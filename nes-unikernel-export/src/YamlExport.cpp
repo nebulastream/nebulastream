@@ -31,8 +31,9 @@
 static std::optional<NES::Optimizer::ExecutionNodePtr> findNodeByOperator(const NES::SourceLogicalOperatorPtr sourceOp,
                                                                           const NES::Optimizer::GlobalExecutionPlanPtr& gep) {
     auto nodeWithOperator = std::ranges::views::filter([&sourceOp](const auto& node) {
-        auto sources =
-            node->operator*()->getAllDecomposedQueryPlans(1)[0]->template getOperatorByType<NES::SourceLogicalOperator>();
+        auto sources = node->operator*()
+                           ->getAllDecomposedQueryPlans(NES::SharedQueryId(1))[0]
+                           ->template getOperatorByType<NES::SourceLogicalOperator>();
         for (const auto& source : sources) {
             if (source->getId() == sourceOp->getId()) {
                 return true;
@@ -41,8 +42,8 @@ static std::optional<NES::Optimizer::ExecutionNodePtr> findNodeByOperator(const 
         return false;
     });
 
-    for (const auto& node :
-         gep->getLockedExecutionNodesHostingSharedQueryId(1) | nodeWithOperator | std::ranges::views::take(1)) {
+    for (const auto& node : gep->getLockedExecutionNodesHostingSharedQueryId(NES::SharedQueryId(1)) | nodeWithOperator
+             | std::ranges::views::take(1)) {
         return node->operator*();
     }
     NES_ERROR("Could not find Operator {}", sourceOp->getId());
@@ -65,7 +66,8 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
             if (sourceOp->getSourceDescriptor()->instanceOf<NES::Network::NetworkSourceDescriptor>()) {
                 auto descriptor = sourceOp->getSourceDescriptor()->as<NES::Network::NetworkSourceDescriptor>();
                 source.schema = SchemaConfiguration(MANUAL, sourceOp->getOutputSchema());
-                source.decomposedQueryPlanId = sourceNode->getAllDecomposedQueryPlans(1)[0]->getDecomposedQueryPlanId();
+                source.decomposedQueryPlanId =
+                    sourceNode->getAllDecomposedQueryPlans(NES::SharedQueryId(1))[0]->getDecomposedQueryPlanId();
                 source.nodeId = sourceNode->getId();
                 source.ip = descriptor->getNodeLocation().getHostname();
                 source.port = descriptor->getNodeLocation().getPort();
@@ -92,15 +94,17 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
     auto sinkSchema = sink[0]->getOutputSchema();
     this->setSinkSchema(sinkSchema);
 
-    this->configuration.query.sharedQueryId = queryPlan->getQueryId();
-    this->configuration.query.workerID = 1;
+    this->configuration.query.sharedQueryId = UNSURE_CONVERSION_TODO_4761(queryPlan->getQueryId(), NES::SharedQueryId);
+    this->configuration.query.workerID = NES::WorkerId(1);
 
     //Assumption: Sink 1 Worker 2 Source 3
-    auto sinkNode = gep->getLockedExecutionNode(1)->operator*();
-    this->configuration.sink.nodeId = 1;
-    this->configuration.sink.decomposedQueryPlanId = sinkNode->getAllDecomposedQueryPlans(1)[0]->getDecomposedQueryPlanId();
-    this->configuration.sink.operatorId =
-        sinkNode->getAllDecomposedQueryPlans(1)[0]->getOperatorByType<NES::SourceLogicalOperator>()[0]->getId();
+    auto sinkNode = gep->getLockedExecutionNode(NES::WorkerId(1))->operator*();
+    this->configuration.sink.nodeId = NES::WorkerId(1);
+    this->configuration.sink.decomposedQueryPlanId =
+        sinkNode->getAllDecomposedQueryPlans(NES::SharedQueryId(1))[0]->getDecomposedQueryPlanId();
+    this->configuration.sink.operatorId = sinkNode->getAllDecomposedQueryPlans(NES::SharedQueryId(1))[0]
+                                              ->getOperatorByType<NES::SourceLogicalOperator>()[0]
+                                              ->getId();
     auto topologyNode = topology->lockTopologyNode(sinkNode->getId());
     this->configuration.sink.ip = topologyNode->operator*()->getIpAddress();
     this->configuration.sink.port = topologyNode->operator*()->getDataPort();

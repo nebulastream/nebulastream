@@ -16,7 +16,7 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_UNIKERNEL_OPERATORHANDLERTRACER_HPP_
 
 #include <API/Schema.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <any>
@@ -50,7 +50,8 @@ enum OperatorHandlerParameterType {
     ENUM_CONSTANT,
     SHARED_PTR,
     BATCH_JOIN_DEFINITION,
-    PAGED_VECTOR
+    PAGED_VECTOR,
+    ORIGIN_ID
 };
 
 struct OperatorHandlerParameterDescriptor {

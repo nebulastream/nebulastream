@@ -282,9 +282,9 @@ int runNetworkSource(Options options) {
         NetworkManager::create(options.nodeId, options.hostIp, options.port, std::move(exchange_protocol), buffer_manager);
 
     NodeLocation upstream_location(options.downstreamId, options.downstreamIp, options.downstreamPort);
-    NesPartition partition(options.queryId, options.operatorId, options.partitionId, options.subPartitionId);
+    NesPartition partition(options.sharedQueryId, options.operatorId, options.partitionId, options.subPartitionId);
 
-    auto wc = std::make_shared<WorkerContext>(options.workerId, buffer_manager, 100);
+    auto wc = std::make_shared<WorkerContext>(NES::INITIAL<NES::WorkerThreadId>, buffer_manager, 100);
 
     //NES::Benchmark::DataGeneration::NEBitDataGenerator generator;
     auto generator = AutomaticDataGenerator::create(options.schema);
@@ -293,8 +293,8 @@ int runNetworkSource(Options options) {
 
     auto sink = std::make_shared<NetworkSink>(generator->getSchema(),
                                               0,
-                                              options.queryId,
-                                              options.subQueryId,
+                                              options.sharedQueryId,
+                                              options.decomposedQueryPlanId,
                                               upstream_location,
                                               partition,
                                               buffer_manager,
@@ -319,7 +319,7 @@ int runNetworkSource(Options options) {
     }
 
     sink->shutdown();
-    wc->releaseNetworkChannel(options.operatorId, QueryTerminationType::Graceful);
+    wc->releaseNetworkChannel(options.operatorId, QueryTerminationType::Graceful, 0, 1000);
 
     return 0;
 }
@@ -350,10 +350,10 @@ int main(int argc, char* argv[]) {
     NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_DEBUG);
     auto optionsResult = Options::fromCLI(argc, argv);
     if (optionsResult.has_error()) {
-        NES_FATAL_ERROR("Failed to Parse Configuration: {}", optionsResult.error());
+        NES_FATAL_ERROR("Failed to Parse Configuration: {}", optionsResult.as_failure());
         return 1;
     }
-    auto options = optionsResult.assume_value();
+    auto options = *optionsResult;
     std::unique_ptr<APrioriDataGenerator> dataGenerator;
 
     if (options.dataSource == DATA_FILE && !hasFormatMismatch(options)) {

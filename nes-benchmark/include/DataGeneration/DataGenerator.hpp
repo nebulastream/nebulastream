@@ -122,7 +122,6 @@ class DataGenerator {
         NES_NOT_IMPLEMENTED();
     }
 
-  private:
     Runtime::BufferManagerPtr bufferManager;
 };
 }// namespace NES::Benchmark::DataGeneration

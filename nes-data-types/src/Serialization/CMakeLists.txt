@@ -13,3 +13,8 @@
 add_source_files(nes-data-types
         DataTypeSerializationUtil.cpp
 )
+
+add_source_files(unikernel-test-lib
+        DataTypeSerializationUtil.cpp
+)
+

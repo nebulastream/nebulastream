@@ -8,7 +8,7 @@
 #include <YAMLModel.h>
 #include <yaml-cpp/yaml.h>
 
-boost::outcome_v2::result<NES::SchemaPtr, std::string> parseSchema(const SchemaConfiguration& schemaConfig) {
+Result<NES::SchemaPtr, std::string> parseSchema(const SchemaConfiguration& schemaConfig) {
     NES::SchemaPtr schema = NES::Schema::create();
     for (const auto& field : schemaConfig.fields) {
         schema = schema->addField(field.name, magic_enum::enum_cast<NES::BasicType>(field.type).value());

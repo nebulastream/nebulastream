@@ -28,5 +28,6 @@ if (NES_USE_MQTT)
     )
 endif ()
 add_source_files(unikernel-test-lib
+        TestTupleBuffer.cpp
         Core.cpp
 )

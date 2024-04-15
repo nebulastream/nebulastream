@@ -80,7 +80,7 @@ void NES::Runtime::AbstractQueryManager::notifySinkCompletion(DecomposedQueryPla
                                                               QueryTerminationType terminationType) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
-uint64_t NES::Runtime::AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId querySubPlanId) const {
+NES::SharedQueryId NES::Runtime::AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId) const {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 uint64_t NES::Runtime::AbstractQueryManager::getCurrentTaskSum() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }

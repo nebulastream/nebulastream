@@ -399,7 +399,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     uint64_t getNextTaskId();
 
   protected:
+#ifndef UNIKERNEL_EXPORT
     WorkerId nodeEngineId;
+#else
+    WorkerId nodeEngineId = INVALID_WORKER_NODE_ID;
+#endif
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;
 

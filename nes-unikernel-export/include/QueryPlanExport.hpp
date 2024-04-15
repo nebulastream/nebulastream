@@ -15,7 +15,7 @@
 #ifndef QUERYPLANEXPORTER_HPP
 #define QUERYPLANEXPORTER_HPP
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Stage/QueryPipeliner.hpp>
@@ -29,6 +29,10 @@ class QueryPlanExporter {
     explicit QueryPlanExporter(const NES::Catalogs::Source::SourceCatalogPtr& sourceCatalog) : sourceCatalog(sourceCatalog) {}
 
     struct ExportSourceDescriptor {
+        ExportSourceDescriptor(const NES::SourceDescriptorPtr& source_descriptor,
+                               const NES::OriginId& origin_id,
+                               const NES::OperatorId& operator_id)
+            : sourceDescriptor(source_descriptor), originId(origin_id), operatorId(operator_id) {}
         NES::SourceDescriptorPtr sourceDescriptor;
         NES::OriginId originId;
         NES::OperatorId operatorId;

@@ -53,7 +53,7 @@ AppendToSliceStoreHandler<Slice>::AppendToSliceStoreHandler(uint64_t windowSize,
             windowSlide);
     }
 
-    std::vector<OriginId> ids = {0};
+    std::vector<OriginId> ids = {INVALID_ORIGIN_ID};
 }
 
 template<class Slice>

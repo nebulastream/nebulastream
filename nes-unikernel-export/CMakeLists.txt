@@ -4,12 +4,15 @@ add_subdirectory(src)
 find_package(Argumentum REQUIRED)
 get_source(unikernel-query-export UNIKERNEL_QUERY_EXPORT_SOURCES)
 add_library(UnikernelQueryExport SHARED ${UNIKERNEL_QUERY_EXPORT_SOURCES})
+target_compile_definitions(UnikernelQueryExport PRIVATE UNIKERNEL_EXPORT)
 target_include_directories(UnikernelQueryExport PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-compiler/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-client/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-window-types/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-expressions/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
 )
 
@@ -42,7 +45,7 @@ add_executable(NesUnikernelExporter src/main.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/LightSaber/SmartGridDataGenerator.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/LightSaber/ManufacturingEquipmentDataGenerator.cpp
 )
-
+target_compile_definitions(NesUnikernelExporter PRIVATE UNIKERNEL_EXPORT)
 
 target_include_directories(NesUnikernelExporter PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/tests/include>
@@ -80,8 +83,7 @@ target_link_libraries(NesUnikernelExporter PUBLIC
         yaml-cpp
         UnikernelCommon
         nes-common
-        Folly::folly
-        Folly::folly_deps
+        folly::folly
         nes-data-types
         UnikernelQueryExport
 )

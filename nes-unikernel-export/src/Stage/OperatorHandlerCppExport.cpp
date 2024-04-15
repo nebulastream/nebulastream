@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#include "../../../nes-execution/tests/Util/include/TestUtils/AbstractCompilationBackendTest.hpp"
-#include "Common/DataTypes/Float.hpp"
-#include "Common/DataTypes/Integer.hpp"
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorSize.hpp>
 #include <OperatorHandlerTracer.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Stage/OperatorHandlerCppExport.hpp>
 #include <Stage/QueryPipeliner.hpp>
@@ -51,6 +50,7 @@ OperatorHandlerCppExporter::HandlerExport::typeName(const Runtime::Unikernel::Op
         case Runtime::Unikernel::OperatorHandlerParameterType::PAGED_VECTOR: return "NES::Nautilus::Interfaces::PagedVectorSize";
         case Runtime::Unikernel::OperatorHandlerParameterType::BATCH_JOIN_DEFINITION:
             return "NES::Join::Experimental::LogicalBatchJoinDefinition";
+        case Runtime::Unikernel::ORIGIN_ID: return "NES::OriginId";
         default: NES_THROW_RUNTIME_ERROR("Not implemented");
     }
 }
@@ -140,6 +140,11 @@ void OperatorHandlerCppExporter::HandlerExport::generateParameter(
             ss << ")";
             break;
         }
+        case OperatorHandlerParameterType::ORIGIN_ID: {
+            ss << typeName(parameter) + "(" + std::any_cast<OriginId>(value).toString() + ")";
+            break;
+        }
+
         default: NES_THROW_RUNTIME_ERROR("Not implemented for type");
     }
 }

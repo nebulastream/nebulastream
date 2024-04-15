@@ -13,8 +13,8 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Measures/TimeCharacteristic.hpp>
 #include <Types/TumblingWindow.hpp>
+#include <sstream>
 #include <utility>
 #include <vector>
 

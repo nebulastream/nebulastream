@@ -403,6 +403,7 @@ class Query {
      */
     static Query from(std::string const& sourceName);
 
+#ifndef UNIKERNEL_EXPORT
     /**
      * @brief Add a synopsis build operator to the query
      * @param window
@@ -417,7 +418,7 @@ class Query {
                           Statistic::StatisticMetricHash metricHash,
                           Statistic::SendingPolicyPtr sendingPolicy,
                           Statistic::TriggerConditionPtr triggerCondition);
-
+#endif
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
     * @param subQuery is the query to be unioned

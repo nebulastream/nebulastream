@@ -36,27 +36,17 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                  numOfProducers,
                  SharedQueryId,
                  DecomposedQueryPlanId,
-                 faultToleranceType,
                  numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), networkManager(networkManager), workerContext(workerContext),
       receiverLocation(destination), bufferManager(std::move(bufferManager)), nesPartition(nesPartition),
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-            workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-        };
-    } else {
-        insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
-        };
-    }
 }
 
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
@@ -72,7 +62,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
-        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), messageSequence++);
         if (success) {
             insertIntoStorageCallback(inputBuffer, workerContext);
         }
@@ -83,16 +73,16 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 }
 
 void NetworkSink::preSetup() {
-    NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), DecomposedQueryPlanId);
+    NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), decomposedQueryPlanId);
     NES_ASSERT2_FMT(
         networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, inherited1::shared_from_this()),
         "Cannot register event listener " << nesPartition.toString());
 }
 
 void NetworkSink::setup() {
-    NES_DEBUG("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), DecomposedQueryPlanId);
-    auto reconf = Runtime::ReconfigurationMessage(SharedQueryId,
-                                                  DecomposedQueryPlanId,
+    NES_DEBUG("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), decomposedQueryPlanId);
+    auto reconf = Runtime::ReconfigurationMessage(sharedQueryId,
+                                                  decomposedQueryPlanId,
                                                   Runtime::ReconfigurationType::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
@@ -102,15 +92,15 @@ void NetworkSink::setup() {
 void NetworkSink::shutdown() {
     NES_DEBUG("NetworkSink: shutdown() called {} SharedQueryId {} qepsubplan {}",
               nesPartition.toString(),
-              SharedQueryId,
-              DecomposedQueryPlanId);
+              sharedQueryId,
+              decomposedQueryPlanId);
     networkManager->unregisterSubpartitionProducer(nesPartition);
 }
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
-    NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), DecomposedQueryPlanId);
+    NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), decomposedQueryPlanId);
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
@@ -139,69 +129,18 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
-        case Runtime::ReconfigurationType::PropagateEpoch: {
-            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto timestamp = task.getUserData<uint64_t>();
-            NES_DEBUG("Executing PropagateEpoch on qep SharedQueryId={} punctuation={}", SharedQueryId, timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, SharedQueryId);
-            workerContext.trimStorage(nesPartition, timestamp);
-            break;
-        }
-        case Runtime::ReconfigurationType::StartBuffering: {
-            //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
-            //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
-                break;
-            }
-            if (reconnectBuffering) {
-                NES_DEBUG("Requested sink to buffer but it is already buffering")
-            } else {
-                this->reconnectBuffering = true;
-            }
-            break;
-        }
-        case Runtime::ReconfigurationType::StopBuffering: {
-            //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
-            //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
-                break;
-            }
-            /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
-            unbuffer*/
-            reconnectBuffering = false;
-            NES_INFO("stop buffering data for context {}", workerContext.getId());
-            auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            NES_INFO("sending buffered data");
-            while (topBuffer) {
-                /*this will only work if guarantees are not set to at least once,
-                otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
-                if (!topBuffer.value().getBuffer()) {
-                    NES_WARNING("buffer does not exist");
-                    break;
-                }
-                if (!writeData(topBuffer.value(), workerContext)) {
-                    NES_WARNING("could not send all data from buffer");
-                    break;
-                }
-                NES_TRACE("buffer sent");
-                workerContext.removeTopTupleFromStorage(nesPartition);
-                topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            }
-            break;
-        }
-        default: {
-            break;
-        }
+        case Runtime::ReconfigurationType::Destroy:
+        case Runtime::ReconfigurationType::ConnectToNewReceiver:
+        case Runtime::ReconfigurationType::ConnectionEstablished:
+        case Runtime::ReconfigurationType::UpdateVersion: NES_NOT_IMPLEMENTED();
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
         //todo #3013: make sure buffers are kept if the device is currently buffering
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             networkManager->unregisterSubpartitionProducer(nesPartition);
-            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
-                            "Cannot remove network channel " << nesPartition.toString());
+            NES_ASSERT2_FMT(
+                workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType, 1, messageSequence),
+                "Cannot remove network channel " << nesPartition.toString());
             NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
                       nesPartition.toString(),
                       Runtime::NesThread::getId());
@@ -212,7 +151,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}",
               nesPartition.toString(),
-              DecomposedQueryPlanId);
+              decomposedQueryPlanId);
     inherited0::postReconfigurationCallback(task);
 }
 

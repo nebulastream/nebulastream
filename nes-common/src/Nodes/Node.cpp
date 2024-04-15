@@ -137,7 +137,7 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
         }
     }
 
-    NES_INFO("Node: Remove all parents of this node.");
+    NES_DEBUG("Node: Remove all parents of this node.");
     removeAllParent();
 
     if (!addParent(newNode)) {
@@ -159,10 +159,10 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
         return false;
     }
 
-    NES_INFO("Node: Create temporary copy of this nodes parents.");
+    NES_DEBUG("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfChildren = children;
 
-    NES_INFO("Node: Remove all children of this node.");
+    NES_DEBUG("Node: Remove all children of this node.");
     removeChildren();
 
     if (!addChild(newNode)) {
@@ -170,7 +170,7 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
         return false;
     }
 
-    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
+    NES_DEBUG("Node: Add copy of this nodes parent as parent to the input node.");
     for (const NodePtr& child : copyOfChildren) {
         if (!newNode->addChild(child)) {
             NES_ERROR("Node: Unable to add child of this node as child to input node.");
@@ -182,24 +182,24 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
 }
 
 void Node::removeAllParent() {
-    NES_INFO("Node: Removing all parents for current node");
+    NES_DEBUG("Node: Removing all parents for current node");
     auto nodeItr = parents.begin();
     while (nodeItr != parents.end()) {
         if (!this->removeParent(*nodeItr)) {
             nodeItr++;
         }
-        NES_INFO("Node: Removed node as parent of this node");
+        NES_DEBUG("Node: Removed node as parent of this node");
     }
 }
 
 void Node::removeChildren() {
-    NES_INFO("Node: Removing all children for current node");
+    NES_DEBUG("Node: Removing all children for current node");
     auto nodeItr = children.begin();
     while (nodeItr != children.end()) {
         if (!this->removeChild(*nodeItr)) {
             nodeItr++;
         }
-        NES_INFO("Node: Removed node as child of this node");
+        NES_DEBUG("Node: Removed node as child of this node");
     }
 }
 

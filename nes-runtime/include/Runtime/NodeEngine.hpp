@@ -20,6 +20,7 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#if !(defined(UNIKERNEL_EXPORT) || defined(UNIKERNEL_TEST_LIBRARY))
 #include <StatisticCollection/StatisticManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -313,6 +314,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
+#if !(defined(UNIKERNEL_EXPORT) || defined(UNIKERNEL_TEST_LIBRARY))
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
     /**
@@ -327,7 +329,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
 
   public:
-#ifndef UNIKERNEL_EXPORT
+#if !(defined(UNIKERNEL_EXPORT) || defined(UNIKERNEL_TEST_LIBRARY))
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
@@ -361,13 +363,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
-#ifndef UNIKERNEL_EXPORT
+#if !(defined(UNIKERNEL_EXPORT) || defined(UNIKERNEL_TEST_LIBRARY))
     std::map<SharedQueryId, std::vector<DecomposedQueryPlanId>> sharedQueryIdToDecomposedQueryPlanIds;
     std::map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> deployedExecutableQueryPlans;
     HardwareManagerPtr hardwareManager;
 #endif
     std::vector<BufferManagerPtr> bufferManagers;
-#ifndef UNIKERNEL_EXPORT
+#if !(defined(UNIKERNEL_EXPORT) || defined(UNIKERNEL_TEST_LIBRARY))
     QueryManagerPtr queryManager;
     BufferStoragePtr bufferStorage;
     Monitoring::MetricStorePtr metricStore;

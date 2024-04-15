@@ -26,7 +26,11 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, u
 void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineCtx) {
     NES_INFO("Stopped StreamJoinOperatorHandler with {}!", magic_enum::enum_name(queryTerminationType));
     if (queryTerminationType == QueryTerminationType::Graceful) {
+#ifdef UNIKERNEL_LIB
+        triggerAllSlices(pipelineCtx);
+#else
         triggerAllSlices(pipelineCtx.get());
+#endif
     }
 }
 

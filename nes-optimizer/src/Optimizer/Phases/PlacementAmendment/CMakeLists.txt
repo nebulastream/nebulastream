@@ -16,3 +16,9 @@ add_source_files(nes-optimizer
         PlacementAmendmentInstance.cpp
 )
 
+add_source_files(unikernel-export
+        QueryPlacementAmendmentPhase.cpp
+        PlacementAmendmentHandler.cpp
+        PlacementAmendmentInstance.cpp
+)
+

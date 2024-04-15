@@ -13,3 +13,7 @@
 add_source_files(nes-catalogs
         PlanJsonGenerator.cpp
 )
+
+add_source_files(unikernel-export
+        PlanJsonGenerator.cpp
+)

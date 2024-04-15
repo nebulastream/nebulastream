@@ -105,7 +105,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
                   buffer.isLastChunk(),
                   buffer.getStatisticId());
     }
-#ifndef UNIKERNEL_SUPPORT_LIB
+
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
         //find the queue to which this sources pushes

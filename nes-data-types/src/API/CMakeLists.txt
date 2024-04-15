@@ -17,3 +17,7 @@ add_source_files(nes-data-types
         TestSchemas.cpp
 )
 
+add_source_files(unikernel-export
+        TimeUnit.cpp
+)
+

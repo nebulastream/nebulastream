@@ -16,3 +16,10 @@ add_source_files(nes-catalogs
         DecomposedQueryPlanMetaData.cpp
         SharedQueryCatalogEntry.cpp
         )
+
+add_source_files(unikernel-export
+        QueryCatalog.cpp
+        QueryCatalogEntry.cpp
+        DecomposedQueryPlanMetaData.cpp
+        SharedQueryCatalogEntry.cpp
+)

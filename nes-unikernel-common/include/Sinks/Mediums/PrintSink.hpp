@@ -36,8 +36,8 @@ class PrintSink : public SinkMedium {
      */
     PrintSink(SinkFormatPtr format,
               uint32_t numOfProducers,
-              DecomposedQueryPlanId DecomposedQueryPlanId,
               SharedQueryId SharedQueryId,
+              DecomposedQueryPlanId DecomposedQueryPlanId,
               std::ostream& pOutputStream = std::cout,
               uint64_t numberOfOrigins = 1);
 

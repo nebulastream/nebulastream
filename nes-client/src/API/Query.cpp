@@ -219,6 +219,7 @@ Query Query::from(const std::string& sourceName) {
     return Query(queryPlan);
 }
 
+#ifndef UNIKERNEL_EXPORT
 Query& Query::buildStatistic(Windowing::WindowTypePtr window,
                              Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
                              Statistic::StatisticMetricHash metricHash,
@@ -232,6 +233,7 @@ Query& Query::buildStatistic(Windowing::WindowTypePtr window,
                                                                   this->queryPlan);
     return *this;
 }
+#endif
 
 Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
     NES_DEBUG("Query: add projection to query");

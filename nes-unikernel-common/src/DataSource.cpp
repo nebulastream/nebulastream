@@ -11,20 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Core.hpp>
-#include <Util/KalmanFilter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <chrono>
 #include <filesystem>
@@ -79,21 +79,31 @@ DataSource::DataSource(SchemaPtr pSchema,
     }
 }
 
-void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
-    // set the origin id for this source
-    buffer.setOriginId(originId);
-    // set the creation timestamp
-    buffer.setCreationTimestampInMS(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count());
-    // Set the sequence number of this buffer.
-    // A data source generates a monotonic increasing sequence number
-    maxSequenceNumber++;
-    buffer.setSequenceNumber(maxSequenceNumber);
-    emitWork(buffer);
-}
+void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) {
+    if (addBufferMetaData) {
+        // set the origin id for this source
+        buffer.setOriginId(originId);
+        // set the creation timestamp
+        buffer.setCreationTimestampInMS(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count());
+        // Set the sequence number of this buffer.
+        // A data source generates a monotonic increasing sequence number
+        maxSequenceNumber++;
+        buffer.setSequenceNumber(maxSequenceNumber);
+        buffer.setChunkNumber(1);
+        buffer.setLastChunk(true);
+        buffer.setStatisticId(0);
+        NES_DEBUG("Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} "
+                  "statisticId={}",
+                  buffer.getOriginId(),
+                  buffer.getOriginId(),
+                  buffer.getSequenceNumber(),
+                  buffer.getChunkNumber(),
+                  buffer.isLastChunk(),
+                  buffer.getStatisticId());
+    }
 
-void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
         successor->writeData(buffer, *workerContext);
@@ -138,7 +148,7 @@ bool DataSource::start() {
                     CPU_SET(sourceAffinity, &cpuset);
                     int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
                     if (rc != 0) {
-                        NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " + std::to_string(operatorId));
+                        NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " + operatorId.toString());
                     }
                 } else {
                     NES_WARNING("Use default affinity for source");
@@ -285,8 +295,8 @@ void DataSource::runningRoutine() {
 }
 
 void DataSource::runningRoutineWithGatheringInterval() {
-    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
-    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
+    std::string thName = "DataSrc-" + operatorId.toString();
     setThreadName(thName.c_str());
 
     NES_DEBUG("DataSource {}: Running Data Source of type={} interval={}",
@@ -323,11 +333,11 @@ void DataSource::runningRoutineWithGatheringInterval() {
 
                 if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-                    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+                    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
                     NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
                 }
 
-                emitWorkFromSource(buf);
+                emitWork(buf, true);
                 ++numberOfBuffersProduced;
             } else {
                 NES_DEBUG("DataSource {}: stopping cause of invalid buffer", operatorId);
@@ -372,9 +382,9 @@ bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
     return std::find(supportedLayouts.begin(), supportedLayouts.end(), schema->getLayoutType()) != supportedLayouts.end();
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer DataSource::allocateBuffer() {
+Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() {
     auto buffer = bufferManager->getBufferBlocking();
-    return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
 void DataSource::onEvent(Runtime::EventPtr event) {

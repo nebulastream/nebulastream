@@ -1,12 +1,14 @@
 find_package(yaml-cpp REQUIRED)
 add_subdirectory(src)
-find_package(Boost REQUIRED COMPONENTS system iostreams)
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(folly REQUIRED CONFIG)
 add_library(UnikernelCommon INTERFACE)
 target_link_libraries(UnikernelCommon INTERFACE
         nes-common
         nes-data-types
         yaml-cpp
-        Boost::iostreams
+        folly::folly
+        spdlog::spdlog
 )
 target_include_directories(UnikernelCommon INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
@@ -32,9 +34,8 @@ add_source_files(unikernel-test-lib
 get_source(unikernel-test-lib UNIKERNEL_TEST_SRC)
 add_library(UnikernelTest SHARED ${UNIKERNEL_TEST_SRC})
 target_link_libraries(UnikernelTest PUBLIC
-        nes-common
-        nes-data-types
         nes-grpc
+        nes-configurations
 )
 
 target_include_directories(UnikernelTest
@@ -47,7 +48,7 @@ target_include_directories(UnikernelTest
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-optimizer/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configuration/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/include>
         $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )

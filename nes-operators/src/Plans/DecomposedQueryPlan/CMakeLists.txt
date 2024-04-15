@@ -13,3 +13,7 @@
 add_source_files(nes-operators
         DecomposedQueryPlan.cpp
 )
+
+add_source_files(unikernel-export
+        DecomposedQueryPlan.cpp
+)

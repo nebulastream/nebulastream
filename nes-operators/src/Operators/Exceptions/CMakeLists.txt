@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        InvalidFieldException.cpp
         InvalidLogicalOperatorException.cpp
         InvalidOperatorStateException.cpp
         SignatureComputationException.cpp

@@ -26,9 +26,8 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      SharedQueryId SharedQueryId,
                      DecomposedQueryPlanId DecomposedQueryPlanId,
                      std::ostream& pOutputStream,
-                     FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), numOfProducers, SharedQueryId, DecomposedQueryPlanId, faultToleranceType, numberOfOrigins),
+    : SinkMedium(std::move(format), numOfProducers, SharedQueryId, DecomposedQueryPlanId, numberOfOrigins),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;

@@ -20,7 +20,6 @@
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 namespace NES {
@@ -60,7 +59,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
         size_t numOfProducers,
         std::chrono::milliseconds waitTime,
         uint8_t retryTimes,
-        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
         uint64_t numberOfOrigins = 0);
 
     /**
@@ -125,12 +123,12 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @brief method to return the network sinks descriptor id
      * @return id
      */
-    uint64_t getUniqueNetworkSinkDescriptorId();
+    OperatorId getUniqueNetworkSinkDescriptorId();
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
-    uint64_t uniqueNetworkSinkDescriptorId;
+    OperatorId uniqueNetworkSinkDescriptorId;
     NetworkManagerPtr networkManager;
     Runtime::WorkerContextPtr workerContext;
     NodeLocation receiverLocation;
@@ -144,6 +142,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     bool reconnectBuffering;
+    std::atomic_uint64_t messageSequence;
 };
 
 }// namespace Network

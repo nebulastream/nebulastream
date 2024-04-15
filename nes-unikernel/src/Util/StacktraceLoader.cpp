@@ -14,6 +14,7 @@
 #ifdef USE_LIB_DWARF
 #include <Util/Backward/backward.hpp>
 #endif
+#include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 
 #define CALLSTACK_MAX_SIZE 32
@@ -22,7 +23,7 @@ namespace NES {
 /**
  * @brief This methods collects the call stacks and prints is
  */
-std::string collectAndPrintStacktrace() {
+std::string collectStacktrace() {
 #ifdef USE_LIB_DWARF
     backward::StackTrace stackTrace;
     backward::Printer printer;
@@ -32,10 +33,18 @@ std::string collectAndPrintStacktrace() {
     std::stringbuf buffer;
     std::ostream os(&buffer);
     printer.print(stackTrace, os);
-    //    NES_ERROR("Stacktrace:\n {}", buffer.str());
     return buffer.str();
 #endif
     return "Stacktrace not available";
+}
+
+/**
+ * @brief This methods collects the call stacks and prints is
+ */
+std::string collectAndPrintStacktrace() {
+    auto stacktrace = collectStacktrace();
+    NES_ERROR("{}", stacktrace);
+    return stacktrace;
 }
 
 void nesErrorHandler() { collectAndPrintStacktrace(); }

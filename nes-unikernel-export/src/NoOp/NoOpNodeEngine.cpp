@@ -48,7 +48,7 @@ NES::Runtime::BufferManagerPtr NES::Runtime::NodeEngine::getBufferManager(uint32
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-uint64_t NES::Runtime::NodeEngine::getNodeEngineId() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
+NES::WorkerId NES::Runtime::NodeEngine::getWorkerId() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
 NES::Network::NetworkManagerPtr NES::Runtime::NodeEngine::getNetworkManager() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
@@ -60,7 +60,7 @@ NES::Runtime::HardwareManagerPtr NES::Runtime::NodeEngine::getHardwareManager() 
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-NES::Runtime::Execution::ExecutableQueryPlanStatus NES::Runtime::NodeEngine::getQueryStatus(QueryId) {
+NES::Runtime::Execution::ExecutableQueryPlanStatus NES::Runtime::NodeEngine::getQueryStatus(SharedQueryId) {
     NES_THROW_RUNTIME_ERROR("getQueryStatus not implemented in NoOpNodeEngine");
 }
 
@@ -84,7 +84,7 @@ void NES::Runtime::NodeEngine::onChannelError(Network::Messages::ErrorMessage) {
     NES_THROW_RUNTIME_ERROR("onChannelError not implemented in NoOpNodeEngine");
 }
 
-std::vector<NES::Runtime::QueryStatisticsPtr> NES::Runtime::NodeEngine::getQueryStatistics(QueryId) {
+std::vector<NES::Runtime::QueryStatisticsPtr> NES::Runtime::NodeEngine::getQueryStatistics(SharedQueryId) {
     NES_THROW_RUNTIME_ERROR("getQueryStatistics not implemented in NoOpNodeEngine");
 }
 
@@ -121,15 +121,15 @@ void NES::Runtime::NodeEngine::onFatalException(const std::shared_ptr<std::excep
 }
 
 std::shared_ptr<const NES::Runtime::Execution::ExecutableQueryPlan>
-NES::Runtime::NodeEngine::getExecutableQueryPlan(uint64_t) const {
+NES::Runtime::NodeEngine::getExecutableQueryPlan(DecomposedQueryPlanId) const {
     NES_THROW_RUNTIME_ERROR("getExecutableQueryPlan not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::bufferData(DecomposedQueryPlanId, uint64_t) {
+bool NES::Runtime::NodeEngine::bufferData(DecomposedQueryPlanId, OperatorId) {
     NES_THROW_RUNTIME_ERROR("bufferData not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::updateNetworkSink(uint64_t, const std::string&, uint32_t, DecomposedQueryPlanId, uint64_t) {
+bool NES::Runtime::NodeEngine::updateNetworkSink(WorkerId, const std::string&, uint32_t, DecomposedQueryPlanId, OperatorId) {
     NES_THROW_RUNTIME_ERROR("updateNetworkSink not implemented in NoOpNodeEngine");
 }
 

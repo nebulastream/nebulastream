@@ -20,7 +20,7 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Text.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Formats/FormatType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -49,6 +49,30 @@ struct SchemaField {
     std::string name;
     std::string type;
 };
+
+namespace YAML {
+template<NES::NESIdentifier IdentifierT>
+struct as_if<IdentifierT, void> {
+    explicit as_if(const Node& node_) : node(node_) {}
+    const Node& node;
+
+    IdentifierT operator()() const { return IdentifierT(as_if<typename IdentifierT::Underlying, void>(node)()); }
+};
+template<typename T, typename Tag, T invalid, T initial>
+struct convert<NES::NESStrongType<T, Tag, invalid, initial>> {
+
+    static Node encode(const NES::NESStrongType<T, Tag, invalid, initial>& rhs) {
+        Node node;
+        node = rhs.getRawValue();
+        return node;
+    };
+
+    static Node decode(const Node& node, NES::NESStrongType<T, Tag, invalid, initial>& rhs) {
+        rhs = NES::NESStrongType<T, Tag, invalid, initial>(node.as<T>());
+        return node;
+    };
+};
+}// namespace YAML
 
 namespace YAML {
 template<>
@@ -149,12 +173,12 @@ struct convert<SchemaConfiguration> {
 enum SourceType { NetworkSource, TcpSource };
 
 struct SinkEndpointConfiguration {
-    NES::DecomposedQueryPlanId decomposedQueryPlanId;
+    NES::DecomposedQueryPlanId decomposedQueryPlanId = NES::INVALID_DECOMPOSED_QUERY_PLAN_ID;
     SchemaConfiguration schema;
     std::string ip;
     uint32_t port;
-    NES::WorkerId nodeId;
-    NES::OperatorId operatorId;
+    NES::WorkerId nodeId = NES::INVALID_WORKER_NODE_ID;
+    NES::OperatorId operatorId = NES::INVALID_OPERATOR_ID;
     std::optional<bool> print;
 };
 
@@ -213,7 +237,7 @@ struct convert<DataSourceType> {
 }// namespace YAML
 
 struct SourceEndpointConfiguration {
-    NES::DecomposedQueryPlanId decomposedQueryPlanId{};
+    NES::DecomposedQueryPlanId decomposedQueryPlanId = NES::INVALID_DECOMPOSED_QUERY_PLAN_ID;
     SchemaConfiguration schema;
     std::optional<size_t> numberOfBuffers;
     std::optional<bool> print;
@@ -222,8 +246,8 @@ struct SourceEndpointConfiguration {
     std::optional<NES::FormatTypes> format;
     std::string ip;
     uint32_t port{};
-    NES::WorkerId nodeId{};
-    NES::OriginId originId{};
+    NES::WorkerId nodeId = NES::INVALID_WORKER_NODE_ID;
+    NES::OriginId originId = NES::INVALID_ORIGIN_ID;
     std::optional<size_t> delayInMS;
     SourceType type;
 };
@@ -286,10 +310,10 @@ struct convert<SourceEndpointConfiguration> {
 struct WorkerLinkConfiguration {
     std::string ip;
     uint32_t port;
-    NES::WorkerId nodeId;
-    NES::PartitionId partitionId;
-    NES::SubpartitionId subpartitionId;
-    NES::OperatorId operatorId;
+    NES::WorkerId nodeId = NES::INVALID_WORKER_NODE_ID;
+    NES::PartitionId partitionId = NES::PartitionId(0);
+    NES::SubpartitionId subpartitionId = NES::SubpartitionId(0);
+    NES::OperatorId operatorId = NES::INVALID_OPERATOR_ID;
 };
 
 namespace YAML {
@@ -349,8 +373,8 @@ struct convert<WorkerTCPSourceConfiguration> {
 }// namespace YAML
 
 struct WorkerSourceConfiguration {
-    NES::OperatorId operatorId;
-    NES::OriginId originId;
+    NES::OperatorId operatorId = NES::INVALID_OPERATOR_ID;
+    NES::OriginId originId = NES::INVALID_ORIGIN_ID;
     std::optional<WorkerLinkConfiguration> worker;
     std::optional<WorkerTCPSourceConfiguration> tcpSource;
 };
@@ -393,7 +417,7 @@ struct convert<WorkerSourceConfiguration> {
 struct WorkerStageConfiguration {
     std::optional<std::vector<WorkerStageConfiguration>> predecessor;
     std::optional<WorkerSourceConfiguration> upstream;
-    size_t stageId = 0;
+    NES::PipelineId stageId = NES::INVALID_PIPELINE_ID;
     size_t numberOfOperatorHandlers = 0;
 };
 
@@ -461,7 +485,7 @@ struct convert<KafkaSinkConfiguration> {
 struct WorkerSubQueryConfiguration {
     std::optional<WorkerStageConfiguration> stage;
     std::optional<WorkerSourceConfiguration> upstream;
-    NES::DecomposedQueryPlanId decomposedQueryPlanId;
+    NES::DecomposedQueryPlanId decomposedQueryPlanId = NES::INVALID_DECOMPOSED_QUERY_PLAN_ID;
     size_t outputSchemaSizeInBytes;
     WorkerDownStreamLinkConfigurationType type;
 
@@ -518,7 +542,7 @@ struct convert<WorkerSubQueryConfiguration> {
 struct WorkerConfiguration {
     std::string ip;
     uint32_t port;
-    NES::WorkerId nodeId;
+    NES::WorkerId nodeId = NES::INVALID_WORKER_NODE_ID;
     std::vector<WorkerSubQueryConfiguration> subQueries;
 };
 
@@ -545,8 +569,8 @@ struct convert<WorkerConfiguration> {
 }// namespace YAML
 
 struct QueryConfiguration {
-    NES::SharedQueryId sharedQueryId;
-    size_t workerID;
+    NES::SharedQueryId sharedQueryId = NES::INVALID_SHARED_QUERY_ID;
+    NES::WorkerId workerID = NES::INVALID_WORKER_NODE_ID;
 };
 
 namespace YAML {

@@ -50,7 +50,7 @@ class NESProvider {
 
 bool isUnikernelWorkerNode(const NES::Optimizer::ExecutionNodeWLock lockedNode) {
     auto node = lockedNode->operator*();
-    auto subplans = node->getAllDecomposedQueryPlans(1)[0];
+    auto subplans = node->getAllDecomposedQueryPlans(SharedQueryId(1))[0];
     auto sink = subplans->getRootOperators()[0]->as<SinkLogicalOperator>();
     auto sources = subplans->getOperatorByType<SourceLogicalOperator>();
     bool hasNetworkSink = sink->getSinkDescriptor()->instanceOf<NES::Network::NetworkSinkDescriptor>();
@@ -100,9 +100,9 @@ int main(int argc, char** argv) {
     NES::Unikernel::Export::QueryPlanExporter queryPlanExporter(sourcesCatalog);
 
     for (const auto& lockedExecutionNode :
-         gep->getLockedExecutionNodesHostingSharedQueryId(1) | stdv::filter(isUnikernelWorkerNode)) {
+         gep->getLockedExecutionNodesHostingSharedQueryId(SharedQueryId(1)) | stdv::filter(isUnikernelWorkerNode)) {
         auto executionNode = lockedExecutionNode->operator*();
-        auto subQueries = executionNode->getAllDecomposedQueryPlans(1);
+        auto subQueries = executionNode->getAllDecomposedQueryPlans(SharedQueryId(1));
         auto topologyNode = topology->lockTopologyNode(executionNode->getId());
         std::vector<WorkerSubQuery> workerSubQueries;
         for (const auto& subquery : subQueries) {

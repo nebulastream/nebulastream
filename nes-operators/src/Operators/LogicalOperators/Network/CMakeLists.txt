@@ -11,8 +11,13 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
+        NesPartition.cpp
         NetworkSinkDescriptor.cpp
         NetworkSourceDescriptor.cpp
+)
+
+add_source_files(unikernel-test-lib
+        NesPartition.cpp
 )
 
 add_source_files(unikernel-lib
@@ -22,6 +27,6 @@ add_source_files(unikernel-lib
 add_source_files(nes-operators
         NetworkSinkDescriptor.cpp
         NetworkSourceDescriptor.cpp
-NesPartition.cpp
-        )
+        NesPartition.cpp
+)
 

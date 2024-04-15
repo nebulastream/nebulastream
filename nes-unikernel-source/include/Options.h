@@ -5,19 +5,18 @@
 #ifndef NES_OPTIONS_H
 #define NES_OPTIONS_H
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Result.hpp>
 #include <Sinks/Formats/FormatType.hpp>
 #include <YAMLModel.h>
 #include <argumentum/argparse.h>
-#include <boost/filesystem.hpp>
-#include <boost/outcome.hpp>
 
 struct Options {
     NES::WorkerId nodeId;
-    NES::QueryId queryId;
-    NES::QuerySubPlanId subQueryId;
+    NES::SharedQueryId sharedQueryId;
+    NES::DecomposedQueryPlanId decomposedQueryPlanId;
     NES::OperatorId operatorId;
-    size_t workerId;
+    NES::WorkerId workerId;
     std::string hostIp = "127.0.0.1";
     uint32_t port = 8082;
     std::string downstreamIp = "127.0.0.1";
@@ -37,7 +36,7 @@ struct Options {
     unsigned long numberOfBuffers;
     bool print;
 
-    using Result = boost::outcome_v2::result<Options, std::string>;
+    using Result = Result<Options, std::string>;
     static Result fromCLI(int argc, char** argv);
     NES::SchemaPtr getSchema() const;
 };

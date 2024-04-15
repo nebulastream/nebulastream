@@ -43,7 +43,6 @@ endif ()
 
 if (UNIKERNEL_USE_CUSTOM_DEPS)
     find_package(scn CONFIG REQUIRED)
-    find_package(smallfolly CONFIG REQUIRED)
     find_package(spdlog CONFIG REQUIRED)
     set(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} smallfolly scn::scn spdlog::spdlog zmq-fork)
     message("Unikernel use custom libs")

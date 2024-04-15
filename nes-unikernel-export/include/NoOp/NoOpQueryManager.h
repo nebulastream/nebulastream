@@ -38,6 +38,8 @@ class NoOpQueryManager : public AbstractQueryManager {
     void reconfigure(ReconfigurationMessage& message, WorkerContext& context) override;
     void destroy() override;
 
+    NoOpQueryManager() = default;
+
   protected:
     void updateStatistics(const Task& task,
                           SharedQueryId queryId,

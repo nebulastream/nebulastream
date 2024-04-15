@@ -17,6 +17,7 @@ add_source_files(unikernel-export
         DefaultPhysicalOperatorProvider.cpp
         LowerPhysicalToNautilusOperators.cpp
         ExpressionProvider.cpp
+        TimestampField.cpp
 )
 add_source_files(nes-execution
         ConvertLogicalToPhysicalSource.cpp

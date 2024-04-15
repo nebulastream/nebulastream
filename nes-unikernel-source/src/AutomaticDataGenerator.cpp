@@ -26,7 +26,7 @@ std::vector<NES::Runtime::TupleBuffer> AutomaticDataGenerator::createData(size_t
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto tuples_in_buffer = 0;
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = NES::Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        auto dynamicBuffer = NES::Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
         auto numberOfTuple = numberOfTupleToCreate.value_or(dynamicBuffer.getCapacity());
         numberOfTuple = std::min(numberOfTuple, dynamicBuffer.getCapacity());
 

@@ -15,14 +15,10 @@
 #ifndef NES_FILEDATAGENERATOR_H
 #define NES_FILEDATAGENERATOR_H
 
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <DataGeneration/DataGenerator.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Parsers/JSONParser.hpp>
 #include <Sources/Parsers/Parser.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <boost/filesystem.hpp>
 
 class FileDataGenerator : public NES::Benchmark::DataGeneration::DataGenerator {
@@ -31,7 +27,6 @@ class FileDataGenerator : public NES::Benchmark::DataGeneration::DataGenerator {
     boost::filesystem::path path;
     boost::filesystem::ifstream file;
     std::unique_ptr<NES::Parser> parser_impl;
-
 
   public:
     FileDataGenerator(NES::SchemaPtr schema, boost::filesystem::path path);

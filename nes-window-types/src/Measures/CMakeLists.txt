@@ -11,10 +11,8 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        WindowMeasure.cpp
         TimeMeasure.cpp
         TimeCharacteristic.cpp
-        TimeUnit.cpp
 )
 add_source_files(nes-window-types
         TimeCharacteristic.cpp

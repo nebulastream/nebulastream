@@ -18,6 +18,8 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <FileDataGenerator.h>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Parsers/JSONParser.hpp>
 
 FileDataGenerator::FileDataGenerator(NES::SchemaPtr s, boost::filesystem::path p) : schema(std::move(s)), path(std::move(p)) {
     auto extension = path.extension().string();
@@ -76,7 +78,7 @@ std::vector<NES::Runtime::TupleBuffer> FileDataGenerator::createData(size_t numb
             NES_ASSERT(file.good(), "Could not read buffer content");
         } else {
             size_t number_of_tuples_in_buffer = bufferSize / schema->getSchemaSizeInBytes();
-            auto dynamicBuffer = NES::Runtime::MemoryLayouts::DynamicTupleBuffer(
+            auto dynamicBuffer = NES::Runtime::MemoryLayouts::TestTupleBuffer(
                 std::make_shared<NES::Runtime::MemoryLayouts::RowLayout>(schema, bufferSize),
                 buffer);
             for (size_t current_tuple_index = 0; current_tuple_index < number_of_tuples_in_buffer; current_tuple_index++) {

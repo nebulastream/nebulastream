@@ -27,7 +27,7 @@ AppendToSliceStoreHandler<Slice>::AppendToSliceStoreHandler(uint64_t windowSize,
     static_assert(std::is_same_v<Slice, NonKeyedSlice> || std::is_same_v<Slice, KeyedSlice>,
                   "AppendToSliceStoreHandler only Supports: KeyedSlice and NonKeyedSlice");
 
-    std::vector<OriginId> ids = {0};
+    std::vector<OriginId> ids = {INVALID_ORIGIN_ID};
     watermarkProcessor = std::make_unique<MultiOriginWatermarkProcessor>(ids);
     sliceStore = std::make_unique<SlidingWindowSliceStore<Slice>>(windowSize, windowSlide);
 }
@@ -45,7 +45,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
 
     NES_ASSERT(sliceStore != 0, "slice store is not initialized");
     // the watermark update is an atomic process and returns the last and the current watermark.
-    auto currentWatermark = watermarkProcessor->updateWatermark(slideEnd, sequenceNumber, 0);
+    auto currentWatermark = watermarkProcessor->updateWatermark(slideEnd, sequenceNumber, INVALID_ORIGIN_ID);
 
     // the watermark has changed get the lock to trigger
     std::lock_guard<std::mutex> lock(triggerMutex);

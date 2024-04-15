@@ -21,6 +21,5 @@ add_source_files(nes-operators
 
 add_source_files(unikernel-test-lib
         SchemaSerializationUtil.cpp
-        DataTypeSerializationUtil.cpp
         )
 

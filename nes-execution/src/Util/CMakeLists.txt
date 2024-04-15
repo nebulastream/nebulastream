@@ -16,6 +16,10 @@ add_source_files(nes-execution
         Execution.cpp
 )
 
+add_source_files(unikernel-export
+        Execution.cpp
+)
+
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_subdirectory(JNI)
 endif ()

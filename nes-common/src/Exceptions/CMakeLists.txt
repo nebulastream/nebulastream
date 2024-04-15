@@ -22,7 +22,9 @@ add_source_files(unikernel-export
         CoordinatesOutOfRangeException.cpp
         InvalidArgumentException.cpp
         RequestExecutionException.cpp
+        InvalidFieldException.cpp
 )
+
 add_source_files(nes-common
         SignalHandling.cpp
         RuntimeException.cpp

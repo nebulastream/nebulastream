@@ -20,7 +20,7 @@
 #include <utility>
 
 namespace NES::Runtime::Execution {
-PipelineExecutionContext::PipelineExecutionContext(uint64_t pipelineId,
+PipelineExecutionContext::PipelineExecutionContext(PipelineId pipelineId,
                                                    DecomposedQueryPlanId queryId,
                                                    Runtime::BufferManagerPtr bufferProvider,
                                                    size_t numberOfWorkerThreads,

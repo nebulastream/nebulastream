@@ -2,15 +2,16 @@
 // Created by ls on 09.10.23.
 //
 
-#include "Util/Logger/Logger.hpp"
 #include <API/Schema.hpp>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <Options.h>
+#include <Result.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <YAMLModel.h>
 
-boost::outcome_v2::result<NES::SchemaPtr, std::string> parseSchema(const SchemaConfiguration& schemaConfig) {
+Result<NES::SchemaPtr, std::string> parseSchema(const SchemaConfiguration& schemaConfig) {
     NES::SchemaPtr schema = NES::Schema::create();
     for (const auto& field : schemaConfig.fields) {
         schema = schema->addField(field.name, magic_enum::enum_cast<NES::BasicType>(field.type).value());
@@ -117,15 +118,15 @@ Options::Result Options::fromCLI(int argc, char** argv) {
     auto schemaResult = parseSchema(source.schema);
     if (schemaResult.has_error())
         return schemaResult.as_failure();
-    auto schema = schemaResult.value();
+    auto schema = *schemaResult;
 
     if (source.type == NetworkSource) {
 
         auto [worker, downstream] = findDownstreamWorker(source, configuration.workers);
 
         return Options{source.nodeId,
-                       configuration.query.queryID,
-                       source.subQueryID,
+                       configuration.query.sharedQueryId,
+                       source.decomposedQueryPlanId,
                        downstream.operatorId,
                        configuration.query.workerID,
                        source.ip,
@@ -147,19 +148,19 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        numberOfTupleBuffers,
                        print};
     } else if (source.type == TcpSource) {
-        return Options{0,
-                       0,
-                       0,
-                       0,
-                       0,
+        return Options{NES::INVALID_WORKER_NODE_ID,
+                       NES::INVALID_SHARED_QUERY_ID,
+                       NES::INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                       NES::INVALID_OPERATOR_ID,
+                       NES::INVALID_WORKER_NODE_ID,
                        source.ip,
                        source.port,
                        "",
                        0,
-                       0,
-                       0,
-                       0,
-                       0,
+                       NES::INVALID_WORKER_NODE_ID,
+                       NES::INVALID_ORIGIN_ID,
+                       NES::INVALID<NES::PartitionId>,
+                       NES::INVALID<NES::SubpartitionId>,
                        schema,
                        delayInMillies,
                        8192,

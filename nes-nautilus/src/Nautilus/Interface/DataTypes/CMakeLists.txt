@@ -18,6 +18,7 @@ add_source_files(unikernel-export
         BooleanInvocationPlugin.cpp
         MemRefInvocationPlugin.cpp
         MemRefUtils.cpp
+        Identifier.cpp
 )
 add_source_files(nes-nautilus
         Any.cpp

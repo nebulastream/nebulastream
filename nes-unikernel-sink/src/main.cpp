@@ -6,7 +6,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Options.h>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
@@ -71,21 +71,21 @@ int main(int argc, char* argv[]) {
             std::make_shared<NES::StatisticsMedium>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
                                                     1,
                                                     options.subQueryId,
-                                                    options.queryId,
+                                                    options.sharedQueryId,
                                                     2s);
     } else if (options.latency) {
         NES_INFO("Latency sink");
         statisticSink = std::make_shared<NES::LatencySink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
                                                            1,
                                                            options.subQueryId,
-                                                           options.queryId,
+                                                           options.sharedQueryId,
                                                            std::chrono::milliseconds(*options.latency));
     } else {
         NES_INFO("Using Printing Sink");
         statisticSink = std::make_shared<NES::PrintSink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
                                                          1,
                                                          options.subQueryId,
-                                                         options.queryId,
+                                                         options.sharedQueryId,
                                                          os);
     }
 
@@ -96,9 +96,9 @@ int main(int argc, char* argv[]) {
 
     for (const auto& upstream : options.upstreams) {
         NodeLocation location(upstream.second.nodeId, upstream.second.ip, upstream.second.port);
-        NesPartition partition(options.queryId, upstream.second.operatorId, upstream.second.partitionId, upstream.second.subpartitionId);
+        NesPartition partition(options.sharedQueryId, upstream.second.operatorId, upstream.second.partitionId, upstream.second.subpartitionId);
 
-        auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
+        auto wc = std::make_shared<WorkerContext>(options.sharedQueryId, buffer_manager, 1);
         std::vector pipelines{statisticSink};
         auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema,
                                                                     buffer_manager,

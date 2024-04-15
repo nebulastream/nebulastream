@@ -12,13 +12,13 @@
 #include <boost/filesystem.hpp>
 #include <boost/outcome.hpp>
 #include <string>
+#include <Result.hpp>
 
 struct Options {
     NES::WorkerId nodeId;
-    NES::QueryId queryId;
-    NES::QuerySubPlanId subQueryId;
+    NES::SharedQueryId queryId;
+    NES::DecomposedQueryPlanId subQueryId;
     NES::OperatorId operatorId;
-    size_t workerId;
     std::string hostIp = "127.0.0.1";
     uint32_t port = 8082;
     std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>> upstreams;
@@ -26,7 +26,7 @@ struct Options {
     bool print;
     std::optional<uint64_t> latency;
 
-    using Result = boost::outcome_v2::result<Options, std::string>;
+    using Result = Result<Options, std::string>;
     static Result fromCLI(int argc, char** argv);
 
     static std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>>

@@ -12,6 +12,7 @@
      limitations under the License.
 */
 
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
@@ -42,7 +43,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  std::move(bufferManager),
                  std::move(workerContext),
                  nesPartition.getOperatorId(),
-                 /*default origin id for the network source this is always zero*/ 0,
+                 INVALID<OriginId>,
                  numSourceLocalBuffers,
                  physicalSourceName,
                  std::move(successors)),
@@ -104,7 +105,7 @@ bool NetworkSource::fail() {
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NetworkSource: fail called on {}", nesPartition);
         auto newReconf =
-            ReconfigurationMessage(-1, -1, ReconfigurationType::FailEndOfStream, DataSource::shared_from_base<DataSource>());
+            ReconfigurationMessage(INVALID<SharedQueryId>, INVALID<DecomposedQueryPlanId>, ReconfigurationType::FailEndOfStream, DataSource::shared_from_base<DataSource>());
         return true;//TODO: Unikernel
     }
     return false;
@@ -117,9 +118,8 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
                     "NetworkSource::stop only supports HardStop or Failure :: partition " << nesPartition);
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NetworkSource: stop called on {}", nesPartition);
-        int invalidId = -1;
-        auto newReconf = ReconfigurationMessage(invalidId,
-                                                invalidId,
+        auto newReconf = ReconfigurationMessage(INVALID<SharedQueryId>,
+                                                INVALID<DecomposedQueryPlanId>,
                                                 ReconfigurationType::HardEndOfStream,
                                                 DataSource::shared_from_base<DataSource>());
         NES_DEBUG("NetworkSource: stop called on {} sent hard eos", nesPartition);
@@ -129,20 +129,7 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     return true;
 }
 
-void NetworkSource::onEvent(Runtime::EventPtr event) {
-    NES_DEBUG("NetworkSource: received an event");
-    if (event->getEventType() == Runtime::EventType::kCustomEvent) {
-        auto epochEvent = std::dynamic_pointer_cast<Runtime::CustomEventWrapper>(event)->data<Runtime::PropagateEpochEvent>();
-        auto epochBarrier = epochEvent->timestampValue();
-        auto SharedQueryId = epochEvent->SharedQueryIdValue();
-        auto success = true;
-        if (success) {
-            NES_DEBUG("NetworkSource::onEvent: epoch {} SharedQueryId {} propagated", epochBarrier, SharedQueryId);
-        } else {
-            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch {} SharedQueryId {}", epochBarrier, SharedQueryId);
-        }
-    }
-}
+void NetworkSource::onEvent(Runtime::EventPtr event) { NES_DEBUG("NetworkSource: received an event"); }
 
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSource: reconfigure() called {}", nesPartition.toString());

@@ -16,7 +16,7 @@
 #define NES_AUTOMATICDATAGENERATOR_H
 
 #include <DataGeneration/DataGenerator.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <fstream>
 #include <random>
 

@@ -15,7 +15,9 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#ifndef UNIKERNEL_TEST_LIBRARY
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#endif
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>

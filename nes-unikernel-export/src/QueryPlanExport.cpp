@@ -20,6 +20,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryPlanExport.hpp>
+#include <utility>
+#include <tuple>
+#include <memory>
 
 namespace NES::Unikernel::Export {
 std::unordered_map<PipelineId, QueryPlanExporter::ExportSinkDescriptor>
@@ -62,7 +65,9 @@ QueryPlanExporter::getSources(const QueryPipeliner::Result& pipeliningResult) co
         auto source = sources[0];
 
         if (source->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
-            sourceMap[pipeline->getPipelineId()] = {source->getSourceDescriptor(), source->getOriginId(), source->getId()};
+            sourceMap.emplace(std::piecewise_construct,
+                              std::make_tuple(pipeline->getPipelineId()),
+                              std::make_tuple(source->getSourceDescriptor(), source->getOriginId(), source->getId()));
             return;
         }
 
@@ -70,13 +75,14 @@ QueryPlanExporter::getSources(const QueryPipeliner::Result& pipeliningResult) co
                                       ->getPhysicalSource()
                                       ->getPhysicalSourceType();
         auto noOpSource = std::dynamic_pointer_cast<NoOpPhysicalSourceType>(physicalSourceType);
-        sourceMap[pipeline->getPipelineId()] = {
-            NoOpSourceDescriptor::create(source->getInputSchema(),
-                                         noOpSource->getSchemaType(),
-                                         source->getSourceDescriptor()->getLogicalSourceName(),
-                                         noOpSource->getTCP()),
-            source->getOriginId(),
-            source->getId()};
+        sourceMap.emplace(std::piecewise_construct,
+                          std::make_tuple(pipeline->getPipelineId()),
+                          std::make_tuple(NoOpSourceDescriptor::create(source->getInputSchema(),
+                                                                       noOpSource->getSchemaType(),
+                                                                       source->getSourceDescriptor()->getLogicalSourceName(),
+                                                                       noOpSource->getTCP()),
+                                          source->getOriginId(),
+                                          source->getId()));
     });
 
     return sourceMap;

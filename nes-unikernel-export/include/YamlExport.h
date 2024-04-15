@@ -36,7 +36,7 @@ struct WorkerSubQuery {
 class YamlExport {
     Configuration configuration;
     std::optional<ExportKafkaConfiguration> exportToKafka;
-    const NES::WorkerId SINK_NODE = 1;
+    const NES::WorkerId SINK_NODE = NES::WorkerId(1);
 
   public:
     explicit YamlExport(const std::optional<ExportKafkaConfiguration>& exportToKafka);

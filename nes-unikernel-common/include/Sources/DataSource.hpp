@@ -16,8 +16,7 @@
 #define NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
 
 #include <API/Schema.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -27,13 +26,13 @@
 #include <future>
 #include <mutex>
 #include <optional>
-#include <thread>
 
 namespace NES::Runtime::MemoryLayouts {
-class DynamicTupleBuffer;
+class TestTupleBuffer;
 }
 
 namespace NES {
+enum class SourceType : uint8_t;
 
 /**
 * @brief Base class for all data sources in NES
@@ -300,14 +299,10 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::atomic<uint64_t> refCounter = 0;
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
 
-    /**
-     * @brief Emits a tuple buffer to the successors.
-     * @param buffer
-     */
-    void emitWork(Runtime::TupleBuffer& buffer) override;
+    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) override;
 
-    void emitWorkFromSource(Runtime::TupleBuffer& buffer);
-    NES::Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
+  protected:
+    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 
   protected:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;

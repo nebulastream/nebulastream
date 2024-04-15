@@ -45,16 +45,16 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     explicit SinkMedium(SinkFormatPtr sinkFormat,
                         uint32_t numOfProducers,
-                        SharedQueryId SharedQueryId,
-                        DecomposedQueryPlanId DecomposedQueryPlanId);
+                        SharedQueryId sharedQueryId,
+                        DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief public constructor for data sink
      */
     explicit SinkMedium(SinkFormatPtr sinkFormat,
                         uint32_t numOfProducers,
-                        SharedQueryId SharedQueryId,
-                        DecomposedQueryPlanId DecomposedQueryPlanId,
+                        SharedQueryId sharedQueryId,
+                        DecomposedQueryPlanId decomposedQueryPlanId,
                         uint64_t numberOfOrigins);
 
     /**
@@ -171,9 +171,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     bool schemaWritten;
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
-    SharedQueryId SharedQueryId;
-    DecomposedQueryPlanId DecomposedQueryPlanId;
-    FaultToleranceType faultToleranceType;
+    SharedQueryId sharedQueryId;
+    DecomposedQueryPlanId decomposedQueryPlanId;
     uint64_t numberOfOrigins;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
 

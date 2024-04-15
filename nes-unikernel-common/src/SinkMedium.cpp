@@ -13,7 +13,6 @@
 */
 
 #include <API/Schema.hpp>
-#include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -25,33 +24,23 @@ namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
-                       SharedQueryId SharedQueryId,
-                       DecomposedQueryPlanId DecomposedQueryPlanId)
-    : SinkMedium(sinkFormat, numOfProducers, SharedQueryId, DecomposedQueryPlanId, FaultToleranceType::NONE, 1) {}
+                       SharedQueryId sharedQueryId,
+                       DecomposedQueryPlanId decomposedQueryPlanId)
+    : SinkMedium(sinkFormat, numOfProducers, sharedQueryId, decomposedQueryPlanId, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
-                       SharedQueryId SharedQueryId,
-                       DecomposedQueryPlanId DecomposedQueryPlanId,
-                       FaultToleranceType faultToleranceType,
+                       SharedQueryId sharedQueryId,
+                       DecomposedQueryPlanId decomposedQueryPlanId,
                        uint64_t numberOfOrigins)
-    : sinkFormat(std::move(sinkFormat)), activeProducers(numOfProducers), SharedQueryId(SharedQueryId),
-      DecomposedQueryPlanId(DecomposedQueryPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
+    : sinkFormat(std::move(sinkFormat)), activeProducers(numOfProducers), sharedQueryId(sharedQueryId),
+      decomposedQueryPlanId(decomposedQueryPlanId), numberOfOrigins(numberOfOrigins) {
     bufferCount = 0;
     buffersPerEpoch = 1000;//TODO
     schemaWritten = false;
-    NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
-            updateWatermark(inputBuffer);
-        };
-    } else {
-        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
-        };
-    }
 }
 
-OperatorId SinkMedium::getOperatorId() const { return 0; }
+OperatorId SinkMedium::getOperatorId() const { return INVALID<OperatorId>; }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
@@ -69,9 +58,9 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return DecomposedQueryPlanId; }
+DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return decomposedQueryPlanId; }
 
-SharedQueryId SinkMedium::getSharedQueryId() const { return SharedQueryId; }
+SharedQueryId SinkMedium::getSharedQueryId() const { return sharedQueryId; }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
     NES_DEBUG("EPOCH: {}", epochBarrier)

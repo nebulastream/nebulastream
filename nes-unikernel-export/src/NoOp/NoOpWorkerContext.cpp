@@ -27,8 +27,6 @@ uint32_t WorkerContext::getQueueId() const { NES_THROW_RUNTIME_ERROR("Not Implem
 
 void WorkerContext::setObjectRefCnt(void* object, uint32_t refCnt) { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
-uint32_t WorkerContext::increaseObjectRefCnt(void* object) { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
-
 uint32_t WorkerContext::decreaseObjectRefCnt(void* object) { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }

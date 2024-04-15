@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-#include "../../nes-execution/tests/Util/include/TestUtils/AbstractCompilationBackendTest.hpp"
 #include "API/AttributeField.hpp"
 #include "Util/Logger/Logger.hpp"
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorSize.hpp>
 #include <OperatorHandlerTracer.hpp>
@@ -52,6 +51,11 @@ OperatorHandlerParameterDescriptor::of(const NES::QueryCompilation::StreamJoinSt
 template<>
 OperatorHandlerParameterDescriptor OperatorHandlerParameterDescriptor::of(const Nautilus::Interfaces::PagedVectorSize& value) {
     return {OperatorHandlerParameterType::PAGED_VECTOR, value};
+}
+
+template<>
+OperatorHandlerParameterDescriptor OperatorHandlerParameterDescriptor::of(const OriginId& value) {
+    return {OperatorHandlerParameterType::ORIGIN_ID, value};
 }
 
 template<>

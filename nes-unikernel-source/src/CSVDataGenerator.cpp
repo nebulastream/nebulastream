@@ -5,7 +5,7 @@
 #include <CSVDataGenerator.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -129,7 +129,7 @@ std::vector<NES::Runtime::TupleBuffer> CSVDataGenerator::createData(size_t numbe
         }
         auto tuples_in_buffer = 0;
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = NES::Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        auto dynamicBuffer = NES::Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
         for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
             std::string line;
             std::getline(file, line);

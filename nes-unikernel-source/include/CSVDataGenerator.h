@@ -4,7 +4,7 @@
 
 #ifndef NES_CSVDATAGENERATOR_H
 #define NES_CSVDATAGENERATOR_H
-#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include <Util/TestTupleBuffer.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <fstream>
 

@@ -15,6 +15,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Runtime/Events.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Logger/Logger.hpp>
 
 // Note that we updated the PartitionManager's logic:
@@ -25,8 +26,7 @@
 namespace NES::Network {
 
 PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& emitter)
-    : senderLocation(std::move(senderLocation)), consumer(std::move(emitter)) {
-}
+    : senderLocation(std::move(senderLocation)), consumer(std::move(emitter)) {}
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
 

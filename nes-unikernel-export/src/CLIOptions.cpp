@@ -85,10 +85,17 @@ Options::getTopologyAndSources() {
     std::vector<NES::PhysicalSourceTypePtr> physicalSources;
     auto topology = NES::Topology::create();
     if (useKafka()) {
-        topology->registerWorkerAsRoot(1, "0.0.0.0", 0, 0, 1, {{NES::Worker::Properties::MAINTENANCE, false}}, 100, 30);
+        topology->registerWorkerAsRoot(NES::WorkerId(1),
+                                       "0.0.0.0",
+                                       0,
+                                       0,
+                                       1,
+                                       {{NES::Worker::Properties::MAINTENANCE, false}},
+                                       100,
+                                       30);
     } else {
         const auto& sink = configuration.topology.sink.node.value();
-        topology->registerWorkerAsRoot(1,
+        topology->registerWorkerAsRoot(NES::WorkerId(1),
                                        sink.ip,
                                        sink.port,
                                        sink.port,
@@ -99,7 +106,7 @@ Options::getTopologyAndSources() {
     }
 
     for (size_t i = 0; const auto& workerConfiguration : configuration.topology.workers) {
-        topology->registerWorker(i + 2,
+        topology->registerWorker(NES::WorkerId(i + 2),
                                  workerConfiguration.node.ip,
                                  workerConfiguration.node.port,
                                  workerConfiguration.node.port,
@@ -109,7 +116,7 @@ Options::getTopologyAndSources() {
                                  30);
 
         for (const auto& source : workerConfiguration.sources) {
-            createSource(sourceCatalog, physicalSources, i + 2, source);
+            createSource(sourceCatalog, physicalSources, NES::WorkerId(i + 2), source);
         }
 
         i++;
@@ -120,7 +127,7 @@ Options::getTopologyAndSources() {
             auto otherNodeId = getOtherNodeIdFromLink(otherNode);
             auto parent = std::min(otherNodeId, i + 2);
             auto child = std::max(otherNodeId, i + 2);
-            topology->addTopologyNodeAsChild(parent, child);
+            topology->addTopologyNodeAsChild(NES::WorkerId(parent), NES::WorkerId(child));
         }
         i++;
     }
