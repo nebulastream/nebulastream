@@ -29,6 +29,62 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <proxy/common.hpp>
 
+PROXY_FN uint64_t pagedVectorIteratorLoadProxy(void* iteratorPtr) {
+    auto it = static_cast<NES::Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorPtr);
+    return std::bit_cast<uint64_t>(it->operator*().getRef());
+}
+PROXY_FN void pagedVectorIteratorIncProxy(void* iteratorPtr) {
+    static_cast<NES::Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorPtr)->operator++();
+}
+PROXY_FN bool pagedVectorIteratorNotEqualsProxy(void* iteratorPtr, void* iteratorOtherPtr) {
+    return *static_cast<NES::Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorPtr)
+        != *static_cast<NES::Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorOtherPtr);
+}
+PROXY_FN bool pagedVectorIteratorEqualsProxy(void* iteratorPtr, void* iteratorOtherPtr) {
+    return *static_cast<NES::Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorPtr)
+        == *static_cast<NES::Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorOtherPtr);
+}
+PROXY_FN void releasePagedVectorIteratorProxy(void* iteratorPtr) {
+    delete static_cast<NES::Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorPtr);
+}
+
+PROXY_FN uint64_t allocateEntryProxy(void* pagedVectorRef) {
+    auto pagedVector = static_cast<NES::Runtime::PagedVectorRowLayout*>(pagedVectorRef);
+    return std::bit_cast<uint64_t>(pagedVector->allocateEntry().getRef());
+}
+
+PROXY_FN void* entryDataProxy(void* pagedVectorRef, uint64_t entryRef) {
+    auto pagedVector = static_cast<NES::Runtime::PagedVectorRowLayout*>(pagedVectorRef);
+    auto ref = std::bit_cast<NES::Runtime::EntryRef>(entryRef);
+    auto entry = pagedVector->getEntry(ref);
+    auto entryMemory = entry.data();
+    return entryMemory.data();
+}
+
+PROXY_FN void* storeVarSizedDataProxy(void* pagedVectorRef, uint64_t entryRef, void* offset, NES::Nautilus::TextValue* text) {
+    auto pagedVector = static_cast<NES::Runtime::PagedVectorRowLayout*>(pagedVectorRef);
+    auto ref = std::bit_cast<NES::Runtime::EntryRef>(entryRef);
+    auto entry = pagedVector->getEntry(ref);
+    return entry.storeVarSizedDataToOffset(std::span{text->c_str(), text->length()}, offset);
+}
+
+PROXY_FN std::tuple<NES::Nautilus::TextValue*, void*> loadVarSizedData(void* pagedVectorRef, uint64_t entryRef, void* offset) {
+    auto pagedVector = static_cast<NES::Runtime::PagedVectorRowLayout*>(pagedVectorRef);
+    auto ref = std::bit_cast<NES::Runtime::EntryRef>(entryRef);
+    auto entry = pagedVector->getEntry(ref);
+    return entry.loadVarSizedDataAtOffset(offset);
+}
+
+PROXY_FN void* pagedSizeVectorBeginProxy(void* pagedVectorPtr) {
+    auto pagedVector = static_cast<NES::Runtime::PagedVectorRowLayout*>(pagedVectorPtr);
+    return pagedVector->beginAlloc();
+}
+
+PROXY_FN void* pagedSizeVectorEndProxy(void* pagedVectorPtr) {
+    auto pagedVector = static_cast<NES::Runtime::PagedVectorRowLayout*>(pagedVectorPtr);
+    return pagedVector->endAlloc();
+}
+
 template<typename T>
 PROXY_FN T max(T a, T b) {
     return std::max(a, b);
@@ -185,14 +241,14 @@ PROXY_FN void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
 
 PROXY_FN void checkWindowsTriggerProxy(void* ptrOpHandler,
                                        void* ptrPipelineCtx,
-                              void* ptrWorkerCtx,
-                              uint64_t watermarkTs,
-                              uint64_t sequenceNumber,
-                              uint64_t chunkNumber,
-                              bool lastChunk,
-                              NES::OriginId originId,
-                              uint64_t joinStrategyInt,
-                              uint64_t windowingStrategy) {
+                                       void* ptrWorkerCtx,
+                                       uint64_t watermarkTs,
+                                       uint64_t sequenceNumber,
+                                       uint64_t chunkNumber,
+                                       bool lastChunk,
+                                       NES::OriginId originId,
+                                       uint64_t joinStrategyInt,
+                                       uint64_t windowingStrategy) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
