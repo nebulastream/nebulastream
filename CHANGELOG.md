@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.94](https://github.com/nebulastream/nebulastream/tree/v0.6.94) (2024-04-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.93...v0.6.94)
+
+**Implemented enhancements:**
+
+- \[TASK\] Without NES\_DEBUG do not show trace of an error to the user [\#4369](https://github.com/nebulastream/nebulastream/issues/4369)
+
+### Bug Fixes 🐛
+
+- \[BUG\] fix stack trace being printed twice [\#4772](https://github.com/nebulastream/nebulastream/issues/4772)
+
 ## [v0.6.93](https://github.com/nebulastream/nebulastream/tree/v0.6.93) (2024-04-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.92...v0.6.93)
