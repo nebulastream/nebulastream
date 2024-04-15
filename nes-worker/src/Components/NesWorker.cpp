@@ -578,15 +578,27 @@ bool NesWorker::notifyErrors(uint64_t pWorkerId, std::string errorMsg) {
 }
 
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [{}] error [{}] callstack {} ", signalNumber, strerror(errno), callstack);
     std::string errorMsg;
-    std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
-    std::cerr << "Error: " << strerror(errno) << std::endl;
-    std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
-    std::cerr << "Callstack:\n " << callstack << std::endl;
-    // save errors in errorMsg
-    errorMsg =
-        "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + callstack;
+    if(callstack.empty()){
+        NES_ERROR("onFatalError: signal [{}] error [{}] ", signalNumber, strerror(errno));
+        std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Signal:" << std::to_string(signalNumber) << std::endl;
+        // save errors in errorMsg
+        errorMsg =
+            "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] ";
+    }
+    else{
+        NES_ERROR("onFatalError: signal [{}] error [{}] callstack {} ", signalNumber, strerror(errno), callstack);
+        std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
+        std::cerr << "Callstack:\n " << callstack << std::endl;
+        // save errors in errorMsg
+        errorMsg =
+            "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + callstack;
+    }
+
     //send it to Coordinator
     notifyErrors(getWorkerId(), errorMsg);
 #ifdef ENABLE_CORE_DUMPER
@@ -595,14 +607,24 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack) {
 }
 
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[{}] callstack={}", ptr->what(), callstack);
     std::string errorMsg;
-    std::cerr << "NesWorker failed fatally" << std::endl;
-    std::cerr << "Error: " << strerror(errno) << std::endl;
-    std::cerr << "Exception: " << ptr->what() << std::endl;
-    std::cerr << "Callstack:\n " << callstack << std::endl;
-    // save errors in errorMsg
-    errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + callstack;
+    if(callstack.empty()){
+        NES_ERROR("onFatalException: exception=[{}] ", ptr->what());
+        std::cerr << "NesWorker failed fatally" << std::endl;
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Exception: " << ptr->what() << std::endl;
+        // save errors in errorMsg
+        errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + callstack;
+    }
+    else{
+        NES_ERROR("onFatalException: exception=[{}] callstack={}", ptr->what(), callstack);
+        std::cerr << "NesWorker failed fatally" << std::endl;
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Exception: " << ptr->what() << std::endl;
+        std::cerr << "Callstack:\n " << callstack << std::endl;
+        // save errors in errorMsg
+        errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + callstack;
+    }
     //send it to Coordinator
     this->notifyErrors(this->getWorkerId(), errorMsg);
 #ifdef ENABLE_CORE_DUMPER

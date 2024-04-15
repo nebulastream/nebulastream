@@ -37,13 +37,23 @@ void BaseUnitTest::TearDown() {
 }
 
 void BaseUnitTest::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [{}] error [{}] callstack [{}]", signalNumber, strerror(errno), callstack);
+    if(callstack.empty()){
+        NES_ERROR("onFatalError: signal [{}] error [{}] ", signalNumber, strerror(errno));
+    }
+    else{
+        NES_ERROR("onFatalError: signal [{}] error [{}] callstack [{}]", signalNumber, strerror(errno), callstack);
+    }
     failTest();
     FAIL();
 }
 
 void BaseUnitTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[{}] callstack=\n{}", exception->what(), callstack);
+    if(callstack.empty()){
+        NES_ERROR("onFatalException: exception=[{}] ", exception->what());
+    }
+    else{
+        NES_ERROR("onFatalException: exception=[{}] callstack=\n{}", exception->what(), callstack);
+    }
     failTest();
     FAIL();
 }

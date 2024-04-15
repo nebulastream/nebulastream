@@ -91,8 +91,10 @@ Logger::Logger(const std::string& logFileName, LogLevel level) {
                                                   loggerThreadPool,
                                                   spdlog::async_overflow_policy::block);
 
-    impl->set_level(spdlogLevel);
+
     impl->flush_on(spdlog::level::debug);
+
+    changeLogLevel(level);
 
     flusher = std::make_unique<spdlog::details::periodic_worker>(
         [this]() {
