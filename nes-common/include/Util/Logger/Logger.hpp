@@ -119,7 +119,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 #define NES_LOG(LEVEL, ...)                                                                                                      \
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
-        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                      \
+        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__);                \
         }                                                                                                                        \
     } while (0)
@@ -156,10 +156,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
             std::stringstream textString;                                                                                        \
             textString << TEXT;                                                                                                  \
             NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, textString.str());                                        \
-            auto __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);                                                                        \
-            auto __currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());                                   \
-            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level)                                                                                                    \
-            {                                                                                                                    \
+            auto __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);                                                           \
+            auto __currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());                            \
+            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                            \
                 {                                                                                                                \
                     auto __stacktrace = NES::collectStacktrace();                                                                \
                     std::stringbuf __buffer;                                                                                     \
@@ -168,9 +167,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
                     __os << " error message: " << TEXT;                                                                          \
                     NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                               \
                 }                                                                                                                \
-            }                                                                                                                    \
-            else                                                                                                                 \
-            {                                                                                                                    \
+            } else {                                                                                                             \
                 {                                                                                                                \
                     std::stringbuf __buffer;                                                                                     \
                     std::ostream __os(&__buffer);                                                                                \
@@ -192,10 +189,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
             std::stringstream textString;                                                                                        \
             textString << TEXT;                                                                                                  \
             NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, textString.str());                                        \
-            auto __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);                                                 \
+            auto __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);                                                           \
             auto __currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());                            \
-            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level)                                              \
-            {                                                                                                                    \
+            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                            \
                 {                                                                                                                \
                     auto __stacktrace = NES::collectStacktrace();                                                                \
                     std::stringbuf __buffer;                                                                                     \
@@ -204,9 +200,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
                     __os << " error message: " << TEXT;                                                                          \
                     NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                               \
                 }                                                                                                                \
-            }                                                                                                                    \
-            else                                                                                                                 \
-            {                                                                                                                    \
+            } else {                                                                                                             \
                 {                                                                                                                \
                     std::stringbuf __buffer;                                                                                     \
                     std::ostream __os(&__buffer);                                                                                \
@@ -224,10 +218,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
             std::stringstream args;                                                                                              \
             args << __VA_ARGS__;                                                                                                 \
             NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, args.str());                                              \
-            auto __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);                                                 \
+            auto __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);                                                           \
             auto __currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());                            \
-            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level)                                              \
-            {                                                                                                                  \
+            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                            \
                 {                                                                                                                \
                     auto __stacktrace = NES::collectAndPrintStacktrace();                                                        \
                 }                                                                                                                \
@@ -251,16 +244,14 @@ struct LogCaller<LogLevel::LOG_WARNING> {
             NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, args.str());                                              \
             auto constexpr __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);                                                 \
             auto __currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());                            \
-            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level)                                              \
-            {                                                                                                                    \
+            if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                            \
                 auto __stacktrace = NES::collectStacktrace();                                                                    \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << __VA_ARGS__;                                                                       \
                 NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
-            }                                                                                                                    \
-            else {                                                                                                               \
+            } else {                                                                                                             \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
@@ -281,8 +272,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                \
             auto __stacktrace = NES::collectStacktrace();                                                                        \
             throw NES::Exceptions::RuntimeException(__buffer.str(), std::move(__stacktrace), std::move(__location));             \
-        }                                                                                                                        \
-        else{                                                                                                                    \
+        } else {                                                                                                                 \
             throw NES::Exceptions::RuntimeException(__buffer.str(), "", std::move(__location));                                  \
         }                                                                                                                        \
     } while (0)

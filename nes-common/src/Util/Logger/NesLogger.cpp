@@ -91,7 +91,6 @@ Logger::Logger(const std::string& logFileName, LogLevel level) {
                                                   loggerThreadPool,
                                                   spdlog::async_overflow_policy::block);
 
-
     impl->flush_on(spdlog::level::debug);
 
     changeLogLevel(level);

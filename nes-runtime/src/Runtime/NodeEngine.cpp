@@ -537,13 +537,12 @@ std::vector<DecomposedQueryPlanId> NodeEngine::getDecomposedQueryIds(SharedQuery
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
-    if(callstack.empty()){
+    if (callstack.empty()) {
         NES_ERROR("onFatalError: signal [{}] error [{}] ", signalNumber, strerror(errno));
         std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
-    }
-    else{
+    } else {
         NES_ERROR("onFatalError: signal [{}] error [{}] callstack {}", signalNumber, strerror(errno), callstack);
         std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
@@ -556,13 +555,12 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
-    if(callstack.empty()){
+    if (callstack.empty()) {
         NES_ERROR("onFatalException: exception=[{}] ", exception->what());
         std::cerr << "Runtime failed fatally" << std::endl;
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Exception: " << exception->what() << std::endl;
-    }
-    else{
+    } else {
         NES_ERROR("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
         std::cerr << "Runtime failed fatally" << std::endl;
         std::cerr << "Error: " << strerror(errno) << std::endl;

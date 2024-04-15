@@ -579,16 +579,14 @@ bool NesWorker::notifyErrors(uint64_t pWorkerId, std::string errorMsg) {
 
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
     std::string errorMsg;
-    if(callstack.empty()){
+    if (callstack.empty()) {
         NES_ERROR("onFatalError: signal [{}] error [{}] ", signalNumber, strerror(errno));
         std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Signal:" << std::to_string(signalNumber) << std::endl;
         // save errors in errorMsg
-        errorMsg =
-            "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] ";
-    }
-    else{
+        errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] ";
+    } else {
         NES_ERROR("onFatalError: signal [{}] error [{}] callstack {} ", signalNumber, strerror(errno), callstack);
         std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
@@ -608,15 +606,14 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack) {
 
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string callstack) {
     std::string errorMsg;
-    if(callstack.empty()){
+    if (callstack.empty()) {
         NES_ERROR("onFatalException: exception=[{}] ", ptr->what());
         std::cerr << "NesWorker failed fatally" << std::endl;
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Exception: " << ptr->what() << std::endl;
         // save errors in errorMsg
         errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + callstack;
-    }
-    else{
+    } else {
         NES_ERROR("onFatalException: exception=[{}] callstack={}", ptr->what(), callstack);
         std::cerr << "NesWorker failed fatally" << std::endl;
         std::cerr << "Error: " << strerror(errno) << std::endl;
