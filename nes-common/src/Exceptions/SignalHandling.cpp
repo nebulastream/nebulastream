@@ -29,9 +29,16 @@ static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     if (globalErrorListeners.empty()) {
-        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what()
-                  << "] with stacktrace=\n"
-                  << stacktrace << std::endl;
+        if(stacktrace.empty()){
+            std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what()
+                      << "]\n"
+                      << std::endl;
+        }
+        else{
+            std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what()
+                      << "] with stacktrace=\n"
+                      << stacktrace << std::endl;
+        }
     }
     for (auto& listener : globalErrorListeners) {
         if (!listener.expired()) {
@@ -45,9 +52,16 @@ void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&
 void invokeErrorHandlers(int signal, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     if (globalErrorListeners.empty()) {
-        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << strerror(errno)
-                  << "] with stacktrace=\n"
-                  << stacktrace << std::endl;
+        if(stacktrace.empty()){
+            std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << strerror(errno)
+                      << "] \n"
+                      << std::endl;
+        }
+        else{
+            std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << strerror(errno)
+                      << "] with stacktrace=\n"
+                      << stacktrace << std::endl;
+        }
     }
     for (auto& listener : globalErrorListeners) {
         if (!listener.expired()) {
@@ -59,7 +73,12 @@ void invokeErrorHandlers(int signal, std::string&& stacktrace) {
 }
 
 void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace) {
-    NES_TRACE("invokeErrorHandlers with buffer={} trace={}", buffer, stacktrace);
+    if(stacktrace.empty()){
+        NES_TRACE("invokeErrorHandlers with buffer={}", buffer);
+    }
+    else{
+        NES_TRACE("invokeErrorHandlers with buffer={} trace={}", buffer, stacktrace);
+    }
     auto exception = std::make_shared<RuntimeException>(buffer, stacktrace);
     invokeErrorHandlers(exception, std::move(stacktrace));
 }

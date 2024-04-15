@@ -61,15 +61,15 @@ class MQTTSinkTest : public Testing::BaseIntegrationTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("MQTTTSinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup MQTTTSinkTest test class.");
+        NES::Logger::setupLogging("MQTTSinkTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup MQTTSinkTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         dataPort = Testing::BaseIntegrationTest::getAvailablePort();
-        NES_DEBUG("Setup MQTTTSinkTest test case.");
+        NES_DEBUG("Setup MQTTSinkTest test case.");
         auto conf = CSVSourceType::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);

@@ -26,7 +26,12 @@ static backward::SignalHandling sh;
 
 /// called when a signal is intercepted
 void nesErrorHandler(int signal) {
-    auto stacktrace = collectAndPrintStacktrace();
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    std::string stacktrace;
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level){
+        stacktrace = collectStacktrace();
+    }
     Exceptions::invokeErrorHandlers(signal, std::move(stacktrace));
 }
 
@@ -37,7 +42,12 @@ void nesKillHandler(int signal) {
 
 /// called when std::terminate() is invoked
 void nesTerminateHandler() {
-    auto stacktrace = collectAndPrintStacktrace();
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    std::string stacktrace;
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level){
+        stacktrace = collectStacktrace();
+    }
     auto unknown = std::current_exception();
     std::shared_ptr<std::exception> currentException;
     try {
@@ -57,7 +67,12 @@ void nesTerminateHandler() {
 
 /// called when an exception is not caught in our code
 void nesUnexpectedException() {
-    auto stacktrace = collectAndPrintStacktrace();
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    std::string stacktrace;
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level){
+        stacktrace = collectStacktrace();
+    }
     auto unknown = std::current_exception();
     std::shared_ptr<std::exception> currentException;
     try {

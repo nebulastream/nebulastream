@@ -28,8 +28,10 @@ namespace NES::Exceptions {
 
 RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location)
     : errorMessage(std::move(msg)) {
-    errorMessage.append(":: callstack:\n");
-    errorMessage.append(stacktrace);
+    if(!stacktrace.empty()){
+        errorMessage.append(":: callstack:\n");
+        errorMessage.append(stacktrace);
+    }
     NES_ERROR("{} at {}", errorMessage, location);
 }
 
