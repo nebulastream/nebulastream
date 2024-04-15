@@ -634,11 +634,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                                                                      sourceSchema,
                                                                                      networkSourceOperatorId,
                                                                                      topologyNodesBetween[pathIndex - 1]);
-                            candidateOperator->addChild(networkSourceOperator);
-
                             //set properties on new source
                             networkSourceOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
                             networkSourceOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
+
+                            candidateOperator->addChild(networkSourceOperator);
                             break;
                         } else {
                             // 12. Compute a network source sink plan.
@@ -660,18 +660,22 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             // 16. add network source as the child
                             networkSinkOperator->addChild(networkSourceOperator);
 
-                            // 17. create the query sub plan
+                            // 17. add upstream and downstream operator id
+                            networkSinkOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
+                            networkSinkOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
+
+                            // 18. create the query sub plan
                             auto newDecomposedQueryPlan =
                                 DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                             sharedQueryId,
                                                             currentWorkerId,
                                                             {networkSinkOperator});
 
-                            // 18. Record information about the query plan and worker id
+                            // 19. Record information about the query plan and worker id
                             connectedSysDecomposedPlanDetails.emplace_back(
                                 SysPlanMetaData(newDecomposedQueryPlan->getDecomposedQueryPlanId(), currentWorkerId));
 
-                            // 19. add the new query plan
+                            // 20. add the new query plan
                             if (computedDecomposedQueryPlans.contains(currentWorkerId)) {
                                 computedDecomposedQueryPlans[currentWorkerId].emplace_back(newDecomposedQueryPlan);
                             } else {

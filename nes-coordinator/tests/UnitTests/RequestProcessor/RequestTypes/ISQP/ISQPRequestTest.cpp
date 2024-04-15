@@ -1561,8 +1561,8 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
     EXPECT_EQ(queryCatalog->getQueryState(queryId2), QueryState::RUNNING);
 
     // Prepare
-    auto addLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId5);
-    auto removeLink24 = ISQPRemoveLinkEvent::create(nodeId4, nodeId5);
+    auto addLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+    auto removeLink24 = ISQPRemoveLinkEvent::create(nodeId2, nodeId4);
     std::vector<ISQPEventPtr> isqpEventsForRequest3;
     isqpEventsForRequest3.emplace_back(addLink34);
     isqpEventsForRequest3.emplace_back(removeLink24);
