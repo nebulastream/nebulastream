@@ -15,8 +15,13 @@ add_source_files(unikernel-export
         Text.cpp
         TextValue.cpp
 )
+
+add_source_files(unikernel-lib
+        TextValue.cpp
+)
+
 add_source_files(nes-nautilus
         TextInvocationPlugin.cpp
         Text.cpp
         TextValue.cpp
-        )
+)

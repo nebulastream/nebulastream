@@ -15,10 +15,11 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
 
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorSize.hpp>
 
 namespace NES::Runtime::Execution::Operators {
+using PagedVectorSize = Nautilus::Interfaces::PagedVectorSize;
 
 /**
  * @brief This task models the information for a join window trigger, so what left and right slice identifier to join together
@@ -33,15 +34,14 @@ class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
 
 class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
+
   public:
     NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                       const OriginId outputOriginId,
-                       const uint64_t windowSize,
-                       const uint64_t windowSlide,
-                       size_t leftSchema,
-                       size_t rightSchema,
-                       const uint64_t pageSizeLeft,
-                       const uint64_t pageSizeRight);
+                       OriginId outputOriginId,
+                       uint64_t windowSize,
+                       uint64_t windowSlide,
+                       PagedVectorSize leftSchema,
+                       PagedVectorSize rightSchema);
 
     virtual ~NLJOperatorHandler() override = default;
 
@@ -53,8 +53,8 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
                              PipelineExecutionContext* pipelineCtx) override;
 
   protected:
-    const uint64_t pageSizeLeft;
-    const uint64_t pageSizeRight;
+    const PagedVectorSize left;
+    const PagedVectorSize right;
 };
 
 /**

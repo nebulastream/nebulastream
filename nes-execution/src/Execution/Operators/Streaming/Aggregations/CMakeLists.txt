@@ -18,7 +18,9 @@ add_source_files(unikernel-export
         WindowProcessingException.cpp
         AppendToSliceStoreHandler.cpp
         AppendToSliceStoreAction.cpp
+        SlidingWindowSliceStore.cpp
 )
+
 add_source_files(nes-execution
         WindowProcessingException.cpp
         SlidingWindowSliceStore.cpp

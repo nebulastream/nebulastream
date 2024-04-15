@@ -44,12 +44,11 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
                              const OriginId outputOriginId,
                              const uint64_t windowSize,
                              const uint64_t windowSlide,
-                             size_t leftSchema,
-                             size_t rightSchema,
+                             PagedVectorSize leftSchema,
+                             PagedVectorSize rightSchema,
                              const QueryCompilation::StreamJoinStrategy joinStrategy,
                              const uint64_t totalSizeForDataStructures,
                              const uint64_t preAllocPageSizeCnt,
-                             const uint64_t pageSize,
                              const uint64_t numPartitions);
 
     /**
@@ -71,12 +70,11 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
                                        const OriginId outputOriginId,
                                        const uint64_t windowSize,
                                        const uint64_t windowSlide,
-                                       size_t leftSchema,
-                                       size_t rightSchema,
+                                       PagedVectorSize leftSchema,
+                                       PagedVectorSize rightSchema,
                                        const QueryCompilation::StreamJoinStrategy joinStrategy,
                                        const uint64_t totalSizeForDataStructures,
                                        const uint64_t preAllocPageSizeCnt,
-                                       const uint64_t pageSize,
                                        const uint64_t numPartitions);
 };
 }// namespace NES::Runtime::Execution::Operators

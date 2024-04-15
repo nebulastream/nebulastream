@@ -20,14 +20,13 @@ HJOperatorHandlerSlicing::HJOperatorHandlerSlicing(const std::vector<OriginId>& 
                                                    const OriginId outputOriginId,
                                                    const uint64_t windowSize,
                                                    const uint64_t windowSlide,
-                                                   const size_t sizeOfRecordLeft,
-                                                   const size_t sizeOfRecordRight,
+                                                   PagedVectorSize sizeOfRecordLeft,
+                                                   PagedVectorSize sizeOfRecordRight,
                                                    const QueryCompilation::StreamJoinStrategy joinStrategy,
                                                    const uint64_t totalSizeForDataStructures,
                                                    const uint64_t preAllocPageSizeCnt,
-                                                   const uint64_t pageSize,
                                                    const uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide),
       HJOperatorHandler(inputOrigins,
                         outputOriginId,
                         windowSize,
@@ -37,19 +36,17 @@ HJOperatorHandlerSlicing::HJOperatorHandlerSlicing(const std::vector<OriginId>& 
                         joinStrategy,
                         totalSizeForDataStructures,
                         preAllocPageSizeCnt,
-                        pageSize,
                         numPartitions) {}
 
 HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId>& inputOrigins,
                                                       const OriginId outputOriginId,
                                                       const uint64_t windowSize,
                                                       const uint64_t windowSlide,
-                                                      size_t leftSchema,
-                                                      size_t rightSchema,
+                                                      PagedVectorSize leftSchema,
+                                                      PagedVectorSize rightSchema,
                                                       const QueryCompilation::StreamJoinStrategy joinStrategy,
                                                       const uint64_t totalSizeForDataStructures,
                                                       const uint64_t preAllocPageSizeCnt,
-                                                      const uint64_t pageSize,
                                                       const uint64_t numPartitions) {
     return std::make_shared<HJOperatorHandlerSlicing>(inputOrigins,
                                                       outputOriginId,
@@ -60,7 +57,6 @@ HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId
                                                       joinStrategy,
                                                       totalSizeForDataStructures,
                                                       preAllocPageSizeCnt,
-                                                      pageSize,
                                                       numPartitions);
 }
 

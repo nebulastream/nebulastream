@@ -16,9 +16,11 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorSize.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
+using PagedVectorSize = Nautilus::Interfaces::PagedVectorSize;
 class HJOperatorHandler;
 using HJOperatorHandlerPtr = std::shared_ptr<HJOperatorHandler>;
 
@@ -33,24 +35,20 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
      * @param joinStrategy
      * @param totalSizeForDataStructures
      * @param preAllocPageSizeCnt
-     * @param pageSize
      * @param numPartitions
      */
     HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                       const OriginId outputOriginId,
                       const uint64_t windowSize,
                       const uint64_t windowSlide,
-                      size_t leftSchema,
-                      size_t rightSchema,
+                      PagedVectorSize left,
+                      PagedVectorSize right,
                       const QueryCompilation::StreamJoinStrategy joinStrategy,
                       uint64_t totalSizeForDataStructures,
                       uint64_t preAllocPageSizeCnt,
-                      uint64_t pageSize,
                       uint64_t numPartitions);
 
     StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
@@ -87,8 +85,9 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
     QueryCompilation::StreamJoinStrategy joinStrategy;
     uint64_t totalSizeForDataStructures;
     uint64_t preAllocPageSizeCnt;
-    uint64_t pageSize;
     uint64_t numPartitions;
+    PagedVectorSize left;
+    PagedVectorSize right;
 };
 
 /**

@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
@@ -36,10 +37,10 @@ StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t s
             return std::make_shared<HJSlice>(numberOfWorkerThreads,
                                              sliceStart,
                                              sliceEnd,
-                                             sizeOfRecordLeft,
-                                             sizeOfRecordRight,
+                                             left.schemaSize(),
+                                             right.schemaSize(),
                                              totalSizeForDataStructures,
-                                             pageSize,
+                                             left.pageSize(),
                                              preAllocPageSizeCnt,
                                              numPartitions,
                                              joinStrategy);
@@ -108,7 +109,7 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
 
 uint64_t HJOperatorHandler::getPreAllocPageSizeCnt() const { return preAllocPageSizeCnt; }
 
-uint64_t HJOperatorHandler::getPageSize() const { return pageSize; }
+uint64_t HJOperatorHandler::getPageSize() const { return left.pageSize(); }
 
 uint64_t HJOperatorHandler::getNumPartitions() const { return numPartitions; }
 
@@ -118,16 +119,17 @@ HJOperatorHandler::HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                      const OriginId outputOriginId,
                                      const uint64_t windowSize,
                                      const uint64_t windowSlide,
-                                     size_t sizeOfRecordsLeft,
-                                     size_t sizeOfRecordsRight,
+                                     PagedVectorSize left,
+                                     PagedVectorSize right,
                                      const QueryCompilation::StreamJoinStrategy joinStrategy,
                                      uint64_t totalSizeForDataStructures,
                                      uint64_t preAllocPageSizeCnt,
-                                     uint64_t pageSize,
                                      uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordsLeft, sizeOfRecordsRight),
-      joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
-      preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {}
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide), joinStrategy(joinStrategy),
+      totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt),
+      numPartitions(numPartitions), left(left), right(right) {
+    NES_ASSERT(left.pageSize() == right.pageSize(), "Hash Join requires a single PageSize but two different where supplied");
+}
 
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");

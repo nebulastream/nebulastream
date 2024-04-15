@@ -37,10 +37,8 @@ class NLJOperatorHandlerBucketing : public NLJOperatorHandler, public StreamJoin
                                 const OriginId outputOriginId,
                                 const uint64_t windowSize,
                                 const uint64_t windowSlide,
-                                size_t leftSchema,
-                                size_t rightSchema,
-                                const uint64_t pageSizeLeft,
-                                const uint64_t pageSizeRight);
+                                PagedVectorSize leftSchema,
+                                PagedVectorSize rightSchema);
 
     /**
      * @brief Creates a NLJOperatorHandlerBucketing
@@ -58,10 +56,8 @@ class NLJOperatorHandlerBucketing : public NLJOperatorHandler, public StreamJoin
                                         const OriginId outputOriginId,
                                         const uint64_t windowSize,
                                         const uint64_t windowSlide,
-                                        size_t leftSchema,
-                                        size_t rightSchema,
-                                        const uint64_t pageSizeLeft,
-                                        const uint64_t pageSizeRight);
+                                        PagedVectorSize leftSchema,
+                                        PagedVectorSize rightSchema);
 };
 }// namespace NES::Runtime::Execution::Operators
 

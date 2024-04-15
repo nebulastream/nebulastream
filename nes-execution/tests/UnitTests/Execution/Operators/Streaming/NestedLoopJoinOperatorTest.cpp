@@ -49,15 +49,15 @@ class NLJBuildPipelineExecutionContext : public PipelineExecutionContext {
   public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID,             // mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef) {
-            },
-            [](TupleBuffer&) {
-            },
-            {nljOperatorHandler}) {}
+              INVALID_PIPELINE_ID,             // mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef) {
+              },
+              [](TupleBuffer&) {
+              },
+              {nljOperatorHandler}) {}
 };
 
 class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
@@ -65,17 +65,17 @@ class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
     std::vector<TupleBuffer> emittedBuffers;
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID,             // mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef) {
-                //                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            [](TupleBuffer&) {
-                //                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            {nljOperatorHandler}) {}
+              INVALID_PIPELINE_ID,             // mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef) {
+                  //                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              [](TupleBuffer&) {
+                  //                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              {nljOperatorHandler}) {}
 };
 
 class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
@@ -116,10 +116,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                                           OriginId(1),
                                                                           windowSize,
                                                                           windowSize,
-                                                                          leftSchema,
-                                                                          rightSchema,
-                                                                          leftPageSize,
-                                                                          rightPageSize);
+                                                                          Operators::PagedVectorSize(leftSchema),
+                                                                          Operators::PagedVectorSize(*rightSchema));
         bm = std::make_shared<BufferManager>(8196, 5000);
         nljOperatorHandler->setBufferManager(bm);
     }
@@ -197,14 +195,14 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto windowEndPos = windowStartPos + expectedNumberOfTuplesInWindow;
         uint64_t posInWindow = 0;
 
-        for (auto pos = windowStartPos; pos < windowEndPos; ++pos, ++posInWindow) {
-            auto record = *pagedVector.at(pos);
+        for (size_t pos = 0; auto record : pagedVector) {
             auto& expectedRecord = allRecords[pos];
             NES_TRACE("readRecord {} record{}", record.toString(), expectedRecord.toString());
 
             for (auto& field : schema->fields) {
                 EXPECT_EQ(record.read(field->getName()), expectedRecord.read(field->getName()));
             }
+            pos++;
         }
     }
 
@@ -520,10 +518,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
                                                                       OriginId(1),
                                                                       windowSize,
                                                                       windowSize,
-                                                                      leftSchema,
-                                                                      rightSchema,
-                                                                      leftPageSize,
-                                                                      rightPageSize);
+                                                                      Operators::PagedVectorSize(leftSchema),
+                                                                      Operators::PagedVectorSize(rightSchema));
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }

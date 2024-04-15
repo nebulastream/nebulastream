@@ -16,6 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_BUCKETING_HJOPERATORHANDLERBUCKETING_HPP_
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerBucketing.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -44,12 +45,11 @@ class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOp
                                const OriginId outputOriginId,
                                const uint64_t windowSize,
                                const uint64_t windowSlide,
-                               size_t leftSchema,
-                               size_t rightSchema,
+                               PagedVectorSize left,
+                               PagedVectorSize right,
                                const QueryCompilation::StreamJoinStrategy joinStrategy,
                                uint64_t totalSizeForDataStructures,
                                uint64_t preAllocPageSizeCnt,
-                               uint64_t pageSize,
                                uint64_t numPartitions);
 
     /**
@@ -71,12 +71,11 @@ class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOp
                                        const OriginId outputOriginId,
                                        const uint64_t windowSize,
                                        const uint64_t windowSlide,
-                                       size_t leftSchema,
-                                       size_t rightSchema,
+                                       PagedVectorSize left,
+                                       PagedVectorSize right,
                                        const QueryCompilation::StreamJoinStrategy joinStrategy,
                                        uint64_t totalSizeForDataStructures,
                                        uint64_t preAllocPageSizeCnt,
-                                       uint64_t pageSize,
                                        uint64_t numPartitions);
 };
 }// namespace NES::Runtime::Execution::Operators

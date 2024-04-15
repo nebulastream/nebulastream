@@ -16,8 +16,8 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRowLayout.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Sources/ZmqSource.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime {
 std::span<char> Entry::data() { return page.data().subspan(offset, entrySize); }
 
@@ -46,7 +46,7 @@ Entry::Entry(detail::Badge<PagedVectorRowLayout>,
 
 void* Entry::storeVarSizedDataToOffset(std::span<const char> data, void* offset_ptr) {
     auto offset = std::distance(this->data().data(), static_cast<char*>(offset_ptr));
-    NES_ASSERT(offset < entrySize, "Wyld Offset");
+    NES_ASSERT(offset >= 0 && static_cast<size_t>(offset) < entrySize, "Wyld Offset");
     auto index = ref.storeVarSized(std::span(data.begin(), data.end()));
     auto relative = toRelativeIndex(index);
     *std::bit_cast<size_t*>(this->data().subspan(offset).data()) = data.size();
@@ -56,7 +56,7 @@ void* Entry::storeVarSizedDataToOffset(std::span<const char> data, void* offset_
 
 std::pair<Nautilus::TextValue*, void*> Entry::loadVarSizedDataAtOffset(void* offset_ptr) const {
     auto offset = std::distance(this->data().data(), static_cast<const char*>(offset_ptr));
-    NES_ASSERT(offset < entrySize, "Wyld Offset");
+    NES_ASSERT(offset >= 0 && static_cast<size_t>(offset) < entrySize, "Wyld Offset");
     auto size = *std::bit_cast<size_t*>(this->data().subspan(offset).data());
     auto relative = *std::bit_cast<detail::RelativeVarPageIndex*>(this->data().subspan(offset + sizeof(size_t)).data());
     auto absolute = toAbsoluteIndex(relative);

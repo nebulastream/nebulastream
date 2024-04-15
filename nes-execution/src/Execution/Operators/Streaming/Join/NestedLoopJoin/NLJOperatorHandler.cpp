@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -41,14 +43,14 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
 
         pipelineCtx->dispatchBuffer(tupleBuffer);
         NES_DEBUG("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
-                 "{} and no. right tuples {}",
-                 bufferMemory->leftSliceIdentifier,
-                 bufferMemory->rightSliceIdentifier,
-                 tupleBuffer.getWatermark(),
-                 tupleBuffer.getSequenceNumber(),
-                 tupleBuffer.getOriginId(),
-                 sliceLeft.getNumberOfTuplesLeft(),
-                 sliceRight.getNumberOfTuplesRight());
+                  "{} and no. right tuples {}",
+                  bufferMemory->leftSliceIdentifier,
+                  bufferMemory->rightSliceIdentifier,
+                  tupleBuffer.getWatermark(),
+                  tupleBuffer.getSequenceNumber(),
+                  tupleBuffer.getOriginId(),
+                  sliceLeft.getNumberOfTuplesLeft(),
+                  sliceRight.getNumberOfTuplesRight());
     }
 }
 
@@ -57,22 +59,19 @@ StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t 
                                       sliceEnd,
                                       numberOfWorkerThreads,
                                       bufferManager,
-                                      sizeOfRecordLeft,
-                                      pageSizeLeft,
-                                      sizeOfRecordRight,
-                                      pageSizeRight);
+                                      left.size(),
+                                      left.pageSize(),
+                                      right.size(),
+                                      right.pageSize());
 }
 
 NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                        const OriginId outputOriginId,
                                        const uint64_t windowSize,
                                        const uint64_t windowSlide,
-                                       size_t leftSchema,
-                                       size_t rightSchema,
-                                       const uint64_t pageSizeLeft,
-                                       const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
-      pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
+                                       PagedVectorSize leftSize,
+                                       PagedVectorSize rightSize)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide), left(leftSize), right(rightSize) {}
 
 void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");

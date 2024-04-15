@@ -38,7 +38,7 @@ bool pagedVectorIteratorEqualsProxy(void* iteratorPtr, void* iteratorOtherPtr) {
     return *static_cast<Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorPtr)
         == *static_cast<Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorOtherPtr);
 }
-void releasePagedVectorIterator(void* iteratorPtr) {
+void releasePagedVectorIteratorProxy(void* iteratorPtr) {
     delete static_cast<Runtime::PagedVectorRowLayout::EntryIterator*>(iteratorPtr);
 }
 
@@ -62,7 +62,7 @@ void* storeVarSizedDataProxy(void* pagedVectorRef, uint64_t entryRef, void* offs
     return entry.storeVarSizedDataToOffset(std::span{text->c_str(), text->length()}, offset);
 }
 
-std::tuple<TextValue*, void*> loadVarSizedData(void* pagedVectorRef, uint64_t entryRef, void* offset) {
+std::tuple<TextValue*, void*> loadVarSizedDataProxy(void* pagedVectorRef, uint64_t entryRef, void* offset) {
     auto pagedVector = static_cast<Runtime::PagedVectorRowLayout*>(pagedVectorRef);
     auto ref = std::bit_cast<Runtime::EntryRef>(entryRef);
     auto entry = pagedVector->getEntry(ref);
@@ -74,7 +74,7 @@ PagedVectorVarSizedRefIterator::PagedVectorVarSizedRefIterator(Value<MemRef> ite
                                                                Value<MemRef> pagedVectorPtr)
     : iteratorPtr(std::move(iteratorPtr)), schema(std::move(schema)), pagedVectorPtr(std::move(pagedVectorPtr)) {}
 PagedVectorVarSizedRefIterator::~PagedVectorVarSizedRefIterator() {
-    FunctionCall("releasePagedVectorIterator", releasePagedVectorIterator, iteratorPtr);
+    FunctionCall("releasePagedVectorIteratorProxy", releasePagedVectorIteratorProxy, iteratorPtr);
 }
 
 PagedVectorVarSizedRefIterator::reference PagedVectorVarSizedRefIterator::operator*() const {
@@ -88,7 +88,7 @@ PagedVectorVarSizedRefIterator::reference PagedVectorVarSizedRefIterator::operat
         auto const fieldName = field->getName();
         if (fieldType->type->isText()) {
             auto [text, new_entry] =
-                Nautilus::FunctionCall("loadVarSizedData", loadVarSizedData, pagedVectorPtr, handle, entryData);
+                Nautilus::FunctionCall("loadVarSizedDataProxy", loadVarSizedDataProxy, pagedVectorPtr, handle, entryData);
             entryData = new_entry;
             record.write(fieldName, text);
         } else {
@@ -164,9 +164,9 @@ bool PagedVectorVarSizedRef::operator==(const PagedVectorVarSizedRef& other) con
 }
 
 Value<Boolean> operator==(const PagedVectorVarSizedRefIterator& a, const PagedVectorVarSizedRefIterator& b) {
-    return FunctionCall("pagedVectorIteratorEquals", pagedVectorIteratorEqualsProxy, a.iteratorPtr, b.iteratorPtr);
+    return FunctionCall("pagedVectorIteratorEqualsProxy", pagedVectorIteratorEqualsProxy, a.iteratorPtr, b.iteratorPtr);
 }
 Value<Boolean> operator!=(const PagedVectorVarSizedRefIterator& a, const PagedVectorVarSizedRefIterator& b) {
-    return FunctionCall("pagedVectorIteratorNotEquals", pagedVectorIteratorNotEqualsProxy, a.iteratorPtr, b.iteratorPtr);
+    return FunctionCall("pagedVectorIteratorNotEqualsProxy", pagedVectorIteratorNotEqualsProxy, a.iteratorPtr, b.iteratorPtr);
 }
 }// namespace NES::Nautilus::Interface

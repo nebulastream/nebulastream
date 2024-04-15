@@ -25,7 +25,7 @@ uint64_t pagedVectorIteratorLoadProxy(void* iteratorPtr);
 void pagedVectorIteratorIncProxy(void* iteratorPtr);
 
 bool pagedVectorIteratorEqualsProxy(void* iteratorPtr, void* iteratorOtherPtr);
-void releasePagedVectorIterator(void* iteratorPtr);
+void releasePagedVectorIteratorProxy(void* iteratorPtr);
 
 class PagedVectorVarSizedRefIterator {
     using iterator_category = std::forward_iterator_tag;
