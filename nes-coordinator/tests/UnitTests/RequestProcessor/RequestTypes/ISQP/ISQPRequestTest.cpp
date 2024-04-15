@@ -887,8 +887,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
 
     // Register physical and logical sources
-    auto schema =
-        Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32));
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
     std::string logicalSourceName1 = "test1";
     auto defaultSourceType1 = DefaultSourceType::create(logicalSourceName1, "pTest1");
     auto physicalSource1 = PhysicalSource::create(defaultSourceType1);
@@ -1124,8 +1123,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
 
     // Register physical and logical sources
-    auto schema =
-        TestSchemas::getSchemaTemplate("id_val_u32");
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
     std::string logicalSourceName1 = "test1";
     auto defaultSourceType1 = DefaultSourceType::create(logicalSourceName1, "pTest1");
     auto physicalSource1 = PhysicalSource::create(defaultSourceType1);
@@ -1520,8 +1518,7 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =
-        Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32));
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId5);
@@ -1580,6 +1577,144 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
     auto numOfSinks = sharedQueryPlan->getQueryPlan()->getSinkOperators().size();
     EXPECT_EQ(numOfSinks, 2);
+    placementAmendmentHandler.shutDown();
+}
+
+//test adding multiple queries
+TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWithMergingWithoutIncrementalPlacement2PL) {
+
+    // init topology nodes
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    int nodeId1 = 1;
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
+    int nodeId2 = 2;
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
+    int nodeId3 = 3;
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
+    int nodeId4 = 4;
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
+    int nodeId5 = 5;
+    auto addNodeEvent5 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId5, "localhost", 4000, 4002, 4, properties);
+
+    auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
+    auto isqpRemoveLink15 = ISQPRemoveLinkEvent::create(nodeId1, nodeId5);
+    auto isqpAddLink24 = ISQPAddLinkEvent::create(nodeId2, nodeId4);
+    auto isqpAddLink25 = ISQPAddLinkEvent::create(nodeId2, nodeId5);
+    auto isqpAddLinkProperty24 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId4, 1, 1);
+    auto isqpAddLinkProperty25 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId5, 1, 1);
+    auto isqpAddLinkProperty12 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId2, 1, 1);
+    auto isqpAddLinkProperty13 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId3, 1, 1);
+
+    std::vector<ISQPEventPtr> isqpEventsForRequest1;
+    isqpEventsForRequest1.emplace_back(addNodeEvent1);
+    isqpEventsForRequest1.emplace_back(addNodeEvent2);
+    isqpEventsForRequest1.emplace_back(addNodeEvent3);
+    isqpEventsForRequest1.emplace_back(addNodeEvent4);
+    isqpEventsForRequest1.emplace_back(addNodeEvent5);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink15);
+    isqpEventsForRequest1.emplace_back(isqpAddLink24);
+    isqpEventsForRequest1.emplace_back(isqpAddLink25);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty24);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty25);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty12);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty13);
+
+    // Enable query merging
+    coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+    // Disable incremental placement
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = false;
+    // Number of amender threads
+    coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
+
+    // Initialize the amender
+    Optimizer::PlacementAmendmentHandler placementAmendmentHandler(
+        coordinatorConfiguration->optimizer.placementAmendmentThreadCount,
+        amendmentQueue);
+    placementAmendmentHandler.start();
+    // Prepare
+    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
+                                                                 topology,
+                                                                 globalExecutionPlan,
+                                                                 globalQueryPlan,
+                                                                 queryCatalog,
+                                                                 sourceCatalog,
+                                                                 udfCatalog,
+                                                                 amendmentQueue});
+    auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
+    constexpr RequestId requestId1 = 1;
+    isqpRequest1->setId(requestId1);
+    // Execute add request until deployment phase
+    try {
+        isqpRequest1->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
+
+    // Register physical and logical sources
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    std::string logicalSourceName1 = "test1";
+    auto defaultSourceType1 = DefaultSourceType::create(logicalSourceName1, "pTest1");
+    auto physicalSource1 = PhysicalSource::create(defaultSourceType1);
+    auto logicalSource1 = LogicalSource::create(logicalSourceName1, schema);
+    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, nodeId5);
+    std::string logicalSourceName2 = "test2";
+    auto defaultSourceType2 = DefaultSourceType::create(logicalSourceName2, "pTest2");
+    auto physicalSource2 = PhysicalSource::create(defaultSourceType2);
+    auto logicalSource2 = LogicalSource::create(logicalSourceName2, schema);
+    auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, nodeId4);
+    sourceCatalog->addLogicalSource(logicalSource1->getLogicalSourceName(), logicalSource1->getSchema());
+    sourceCatalog->addLogicalSource(logicalSource2->getLogicalSourceName(), logicalSource2->getSchema());
+    sourceCatalog->addPhysicalSource(logicalSourceName1, sce1);
+    sourceCatalog->addPhysicalSource(logicalSourceName2, sce2);
+
+    auto query1 = Query::from(logicalSourceName1)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .unionWith(Query::from(logicalSourceName2).map(Attribute("value") = Attribute("value") + 1))
+                      .sink(NullOutputSinkDescriptor::create());
+    const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
+    queryPlan1->setQueryId(1);
+    auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
+
+    std::vector<ISQPEventPtr> isqpEventsForRequest2;
+    isqpEventsForRequest2.emplace_back(queryAddEvent1);
+    // Prepare
+    auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
+    constexpr RequestId requestId2 = 2;
+    isqpRequest2->setId(requestId2);
+    // Execute add request until deployment phase
+    try {
+        isqpRequest2->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
+    auto response1 = queryAddEvent1->getResponse().get();
+    auto queryId1 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response1)->queryId;
+    EXPECT_EQ(queryCatalog->getQueryState(queryId1), QueryState::RUNNING);
+
+    // Prepare
+    auto addLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+    auto removeLink24 = ISQPRemoveLinkEvent::create(nodeId2, nodeId4);
+    std::vector<ISQPEventPtr> isqpEventsForRequest3;
+    isqpEventsForRequest3.emplace_back(addLink34);
+    isqpEventsForRequest3.emplace_back(removeLink24);
+    auto isqpRequest3 = ISQPRequest::create(z3Context, isqpEventsForRequest3, ZERO_RETRIES);
+    constexpr RequestId requestId3 = 3;
+    isqpRequest3->setId(requestId3);
+    try {
+        isqpRequest3->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
+
+    // Verify if removal happened
+    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId1);
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+    auto numOfSinks = sharedQueryPlan->getQueryPlan()->getSinkOperators().size();
+    EXPECT_EQ(numOfSinks, 1);
     placementAmendmentHandler.shutDown();
 }
 
