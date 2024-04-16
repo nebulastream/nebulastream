@@ -29,9 +29,8 @@ namespace NES::Runtime::Execution {
 using namespace std::chrono_literals;
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class CountMinBuildExecutionTest
-    : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, uint64_t, Statistic::StatisticDataCodec>> {
+class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
+                                   public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, uint64_t, Statistic::StatisticDataCodec>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
@@ -323,6 +322,7 @@ INSTANTIATE_TEST_CASE_P(testCountMin,
                             const auto sketchDepth = std::get<2>(info.param);
                             const auto dataCodec = std::get<3>(info.param);
                             return std::to_string(numWorkerThread) + "Threads_" + std::to_string(sketchWidth) + "Width_"
-                                + std::to_string(sketchDepth) + "Depth_" + std::string(magic_enum::enum_name(dataCodec));
+                                + std::to_string(sketchDepth) + "Depth_"  +
+                                std::string(magic_enum::enum_name(dataCodec));
                         });
 }// namespace NES::Runtime::Execution

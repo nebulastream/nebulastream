@@ -14,6 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 
 #include <StatisticIdentifiers.hpp>
 #include <memory>

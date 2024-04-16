@@ -455,7 +455,7 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     const auto width = physicalCountMinBuild.getWidth();
     const auto depth = physicalCountMinBuild.getDepth();
     const auto metricHash = physicalCountMinBuild.getMetricHash();
-    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
+    const auto outputMemoryLayout = Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
     const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
     const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
     const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();

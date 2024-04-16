@@ -23,9 +23,9 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -53,6 +53,7 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
         metricHash = metric->hash();
         sendingPolicy = Statistic::SendingPolicyASAP::create(Statistic::StatisticDataCodec::DEFAULT);
         triggerCondition = Statistic::NeverTrigger::create();
+
 
         const auto numberOfSources = StatisticIdsExtractorTest::GetParam();
         sourceCatalog = setUpSourceCatalog(numberOfSources);

@@ -182,8 +182,8 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
 
 HyperLogLogStatisticFormat::HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
                                                        Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                       std::function<std::string(const std::string&)> postProcessingData,
-                                                       std::function<std::string(const std::string&)> preProcessingData)
+                                                       std::function<std::string (const std::string&)> postProcessingData,
+                                                       std::function<std::string (const std::string&)> preProcessingData)
     : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData),
       widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
       estimateFieldName(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME),
