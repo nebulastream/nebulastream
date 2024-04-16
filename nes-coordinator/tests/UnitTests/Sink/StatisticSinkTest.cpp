@@ -139,8 +139,7 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
                                                                                    Statistic::StatisticSynopsisType::COUNT_MIN,
                                                                                    statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(),
-                       expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
@@ -189,8 +188,7 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
                                                                                    Statistic::StatisticSynopsisType::HLL,
                                                                                    statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(),
-                       expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
