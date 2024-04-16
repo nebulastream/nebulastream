@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.95](https://github.com/nebulastream/nebulastream/tree/v0.6.95) (2024-04-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.94...v0.6.95)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement piggy-backing [\#4792](https://github.com/nebulastream/nebulastream/issues/4792)
+- \[RELEASE\_TASK\] Topology [\#4185](https://github.com/nebulastream/nebulastream/issues/4185)
+
 ## [v0.6.94](https://github.com/nebulastream/nebulastream/tree/v0.6.94) (2024-04-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.93...v0.6.94)
