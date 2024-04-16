@@ -783,11 +783,9 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
                 auto metric = Statistic::IngestionRate::create();
                 auto statisticDescriptor = Statistic::DDSketchDescriptor::create(metric->getField(), 0.01, 1024);
                 auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-                auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
-                                                                                                   statisticDescriptor,
-                                                                                                   metric->hash(),
-                                                                                                   sendingPolicy,
-                                                                                                   triggerCondition);
+                auto statisticBuildOperator =
+                    LogicalOperatorFactory::createStatisticBuildOperator(windowType, statisticDescriptor, metric->hash(),
+                                                                         sendingPolicy, triggerCondition);
                 statisticBuildOperator->setStatisticId(getNextStatisticId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
                 auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
