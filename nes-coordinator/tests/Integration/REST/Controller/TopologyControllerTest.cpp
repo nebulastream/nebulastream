@@ -273,7 +273,8 @@ TEST_F(TopologyControllerTest, testaddAsChildAlreadyExists) {
     EXPECT_EQ(response.status_code, 400l);
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG("{}", res.dump());
-    EXPECT_EQ(res["message"], "Could not add parent for node in topology: Node with childId=2 is already a child of node with parentID=1 .");
+    EXPECT_EQ(res["message"],
+              "Could not add parent for node in topology: Node with childId=2 is already a child of node with parentID=1 .");
     bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
     bool stopCrd = coordinator->stopCoordinator(true);
@@ -374,11 +375,11 @@ TEST_F(TopologyControllerTest, testRemoveParentChildIDIsNotChildOfParent) {
     ASSERT_TRUE(TestUtils::waitForWorkers(coordinatorConfig->restPort.getValue(), 5, 1));
     // start second work with id =3
 
-     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
-     wrkConf2->coordinatorPort = *rpcCoordinatorPort;
-     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
-     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-     EXPECT_TRUE(retStart2);
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->coordinatorPort = *rpcCoordinatorPort;
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
 
     nlohmann::json request{};
     request["parentId"] = 2;
@@ -395,7 +396,8 @@ TEST_F(TopologyControllerTest, testRemoveParentChildIDIsNotChildOfParent) {
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG("{}", res.dump());
-    EXPECT_EQ(res["message"], "Could not remove parent for node in topology: Node with childId=3 is not a child of node with parentID=2 .");
+    EXPECT_EQ(res["message"],
+              "Could not remove parent for node in topology: Node with childId=3 is not a child of node with parentID=2 .");
     bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
     bool stopWrk2 = wrk2->stop(true);

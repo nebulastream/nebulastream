@@ -186,7 +186,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 nlohmann::json response;
                 response["success"] = removed;
                 return createResponse(Status::CODE_200, response.dump());
-            }else{
+            } else {
                 return errorHandler->handleError(
                     Status::CODE_400,
                     "Could not remove parent for node in topology: Node with childId=" + std::to_string(childId)
@@ -225,9 +225,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
 
         if (!topology->nodeWithWorkerIdExists(parentId)) {
-            return errorHandler->handleError(
-                Status::CODE_400,
-                "Could not add/remove parent for node in topology: Node with parentId=" + std::to_string(parentId) + " not found.");
+            return errorHandler->handleError(Status::CODE_400,
+                                             "Could not add/remove parent for node in topology: Node with parentId="
+                                                 + std::to_string(parentId) + " not found.");
         }
         return std::nullopt;
     }
