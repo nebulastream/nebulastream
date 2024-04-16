@@ -85,8 +85,7 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
                                                                                            sendingPolicy,
                                                                                            triggerCondition);
         auto statisticSinkOperator =
-            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec),
-                                                       INVALID_WORKER_NODE_ID);
+            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec), INVALID_WORKER_NODE_ID);
         statisticBuildOperator->addParent(statisticSinkOperator);
 
         // As we are operating on a queryPlanCopy, we can replace the operatorUnderTest with a statistic build operator

@@ -19,7 +19,7 @@
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <Util/CompressionMethods.hpp>
 namespace NES::Statistic {
 StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema,
                                                             uint64_t bufferSize,
@@ -40,17 +40,18 @@ StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema,
     }
 
     // 2. We decide how the post- and preprocessing functions should be, i.e., do we perform some compression for example
-    std::function<std::string(const std::string&)> postProcessingData;
-    std::function<std::string(const std::string&)> preProcessingData;
+    std::function<std::string (const std::string&)> postProcessingData;
+    std::function<std::string (const std::string&)> preProcessingData;
 
     switch (sinkDataCodec) {
         case StatisticDataCodec::DEFAULT: {
-            postProcessingData = [](const std::string& data) {
-                return data;
-            };
-            preProcessingData = [](const std::string& data) {
-                return data;
-            };
+            postProcessingData = [](const std::string& data) { return data; };
+            preProcessingData = [](const std::string& data) { return data; };
+            break;
+        }
+        case StatisticDataCodec::RUN_LENGTH_ENCODED: {
+            postProcessingData = CompressionMethods::runLengthDecoding;
+            preProcessingData = CompressionMethods::runLengthEncoding;
             break;
         }
     }
