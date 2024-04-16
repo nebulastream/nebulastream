@@ -99,6 +99,16 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
+
+            auto children = topology->getChildTopologyNodeIds(parentId);
+            for (const auto& child : children) {
+                if (child == childId) {
+                    return errorHandler->handleError(
+                        Status::CODE_400,
+                        "Could not add parent for node in topology: Node with childId=" + std::to_string(childId)
+                            + " is already a child of node with parentID=" + std::to_string(parentId) + " .");
+                }
+            }
             bool added = topology->addTopologyNodeAsChild(parentId, childId);
             if (added) {
                 NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
@@ -156,17 +166,32 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            bool removed = topology->removeTopologyNodeAsChild(parentId, childId);
-            if (removed) {
-                NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
-            } else {
-                NES_ERROR("TopologyController::handlePost:addParent: Failed");
-                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
+            // check if childID is actually a child of parentID
+            auto children = topology->getChildTopologyNodeIds(parentId);
+            bool contained = false;
+            for (const auto& child : children) {
+                if (child == childId) {
+                    contained = true;
+                }
             }
-            //Prepare the response
-            nlohmann::json response;
-            response["success"] = removed;
-            return createResponse(Status::CODE_200, response.dump());
+            if (contained) {
+                bool removed = topology->removeTopologyNodeAsChild(parentId, childId);
+                if (removed) {
+                    NES_DEBUG("TopologyController::handlePost:removeParent: deleted link successfully");
+                } else {
+                    NES_ERROR("TopologyController::handlePost:removeParent: Failed");
+                    return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
+                }
+                //Prepare the response
+                nlohmann::json response;
+                response["success"] = removed;
+                return createResponse(Status::CODE_200, response.dump());
+            }else{
+                return errorHandler->handleError(
+                    Status::CODE_400,
+                    "Could not remove parent for node in topology: Node with childId=" + std::to_string(childId)
+                        + " is not a child of node with parentID=" + std::to_string(parentId) + " .");
+            }
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (...) {
@@ -190,19 +215,19 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         if (parentId == childId) {
             return errorHandler->handleError(
                 Status::CODE_400,
-                "Could not add parent for node in topology: childId and parentId must be different.");
+                "Could not add/remove parent for node in topology: childId and parentId must be different.");
         }
 
         if (!topology->nodeWithWorkerIdExists(childId)) {
             return errorHandler->handleError(
                 Status::CODE_400,
-                "Could not add parent for node in topology: Node with childId=" + std::to_string(childId) + " not found.");
+                "Could not add/remove parent for node in topology: Node with childId=" + std::to_string(childId) + " not found.");
         }
 
         if (!topology->nodeWithWorkerIdExists(parentId)) {
             return errorHandler->handleError(
                 Status::CODE_400,
-                "Could not add parent for node in topology: Node with parentId=" + std::to_string(parentId) + " not found.");
+                "Could not add/remove parent for node in topology: Node with parentId=" + std::to_string(parentId) + " not found.");
         }
         return std::nullopt;
     }
