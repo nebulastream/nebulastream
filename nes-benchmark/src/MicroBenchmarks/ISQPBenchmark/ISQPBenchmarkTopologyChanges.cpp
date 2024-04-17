@@ -49,6 +49,7 @@
 #include <Util/yaml/Yaml.hpp>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <thread>
 #include <z3++.h>
 
@@ -57,6 +58,7 @@ using namespace NES::Benchmark;
 using std::filesystem::directory_iterator;
 
 std::chrono::nanoseconds Runtime;
+std::map<WorkerId, std::vector<WorkerId>> baseStationToConnectedWorkerIds;
 
 class ErrorHandler : public Exceptions::ErrorListener {
   public:
@@ -216,7 +218,9 @@ void setupTopology(uint16_t rootNodes,
     uint16_t leafNodeCounter = 0;
     for (const auto& intermediateWorkerId : intermediateWorkerIds) {
         uint16_t connectivityCounter = 1;
+        std::vector<WorkerId> connectedLeafNodeIds;
         for (; leafNodeCounter < leafWorkerIds.size(); leafNodeCounter++) {
+            connectedLeafNodeIds.emplace_back(leafWorkerIds[leafNodeCounter]);
             auto linkAddEvent = RequestProcessor::ISQPAddLinkEvent::create(intermediateWorkerId, leafWorkerIds[leafNodeCounter]);
             linkAddEvents.emplace_back(linkAddEvent);
             connectivityCounter++;
@@ -225,6 +229,8 @@ void setupTopology(uint16_t rootNodes,
                 break;
             }
         }
+        // Intermediate worker id
+        baseStationToConnectedWorkerIds[intermediateWorkerId] = connectedLeafNodeIds;
     }
     requestHandlerService->queueISQPRequest(linkAddEvents);
 
@@ -482,7 +488,8 @@ int main(int argc, const char* argv[]) {
             auto batchSize = node["BatchSize"].As<uint16_t>();
             auto numOfRemoveQueries = node["NumOfRemoveQueries"].As<uint16_t>();
             auto numOfAddQueries = node["NumOfAddQueries"].As<uint16_t>();
-            std::cout<< "NumOfRemoveQueries:"<< numOfRemoveQueries<<", NumOfAddQueries:"<< numOfAddQueries<<", BatchSize"<<batchSize;
+            std::cout << "NumOfRemoveQueries:" << numOfRemoveQueries << ", NumOfAddQueries:" << numOfAddQueries << ", BatchSize"
+                      << batchSize << std::endl;
             NES_ASSERT(numOfAddQueries + numOfRemoveQueries == batchSize,
                        "Number of remove and add queries should be same as the batch size");
             auto placementAmendmentThreadCount = node["PlacementAmendmentThreadCount"].As<uint32_t>();
@@ -510,16 +517,16 @@ int main(int argc, const char* argv[]) {
                 auto globalExecutionPlan = nesCoordinator->getGlobalExecutionPlan();
                 std::cout << "Setting up the topology." << std::endl;
                 //Setup topology and source catalog
-                setUp(63, 64, 640, requestHandlerService, sourceCatalogService, topology, globalExecutionPlan);
+                setUp(9, 10, 100, requestHandlerService, sourceCatalogService, topology, globalExecutionPlan);
+                std::cout << "Set up of topology done." << std::endl;
 
                 auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
                 // Setup system with initially running query plans
-                uint64_t initiallyRunningQueries = 4096;
                 std::vector<QueryId> potentialCandidatesForRemoval;
                 std::vector<RequestProcessor::ISQPEventPtr> initialISQPEvents;
                 uint64_t currentIndex;
-                for (currentIndex = 0; currentIndex < initiallyRunningQueries; currentIndex++) {
+                for (currentIndex = 0; currentIndex < numOfQueries; currentIndex++) {
                     auto queryPlan = queryObjects[currentIndex];
                     potentialCandidatesForRemoval.emplace_back(queryPlan->getQueryId());
                     initialISQPEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
@@ -528,49 +535,64 @@ int main(int argc, const char* argv[]) {
                 requestHandlerService->queueISQPRequest(initialISQPEvents);
                 std::cout << "*******************************Initial queries placed" << std::endl;
 
-                // Compute batches of ISQP events
-                std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
+                uint64_t numOfTopologyChangeEvents = 4000;
+                uint64_t minLeafNodeId = 21;
+                uint64_t maxLeafNodeId = 120;
+                uint64_t minIntermediateNodeId = 11;
+                uint64_t maxIntermediateNodeId = 20;
+                uint64_t intermediateNodeId = minIntermediateNodeId;
+                uint16_t batchIncrement = 1;
                 std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
 
-                uint16_t batchIncrement = 1;
-                uint16_t addQueryIncrement = 1;
-                uint16_t removeQueryIncrement = 1;
+                //Add link remove and add events
+                while (isqpEvents.size() < numOfTopologyChangeEvents) {
+                    // Get all attached leaf node ids
+                    auto attachedLeafNodes = baseStationToConnectedWorkerIds[intermediateNodeId];
+                    //Fetch the first attached node in the list
+                    auto leafNodeId = (*attachedLeafNodes.begin());
+                    auto removeLink = RequestProcessor::ISQPRemoveLinkEvent::create(intermediateNodeId, leafNodeId);
+                    //Remove the top node form the list abd update the map
+                    attachedLeafNodes.erase(attachedLeafNodes.begin());
+                    baseStationToConnectedWorkerIds[intermediateNodeId] = attachedLeafNodes;
+                    std::cout << "Remove Link: " << intermediateNodeId << "-" << leafNodeId << std::endl;
 
-                std::vector<QueryId> newCandidatesForRemoval;
-                for (uint64_t i = currentIndex; i < numOfQueries; i++) {
-                    auto queryPlan = queryObjects[i];
-                    if (batchIncrement == 1) {
-                        isqpEvents.clear();
+                    //Check the neighbouring base station id
+                    intermediateNodeId++;
+                    if (intermediateNodeId > maxIntermediateNodeId) {
+                        intermediateNodeId = minIntermediateNodeId;
                     }
+                    //Add the removed worker id to the neighbouring base stations
+                    auto addLink = RequestProcessor::ISQPAddLinkEvent::create(intermediateNodeId, leafNodeId);
+                    std::cout << "Add Link: " << intermediateNodeId << "-" << leafNodeId << std::endl;
+                    isqpEvents.emplace_back(removeLink);
+                    isqpEvents.emplace_back(addLink);
 
-                    //Add query events
-                    if (addQueryIncrement <= numOfAddQueries) {
-                        isqpEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
-                        newCandidatesForRemoval.emplace_back(i + 1);
-                        addQueryIncrement++;
-                    }
-
-                    //Remove query events
-                    while (addQueryIncrement > numOfAddQueries && removeQueryIncrement <= numOfRemoveQueries) {
-                        QueryId& queryId = potentialCandidatesForRemoval.rbegin()[removeQueryIncrement - 1];
-                        isqpEvents.emplace_back(RequestProcessor::ISQPRemoveQueryEvent::create(queryId));
-                        removeQueryIncrement++;
-                        batchIncrement++;
-                        i++;
-                    }
-
-                    if (batchIncrement == batchSize || i == numOfQueries - 1) {
-                        isqpBatches.emplace_back(isqpEvents);
-                        potentialCandidatesForRemoval.clear();
-                        potentialCandidatesForRemoval = newCandidatesForRemoval;
-                        newCandidatesForRemoval.clear();
-                        batchIncrement = 1;
-                        addQueryIncrement = 1;
-                        removeQueryIncrement = 1;
-                        continue;
-                    }
-                    batchIncrement++;
+                    //Update the connected worker list of the neighbouring base station
+                    attachedLeafNodes = baseStationToConnectedWorkerIds[intermediateNodeId];
+                    attachedLeafNodes.emplace_back(leafNodeId);
+                    baseStationToConnectedWorkerIds[intermediateNodeId] = attachedLeafNodes;
                 }
+
+                std::cout << "*******************************Finished collecting ISQP events " << isqpEvents.size() << std::endl;
+
+                // Compute batches of ISQP events
+                std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
+                uint64_t startPos = 0;
+                while (startPos < isqpEvents.size()) {
+                    uint64_t pos = startPos;
+                    std::vector<RequestProcessor::ISQPEventPtr> batch;
+                    for (uint64_t j = 0; j < batchSize; j++) {
+                        batch.emplace_back(isqpEvents.at(pos));
+                        batch.emplace_back(isqpEvents.at(pos + 1));
+                        pos = pos + 2;
+                    }
+                    isqpBatches.emplace_back(batch);
+                    startPos = pos;
+                }
+
+                std::cout << "*******************************Finished preparing ISQP batch " << isqpBatches.size() << std::endl;
+
+                std::cout << "Initiating experiment" << std::endl;
 
                 std::vector<std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>> batchResponses;
                 auto startTime =
@@ -636,7 +658,7 @@ int main(int argc, const char* argv[]) {
         }
         // rename filename
         std::cout << "Renaming File: " << file.path().relative_path().string() << std::endl;
-        std::filesystem::rename(file.path(), "/" + file.path().relative_path().string() + "_done");
+        //        std::filesystem::rename(file.path(), "/" + file.path().relative_path().string() + "_done");
     }
     //Print the benchmark output and same it to the CSV file for further processing
     std::cout << "benchmark finish" << std::endl;

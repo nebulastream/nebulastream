@@ -380,30 +380,34 @@ void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQu
                     placedOperator->removeAllParent();
                     placedOperator->removeChildren();
                     placedOperator->clear();
-                } else {
+                } else if (operatorState == OperatorState::PLACED) {
 
-                    //12. Check if the operator is connected to one of the removed downstream operator via network sink
-                    // then remove the network sink operator also
-                    const auto& downstreamOperators = placedOperator->getParents();
-                    for (const auto& downstreamOperator : downstreamOperators) {
-                        // If the downstream operator is a network sink operator
-                        if (downstreamOperator->instanceOf<SinkLogicalOperator>()
-                            && downstreamOperator->as_if<SinkLogicalOperator>()
-                                   ->getSinkDescriptor()
-                                   ->instanceOf<Network::NetworkSinkDescriptor>()) {
-                            auto connectedDownStreamOperatorId = std::any_cast<OperatorId>(
-                                downstreamOperator->as_if<LogicalOperator>()->getProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID));
-                            bool connectedToRemovedOperator = std::any_of(idsOfOperatorsToBeProcessed.begin(),
-                                                                          idsOfOperatorsToBeProcessed.end(),
-                                                                          [&](const OperatorId& operatorId) {
-                                                                              return operatorId == connectedDownStreamOperatorId;
-                                                                          });
-                            if (connectedToRemovedOperator) {
-                                //Remove the operator as downstream
-                                placedOperator->removeParent(downstreamOperator);
-                                //Remove as the root of the decomposed query plan
-                                decomposedQueryPlanToUpdate->removeAsRootOperator(
-                                    downstreamOperator->as_if<LogicalOperator>()->getId());
+                    // 9. check if the placed pinned operator is connected to an operator o be processed via a
+                    // network source then remove the connected network source
+                    auto children = placedOperator->getChildren();
+                    for (const auto& childOperator : children) {
+
+                        // 10. Check if a network source operator
+                        if (childOperator->instanceOf<SourceLogicalOperator>()
+                            && childOperator->as_if<SourceLogicalOperator>()
+                                   ->getSourceDescriptor()
+                                   ->instanceOf<Network::NetworkSourceDescriptor>()) {
+
+                            // 11. Fetch the id of the connected operator
+                            auto connectedUpstreamOperatorId = std::any_cast<OperatorId>(
+                                childOperator->as_if<LogicalOperator>()->getProperty(UPSTREAM_LOGICAL_OPERATOR_ID));
+
+                            // 12. Check if connected to operator to be processed
+                            bool connectedToOperatorToBeProcessed =
+                                std::any_of(idsOfOperatorsToBeProcessed.begin(),
+                                            idsOfOperatorsToBeProcessed.end(),
+                                            [&](const OperatorId& operatorId) {
+                                                return operatorId == connectedUpstreamOperatorId;
+                                            });
+
+                            // 13. remove the network source operator
+                            if (connectedToOperatorToBeProcessed) {
+                                placedOperator->removeChild(childOperator);
                             }
                         }
                     }
@@ -420,6 +424,37 @@ void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQu
             updatedDecomposedQueryPlans.emplace_back(decomposedQueryPlanToUpdate);
         }
 
+        //        else {
+        //            //12. Check if the upstream operator is one of the operator to be processed
+        //            // then remove the network sink operator
+        //            auto connectedUpstreamOperatorId = upstreamOperator->as_if<LogicalOperator>()->getId();
+        //            if (!operatorIdToOriginalOperatorMap.contains(connectedUpstreamOperatorId)) {
+        //                NES_WARNING("Found the operator {} not in the submitted query plan.", upstreamOperator->toString());
+        //                continue;
+        //            }
+        //
+        //            //Check the state of the upstream operator and only process if the upstream operator in the state to be
+        //            // removed or replaced
+        //            auto operatorState = operatorIdToOriginalOperatorMap[connectedUpstreamOperatorId]->getOperatorState();
+        //            if (operatorState == OperatorState::TO_BE_REMOVED || operatorState == OperatorState::TO_BE_REPLACED) {
+        //
+        //                bool connectedToBeRemoved = std::any_of(idsOfOperatorsToBeProcessed.begin(),
+        //                                                        idsOfOperatorsToBeProcessed.end(),
+        //                                                        [&](const OperatorId& operatorId) {
+        //                                                            return operatorId == connectedUpstreamOperatorId;
+        //                                                        });
+        //
+        //                if (connectedToBeRemoved) {
+        //                    //Remove the operator as downstream
+        //                    upstreamOperator->removeParent(rootOperator);
+        //                    //Remove as the root of the decomposed query plan
+        //                    decomposedQueryPlanToUpdate->removeAsRootOperator(
+        //                        rootOperator->as_if<LogicalOperator>()->getId());
+        //                    // 6. Mark the plan for migration to flush the in network tuples
+        //                    decomposedQueryPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
+        //                }
+        //            }
+        //        }
         // 14. Store the updated query sub plans
         workerIdToUpdatedDecomposedQueryPlans[workerId] = updatedDecomposedQueryPlans;
         workerIdToReleasedSlotMap[workerId] = releasedSlots;
@@ -428,7 +463,7 @@ void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQu
 
 std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
-                                               DecomposedQueryPlanVersion querySubPlanVersion,
+                                               DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                std::set<LogicalOperatorPtr>& upStreamPinnedOperators) {
 
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
@@ -477,7 +512,7 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 }
 
                 // 4. Set the new version to the updated query sub plan
-                updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
+                updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
             }
 
             globalExecutionPlan->updateDecomposedQueryPlans(workerId, updatedDecomposedQueryPlans);

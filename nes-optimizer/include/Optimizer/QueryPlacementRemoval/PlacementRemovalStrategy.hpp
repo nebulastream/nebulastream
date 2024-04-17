@@ -138,7 +138,7 @@ class PlacementRemovalStrategy {
      */
     std::map<DecomposedQueryPlanId, DeploymentContextPtr>
     updateExecutionNodes(SharedQueryId sharedQueryId,
-                         DecomposedQueryPlanVersion querySubPlanVersionconst,
+                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                          std::set<LogicalOperatorPtr>& upStreamPinnedOperators);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,

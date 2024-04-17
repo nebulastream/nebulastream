@@ -798,10 +798,10 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                 // Flag indicating, if we found a placed decomposed query plan that contains pinned operator
                                 bool found = false;
 
-                                // Find and merge with the shared query plan
+                                // Find and merge with the placed decomposed query plan
                                 for (const auto& placedDecomposedQueryPlan : placedDecomposedQueryPlans) {
 
-                                    // If the placed query sub plan contains the pinned upstream operator
+                                    // Check if the placed decomposed query plan contains the pinned upstream operator
                                     auto matchingPlacedLeafOperator =
                                         placedDecomposedQueryPlan->getOperatorWithOperatorId(computedOperator->getId());
                                     if (matchingPlacedLeafOperator) {

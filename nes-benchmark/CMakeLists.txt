@@ -54,6 +54,9 @@ add_nes_benchmarks(isqm-benchmark "src/MicroBenchmarks/ISQMBenchmark/ISQMBenchma
 ### Incremental Stream Query Placement Benchmark ###
 add_nes_benchmarks(isqp-benchmark "src/MicroBenchmarks/ISQPBenchmark/ISQPBenchmark.cpp")
 
+### Incremental Stream Query Placement Benchmark ###
+add_nes_benchmarks(isqp-benchmark-topology-change "src/MicroBenchmarks/ISQPBenchmark/ISQPBenchmarkTopologyChanges.cpp")
+
 ### Output Channel Benchmark ###
 add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
 
