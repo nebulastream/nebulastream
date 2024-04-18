@@ -243,9 +243,12 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             }
         }
 
+//        std::stringstream ss;
         for (const auto& workerId : workerIdsInBFS) {
+//            ss<<workerId<<",";
             workerIdToTopologyNodeMap[workerId] = topology->getCopyOfTopologyNodeWithId(workerId);
         }
+//        NES_ERROR("Removal: {}", ss.str())
 
         // 13. try to lock all selected topology nodes
         if (!workerIdsInBFS.empty() && placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {

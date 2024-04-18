@@ -145,6 +145,7 @@ class ISQPRequest : public AbstractUniRequest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    bool enableIncrementalPlacement = false;
 };
 
 }// namespace RequestProcessor

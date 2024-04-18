@@ -7,25 +7,41 @@ LogLevel: LOG_ERROR
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
-NumOfRuns: 1
+NumOfRuns: 7
 
 RunConfig:
   - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: true
-    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentThreadCount: 10
     PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 8
+    BatchSize: 10
     NumOfRemoveQueries: 0
-    NumOfAddQueries: 8
+    NumOfAddQueries: 10
     ConfNum: 1
   - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentThreadCount: 10
     PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 8
+    BatchSize: 10
     NumOfRemoveQueries: 0
-    NumOfAddQueries: 8
+    NumOfAddQueries: 10
     ConfNum: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 3
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 4
   - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: false
     PlacementAmendmentThreadCount: 1
@@ -33,20 +49,36 @@ RunConfig:
     BatchSize: 1
     NumOfRemoveQueries: 0
     NumOfAddQueries: 1
-    ConfNum: 3
-  - QueryPlacementStrategy: BottomUp
-    IncrementalPlacement: true
-    PlacementAmendmentThreadCount: 8
-    PlacementAmendmentMode: OPTIMISTIC
-    BatchSize: 8
-    NumOfRemoveQueries: 0
-    NumOfAddQueries: 8
-    ConfNum: 4
-  - QueryPlacementStrategy: BottomUp
-    IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 8
-    PlacementAmendmentMode: OPTIMISTIC
-    BatchSize: 8
-    NumOfRemoveQueries: 0
-    NumOfAddQueries: 8
     ConfNum: 5
+  - QueryPlacementStrategy: TopDown
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 6
+  - QueryPlacementStrategy: TopDown
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 7
+  - QueryPlacementStrategy: TopDown
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 8
+  - QueryPlacementStrategy: TopDown
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 9

@@ -72,6 +72,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
         sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
         coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
+        enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
         auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
 
         // Apply all topology events
@@ -152,7 +153,6 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
             completedAmendments.emplace_back(amendmentInstance->getFuture());
             placementAmendmentQueue->enqueue(amendmentInstance);
         }
-
         uint64_t numOfFailedPlacements = 0;
         // Wait for all amendment runners to finish processing
         for (auto& completedAmendment : completedAmendments) {
@@ -160,7 +160,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 numOfFailedPlacements++;
             }
         }
-        NES_INFO("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
+        NES_DEBUG("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
         auto processingEndTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         auto numOfSQPAffected = sharedQueryPlans.size();
@@ -180,20 +180,20 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
 
 void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkEventPtr removeLinkEvent) {
 
-    auto upstreamNodeId = removeLinkEvent->getChildNodeId();
     auto downstreamNodeId = removeLinkEvent->getParentNodeId();
+    auto upstreamNodeId = removeLinkEvent->getChildNodeId();
 
     // Step1. Identify the impacted SQPs
-    auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
     auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamNodeId);
+    auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
     if (!upstreamExecutionNode || !downstreamExecutionNode) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return;
     }
 
-    auto upstreamSharedQueryIds = upstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     auto downstreamSharedQueryIds = downstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
+    auto upstreamSharedQueryIds = upstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
     if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty()) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
@@ -224,14 +224,16 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
 
         queryCatalog->updateSharedQueryStatus(impactedSharedQueryId, QueryState::MIGRATING, "");
 
-        //find the pinned operators for the changelog
-        auto [upstreamOperatorIds, downstreamOperatorIds] =
-            NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                                        upstreamExecutionNode,
-                                                                        downstreamExecutionNode,
-                                                                        topology);
-        //perform re-operator placement on the query plan
-        sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+        if (enableIncrementalPlacement) {
+            //find the pinned operators for the changelog
+            auto [upstreamOperatorIds, downstreamOperatorIds] =
+                NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+                                                                            upstreamExecutionNode,
+                                                                            downstreamExecutionNode,
+                                                                            topology);
+            //perform re-operator placement on the query plan
+            sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+        }
     }
 }
 

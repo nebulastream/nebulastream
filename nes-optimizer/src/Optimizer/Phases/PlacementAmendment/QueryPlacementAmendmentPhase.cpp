@@ -118,7 +118,6 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
 
                 //6. Call placement removal strategy
                 if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
-
                     auto placementRemovalStrategy = PlacementRemovalStrategy::create(globalExecutionPlan,
                                                                                      topology,
                                                                                      typeInferencePhase,

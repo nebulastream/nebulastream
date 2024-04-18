@@ -89,6 +89,12 @@ void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalO
         }
     }
 
+//    std::stringstream ss;
+//    for (const auto& workerId : workerNodeIdsInBFS){
+//        ss<<workerId<<",";
+//    }
+//    NES_ERROR("Addition: {}", ss.str());
+
     // 4. Raise exception if unable to select and lock all topology nodes in the path
     if (!success) {
         throw Exceptions::RuntimeException("Unable to perform path selection.");
@@ -593,7 +599,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                     auto networkSourceOperatorId = getNextOperatorId();
 
                     // compute a vector of sub plan id and worker node id where the system generated plans are placed
-                    std::vector<SysPlanMetaData> connectedSysDecomposedPlanDetails;
+                    std::vector<SysPlanMetaData> connectedSysDecomposedPlanDetails{};
                     OperatorPtr operatorToConnectInMatchedPlan;
                     // 12. Starting from the upstream to downstream topology node and add network sink source pairs.
                     for (uint16_t pathIndex = 0; pathIndex < topologyNodesBetween.size(); pathIndex++) {
@@ -623,9 +629,27 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 
                             // 13. Record information about the query plan and worker id
                             DecomposedQueryPlanId decomposedPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+
                             if (candidateOperator->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED) {
                                 decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
                                     candidateOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                            } else if (decomposedPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
+                                // The candidate operator is not in the placed state but it is connected to a placed downstream operator
+                                // therefore connected downstream operator prop should be explored
+                                for (const auto& placedOperator : decomposedQueryPlan->getAllOperators()){
+                                    if(placedOperator->as_if<LogicalOperator>()->getOperatorState() == OperatorState::PLACED){
+                                        decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
+                                            placedOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                                        break;
+                                    }
+                                }
+
+                                // Check if found a decomposed query plan
+                                if(decomposedPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID){
+                                    NES_ERROR("No placed operator found to retrieve original decomposed query plan.")
+                                    throw Exceptions::RuntimeException(
+                                        "No placed operator found to retrieve original decomposed query plan.");
+                                }
                             }
 
                             connectedSysDecomposedPlanDetails.emplace_back(SysPlanMetaData(decomposedPlanId, currentWorkerId));

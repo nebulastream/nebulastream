@@ -554,7 +554,7 @@ int main(int argc, const char* argv[]) {
                     //Remove the top node form the list abd update the map
                     attachedLeafNodes.erase(attachedLeafNodes.begin());
                     baseStationToConnectedWorkerIds[intermediateNodeId] = attachedLeafNodes;
-                    std::cout << "Remove Link: " << intermediateNodeId << "-" << leafNodeId << std::endl;
+//                    std::cout << "Remove Link: " << intermediateNodeId << "-" << leafNodeId << std::endl;
 
                     //Check the neighbouring base station id
                     intermediateNodeId++;
@@ -563,7 +563,7 @@ int main(int argc, const char* argv[]) {
                     }
                     //Add the removed worker id to the neighbouring base stations
                     auto addLink = RequestProcessor::ISQPAddLinkEvent::create(intermediateNodeId, leafNodeId);
-                    std::cout << "Add Link: " << intermediateNodeId << "-" << leafNodeId << std::endl;
+//                    std::cout << "Add Link: " << intermediateNodeId << "-" << leafNodeId << std::endl;
                     isqpEvents.emplace_back(removeLink);
                     isqpEvents.emplace_back(addLink);
 
