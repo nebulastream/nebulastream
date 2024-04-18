@@ -841,7 +841,7 @@ void NodeEngine::setTcpDescriptor(std::string sourceName, int tcpDescriptor) {
     this->tcpDescriptor.insert({sourceName, tcpDescriptor});
 }
 
-const Statistic::AbstractStatisticStorePtr NodeEngine::getStatisticStore() const { return statisticStore; }
+const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
 
 WorkerId NodeEngine::getParentId() const { return parentId; }
 
@@ -851,6 +851,5 @@ void NodeEngine::initializeParentId(WorkerId newParent) {
     uint64_t expected = 0;
     parentId.compare_exchange_strong(expected, newParent);
 }
-const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
 
 }// namespace NES::Runtime

@@ -322,7 +322,7 @@ void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQu
             // 3. Fetch the copy of Decomposed query plan to modify
             auto decomposedQueryPlanToUpdate =
                 globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryPlanId);
-            if (!querySubPlanToUpdate) {
+            if (!decomposedQueryPlanToUpdate) {
                 continue;
             }
 

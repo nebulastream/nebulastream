@@ -312,7 +312,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
-    const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
+    //const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
     WorkerId getParentId() const;
     void setParentId(WorkerId newParent);
     void initializeParentId(WorkerId newParent);
