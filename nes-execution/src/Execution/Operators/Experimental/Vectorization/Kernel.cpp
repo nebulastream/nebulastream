@@ -19,6 +19,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
 #include <QueryCompiler/Experimental/Vectorization/CUDA/CUDAKernelCompiler.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -43,11 +44,19 @@ Kernel::Kernel(Descriptor descriptor)
     : descriptor(descriptor)
     , kernelExecutable(nullptr)
 {
+}
 
+Value<> Kernel::getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
+    auto ref = createNextValueReference(builtInVariable->getType());
+    Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
+    auto value = builtInVariable->getAsValue();
+    value.ref = ref;
+    return value;
 }
 
 void Kernel::setup(ExecutionContext& ctx) const {
 #ifdef ENABLE_CUDA
+    NES_INFO("Start CUDA Compiling...");
     auto desc = Nautilus::Backends::CUDA::CUDAKernelCompiler::Descriptor {
         .kernelFunctionName = "cudaKernel",
         .wrapperFunctionName = "cudaKernelWrapper",

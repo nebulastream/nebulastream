@@ -11,9 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/Aggregation/Experimental/Vectorization/VectorizedAggregationFunction.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Aggregation {
 
 SumAggregationFunction::SumAggregationFunction(const PhysicalTypePtr& inputType,
@@ -57,5 +60,10 @@ void SumAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> state) {
     state.store(zero);
 }
 uint64_t SumAggregationFunction::getSize() { return inputType->size(); }
+
+//Nautilus::Value<Nautilus::UInt64> SumAggregationFunction::callVectorizedFunction(Nautilus::Value<Nautilus::MemRef> bufferAddress, Nautilus::Value<Nautilus::UInt64> recordIndex, Nautilus::Value<Nautilus::UInt64> fieldOffset) {
+//    auto result = Nautilus::FunctionCall("sum", VectorizedAggregationFunction::sum, bufferAddress, recordIndex, fieldOffset);
+//    return result;
+//}
 
 }// namespace NES::Runtime::Execution::Aggregation

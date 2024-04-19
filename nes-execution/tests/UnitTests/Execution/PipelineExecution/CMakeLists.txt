@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Experimental)
+
 add_nes_execution_test(execution-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
 add_nes_execution_test(execution-selection-pipeline-test "SelectionPipelineTest.cpp")
 add_nes_execution_test(execution-sequence-number-pipeline-test "SequenceNumberPipelineTest.cpp")

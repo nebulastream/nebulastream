@@ -20,4 +20,5 @@ add_source_files(
     PhysicalVectorizedNonKeyedPreAggregationOperator.cpp
     PhysicalVectorizedPipelineOperator.cpp
     PhysicalVectorizeOperator.cpp
+    PhysicalVectorizedBatchAggregationOperator.cpp
 )

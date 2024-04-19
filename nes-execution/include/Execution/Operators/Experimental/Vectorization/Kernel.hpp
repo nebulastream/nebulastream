@@ -16,6 +16,7 @@
 
 #include <Execution/Operators/Experimental/Vectorization/VectorizableOperator.hpp>
 
+#include <Nautilus/Interface/DataTypes/BuiltIns/BuiltInVariable.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 
@@ -48,9 +49,11 @@ public:
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-private:
+    static Value<> getCompilerBuiltInVariable(const std::shared_ptr<NES::Nautilus::BuiltInVariable>& builtInVariable);
+
+  private:
     Descriptor descriptor;
-    std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
+    mutable std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
 };
 
 } // namespace NES::Runtime::Execution::Operators

@@ -20,4 +20,5 @@ add_source_files(
     VectorizedMap.cpp
     VectorizedNonKeyedPreAggregation.cpp
     VectorizedSelection.cpp
+    VectorizedBatchAggregation.cpp
 )

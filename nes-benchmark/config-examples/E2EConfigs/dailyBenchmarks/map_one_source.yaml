@@ -1,13 +1,16 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
-numberOfWorkerThreads: 1, 2, 4 
-bufferSizeInBytes: 512, 1024, 2048, 512, 1024, 2048
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 2048
 numberOfPreAllocatedBuffer: 1000 # eigentlich 10000000
 
 # ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect: 3 #number of experiments
+numberOfMeasurementsToCollect: 1 #number of experiments
+nautilusBackend: CPP_COMPILER_BACKEND
+useCuda: true
+vectorize: true
 
 logicalSources:
   - name: input1

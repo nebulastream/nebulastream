@@ -69,7 +69,12 @@ class AggregationFunction {
      */
     virtual uint64_t getSize() = 0;
 
+//    virtual Nautilus::Value<Nautilus::UInt64> callVectorizedFunction(Nautilus::Value<Nautilus::MemRef> bufferAdress,
+//                                                                     Nautilus::Value<Nautilus::UInt64> recordIndex,
+//                                                                     Nautilus::Value<Nautilus::UInt64> fieldOffset) = 0;
+
     const Nautilus::Record::RecordFieldIdentifier& getInputFieldIdentifier();
+    const Nautilus::Record::RecordFieldIdentifier& getResultFieldIdentifier();
 
     virtual ~AggregationFunction();
 

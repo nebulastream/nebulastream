@@ -10,15 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        AggregationFunction.cpp
-        SumAggregation.cpp
-        CountAggregation.cpp
-        AvgAggregation.cpp
-        MinAggregation.cpp
-        MaxAggregation.cpp
-        HyperLogLogDistinctCountApproximation.cpp
-        QuantileEstimationAggregation.cpp
+add_source_files(
+        nes-execution
+        VectorizedAggregationFunction.cpp
 )
-
-add_subdirectory(Experimental)

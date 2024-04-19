@@ -12,15 +12,17 @@
     limitations under the License.
 */
 
+#include <Execution/Aggregation/Experimental/Vectorization/VectorizedAggregationFunction.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Kernel.hpp>
 #include <Execution/Operators/Experimental/Vectorization/VectorizedNonKeyedPreAggregation.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/BlockDim.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/BlockIdx.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/FieldAccess.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/ThreadIdx.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -46,23 +48,6 @@ VectorizedNonKeyedPreAggregation::VectorizedNonKeyedPreAggregation(
 
 }
 
-// TODO Move this method out of this source file to a more sensible place.
-static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
-    auto ref = createNextValueReference(builtInVariable->getType());
-    Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
-    auto value = builtInVariable->getAsValue();
-    value.ref = ref;
-    return value;
-}
-
-void* getSliceStore() {
-    return nullptr;
-}
-
-uint64_t sum(void* /*buffer*/, uint64_t /*tid*/, uint64_t /*offset*/) {
-    return 0;
-}
-
 void VectorizedNonKeyedPreAggregation::setup(ExecutionContext& ctx) const {
     nonKeyedSlicePreAggregationOperator->setup(ctx);
 }
@@ -76,13 +61,13 @@ void VectorizedNonKeyedPreAggregation::execute(ExecutionContext& ctx, RecordBuff
     // Assume sum aggregation for now. Thus, we can call reduce on the fields.
 
     auto blockDim = std::make_shared<BlockDim>();
-    auto blockDim_x = getCompilerBuiltInVariable(blockDim->x());
+    auto blockDim_x = Kernel::getCompilerBuiltInVariable(blockDim->x());
 
     auto blockIdx = std::make_shared<BlockIdx>();
-    auto blockIdx_x = getCompilerBuiltInVariable(blockIdx->x());
+    auto blockIdx_x = Kernel::getCompilerBuiltInVariable(blockIdx->x());
 
     auto threadIdx = std::make_shared<ThreadIdx>();
-    auto threadIdx_x = getCompilerBuiltInVariable(threadIdx->x());
+    auto threadIdx_x = Kernel::getCompilerBuiltInVariable(threadIdx->x());
 
     auto threadId = blockIdx_x * blockDim_x + threadIdx_x;
 
@@ -100,9 +85,10 @@ void VectorizedNonKeyedPreAggregation::execute(ExecutionContext& ctx, RecordBuff
             NES_ASSERT(fieldIndex, "Invalid field name");
             auto fieldOffset = memoryProvider->getMemoryLayoutPtr()->getFieldOffset(0, fieldIndex.value());
             auto fieldOffsetVal = Value<UInt64>(fieldOffset);
-            auto aggregate = FunctionCall("sum", sum, bufferAddress, recordIndex, fieldOffsetVal);
+            //auto aggregate = aggregationFunction->callVectorizedFunction(bufferAddress, recordIndex, fieldOffsetVal);
+            auto aggregate =FunctionCall("sum", Aggregation::VectorizedAggregationFunction::sum, bufferAddress, recordIndex, fieldOffsetVal);
             if (threadId == 0) {
-                auto sliceStore = FunctionCall("getSliceStore", getSliceStore);
+                auto sliceStore = FunctionCall("getSliceStore", Aggregation::VectorizedAggregationFunction::getSliceStore);
                 sliceStore.store(aggregate);
                 // TODO Timestamp for ingestion time is set in ctx in open() method which happens after kernel compilation.
                 // auto timeFunction = nonKeyedSlicePreAggregationOperator->getTimeFunction();

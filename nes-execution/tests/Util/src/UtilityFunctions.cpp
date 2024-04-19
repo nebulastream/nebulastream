@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <Configurations/Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
@@ -472,5 +474,14 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
     }
 
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
+}
+
+Nautilus::CompilationOptions createVectorizedCompilerOptions() {
+    auto compileOptions = Nautilus::CompilationOptions();
+    compileOptions.setIdentifier("KernelCompilation");
+    compileOptions.setDumpToFile(true);
+    compileOptions.setDumpToConsole(true);
+    compileOptions.setCUDASdkPath(NES::Runtime::Execution::Experimental::Vectorization::CUDA_SDK_PATH);
+    return compileOptions;
 }
 }// namespace NES::Runtime::Execution::Util

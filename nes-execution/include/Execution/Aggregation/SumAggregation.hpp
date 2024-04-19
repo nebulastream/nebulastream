@@ -37,6 +37,9 @@ class SumAggregationFunction : public AggregationFunction {
     void lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRe) override;
     void reset(Nautilus::Value<Nautilus::MemRef> state) override;
     uint64_t getSize() override;
+//    Nautilus::Value<Nautilus::UInt64> callVectorizedFunction(Nautilus::Value<Nautilus::MemRef> bufferAddress,
+//                                                             Nautilus::Value<Nautilus::UInt64> recordIndex,
+//                                                             Nautilus::Value<Nautilus::UInt64> fieldOffset) override;
 };
 }// namespace NES::Runtime::Execution::Aggregation
 

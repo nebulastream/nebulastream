@@ -40,6 +40,7 @@ const CompilerFlags CUDAPlatform::getCompilerFlags() const {
         "-lrt",
         "-lpthread",
         "-Xclang -fcuda-allow-variadic-functions",
+        "-DLLVM_TARGETS_TO_BUILD=\"X86;NVPTX\""
     };
 
     CompilerFlags flags;

@@ -251,6 +251,9 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
 const Nautilus::Record::RecordFieldIdentifier& AggregationFunction::getInputFieldIdentifier() {
     return inputFieldIdentifier;
 }
+const Nautilus::Record::RecordFieldIdentifier& AggregationFunction::getResultFieldIdentifier() {
+    return resultFieldIdentifier;
+}
 
 AggregationFunction::~AggregationFunction() = default;
 

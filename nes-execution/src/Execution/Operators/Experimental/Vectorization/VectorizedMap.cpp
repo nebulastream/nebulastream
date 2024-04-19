@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Experimental/Vectorization/VectorizedMap.hpp>
 
+#include <Execution/Operators/Experimental/Vectorization/Kernel.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/BlockDim.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/BlockIdx.hpp>
@@ -34,26 +35,18 @@ VectorizedMap::VectorizedMap(const std::shared_ptr<Map>& mapOperator,
 
 }
 
-// TODO Move this method out of this source file to a more sensible place.
-static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
-    auto ref = createNextValueReference(builtInVariable->getType());
-    Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
-    auto value = builtInVariable->getAsValue();
-    value.ref = ref;
-    return value;
-}
 
 static void setAsValidInMetadata(uint64_t /*recordIndex*/) {}
 
 void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto blockDim = std::make_shared<BlockDim>();
-    auto blockDim_x = getCompilerBuiltInVariable(blockDim->x());
+    auto blockDim_x = Kernel::getCompilerBuiltInVariable(blockDim->x());
 
     auto blockIdx = std::make_shared<BlockIdx>();
-    auto blockIdx_x = getCompilerBuiltInVariable(blockIdx->x());
+    auto blockIdx_x = Kernel::getCompilerBuiltInVariable(blockIdx->x());
 
     auto threadIdx = std::make_shared<ThreadIdx>();
-    auto threadIdx_x = getCompilerBuiltInVariable(threadIdx->x());
+    auto threadIdx_x = Kernel::getCompilerBuiltInVariable(threadIdx->x());
 
     auto threadId = blockIdx_x * blockDim_x + threadIdx_x;
 

@@ -39,6 +39,9 @@ class BatchAggregation : public ExecutableOperator {
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
+    uint64_t getOperatorHandlerIndex();
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& getAggregationFunctions();
+
   private:
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;

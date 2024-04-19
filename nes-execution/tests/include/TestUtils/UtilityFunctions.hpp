@@ -14,6 +14,7 @@
 #ifndef NES_UTILITYFUNCTIONS_HPP
 #define NES_UTILITYFUNCTIONS_HPP
 
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -205,6 +206,11 @@ PhysicalTypePtr getPhysicalTypePtr() {
     }
     return type;
 }
+
+/**
+ * @brief create Compiler options for CUDA/Vectorization compilation
+ */
+Nautilus::CompilationOptions createVectorizedCompilerOptions();
 
 }// namespace NES::Runtime::Execution::Util
 

@@ -17,7 +17,7 @@
 
 #include <Nautilus/Backends/Executable.hpp>
 
-#include <Compiler/DynamicObject.hpp>
+#include "../../../../../../nes-compiler/include/Compiler/DynamicObject.hpp"
 #include <memory>
 
 namespace NES::Nautilus::Backends {
@@ -39,7 +39,7 @@ public:
      * @param obj the shared object which we invoke at runtime
      * @param wrapperFunctionName the function name of the kernel wrapper
      */
-    KernelExecutable(std::shared_ptr<Compiler::DynamicObject> obj, std::string wrapperFunctionName);
+    KernelExecutable(std::shared_ptr< Compiler::DynamicObject> obj, std::string wrapperFunctionName);
 
     ~KernelExecutable() override = default;
 

@@ -71,6 +71,7 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDALoweringInterface::lowerProxyCall(co
         auto tupleBufferVar = frame.getValue(TUPLE_BUFFER_IDENTIFIER);
         auto tidVar = getVariable(operation->getInputArguments().at(1)->getIdentifier());
         auto offsetVar = getVariable(operation->getInputArguments().at(2)->getIdentifier());
+        //TODO: change number of threads to variable
         auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__sum<uint64_t, 32, 1>({}, {}, {})", var, tupleBufferVar, tidVar, offsetVar));
         code->add(stmt);
         return std::move(code);

@@ -77,4 +77,12 @@ void BatchAggregation::execute(ExecutionContext& ctx, Record& record) const {
 void BatchAggregation::close(ExecutionContext&, RecordBuffer&) const {}
 void BatchAggregation::terminate(ExecutionContext&) const {}
 
+const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& BatchAggregation::getAggregationFunctions() {
+    return aggregationFunctions;
+}
+
+uint64_t BatchAggregation::getOperatorHandlerIndex() {
+    return operatorHandlerIndex ;
+}
+
 }// namespace NES::Runtime::Execution::Operators
