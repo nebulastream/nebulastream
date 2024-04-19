@@ -47,7 +47,7 @@
 
 namespace NES::RequestProcessor {
 
-ISQPRequest::ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries)
+ISQPRequest::ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries, bool deploy)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -56,10 +56,10 @@ ISQPRequest::ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventP
                           ResourceType::SourceCatalog,
                           ResourceType::CoordinatorConfiguration},
                          maxRetries),
-      z3Context(z3Context), events(events) {}
+      z3Context(z3Context), events(events), deploy(deploy) {}
 
-ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries) {
-    return std::make_shared<ISQPRequest>(z3Context, events, maxRetries);
+ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries, bool deploy) {
+    return std::make_shared<ISQPRequest>(z3Context, events, maxRetries, deploy);
 }
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
@@ -150,7 +150,8 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                                           topology,
                                                                                           typeInferencePhase,
                                                                                           coordinatorConfiguration,
-                                                                                          queryCatalog);
+                                                                                          queryCatalog,
+                                                                                          deploy);
             completedAmendments.emplace_back(amendmentInstance->getFuture());
             placementAmendmentQueue->enqueue(amendmentInstance);
         }

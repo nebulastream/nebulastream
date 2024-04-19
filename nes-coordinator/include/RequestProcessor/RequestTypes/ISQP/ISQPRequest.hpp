@@ -92,9 +92,9 @@ using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance
 class ISQPRequest : public AbstractUniRequest {
 
   public:
-    ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries);
+    ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries, bool deploy);
 
-    static ISQPRequestPtr create(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries);
+    static ISQPRequestPtr create(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries, bool deploy = false);
 
   protected:
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
@@ -138,6 +138,7 @@ class ISQPRequest : public AbstractUniRequest {
 
     z3::ContextPtr z3Context;
     std::vector<ISQPEventPtr> events;
+    bool deploy;
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
