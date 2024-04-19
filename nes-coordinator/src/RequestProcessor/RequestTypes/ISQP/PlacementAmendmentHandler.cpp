@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <../../../../../nes-common/include/Util/Logger/Logger.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/PlacementAmendmentHandler.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/PlacementAmendmentInstance.hpp>
 
 namespace NES::Optimizer {
 PlacementAmendmentHandler::PlacementAmendmentHandler(uint16_t numOfHandler, UMPMCAmendmentQueuePtr amendmentQueue)

@@ -31,6 +31,7 @@
 #include <Exceptions/RpcException.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 
 namespace NES {
 class Topology;
@@ -160,7 +161,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             auto completionQueue = std::make_shared<CompletionQueue>();
             startBufferingOnAllSources(reqJson, completionQueue);
             auto events = createEvents(reqJson);
-            bool success = requestHandlerService->queueISQPRequest(events);
+            bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
             //todo: do we have to collect the response of the async events?
             if (success) {
                 NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");

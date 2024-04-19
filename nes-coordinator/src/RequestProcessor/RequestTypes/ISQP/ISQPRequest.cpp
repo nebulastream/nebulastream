@@ -18,8 +18,8 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/PlacementAmendmentHandler.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/PlacementAmendmentInstance.hpp>
 #include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>

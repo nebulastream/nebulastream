@@ -32,7 +32,7 @@
 #include <Health.pb.h>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/PlacementAmendmentHandler.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

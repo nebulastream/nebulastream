@@ -30,7 +30,7 @@
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/PlacementAmendmentHandler.hpp>
 #include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>

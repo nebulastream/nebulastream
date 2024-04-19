@@ -12,15 +12,16 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
-#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Util/DeploymentContext.hpp>
-#include <Util/QueryState.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <../../../../../nes-catalogs/include/Catalogs/Query/QueryCatalog.hpp>
+#include <../../../../../nes-common/include/Util/QueryState.hpp>
+#include <../../../../../nes-common/include/Util/magicenum/magic_enum.hpp>
+#include <../../../../../nes-configurations/include/Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <../../../../../nes-optimizer/include/Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
+#include <../../../../../nes-optimizer/include/Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <../../../../../nes-optimizer/include/Plans/Global/Query/SharedQueryPlan.hpp>
+#include <../../../../../nes-optimizer/include/Util/DeploymentContext.hpp>
+#include <Phases/DeploymentPhase.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/PlacementAmendmentInstance.hpp>
 
 namespace NES::Optimizer {
 
@@ -30,13 +31,15 @@ PlacementAmendmentInstance::create(SharedQueryPlanPtr sharedQueryPlan,
                                    TopologyPtr topology,
                                    Optimizer::TypeInferencePhasePtr typeInferencePhase,
                                    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                   Catalogs::Query::QueryCatalogPtr queryCatalog) {
+                                   Catalogs::Query::QueryCatalogPtr queryCatalog,
+                                   bool deploy) {
     return std::make_unique<PlacementAmendmentInstance>(sharedQueryPlan,
                                                         globalExecutionPlan,
                                                         topology,
                                                         typeInferencePhase,
                                                         coordinatorConfiguration,
-                                                        queryCatalog);
+                                                        queryCatalog,
+                                                        deploy);
 }
 
 PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
@@ -44,9 +47,11 @@ PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr shared
                                                        TopologyPtr topology,
                                                        TypeInferencePhasePtr typeInferencePhase,
                                                        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                       Catalogs::Query::QueryCatalogPtr queryCatalog)
+                                                       Catalogs::Query::QueryCatalogPtr queryCatalog,
+                                                       bool deploy)
     : sharedQueryPlan(sharedQueryPlan), globalExecutionPlan(globalExecutionPlan), topology(topology),
-      typeInferencePhase(typeInferencePhase), coordinatorConfiguration(coordinatorConfiguration), queryCatalog(queryCatalog){};
+      typeInferencePhase(typeInferencePhase), coordinatorConfiguration(coordinatorConfiguration), queryCatalog(queryCatalog),
+      deploy(deploy){};
 
 void PlacementAmendmentInstance::execute() {
     auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
@@ -95,6 +100,11 @@ void PlacementAmendmentInstance::execute() {
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
     } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED) {
         queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "");
+    }
+    if (deploy) {
+        //deployment phase
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
+        deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
     }
     //Mark as completed
     completionPromise.set_value(true);

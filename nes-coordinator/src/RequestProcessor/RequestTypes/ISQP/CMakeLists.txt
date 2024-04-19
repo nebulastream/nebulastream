@@ -13,6 +13,8 @@
 
 add_source_files(nes-coordinator
         ISQPRequest.cpp
+        PlacementAmendmentHandler.cpp
+        PlacementAmendmentInstance.cpp
 )
 
 add_subdirectory(ISQPEvents)
