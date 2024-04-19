@@ -20,17 +20,16 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <utility>
 
@@ -85,6 +84,7 @@ namespace NES::Runtime::Execution::Util {
                                             Statistic::StatisticMetricHash metricHash, uint64_t windowSize, uint64_t windowSlide,
                                             uint64_t width, const std::string& fieldToBuildCountMinOver,
                                             const std::string& timestampFieldName);
+
 
         /**
 * @brief Creates a TupleBuffer from recordPtr
