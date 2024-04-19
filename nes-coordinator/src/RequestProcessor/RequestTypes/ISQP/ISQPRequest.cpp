@@ -228,6 +228,7 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
 
         std::set<OperatorId> upstreamOperatorIds;
         std::set<OperatorId> downstreamOperatorIds;
+        //if (true) {
         if (coordinatorConfiguration->optimizer.enableIncrementalPlacement) {
             //find the pinned operators for the changelog
             auto [upstream, downstream] =

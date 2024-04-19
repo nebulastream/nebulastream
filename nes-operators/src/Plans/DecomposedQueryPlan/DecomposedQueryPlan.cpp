@@ -118,8 +118,12 @@ std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() {
     NES_DEBUG("Get all sink operators by traversing all the root nodes.");
     std::vector<SinkLogicalOperatorPtr> sinkOperators;
     for (const auto& rootOperator : rootOperators) {
-        auto sinkOperator = rootOperator->as<SinkLogicalOperator>();
-        sinkOperators.emplace_back(sinkOperator);
+        auto sinkOperator = rootOperator->as_if<SinkLogicalOperator>();
+        if (sinkOperator) {
+            NES_DEBUG("Insert sink operator to the collection");
+            sinkOperators.emplace_back(sinkOperator);
+        }
+        //sinkOperators.emplace_back(sinkOperator);
     }
     NES_DEBUG("Found {} sink operators.", sinkOperators.size());
     return sinkOperators;
