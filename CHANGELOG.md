@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.97](https://github.com/nebulastream/nebulastream/tree/v0.6.97) (2024-04-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.96...v0.6.97)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Missing method if built with different CMake Flags [\#4783](https://github.com/nebulastream/nebulastream/issues/4783)
+
 ## [v0.6.96](https://github.com/nebulastream/nebulastream/tree/v0.6.96) (2024-04-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.95...v0.6.96)
