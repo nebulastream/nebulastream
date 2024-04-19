@@ -60,8 +60,8 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-message(STATUS "Execution benchmarks status: ${NES_RUNTIME_BENCHMARKS}")
-if (NES_RUNTIME_BENCHMARKS)
+message(STATUS "Execution benchmarks status: ${NES_BUILD_BENCHMARKS}")
+if (NES_BUILD_BENCHMARKS)
     # Add tests with command
     add_subdirectory(benchmark)
     message(STATUS "Execution benchmarks are enabled")
