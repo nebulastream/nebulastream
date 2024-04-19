@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.96](https://github.com/nebulastream/nebulastream/tree/v0.6.96) (2024-04-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.95...v0.6.96)
+
+**Implemented enhancements:**
+
+- \[TASK\] Two UtilityFunctions.hpp [\#4716](https://github.com/nebulastream/nebulastream/issues/4716)
+
 ## [v0.6.95](https://github.com/nebulastream/nebulastream/tree/v0.6.95) (2024-04-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.94...v0.6.95)
