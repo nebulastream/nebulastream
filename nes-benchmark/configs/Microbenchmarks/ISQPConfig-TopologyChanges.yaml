@@ -50,35 +50,4 @@ RunConfig:
     NumOfRemoveQueries: 0
     NumOfAddQueries: 1
     ConfNum: 5
-  - QueryPlacementStrategy: TopDown
-    IncrementalPlacement: true
-    PlacementAmendmentThreadCount: 10
-    PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 10
-    NumOfRemoveQueries: 0
-    NumOfAddQueries: 10
-    ConfNum: 6
-  - QueryPlacementStrategy: TopDown
-    IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 10
-    PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 10
-    NumOfRemoveQueries: 0
-    NumOfAddQueries: 10
-    ConfNum: 7
-  - QueryPlacementStrategy: TopDown
-    IncrementalPlacement: true
-    PlacementAmendmentThreadCount: 10
-    PlacementAmendmentMode: OPTIMISTIC
-    BatchSize: 10
-    NumOfRemoveQueries: 0
-    NumOfAddQueries: 10
-    ConfNum: 8
-  - QueryPlacementStrategy: TopDown
-    IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 10
-    PlacementAmendmentMode: OPTIMISTIC
-    BatchSize: 10
-    NumOfRemoveQueries: 0
-    NumOfAddQueries: 10
-    ConfNum: 9
+
