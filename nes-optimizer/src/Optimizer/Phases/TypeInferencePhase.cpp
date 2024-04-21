@@ -47,7 +47,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     auto sinkOperators = queryPlan->getSinkOperators();
 
     if (sourceOperators.empty() || sinkOperators.empty()) {
-        throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
+        throw TypeInferenceException(queryPlan->getQueryId(), "TypeInferencePhase: Found no source or sink operators");
     }
 
     performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators);
