@@ -32,6 +32,10 @@ DeploymentPhase::DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCa
 }
 
 void DeploymentPhase::execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType) {
+    if (deploymentContexts.empty()) {
+        NES_INFO("No decomposed queries to deploy.");
+        return;
+    }
 
     NES_INFO("Register or unregister {} decomposed queries.", deploymentContexts.size());
     registerOrStopDecomposedQueryPlan(deploymentContexts, requestType);
@@ -45,7 +49,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
 
     // TODO as part of issue #4699, we will solve this better
     QueryState sharedQueryState = QueryState::REGISTERED;
-    SharedQueryId sharedQueryId;
+    SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
     //std::vector<RpcAsyncRequest> asyncRequests;
     for (const auto& deploymentContext : deploymentContexts) {
         //auto queueForDeploymentContext = std::make_shared<CompletionQueue>();
