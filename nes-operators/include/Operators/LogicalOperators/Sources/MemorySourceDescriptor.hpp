@@ -38,8 +38,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                     GatheringMode gatheringMode,
                                     uint64_t sourceAffinity,
                                     uint64_t taskQueueId,
-                                    std::string logicalSourceName,
-                                    std::string physicalSourceName);
+                                    const std::string& logicalSourceName,
+                                    const std::string& physicalSourceName);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -76,7 +76,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @brief returns the shared ptr to the memory area
      * @return the shared ptr to the memory area
      */
-    std::shared_ptr<uint8_t> getMemoryArea();
+    std::shared_ptr<uint8_t> getMemoryArea() const;
 
     /**
      * @brief returns the size of the stored memory area

@@ -44,7 +44,7 @@ class QueryPlanSerializationUtil {
      * @param serializedQueryPlan the serialized query plan.
      * @return the pointer to the deserialized query plan
      */
-    static QueryPlanPtr deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan);
+    static QueryPlanPtr deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };
 }// namespace NES
 #endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_

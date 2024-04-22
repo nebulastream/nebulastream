@@ -76,13 +76,13 @@ class QueryPlan {
      * @brief Get all source operators
      * @return vector of logical source operators
      */
-    std::vector<SourceLogicalOperatorPtr> getSourceOperators();
+    std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
 
     /**
      * @brief Get all sink operators
      * @return vector of logical sink operators
      */
-    std::vector<SinkLogicalOperatorPtr> getSinkOperators();
+    std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
     /**
      * @brief Appends an operator to the query plan and make the new operator as root.
@@ -93,14 +93,14 @@ class QueryPlan {
     /**
      * @brief Returns string representation of the query.
      */
-    std::string toString();
+    std::string toString() const;
 
     /**
      * @brief Get the list of root operators for the query graph.
      * NOTE: in certain stages the sink operators might not be the root operators
      * @return
      */
-    std::vector<OperatorPtr> getRootOperators();
+    std::vector<OperatorPtr> getRootOperators() const;
 
     /**
      * add subQuery's rootnode into the current node for merging purpose.
@@ -129,7 +129,7 @@ class QueryPlan {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<Operator>();
-                if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                if (visitedOpIds.contains(visitingOp->getId())) {
                     // skip rest of the steps as the node found in already visited node list
                     continue;
                 }
@@ -147,13 +147,13 @@ class QueryPlan {
     * @note: in certain stages the source operators might not be Leaf operators
     * @return returns a vector of leaf operators
     */
-    std::vector<OperatorPtr> getLeafOperators();
+    std::vector<OperatorPtr> getLeafOperators() const;
 
     /**
      * @brief Get all operators in the query plan
      * @return unordered_set of operators
      */
-    std::unordered_set<OperatorPtr> getAllOperators();
+    std::unordered_set<OperatorPtr> getAllOperators() const;
 
     /**
      * Find if the operator with the input Id exists in the plan.
@@ -169,14 +169,14 @@ class QueryPlan {
      * @param operatorId : the input operator id
      * @return operator with the input id
      */
-    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId);
+    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
 
     /**
      * @brief Gets the operator node for the statistic id. This method traverses all operators in the query plan.
      * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @return Operator with the statistic id
      */
-    OperatorPtr getOperatorWithStatisticId(StatisticId statisticId);
+    OperatorPtr getOperatorWithStatisticId(StatisticId statisticId) const;
 
     /**
      * Set the query Id for the plan
@@ -202,7 +202,7 @@ class QueryPlan {
      * @brief Set the logical sources used in the query
      * @param sourceName: the name of the logical source
      */
-    void setSourceConsumed(const std::string& sourceName);
+    void setSourceConsumed(std::string_view sourceName);
 
     /**
      * @brief Set query placement strategy
@@ -229,7 +229,7 @@ class QueryPlan {
      * @brief Get state of the query plan
      * @return query state
      */
-    QueryState getQueryState();
+    QueryState getQueryState() const;
 
     /**
      * @brief Set state of the query plan
@@ -254,7 +254,7 @@ class QueryPlan {
      * @brief Creates a new query plan with a query id and a query sub plan id.
      * @param queryId :  the query id
      */
-    QueryPlan(QueryId queryId);
+    explicit QueryPlan(QueryId queryId);
 
     /**
      * @brief initialize query plan with a root operator
@@ -277,7 +277,7 @@ class QueryPlan {
                                                                            const std::set<OperatorPtr>& targetOperators);
 
     std::vector<OperatorPtr> rootOperators{};
-    QueryId queryId;
+    QueryId queryId = INVALID_QUERY_ID;
     std::string sourceConsumed;
     QueryState currentState;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request

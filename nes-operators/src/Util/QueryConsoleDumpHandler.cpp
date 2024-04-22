@@ -39,7 +39,7 @@ void QueryConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t de
 
     std::vector<std::string> multiLineNodeString = op->toMultilineString();
     for (const std::string& line : multiLineNodeString) {
-        for (auto i{0ull}; i < indent * depth; ++i) {
+        for (auto i{0ULL}; i < indent * depth; ++i) {
             if (i % indent == 0) {
                 out << '|';
             } else {

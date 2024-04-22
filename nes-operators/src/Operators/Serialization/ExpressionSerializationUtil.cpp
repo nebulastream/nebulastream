@@ -131,7 +131,7 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         for (const auto& child : functionExpressionNode->getChildren()) {
             auto argument = serializedExpressionNode.add_arguments();
             serializeExpression(child->as<ExpressionNode>(), argument);
-        };
+        }
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
 
     } else {
@@ -168,7 +168,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as FieldAccess expression node.");
             SerializableExpression_FieldAccessExpression serializedFieldAccessExpression;
             serializedExpression.details().UnpackTo(&serializedFieldAccessExpression);
-            auto name = serializedFieldAccessExpression.fieldname();
+            const auto& name = serializedFieldAccessExpression.fieldname();
             expressionNodePtr = FieldAccessExpressionNode::create(name);
 
         } else if (serializedExpression.details().Is<SerializableExpression_FieldRenameExpression>()) {
@@ -183,7 +183,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
                                 "should be of type FieldAccessExpressionNode, but was a {}",
                                 originalFieldAccessExpression->toString());
             }
-            auto newFieldName = serializedFieldRenameExpression.newfieldname();
+            const auto& newFieldName = serializedFieldRenameExpression.newfieldname();
             expressionNodePtr =
                 FieldRenameExpressionNode::create(originalFieldAccessExpression->as<FieldAccessExpressionNode>(), newFieldName);
 
@@ -192,7 +192,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as FieldAssignment expression node.");
             SerializableExpression_FieldAssignmentExpression serializedFieldAccessExpression;
             serializedExpression.details().UnpackTo(&serializedFieldAccessExpression);
-            auto* field = serializedFieldAccessExpression.mutable_field();
+            const auto* field = serializedFieldAccessExpression.mutable_field();
             auto fieldStamp = DataTypeSerializationUtil::deserializeDataType(field->type());
             auto fieldAccessNode = FieldAccessExpressionNode::create(fieldStamp, field->fieldname());
             auto fieldAssignmentExpression = deserializeExpression(serializedFieldAccessExpression.assignment());
@@ -204,11 +204,11 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as function expression node.");
             SerializableExpression_FunctionExpression functionExpression;
             serializedExpression.details().UnpackTo(&functionExpression);
-            auto functionName = functionExpression.functionname();
+            const auto& functionName = functionExpression.functionname();
             std::vector<ExpressionNodePtr> arguments;
-            for (auto arg : functionExpression.arguments()) {
+            for (const auto& arg : functionExpression.arguments()) {
                 arguments.emplace_back(deserializeExpression(arg));
-            };
+            }
             auto resultStamp = DataTypeSerializationUtil::deserializeDataType(serializedExpression.stamp());
             auto functionExpressionNode = FunctionExpression::create(resultStamp, functionName, arguments);
             expressionNodePtr = functionExpressionNode;
@@ -231,7 +231,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
 
             //todo: deserialization might be possible more efficiently
             for (int i = 0; i < serializedExpressionNode.left_size(); i++) {
-                auto leftNode = serializedExpressionNode.left(i);
+                const auto& leftNode = serializedExpressionNode.left(i);
                 leftExps.push_back(deserializeExpression(leftNode));
             }
             auto right = deserializeExpression(serializedExpressionNode.right());

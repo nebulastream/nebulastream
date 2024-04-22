@@ -35,7 +35,7 @@ class SendingPolicyLazy : public SendingPolicy {
     /**
      * @brief Virtual destructor
      */
-    virtual ~SendingPolicyLazy() = default;
+    ~SendingPolicyLazy() override = default;
 
     bool operator==(const SendingPolicy& rhs) const override;
 

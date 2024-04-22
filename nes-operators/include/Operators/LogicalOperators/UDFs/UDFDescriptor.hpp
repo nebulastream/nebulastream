@@ -87,7 +87,7 @@ class UDFDescriptor {
     bool instanceOf() {
         if (dynamic_cast<UDFDescriptor*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 

@@ -18,6 +18,9 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
 
+class FieldRenameExpressionNode;
+using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
+
 /**
  * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .as in the query
  */
@@ -35,7 +38,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-    std::string getNewFieldName();
+    std::string getNewFieldName() const;
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
@@ -53,7 +56,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     FieldAccessExpressionNodePtr getOriginalField() const;
 
   protected:
-    explicit FieldRenameExpressionNode(FieldRenameExpressionNode* other);
+    explicit FieldRenameExpressionNode(const FieldRenameExpressionNodePtr other);
 
   private:
     FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName);
@@ -62,7 +65,6 @@ class FieldRenameExpressionNode : public ExpressionNode {
     std::string newFieldName;
 };
 
-using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
 
 }// namespace NES
 

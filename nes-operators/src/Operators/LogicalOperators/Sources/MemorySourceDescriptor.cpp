@@ -27,8 +27,8 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
                                                GatheringMode gatheringMode,
                                                uint64_t sourceAffinity,
                                                uint64_t taskQueueId,
-                                               std::string logicalSourceName,
-                                               std::string physicalSourceName)
+                                               const std::string& logicalSourceName,
+                                               const std::string& physicalSourceName)
     : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), memoryArea(std::move(memoryArea)),
       memoryAreaSize(memoryAreaSize), numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {
@@ -68,7 +68,7 @@ bool MemorySourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     return schema == otherMemDescr->schema;
 }
 
-std::shared_ptr<uint8_t> MemorySourceDescriptor::getMemoryArea() { return memoryArea; }
+std::shared_ptr<uint8_t> MemorySourceDescriptor::getMemoryArea() const { return memoryArea; }
 
 size_t MemorySourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize; }
 

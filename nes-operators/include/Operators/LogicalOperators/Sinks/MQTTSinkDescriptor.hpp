@@ -109,13 +109,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     bool getAsynchronousClient() const;
 
-
-    /**
-     * @brief getter for number of origins
-     * @return number of origins
-     */
-    uint64_t getNumberOfOrigins() const;
-
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 

@@ -48,8 +48,8 @@ class LambdaSourceDescriptor : public SourceDescriptor {
         GatheringMode gatheringMode,
         uint64_t sourceAffinity,
         uint64_t taskQueueId,
-        std::string logicalSourceName,
-        std::string physicalSourceName);
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName);
 
     /**
      * @brief Factory method to create a LambdaSourceDescriptor object
@@ -67,8 +67,8 @@ class LambdaSourceDescriptor : public SourceDescriptor {
            GatheringMode gatheringMode,
            uint64_t sourceAffinity = 0,
            uint64_t taskQueueId = 0,
-           std::string logicalSourceName = "",
-           std::string physicalSourceName = "");
+           const std::string& logicalSourceName = "",
+           const std::string& physicalSourceName = "");
 
     /**
      * @brief Provides the string representation of the memory source

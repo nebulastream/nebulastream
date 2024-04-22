@@ -46,7 +46,7 @@ bool RenameSourceOperator::inferSchema() {
     }
     //Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (auto& field : outputSchema->fields) {
+    for (const auto& field : outputSchema->fields) {
         //Extract field name without qualifier
         auto fieldName = field->getName();
         //Add new qualifier name to the field and update the field name
@@ -55,7 +55,7 @@ bool RenameSourceOperator::inferSchema() {
     return true;
 }
 
-std::string RenameSourceOperator::getNewSourceName() { return newSourceName; }
+std::string RenameSourceOperator::getNewSourceName() const { return newSourceName; }
 
 OperatorPtr RenameSourceOperator::copy() {
     auto copy = LogicalOperatorFactory::createRenameSourceOperator(newSourceName, id);
@@ -66,7 +66,7 @@ OperatorPtr RenameSourceOperator::copy() {
     copy->setOperatorState(operatorState);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -77,7 +77,7 @@ void RenameSourceOperator::inferStringSignature() {
     NES_TRACE("RenameSourceOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }

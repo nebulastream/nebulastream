@@ -15,7 +15,10 @@
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 namespace NES {
 
-KafkaSinkDescriptor::KafkaSinkDescriptor(std::string sinkFormat, std::string topic, std::string brokers, uint64_t timeout)
+KafkaSinkDescriptor::KafkaSinkDescriptor(const std::string& sinkFormat,
+                                         const std::string& topic,
+                                         const std::string& brokers,
+                                         uint64_t timeout)
     : sinkFormat(sinkFormat), topic(topic), brokers(brokers), timeout(timeout) {}
 
 const std::string& KafkaSinkDescriptor::getTopic() const { return topic; }
@@ -23,7 +26,11 @@ const std::string& KafkaSinkDescriptor::getTopic() const { return topic; }
 const std::string& KafkaSinkDescriptor::getBrokers() const { return brokers; }
 
 uint64_t KafkaSinkDescriptor::getTimeout() const { return timeout; }
-SinkDescriptorPtr KafkaSinkDescriptor::create(std::string sinkFormat, std::string topic, std::string brokers, uint64_t timeout) {
+
+SinkDescriptorPtr KafkaSinkDescriptor::create(const std::string& sinkFormat,
+                                              const std::string& topic,
+                                              const std::string& brokers,
+                                              uint64_t timeout) {
     return std::make_shared<KafkaSinkDescriptor>(KafkaSinkDescriptor(sinkFormat, topic, brokers, timeout));
 }
 
@@ -38,6 +45,6 @@ bool KafkaSinkDescriptor::equal(SinkDescriptorPtr const& other) {
         && sinkFormat == otherSinkDescriptor->sinkFormat && timeout == otherSinkDescriptor->timeout;
 }
 
-std::string KafkaSinkDescriptor::getSinkFormatAsString() { return sinkFormat; }
+std::string KafkaSinkDescriptor::getSinkFormatAsString() const { return sinkFormat; }
 
 }// namespace NES

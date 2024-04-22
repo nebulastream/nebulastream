@@ -44,7 +44,7 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
-    const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
 
     /**
@@ -71,9 +71,9 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
      * @param windowEndFieldName
      * @param windowKeyFieldName
      */
-    void setWindowStartEndKeyFieldName(const std::string& windowStartFieldName,
-                                       const std::string& windowEndFieldName,
-                                       const std::string& windowKeyFieldName);
+    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName,
+                                       std::string_view windowEndFieldName,
+                                       std::string_view windowKeyFieldName);
 
   private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;

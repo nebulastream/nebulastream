@@ -31,7 +31,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @brief Factory method to create a ConstantValueExpressionNode.
      */
     static ExpressionNodePtr create(ValueTypePtr const& constantValue);
-    virtual ~ConstantValueExpressionNode() noexcept = default;
+    ~ConstantValueExpressionNode() noexcept override = default;
 
     /**
      * @brief Returns the constant value.
@@ -65,7 +65,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
     ExpressionNodePtr copy() override;
 
   protected:
-    explicit ConstantValueExpressionNode(ConstantValueExpressionNode* other);
+    explicit ConstantValueExpressionNode(const ConstantValueExpressionNode* other);
 
   private:
     explicit ConstantValueExpressionNode(ValueTypePtr const& constantValue);

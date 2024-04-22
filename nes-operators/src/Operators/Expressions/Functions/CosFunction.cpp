@@ -30,6 +30,6 @@ class CosFunction : public UnaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static LogicalFunctionRegistry::Add<CosFunction> cosFunction("cos");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<CosFunction> cosFunction("cos");
 
 }// namespace NES

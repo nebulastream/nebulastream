@@ -43,7 +43,7 @@ class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOpe
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
 
     /**
      * @brief Sets the new origin id also to the window definition

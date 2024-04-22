@@ -69,13 +69,6 @@ class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
     virtual bool equal(const StatisticMetric&) const;
 
     /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    virtual bool operator!=(const StatisticMetric& rhs) const { return !(*this == rhs); }
-
-    /**
      * @brief Checks if the current Metric is of type MetricType
      * @tparam StatisticMetricType
      * @return bool true if node is of Metric

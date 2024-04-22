@@ -51,11 +51,6 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      */
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
-    /**
-     * @brief return the schema
-     * @return
-     */
-    SchemaPtr getSchema() const;
 
     /**
      * @brief return the path to the table file to be loaded.
@@ -67,7 +62,7 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      * @brief Getter for lateStart.
      * @returns lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      */
-    bool getLateStart();
+    bool getLateStart() const;
 
     SourceDescriptorPtr copy() override;
 

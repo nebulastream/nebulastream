@@ -16,7 +16,7 @@
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
-OrExpressionNode::OrExpressionNode(){};
+OrExpressionNode::OrExpressionNode() = default;
 
 OrExpressionNode::OrExpressionNode(OrExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 

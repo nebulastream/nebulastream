@@ -37,19 +37,19 @@ class WindowAggregationDescriptor {
     * Returns the result field of the aggregation
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr as();
+    ExpressionNodePtr as() const;
 
     /**
     * Returns the result field of the aggregation
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr on();
+    ExpressionNodePtr on() const;
 
     /**
      * @brief Returns the type of this aggregation.
      * @return WindowAggregationDescriptor::Type
      */
-    Type getType();
+    Type getType() const;
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
@@ -78,9 +78,9 @@ class WindowAggregationDescriptor {
      */
     virtual DataTypePtr getFinalAggregateStamp() = 0;
 
-    std::string toString();
+    std::string toString() const;
 
-    std::string getTypeAsString();
+    std::string getTypeAsString() const;
 
     /**
      * @brief Check if input window aggregation is equal to this window aggregation definition by checking the aggregation type,
@@ -88,7 +88,7 @@ class WindowAggregationDescriptor {
      * @param otherWindowAggregationDescriptor : other window aggregation definition
      * @return true if equal else false
      */
-    bool equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor);
+    bool equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) const;
 
   protected:
     explicit WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField);

@@ -39,13 +39,13 @@ class ExpressionNode : public Node {
   public:
     explicit ExpressionNode(DataTypePtr stamp);
 
-    ~ExpressionNode() = default;
+    ~ExpressionNode() override = default;
 
     /**
      * @brief Indicates if this expression is a predicate -> if its result stamp is a boolean
      * @return
      */
-    bool isPredicate();
+    bool isPredicate() const;
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
@@ -73,7 +73,7 @@ class ExpressionNode : public Node {
     virtual ExpressionNodePtr copy() = 0;
 
   protected:
-    explicit ExpressionNode(ExpressionNode* other);
+    explicit ExpressionNode(const ExpressionNode* other);
 
     /**
      * @brief declares the type of this expression.
@@ -81,6 +81,5 @@ class ExpressionNode : public Node {
      */
     DataTypePtr stamp;
 };
-using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 }// namespace NES
 #endif // NES_OPERATORS_INCLUDE_OPERATORS_EXPRESSIONS_EXPRESSIONNODE_HPP_

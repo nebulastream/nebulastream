@@ -14,8 +14,6 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>

@@ -21,10 +21,9 @@
 
 namespace NES {
 
-LogicalOperator::LogicalOperator(OperatorId id)
-    : Operator(id), z3Signature(nullptr), hashBasedSignature(), hashGenerator(), operatorState(OperatorState::TO_BE_PLACED) {}
+LogicalOperator::LogicalOperator(OperatorId id) : Operator(id) {}
 
-Optimizer::QuerySignaturePtr LogicalOperator::getZ3Signature() { return z3Signature; }
+Optimizer::QuerySignaturePtr LogicalOperator::getZ3Signature() const { return z3Signature; }
 
 void LogicalOperator::inferZ3Signature(const Optimizer::QuerySignatureContext& context) {
     if (z3Signature) {
@@ -34,7 +33,7 @@ void LogicalOperator::inferZ3Signature(const Optimizer::QuerySignatureContext& c
     NES_TRACE("Inferring Z3 expressions for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferZ3Signature(context);
     }
@@ -43,14 +42,14 @@ void LogicalOperator::inferZ3Signature(const Optimizer::QuerySignatureContext& c
 
 void LogicalOperator::setZ3Signature(Optimizer::QuerySignaturePtr signature) { this->z3Signature = std::move(signature); }
 
-std::map<size_t, std::set<std::string>> LogicalOperator::getHashBasedSignature() { return hashBasedSignature; }
+std::map<size_t, std::set<std::string>> LogicalOperator::getHashBasedSignature() const { return hashBasedSignature; }
 
 void LogicalOperator::setHashBasedSignature(std::map<size_t, std::set<std::string>> signature) {
     this->hashBasedSignature = std::move(signature);
 }
 
 void LogicalOperator::updateHashBasedSignature(size_t hashCode, const std::string& stringSignature) {
-    if (hashBasedSignature.find(hashCode) != hashBasedSignature.end()) {
+    if (hashBasedSignature.contains(hashCode)) {
         auto stringSignatures = hashBasedSignature[hashCode];
         stringSignatures.emplace(stringSignature);
         hashBasedSignature[hashCode] = stringSignatures;
@@ -60,57 +59,52 @@ void LogicalOperator::updateHashBasedSignature(size_t hashCode, const std::strin
 }
 
 void LogicalOperator::setOperatorState(NES::OperatorState newOperatorState) {
-
+    using enum OperatorState;
     //Set the new operator state after validating the previous state
     switch (newOperatorState) {
-        case OperatorState::TO_BE_PLACED:
+        case TO_BE_PLACED:
             // an operator in the state TO_BE_PLACED or TO_BE_REPLACED can be changed to TO_BE_PLACED
-            if (this->operatorState == OperatorState::TO_BE_PLACED || this->operatorState == OperatorState::TO_BE_REPLACED) {
+            if (this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REPLACED) {
                 this->operatorState = newOperatorState;
                 break;
             }
-            throw Exceptions::InvalidOperatorStateException(id,
-                                                            {OperatorState::TO_BE_REMOVED, OperatorState::PLACED},
-                                                            this->operatorState);
-        case OperatorState::TO_BE_REMOVED:
-            if (this->operatorState != OperatorState::REMOVED) {
-                this->operatorState = OperatorState::TO_BE_REMOVED;
+            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_REMOVED, PLACED}, this->operatorState);
+        case TO_BE_REMOVED:
+            if (this->operatorState != REMOVED) {
+                this->operatorState = TO_BE_REMOVED;
                 break;
             }
             // an operator can be marked as TO_BE_REMOVED only if it is not in the state REMOVED.
             throw Exceptions::InvalidOperatorStateException(
                 id,
-                {OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
-                this->operatorState);
-        case OperatorState::TO_BE_REPLACED:
-            if (this->operatorState != OperatorState::REMOVED && this->operatorState != OperatorState::TO_BE_REMOVED) {
-                this->operatorState = OperatorState::TO_BE_REPLACED;
+                                                            {TO_BE_REMOVED, TO_BE_PLACED, PLACED, TO_BE_REPLACED},
+                                                            this->operatorState);
+        case TO_BE_REPLACED:
+            if (this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED) {
+                this->operatorState = TO_BE_REPLACED;
                 break;
             }
             // an operator can be marked as TO_BE_REPLACED only if it is not in the state REMOVED or TO_BE_REMOVED.
-            throw Exceptions::InvalidOperatorStateException(
-                id,
-                {OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
-                this->operatorState);
-        case OperatorState::PLACED:
-            if (this->operatorState != OperatorState::REMOVED && this->operatorState != OperatorState::TO_BE_REMOVED) {
-                this->operatorState = OperatorState::PLACED;
+            throw Exceptions::InvalidOperatorStateException(id,
+                                                            {TO_BE_PLACED, PLACED, OperatorState::TO_BE_REPLACED},
+                                                            this->operatorState);
+        case PLACED:
+            if (this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED) {
+                this->operatorState = PLACED;
                 break;
             }
             // an operator can be marked as PLACED only if it is not in the state REMOVED or TO_BE_REMOVED or already PLACED.
-            throw Exceptions::InvalidOperatorStateException(id,
-                                                            {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REPLACED},
-                                                            this->operatorState);
-        case OperatorState::REMOVED:
-            if (this->operatorState == OperatorState::TO_BE_PLACED || this->operatorState == OperatorState::TO_BE_REMOVED) {
-                this->operatorState = OperatorState::REMOVED;
+            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_PLACED, TO_BE_REPLACED}, this->operatorState);
+        case REMOVED:
+            if (this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REMOVED) {
+                this->operatorState = REMOVED;
                 break;
             }
             // an operator can be marked as REMOVED only if it is in the state TO_BE_REMOVED.
-            throw Exceptions::InvalidOperatorStateException(id, {OperatorState::TO_BE_REMOVED}, this->operatorState);
+            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_REMOVED}, this->operatorState);
     }
 }
 
-OperatorState LogicalOperator::getOperatorState() { return operatorState; }
+OperatorState LogicalOperator::getOperatorState() const { return operatorState; }
 
 }// namespace NES

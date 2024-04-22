@@ -23,7 +23,7 @@ namespace NES {
 class NegateExpressionNode : public LogicalUnaryExpressionNode {
   public:
     NegateExpressionNode();
-    ~NegateExpressionNode() = default;
+    ~NegateExpressionNode() override = default;
 
     /**
      * @brief Create a new negate expression

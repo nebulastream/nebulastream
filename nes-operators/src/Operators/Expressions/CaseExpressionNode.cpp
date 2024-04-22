@@ -24,7 +24,6 @@ CaseExpressionNode::CaseExpressionNode(CaseExpressionNode* other) : ExpressionNo
     for (auto& whenItr : otherWhenChildren) {
         addChildWithEqual(whenItr->copy());
     }
-
     addChildWithEqual(getDefaultExp()->copy());
 }
 
@@ -41,26 +40,24 @@ void CaseExpressionNode::inferStamp( SchemaPtr schema) {
     auto defaultExp = getDefaultExp();
     defaultExp->inferStamp( schema);
     if (defaultExp->getStamp()->isUndefined()) {
-        throw std::logic_error("CaseExpressionNode: Error during stamp inference. Right type must be defined, but was:"
-                               + defaultExp->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("Error during stamp inference. Right type must be defined, but was: {}",
+                                defaultExp->getStamp()->toString());
     }
 
     for (auto elem : whenChildren) {
         elem->inferStamp( schema);
         //all elements in whenChildren must be WhenExpressionNodes
         if (!elem->instanceOf<WhenExpressionNode>()) {
-            throw std::logic_error("CaseExpressionNode: Error during stamp inference."
-                                   "All expressions in when expression vector must be when expressions, but "
-                                   + elem->toString() + " is not a when expression.");
+            NES_THROW_RUNTIME_ERROR(
+                "Error during stamp inference. All expressions in when expression vector must be when expressions, but "
+                + elem->toString() + " is not a when expression.");
         }
         //all elements must have same stamp as defaultExp value
         if (!defaultExp->getStamp()->equals(elem->getStamp())) {
-            throw std::logic_error("CaseExpressionNode: Error during stamp inference."
-                                   "All elements must have same stamp as defaultExp default value, but element "
-                                   + elem->toString() + " has:" + elem->getStamp()->toString()
-                                   + "."
-                                     "Right was: "
-                                   + defaultExp->getStamp()->toString());
+            NES_THROW_RUNTIME_ERROR(
+                "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element "
+                + elem->toString() + " has: " + elem->getStamp()->toString()
+                + ". Right was: " + defaultExp->getStamp()->toString());
         }
     }
 
@@ -71,7 +68,7 @@ void CaseExpressionNode::inferStamp( SchemaPtr schema) {
 void CaseExpressionNode::setChildren(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp) {
     for (auto elem : whenExps) {
         addChildWithEqual(elem);
-    };
+    }
     addChildWithEqual(defaultExp);
 }
 
@@ -82,8 +79,7 @@ std::vector<ExpressionNodePtr> CaseExpressionNode::getWhenChildren() const {
     std::vector<ExpressionNodePtr> whenChildren;
     for (auto whenIter = children.begin(); whenIter != children.end() - 1; ++whenIter) {
         whenChildren.push_back(whenIter->get()->as<ExpressionNode>());
-    };
-
+    }
     return whenChildren;
 }
 
@@ -125,7 +121,6 @@ std::string CaseExpressionNode::toString() const {
 ExpressionNodePtr CaseExpressionNode::copy() {
     std::vector<ExpressionNodePtr> copyOfWhenExpressions;
     for (auto whenExpression : getWhenChildren()) {
-        auto expChild = whenExpression->as<ExpressionNode>()->copy();
         copyOfWhenExpressions.push_back(whenExpression->as<ExpressionNode>()->copy());
     }
     return CaseExpressionNode::create(copyOfWhenExpressions, getDefaultExp()->copy());

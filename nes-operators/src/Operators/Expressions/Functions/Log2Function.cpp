@@ -32,6 +32,6 @@ class Log2Function : public UnaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static LogicalFunctionRegistry::Add<Log2Function> logFunction("log2");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<Log2Function> logFunction("log2");
 
 }// namespace NES

@@ -37,13 +37,6 @@ class SendingPolicy {
     virtual bool operator==(const SendingPolicy& rhs) const = 0;
 
     /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    virtual bool operator!=(const SendingPolicy& rhs) const {return !(*this == rhs); };
-
-    /**
      * @brief Checks if the current SendingPolicy is of type SendingPolicyType
      * @tparam SendingPolicyType
      * @return bool true if node is of SendingPolicyType

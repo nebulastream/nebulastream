@@ -38,15 +38,15 @@ TimeCharacteristicPtr TimeCharacteristic::createIngestionTime() {
     return std::make_shared<TimeCharacteristic>(Type::IngestionTime);
 }
 
-AttributeFieldPtr TimeCharacteristic::getField() { return field; }
+AttributeFieldPtr TimeCharacteristic::getField() const { return field; }
 
-TimeCharacteristic::Type TimeCharacteristic::getType() { return type; }
+TimeCharacteristic::Type TimeCharacteristic::getType() const { return type; }
 
-TimeUnit TimeCharacteristic::getTimeUnit() { return unit; }
+TimeUnit TimeCharacteristic::getTimeUnit() const { return unit; }
 
-void TimeCharacteristic::setTimeUnit(const TimeUnit newUnit) { this->unit = newUnit; }
+void TimeCharacteristic::setTimeUnit(const TimeUnit& newUnit) { this->unit = newUnit; }
 
-std::string TimeCharacteristic::toString() {
+std::string TimeCharacteristic::toString() const {
     std::stringstream ss;
     ss << "TimeCharacteristic: ";
     ss << " type=" << getTypeAsString();
@@ -58,7 +58,7 @@ std::string TimeCharacteristic::toString() {
     return ss.str();
 }
 
-std::string TimeCharacteristic::getTypeAsString() {
+std::string TimeCharacteristic::getTypeAsString() const {
     switch (type) {
         case Type::IngestionTime: return "IngestionTime";
         case Type::EventTime: return "EventTime";

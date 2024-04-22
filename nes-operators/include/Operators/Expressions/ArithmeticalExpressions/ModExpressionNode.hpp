@@ -22,13 +22,13 @@ namespace NES {
 class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit ModExpressionNode(DataTypePtr stamp);
-    ~ModExpressionNode() noexcept final = default;
+    ~ModExpressionNode() noexcept override = default;
     /**
          * @brief Create a new MODULO expression
          */
     static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
          * @brief Determine returned datatype (-> UInt64/Double/ Throw exception for invalid inputs). Override ArithmeticalBinaryExpressionNode::inferStamp to tighten bounds.
@@ -37,15 +37,15 @@ class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
          * @param typeInferencePhaseContext
          * @param schema: the current schema.
          */
-    void inferStamp(SchemaPtr schema) final;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
         * @brief Create a deep copy of this expression node.
         * @return ExpressionNodePtr
         */
-    ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit ModExpressionNode(ModExpressionNode* other);
 };
 

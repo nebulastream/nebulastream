@@ -40,7 +40,7 @@ class QueryPlanBuilder {
       * @param queryPlan the queryPlan to add the projection node
       * @return the updated queryPlan
       */
-    static QueryPlanPtr addProjection(std::vector<ExpressionNodePtr> expressions, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addProjection(const std::vector<ExpressionNodePtr>& expressions, QueryPlanPtr queryPlan);
 
     /**
      * @brief this call add the rename operator to the queryPlan, this operator renames the source

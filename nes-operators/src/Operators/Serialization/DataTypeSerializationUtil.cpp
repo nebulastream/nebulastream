@@ -103,7 +103,6 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: data type which is to be serialized not registered. "
                             "Deserialization is not possible");
-    return nullptr;
 }
 
 std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(const SerializableDataType& serializedDataType) {
@@ -170,13 +169,12 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableD
         // copy values from serializedArrayValue to array values
         std::vector<std::string> values{};
         for (const auto& value : serializedArrayValue.values()) {
-            values.emplace_back(std::string{value});
+            values.emplace_back(value);
         }
         return DataTypeFactory::createArrayValueFromContainerType(std::move(dataTypePtr), std::move(values));
     }
     NES_THROW_RUNTIME_ERROR(
         "DataTypeSerializationUtil: deserialization of value type is not possible: " << serializedDataValue.DebugString());
-    return nullptr;
 }
 
 }// namespace NES

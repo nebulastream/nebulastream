@@ -48,8 +48,8 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& s
     // de-serialize field from serialized schema to the schema object.
     NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
     auto deserializedSchema = Schema::create();
-    for (auto serializedField : serializedSchema.fields()) {
-        auto fieldName = serializedField.name();
+    for (const auto& serializedField : serializedSchema.fields()) {
+        const auto& fieldName = serializedField.name();
         // de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
         deserializedSchema->addField(fieldName, type);
@@ -61,7 +61,7 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& s
             deserializedSchema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
             NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");
             break;
-        };
+        }
         case SerializableSchema_MemoryLayoutType_COL_LAYOUT: {
             deserializedSchema->setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             NES_DEBUG("SchemaSerializationUtil:: deserialized columnar Layout");

@@ -34,16 +34,17 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @param schema
      * @param nesPartition
      * @param nodeLocation
-     * @param initialVersion the initial versio of the source
+     * @param initialVersion the initial version of the source
      * @param uniqueNetworkSourceIdentifier a unique identifier for the source
      * @return instance of network source descriptor
      */
     static SourceDescriptorPtr create(SchemaPtr schema,
-                                      NesPartition nesPartition,
-                                      NodeLocation nodeLocation,
+                                      const NesPartition& nesPartition,
+                                      const NodeLocation& nodeLocation,
                                       std::chrono::milliseconds waitTime,
                                       uint32_t retryTimes,
-                                      DecomposedQueryPlanVersion version, OperatorId uniqueNetworkSourceId);
+                                      DecomposedQueryPlanVersion version,
+                                      OperatorId uniqueNetworkSourceId);
 
     /**
      * @brief equal method for the NetworkSourceDescriptor
@@ -90,16 +91,17 @@ class NetworkSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit NetworkSourceDescriptor(SchemaPtr schema,
-                                     NesPartition nesPartition,
-                                     NodeLocation nodeLocation,
+                                     const NesPartition& nesPartition,
+                                     const NodeLocation& nodeLocation,
                                      std::chrono::milliseconds waitTime,
                                      uint32_t retryTimes,
-                                     DecomposedQueryPlanVersion version, OperatorId uniqueNetworkSourceId);
+                                     DecomposedQueryPlanVersion version,
+                                     OperatorId uniqueNetworkSourceId);
 
     NesPartition nesPartition;
     NodeLocation nodeLocation;
     std::chrono::milliseconds waitTime;
-    uint32_t retryTimes;
+    uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
     OperatorId uniqueNetworkSourceId;
 };

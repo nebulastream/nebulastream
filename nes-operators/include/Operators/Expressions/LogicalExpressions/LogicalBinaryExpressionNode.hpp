@@ -32,7 +32,7 @@ class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalE
 
   protected:
     LogicalBinaryExpressionNode();
-    ~LogicalBinaryExpressionNode() = default;
+    ~LogicalBinaryExpressionNode() override = default;
     explicit LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other);
 };
 }// namespace NES

@@ -22,28 +22,28 @@ namespace NES {
 class FloorExpressionNode final : public ArithmeticalUnaryExpressionNode {
   public:
     explicit FloorExpressionNode(DataTypePtr stamp);
-    ~FloorExpressionNode() noexcept final = default;
+    ~FloorExpressionNode() noexcept override = default;
     /**
      * @brief Create a new FLOOR expression
      */
     [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) final;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit FloorExpressionNode(FloorExpressionNode* other);
 };
 

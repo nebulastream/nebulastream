@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Windows/Measures/TimeUnit.hpp>
+#include <fmt/format.h>
 
 namespace NES::Windowing {
 
@@ -20,7 +21,7 @@ TimeUnit::TimeUnit(uint64_t offset) : multiplier(offset){};
 
 uint64_t TimeUnit::getMultiplier() const { return multiplier; }
 
-std::string TimeUnit::toString() const { return "TimeUnit: multiplier=" + std::to_string(multiplier); }
+std::string TimeUnit::toString() const { return fmt::format("TimeUnit: multiplier= {}", std::to_string(multiplier)); }
 
 bool TimeUnit::equals(const TimeUnit& other) const { return this->multiplier == other.multiplier; }
 

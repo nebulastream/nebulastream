@@ -23,7 +23,7 @@ namespace NES {
 class OrExpressionNode : public LogicalBinaryExpressionNode {
   public:
     OrExpressionNode();
-    ~OrExpressionNode() = default;
+    ~OrExpressionNode() override = default;
     /**
     * @brief Create a new OR expression
     */

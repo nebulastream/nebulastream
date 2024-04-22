@@ -290,7 +290,7 @@ class OperatorSerializationUtil {
      * @param serializedOperator serialized operator
      * @param operatorNode LogicalOperator for which to serialize the input schema
      */
-    static void deserializeInputSchema(LogicalOperatorPtr operatorNode, SerializableOperator& serializedOperator);
+    static void deserializeInputSchema(LogicalOperatorPtr operatorNode, const SerializableOperator& serializedOperator);
 
     /**
      * @brief Serializes an inferModel logical operator

@@ -28,6 +28,4 @@ std::string PrintSinkDescriptor::toString() const { return "PrintSinkDescriptor(
 
 bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<PrintSinkDescriptor>(); }
 
-uint64_t PrintSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
-
 }// namespace NES

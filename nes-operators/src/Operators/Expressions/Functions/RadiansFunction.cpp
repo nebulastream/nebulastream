@@ -30,6 +30,6 @@ class RadiansFunction : public UnaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static LogicalFunctionRegistry::Add<RadiansFunction> RadiansFunction("radians");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<RadiansFunction> RadiansFunction("radians");
 
 }// namespace NES

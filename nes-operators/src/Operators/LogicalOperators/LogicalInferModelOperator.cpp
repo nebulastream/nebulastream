@@ -46,7 +46,7 @@ OperatorPtr LogicalInferModelOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -63,7 +63,7 @@ bool LogicalInferModelOperator::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<LogicalInferModelOperator>()->getId() == id;
 }
 
-void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) {
+void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const {
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
     auto existingField = schema->getField(fieldName);
@@ -120,7 +120,7 @@ void LogicalInferModelOperator::inferStringSignature() {
     NES_TRACE("InferModelOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalInferModelOperator: InferModel should have children (?)");
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -132,6 +132,7 @@ void LogicalInferModelOperator::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
 const std::string& LogicalInferModelOperator::getModel() const { return model; }
 
 const std::string LogicalInferModelOperator::getDeployedModelPath() const {

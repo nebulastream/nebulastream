@@ -39,16 +39,16 @@ class LogicalBinaryOperator : public LogicalOperator, public BinaryOperator {
      * @brief Get all left input operators.
      * @return std::vector<OperatorPtr>
      */
-    std::vector<OperatorPtr> getLeftOperators();
+    std::vector<OperatorPtr> getLeftOperators() const;
 
     /**
     * @brief Get all right input operators.
     * @return std::vector<OperatorPtr>
     */
-    std::vector<OperatorPtr> getRightOperators();
+    std::vector<OperatorPtr> getRightOperators() const;
 
   private:
-    std::vector<OperatorPtr> getOperatorsBySchema(const SchemaPtr& schema);
+    std::vector<OperatorPtr> getOperatorsBySchema(const SchemaPtr& schema) const;
 };
 }// namespace NES
 

@@ -23,7 +23,7 @@ namespace NES {
 class GreaterExpressionNode : public LogicalBinaryExpressionNode {
   public:
     GreaterExpressionNode() noexcept = default;
-    ~GreaterExpressionNode() = default;
+    ~GreaterExpressionNode() override = default;
     /**
     * @brief Create a new greater expression
     */

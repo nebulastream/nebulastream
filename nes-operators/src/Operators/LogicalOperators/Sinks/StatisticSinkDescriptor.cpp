@@ -14,7 +14,6 @@
 
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <sstream>
 #include <fmt/format.h>
 
 namespace NES::Statistic {

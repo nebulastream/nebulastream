@@ -30,6 +30,6 @@ class SinFunction : public UnaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static LogicalFunctionRegistry::Add<SinFunction> sinFunction("sin");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<SinFunction> sinFunction("sin");
 
 }// namespace NES

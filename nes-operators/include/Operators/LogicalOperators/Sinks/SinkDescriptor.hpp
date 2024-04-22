@@ -35,7 +35,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
      * @return descriptor for sink
      */
     SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp);
-    SinkDescriptor(uint64_t numberOfOrigins);
+    explicit SinkDescriptor(uint64_t numberOfOrigins);
     SinkDescriptor();
 
     virtual ~SinkDescriptor() = default;
@@ -49,7 +49,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     bool instanceOf() const {
         if (dynamic_cast<const SinkType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 

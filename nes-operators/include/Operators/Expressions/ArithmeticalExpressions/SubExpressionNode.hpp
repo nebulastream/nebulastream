@@ -23,7 +23,7 @@ namespace NES {
 class SubExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit SubExpressionNode(DataTypePtr stamp);
-    ~SubExpressionNode() noexcept final = default;
+    ~SubExpressionNode() noexcept override = default;
 
     /**
      * @brief Create a new SUB expression
@@ -38,7 +38,7 @@ class SubExpressionNode final : public ArithmeticalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit SubExpressionNode(SubExpressionNode* other);
 };
 

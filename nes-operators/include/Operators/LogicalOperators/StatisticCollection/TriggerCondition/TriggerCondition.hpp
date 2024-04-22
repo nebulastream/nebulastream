@@ -26,7 +26,7 @@ class TriggerCondition {
      * @param curStatistic
      * @return True or false
      */
-    virtual bool shallTrigger(const Statistic& curStatistic) = 0;
+    [[maybe_unused]] virtual bool shallTrigger(const Statistic& curStatistic) = 0;
 
     /**
      * @brief Checks for equality
@@ -34,13 +34,6 @@ class TriggerCondition {
      * @return True, if equal otherwise false
      */
     virtual bool operator==(const TriggerCondition& rhs) const = 0;
-
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    virtual bool operator!=(const TriggerCondition& rhs) const = 0;
 
     /**
      * @brief Checks if the current TriggerCondition is of type TriggerConditionType

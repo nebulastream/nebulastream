@@ -16,7 +16,6 @@ add_subdirectory(Synopses)
 
 add_source_files(nes-operators
         Statistic.cpp
-        StatisticValue.cpp
         ProbeExpression.cpp
         StatisticUtil.cpp
 )

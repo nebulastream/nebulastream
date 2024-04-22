@@ -94,13 +94,6 @@ class Characteristic : public std::enable_shared_from_this<Characteristic> {
     virtual bool operator==(const Characteristic& rhs) const { return (*type) == (*rhs.type); };
 
     /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    virtual bool operator!=(const Characteristic& rhs) const { return !(*this == rhs); };
-
-    /**
      * @brief Computes a hash for this characteristic
      * @return std::size_t
      */

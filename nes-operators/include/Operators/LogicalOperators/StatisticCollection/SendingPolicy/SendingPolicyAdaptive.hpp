@@ -35,7 +35,7 @@ class SendingPolicyAdaptive : public SendingPolicy {
     /**
      * @brief Virtual destructor
      */
-    virtual ~SendingPolicyAdaptive() = default;
+    ~SendingPolicyAdaptive() override = default;
 
     bool operator==(const SendingPolicy& rhs) const override;
 

@@ -16,8 +16,6 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
-#include <numeric>
-#include <utility>
 
 namespace NES {
 
@@ -25,13 +23,13 @@ LogicalOpenCLOperator::LogicalOpenCLOperator(Catalogs::UDF::JavaUdfDescriptorPtr
     : Operator(id), UDFLogicalOperator(javaUDFDescriptor, id) {}
 
 std::string LogicalOpenCLOperator::toString() const {
-    auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
+    auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
     return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." + javaUDFDescriptor->getMethodName()
         + "; openCLCode : " + openCLCode + " )";
 }
 
 OperatorPtr LogicalOpenCLOperator::copy() {
-    auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
+    auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
     auto copy = std::make_shared<LogicalOpenCLOperator>(javaUDFDescriptor, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -40,7 +38,7 @@ OperatorPtr LogicalOpenCLOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -64,7 +62,7 @@ size_t LogicalOpenCLOperator::getDeviceId() const { return deviceId; }
 void LogicalOpenCLOperator::setDeviceId(const size_t deviceId) { LogicalOpenCLOperator::deviceId = deviceId; }
 
 Catalogs::UDF::JavaUDFDescriptorPtr LogicalOpenCLOperator::getJavaUDFDescriptor() const {
-    return udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+    return Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
 }
 
 }// namespace NES

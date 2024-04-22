@@ -42,7 +42,7 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
     return queryPlanPtr;
 }
 
-QueryPlanPtr QueryPlanBuilder::addProjection(std::vector<ExpressionNodePtr> expressions, QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addProjection(const std::vector<ExpressionNodePtr>& expressions, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add projection operator to query plan");
     OperatorPtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
     queryPlan->appendOperatorAsNewRoot(op);
@@ -109,7 +109,7 @@ QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePt
                                                          Statistic::StatisticMetricHash metricHash,
                                                          QueryPlanPtr queryPlan) {
     queryPlan = checkAndAddWatermarkAssignment(queryPlan, window);
-    auto op = LogicalOperatorFactory::createStatisticBuildOperator(window, std::move(statisticDescriptor), metricHash);
+    auto op = LogicalOperatorFactory::createStatisticBuildOperator(window, statisticDescriptor, metricHash);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

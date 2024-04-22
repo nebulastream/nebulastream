@@ -23,11 +23,11 @@ namespace NES::Windowing {
 class ContentBasedWindowType : public WindowType {
 
   public:
-    enum ContentBasedSubWindowType { THRESHOLDWINDOW };
+    enum class ContentBasedSubWindowType : uint8_t { THRESHOLDWINDOW };
 
     explicit ContentBasedWindowType();
 
-    virtual ~ContentBasedWindowType() = default;
+    ~ContentBasedWindowType() override = default;
 
     /**
      * @brief getter for the SubWindowType, i.e., Thresholdwindow

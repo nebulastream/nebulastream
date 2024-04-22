@@ -30,6 +30,6 @@ class AbsFunction : public UnaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static LogicalFunctionRegistry::Add<AbsFunction> absFunction("abs");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<AbsFunction> absFunction("abs");
 
 }// namespace NES

@@ -21,11 +21,11 @@
 namespace NES::Windowing {
 
 MedianAggregationDescriptor::MedianAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {
+    : WindowAggregationDescriptor(field) {
     this->aggregationType = Type::Median;
 }
 MedianAggregationDescriptor::MedianAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    : WindowAggregationDescriptor(field, asField) {
     this->aggregationType = Type::Median;
 }
 

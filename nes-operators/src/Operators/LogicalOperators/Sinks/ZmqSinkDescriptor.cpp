@@ -51,6 +51,4 @@ bool ZmqSinkDescriptor::isInternal() const { return internal; }
 
 void ZmqSinkDescriptor::setInternal(bool newInternal) { ZmqSinkDescriptor::internal = newInternal; }
 
-uint64_t ZmqSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
-
 }// namespace NES

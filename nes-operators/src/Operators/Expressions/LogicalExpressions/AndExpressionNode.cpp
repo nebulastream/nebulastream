@@ -17,7 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-AndExpressionNode::AndExpressionNode(){};
+AndExpressionNode::AndExpressionNode() = default;
 
 AndExpressionNode::AndExpressionNode(AndExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 

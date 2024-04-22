@@ -166,13 +166,6 @@ class LogicalOperatorFactory {
                             OperatorId id = getNextOperatorId());
 
     /**
-     * @brief Create a broadcast operator.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return BroadcastLogicalOperatorPtr
-     */
-    static BroadcastLogicalOperatorPtr createBroadcastOperator(OperatorId id = getNextOperatorId());
-
-    /**
      * @brief Create a new MapJavaUDFLogicalOperator.
      * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
      * @param id The operator ID.

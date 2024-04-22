@@ -85,13 +85,13 @@ class LogicalOperator : public virtual Operator {
      * @brief Get the Z3 expression for the logical operator
      * @return reference to the Z3 expression
      */
-    Optimizer::QuerySignaturePtr getZ3Signature();
+    Optimizer::QuerySignaturePtr getZ3Signature() const;
 
     /**
      * @brief Get the string signature computed based on upstream operator chain
      * @return string representing the query signature
      */
-    std::map<size_t, std::set<std::string>> getHashBasedSignature();
+    std::map<size_t, std::set<std::string>> getHashBasedSignature() const;
 
     /**
      * @brief infers the input and out schema of this operator depending on its child.
@@ -111,13 +111,13 @@ class LogicalOperator : public virtual Operator {
      * @brief Get the operator state
      * @return the current state of the operator
      */
-    OperatorState getOperatorState();
+    OperatorState getOperatorState() const;
 
   protected:
-    Optimizer::QuerySignaturePtr z3Signature;
+    Optimizer::QuerySignaturePtr z3Signature = nullptr;
     std::map<size_t, std::set<std::string>> hashBasedSignature;
-    std::hash<std::string> hashGenerator;
-    OperatorState operatorState;
+    [[no_unique_address]] std::hash<std::string> hashGenerator;
+    OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
 
 }// namespace NES

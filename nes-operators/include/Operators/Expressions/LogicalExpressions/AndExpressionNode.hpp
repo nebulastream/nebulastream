@@ -23,7 +23,7 @@ namespace NES {
 class AndExpressionNode : public LogicalBinaryExpressionNode {
   public:
     AndExpressionNode();
-    ~AndExpressionNode() = default;
+    ~AndExpressionNode() override = default;
     /**
     * @brief Create a new AND expression
     */
@@ -44,7 +44,7 @@ class AndExpressionNode : public LogicalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit AndExpressionNode(AndExpressionNode* other);
 };
 }// namespace NES

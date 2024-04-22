@@ -108,11 +108,6 @@ class TimeMeasure;
 class TimeCharacteristic;
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
-inline uint64_t getTsFromClock() { return time(nullptr) * 1000; }
-
-class WindowAggregationDescriptor;
-using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
-
 class WindowState;
 
 class WatermarkStrategy;

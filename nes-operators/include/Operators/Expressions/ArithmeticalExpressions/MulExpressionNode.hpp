@@ -23,7 +23,7 @@ namespace NES {
 class MulExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit MulExpressionNode(DataTypePtr stamp);
-    ~MulExpressionNode() noexcept final = default;
+    ~MulExpressionNode() noexcept override = default;
     /**
      * @brief Create a new Mul expression
      */
@@ -37,7 +37,7 @@ class MulExpressionNode final : public ArithmeticalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit MulExpressionNode(MulExpressionNode* other);
 };
 

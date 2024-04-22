@@ -13,13 +13,12 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <utility>
 namespace NES {
 ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(std::move(stamp)) {}
 
-bool ExpressionNode::isPredicate() { return stamp->isBoolean(); }
+bool ExpressionNode::isPredicate() const { return stamp->isBoolean(); }
 
 DataTypePtr ExpressionNode::getStamp() const { return stamp; }
 
@@ -32,6 +31,6 @@ void ExpressionNode::inferStamp( SchemaPtr schema) {
     }
 }
 
-ExpressionNode::ExpressionNode(ExpressionNode* other) : stamp(other->stamp) {}
+ExpressionNode::ExpressionNode(const ExpressionNode* other) : stamp(other->stamp) {}
 
 }// namespace NES

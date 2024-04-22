@@ -21,7 +21,7 @@ namespace NES::Windowing {
 ThresholdWindow::ThresholdWindow(ExpressionNodePtr predicate) : ContentBasedWindowType(), predicate(std::move(predicate)) {}
 
 ThresholdWindow::ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount)
-    : ContentBasedWindowType(), predicate(std::move(predicate)), minimumCount(std::move(minCount)) {}
+    : ContentBasedWindowType(), predicate(predicate), minimumCount(minCount) {}
 
 WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate) {
     return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
@@ -29,7 +29,7 @@ WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate) {
 
 WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate, uint64_t minimumCount) {
     return std::reinterpret_pointer_cast<WindowType>(
-        std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), std::move(minimumCount))));
+        std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount)));
 }
 
 bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
@@ -40,11 +40,13 @@ bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
     return false;
 }
 
-ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBasedSubWindowType() { return THRESHOLDWINDOW; }
+ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBasedSubWindowType() {
+    return ContentBasedSubWindowType::THRESHOLDWINDOW;
+}
 
 const ExpressionNodePtr& ThresholdWindow::getPredicate() const { return predicate; }
 
-uint64_t ThresholdWindow::getMinimumCount() { return minimumCount; }
+uint64_t ThresholdWindow::getMinimumCount() const { return minimumCount; }
 
 bool ThresholdWindow::inferStamp(const SchemaPtr& schema) {
     NES_INFO("inferStamp for ThresholdWindow")

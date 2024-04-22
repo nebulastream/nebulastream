@@ -42,13 +42,13 @@ LogicalBatchJoinDescriptorPtr LogicalBatchJoinDescriptor::create(const FieldAcce
                                                                             numberOfInputEdgesRight);
 }
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getBuildJoinKey() { return keyTypeBuild; }
+FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getBuildJoinKey() const { return keyTypeBuild; }
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getProbeJoinKey() { return keyTypeProbe; }
+FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getProbeJoinKey() const { return keyTypeProbe; }
 
-SchemaPtr LogicalBatchJoinDescriptor::getBuildSchema() { return buildSchema; }
+SchemaPtr LogicalBatchJoinDescriptor::getBuildSchema() const { return buildSchema; }
 
-SchemaPtr LogicalBatchJoinDescriptor::getProbeSchema() { return probeSchema; }
+SchemaPtr LogicalBatchJoinDescriptor::getProbeSchema() const { return probeSchema; }
 
 uint64_t LogicalBatchJoinDescriptor::getNumberOfInputEdgesBuild() const { return numberOfInputEdgesBuild; }
 

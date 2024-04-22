@@ -30,7 +30,7 @@ PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName,
 
 bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
     return functionString == other.functionString && getMethodName() == other.getMethodName()
-        && getInputSchema()->equals(other.getInputSchema(), true) && getInputSchema()->equals(other.getInputSchema(), true);
+        && getInputSchema()->equals(other.getInputSchema(), true) && getOutputSchema()->equals(other.getOutputSchema(), true);
 }
 
 std::stringstream PythonUDFDescriptor::generateInferStringSignature() {

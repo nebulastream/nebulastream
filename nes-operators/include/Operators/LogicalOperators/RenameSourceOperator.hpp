@@ -45,7 +45,7 @@ class RenameSourceOperator : public LogicalUnaryOperator {
     bool inferSchema() override;
     OperatorPtr copy() override;
     void inferStringSignature() override;
-    std::string getNewSourceName();
+    std::string getNewSourceName() const;
 
   private:
     const std::string newSourceName;

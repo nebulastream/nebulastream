@@ -39,9 +39,9 @@ void ArithmeticalBinaryExpressionNode::inferStamp(SchemaPtr schema) {
 
     // both sub expressions have to be numerical
     if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric()) {
-        throw std::logic_error(
-            "ArithmeticalBinaryExpressionNode: Error during stamp inference. Types need to be Numerical but Left was:"
-            + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("Error during stamp inference. Types need to be Numerical but Left was: {} Right was: {}",
+                                left->getStamp()->toString(),
+                                right->getStamp()->toString());
     }
 
     // calculate the common stamp by joining the left and right stamp
@@ -50,8 +50,7 @@ void ArithmeticalBinaryExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the common stamp is defined
     if (commonStamp->isUndefined()) {
         // the common stamp was not valid -> in this case the common stamp is undefined.
-        throw std::logic_error("ArithmeticalBinaryExpressionNode: " + commonStamp->toString()
-                               + " is not supported by arithmetical expressions");
+        NES_THROW_RUNTIME_ERROR("{} is not supported by arithmetical expressions", commonStamp->toString());
     }
 
     stamp = commonStamp;

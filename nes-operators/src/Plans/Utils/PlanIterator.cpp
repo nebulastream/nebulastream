@@ -48,7 +48,7 @@ PlanIterator::iterator::iterator() = default;
 bool PlanIterator::iterator::operator!=(const iterator& other) const {
     if (workStack.empty() && other.workStack.empty()) {
         return false;
-    };
+    }
     return true;
 };
 

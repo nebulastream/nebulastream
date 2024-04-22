@@ -59,21 +59,21 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
     }
 }
 
-QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {
+QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan) {
     NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializedQueryPlan->DebugString());
     std::vector<OperatorPtr> rootOperators;
     std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
 
     //Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap()) {
-        auto serializedOperator = operatorIdAndSerializedOperator.second;
+        const auto& serializedOperator = operatorIdAndSerializedOperator.second;
         operatorIdToOperatorMap[serializedOperator.operatorid()] =
             OperatorSerializationUtil::deserializeOperator(serializedOperator);
     }
 
     //Add deserialized children
     for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap()) {
-        auto serializedOperator = operatorIdAndSerializedOperator.second;
+        const auto& serializedOperator = operatorIdAndSerializedOperator.second;
         auto deserializedOperator = operatorIdToOperatorMap[serializedOperator.operatorid()];
         for (auto childId : serializedOperator.childrenids()) {
             deserializedOperator->addChild(operatorIdToOperatorMap[childId]);
