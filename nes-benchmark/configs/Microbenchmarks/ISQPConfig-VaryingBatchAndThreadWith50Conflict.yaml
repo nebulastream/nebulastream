@@ -8,6 +8,8 @@ LogLevel: LOG_NONE
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
 NumOfRuns: 7
+# Initial queries to deploy
+InitialQueries: 4096
 
 RunConfig:
   - QueryPlacementStrategy: BottomUp

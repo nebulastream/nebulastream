@@ -377,6 +377,7 @@ int main(int argc, const char* argv[]) {
     auto logLevel = configs["LogLevel"].As<std::string>();
     auto numberOfRun = configs["NumOfRuns"].As<uint16_t>();
     auto startupSleepInterval = configs["StartupSleepIntervalInSeconds"].As<uint16_t>();
+    auto initialQueries = configs["InitialQueries"].As<uint16_t>();
     NES::Logger::setupLogging("BM.log", magic_enum::enum_cast<LogLevel>(logLevel).value());
     //Load queries from the query set location and run the benchmark
     auto querySetLocation = configs["QuerySetLocation"].As<std::string>();
@@ -482,9 +483,10 @@ int main(int argc, const char* argv[]) {
             auto batchSize = node["BatchSize"].As<uint16_t>();
             auto numOfRemoveQueries = node["NumOfRemoveQueries"].As<uint16_t>();
             auto numOfAddQueries = node["NumOfAddQueries"].As<uint16_t>();
-            std::cout<< "NumOfRemoveQueries:"<< numOfRemoveQueries<<", NumOfAddQueries:"<< numOfAddQueries<<", BatchSize"<<batchSize;
-            NES_ASSERT(numOfAddQueries + numOfRemoveQueries == batchSize,
-                       "Number of remove and add queries should be same as the batch size");
+            std::cout << "NumOfRemoveQueries:" << numOfRemoveQueries << ", NumOfAddQueries:" << numOfAddQueries << ", BatchSize"
+                      << batchSize;
+//            NES_ASSERT(numOfAddQueries + numOfRemoveQueries == batchSize,
+//                       "Number of remove and add queries should be same as the batch size");
             auto placementAmendmentThreadCount = node["PlacementAmendmentThreadCount"].As<uint32_t>();
             auto configNum = node["ConfNum"].As<uint32_t>();
             auto placementAmendmentMode = node["PlacementAmendmentMode"].As<std::string>();
@@ -515,11 +517,10 @@ int main(int argc, const char* argv[]) {
                 auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
                 // Setup system with initially running query plans
-                uint64_t initiallyRunningQueries = 4096;
                 std::vector<QueryId> potentialCandidatesForRemoval;
                 std::vector<RequestProcessor::ISQPEventPtr> initialISQPEvents;
                 uint64_t currentIndex;
-                for (currentIndex = 0; currentIndex < initiallyRunningQueries; currentIndex++) {
+                for (currentIndex = 0; currentIndex < initialQueries; currentIndex++) {
                     auto queryPlan = queryObjects[currentIndex];
                     potentialCandidatesForRemoval.emplace_back(queryPlan->getQueryId());
                     initialISQPEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
@@ -529,48 +530,60 @@ int main(int argc, const char* argv[]) {
                 std::cout << "*******************************Initial queries placed" << std::endl;
 
                 // Compute batches of ISQP events
-                std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
                 std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
 
                 uint16_t batchIncrement = 1;
                 uint16_t addQueryIncrement = 1;
                 uint16_t removeQueryIncrement = 1;
-
-                std::vector<QueryId> newCandidatesForRemoval;
-                for (uint64_t i = currentIndex; i < numOfQueries; i++) {
-                    auto queryPlan = queryObjects[i];
-                    if (batchIncrement == 1) {
-                        isqpEvents.clear();
-                    }
+                std::vector<QueryId> newPotentialCandidatesForRemoval;
+                while (currentIndex < numOfQueries) {
 
                     //Add query events
-                    if (addQueryIncrement <= numOfAddQueries) {
+                    while (addQueryIncrement <= numOfAddQueries) {
+                        auto queryPlan = queryObjects[currentIndex];
                         isqpEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
-                        newCandidatesForRemoval.emplace_back(i + 1);
+                        newPotentialCandidatesForRemoval.emplace_back(queryPlan->getQueryId());
                         addQueryIncrement++;
+                        currentIndex++;
+                        if (currentIndex >= numOfQueries) {
+                            break;
+                        }
                     }
 
                     //Remove query events
-                    while (addQueryIncrement > numOfAddQueries && removeQueryIncrement <= numOfRemoveQueries) {
+                    while (removeQueryIncrement <= numOfRemoveQueries) {
                         QueryId& queryId = potentialCandidatesForRemoval.rbegin()[removeQueryIncrement - 1];
                         isqpEvents.emplace_back(RequestProcessor::ISQPRemoveQueryEvent::create(queryId));
                         removeQueryIncrement++;
-                        batchIncrement++;
-                        i++;
+                        currentIndex++;
                     }
-
-                    if (batchIncrement == batchSize || i == numOfQueries - 1) {
-                        isqpBatches.emplace_back(isqpEvents);
-                        potentialCandidatesForRemoval.clear();
-                        potentialCandidatesForRemoval = newCandidatesForRemoval;
-                        newCandidatesForRemoval.clear();
-                        batchIncrement = 1;
-                        addQueryIncrement = 1;
-                        removeQueryIncrement = 1;
-                        continue;
-                    }
-                    batchIncrement++;
+                    addQueryIncrement = 1;
+                    removeQueryIncrement = 1;
+                    potentialCandidatesForRemoval=newPotentialCandidatesForRemoval;
+                    newPotentialCandidatesForRemoval.clear();
                 }
+
+                std::cout << "*******************************Finished collecting ISQP events " << isqpEvents.size() << std::endl;
+
+                //Compute isqp batches
+                std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
+                uint64_t counter = 0;
+                while (counter < isqpEvents.size()) {
+                    uint16_t batchSizeCounter = 0;
+                    std::vector<RequestProcessor::ISQPEventPtr> tempBatch;
+                    while (batchSizeCounter < batchSize) {
+                        auto isqpEvent = isqpEvents.at(counter);
+                        tempBatch.emplace_back(isqpEvent);
+                        batchSizeCounter++;
+                        counter++;
+                        if (counter >= isqpEvents.size()) {
+                            break;
+                        }
+                    }
+                    isqpBatches.emplace_back(tempBatch);
+                }
+
+                std::cout << "*******************************Finished preparing ISQP batches " << isqpBatches.size() << std::endl;
 
                 std::vector<std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>> batchResponses;
                 auto startTime =

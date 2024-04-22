@@ -8,7 +8,8 @@ LogLevel: LOG_ERROR
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
 NumOfRuns: 7
-
+# Initial queries to deploy
+InitialQueries: 1024
 
 RunConfig:
   - QueryPlacementStrategy: BottomUp

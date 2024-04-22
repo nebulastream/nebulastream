@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ILPSTRATEGY_HPP_
@@ -34,8 +34,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace NES::Optimizer {
 
 /**
- * @brief This class implements Integer Linear Programming strategy to perform the operator placement
- */
+* @brief This class implements Integer Linear Programming strategy to perform the operator placement
+*/
 class ILPStrategy : public BasePlacementAdditionStrategy {
   public:
     ~ILPStrategy() override = default;
@@ -151,18 +151,10 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     void computeDistance(const TopologyNodePtr& node, std::map<uint64_t, double>& mileages);
 
     /**
-     * Get default operator output value
-     * @param operatorNode : the operator for which output values are needed
-     * @return weight for the output
+     * Assign default cost values
+     * @param operatorNode : the last operator to strat with
      */
-    double getDefaultOperatorOutput(const LogicalOperatorPtr& operatorNode);
-
-    /**
-     * Get default value for operator cost
-     * @param operatorNode : operator for which cost is to be computed
-     * @return weight indicating operator cost
-     */
-    int getDefaultOperatorCost(const LogicalOperatorPtr& operatorNode);
+    void assignOperatorDefaultProperties(const LogicalOperatorPtr operatorNode);
 };
 }// namespace NES::Optimizer
 

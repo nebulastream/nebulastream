@@ -311,9 +311,9 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     auto queryPlacementStrategy = addQueryEvent->getPlacementStrategy();
 
     // Set unique identifier and additional properties to the query
-    auto queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
-    //    auto queryId = queryPlan->getQueryId();
+//    auto queryId = PlanIdGenerator::getNextQueryId();
+//    queryPlan->setQueryId(queryId);
+        auto queryId = queryPlan->getQueryId();
     queryPlan->setPlacementStrategy(queryPlacementStrategy);
 
     // Create a new entry in the query catalog
