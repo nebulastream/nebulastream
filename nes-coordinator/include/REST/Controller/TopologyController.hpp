@@ -222,15 +222,15 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
 
         if (!topology->nodeWithWorkerIdExists(childId)) {
-            return errorHandler->handleError(Status::CODE_400,
-                                             "Could not add/remove parent for node in topology: Node with childId=" + childId.toString()
-                                                 + " not found.");
+            return errorHandler->handleError(
+                Status::CODE_400,
+                "Could not add/remove parent for node in topology: Node with childId=" + childId.toString() + " not found.");
         }
 
         if (!topology->nodeWithWorkerIdExists(parentId)) {
-            return errorHandler->handleError(Status::CODE_400,
-                                             "Could not add/remove parent for node in topology: Node with parentId="
-                                                 + parentId.toString() + " not found.");
+            return errorHandler->handleError(
+                Status::CODE_400,
+                "Could not add/remove parent for node in topology: Node with parentId=" + parentId.toString() + " not found.");
         }
         return std::nullopt;
     }
