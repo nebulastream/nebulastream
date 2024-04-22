@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.100](https://github.com/nebulastream/nebulastream/tree/v0.6.100) (2024-04-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.99...v0.6.100)
+
+**Implemented enhancements:**
+
+- \[TASK\] Code quality improvement for nes-data-types [\#4795](https://github.com/nebulastream/nebulastream/issues/4795)
+
 ## [v0.6.99](https://github.com/nebulastream/nebulastream/tree/v0.6.99) (2024-04-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.98...v0.6.99)
