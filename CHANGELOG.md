@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.98](https://github.com/nebulastream/nebulastream/tree/v0.6.98) (2024-04-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.97...v0.6.98)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace identifier types with strong types [\#4693](https://github.com/nebulastream/nebulastream/issues/4693)
+
 ## [v0.6.97](https://github.com/nebulastream/nebulastream/tree/v0.6.97) (2024-04-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.96...v0.6.97)
