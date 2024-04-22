@@ -130,8 +130,8 @@ class MQTTSinkTest : public Testing::BaseIntegrationTest {
         MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
                                                           nodeEngine,
                                                           1,
-                                                          0,
-                                                          0,
+                                                          INVALID_SHARED_QUERY_ID,
+                                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                           LOCAL_ADDRESS,
                                                           CLIENT_ID,
                                                           TOPIC,
@@ -178,8 +178,8 @@ TEST_F(MQTTSinkTest, testMQTTClientCreation) {
     MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = true;
     auto mqttSink = createMQTTSink(testSchema,
-                                   0,
-                                   0,
+                                   INVALID_SHARED_QUERY_ID,
+                                   INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                    nodeEngine,
                                    1,
                                    LOCAL_ADDRESS,
@@ -206,8 +206,8 @@ TEST_F(MQTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
                                                       nodeEngine,
                                                       1,
-                                                      0,
-                                                      0,
+                                                      INVALID_SHARED_QUERY_ID,
+                                                      INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                       LOCAL_ADDRESS,
                                                       CLIENT_ID,
                                                       TOPIC,
@@ -292,8 +292,8 @@ TEST_F(MQTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
     bool asynchronousClient = false;
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     auto mqttSink = createMQTTSink(testSchema,
-                                   0,
-                                   0,
+                                   INVALID_SHARED_QUERY_ID,
+                                   INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                    nodeEngine,
                                    1,
                                    LOCAL_ADDRESS,

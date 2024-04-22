@@ -1,0 +1,95 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPE_HPP_
+#define NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPE_HPP_
+#include <compare>
+#include <memory>
+#include <string>
+#include <type_traits>
+
+namespace NES {
+/**
+ * Identifiers in NebulaStream are based on a Strong Type. This prevents accidental conversion between different Entity Identifiers.
+ * In general a Identifier should not expose its underlying Type and no code should depend on specific values. This is the reason why
+ * only a limited subset of operations are supported, and it is not default constructible. Identifiers are orderable and hashable to
+ * be used as keys in maps.
+ * We Introduce overloads for nlohmann, yaml and fmt to make the identifiers feel ergonomic.
+ * @tparam T underlying type
+ * @tparam Tag a tag type required to distinguish two strong types
+ * @tparam invalid The invalid value
+ * @tparam initial The initial value used by Identifier generators
+ */
+template<typename T, typename Tag, T invalid, T initial>
+class NESStrongType {
+  public:
+    explicit constexpr NESStrongType(T v) : v(v) {}
+    using Underlying = T;
+    constexpr static T INITIAL = initial;
+    constexpr static T INVALID = invalid;
+
+    [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongType& lh, const NESStrongType& rh) noexcept {
+        return lh.v <=> rh.v;
+    }
+
+    [[nodiscard]] friend constexpr bool operator==(const NESStrongType& lh, const NESStrongType& rh) noexcept {
+        return lh.v == rh.v;
+    }
+
+    [[nodiscard]] friend constexpr bool operator!=(const NESStrongType& lh, const NESStrongType& rh) noexcept {
+        return lh.v != rh.v;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const NESStrongType& t) { return os << t.getRawValue(); }
+
+    [[nodiscard]] std::string toString() const { return std::to_string(v); }
+
+    /**
+     * Serializes the Identifier. Useful for protobuf. Yaml and Json should not require this method.
+     * @return the underlying value for serialization purpose
+     */
+    [[nodiscard]] constexpr T getRawValue() const { return v; }
+
+  private:
+    T v;
+};
+
+template<typename T>
+concept NESIdentifier = requires(T t) {
+    { t < t };
+    { t > t };
+    { t == t };
+    { t != t };
+    { std::hash<T>()(t) };
+    requires(!std::is_default_constructible_v<T>);
+    requires(std::is_trivially_copyable_v<T>);
+    requires(sizeof(t) == sizeof(typename T::Underlying));
+    requires(!std::is_convertible_v<T, typename T::Underlying>);
+};
+
+template<NESIdentifier Ident>
+static constexpr Ident INVALID = Ident(Ident::INVALID);
+template<NESIdentifier Ident>
+static constexpr Ident INITIAL = Ident(Ident::INITIAL);
+
+}// namespace NES
+
+namespace std {
+template<typename T, typename Tag, T invalid, T initial>
+struct hash<NES::NESStrongType<T, Tag, invalid, initial>> {
+    size_t operator()(NES::NESStrongType<T, Tag, invalid, initial> const& x) const { return std::hash<T>()(x.getRawValue()); }
+};
+}// namespace std
+
+#endif//NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPE_HPP_

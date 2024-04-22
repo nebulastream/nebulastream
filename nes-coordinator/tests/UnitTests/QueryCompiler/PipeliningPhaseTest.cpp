@@ -63,8 +63,8 @@ class PipeliningPhaseTest : public Testing::BaseUnitTest {
     LogicalOperatorPtr mapOp;
     LogicalOperatorPtr projectPp;
     LogicalJoinOperatorPtr joinOp1;
-    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
-    static constexpr uint64_t defaultSharedQueryId = 0;
+    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
     std::atomic<StatisticId> statisticId = INVALID_STATISTIC_ID;
 };
 

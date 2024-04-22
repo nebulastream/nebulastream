@@ -21,7 +21,7 @@
 
 namespace NES {
 
-LogicalOperator::LogicalOperator(uint64_t id)
+LogicalOperator::LogicalOperator(OperatorId id)
     : Operator(id), z3Signature(nullptr), hashBasedSignature(), hashGenerator(), operatorState(OperatorState::TO_BE_PLACED) {}
 
 Optimizer::QuerySignaturePtr LogicalOperator::getZ3Signature() { return z3Signature; }

@@ -24,7 +24,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>

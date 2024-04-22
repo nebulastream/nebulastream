@@ -54,8 +54,7 @@ bool LogicalStatisticWindowOperator::inferSchema() {
 bool LogicalStatisticWindowOperator::equal(const NodePtr& rhs) const {
     if (rhs->instanceOf<LogicalStatisticWindowOperator>()) {
         auto rhsStatisticOperatorNode = rhs->as<LogicalStatisticWindowOperator>();
-        return windowType->equal(rhsStatisticOperatorNode->windowType)
-            && statisticId == rhsStatisticOperatorNode->statisticId
+        return windowType->equal(rhsStatisticOperatorNode->windowType) && statisticId == rhsStatisticOperatorNode->statisticId
             && windowStatisticDescriptor->equal(rhsStatisticOperatorNode->windowStatisticDescriptor)
             && metricHash == rhsStatisticOperatorNode->metricHash;
     }
@@ -67,13 +66,14 @@ bool LogicalStatisticWindowOperator::isIdentical(const NodePtr& rhs) const {
 }
 
 std::string LogicalStatisticWindowOperator::toString() const {
-    std::ostringstream oss;
-    oss << "LogicalStatisticWindowOperator(" << id << ", " << statisticId << "): " << " ";
-    oss << "Windowtype: " << windowType->toString() << " ";
-    oss << "Descriptor: " << windowStatisticDescriptor->toString() << " ";
-    oss << "MetricHash: " << metricHash;
-
-    return oss.str();
+    return fmt::format(
+        "LogicalStatisticWindowOperator({}, {}): Windowtype: {} Descriptor: {} InputOriginIds: {} MetricHash: {}",
+        id,
+        statisticId,
+        windowType->toString(),
+        windowStatisticDescriptor->toString(),
+        fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "),
+        metricHash);
 }
 
 OperatorPtr LogicalStatisticWindowOperator::copy() {
@@ -86,7 +86,7 @@ OperatorPtr LogicalStatisticWindowOperator::copy() {
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
     copy->setInputOriginIds(inputOriginIds);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;

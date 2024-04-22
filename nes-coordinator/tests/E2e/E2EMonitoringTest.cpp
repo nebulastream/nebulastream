@@ -115,7 +115,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsViaRest) {
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
         ASSERT_TRUE(
             MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonLohmann));
-        ASSERT_TRUE(MetricValidator::checkNodeIds(jsonLohmann, i));
+        ASSERT_TRUE(MetricValidator::checkNodeIds(jsonLohmann, WorkerId(i)));
     }
 }
 
@@ -203,7 +203,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
         ASSERT_TRUE(MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
                                                        jsonLohmann));
-        ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(jsonLohmann, i));
+        ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(jsonLohmann, WorkerId(i)));
     }
 }
 

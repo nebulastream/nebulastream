@@ -31,7 +31,7 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
                               uint64_t sequenceNumber,
                               uint64_t chunkNumber,
                               bool lastChunk,
-                              OriginId originId,
+                              uint64_t originId,
                               uint64_t joinStrategyInt,
                               uint64_t windowingStrategy) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
@@ -46,7 +46,7 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    BufferMetaData bufferMetaData(minWatermark, {sequenceNumber, chunkNumber, lastChunk}, originId);
+    BufferMetaData bufferMetaData(minWatermark, {sequenceNumber, chunkNumber, lastChunk}, OriginId(originId));
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 

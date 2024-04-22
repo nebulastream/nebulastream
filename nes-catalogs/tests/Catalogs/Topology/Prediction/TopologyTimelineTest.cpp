@@ -32,11 +32,11 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
         NES_DEBUG("Setup TopologyTimeline test class.");
     }
 
-    static std::vector<WorkerId> getIdVector(const std::vector<NodePtr>& nodes) {
-        std::vector<WorkerId> ids;
+    static std::vector<WorkerId::Underlying> getIdVector(const std::vector<NodePtr>& nodes) {
+        std::vector<WorkerId::Underlying> ids;
         ids.reserve(nodes.size());
         for (auto& node : nodes) {
-            ids.push_back(node->as<TopologyNode>()->getId());
+            ids.push_back(node->as<TopologyNode>()->getId().getRawValue());
         }
         std::sort(ids.begin(), ids.end());
         return ids;
@@ -44,8 +44,8 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
 
     static void compareIdVectors(const std::vector<NodePtr>& original, const std::vector<NodePtr>& copy) {
         EXPECT_EQ(original.size(), copy.size());
-        std::vector<WorkerId> originalIds = getIdVector(original);
-        std::vector<WorkerId> copiedIds = getIdVector(copy);
+        auto originalIds = getIdVector(original);
+        auto copiedIds = getIdVector(copy);
 
         std::sort(originalIds.begin(), originalIds.end());
         std::sort(copiedIds.begin(), copiedIds.end());
@@ -59,7 +59,7 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
                               std::vector<uint64_t> parents,
                               std::vector<uint64_t> children) {
         NES_DEBUG("compare node {}", id);
-        auto predictedNode = versions.getTopologyVersion(time)->getCopyOfTopologyNodeWithId(id);
+        auto predictedNode = versions.getTopologyVersion(time)->getCopyOfTopologyNodeWithId(WorkerId(id));
 
         //check if the node is predicted to be removed
         if (children.empty() && parents.empty()) {
@@ -79,13 +79,13 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
 TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
-    int rootNodeId = 1;
+    auto rootNodeId = WorkerId(1);
     topology->registerWorker(rootNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
-    int middleNodeId = 2;
+    auto middleNodeId = WorkerId(2);
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
-    int srcNodeId1 = 3;
+    auto srcNodeId1 = WorkerId(3);
     topology->registerWorker(srcNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
-    int srcNodeId2 = 4;
+    auto srcNodeId2 = WorkerId(4);
     topology->registerWorker(srcNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
 
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
@@ -103,13 +103,13 @@ TEST_F(TopologyTimelineTest, testNoChangesPresent) {
 TEST_F(TopologyTimelineTest, DISABLED_testUpdatingMultiplePredictions) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
-    int rootNodeId = 1;
+    auto rootNodeId = WorkerId(1);
     topology->registerWorker(rootNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
-    int middleNodeId = 2;
+    auto middleNodeId = WorkerId(2);
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
-    int srcNodeId1 = 3;
+    auto srcNodeId1 = WorkerId(3);
     topology->registerWorker(srcNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
-    int srcNodeId2 = 4;
+    auto srcNodeId2 = WorkerId(4);
     topology->registerWorker(srcNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
 
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);

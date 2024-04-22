@@ -168,7 +168,7 @@ std::string keyAssignment(std::string keyName) {
     //first, get unique ids for the key attributes
     auto cepId = getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepKey = keyName + std::to_string(cepId);
+    std::string cepKey = fmt::format("{}{}", keyName, cepId);
     return cepKey;
 }
 

@@ -14,7 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
@@ -76,7 +76,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     */
     explicit AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                   std::vector<BufferManagerPtr> bufferManagers,
-                                  uint64_t nodeEngineId,
+                                  WorkerId nodeEngineId,
                                   uint16_t numThreads,
                                   HardwareManagerPtr hardwareManager,
                                   uint64_t numberOfBuffersPerEpoch,
@@ -194,19 +194,19 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * Get the id of the current node
      * @return node id
      */
-    uint64_t getNodeId() const;
+    WorkerId getNodeId() const;
 
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryId: the local QEP to reconfigure
+     * @param sharedQueryId: the local QEP to reconfigure
      * @param queryExecutionPlanId: the local sub QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    virtual bool addReconfigurationMessage(QueryId queryId,
+    virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                            DecomposedQueryPlanId queryExecutionPlanId,
                                            const ReconfigurationMessage& reconfigurationMessage,
                                            bool blocking = false) = 0;
@@ -223,12 +223,12 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryId: the local QEP to reconfigure
+     * @param sharedQueryId: the local QEP to reconfigure
      * @param queryExecutionPlanId: the local szb QEP to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    virtual bool addReconfigurationMessage(QueryId queryId,
+    virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                            DecomposedQueryPlanId queryExecutionPlanId,
                                            TupleBuffer&& buffer,
                                            bool blocking = false) = 0;
@@ -350,14 +350,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     /**
      * @brief Method to update the statistics
      * @param task
-     * @param queryId
-     * @param subPlanId
+     * @param sharedQueryId
+     * @param decomposedQueryPlanId
      * @param pipelineId
      * @param workerContext
      */
     virtual void updateStatistics(const Task& task,
-                                  QueryId queryId,
-                                  DecomposedQueryPlanId subPlanId,
+                                  SharedQueryId sharedQueryId,
+                                  DecomposedQueryPlanId decomposedQueryPlanId,
                                   PipelineId pipelineId,
                                   WorkerContext& workerContext);
 
@@ -403,7 +403,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void injectEpochMarker(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
 
   protected:
-    uint64_t nodeEngineId;
+    WorkerId nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;
 
@@ -446,7 +446,7 @@ class DynamicQueryManager : public AbstractQueryManager {
   public:
     explicit DynamicQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                  std::vector<BufferManagerPtr> bufferManager,
-                                 uint64_t nodeEngineId,
+                                 WorkerId nodeEngineId,
                                  uint16_t numThreads,
                                  HardwareManagerPtr hardwareManager,
                                  uint64_t numberOfBuffersPerEpoch,
@@ -482,14 +482,14 @@ class DynamicQueryManager : public AbstractQueryManager {
     /**
      * @brief
      * @param task
-     * @param queryId
-     * @param subPlanId
+     * @param sharedQueryId
+     * @param decomposedQueryPlanId
      * @param pipeId
      * @param workerContext
      */
     void updateStatistics(const Task& task,
-                          QueryId queryId,
-                          DecomposedQueryPlanId subPlanId,
+                          SharedQueryId sharedQueryId,
+                          DecomposedQueryPlanId decomposedQueryPlanId,
                           PipelineId pipeId,
                           WorkerContext& workerContext) override;
 
@@ -512,7 +512,7 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QueryId sharedQueryId,
+    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryPlanId decomposedQueryPlanId,
                                    TupleBuffer&& buffer,
                                    bool blocking = false) override;
@@ -527,7 +527,7 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QueryId sharedQueryId,
+    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryPlanId queryExecutionPlanId,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false) override;
@@ -553,7 +553,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
   public:
     explicit MultiQueueQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                     std::vector<BufferManagerPtr> bufferManager,
-                                    uint64_t nodeEngineId,
+                                    WorkerId nodeEngineId,
                                     uint16_t numThreads,
                                     HardwareManagerPtr hardwareManager,
                                     uint64_t numberOfBuffersPerEpoch,
@@ -600,14 +600,14 @@ class MultiQueueQueryManager : public AbstractQueryManager {
 
     /**
      * @brief
-     * @param queryId
-     * @param subPlanId
+     * @param sharedQueryId
+     * @param decomposedQueryPlanId
      * @param pipeId
      * @param workerContext
      */
     void updateStatistics(const Task& task,
-                          QueryId queryId,
-                          DecomposedQueryPlanId subPlanId,
+                          SharedQueryId sharedQueryId,
+                          DecomposedQueryPlanId decomposedQueryPlanId,
                           PipelineId pipeId,
                           WorkerContext& workerContext) override;
 
@@ -617,12 +617,12 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryId: the local QEP to reconfigure
+     * @param sharedQueryId: the local QEP to reconfigure
      * @param queryExecutionPlanId: the local szb QEP to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QueryId queryId,
+    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryPlanId queryExecutionPlanId,
                                    TupleBuffer&& buffer,
                                    bool blocking = false) override;
@@ -632,12 +632,12 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryId: the local QEP to reconfigure
+     * @param sharedQueryId: the local QEP to reconfigure
      * @param queryExecutionPlanId: the local sub QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QueryId queryId,
+    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
                                    DecomposedQueryPlanId queryExecutionPlanId,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false) override;

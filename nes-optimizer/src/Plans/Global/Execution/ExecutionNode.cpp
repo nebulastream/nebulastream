@@ -24,15 +24,16 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <set>
+#include <Identifiers/Identifiers.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
 
-ExecutionNodePtr ExecutionNode::create(ExecutionNodeId executionNodeId) {
-    return std::make_shared<ExecutionNode>(executionNodeId);
+ExecutionNodePtr ExecutionNode::create(WorkerId workerId) {
+    return std::make_shared<ExecutionNode>(workerId);
 }
 
-ExecutionNode::ExecutionNode(ExecutionNodeId executionNodeId) : executionNodeId(executionNodeId) {}
+ExecutionNode::ExecutionNode(WorkerId workerId) : workerId(workerId) {}
 
 bool ExecutionNode::registerDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
@@ -117,13 +118,13 @@ bool ExecutionNode::removeDecomposedQueryPlan(SharedQueryId sharedQueryId, Decom
     return false;
 }
 
-std::string ExecutionNode::toString() const { return "ExecutionNode(id:" + std::to_string(executionNodeId) + ")"; }
+std::string ExecutionNode::toString() const { return fmt::format("ExecutionNode(id:{})", workerId); }
 
-uint64_t ExecutionNode::getId() const { return executionNodeId; }
+WorkerId ExecutionNode::getId() const { return workerId; }
 
 PlacedDecomposedQueryPlans ExecutionNode::getAllQuerySubPlans() { return mapOfSharedQueryToDecomposedQueryPlans; }
 
-bool ExecutionNode::equal(NodePtr const& rhs) const { return rhs->as<ExecutionNode>()->getId() == executionNodeId; }
+bool ExecutionNode::equal(NodePtr const& rhs) const { return rhs->as<ExecutionNode>()->getId() == workerId; }
 
 std::vector<std::string> ExecutionNode::toMultilineString() {
     std::vector<std::string> lines;
@@ -131,9 +132,10 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
 
     for (const auto& mapOfQuerySubPlan : mapOfSharedQueryToDecomposedQueryPlans) {
         for (const auto& [querySubPlanId, querySubPlan] : mapOfQuerySubPlan.second) {
-            lines.push_back("QuerySubPlan(SharedQueryId:" + std::to_string(mapOfQuerySubPlan.first)
-                            + ", DecomposedQueryPlanId:" + std::to_string(querySubPlan->getDecomposedQueryPlanId())
-                            + ", queryState:" + std::string(magic_enum::enum_name(querySubPlan->getState())) + ")");
+            lines.push_back(fmt::format("QuerySubPlan(SharedQueryId:{}, DecomposedQueryPlanId:{}, queryState:{})",
+                                        mapOfQuerySubPlan.first,
+                                        querySubPlan->getDecomposedQueryPlanId(),
+                                        magic_enum::enum_name(querySubPlan->getState())));
 
             // Split the string representation of the queryPlan into multiple lines
             std::string s = querySubPlan->toString();

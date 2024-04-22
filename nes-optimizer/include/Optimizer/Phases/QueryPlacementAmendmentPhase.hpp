@@ -16,7 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTAMENDMENTPHASE_HPP_
 
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
 #include <set>

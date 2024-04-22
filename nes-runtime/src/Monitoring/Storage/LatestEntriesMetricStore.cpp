@@ -24,7 +24,7 @@ LatestEntriesMetricStore::LatestEntriesMetricStore() { NES_DEBUG("LatestEntriesM
 
 MetricStoreType LatestEntriesMetricStore::getType() const { return MetricStoreType::NewestEntry; }
 
-void LatestEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
+void LatestEntriesMetricStore::addMetrics(WorkerId nodeId, MetricPtr metric) {
     std::unique_lock lock(storeMutex);
     StoredNodeMetricsPtr nodeMetrics;
     auto metricType = metric->getMetricType();
@@ -59,7 +59,7 @@ void LatestEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
     entryVec->emplace_back(std::move(entry));
 }
 
-bool LatestEntriesMetricStore::removeMetrics(uint64_t nodeId) {
+bool LatestEntriesMetricStore::removeMetrics(WorkerId nodeId) {
     std::unique_lock lock(storeMutex);
     if (storedMetrics.contains(nodeId)) {
         storedMetrics.erase(nodeId);
@@ -68,12 +68,12 @@ bool LatestEntriesMetricStore::removeMetrics(uint64_t nodeId) {
     return false;
 }
 
-bool LatestEntriesMetricStore::hasMetrics(uint64_t nodeId) {
+bool LatestEntriesMetricStore::hasMetrics(WorkerId nodeId) {
     std::unique_lock lock(storeMutex);
     return storedMetrics.contains(nodeId);
 }
 
-StoredNodeMetricsPtr LatestEntriesMetricStore::getAllMetrics(uint64_t nodeId) {
+StoredNodeMetricsPtr LatestEntriesMetricStore::getAllMetrics(WorkerId nodeId) {
     std::unique_lock lock(storeMutex);
     return storedMetrics[nodeId];
 }

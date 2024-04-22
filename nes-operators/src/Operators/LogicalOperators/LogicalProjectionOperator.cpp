@@ -23,7 +23,7 @@
 
 namespace NES {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, uint64_t id)
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), expressions(std::move(expressions)) {}
 
 std::vector<ExpressionNodePtr> LogicalProjectionOperator::getExpressions() const { return expressions; }

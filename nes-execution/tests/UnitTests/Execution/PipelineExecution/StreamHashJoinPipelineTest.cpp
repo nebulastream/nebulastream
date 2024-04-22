@@ -45,10 +45,10 @@ class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
     HashJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager,
                                            uint64_t noWorkerThreads,
                                            OperatorHandlerPtr hashJoinOpHandler,
-                                           uint64_t pipelineId)
+                                           PipelineId pipelineId)
         : PipelineExecutionContext(
             pipelineId,// mock pipeline id
-            1,         // mock query id
+            DecomposedQueryPlanId(1),         // mock query id
             bufferManager,
             noWorkerThreads,
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -178,8 +178,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
         // Creating the hash join operator
-        std::vector<OriginId> originIds{0, 1};
-        OriginId outputOriginId = 2;
+        std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
+        OriginId outputOriginId = OriginId(2);
         auto hashJoinOpHandler =
             Operators::HJOperatorHandlerSlicing::create(originIds,
                                                         outputOriginId,
@@ -209,11 +209,11 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         auto curPipelineId = 0;
         auto noWorkerThreads = 1;
         auto pipelineExecCtxLeft =
-            HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, curPipelineId++);
+            HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, PipelineId(curPipelineId++));
         auto pipelineExecCtxRight =
-            HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, curPipelineId++);
+            HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, PipelineId(curPipelineId++));
         auto pipelineExecCtxSink =
-            HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, curPipelineId++);
+            HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, PipelineId(curPipelineId++));
 
         auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
         auto executablePipelineRight = provider->create(pipelineBuildRight, options);

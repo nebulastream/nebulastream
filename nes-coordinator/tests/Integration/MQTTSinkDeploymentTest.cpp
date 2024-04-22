@@ -20,7 +20,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_MEMORYMETRICS_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_MEMORYMETRICS_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
@@ -72,7 +73,7 @@ class MemoryMetrics {
     bool operator==(const MemoryMetrics& rhs) const;
     bool operator!=(const MemoryMetrics& rhs) const;
 
-    uint64_t nodeId;
+    WorkerId nodeId;
     uint64_t timestamp;
     uint64_t TOTAL_RAM;
     uint64_t TOTAL_SWAP;

@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <memory>
 #include <string>
 

@@ -41,7 +41,7 @@ class NodeLocation {
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return hostname.empty() && port == 0 && workerId == 0; }
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return hostname.empty() && port == 0 && workerId == INVALID_WORKER_NODE_ID; }
 
     /**
      * @brief Returns the zmq uri for connection
@@ -78,7 +78,7 @@ class NodeLocation {
     }
 
   private:
-    WorkerId workerId;
+    WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::string hostname;
     uint32_t port;
 };

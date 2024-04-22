@@ -174,29 +174,29 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     SchemaSerializationUtil::serializeSchema(operatorNode->getOutputSchema(), serializedOperator.mutable_outputschema());
 
     // serialize operator id
-    serializedOperator.set_operatorid(operatorNode->getId());
+    serializedOperator.set_operatorid(operatorNode->getId().getRawValue());
 
     // serialize statistic id
     serializedOperator.set_statisticid(operatorNode->getStatisticId());
 
     // serialize and append children if the node has any
     for (const auto& child : operatorNode->getChildren()) {
-        serializedOperator.add_childrenids(child->as<Operator>()->getId());
+        serializedOperator.add_childrenids(child->as<Operator>()->getId().getRawValue());
     }
 
     // serialize and append origin id
     if (operatorNode->instanceOf<BinaryOperator>()) {
         auto binaryOperator = operatorNode->as<BinaryOperator>();
         for (const auto& originId : binaryOperator->getLeftInputOriginIds()) {
-            serializedOperator.add_leftoriginids(originId);
+            serializedOperator.add_leftoriginids(originId.getRawValue());
         }
         for (const auto& originId : binaryOperator->getRightInputOriginIds()) {
-            serializedOperator.add_rightoriginids(originId);
+            serializedOperator.add_rightoriginids(originId.getRawValue());
         }
     } else {
         auto unaryOperator = operatorNode->as<UnaryOperator>();
         for (const auto& originId : unaryOperator->getInputOriginIds()) {
-            serializedOperator.add_originids(originId);
+            serializedOperator.add_originids(originId.getRawValue());
         }
     }
 
@@ -350,21 +350,21 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
     // de-serialize and append origin id
     if (operatorNode->instanceOf<BinaryOperator>()) {
         auto binaryOperator = operatorNode->as<BinaryOperator>();
-        std::vector<uint64_t> leftOriginIds;
+        std::vector<OriginId> leftOriginIds;
         for (const auto& originId : serializedOperator.leftoriginids()) {
-            leftOriginIds.push_back(originId);
+            leftOriginIds.emplace_back(originId);
         }
         binaryOperator->setLeftInputOriginIds(leftOriginIds);
-        std::vector<uint64_t> rightOriginIds;
+        std::vector<OriginId> rightOriginIds;
         for (const auto& originId : serializedOperator.rightoriginids()) {
-            rightOriginIds.push_back(originId);
+            rightOriginIds.emplace_back(originId);
         }
         binaryOperator->setRightInputOriginIds(rightOriginIds);
     } else {
         auto unaryOperator = operatorNode->as<UnaryOperator>();
-        std::vector<uint64_t> originIds;
+        std::vector<OriginId> originIds;
         for (const auto& originId : serializedOperator.originids()) {
-            originIds.push_back(originId);
+            originIds.emplace_back(originId);
         }
         unaryOperator->setInputOriginIds(originIds);
     }
@@ -381,7 +381,7 @@ void OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOpera
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator.getSourceDescriptor();
     serializeSourceDescriptor(*sourceDescriptor, sourceDetails, isClientOriginated);
-    sourceDetails.set_sourceoriginid(sourceOperator.getOriginId());
+    sourceDetails.set_sourceoriginid(sourceOperator.getOriginId().getRawValue());
 
     serializedOperator.mutable_details()->PackFrom(sourceDetails);
 }
@@ -389,7 +389,9 @@ void OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOpera
 LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails) {
     auto sourceDescriptor = deserializeSourceDescriptor(sourceDetails);
-    return LogicalOperatorFactory::createSourceOperator(sourceDescriptor, getNextOperatorId(), sourceDetails.sourceoriginid());
+    return LogicalOperatorFactory::createSourceOperator(sourceDescriptor,
+                                                        getNextOperatorId(),
+                                                        OriginId(sourceDetails.sourceoriginid()));
 }
 
 void OperatorSerializationUtil::serializeFilterOperator(const LogicalFilterOperator& filterOperator,
@@ -470,7 +472,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
             ExpressionSerializationUtil::serializeExpression(key, expression);
         }
     }
-    windowDetails.set_origin(windowOperator.getOriginId());
+    windowDetails.set_origin(windowOperator.getOriginId().getRawValue());
     windowDetails.set_allowedlateness(windowDefinition->getAllowedLateness());
     auto windowType = windowDefinition->getWindowType();
 
@@ -632,7 +634,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
             ExpressionSerializationUtil::deserializeExpression(key)->as<FieldAccessExpressionNode>());
     }
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessExpression, aggregation, window, allowedLateness);
-    windowDef->setOriginId(windowDetails.origin());
+    windowDef->setOriginId(OriginId(windowDetails.origin()));
     return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId);
 }
 
@@ -679,7 +681,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     joinDetails.set_windowstartfieldname(joinOperator.getWindowStartFieldName());
     joinDetails.set_windowendfieldname(joinOperator.getWindowEndFieldName());
     joinDetails.set_windowkeyfieldname(joinOperator.getWindowKeyFieldName());
-    joinDetails.set_origin(joinOperator.getOutputOriginIds()[0]);
+    joinDetails.set_origin(joinOperator.getOutputOriginIds()[0].getRawValue());
 
     if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::INNER_JOIN) {
         joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
@@ -755,7 +757,7 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
     joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(),
                                                 joinDetails.windowendfieldname(),
                                                 joinDetails.windowkeyfieldname());
-    joinOperator->setOriginId(joinDetails.origin());
+    joinOperator->setOriginId(OriginId(joinDetails.origin()));
     return joinOperator;
 
     //TODO: enable distrChar for distributed joins
@@ -956,17 +958,17 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(networkSourceDescriptor->getSchema(),
                                                  networkSerializedSourceDescriptor.mutable_sourceschema());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(nesPartition.getOperatorId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(nesPartition.getPartitionId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(nesPartition.getQueryId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(nesPartition.getSubpartitionId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(nesPartition.getOperatorId().getRawValue());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(nesPartition.getPartitionId().getRawValue());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(nesPartition.getQueryId().getRawValue());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(nesPartition.getSubpartitionId().getRawValue());
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_port(nodeLocation.getPort());
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_hostname(nodeLocation.getHostname());
-        networkSerializedSourceDescriptor.mutable_nodelocation()->set_nodeid(nodeLocation.getNodeId());
+        networkSerializedSourceDescriptor.mutable_nodelocation()->set_nodeid(nodeLocation.getNodeId().getRawValue());
         auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSourceDescriptor->getWaitTime());
         networkSerializedSourceDescriptor.set_waittime(s.count());
         networkSerializedSourceDescriptor.set_version(networkSourceDescriptor->getVersion());
-        networkSerializedSourceDescriptor.set_uniqueid(networkSourceDescriptor->getUniqueId());
+        networkSerializedSourceDescriptor.set_uniqueid(networkSourceDescriptor->getUniqueId().getRawValue());
         networkSerializedSourceDescriptor.set_retrytimes(networkSourceDescriptor->getRetryTimes());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(networkSerializedSourceDescriptor);
     } else if (sourceDescriptor.instanceOf<const DefaultSourceDescriptor>()) {
@@ -1155,11 +1157,11 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         serializedSourceDescriptor.UnpackTo(&networkSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(networkSerializedSourceDescriptor.sourceschema());
-        Network::NesPartition nesPartition{networkSerializedSourceDescriptor.nespartition().queryid(),
-                                           networkSerializedSourceDescriptor.nespartition().operatorid(),
-                                           networkSerializedSourceDescriptor.nespartition().partitionid(),
-                                           networkSerializedSourceDescriptor.nespartition().subpartitionid()};
-        NES::Network::NodeLocation nodeLocation(networkSerializedSourceDescriptor.nodelocation().nodeid(),
+        Network::NesPartition nesPartition{SharedQueryId(networkSerializedSourceDescriptor.nespartition().queryid()),
+                                           OperatorId(networkSerializedSourceDescriptor.nespartition().operatorid()),
+                                           PartitionId(networkSerializedSourceDescriptor.nespartition().partitionid()),
+                                           SubpartitionId(networkSerializedSourceDescriptor.nespartition().subpartitionid())};
+        NES::Network::NodeLocation nodeLocation(WorkerId(networkSerializedSourceDescriptor.nodelocation().nodeid()),
                                                 networkSerializedSourceDescriptor.nodelocation().hostname(),
                                                 networkSerializedSourceDescriptor.nodelocation().port());
         auto waitTime = std::chrono::milliseconds(networkSerializedSourceDescriptor.waittime());
@@ -1169,7 +1171,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
                                                             waitTime,
                                                             networkSerializedSourceDescriptor.retrytimes(),
                                                             networkSerializedSourceDescriptor.version(),
-                                                            networkSerializedSourceDescriptor.uniqueid());
+                                                            OperatorId(networkSerializedSourceDescriptor.uniqueid()));
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default source descriptor
@@ -1348,14 +1350,14 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         //set details of NesPartition
         auto* serializedNesPartition = serializedSinkDescriptor.mutable_nespartition();
         auto nesPartition = networkSinkDescriptor->getNesPartition();
-        serializedNesPartition->set_queryid(nesPartition.getQueryId());
-        serializedNesPartition->set_operatorid(nesPartition.getOperatorId());
-        serializedNesPartition->set_partitionid(nesPartition.getPartitionId());
-        serializedNesPartition->set_subpartitionid(nesPartition.getSubpartitionId());
+        serializedNesPartition->set_queryid(nesPartition.getQueryId().getRawValue());
+        serializedNesPartition->set_operatorid(nesPartition.getOperatorId().getRawValue());
+        serializedNesPartition->set_partitionid(nesPartition.getPartitionId().getRawValue());
+        serializedNesPartition->set_subpartitionid(nesPartition.getSubpartitionId().getRawValue());
         //set details of NodeLocation
         auto* serializedNodeLocation = serializedSinkDescriptor.mutable_nodelocation();
         auto nodeLocation = networkSinkDescriptor->getNodeLocation();
-        serializedNodeLocation->set_nodeid(nodeLocation.getNodeId());
+        serializedNodeLocation->set_nodeid(nodeLocation.getNodeId().getRawValue());
         serializedNodeLocation->set_hostname(nodeLocation.getHostname());
         serializedNodeLocation->set_port(nodeLocation.getPort());
         // set reconnection details
@@ -1363,7 +1365,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         serializedSinkDescriptor.set_waittime(s.count());
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
         serializedSinkDescriptor.set_version(networkSinkDescriptor->getVersion());
-        serializedSinkDescriptor.set_uniquenetworksinkdescriptorid(networkSinkDescriptor->getUniqueId());
+        serializedSinkDescriptor.set_uniquenetworksinkdescriptorid(networkSinkDescriptor->getUniqueId().getRawValue());
         //pack to output
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
@@ -1488,11 +1490,11 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        Network::NesPartition nesPartition{serializedSinkDescriptor.nespartition().queryid(),
-                                           serializedSinkDescriptor.nespartition().operatorid(),
-                                           serializedSinkDescriptor.nespartition().partitionid(),
-                                           serializedSinkDescriptor.nespartition().subpartitionid()};
-        Network::NodeLocation nodeLocation{serializedSinkDescriptor.nodelocation().nodeid(),
+        Network::NesPartition nesPartition{SharedQueryId(serializedSinkDescriptor.nespartition().queryid()),
+                                           OperatorId(serializedSinkDescriptor.nespartition().operatorid()),
+                                           PartitionId(serializedSinkDescriptor.nespartition().partitionid()),
+                                           SubpartitionId(serializedSinkDescriptor.nespartition().subpartitionid())};
+        Network::NodeLocation nodeLocation{WorkerId(serializedSinkDescriptor.nodelocation().nodeid()),
                                            serializedSinkDescriptor.nodelocation().hostname(),
                                            serializedSinkDescriptor.nodelocation().port()};
         auto waitTime = std::chrono::milliseconds(serializedSinkDescriptor.waittime());
@@ -1502,7 +1504,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                                       serializedSinkDescriptor.retrytimes(),
                                                       serializedSinkDescriptor.version(),
                                                       deserializedNumberOfOrigins,
-                                                      serializedSinkDescriptor.uniquenetworksinkdescriptorid());
+                                                      OperatorId(serializedSinkDescriptor.uniquenetworksinkdescriptorid()));
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();

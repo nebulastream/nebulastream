@@ -158,15 +158,15 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                       this->nodeEngine->getBufferManager(),
                                       this->nodeEngine->getQueryManager(),
                                       csvSourceType,
-                                      1,
-                                      0,
+                                      OperatorId(1),
+                                      INVALID_ORIGIN_ID,
                                       INVALID_STATISTIC_ID,
                                       12,
                                       defaultPhysicalStreamName,
                                       {sink});
 
-    auto executionPlan = ExecutableQueryPlan::create(queryId,
-                                                     queryId,
+    auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(queryId),
+                                                     DecomposedQueryPlanId(queryId),
                                                      {source},
                                                      {sink},
                                                      {},
@@ -174,7 +174,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                      this->nodeEngine->getBufferManager());
     EXPECT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     EXPECT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
-    EXPECT_EQ(this->nodeEngine->getQueryStatus(queryId), ExecutableQueryPlanStatus::Running);
+    EXPECT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(queryId)), ExecutableQueryPlanStatus::Running);
     sink->waitTillCompleted(numberOfBuffers * numberOfTuplesToProcess);
     auto theThing = sink->getResult();
     EXPECT_EQ(theThing.size(), numberOfTuplesToProcess);

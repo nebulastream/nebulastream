@@ -65,8 +65,7 @@ QueryPlacementAmendmentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
 }
 
 std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
-    NES_INFO("QueryPlacementAmendmentPhase: Perform query placement phase for shared query plan {}",
-             std::to_string(sharedQueryPlan->getId()));
+    NES_INFO("QueryPlacementAmendmentPhase: Perform query placement phase for shared query plan {}", sharedQueryPlan->getId());
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     bool enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
@@ -275,7 +274,7 @@ bool QueryPlacementAmendmentPhase::containsOperatorsForRemoval(const std::set<Lo
 }
 
 void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOperatorPtr>& operators) {
-    uint64_t rootNodeId = topology->getRootWorkerNodeIds()[0];
+    auto rootNodeId = topology->getRootWorkerNodeIds()[0];
     for (const auto& operatorToCheck : operators) {
         if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperator>()) {
             operatorToCheck->addProperty(PINNED_WORKER_ID, rootNodeId);

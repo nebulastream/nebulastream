@@ -386,9 +386,9 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
 void ISQPRequest::handleRemoveQueryRequest(NES::RequestProcessor::ISQPRemoveQueryEventPtr removeQueryEvent) {
 
     auto queryId = removeQueryEvent->getQueryId();
-    if (queryId == INVALID_SHARED_QUERY_ID) {
-        throw Exceptions::QueryNotFoundException("Cannot stop query with invalid query id " + std::to_string(queryId)
-                                                 + ". Please enter a valid query id.");
+    if (queryId == INVALID_QUERY_ID) {
+        throw Exceptions::QueryNotFoundException(
+            fmt::format("Cannot stop query with invalid query id {}. Please enter a valid query id.", queryId));
     }
 
     //mark query for hard stop
@@ -396,8 +396,9 @@ void ISQPRequest::handleRemoveQueryRequest(NES::RequestProcessor::ISQPRemoveQuer
 
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
-                                                 + std::to_string(queryId) + " in the global query plan");
+        throw Exceptions::QueryNotFoundException(
+            fmt::format("Could not find a a valid shared query plan for query with id {} in the global query plan",
+                        sharedQueryId));
     }
     // remove single query from global query plan
     globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
@@ -445,14 +446,14 @@ bool PlacementAmemderInstance::execute() {
 
     // Iterate over deployment context and update execution plan
     for (const auto& deploymentContext : deploymentContexts) {
-        auto executionNodeId = deploymentContext->getWorkerId();
+        auto WorkerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
         auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
         switch (decomposedQueryPlanState) {
             case QueryState::MARKED_FOR_REDEPLOYMENT:
             case QueryState::MARKED_FOR_DEPLOYMENT: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
                                                                     decomposedQueryPlanVersion,
@@ -460,12 +461,12 @@ bool PlacementAmemderInstance::execute() {
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
                                                                     decomposedQueryPlanVersion,
                                                                     QueryState::STOPPED);
-                globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
                                                                sharedQueryId,
                                                                decomposedQueryPlanId,
                                                                decomposedQueryPlanVersion);

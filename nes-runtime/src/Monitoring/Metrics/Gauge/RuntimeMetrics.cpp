@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>

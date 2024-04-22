@@ -67,7 +67,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
     NES_DEBUG("StaticDataSource: id {} Initialize source with schema: |{}| size: {}",
-              std::to_string(operatorId),
+              operatorId,
               this->schema->toString(),
               std::to_string(tupleSizeInBytes));
 

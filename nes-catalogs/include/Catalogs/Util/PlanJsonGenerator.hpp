@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES {

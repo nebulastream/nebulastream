@@ -29,8 +29,8 @@ class NonRunnableDataSource : public NES::DefaultSource {
         uint64_t numbersOfBufferToProduce,
         uint64_t gatheringInterval,
         OperatorId operatorId,
-        StatisticId statisticId,
         OriginId originId,
+        StatisticId statisticId,
         size_t numSourceLocalBuffers,
         const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
         NES::Runtime::QueryTerminationType terminationType = NES::Runtime::QueryTerminationType::HardStop);

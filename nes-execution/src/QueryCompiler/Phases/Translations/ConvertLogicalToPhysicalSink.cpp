@@ -125,7 +125,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         // Two MQTT clients with the same client-id can not communicate with the same broker. Therefore, client-ids should generally be unique.
         // If the user does not pass a client-id explicitly, we utilize the operatorId to generate a client-id that is guaranteed to be unique.
         std::string clientId =
-            (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(operatorId);
+            (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : operatorId.toString();
         return createMQTTSink(schema,
                               pipelineQueryPlan->getQueryId(),
                               pipelineQueryPlan->getQuerySubPlanId(),

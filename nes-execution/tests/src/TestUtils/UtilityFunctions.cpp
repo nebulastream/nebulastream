@@ -41,7 +41,7 @@ namespace NES::Runtime::Execution::Util {
             SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
             StatisticId statisticId = 1;
             ChunkNumber chunkNumber = 1; // As we do not split a sequence number over multiple buffers here
-            OriginId originId = 0; // As we only have one origin in all tests
+            auto originId = OriginId(0); // As we only have one origin in all tests
 
             for (auto i = 0; i < numberOfTuples; ++i) {
                 auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
@@ -405,7 +405,7 @@ namespace NES::Runtime::Execution::Util {
 
                 if (tupleCount >= maxTuplesPerBuffer) {
                     tupleBuffer.setNumberOfTuples(tupleCount);
-                    tupleBuffer.setOriginId(originId);
+                    tupleBuffer.setOriginId(OriginId(originId));
                     tupleBuffer.setSequenceNumber(++sequenceNumber);
                     tupleBuffer.setWatermark(watermarkTS);
                     NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
@@ -420,7 +420,7 @@ namespace NES::Runtime::Execution::Util {
 
             if (tupleCount > 0) {
                 tupleBuffer.setNumberOfTuples(tupleCount);
-                tupleBuffer.setOriginId(originId);
+                tupleBuffer.setOriginId(OriginId(originId));
                 tupleBuffer.setSequenceNumber(++sequenceNumber);
                 tupleBuffer.setWatermark(watermarkTS);
                 recordBuffers.emplace_back(tupleBuffer);

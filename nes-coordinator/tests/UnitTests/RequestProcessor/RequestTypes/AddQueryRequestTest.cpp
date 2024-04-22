@@ -71,7 +71,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-        int rootNodeId = 1;
+        auto rootNodeId = WorkerId(1);
         topology = Topology::create();
         topology->registerWorker(rootNodeId, "localhost", 4000, 4002, 4, properties, 0, 0);
         topology->addAsRootWorkerId(rootNodeId);
@@ -96,7 +96,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
 TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
 
     // Prepare
-    constexpr RequestId requestId = 1;
+    constexpr auto requestId = RequestId(1);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();

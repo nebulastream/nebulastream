@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -43,12 +43,12 @@ class ReconfigurationMessage {
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
-    explicit ReconfigurationMessage(const QueryId queryId,
+    explicit ReconfigurationMessage(const SharedQueryId sharedQueryId,
                                     const DecomposedQueryPlanId parentPlanId,
                                     ReconfigurationType type,
                                     ReconfigurablePtr instance = nullptr,
                                     std::any&& userdata = nullptr)
-        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), queryId(queryId),
+        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), sharedQueryId(sharedQueryId),
           parentPlanId(parentPlanId), userdata(std::move(userdata)) {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
@@ -62,15 +62,15 @@ class ReconfigurationMessage {
      * @param userdata extra information to use in this reconfiguration
      * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationMessage(const QueryId queryId,
+    explicit ReconfigurationMessage(const SharedQueryId sharedQueryId,
                                     const DecomposedQueryPlanId parentPlanId,
                                     ReconfigurationType type,
                                     uint64_t numThreads,
                                     ReconfigurablePtr instance,
                                     std::any&& userdata = nullptr,
                                     bool blocking = false)
-        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), queryId(queryId), parentPlanId(parentPlanId),
-          userdata(std::move(userdata)) {
+        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), sharedQueryId(sharedQueryId),
+          parentPlanId(parentPlanId), userdata(std::move(userdata)) {
         NES_ASSERT(this->instance, "invalid instance");
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
@@ -101,8 +101,8 @@ class ReconfigurationMessage {
      * @param that
      */
     ReconfigurationMessage(const ReconfigurationMessage& that)
-        : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr), queryId(that.queryId),
-          parentPlanId(that.parentPlanId), userdata(that.userdata) {
+        : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr),
+          sharedQueryId(that.sharedQueryId), parentPlanId(that.parentPlanId), userdata(that.userdata) {
         // nop
     }
 
@@ -121,7 +121,7 @@ class ReconfigurationMessage {
      * @brief get the target plan id
      * @return the query id
      */
-    [[nodiscard]] QueryId getQueryId() const { return queryId; }
+    [[nodiscard]] SharedQueryId getQueryId() const { return sharedQueryId; }
 
     /**
      * @brief get the target plan id
@@ -183,7 +183,7 @@ class ReconfigurationMessage {
     std::atomic<uint32_t> refCnt{};
 
     /// owning plan id
-    const QueryId queryId;
+    const SharedQueryId sharedQueryId;
 
     /// owning plan id
     const DecomposedQueryPlanId parentPlanId;

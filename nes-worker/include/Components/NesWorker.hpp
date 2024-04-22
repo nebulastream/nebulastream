@@ -17,7 +17,7 @@
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/PluginLoader.hpp>
@@ -127,7 +127,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     * @param parentId
     * @return bool indicating success
     */
-    bool addParent(uint64_t parentId);
+    bool addParent(WorkerId parentId);
 
     /**
     * @brief method to replace old with new parent
@@ -135,21 +135,21 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     * @param newParentId
     * @return bool indicating success
     */
-    bool replaceParent(uint64_t oldParentId, uint64_t newParentId);
+    bool replaceParent(WorkerId oldParentId, WorkerId newParentId);
 
     /**
     * @brief method remove parent from this node
     * @param parentId
     * @return bool indicating success
     */
-    bool removeParent(uint64_t parentId);
+    bool removeParent(WorkerId parentId);
 
     /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(SharedQueryId sharedQueryId);
 
     /**
      * @brief method to get a ptr to the node engine
@@ -165,27 +165,27 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     /**
      * @brief Method to let the Coordinator know that a Query failed
-     * @param queryId of the failed query
+     * @param sharedQueryId of the failed query
      * @param subQueryId of the failed query
      * @param workerId of the worker that handled the failed query
      * @param operatorId of failed query
      * @param errorMsg to describe the reason of the failure
      * @return true if Notification was successful, false otherwise
      */
-    bool notifyQueryFailure(QueryId queryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) override;
+    bool notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) override;
 
-    bool notifySourceTermination(QueryId queryId,
-                                 DecomposedQueryPlanId subPlanId,
+    bool notifySourceTermination(SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                  OperatorId sourceId,
                                  Runtime::QueryTerminationType) override;
 
-    bool canTriggerEndOfStream(QueryId queryId,
-                               DecomposedQueryPlanId subPlanId,
+    bool canTriggerEndOfStream(SharedQueryId sharedQueryId,
+                               DecomposedQueryPlanId decomposedQueryPlanId,
                                OperatorId sourceId,
                                Runtime::QueryTerminationType) override;
 
-    bool notifyQueryStatusChange(QueryId queryId,
-                                 DecomposedQueryPlanId subQueryId,
+    bool notifyQueryStatusChange(SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                  Runtime::Execution::ExecutableQueryPlanStatus newStatus) override;
 
     /**
@@ -194,13 +194,13 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @param errorMsg to describe the reason of the failure
      * @return true if Notification was successful, false otherwise
      */
-    bool notifyErrors(uint64_t workerId, std::string errorMsg);
+    bool notifyErrors(WorkerId workerId, std::string errorMsg);
 
     /**
      * @brief Method to get worker id
      * @return worker id
     */
-    uint64_t getWorkerId();
+    WorkerId getWorkerId();
 
     const Configurations::WorkerConfigurationPtr& getWorkerConfiguration() const;
 
@@ -283,7 +283,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     Monitoring::MetricStorePtr metricStore;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
-    uint64_t parentId;
+    WorkerId parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
     Util::PluginLoader pluginLoader = Util::PluginLoader();
 };

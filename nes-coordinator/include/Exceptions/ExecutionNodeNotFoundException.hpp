@@ -15,7 +15,7 @@
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_
 
 #include <Exceptions/RequestExecutionException.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 namespace NES::Exceptions {
 
 /**
@@ -35,15 +35,15 @@ class ExecutionNodeNotFoundException : public RequestExecutionException {
      * @param id: the id of the execution node that was looked up but not found (execution node ids correspond to topology
      * node ids and therefore have the same type)
      */
-    ExecutionNodeNotFoundException(const std::string& message, ExecutionNodeId id);
+    ExecutionNodeNotFoundException(const std::string& message, WorkerId id);
 
     /**
      * @brief get the id of the execution node that could not be found
      */
-    [[nodiscard]] ExecutionNodeId getExecutionNodeId() const;
+    [[nodiscard]] WorkerId getWorkerId() const;
 
   private:
-    ExecutionNodeId id;
+    WorkerId id;
 };
 }// namespace NES::Exceptions
 #endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

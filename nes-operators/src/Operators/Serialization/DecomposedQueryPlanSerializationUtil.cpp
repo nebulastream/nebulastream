@@ -36,25 +36,25 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     auto bfsIterator = PlanIterator(decomposedQueryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<Operator>();
-        if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
+        if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end()) {
             // skip rest of the steps as the operator is already serialized
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp, false);
-        serializedOperatorMap[visitingOp->getId()] = serializeOperator;
+        serializedOperatorMap[visitingOp->getId().getRawValue()] = serializeOperator;
     }
 
     //Serialize the root operator ids
     for (const auto& rootOperator : rootOperators) {
-        uint64_t rootOperatorId = rootOperator->getId();
-        serializableDecomposedQueryPlan->add_rootoperatorids(rootOperatorId);
+        auto rootOperatorId = rootOperator->getId();
+        serializableDecomposedQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
     }
 
     //Serialize the sub query plan and query plan id
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-    serializableDecomposedQueryPlan->set_decomposedqueryplanid(decomposedQueryPlan->getDecomposedQueryPlanId());
-    serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getSharedQueryId());
+    serializableDecomposedQueryPlan->set_decomposedqueryplanid(decomposedQueryPlan->getDecomposedQueryPlanId().getRawValue());
+    serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getSharedQueryId().getRawValue());
     serializableDecomposedQueryPlan->set_state(serializeQueryState(decomposedQueryPlan->getState()));
 }
 
@@ -86,8 +86,9 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     }
 
     //set properties of the query plan
-    DecomposedQueryPlanId decomposableQueryPlanId = serializableDecomposedQueryPlan->decomposedqueryplanid();
-    SharedQueryId sharedQueryId = serializableDecomposedQueryPlan->sharedqueryplanid();
+    DecomposedQueryPlanId decomposableQueryPlanId =
+        DecomposedQueryPlanId(serializableDecomposedQueryPlan->decomposedqueryplanid());
+    SharedQueryId sharedQueryId = SharedQueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
     auto decomposedQueryPlan =
         DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators);

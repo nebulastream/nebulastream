@@ -82,7 +82,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         std::vector<int> sources{8, 9, 10, 11, 12};
 
         for (int i = 0; i < (int) resources.size(); i++) {
-            WorkerId workerId = i + 1;
+            auto workerId = WorkerId(i + 1);
 
             std::map<std::string, std::any> properties;
             properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -101,8 +101,8 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
             if (i == 0) {
                 topology->addAsRootWorkerId(workerId);
             } else if (i > 1) {
-                topology->addTopologyNodeAsChild(workerId - 1, workerId);
-                topology->removeTopologyNodeAsChild(1, workerId);
+                topology->addTopologyNodeAsChild(WorkerId(workerId.getRawValue() - 1), workerId);
+                topology->removeTopologyNodeAsChild(WorkerId(1), workerId);
             }
         }
 
@@ -136,7 +136,8 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         auto physicalSource = PhysicalSource::create(csvSourceType);
 
         for (int source : sources) {
-            auto streamCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, source + 1);
+            auto streamCatalogEntry =
+                Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(source + 1));
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 
@@ -203,7 +204,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     uint64_t totalQuerySubPlansOnNode11 = 3;
     uint64_t totalQuerySubPlansOnNode12 = 2;
     uint64_t totalQuerySubPlansOnNode13 = 1;
-    std::vector<uint64_t> querySubPlanSizeCompare = {totalQuerySubPlansOnNode1,
+    std::vector querySubPlanSizeCompare = {totalQuerySubPlansOnNode1,
                                                      totalQuerySubPlansOnNode2,
                                                      totalQuerySubPlansOnNode3,
                                                      totalQuerySubPlansOnNode4,
@@ -219,7 +220,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     for (const auto& executionNode : executionNodes) {
         auto querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
         NES_INFO("Worker Id {} ", executionNode->operator*()->getId());
-        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->operator*()->getId() - 1]);
+        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->operator*()->getId().getRawValue() - 1]);
         auto querySubPlan = querySubPlans[0];
         std::vector<OperatorPtr> actualRootOperators = querySubPlan->getRootOperators();
         EXPECT_EQ(actualRootOperators.size(), 1U);

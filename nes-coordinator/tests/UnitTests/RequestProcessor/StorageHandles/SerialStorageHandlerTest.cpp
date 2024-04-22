@@ -34,7 +34,7 @@ class SerialStorageHandlerTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
-    constexpr RequestId requestId = 1;
+    constexpr auto requestId = RequestId(1);
     //create access handle
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();

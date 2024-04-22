@@ -14,7 +14,7 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Enums/StorageHandlerType.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>

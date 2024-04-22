@@ -15,7 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 #define NES_COORDINATOR_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -112,7 +112,7 @@ class MonitoringManager {
      * @param monitoringPlan
      * @return True, if successful, else false
     */
-    bool registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan);
+    bool registerRemoteMonitoringPlans(const std::vector<WorkerId>& nodeIds, MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Get the monitoring data for a given node.
@@ -122,27 +122,27 @@ class MonitoringManager {
      * @param tupleBuffer
      * @return the grouped metric values
     */
-    nlohmann::json requestRemoteMonitoringData(uint64_t nodeId);
+    nlohmann::json requestRemoteMonitoringData(WorkerId nodeId);
 
     /**
      * @brief Requests monitoring data from metric store.
      * @param nodeId
      * @return the grouped metric values
     */
-    StoredNodeMetricsPtr getMonitoringDataFromMetricStore(uint64_t nodeId);
+    StoredNodeMetricsPtr getMonitoringDataFromMetricStore(WorkerId nodeId);
 
     /**
      * @brief Receive arbitrary monitoring data from a given node.
      * @param nodeId
      * @param GroupedMetricValuesPtr the grouped metric values
     */
-    void addMonitoringData(uint64_t nodeId, MetricPtr metrics);
+    void addMonitoringData(WorkerId nodeId, MetricPtr metrics);
 
     /**
      * @brief Remove node from monitoring store.
      * @param nodeId
     */
-    void removeMonitoringNode(uint64_t nodeId);
+    void removeMonitoringNode(WorkerId nodeId);
 
     /**
      * @brief Get the monitoring plan for a given node ID. If the node exists in the topology but has not a registered
@@ -150,7 +150,7 @@ class MonitoringManager {
      * @param nodeId
      * @return The monitoring plan
     */
-    MonitoringPlanPtr getMonitoringPlan(uint64_t nodeId);
+    MonitoringPlanPtr getMonitoringPlan(WorkerId nodeId);
 
     /**
      * @brief Registers the logical monitoring streams at the coordinator.
@@ -212,7 +212,7 @@ class MonitoringManager {
 
   private:
     MetricStorePtr metricStore;
-    std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
+    std::unordered_map<WorkerId, MonitoringPlanPtr> monitoringPlanMap;
     std::unordered_map<std::string, QueryId> deployedMonitoringQueries;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;

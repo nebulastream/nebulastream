@@ -110,9 +110,19 @@ class TestHarness {
          * @param workerId id of the worker whose source will produce the pushed element
          */
     template<typename T>
-    TestHarness& pushElement(T element, uint64_t workerId) {
+    TestHarness& pushElement(T element, WorkerId::Underlying workerId) {
+        return pushElement(element, WorkerId(workerId));
+    }
+
+    /**
+         * @brief push a single element/tuple to specific source
+         * @param element element of Record to push
+         * @param workerId id of the worker whose source will produce the pushed element
+         */
+    template<typename T>
+    TestHarness& pushElement(T element, WorkerId workerId) {
         if (workerId > topologyId) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: workerId " + std::to_string(workerId) + " does not exists");
+            NES_THROW_RUNTIME_ERROR("TestHarness: workerId " + workerId.toString() + " does not exists");
         }
 
         bool found = false;
@@ -154,7 +164,7 @@ class TestHarness {
         }
 
         if (!found) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: Unable to locate worker with id " + std::to_string(workerId));
+            NES_THROW_RUNTIME_ERROR("TestHarness: Unable to locate worker with id " + workerId.toString());
         }
 
         return *this;
@@ -179,7 +189,7 @@ class TestHarness {
      */
     TestHarness&
     attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalSourceName,
-                                               uint32_t parentId,
+                                               WorkerId parentId,
                                                WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create());
 
     /**
@@ -204,7 +214,7 @@ class TestHarness {
      * @param csvSourceType csv source type
      * @param parentId id of the parent to connect
      */
-    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const CSVSourceTypePtr& csvSourceType, uint64_t parentId);
+    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const CSVSourceTypePtr& csvSourceType, WorkerId parentId);
 
     /**
       * @brief add a csv source to be used in the test
@@ -218,7 +228,7 @@ class TestHarness {
      * @param parentId id of the Test Harness worker to connect
      * Note: The parent id can not be greater than the current testharness worker id
      */
-    TestHarness& attachWorkerToWorkerWithId(uint32_t parentId);
+    TestHarness& attachWorkerToWorkerWithId(WorkerId parentId);
 
     /**
      * @brief add non source worker
@@ -272,7 +282,7 @@ class TestHarness {
 
   private:
     std::string getNextPhysicalSourceName();
-    uint32_t getNextTopologyId();
+    WorkerId getNextTopologyId();
 
     const std::chrono::seconds SETUP_TIMEOUT_IN_SEC = std::chrono::seconds(2);
     const QueryPtr queryWithoutSink;
@@ -287,14 +297,14 @@ class TestHarness {
     std::vector<LogicalSourcePtr> logicalSources;
     std::vector<TestHarnessWorkerConfigurationPtr> testHarnessWorkerConfigurations;
     uint32_t physicalSourceCount;
-    uint32_t topologyId;
+    WorkerId topologyId;
     QueryCompilation::StreamJoinStrategy joinStrategy;
     QueryCompilation::WindowingStrategy windowingStrategy;
     bool validationDone;
     bool topologySetupDone;
     std::filesystem::path filePath;
     QueryPlanPtr queryPlan;
-    QueryId queryId;
+    QueryId queryId = INVALID_QUERY_ID;
     Runtime::BufferManagerPtr bufferManager;
 };
 }// namespace NES

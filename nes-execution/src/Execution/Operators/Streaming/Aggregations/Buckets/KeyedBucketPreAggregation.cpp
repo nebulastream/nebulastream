@@ -59,7 +59,10 @@ void triggerKeyedBucketsProxy(void* op,
     auto handler = static_cast<KeyedBucketPreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk},
+    handler->trigger(*workerContext,
+                     *pipelineExecutionContext,
+                     OriginId(originId),
+                     {sequenceNumber, chunkNumber, lastChunk},
                      watermarkTs);
 }
 

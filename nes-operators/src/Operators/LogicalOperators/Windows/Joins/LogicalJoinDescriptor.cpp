@@ -97,7 +97,7 @@ void LogicalJoinDescriptor::setNumberOfInputEdgesRight(uint64_t numberOfInputEdg
     LogicalJoinDescriptor::numberOfInputEdgesRight = numberOfInputEdgesRight;
 }
 
-uint64_t LogicalJoinDescriptor::getOriginId() const { return originId; }
+OriginId LogicalJoinDescriptor::getOriginId() const { return originId; }
 void LogicalJoinDescriptor::setOriginId(OriginId originId) { this->originId = originId; }
 
 bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const {

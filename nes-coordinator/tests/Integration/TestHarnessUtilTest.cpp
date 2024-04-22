@@ -390,11 +390,11 @@ TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
                                         |  |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
                                         |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
                                     */
-                                  .attachWorkerToCoordinator()                         //idx=2
-                                  .attachWorkerToWorkerWithId(2)                       //idx=3
-                                  .attachWorkerWithMemorySourceToWorkerWithId("car", 3)//idx=4
-                                  .attachWorkerWithMemorySourceToWorkerWithId("car", 3)//idx=5
-                                                                                       //Source1
+                                  .attachWorkerToCoordinator()                                   //idx=2
+                                  .attachWorkerToWorkerWithId(WorkerId(2))                       //idx=3
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(3))//idx=4
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(3))//idx=5
+                                                                                                 //Source1
                                   .pushElement<Car>({40, 40, 40}, 4)
                                   .pushElement<Car>({30, 30, 30}, 4)
                                   .pushElement<Car>({71, 71, 71}, 4)

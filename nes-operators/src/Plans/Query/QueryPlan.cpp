@@ -148,7 +148,7 @@ std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() {
     return visitedOperators;
 }
 
-bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
+bool QueryPlan::hasOperatorWithId(OperatorId operatorId) {
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
     if (getOperatorWithOperatorId(operatorId)) {
         return true;
@@ -157,7 +157,7 @@ bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
     return false;
 }
 
-OperatorPtr QueryPlan::getOperatorWithOperatorId(uint64_t operatorId) {
+OperatorPtr QueryPlan::getOperatorWithOperatorId(OperatorId operatorId) {
     NES_DEBUG("QueryPlan: Checking if the operator with id {} exists in the query plan or not", operatorId);
     for (auto rootOperator : rootOperators) {
 
@@ -229,12 +229,12 @@ void QueryPlan::removeAsRootOperator(OperatorPtr root) {
 QueryPlanPtr QueryPlan::copy() {
     NES_INFO("QueryPlan: make copy of this query plan");
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed
-    std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
+    std::map<OperatorId, OperatorPtr> operatorIdToOperatorMap;
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty()) {
         auto operatorNode = operatorsToProcess.front()->as<Operator>();
         operatorsToProcess.pop_front();
-        uint64_t operatorId = operatorNode->getId();
+        auto operatorId = operatorNode->getId();
         // 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
         // 3. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
         if (operatorIdToOperatorMap[operatorId]) {
@@ -248,7 +248,7 @@ QueryPlanPtr QueryPlan::copy() {
         // 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
         for (const auto& parentNode : operatorNode->getParents()) {
             auto parentOperator = parentNode->as<Operator>();
-            uint64_t parentOperatorId = parentOperator->getId();
+            auto parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap[parentOperatorId]) {
                 NES_TRACE("QueryPlan: Found the parent operator. Adding as parent to the current operator.");
                 parentOperator = operatorIdToOperatorMap[parentOperatorId];

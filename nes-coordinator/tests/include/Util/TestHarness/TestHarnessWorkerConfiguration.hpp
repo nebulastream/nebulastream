@@ -38,13 +38,13 @@ class TestHarnessWorkerConfiguration {
   public:
     enum class TestHarnessWorkerSourceType : int8_t { CSVSource, MemorySource, LambdaSource, NonSource };
 
-    static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration, uint32_t workerId);
+    static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration, WorkerId workerId);
 
     static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration,
                                                     std::string logicalSourceName,
                                                     std::string physicalSourceName,
                                                     TestHarnessWorkerSourceType sourceType,
-                                                    uint32_t workerId);
+                                                    WorkerId workerId);
 
     void setQueryStatusListener(const NesWorkerPtr& nesWorker);
 
@@ -54,7 +54,7 @@ class TestHarnessWorkerConfiguration {
     void setPhysicalSourceType(PhysicalSourceTypePtr physicalSource);
     const std::vector<uint8_t*>& getRecords() const;
     void addRecord(uint8_t* record);
-    uint32_t getWorkerId() const;
+    WorkerId getWorkerId() const;
     const std::string& getLogicalSourceName() const;
     const std::string& getPhysicalSourceName() const;
     const NesWorkerPtr& getNesWorker() const;
@@ -64,16 +64,16 @@ class TestHarnessWorkerConfiguration {
                                    std::string logicalSourceName,
                                    std::string physicalSourceName,
                                    TestHarnessWorkerSourceType sourceType,
-                                   uint32_t workerId);
+                                   WorkerId workerId);
     TestHarnessWorkerConfiguration(WorkerConfigurationPtr workerConfiguration,
                                    TestHarnessWorkerSourceType sourceType,
-                                   uint32_t workerId);
+                                   WorkerId workerId);
     WorkerConfigurationPtr workerConfiguration;
     std::string logicalSourceName;
     std::string physicalSourceName;
     TestHarnessWorkerSourceType sourceType;
     std::vector<uint8_t*> records;
-    uint32_t workerId;
+    WorkerId workerId;
     NesWorkerPtr nesWorker;
     PhysicalSourceTypePtr physicalSource;
 };

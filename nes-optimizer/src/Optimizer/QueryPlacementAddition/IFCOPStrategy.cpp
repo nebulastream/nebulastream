@@ -320,10 +320,11 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
     }*/
 }
 
-PlacementAdditionResult IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
-                                              const std::set<LogicalOperatorPtr>& /*pinnedUpStreamNodes*/,
-                                              const std::set<LogicalOperatorPtr>& /*pinnedDownStreamNodes*/,
-                                              DecomposedQueryPlanVersion /*querySubPlanVersion*/) {
+PlacementAdditionResult
+IFCOPStrategy::updateGlobalExecutionPlan(SharedQueryId /*queryId*/,
+                                         const std::set<LogicalOperatorPtr>& /*pinnedUpStreamNodes*/,
+                                         const std::set<LogicalOperatorPtr>& /*pinnedDownStreamNodes*/,
+                                         DecomposedQueryPlanVersion /*querySubPlanVersion*/) {
     NES_NOT_IMPLEMENTED();
 }
 

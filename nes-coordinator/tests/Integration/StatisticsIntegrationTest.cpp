@@ -96,7 +96,7 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
         for (uint64_t i = 0; i < numberOfWorkers; ++i) {
             const auto physicalSourceName = basePhysicalSourceName + std::to_string(i);
             physicalSourceNames.emplace_back(physicalSourceName);
-            auto worker = createWorker(logicalSourceName, physicalSourceName, coordinatorRPCPort, i + 2);
+            auto worker = createWorker(logicalSourceName, physicalSourceName, coordinatorRPCPort, WorkerId(i + 2));
             allWorkers.emplace_back(worker);
         }
 
@@ -125,7 +125,7 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
     NesWorkerPtr createWorker(const string& defaultLogicalSourceName,
                               const std::string& physicalSourceName,
                               const uint64_t coordinatorRPCPort,
-                              uint64_t workerId) {
+                              WorkerId workerId) {
         // Create the generator function that produces data id (rand() % 1000) and timestamp monotonic increasing
         auto createData = [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             static uint64_t curTimestamp = 0;

@@ -274,7 +274,7 @@ TEST_F(TopologyControllerTest, testaddAsChildAlreadyExists) {
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG("{}", res.dump());
     EXPECT_EQ(res["message"],
-              "Could not add parent for node in topology: Node with childId=2 is already a child of node with parentID=1 .");
+              "Could not add parent for node in topology: Node with childId=2 is already a child of node with parentID=1.");
     bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
     bool stopCrd = coordinator->stopCoordinator(true);
@@ -397,7 +397,7 @@ TEST_F(TopologyControllerTest, testRemoveParentChildIDIsNotChildOfParent) {
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG("{}", res.dump());
     EXPECT_EQ(res["message"],
-              "Could not remove parent for node in topology: Node with childId=3 is not a child of node with parentID=2 .");
+              "Could not remove parent for node in topology: Node with childId=3 is not a child of node with parentID=2.");
     bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
     bool stopWrk2 = wrk2->stop(true);

@@ -21,7 +21,10 @@ std::string TopologyLinkInformation::toString() const {
 }
 
 TopologyLinkInformation::TopologyLinkInformation(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode)
-    : upstreamTopologyNode(upstreamTopologyNode), downstreamTopologyNode(downstreamTopologyNode){};
+    : upstreamTopologyNode(upstreamTopologyNode), downstreamTopologyNode(downstreamTopologyNode) {}
+TopologyLinkInformation::TopologyLinkInformation(WorkerId::Underlying upstreamTopologyNode,
+                                                 WorkerId::Underlying downstreamTopologyNode)
+    : upstreamTopologyNode(WorkerId(upstreamTopologyNode)), downstreamTopologyNode(WorkerId(downstreamTopologyNode)) {}
 
 bool TopologyLinkInformation::operator==(const TopologyLinkInformation& other) const {
     return this->downstreamTopologyNode == other.downstreamTopologyNode

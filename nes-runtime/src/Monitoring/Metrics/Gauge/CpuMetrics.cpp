@@ -15,6 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -64,7 +65,7 @@ void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) c
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<WorkerId>(nodeId);
     buffer[tupleIndex][cnt++].write<uint64_t>(timestamp);
     buffer[tupleIndex][cnt++].write<uint64_t>(coreNum);
     buffer[tupleIndex][cnt++].write<uint64_t>(user);
@@ -86,7 +87,7 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     int cnt = 0;
-    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    nodeId = buffer[tupleIndex][cnt++].read<WorkerId>();
     timestamp = buffer[tupleIndex][cnt++].read<uint64_t>();
     coreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
     user = buffer[tupleIndex][cnt++].read<uint64_t>();

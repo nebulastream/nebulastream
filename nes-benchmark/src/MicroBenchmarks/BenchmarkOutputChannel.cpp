@@ -53,7 +53,8 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
 
     uint64_t totalNumBuffer = dataSize / bufferSize;
     std::atomic<std::uint64_t> bufferReceived = 0;
-    auto nesPartition = Network::NesPartition(1 + rep, 22 + rep, 333 + rep, 444 + rep);
+    auto nesPartition =
+        Network::NesPartition(SharedQueryId(1 + rep), OperatorId(22 + rep), PartitionId(333 + rep), SubpartitionId(444 + rep));
     try {
         class ExchangeListener : public Network::ExchangeProtocolListener {
 
@@ -85,7 +86,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = Network::NetworkManager::create(
-            0,
+            WorkerId(0),
             "127.0.0.1",
             port,
             Network::ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
@@ -127,7 +128,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
         for (uint64_t thread = 0; thread < numSenderThreads; ++thread) {
             allThreads.emplace_back(
                 [totalNumBuffer, &completedProm, nesPartition, bufferSize, &buffMgr, &netManager, port, secondBarrier] {
-                    Network::NodeLocation nodeLocation(0, "127.0.0.1", port);
+                    Network::NodeLocation nodeLocation(WorkerId(0), "127.0.0.1", port);
                     auto senderChannel =
                         netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
                     secondBarrier->wait();
