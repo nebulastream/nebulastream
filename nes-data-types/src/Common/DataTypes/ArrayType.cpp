@@ -14,7 +14,6 @@
 
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <utility>
 
 namespace NES {
 

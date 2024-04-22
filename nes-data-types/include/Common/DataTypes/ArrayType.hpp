@@ -33,7 +33,7 @@ class ArrayType : public DataType {
      */
     inline ArrayType(uint64_t length, DataTypePtr component) noexcept : length(length), component(std::move(component)) {}
 
-    virtual ~ArrayType() = default;
+    ~ArrayType() override = default;
 
     /**
      * @brief Checks if this data type is an ArrayType.

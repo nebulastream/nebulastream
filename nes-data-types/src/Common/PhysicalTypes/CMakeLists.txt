@@ -12,10 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-data-types
-        PhysicalType.cpp
         ArrayPhysicalType.cpp
         BasicPhysicalType.cpp
-        PhysicalTypeFactory.cpp
         DefaultPhysicalTypeFactory.cpp
         PhysicalTypeUtil.cpp
 )

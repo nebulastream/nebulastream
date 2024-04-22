@@ -28,49 +28,52 @@ PhysicalTypePtr BasicPhysicalType::create(const DataTypePtr& type, NativeType na
 
 uint64_t BasicPhysicalType::size() const {
     switch (nativeType) {
-        case NativeType::INT_8: return sizeof(int8_t);
-        case NativeType::INT_16: return sizeof(int16_t);
-        case NativeType::INT_32: return sizeof(int32_t);
-        case NativeType::INT_64: return sizeof(int64_t);
-        case NativeType::UINT_8: return sizeof(uint8_t);
-        case NativeType::UINT_16: return sizeof(uint16_t);
-        case NativeType::UINT_32: return sizeof(uint32_t);
-        case NativeType::UINT_64: return sizeof(uint64_t);
-        case NativeType::FLOAT: return sizeof(float);
-        case NativeType::DOUBLE: return sizeof(double);
-        case NativeType::BOOLEAN: return sizeof(bool);
-        case NativeType::CHAR: return sizeof(char);
-        case NativeType::TEXT: return sizeof(uint32_t);// we store the child buffer index (NestedTupleBufferKey) in the tuple
-        case NativeType::UNDEFINED: return -1;
+        using enum NES::BasicPhysicalType::NativeType;
+        case INT_8: return sizeof(int8_t);
+        case INT_16: return sizeof(int16_t);
+        case INT_32: return sizeof(int32_t);
+        case INT_64: return sizeof(int64_t);
+        case UINT_8: return sizeof(uint8_t);
+        case UINT_16: return sizeof(uint16_t);
+        case UINT_32: return sizeof(uint32_t);
+        case UINT_64: return sizeof(uint64_t);
+        case FLOAT: return sizeof(float);
+        case DOUBLE: return sizeof(double);
+        case BOOLEAN: return sizeof(bool);
+        case CHAR: return sizeof(char);
+        case TEXT: return sizeof(uint32_t);// we store the child buffer index (NestedTupleBufferKey) in the tuple
+        case UNDEFINED: return -1;
     }
     return -1;
 }
+
 std::string BasicPhysicalType::convertRawToString(void const* data) const noexcept {
     if (!data) {
         return std::string();
     }
     switch (nativeType) {
-        case NativeType::INT_8: return std::to_string(*reinterpret_cast<int8_t const*>(data));
-        case NativeType::UINT_8: return std::to_string(*reinterpret_cast<uint8_t const*>(data));
-        case NativeType::INT_16: return std::to_string(*reinterpret_cast<int16_t const*>(data));
-        case NativeType::UINT_16: return std::to_string(*reinterpret_cast<uint16_t const*>(data));
-        case NativeType::INT_32: return std::to_string(*reinterpret_cast<int32_t const*>(data));
-        case NativeType::UINT_32: return std::to_string(*reinterpret_cast<uint32_t const*>(data));
-        case NativeType::INT_64: return std::to_string(*reinterpret_cast<int64_t const*>(data));
-        case NativeType::UINT_64: return std::to_string(*reinterpret_cast<uint64_t const*>(data));
-        case NativeType::FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
-        case NativeType::DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
-        case NativeType::BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
-        case NativeType::TEXT: {
+        using enum NES::BasicPhysicalType::NativeType;
+        case INT_8: return std::to_string(*reinterpret_cast<int8_t const*>(data));
+        case UINT_8: return std::to_string(*reinterpret_cast<uint8_t const*>(data));
+        case INT_16: return std::to_string(*reinterpret_cast<int16_t const*>(data));
+        case UINT_16: return std::to_string(*reinterpret_cast<uint16_t const*>(data));
+        case INT_32: return std::to_string(*reinterpret_cast<int32_t const*>(data));
+        case UINT_32: return std::to_string(*reinterpret_cast<uint32_t const*>(data));
+        case INT_64: return std::to_string(*reinterpret_cast<int64_t const*>(data));
+        case UINT_64: return std::to_string(*reinterpret_cast<uint64_t const*>(data));
+        case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
+        case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
+        case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
+        case TEXT: {
             NES_DEBUG(
                 "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.");
             return "TEXT conversion to string not implemented.";
         }
-        case NativeType::CHAR:
+        case CHAR:
             if (size() != 1) {
                 return "invalid char type";
             }
-            return std::string{*static_cast<char const*>(data)};
+            return std::string{*reinterpret_cast<char const*>(data)};
         default: return "invalid native type";
     }
 }
@@ -81,45 +84,47 @@ std::string BasicPhysicalType::convertRawToStringWithoutFill(void const* data) c
         return std::string();
     }
     switch (nativeType) {
-        case NativeType::INT_8: return std::to_string(*reinterpret_cast<int8_t const*>(data));
-        case NativeType::UINT_8: return std::to_string(*reinterpret_cast<uint8_t const*>(data));
-        case NativeType::INT_16: return std::to_string(*reinterpret_cast<int16_t const*>(data));
-        case NativeType::UINT_16: return std::to_string(*reinterpret_cast<uint16_t const*>(data));
-        case NativeType::INT_32: return std::to_string(*reinterpret_cast<int32_t const*>(data));
-        case NativeType::UINT_32: return std::to_string(*reinterpret_cast<uint32_t const*>(data));
-        case NativeType::INT_64: return std::to_string(*reinterpret_cast<int64_t const*>(data));
-        case NativeType::UINT_64: return std::to_string(*reinterpret_cast<uint64_t const*>(data));
-        case NativeType::FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
-        case NativeType::DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
-        case NativeType::BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
-        case NativeType::TEXT: {
+        using enum NES::BasicPhysicalType::NativeType;
+        case INT_8: return std::to_string(*reinterpret_cast<int8_t const*>(data));
+        case UINT_8: return std::to_string(*reinterpret_cast<uint8_t const*>(data));
+        case INT_16: return std::to_string(*reinterpret_cast<int16_t const*>(data));
+        case UINT_16: return std::to_string(*reinterpret_cast<uint16_t const*>(data));
+        case INT_32: return std::to_string(*reinterpret_cast<int32_t const*>(data));
+        case UINT_32: return std::to_string(*reinterpret_cast<uint32_t const*>(data));
+        case INT_64: return std::to_string(*reinterpret_cast<int64_t const*>(data));
+        case UINT_64: return std::to_string(*reinterpret_cast<uint64_t const*>(data));
+        case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
+        case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
+        case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
+        case TEXT: {
             return "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.";
         }
-        case NativeType::CHAR:
+        case CHAR:
             if (size() != 1) {
                 return "invalid char type";
             }
-            return std::string{*static_cast<char const*>(data)};
+            return std::string{*reinterpret_cast<char const*>(data)};
         default: return "invalid native type";
     }
 }
 
 std::string BasicPhysicalType::toString() const noexcept {
     switch (nativeType) {
-        case NativeType::INT_8: return "INT8";
-        case NativeType::UINT_8: return "UINT8";
-        case NativeType::INT_16: return "INT16";
-        case NativeType::UINT_16: return "UINT16";
-        case NativeType::INT_32: return "INT32";
-        case NativeType::UINT_32: return "UINT32";
-        case NativeType::INT_64: return "INT64";
-        case NativeType::UINT_64: return "UINT64";
-        case NativeType::FLOAT: return "FLOAT32";
-        case NativeType::DOUBLE: return "FLOAT64";
-        case NativeType::BOOLEAN: return "BOOLEAN";
-        case NativeType::CHAR: return "CHAR";
-        case NativeType::TEXT: return "TEXT";
-        case NativeType::UNDEFINED: return "UNDEFINED";
+        using enum NES::BasicPhysicalType::NativeType;
+        case INT_8: return "INT8";
+        case UINT_8: return "UINT8";
+        case INT_16: return "INT16";
+        case UINT_16: return "UINT16";
+        case INT_32: return "INT32";
+        case UINT_32: return "UINT32";
+        case INT_64: return "INT64";
+        case UINT_64: return "UINT64";
+        case FLOAT: return "FLOAT32";
+        case DOUBLE: return "FLOAT64";
+        case BOOLEAN: return "BOOLEAN";
+        case CHAR: return "CHAR";
+        case TEXT: return "TEXT";
+        case UNDEFINED: return "UNDEFINED";
     }
     return "";
 }

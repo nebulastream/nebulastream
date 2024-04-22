@@ -17,6 +17,8 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <algorithm>
 #include <cmath>
+#include <fmt/format.h>
+
 namespace NES {
 
 bool Float::equals(DataTypePtr otherDataType) {
@@ -45,6 +47,6 @@ DataTypePtr Float::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
-std::string Float::toString() { return "Float(" + std::to_string(bits) + " bits)"; }
+std::string Float::toString() { return fmt::format("Float({} bits)", bits); }
 
 }// namespace NES
