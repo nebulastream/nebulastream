@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.99](https://github.com/nebulastream/nebulastream/tree/v0.6.99) (2024-04-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.98...v0.6.99)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add a flag to force Ubuntu-22 Dependencies [\#4770](https://github.com/nebulastream/nebulastream/issues/4770)
+- \[TASK\] Code quality improvement for nes-operator [\#4509](https://github.com/nebulastream/nebulastream/issues/4509)
+
 ## [v0.6.98](https://github.com/nebulastream/nebulastream/tree/v0.6.98) (2024-04-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.97...v0.6.98)
