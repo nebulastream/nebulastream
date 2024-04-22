@@ -14,11 +14,11 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <fmt/format.h>
 #include <utility>
 
 namespace NES::Experimental {
@@ -49,8 +49,8 @@ bool LogicalBatchJoinOperator::inferSchema() {
 
     //validate that only two different type of schema were present
     if (distinctSchemas.size() != 2) {
-        throw TypeInferenceException("BinaryOperator: Found " + std::to_string(distinctSchemas.size())
-                                     + " distinct schemas but expected 2 distinct schemas.");
+        throw TypeInferenceException(
+            fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size()));
     }
 
     //reset left and right schema
@@ -74,7 +74,7 @@ bool LogicalBatchJoinOperator::inferSchema() {
     //Find the schema for right join key
     FieldAccessExpressionNodePtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
     auto probeJoinKeyName = probeJoinKey->getFieldName();
-    for (auto& schema : distinctSchemas) {
+    for (const auto& schema : distinctSchemas) {
         if (schema->getField(probeJoinKeyName)) {
             rightInputSchema->copyFields(schema);
             probeJoinKey->inferStamp( rightInputSchema);
@@ -133,7 +133,7 @@ OperatorPtr LogicalBatchJoinOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -148,7 +148,7 @@ void LogicalBatchJoinOperator::inferStringSignature() {
     NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }

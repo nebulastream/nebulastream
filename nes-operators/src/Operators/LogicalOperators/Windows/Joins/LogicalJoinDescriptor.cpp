@@ -29,7 +29,6 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(FieldAccessExpressionNodePtr leftJo
                                              JoinType joinType,
                                              OriginId originId)
     : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
-      leftSourceType(Schema::create()), rightSourceType(Schema::create()), outputSchema(Schema::create()),
       windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
       numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType), originId(originId) {
 
@@ -56,15 +55,15 @@ LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(const FieldAccessExpressi
                                                          joinType);
 }
 
-FieldAccessExpressionNodePtr LogicalJoinDescriptor::getLeftJoinKey() { return leftJoinKeyType; }
+FieldAccessExpressionNodePtr LogicalJoinDescriptor::getLeftJoinKey() const { return leftJoinKeyType; }
 
-FieldAccessExpressionNodePtr LogicalJoinDescriptor::getRightJoinKey() { return rightJoinKeyType; }
+FieldAccessExpressionNodePtr LogicalJoinDescriptor::getRightJoinKey() const { return rightJoinKeyType; }
 
-SchemaPtr LogicalJoinDescriptor::getLeftSourceType() { return leftSourceType; }
+SchemaPtr LogicalJoinDescriptor::getLeftSourceType() const { return leftSourceType; }
 
-SchemaPtr LogicalJoinDescriptor::getRightSourceType() { return rightSourceType; }
+SchemaPtr LogicalJoinDescriptor::getRightSourceType() const { return rightSourceType; }
 
-Windowing::WindowTypePtr LogicalJoinDescriptor::getWindowType() { return windowType; }
+Windowing::WindowTypePtr LogicalJoinDescriptor::getWindowType() const { return windowType; }
 
 Join::LogicalJoinDescriptor::JoinType LogicalJoinDescriptor::getJoinType() const { return joinType; }
 

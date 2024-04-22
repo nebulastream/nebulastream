@@ -45,14 +45,15 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     bool instanceOf() const {
         if (dynamic_cast<WatermarkStrategyType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
+
     template<class WatermarkStrategyType>
     bool instanceOf() {
         if (dynamic_cast<WatermarkStrategyType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 

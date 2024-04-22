@@ -27,8 +27,8 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
-    std::string logicalSourceName,
-    std::string physicalSourceName)
+    const std::string& logicalSourceName,
+    const std::string& physicalSourceName)
     : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName),
       generationFunction(std::move(generationFunction)), numBuffersToProcess(numBuffersToProduce), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
@@ -41,8 +41,8 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
-    std::string logicalSourceName,
-    std::string physicalSourceName) {
+    const std::string& logicalSourceName,
+    const std::string& physicalSourceName) {
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<LambdaSourceDescriptor>(schema,
                                                     std::move(generationFunction),

@@ -17,7 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-NegateExpressionNode::NegateExpressionNode() {}
+NegateExpressionNode::NegateExpressionNode() = default;
 
 NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other) {}
 
@@ -46,8 +46,8 @@ void NegateExpressionNode::inferStamp( SchemaPtr schema) {
     ExpressionNode::inferStamp( schema);
     // check if children stamp is correct
     if (!child()->isPredicate()) {
-        throw std::logic_error("Negate Expression Node: the stamp of child must be boolean, but was: "
-                               + child()->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("Negate Expression Node: the stamp of child must be boolean, but was: "
+                                + child()->getStamp()->toString());
     }
 }
 ExpressionNodePtr NegateExpressionNode::copy() { return NegateExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }

@@ -40,8 +40,8 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                        SourceMode sourceMode,
                                        uint64_t sourceAffinity,
                                        uint64_t taskQueueId,
-                                       std::string logicalSourceName,
-                                       std::string physicalSourceName);
+                                       const std::string& logicalSourceName,
+                                       const std::string& physicalSourceName);
 
     /**
      * @brief Factory method to create a BenchmarkSourceDescriptor object
@@ -59,8 +59,8 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                                              SourceMode sourceMode,
                                                              uint64_t sourceAffinity = 0,
                                                              uint64_t taskQueueId = 0,
-                                                             std::string logicalSourceName = "",
-                                                             std::string physicalSourceName = "");
+                                                             const std::string& logicalSourceName = "",
+                                                             const std::string& physicalSourceName = "");
 
     /**
      * @brief Provides the string representation of the memory source
@@ -79,7 +79,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
      * @brief returns the shared ptr to the memory area
      * @return the shared ptr to the memory area
      */
-    std::shared_ptr<uint8_t> getMemoryArea();
+    std::shared_ptr<uint8_t> getMemoryArea() const;
 
     /**
      * @brief returns the size of the stored memory area

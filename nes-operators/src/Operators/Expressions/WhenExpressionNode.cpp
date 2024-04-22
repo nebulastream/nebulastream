@@ -37,8 +37,9 @@ void WhenExpressionNode::inferStamp( SchemaPtr schema) {
 
     //left expression has to be boolean
     if (!left->getStamp()->isBoolean()) {
-        throw std::logic_error("WhenExpressionNode: Error during stamp inference. Left type needs to be Boolean, but Left was:"
-                               + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("Error during stamp inference. Left type needs to be Boolean, but Left was: {} Right was: {}",
+                                left->getStamp()->toString(),
+                                right->getStamp()->toString());
     }
 
     //set stamp to right stamp, as only the left expression will be returned

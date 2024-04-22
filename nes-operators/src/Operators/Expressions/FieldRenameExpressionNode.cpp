@@ -24,12 +24,11 @@ namespace NES {
 FieldRenameExpressionNode::FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName)
     : ExpressionNode(originalField->getStamp()), originalField(originalField), newFieldName(std::move(newFieldName)){};
 
-FieldRenameExpressionNode::FieldRenameExpressionNode(FieldRenameExpressionNode* other)
+FieldRenameExpressionNode::FieldRenameExpressionNode(const FieldRenameExpressionNodePtr other)
     : FieldRenameExpressionNode(other->getOriginalField(), other->getNewFieldName()){};
 
 ExpressionNodePtr FieldRenameExpressionNode::create(FieldAccessExpressionNodePtr originalField, std::string newFieldName) {
-    return std::make_shared<FieldRenameExpressionNode>(
-        FieldRenameExpressionNode(std::move(originalField), std::move(newFieldName)));
+    return std::make_shared<FieldRenameExpressionNode>(FieldRenameExpressionNode(originalField, std::move(newFieldName)));
 }
 
 bool FieldRenameExpressionNode::equal(NodePtr const& rhs) const {
@@ -43,7 +42,7 @@ bool FieldRenameExpressionNode::equal(NodePtr const& rhs) const {
 
 FieldAccessExpressionNodePtr FieldRenameExpressionNode::getOriginalField() const { return this->originalField; }
 
-std::string FieldRenameExpressionNode::getNewFieldName() { return newFieldName; }
+std::string FieldRenameExpressionNode::getNewFieldName() const { return newFieldName; }
 
 std::string FieldRenameExpressionNode::toString() const {
     auto node = getOriginalField();

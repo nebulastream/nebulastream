@@ -40,22 +40,22 @@ class LogicalBatchJoinDescriptor {// todo jm its dumb that this is in the window
     /**
     * @brief getter/setter for on build join key
     */
-    FieldAccessExpressionNodePtr getBuildJoinKey();
+    FieldAccessExpressionNodePtr getBuildJoinKey() const;
 
     /**
    * @brief getter/setter for on probe join key
    */
-    FieldAccessExpressionNodePtr getProbeJoinKey();
+    FieldAccessExpressionNodePtr getProbeJoinKey() const;
 
     /**
    * @brief getter build schema
    */
-    SchemaPtr getBuildSchema();
+    SchemaPtr getBuildSchema() const;
 
     /**
    * @brief getter probe schema
    */
-    SchemaPtr getProbeSchema();
+    SchemaPtr getProbeSchema() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this

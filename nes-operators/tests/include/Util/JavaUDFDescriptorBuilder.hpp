@@ -15,12 +15,10 @@
 #ifndef NES_JAVAUDFDESCRIPTORBUILDER_H
 #define NES_JAVAUDFDESCRIPTORBUILDER_H
 
-#include <string>
-
-using namespace std::string_literals;
-
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <string>
+using namespace std::string_literals;
 
 namespace NES::Catalogs::UDF {
 
@@ -40,27 +38,27 @@ class JavaUDFDescriptorBuilder {
     /**
      * @return A Java UDF descriptor with the fields either set to default values or with explicitly specified values in setters.
      */
-    JavaUDFDescriptorPtr build();
+    JavaUDFDescriptorPtr build() const;
 
     /**
      * Load the bytecode for each class specified in the byte code list.
      * @return The JavaUDFDescriptorBuilder.
      */
-    JavaUDFDescriptorBuilder& loadByteCodeFrom(const std::string& classFilePath);
+    JavaUDFDescriptorBuilder& loadByteCodeFrom(std::string_view classFilePath);
 
     /**
      * Set the class name of the Java UDF descriptor.
      * @param newClassName The class name of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setClassName(const std::string& newClassName);
+    JavaUDFDescriptorBuilder& setClassName(std::string_view newClassName);
 
     /**
      * Set the method name of the Java UDF descriptor.
      * @param newMethodName The method name of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setMethodName(const std::string& newMethodName);
+    JavaUDFDescriptorBuilder& setMethodName(std::string_view newMethodName);
 
     /**
      * Set the serialized Java instance of the Java UDF descriptor.
@@ -98,14 +96,14 @@ class JavaUDFDescriptorBuilder {
      * @param newInputClassName The class name of the input type of the UDF method.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setInputClassName(const std::string newInputClassName);
+    JavaUDFDescriptorBuilder& setInputClassName(std::string_view newInputClassName);
 
     /**
      * Set the class name of the return type of the UDF method.
      * @param newOutputClassName The class name of the return type of the UDF method.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setOutputClassName(const std::string newOutputClassName);
+    JavaUDFDescriptorBuilder& setOutputClassName(std::string_view newOutputClassName);
 
     /**
      * Create a default Java UDF descriptor that can be used in tests.

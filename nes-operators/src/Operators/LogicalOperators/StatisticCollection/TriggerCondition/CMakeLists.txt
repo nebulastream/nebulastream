@@ -14,5 +14,4 @@
 add_source_files(nes-operators
         NeverTrigger.cpp
         ThresholdTrigger.cpp
-        TriggerCondition.cpp
 )

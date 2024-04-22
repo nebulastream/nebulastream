@@ -13,45 +13,43 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/Operator.hpp>
 #include <utility>
 
 namespace NES {
 
-SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) { return create(std::move(fileName), false); }
+SinkDescriptorPtr FileSinkDescriptor::create(std::string_view fileName) { return create(fileName, false); }
 
-SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, bool addTimestamp) {
-    return create(std::move(fileName), "CSV_FORMAT", "OVERWRITE", addTimestamp);
+SinkDescriptorPtr FileSinkDescriptor::create(std::string_view fileName, bool addTimestamp) {
+    return create(fileName, "CSV_FORMAT", "OVERWRITE", addTimestamp);
 }
 
 SinkDescriptorPtr
-FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, const std::string& append, bool addTimestamp) {
-    return create(std::move(fileName), std::move(sinkFormat), append, addTimestamp, 1);
+FileSinkDescriptor::create(std::string_view fileName, std::string_view sinkFormat, std::string_view append, bool addTimestamp) {
+    return create(fileName, sinkFormat, append, addTimestamp, 1);
 }
 
-SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName,
-                                             std::string sinkFormat,
-                                             const std::string& append,
+SinkDescriptorPtr FileSinkDescriptor::create(std::string_view fileName,
+                                             std::string_view sinkFormat,
+                                             std::string_view append,
                                              bool addTimestamp,
                                              uint64_t numberOfOrigins) {
-    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(std::move(fileName),
-                                                                   std::move(sinkFormat),
-                                                                   append == "APPEND",
+    return std::make_shared<FileSinkDescriptor>(
+        FileSinkDescriptor(fileName, sinkFormat, append == "APPEND",
                                                                    addTimestamp,
                                                                    numberOfOrigins));
 }
 
-SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, const std::string& append) {
-    return create(std::move(fileName), std::move(sinkFormat), append, false, 1);
+SinkDescriptorPtr
+FileSinkDescriptor::create(const std::string& fileName, const std::string& sinkFormat, const std::string& append) {
+    return create(fileName, sinkFormat, append, false, 1);
 }
 
-FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
-                                       std::string sinkFormat,
+FileSinkDescriptor::FileSinkDescriptor(std::string_view fileName,
+                                       std::string_view sinkFormat,
                                        bool append,
                                        bool addTimestamp,
                                        uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins, addTimestamp), fileName(std::move(fileName)),
-      sinkFormat(std::move(sinkFormat)), append(append) {}
+    : SinkDescriptor(numberOfOrigins, addTimestamp), fileName(fileName), sinkFormat(sinkFormat), append(append) {}
 
 const std::string& FileSinkDescriptor::getFileName() const { return fileName; }
 

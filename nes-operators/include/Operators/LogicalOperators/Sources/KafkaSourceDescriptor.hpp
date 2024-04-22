@@ -32,7 +32,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       std::string groupId,
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
-                                      std::string offsetMode,
+                                      const std::string& offsetMode,
                                       const KafkaSourceTypePtr& kafkaSourceType,
                                       uint64_t numbersOfBufferToProduce,
                                       uint64_t batchSize);
@@ -43,7 +43,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       std::string groupId,
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
-                                      std::string offsetMode,
+                                      const std::string& offsetMode,
                                       const KafkaSourceTypePtr& kafkaSourceType,
                                       uint64_t numbersOfBufferToProduce,
                                       uint64_t batchSize);
@@ -108,7 +108,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    std::string groupId,
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
-                                   std::string offsetMode,
+                                   const std::string& offsetMode,
                                    const KafkaSourceTypePtr& kafkaSourceType,
                                    uint64_t numbersOfBufferToProduce,
                                    uint64_t batchSize);
@@ -119,7 +119,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    std::string groupId,
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
-                                   std::string offsetMode,
+                                   const std::string& offsetMode,
                                    const KafkaSourceTypePtr& kafkaSourceType,
                                    uint64_t numbersOfBufferToProduce,
                                    uint64_t batchSize);

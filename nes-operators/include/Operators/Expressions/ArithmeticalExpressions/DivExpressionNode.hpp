@@ -23,21 +23,21 @@ namespace NES {
 class DivExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit DivExpressionNode(DataTypePtr stamp);
-    ~DivExpressionNode() noexcept final = default;
+    ~DivExpressionNode() noexcept override = default;
     /**
      * @brief Create a new DIV expression
      */
     static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit DivExpressionNode(DivExpressionNode* other);
 };
 

@@ -36,8 +36,6 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const {
     return false;
 };
 
-bool SinkLogicalOperator::inferSchema() { return LogicalUnaryOperator::inferSchema(); }
-
 std::string SinkLogicalOperator::toString() const {
     std::stringstream ss;
     ss << "SINK(opId: " << id << ", statisticId: " << statisticId << ": {" << sinkDescriptor->toString() << "})";
@@ -54,8 +52,8 @@ OperatorPtr SinkLogicalOperator::copy() {
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
-        copy->addProperty(key, value);
+    for (const auto& pair : properties) {
+        copy->addProperty(pair.first, pair.second);
     }
     return copy;
 }
@@ -65,7 +63,7 @@ void SinkLogicalOperator::inferStringSignature() {
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }

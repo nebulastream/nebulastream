@@ -36,7 +36,7 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
     bool instanceOf() {
         if (dynamic_cast<WindowType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 
@@ -52,7 +52,6 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
         }
         throw std::logic_error("WindowType:: we performed an invalid cast of operator " + this->toString() + " to type "
                                + typeid(WindowType).name());
-        return nullptr;
     }
 
     virtual std::string toString() const = 0;
@@ -82,7 +81,6 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
      * @return the hash of the window type
      */
     virtual uint64_t hash() const = 0;
-private:
 };
 
 }// namespace NES::Windowing

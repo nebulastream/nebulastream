@@ -25,8 +25,7 @@ WindowOperator::WindowOperator(const Windowing::LogicalWindowDescriptorPtr& wind
 
 Windowing::LogicalWindowDescriptorPtr WindowOperator::getWindowDefinition() const { return windowDefinition; }
 
-const std::vector<OriginId> WindowOperator::getOutputOriginIds() const {
-    return OriginIdAssignmentOperator::getOutputOriginIds();
+std::vector<OriginId> WindowOperator::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 void WindowOperator::setOriginId(OriginId originId) {
     OriginIdAssignmentOperator::setOriginId(originId);

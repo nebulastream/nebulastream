@@ -99,9 +99,8 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
      * @brief updates the field to a fully qualified one.
      * @param field
      */
-    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field);
+    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const;
 
-  private:
     std::string model;
     std::vector<ExpressionNodePtr> inputFields;
     std::vector<ExpressionNodePtr> outputFields;

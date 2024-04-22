@@ -13,6 +13,7 @@
 */
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
+#include <fmt/format.h>
 
 namespace NES::Statistic {
 

@@ -23,7 +23,7 @@ namespace NES {
 class WhenExpressionNode final : public BinaryExpressionNode {
   public:
     explicit WhenExpressionNode(DataTypePtr stamp);
-    ~WhenExpressionNode() noexcept final = default;
+    ~WhenExpressionNode() noexcept override = default;
 
     /**
      * @brief Create a new When expression.
@@ -37,16 +37,16 @@ class WhenExpressionNode final : public BinaryExpressionNode {
      */
     void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Create a deep copy of this expression node.
      * @return ExpressionNodePtr
      */
-    ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit WhenExpressionNode(WhenExpressionNode* other);
 };
 

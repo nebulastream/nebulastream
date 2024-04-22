@@ -35,7 +35,7 @@ class SendingPolicyASAP : public SendingPolicy {
     /**
      * @brief Virtual destructor
      */
-    virtual ~SendingPolicyASAP() = default;
+    ~SendingPolicyASAP() override = default;
 
     bool operator==(const SendingPolicy& rhs) const override;
 

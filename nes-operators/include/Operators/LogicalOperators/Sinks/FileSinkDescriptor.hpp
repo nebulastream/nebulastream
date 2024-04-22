@@ -35,9 +35,9 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string fileName,
-                                    std::string sinkFormat,
-                                    const std::string& append,
+    static SinkDescriptorPtr create(std::string_view fileName,
+                                    std::string_view sinkFormat,
+                                    std::string_view append,
                                     bool addTimestamp,
                                     uint64_t numberOfOrigins);
 
@@ -49,7 +49,8 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param addTimestamp flat to indicate if timestamp shall be add when writing to file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string fileName, std::string sinkFormat, const std::string& append, bool addTimestamp);
+    static SinkDescriptorPtr
+    create(std::string_view fileName, std::string_view sinkFormat, std::string_view append, bool addTimestamp);
 
     /**
      * @brief Factory method to create a new file sink descriptor
@@ -58,7 +59,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param append flag to indicate if to append to file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string fileName, std::string sinkFormat, const std::string& append);
+    static SinkDescriptorPtr create(const std::string& fileName, const std::string& sinkFormat, const std::string& append);
 
     /**
      * @brief Factory method to create a new file sink descriptor as default
@@ -66,14 +67,14 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param addTimestamp flag to add timestamp
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string fileName, bool addTimestamp);
+    static SinkDescriptorPtr create(std::string_view fileName, bool addTimestamp);
 
     /**
      * @brief Factory method to create a new file sink descriptor as default
      * @param filePath the path to the output file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string fileName);
+    static SinkDescriptorPtr create(std::string_view fileName);
 
     /**
      * @brief Get the file name where the data is to be written
@@ -88,8 +89,8 @@ class FileSinkDescriptor : public SinkDescriptor {
     bool getAppend() const;
 
   private:
-    explicit FileSinkDescriptor(std::string fileName,
-                                std::string sinkFormat,
+    explicit FileSinkDescriptor(std::string_view fileName,
+                                std::string_view sinkFormat,
                                 bool append,
                                 bool addTimestamp,
                                 uint64_t numberOfOrigins);

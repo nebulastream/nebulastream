@@ -22,7 +22,6 @@
 
 namespace NES::Statistic {
 
-
 class WindowStatisticDescriptor;
 using WindowStatisticDescriptorPtr = std::shared_ptr<WindowStatisticDescriptor>;
 
@@ -36,6 +35,8 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      * @param field: Over which field to track the statistic
      */
     WindowStatisticDescriptor(const FieldAccessExpressionNodePtr& field, uint64_t width);
+
+    virtual ~WindowStatisticDescriptor() = default;
 
     /**
      * @brief Compares for equality

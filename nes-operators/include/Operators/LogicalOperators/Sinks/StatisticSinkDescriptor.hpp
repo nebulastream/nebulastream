@@ -42,8 +42,6 @@ class StatisticSinkDescriptor : public SinkDescriptor {
 
   private:
     explicit StatisticSinkDescriptor(StatisticSinkFormatType sinkFormatType, uint64_t numberOfOrigins);
-
-  private:
     StatisticSinkFormatType sinkFormatType;
 };
 

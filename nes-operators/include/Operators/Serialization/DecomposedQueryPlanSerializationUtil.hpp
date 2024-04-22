@@ -42,7 +42,8 @@ class DecomposedQueryPlanSerializationUtil {
      * @param serializableDecomposedQueryPlan the serialized decomposed query plan.
      * @return the pointer to the deserialized query plan
      */
-    static DecomposedQueryPlanPtr deserializeDecomposedQueryPlan(SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
+    static DecomposedQueryPlanPtr
+    deserializeDecomposedQueryPlan(const SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
 
     static NES::QueryState deserializeQueryState(NES::SerializableQueryState serializedQueryState);
 

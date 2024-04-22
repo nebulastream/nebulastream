@@ -28,8 +28,8 @@ BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,
                                                      SourceMode sourceMode,
                                                      uint64_t sourceAffinity,
                                                      uint64_t taskQueueId,
-                                                     std::string logicalSourceName,
-                                                     std::string physicalSourceName)
+                                                     const std::string& logicalSourceName,
+                                                     const std::string& physicalSourceName)
     : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), memoryArea(std::move(memoryArea)),
       memoryAreaSize(memoryAreaSize), numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {
@@ -45,8 +45,8 @@ std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(con
                                                                              SourceMode sourceMode,
                                                                              uint64_t sourceAffinity,
                                                                              uint64_t taskQueueId,
-                                                                             std::string logicalSourceName,
-                                                                             std::string physicalSourceName) {
+                                                                             const std::string& logicalSourceName,
+                                                                             const std::string& physicalSourceName) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<BenchmarkSourceDescriptor>(schema,
@@ -71,7 +71,7 @@ bool BenchmarkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     return schema == otherMemDescr->schema;
 }
 
-std::shared_ptr<uint8_t> BenchmarkSourceDescriptor::getMemoryArea() { return memoryArea; }
+std::shared_ptr<uint8_t> BenchmarkSourceDescriptor::getMemoryArea() const { return memoryArea; }
 
 size_t BenchmarkSourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize; }
 
@@ -89,7 +89,7 @@ uint64_t BenchmarkSourceDescriptor::getGatheringValue() const { return gathering
 
 SourceDescriptorPtr BenchmarkSourceDescriptor::copy() {
     auto copy = BenchmarkSourceDescriptor::create(schema->copy(),
-                                                  std::move(memoryArea),
+                                                  memoryArea,
                                                   memoryAreaSize,
                                                   numBuffersToProcess,
                                                   gatheringValue,

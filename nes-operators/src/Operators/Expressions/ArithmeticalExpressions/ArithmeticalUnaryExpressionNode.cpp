@@ -37,13 +37,12 @@ void ArithmeticalUnaryExpressionNode::inferStamp(SchemaPtr schema) {
     // get stamp from child
     auto child_stamp = child->getStamp();
     if (!child_stamp->isNumeric()) {
-        throw std::logic_error(
-            "ArithmeticalUnaryExpressionNode: Error during stamp inference. Type needs to be Numerical but Child was:"
-            + child_stamp->toString());
+        NES_THROW_RUNTIME_ERROR("Error during stamp inference. Types need to be Numerical but child was: {}",
+                                child->getStamp()->toString());
     }
 
     this->stamp = child_stamp;
-    NES_TRACE("ArithmeticalUnaryExpressionNode: we assigned the following stamp: {}", toString());
+    NES_TRACE("We assigned the following stamp: {}", toString());
 }
 
 bool ArithmeticalUnaryExpressionNode::equal(NodePtr const& rhs) const {

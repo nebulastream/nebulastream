@@ -19,6 +19,7 @@
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <algorithm>
 #include <utility>
 
 namespace NES {
@@ -52,7 +53,7 @@ bool LogicalProjectionOperator::inferSchema() {
     }
     NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), toString());
     outputSchema->clear();
-    for (auto& expression : expressions) {
+    for (const auto& expression : expressions) {
 
         //Infer schema of the field expression
         expression->inferStamp(inputSchema);
@@ -89,7 +90,7 @@ OperatorPtr LogicalProjectionOperator::copy() {
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
     copy->setHashBasedSignature(hashBasedSignature);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -100,13 +101,13 @@ void LogicalProjectionOperator::inferStringSignature() {
     NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
     std::vector<std::string> fields;
-    for (auto& field : outputSchema->fields) {
+    for (const auto& field : outputSchema->fields) {
         fields.push_back(field->getName());
     }
     std::sort(fields.begin(), fields.end());

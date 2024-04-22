@@ -30,6 +30,6 @@ class PowerFunction : public BinaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static LogicalFunctionRegistry::Add<PowerFunction> powerFunction("power");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<PowerFunction> powerFunction("power");
 
 }// namespace NES

@@ -23,7 +23,7 @@ namespace NES {
 class LessExpressionNode : public LogicalBinaryExpressionNode {
   public:
     LessExpressionNode() = default;
-    ~LessExpressionNode() = default;
+    ~LessExpressionNode() override = default;
     /**
     * @brief Create a new less expression
     */

@@ -91,19 +91,19 @@ class Operator : public Node {
      * @brief detect if this operator is a n-ary operator, i.e., it has multiple parent or children.
      * @return true if n-ary else false;
      */
-    bool hasMultipleChildrenOrParents();
+    bool hasMultipleChildrenOrParents() const;
 
     /**
     * @brief return if the operator has multiple children
     * @return bool
     */
-    bool hasMultipleChildren();
+    bool hasMultipleChildren() const;
 
     /**
     * @brief return if the operator has multiple children
     * @return bool
     */
-    bool hasMultipleParents();
+    bool hasMultipleParents() const;
 
     /**
      * @brief method to add a child to this node
@@ -124,14 +124,14 @@ class Operator : public Node {
      * @param operatorId : the operator id of the operator to find
      * @return nullptr if not found else the operator node
      */
-    NodePtr getChildWithOperatorId(OperatorId operatorId);
+    NodePtr getChildWithOperatorId(OperatorId operatorId) const;
 
     /**
      * @brief Get the operator with statisticId id
      * @param operatorId : the statisticId id of the operator to find
      * @return nullptr if not found else the operator node
      */
-    NodePtr getChildWithStatisticId(StatisticId statisticId);
+    NodePtr getChildWithStatisticId(StatisticId statisticId) const;
 
     /**
      * Check if a node with the id is either a child or a grandchild of this operator
@@ -190,13 +190,13 @@ class Operator : public Node {
      * @param key key of the property to check
      * @return true if property exists
      */
-    bool hasProperty(const std::string& key);
+    bool hasProperty(const std::string& key) const;
 
     /**
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    virtual const std::vector<OriginId> getOutputOriginIds() const = 0;
+    virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 
     /**
      * @brief returns the string representation of the class

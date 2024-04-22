@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <fmt/format.h>
 #include <string>
 
 namespace NES::Windowing {
@@ -21,7 +22,7 @@ TimeMeasure::TimeMeasure(uint64_t milliseconds) : milliSeconds(milliseconds) {}
 
 uint64_t TimeMeasure::getTime() const { return milliSeconds; }
 
-std::string TimeMeasure::toString() const { return "TimeMeasure: " + std::to_string(milliSeconds) + "ms"; }
+std::string TimeMeasure::toString() const { return fmt::format("TimeMeasure: {}ms", std::to_string(milliSeconds)); }
 
 bool TimeMeasure::operator<(const TimeMeasure& other) const { return milliSeconds < other.milliSeconds; }
 

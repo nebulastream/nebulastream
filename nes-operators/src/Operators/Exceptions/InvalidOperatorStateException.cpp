@@ -16,6 +16,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <sstream>
+#include <fmt/core.h>
 
 namespace NES::Exceptions {
 

@@ -58,12 +58,12 @@ class UDFLogicalOperator : public LogicalUnaryOperator {
     /**
      * @see Operator#copy
      */
-    virtual OperatorPtr copy() override = 0;
+    OperatorPtr copy() override = 0;
 
     /**
      * Two MapUdfLogicalOperator are equal when the wrapped UDFDescriptor are equal.
      */
-    [[nodiscard]] virtual bool equal(const NodePtr& other) const override;
+    [[nodiscard]] bool equal(const NodePtr& other) const override;
 
     /**
      * @see Node#isIdentical

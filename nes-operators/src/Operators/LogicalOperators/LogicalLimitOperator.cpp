@@ -56,7 +56,7 @@ OperatorPtr LogicalLimitOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -68,7 +68,7 @@ void LogicalLimitOperator::inferStringSignature() {
     NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
 
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }

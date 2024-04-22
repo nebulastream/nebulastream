@@ -14,6 +14,7 @@
 
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 
 namespace NES::Windowing {
@@ -30,14 +31,14 @@ WindowAggregationDescriptorPtr WindowAggregationDescriptor::as(const ExpressionN
     return this->copy();
 }
 
-ExpressionNodePtr WindowAggregationDescriptor::as() {
+ExpressionNodePtr WindowAggregationDescriptor::as() const {
     if (asField == nullptr) {
         return onField;
     }
     return asField;
 }
 
-std::string WindowAggregationDescriptor::toString() {
+std::string WindowAggregationDescriptor::toString() const {
     std::stringstream ss;
     ss << "WindowAggregation: ";
     ss << " Type=" << getTypeAsString();
@@ -47,30 +48,13 @@ std::string WindowAggregationDescriptor::toString() {
     return ss.str();
 }
 
-WindowAggregationDescriptor::Type WindowAggregationDescriptor::getType() { return aggregationType; }
+WindowAggregationDescriptor::Type WindowAggregationDescriptor::getType() const { return aggregationType; }
 
-std::string WindowAggregationDescriptor::getTypeAsString() {
-    if (aggregationType == Type::Count) {
-        return "Count";
-    }
-    if (aggregationType == Type::Avg) {
-        return "Avg";
-    } else if (aggregationType == Type::Max) {
-        return "Max";
-    } else if (aggregationType == Type::Min) {
-        return "Min";
-    } else if (aggregationType == Type::Sum) {
-        return "Sum";
-    } else if (aggregationType == Type::Median) {
-        return "Median";
-    } else {
-        return "Unknown Agg Type";
-    }
-}
+std::string WindowAggregationDescriptor::getTypeAsString() const { return std::string(magic_enum::enum_name(aggregationType)); }
 
-ExpressionNodePtr WindowAggregationDescriptor::on() { return onField; }
+ExpressionNodePtr WindowAggregationDescriptor::on() const { return onField; }
 
-bool WindowAggregationDescriptor::equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) {
+bool WindowAggregationDescriptor::equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) const {
     return this->getType() == otherWindowAggregationDescriptor->getType()
         && this->onField->equal(otherWindowAggregationDescriptor->onField)
         && this->asField->equal(otherWindowAggregationDescriptor->asField);

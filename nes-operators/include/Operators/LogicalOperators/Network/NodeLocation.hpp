@@ -17,6 +17,7 @@
 
 #include<Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/core.h>
 
 namespace NES::Network {
 
@@ -47,7 +48,7 @@ class NodeLocation {
      * @brief Returns the zmq uri for connection
      * @return the zmq uri for connection
      */
-    [[nodiscard]] std::string createZmqURI() const { return "tcp://" + hostname + ":" + std::to_string(port); }
+    [[nodiscard]] std::string createZmqURI() const { return fmt::format("tcp://{}:{}", hostname, std::to_string(port)); }
 
     /**
      * @brief Return the node id

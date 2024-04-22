@@ -62,7 +62,7 @@ OperatorPtr LogicalWindowOperator::copy() {
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -78,7 +78,7 @@ bool LogicalWindowOperator::inferSchema() {
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    for (auto& agg : windowAggregation) {
+    for (const auto& agg : windowAggregation) {
         agg->inferStamp(inputSchema);
     }
 
@@ -100,8 +100,9 @@ bool LogicalWindowOperator::inferSchema() {
     } else if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
         // type Inference for Content-based Windows requires the typeInferencePhaseContext
         auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
-        if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
-            auto thresholdWindow = contentBasedWindowType->asThresholdWindow(contentBasedWindowType);
+        if (contentBasedWindowType->getContentBasedSubWindowType()
+            == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
+            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
             if (!thresholdWindow->inferStamp(inputSchema)) {
                 return false;
             }
@@ -114,12 +115,12 @@ bool LogicalWindowOperator::inferSchema() {
 
         // infer the data type of the key field.
         auto keyList = windowDefinition->getKeys();
-        for (auto& key : keyList) {
+        for (const auto& key : keyList) {
             key->inferStamp(inputSchema);
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }
-    for (auto& agg : windowAggregation) {
+    for (const auto& agg : windowAggregation) {
         outputSchema->addField(
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }
@@ -134,7 +135,7 @@ void LogicalWindowOperator::inferStringSignature() {
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -144,7 +145,7 @@ void LogicalWindowOperator::inferStringSignature() {
     auto windowAggregation = windowDefinition->getWindowAggregation();
     if (windowDefinition->isKeyed()) {
         signatureStream << "WINDOW-BY-KEY(";
-        for (auto& key : windowDefinition->getKeys()) {
+        for (const auto& key : windowDefinition->getKeys()) {
             signatureStream << key->toString() << ",";
         }
     } else {
@@ -152,7 +153,7 @@ void LogicalWindowOperator::inferStringSignature() {
     }
     signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
     signatureStream << "AGGREGATION: ";
-    for (auto& agg : windowAggregation) {
+    for (const auto& agg : windowAggregation) {
         signatureStream << agg->toString() << ",";
     }
     signatureStream << ")";
@@ -165,7 +166,7 @@ void LogicalWindowOperator::inferStringSignature() {
     hashBasedSignature[hashCode] = {signature};
 }
 
-std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() {
+std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const {
     std::vector<std::string> groupByKeyNames = {};
     auto windowDefinition = this->getWindowDefinition();
     if (windowDefinition->isKeyed()) {

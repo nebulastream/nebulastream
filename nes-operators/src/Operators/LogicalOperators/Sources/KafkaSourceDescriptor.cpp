@@ -24,13 +24,12 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              std::string groupId,
                                              bool autoCommit,
                                              uint64_t kafkaConnectTimeout,
-                                             std::string offsetMode,
+                                             const std::string& offsetMode,
                                              const KafkaSourceTypePtr& kafkaSourceType,
                                              uint64_t numbersOfBufferToProduce,
                                              uint64_t batchSize)
     : SourceDescriptor(std::move(schema)), brokers(std::move(brokers)), topic(std::move(topic)), groupId(std::move(groupId)),
-      kafkaSourceType(std::move(kafkaSourceType)), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout),
-      offsetMode(offsetMode), numbersOfBufferToProduce(numbersOfBufferToProduce), batchSize(batchSize) {}
+      kafkaSourceType(kafkaSourceType), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout), offsetMode(offsetMode), numbersOfBufferToProduce(numbersOfBufferToProduce), batchSize(batchSize) {}
 
 KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema, KafkaSourceTypePtr kafkaSourceType)
     : SourceDescriptor(std::move(schema)), kafkaSourceType(std::move(kafkaSourceType)) {}
@@ -42,12 +41,12 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              std::string groupId,
                                              bool autoCommit,
                                              uint64_t kafkaConnectTimeout,
-                                             std::string offsetMode,
+                                             const std::string& offsetMode,
                                              const KafkaSourceTypePtr& kafkaSourceType,
                                              uint64_t numbersOfBufferToProduce,
                                              uint64_t batchSize)
     : SourceDescriptor(std::move(schema), std::move(logicalSourceName)), brokers(std::move(brokers)), topic(std::move(topic)),
-      groupId(std::move(groupId)), kafkaSourceType(std::move(kafkaSourceType)), autoCommit(autoCommit),
+      groupId(std::move(groupId)), kafkaSourceType(kafkaSourceType), autoCommit(autoCommit),
       kafkaConnectTimeout(kafkaConnectTimeout), offsetMode(offsetMode), numbersOfBufferToProduce(numbersOfBufferToProduce),
       batchSize(batchSize) {}
 
@@ -58,7 +57,7 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                   std::string groupId,
                                                   bool autoCommit,
                                                   uint64_t kafkaConnectTimeout,
-                                                  std::string offsetMode,
+                                                  const std::string& offsetMode,
                                                   const KafkaSourceTypePtr& kafkaSourceType,
                                                   uint64_t numbersOfBufferToProduce,
                                                   uint64_t batchSize) {
@@ -69,7 +68,7 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                                          std::move(groupId),
                                                                          autoCommit,
                                                                          kafkaConnectTimeout,
-                                                                         std::move(offsetMode),
+                                                                         offsetMode,
                                                                          kafkaSourceType,
                                                                          numbersOfBufferToProduce,
                                                                          batchSize));
@@ -81,7 +80,7 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                   std::string groupId,
                                                   bool autoCommit,
                                                   uint64_t kafkaConnectTimeout,
-                                                  std::string offsetMode,
+                                                  const std::string& offsetMode,
                                                   const KafkaSourceTypePtr& kafkaSourceType,
                                                   uint64_t numbersOfBufferToProduce,
                                                   uint64_t batchSize) {
@@ -91,7 +90,7 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                                          std::move(groupId),
                                                                          autoCommit,
                                                                          kafkaConnectTimeout,
-                                                                         std::move(offsetMode),
+                                                                         offsetMode,
                                                                          kafkaSourceType,
                                                                          numbersOfBufferToProduce,
                                                                          batchSize));
@@ -140,7 +139,7 @@ SourceDescriptorPtr KafkaSourceDescriptor::copy() {
                                               autoCommit,
                                               kafkaConnectTimeout,
                                               offsetMode,
-                                              std::move(kafkaSourceType),
+                                              kafkaSourceType,
                                               numbersOfBufferToProduce,
                                               batchSize);
     copy->setPhysicalSourceName(physicalSourceName);

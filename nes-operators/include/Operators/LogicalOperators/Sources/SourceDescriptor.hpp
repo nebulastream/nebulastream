@@ -64,7 +64,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     bool instanceOf() const {
         if (dynamic_cast<const SourceType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 
@@ -106,7 +106,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Set physical source name
      * @param physicalSourceName : name of the physical source
      */
-    void setPhysicalSourceName(const std::string& physicalSourceName);
+    void setPhysicalSourceName(std::string_view physicalSourceName);
 
     /**
      * @brief Set schema of the source

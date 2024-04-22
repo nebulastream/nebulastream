@@ -22,8 +22,6 @@ bool NeverTrigger::operator==(const TriggerCondition& rhs) const { return rhs.in
 
 std::string NeverTrigger::toString() const { return "NeverTrigger"; }
 
-bool NeverTrigger::operator!=(const TriggerCondition& rhs) const { return !(rhs == *this); }
-
 bool NeverTrigger::shallTrigger(const Statistic&) { return false; }
 
 }// namespace NES::Statistic

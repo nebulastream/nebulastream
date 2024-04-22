@@ -23,7 +23,7 @@ namespace NES {
 class EqualsExpressionNode : public LogicalBinaryExpressionNode {
   public:
     EqualsExpressionNode() noexcept = default;
-    ~EqualsExpressionNode() = default;
+    ~EqualsExpressionNode() override = default;
     /**
     * @brief Create a new equals expression
     */

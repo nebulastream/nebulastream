@@ -24,7 +24,7 @@ namespace NES {
  */
 Operator::Operator(OperatorId id) : Operator(id, INVALID_STATISTIC_ID) {}
 
-Operator::Operator(OperatorId id, StatisticId statisticId) : id(id), statisticId(statisticId), properties() {
+Operator::Operator(OperatorId id, StatisticId statisticId) : id(id), statisticId(statisticId) {
     NES_INFO("Creating Operator {}", id);
 }
 
@@ -36,7 +36,7 @@ StatisticId Operator::getStatisticId() const { return statisticId; }
 
 void Operator::setStatisticId(StatisticId statisticId) { Operator::statisticId = statisticId; }
 
-bool Operator::hasMultipleChildrenOrParents() {
+bool Operator::hasMultipleChildrenOrParents() const {
     //has multiple child operator
     bool hasMultipleChildren = (!getChildren().empty()) && getChildren().size() > 1;
     //has multiple parent operator
@@ -45,9 +45,9 @@ bool Operator::hasMultipleChildrenOrParents() {
     return hasMultipleChildren || hasMultipleParent;
 }
 
-bool Operator::hasMultipleChildren() { return !getChildren().empty() && getChildren().size() > 1; }
+bool Operator::hasMultipleChildren() const { return !getChildren().empty() && getChildren().size() > 1; }
 
-bool Operator::hasMultipleParents() { return !getParents().empty() && getParents().size() > 1; }
+bool Operator::hasMultipleParents() const { return !getParents().empty() && getParents().size() > 1; }
 
 OperatorPtr Operator::duplicate() {
     NES_INFO("Operator: Create copy of the operator");
@@ -155,7 +155,7 @@ bool Operator::addParent(NodePtr newNode) {
     return false;
 }
 
-NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) {
+NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) const {
 
     for (const auto& child : children) {
 
@@ -173,7 +173,7 @@ NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) {
     return nullptr;
 }
 
-NodePtr Operator::getChildWithStatisticId(StatisticId statisticId) {
+NodePtr Operator::getChildWithStatisticId(StatisticId statisticId) const {
     for (const auto& child : children) {
         // If the child has a matching statistic id then return it
         if(child->as<Operator>()->getStatisticId() == statisticId){
@@ -193,7 +193,7 @@ void Operator::addProperty(const std::string& key, const std::any value) { prope
 
 std::any Operator::getProperty(const std::string& key) { return properties[key]; }
 
-bool Operator::hasProperty(const std::string& key) { return properties.find(key) != properties.end(); }
+bool Operator::hasProperty(const std::string& key) const { return properties.contains(key); }
 
 void Operator::removeProperty(const std::string& key) { properties.erase(key); }
 
@@ -216,7 +216,7 @@ bool Operator::containAsGrandParent(NES::NodePtr operatorNode) {
     auto operatorIdToCheck = operatorNode->as<Operator>()->getId();
     // populate all ancestors
     std::vector<NodePtr> ancestors{};
-    for (auto& parent : parents) {
+    for (const auto& parent : parents) {
         std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }

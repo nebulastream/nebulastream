@@ -52,7 +52,7 @@ class ThresholdWindow : public ContentBasedWindowType {
 
     [[nodiscard]] const ExpressionNodePtr& getPredicate() const;
 
-    uint64_t getMinimumCount();
+    uint64_t getMinimumCount() const;
 
     bool inferStamp(const SchemaPtr& schema) override;
 

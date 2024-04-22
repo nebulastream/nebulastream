@@ -15,7 +15,6 @@
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <numeric>
 #include <utility>
 
 namespace NES::Statistic {
@@ -28,6 +27,7 @@ LogicalStatisticWindowOperator::LogicalStatisticWindowOperator(OperatorId id,
       windowStatisticDescriptor(std::move(windowStatisticDescriptor)), metricHash(metricHash) {}
 
 bool LogicalStatisticWindowOperator::inferSchema() {
+    using enum BasicType;
     if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
@@ -39,11 +39,11 @@ bool LogicalStatisticWindowOperator::inferSchema() {
     // Creating output schema
     const auto qualifierNameWithSeparator = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     outputSchema->clear();
-    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_START, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_END, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_START, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_END, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME, UINT64);
     windowStatisticDescriptor->addDescriptorFields(*outputSchema, qualifierNameWithSeparator);
 
     NES_DEBUG("OutputSchema is = {}", outputSchema->toString());

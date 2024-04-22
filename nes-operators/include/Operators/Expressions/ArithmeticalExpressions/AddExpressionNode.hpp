@@ -22,21 +22,21 @@ namespace NES {
 class AddExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit AddExpressionNode(DataTypePtr stamp);
-    ~AddExpressionNode() noexcept final = default;
+    ~AddExpressionNode() noexcept override = default;
     /**
      * @brief Create a new ADD expression
      */
     static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit AddExpressionNode(AddExpressionNode* other);
 };
 

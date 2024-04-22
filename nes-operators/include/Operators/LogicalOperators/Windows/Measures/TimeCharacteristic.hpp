@@ -49,12 +49,12 @@ class TimeCharacteristic final {
     /**
      * @return The TimeCharacteristic type.
      */
-    Type getType();
+    Type getType() const;
 
     /**
      * @return  If it is a event time window this returns the field, from which we extract the time stamp.
      */
-    AttributeFieldPtr getField();
+    AttributeFieldPtr getField() const;
 
     /**
      * @brief Set the field from which we extract the time stamp.
@@ -67,15 +67,15 @@ class TimeCharacteristic final {
      * @param other: Object that we want to compare this to
      * @return Boolean
      */
-    virtual bool equals(const TimeCharacteristic& other) const;
+    bool equals(const TimeCharacteristic& other) const;
 
     uint64_t hash() const;
 
-    std::string toString();
-    std::string getTypeAsString();
-    TimeUnit getTimeUnit();
+    std::string toString() const;
+    std::string getTypeAsString() const;
+    TimeUnit getTimeUnit() const;
 
-    void setTimeUnit(const TimeUnit unit);
+    void setTimeUnit(const TimeUnit& unit);
 
   private:
     Type type;

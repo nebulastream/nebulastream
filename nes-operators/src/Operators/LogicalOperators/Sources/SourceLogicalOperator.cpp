@@ -72,8 +72,8 @@ OperatorPtr SourceLogicalOperator::copy() {
     if (copy->instanceOf<SourceLogicalOperator>()) {
         copy->as<SourceLogicalOperator>()->setProjectSchema(projectSchema);
     }
-    for (auto [key, value] : properties) {
-        copy->addProperty(key, value);
+    for (const auto& pair : properties) {
+        copy->addProperty(pair.first, pair.second);
     }
     return copy;
 }
@@ -88,7 +88,7 @@ void SourceLogicalOperator::inferInputOrigins() {
     // Data sources have no input origins.
 }
 
-const std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const {
+std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 

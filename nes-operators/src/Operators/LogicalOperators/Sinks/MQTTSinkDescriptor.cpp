@@ -48,8 +48,6 @@ MQTTSinkDescriptor::ServiceQualities MQTTSinkDescriptor::getQualityOfService() c
 
 bool MQTTSinkDescriptor::getAsynchronousClient() const { return asynchronousClient; }
 
-uint64_t MQTTSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
-
 SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              std::string&& topic,
                                              std::string&& user,

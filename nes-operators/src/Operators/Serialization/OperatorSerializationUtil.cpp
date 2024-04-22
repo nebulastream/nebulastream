@@ -11,6 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -90,7 +93,7 @@ namespace NES {
 
 SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorPtr& operatorNode, bool isClientOriginated) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator {}", operatorNode->toString());
-    SerializableOperator serializedOperator = SerializableOperator();
+    auto serializedOperator = SerializableOperator();
     if (operatorNode->instanceOf<SourceLogicalOperator>()) {
         // serialize source operator
         serializeSourceOperator(*operatorNode->as<SourceLogicalOperator>(), serializedOperator, isClientOriginated);
@@ -424,7 +427,7 @@ LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails) {
     // serialize and append children if the node has any
     std::vector<ExpressionNodePtr> exps;
-    for (auto serializedExpression : projectionDetails.expression()) {
+    for (const auto& serializedExpression : projectionDetails.expression()) {
         auto projectExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
         exps.push_back(projectExpression);
     }
@@ -467,7 +470,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
     auto windowDefinition = windowOperator.getWindowDefinition();
 
     if (windowDefinition->isKeyed()) {
-        for (auto& key : windowDefinition->getKeys()) {
+        for (const auto& key : windowDefinition->getKeys()) {
             auto expression = windowDetails.mutable_keys()->Add();
             ExpressionSerializationUtil::serializeExpression(key, expression);
         }
@@ -508,7 +511,8 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         }
     } else if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
         auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
-        if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
+        if (contentBasedWindowType->getContentBasedSubWindowType()
+            == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
             auto thresholdWindow = std::dynamic_pointer_cast<Windowing::ThresholdWindow>(windowType);
             auto thresholdWindowDetails = SerializableOperator_ThresholdWindow();
             ExpressionSerializationUtil::serializeExpression(thresholdWindow->getPredicate(),
@@ -526,24 +530,19 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         ExpressionSerializationUtil::serializeExpression(aggregation->as(), windowAggregation->mutable_asfield());
         ExpressionSerializationUtil::serializeExpression(aggregation->on(), windowAggregation->mutable_onfield());
 
+        using enum Windowing::WindowAggregationDescriptor::Type;
         switch (aggregation->getType()) {
-            case Windowing::WindowAggregationDescriptor::Type::Count:
-                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
+            case Count: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
                 break;
-            case Windowing::WindowAggregationDescriptor::Type::Max:
-                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
+            case Max: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
                 break;
-            case Windowing::WindowAggregationDescriptor::Type::Min:
-                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
+            case Min: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
                 break;
-            case Windowing::WindowAggregationDescriptor::Type::Sum:
-                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
+            case Sum: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
                 break;
-            case Windowing::WindowAggregationDescriptor::Type::Avg:
-                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
+            case Avg: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
                 break;
-            case Windowing::WindowAggregationDescriptor::Type::Median:
-                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
+            case Median: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
                 break;
             default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
         }
@@ -555,11 +554,11 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
 LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails,
                                                      OperatorId operatorId) {
-    auto serializedWindowAggregations = windowDetails.windowaggregations();
-    auto serializedWindowType = windowDetails.windowtype();
+    const auto& serializedWindowAggregations = windowDetails.windowaggregations();
+    const auto& serializedWindowType = windowDetails.windowtype();
 
     std::vector<Windowing::WindowAggregationDescriptorPtr> aggregation;
-    for (auto serializedWindowAggregation : serializedWindowAggregations) {
+    for (const auto& serializedWindowAggregation : serializedWindowAggregations) {
         auto onField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.onfield())
                            ->as<FieldAccessExpressionNode>();
         auto asField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.asfield())
@@ -695,8 +694,8 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
 
 LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails,
                                                                           OperatorId operatorId) {
-    auto serializedWindowType = joinDetails.windowtype();
-    auto serializedJoinType = joinDetails.jointype();
+    const auto& serializedWindowType = joinDetails.windowtype();
+    const auto& serializedJoinType = joinDetails.jointype();
     // check which jointype is set
     // default: JoinType::INNER_JOIN
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
@@ -709,7 +708,7 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>()) {
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
-        auto serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
+        const auto& serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
@@ -724,7 +723,7 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
     } else if (serializedWindowType.Is<SerializableOperator_SlidingWindow>()) {
         auto serializedSlidingWindow = SerializableOperator_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
-        auto serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
+        const auto& serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
             window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
@@ -909,16 +908,18 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
                 tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
                 break;
         }
+
+        using enum Configurations::TCPDecideMessageSize;
         switch (tcpSourceDescriptor->getSourceConfig()->getDecideMessageSize()->getValue()) {
-            case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
+            case TUPLE_SEPARATOR:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_TUPLE_SEPARATOR);
                 break;
-            case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
+            case USER_SPECIFIED_BUFFER_SIZE:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_USER_SPECIFIED_BUFFER_SIZE);
                 break;
-            case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET:
+            case BUFFER_SIZE_FROM_SOCKET:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_BUFFER_SIZE_FROM_SOCKET);
                 break;
@@ -1636,7 +1637,7 @@ void OperatorSerializationUtil::serializeInputSchema(const OperatorPtr& operator
 }
 
 void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorPtr operatorNode,
-                                                       SerializableOperator& serializedOperator) {
+                                                       const SerializableOperator& serializedOperator) {
     // de-serialize operator input schema
     if (!operatorNode->instanceOf<BinaryOperator>()) {
         operatorNode->as<UnaryOperator>()->setInputSchema(
@@ -1679,16 +1680,16 @@ OperatorSerializationUtil::deserializeInferModelOperator(const SerializableOpera
     std::vector<ExpressionNodePtr> inputFields;
     std::vector<ExpressionNodePtr> outputFields;
 
-    for (auto serializedInputField : inferModelDetails.inputfields()) {
+    for (const auto& serializedInputField : inferModelDetails.inputfields()) {
         auto inputField = ExpressionSerializationUtil::deserializeExpression(serializedInputField);
         inputFields.push_back(inputField);
     }
-    for (auto serializedOutputField : inferModelDetails.outputfields()) {
+    for (const auto& serializedOutputField : inferModelDetails.outputfields()) {
         auto outputField = ExpressionSerializationUtil::deserializeExpression(serializedOutputField);
         outputFields.push_back(outputField);
     }
 
-    auto content = inferModelDetails.mlfilecontent();
+    const auto& content = inferModelDetails.mlfilecontent();
     std::ofstream output(inferModelDetails.mlfilename(), std::ios::binary);
     output << content;
     output.close();
@@ -1797,12 +1798,12 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOpe
     const SerializableOperator_StatisticWindowDetails& statisticWindowDetails) {
 
     // 1. Deserializing the window type
-    auto serializedWindowType = statisticWindowDetails.windowtype();
+    const auto serializedWindowType = statisticWindowDetails.windowtype();
     Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>()) {
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
-        auto serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
+        const auto serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
@@ -1817,7 +1818,7 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOpe
     } else if (serializedWindowType.Is<SerializableOperator_SlidingWindow>()) {
         auto serializedSlidingWindow = SerializableOperator_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
-        auto serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
+        const auto serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
             window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),

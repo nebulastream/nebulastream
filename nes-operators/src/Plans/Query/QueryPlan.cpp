@@ -39,7 +39,7 @@ QueryPlanPtr QueryPlan::create(OperatorPtr rootOperator) {
 
 QueryPlanPtr QueryPlan::create() { return std::make_shared<QueryPlan>(QueryPlan()); }
 
-QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID) {}
+QueryPlan::QueryPlan() {}
 
 QueryPlan::QueryPlan(OperatorPtr rootOperator) : queryId(INVALID_QUERY_ID) {
     rootOperators.push_back(std::move(rootOperator));
@@ -50,7 +50,7 @@ QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators)
 
 QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId) {}
 
-std::vector<SourceLogicalOperatorPtr> QueryPlan::getSourceOperators() {
+std::vector<SourceLogicalOperatorPtr> QueryPlan::getSourceOperators() const {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
     std::set<SourceLogicalOperatorPtr> sourceOperatorsSet;
     for (const auto& rootOperator : rootOperators) {
@@ -63,7 +63,7 @@ std::vector<SourceLogicalOperatorPtr> QueryPlan::getSourceOperators() {
     return sourceOperators;
 }
 
-std::vector<SinkLogicalOperatorPtr> QueryPlan::getSinkOperators() {
+std::vector<SinkLogicalOperatorPtr> QueryPlan::getSinkOperators() const {
     NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
     std::vector<SinkLogicalOperatorPtr> sinkOperators;
     for (const auto& rootOperator : rootOperators) {
@@ -92,7 +92,7 @@ void QueryPlan::clearRootOperators() {
     rootOperators.clear();
 }
 
-std::string QueryPlan::toString() {
+std::string QueryPlan::toString() const {
     std::stringstream ss;
     auto dumpHandler = QueryConsoleDumpHandler::create(ss);
     for (const auto& rootOperator : rootOperators) {
@@ -101,9 +101,9 @@ std::string QueryPlan::toString() {
     return ss.str();
 }
 
-std::vector<OperatorPtr> QueryPlan::getRootOperators() { return rootOperators; }
+std::vector<OperatorPtr> QueryPlan::getRootOperators() const { return rootOperators; }
 
-std::vector<OperatorPtr> QueryPlan::getLeafOperators() {
+std::vector<OperatorPtr> QueryPlan::getLeafOperators() const {
     // Find all the leaf nodes in the query plan
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<OperatorPtr> leafOperators;
@@ -129,7 +129,7 @@ std::vector<OperatorPtr> QueryPlan::getLeafOperators() {
     return leafOperators;
 }
 
-std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() {
+std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() const {
     // Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<OperatorPtr> visitedOperators;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
@@ -157,7 +157,7 @@ bool QueryPlan::hasOperatorWithId(OperatorId operatorId) {
     return false;
 }
 
-OperatorPtr QueryPlan::getOperatorWithOperatorId(OperatorId operatorId) {
+OperatorPtr QueryPlan::getOperatorWithOperatorId(OperatorId operatorId) const {
     NES_DEBUG("QueryPlan: Checking if the operator with id {} exists in the query plan or not", operatorId);
     for (auto rootOperator : rootOperators) {
 
@@ -176,7 +176,7 @@ OperatorPtr QueryPlan::getOperatorWithOperatorId(OperatorId operatorId) {
     return nullptr;
 }
 
-OperatorPtr QueryPlan::getOperatorWithStatisticId(StatisticId statisticId) {
+OperatorPtr QueryPlan::getOperatorWithStatisticId(StatisticId statisticId) const {
     NES_DEBUG("QueryPlan: Checking if the operator with statisticId {} exists in the query plan or not", statisticId);
     for (auto rootOperator : rootOperators) {
         if (rootOperator->getStatisticId() == statisticId) {
@@ -282,7 +282,7 @@ QueryPlanPtr QueryPlan::copy() {
 
 std::string QueryPlan::getSourceConsumed() const { return sourceConsumed; }
 
-void QueryPlan::setSourceConsumed(const std::string& sourceName) { sourceConsumed = sourceName; }
+void QueryPlan::setSourceConsumed(std::string_view sourceName) { sourceConsumed = sourceName; }
 
 Optimizer::PlacementStrategy QueryPlan::getPlacementStrategy() const { return placementStrategy; }
 
@@ -359,7 +359,7 @@ QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourc
     return operatorsBetween;
 }
 
-QueryState QueryPlan::getQueryState() { return currentState; }
+QueryState QueryPlan::getQueryState() const { return currentState; }
 
 void QueryPlan::setQueryState(QueryState newState) { currentState = newState; }
 

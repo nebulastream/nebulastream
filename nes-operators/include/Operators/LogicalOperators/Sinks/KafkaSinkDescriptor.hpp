@@ -32,7 +32,8 @@ class KafkaSinkDescriptor : public SinkDescriptor {
      * @param timeout Kafka producer timeout
      * @return descriptor for kafka sink
      */
-    static SinkDescriptorPtr create(std::string sinkFormat, std::string topic, std::string brokers, uint64_t timeout);
+    static SinkDescriptorPtr
+    create(const std::string& sinkFormat, const std::string& topic, const std::string& brokers, uint64_t timeout);
 
     /**
      * @brief Get Kafka topic where data is to be written
@@ -51,10 +52,13 @@ class KafkaSinkDescriptor : public SinkDescriptor {
 
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
-    std::string getSinkFormatAsString();
+    std::string getSinkFormatAsString() const;
 
   private:
-    explicit KafkaSinkDescriptor(std::string sinkFormat, std::string topic, std::string brokers, uint64_t timeout);
+    explicit KafkaSinkDescriptor(const std::string& sinkFormat,
+                                 const std::string& topic,
+                                 const std::string& brokers,
+                                 uint64_t timeout);
     std::string sinkFormat;
     std::string topic;
     std::string brokers;

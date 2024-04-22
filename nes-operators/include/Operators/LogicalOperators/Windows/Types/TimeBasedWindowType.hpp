@@ -25,7 +25,7 @@ class TimeBasedWindowType : public WindowType {
   public:
     explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
 
-    virtual ~TimeBasedWindowType() = default;
+    ~TimeBasedWindowType() override = default;
     /**
      * @brief Get the time characteristic of the window.
      * @return

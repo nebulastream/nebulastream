@@ -29,16 +29,13 @@ using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
  */
 class SinkLogicalOperator : public LogicalUnaryOperator {
   public:
-    explicit SinkLogicalOperator(OperatorId id);
     SinkLogicalOperator(SinkDescriptorPtr const& sinkDescriptor, OperatorId id);
-    SinkLogicalOperator& operator=(const SinkLogicalOperator& other);
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     std::string toString() const override;
     SinkDescriptorPtr getSinkDescriptor() const;
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorPtr copy() override;
-    bool inferSchema() override;
     void inferStringSignature() override;
 
   private:

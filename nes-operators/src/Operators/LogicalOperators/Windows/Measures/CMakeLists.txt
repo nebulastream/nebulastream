@@ -15,5 +15,4 @@ add_source_files(nes-operators
         TimeCharacteristic.cpp
         TimeMeasure.cpp
         TimeUnit.cpp
-        WindowMeasure.cpp
 )

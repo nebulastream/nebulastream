@@ -20,10 +20,7 @@
 
 namespace NES {
 
-BinaryOperator::BinaryOperator(OperatorId id)
-    : Operator(id), leftInputSchema(Schema::create()), rightInputSchema(Schema::create()), outputSchema(Schema::create()) {
-    //nop
-}
+BinaryOperator::BinaryOperator(OperatorId id) : Operator(id) {}
 
 void BinaryOperator::setLeftInputSchema(SchemaPtr inputSchema) {
     if (inputSchema) {
@@ -56,13 +53,13 @@ std::vector<OriginId> BinaryOperator::getAllInputOriginIds() {
     return vec;
 }
 
-void BinaryOperator::setLeftInputOriginIds(std::vector<OriginId> originIds) { this->leftInputOriginIds = originIds; }
+void BinaryOperator::setLeftInputOriginIds(const std::vector<OriginId>& originIds) { this->leftInputOriginIds = originIds; }
 
 std::vector<OriginId> BinaryOperator::getRightInputOriginIds() { return rightInputOriginIds; }
 
-void BinaryOperator::setRightInputOriginIds(std::vector<OriginId> originIds) { this->rightInputOriginIds = originIds; }
+void BinaryOperator::setRightInputOriginIds(const std::vector<OriginId>& originIds) { this->rightInputOriginIds = originIds; }
 
-const std::vector<OriginId> BinaryOperator::getOutputOriginIds() const {
+std::vector<OriginId> BinaryOperator::getOutputOriginIds() const {
     std::vector<OriginId> outputOriginIds = leftInputOriginIds;
     outputOriginIds.insert(outputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
     return outputOriginIds;

@@ -61,12 +61,6 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
     std::string toString() const override;
 
-    /**
-     * @brief getter for number of origins
-     * @return number of origins
-     */
-    uint64_t getNumberOfOrigins() const;
-
   private:
     explicit ZmqSinkDescriptor(std::string host,
                                uint16_t port,

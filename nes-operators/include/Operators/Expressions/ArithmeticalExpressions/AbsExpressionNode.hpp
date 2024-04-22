@@ -22,13 +22,13 @@ namespace NES {
 class AbsExpressionNode final : public ArithmeticalUnaryExpressionNode {
   public:
     explicit AbsExpressionNode(DataTypePtr stamp);
-    ~AbsExpressionNode() noexcept final = default;
+    ~AbsExpressionNode() noexcept override = default;
     /**
      * @brief Create a new ABS expression
      */
     [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
@@ -41,9 +41,9 @@ class AbsExpressionNode final : public ArithmeticalUnaryExpressionNode {
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() override;
 
-  protected:
+  private:
     explicit AbsExpressionNode(AbsExpressionNode* other);
 };
 

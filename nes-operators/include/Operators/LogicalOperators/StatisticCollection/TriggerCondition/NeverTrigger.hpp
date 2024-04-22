@@ -38,13 +38,6 @@ class NeverTrigger : public TriggerCondition {
     bool operator==(const TriggerCondition& rhs) const override;
 
     /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    bool operator!=(const TriggerCondition& rhs) const override;
-
-    /**
      * @brief Creates a string representation
      * @return std::string
      */

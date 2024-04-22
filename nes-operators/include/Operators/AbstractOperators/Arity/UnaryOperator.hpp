@@ -15,8 +15,9 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_UNARYOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_UNARYOPERATOR_HPP_
 
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <API/Schema.hpp>
 #include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
 
@@ -58,19 +59,19 @@ class UnaryOperator : public virtual Operator {
      * @brief Set the input origin ids from the input stream
      * @param originIds
      */
-    void setInputOriginIds(std::vector<OriginId> originIds);
+    void setInputOriginIds(const std::vector<OriginId>& originIds);
 
     /**
      * @brief Gets the input origin ids  from the input stream
      * @return std::vector<OriginId>
      */
-    const std::vector<OriginId> getInputOriginIds() const;
+    std::vector<OriginId> getInputOriginIds() const;
 
     /**
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    virtual const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
 
     /**
      * @brief returns the string representation of the class
@@ -79,8 +80,8 @@ class UnaryOperator : public virtual Operator {
     std::string toString() const override;
 
   protected:
-    SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
+    SchemaPtr inputSchema = Schema::create();
+    SchemaPtr outputSchema = Schema::create();
     std::vector<OriginId> inputOriginIds;
 };
 

@@ -22,26 +22,26 @@ namespace NES {
 class SqrtExpressionNode final : public ArithmeticalUnaryExpressionNode {
   public:
     explicit SqrtExpressionNode(DataTypePtr stamp);
-    ~SqrtExpressionNode() noexcept final = default;
+    ~SqrtExpressionNode() noexcept override = default;
     /**
      * @brief Create a new SQRT expression
      */
     [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) final;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr copy() final;
+    ExpressionNodePtr copy() override;
 
   protected:
     explicit SqrtExpressionNode(SqrtExpressionNode* other);

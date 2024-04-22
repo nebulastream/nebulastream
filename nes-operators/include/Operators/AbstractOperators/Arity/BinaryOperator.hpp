@@ -15,8 +15,10 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_BINARYOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_BINARYOPERATOR_HPP_
 
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <API/Schema.hpp>
 #include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
+
 namespace NES {
 
 /**
@@ -66,7 +68,7 @@ class BinaryOperator : public virtual Operator {
      * @brief Set the input origin ids for the left input stream.
      * @param originIds
      */
-    void setLeftInputOriginIds(std::vector<OriginId> originIds);
+    void setLeftInputOriginIds(const std::vector<OriginId>& originIds);
 
     /**
      * @brief Gets the input origin ids for the left input stream
@@ -84,7 +86,7 @@ class BinaryOperator : public virtual Operator {
      * @brief Set the input origin ids for the right input stream.
      * @param originIds
      */
-    void setRightInputOriginIds(std::vector<OriginId> originIds);
+    void setRightInputOriginIds(const std::vector<OriginId>& originIds);
 
     /**
      * @brief Gets the input origin ids for the right input stream
@@ -96,7 +98,7 @@ class BinaryOperator : public virtual Operator {
      * @brief Gets the output origin ids for the result stream
      * @return std::vector<OriginId> originids
      */
-    const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
 
     /**
      * @brief returns the string representation of the class
@@ -105,9 +107,9 @@ class BinaryOperator : public virtual Operator {
     std::string toString() const override;
 
   protected:
-    SchemaPtr leftInputSchema;
-    SchemaPtr rightInputSchema;
-    SchemaPtr outputSchema;
+    SchemaPtr leftInputSchema = Schema::create();
+    SchemaPtr rightInputSchema = Schema::create();
+    SchemaPtr outputSchema = Schema::create();
     std::vector<SchemaPtr> distinctSchemas;
     std::vector<OriginId> leftInputOriginIds;
     std::vector<OriginId> rightInputOriginIds;

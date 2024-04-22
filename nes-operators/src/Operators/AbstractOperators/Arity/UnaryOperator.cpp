@@ -20,7 +20,7 @@
 
 namespace NES {
 
-UnaryOperator::UnaryOperator(OperatorId id) : Operator(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
+UnaryOperator::UnaryOperator(OperatorId id) : Operator(id) {}
 
 void UnaryOperator::setInputSchema(SchemaPtr inputSchema) {
     if (inputSchema) {
@@ -38,11 +38,11 @@ SchemaPtr UnaryOperator::getInputSchema() const { return inputSchema; }
 
 SchemaPtr UnaryOperator::getOutputSchema() const { return outputSchema; }
 
-void UnaryOperator::setInputOriginIds(std::vector<OriginId> originIds) { this->inputOriginIds = originIds; }
+void UnaryOperator::setInputOriginIds(const std::vector<OriginId>& originIds) { this->inputOriginIds = originIds; }
 
-const std::vector<OriginId> UnaryOperator::getInputOriginIds() const { return inputOriginIds; }
+std::vector<OriginId> UnaryOperator::getInputOriginIds() const { return inputOriginIds; }
 
-const std::vector<OriginId> UnaryOperator::getOutputOriginIds() const { return inputOriginIds; }
+std::vector<OriginId> UnaryOperator::getOutputOriginIds() const { return inputOriginIds; }
 
 std::string UnaryOperator::toString() const {
     return fmt::format("inputSchema: {}\n"

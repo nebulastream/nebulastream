@@ -60,12 +60,10 @@ void ModExpressionNode::inferStamp( SchemaPtr schema) {
             auto leftAsFloat = DataType::as<Float>(static_cast<DataTypePtr>(leftStamp));
             leftL = leftAsFloat->lowerBound;
             leftU = leftAsFloat->upperBound;
-            // leftL, leftU = leftAsFloat->lowerBound, leftAsFloat->upperBound;
         } else if (leftStamp->isInteger()) {
             auto leftAsInteger = DataType::as<Integer>(static_cast<DataTypePtr>(leftStamp));
             leftL = (double) leftAsInteger->lowerBound;
             leftU = (double) leftAsInteger->upperBound;
-            // leftL, leftU = leftAsFloat->lowerBound, leftAsFloat->upperBound;
         } else {
             return;
         }
@@ -74,12 +72,10 @@ void ModExpressionNode::inferStamp( SchemaPtr schema) {
             auto rightAsFloat = DataType::as<Float>(static_cast<DataTypePtr>(rightStamp));
             rightL = rightAsFloat->lowerBound;
             rightU = rightAsFloat->upperBound;
-            // rightL, rightU = rightAsFloat->lowerBound, rightAsFloat->upperBound;
         } else if (rightStamp->isInteger()) {
             auto rightAsInteger = DataType::as<Integer>(static_cast<DataTypePtr>(rightStamp));
             rightL = (double) rightAsInteger->lowerBound;
             rightU = (double) rightAsInteger->upperBound;
-            // rightL, rightU = rightAsFloat->lowerBound, rightAsFloat->upperBound;
         } else {
             return;
         }

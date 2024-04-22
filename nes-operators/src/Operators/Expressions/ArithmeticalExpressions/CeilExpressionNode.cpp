@@ -29,7 +29,7 @@ ExpressionNodePtr CeilExpressionNode::create(ExpressionNodePtr const& child) {
 }
 
 void CeilExpressionNode::inferStamp( SchemaPtr schema) {
-    // infer stamp of child, check if its numerical, assume same stamp
+    // infer stamp of the child, check if its numerical, assume the same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
     // if stamp is integer, convert stamp to float

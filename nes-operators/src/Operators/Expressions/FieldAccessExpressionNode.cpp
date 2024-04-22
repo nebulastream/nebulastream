@@ -40,7 +40,7 @@ bool FieldAccessExpressionNode::equal(NodePtr const& rhs) const {
     return false;
 }
 
-std::string FieldAccessExpressionNode::getFieldName() { return fieldName; }
+std::string FieldAccessExpressionNode::getFieldName() const { return fieldName; }
 
 void FieldAccessExpressionNode::updateFieldName(std::string fieldName) { this->fieldName = std::move(fieldName); }
 
@@ -60,7 +60,5 @@ void FieldAccessExpressionNode::inferStamp( SchemaPtr schema) {
                            + schema->toString());
 }
 
-ExpressionNodePtr FieldAccessExpressionNode::copy() {
-    return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(this));
-}
+ExpressionNodePtr FieldAccessExpressionNode::copy() { return std::make_shared<FieldAccessExpressionNode>(*this); }
 }// namespace NES
