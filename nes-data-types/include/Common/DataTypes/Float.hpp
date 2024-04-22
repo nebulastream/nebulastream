@@ -36,19 +36,19 @@ class Float final : public Numeric {
     inline Float(int8_t bits, double lowerBound, double upperBound) noexcept
         : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
 
-    virtual ~Float() = default;
+    ~Float() override = default;
 
     /**
     * @brief Checks if this data type is Float.
     */
-    [[nodiscard]] bool isFloat() const final { return true; }
+    [[nodiscard]] bool isFloat() const override { return true; }
 
     /**
     * @brief Checks if two data types are equal.
     * @param otherDataType
     * @return
     */
-    bool equals(DataTypePtr otherDataType) final;
+    bool equals(DataTypePtr otherDataType) override;
 
     /**
     * @brief Calculates the joined data type between this data type and the other.
@@ -57,13 +57,13 @@ class Float final : public Numeric {
     * @param other data type
     * @return DataTypePtr joined data type
     */
-    DataTypePtr join(DataTypePtr otherDataType) final;
+    DataTypePtr join(DataTypePtr otherDataType) override;
 
     /**
     * @brief Returns a string representation of the data type.
     * @return string
     */
-    std::string toString() final;
+    std::string toString() override;
 
     double const lowerBound;
     double const upperBound;

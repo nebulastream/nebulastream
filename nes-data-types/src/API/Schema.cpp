@@ -29,7 +29,7 @@
 namespace NES {
 
 // TODO REMOVE THIS FUNCTION AFTER REFACTORING
-bool startsWith(const std::string& fullString, const std::string& ending) { return (fullString.rfind(ending, 0) == 0); }
+bool startsWith(const std::string& fullString, std::string_view ending) { return (fullString.rfind(ending, 0) == 0); }
 
 Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType){};
 
@@ -71,9 +71,7 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
     return addField(name, DataTypeFactory::createType(type));
 }
 
-SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
-    return addField(AttributeField::create(name, std::move(data)));
-}
+SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, data)); }
 
 void Schema::removeField(const AttributeFieldPtr& field) {
     auto it = fields.begin();
@@ -95,8 +93,8 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type) {
     }
 }
 
-AttributeFieldPtr Schema::get(const std::string& fieldName) {
-    for (auto& field : fields) {
+AttributeFieldPtr Schema::get(const std::string& fieldName) const {
+    for (const auto& field : fields) {
         if (field->getName() == fieldName) {
             return field;
         }
@@ -125,7 +123,7 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
         }
         return true;
     }
-    for (auto&& fieldAttribute : fields) {
+    for (auto const& fieldAttribute : fields) {
         auto otherFieldAttribute = schema->getField(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
             return false;
@@ -136,12 +134,12 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
 
 bool Schema::hasEqualTypes(const SchemaPtr& otherSchema) {
     auto otherFields = otherSchema->fields;
-    // Check if the number of fields are same or not
+    // Check if the number of fields is same or not
     if (otherFields.size() != fields.size()) {
         return false;
     }
 
-    //Iterate over all fields and check in both schema at same index that they have same attribute type
+    //Iterate over all fields and check in both schemas the same index that they have is the same attribute type
     for (uint32_t i = 0; i < fields.size(); i++) {
         auto thisField = fields.at(i);
         auto otherField = otherFields.at(i);
@@ -174,8 +172,8 @@ std::string Schema::getSourceNameQualifier() const {
     return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
 }
 
-AttributeFieldPtr createField(std::string name, BasicType type) {
-    return AttributeField::create(std::move(name), DataTypeFactory::createType(type));
+AttributeFieldPtr createField(const std::string& name, BasicType type) {
+    return AttributeField::create(name, DataTypeFactory::createType(type));
 }
 
 std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const {
@@ -191,7 +189,7 @@ std::string Schema::getQualifierNameForSystemGeneratedFields() const {
     return "";
 }
 
-bool Schema::contains(const std::string& fieldName) {
+bool Schema::contains(const std::string& fieldName) const {
     for (const auto& field : this->fields) {
         NES_TRACE("contain compare field={} with other={}", field->getName(), fieldName);
         if (field->getName() == fieldName) {
@@ -201,7 +199,7 @@ bool Schema::contains(const std::string& fieldName) {
     return false;
 }
 
-uint64_t Schema::getIndex(const std::string& fieldName) {
+uint64_t Schema::getIndex(const std::string& fieldName) const {
     int i = 0;
     bool found = false;
     for (const auto& field : this->fields) {
@@ -274,7 +272,7 @@ std::vector<std::string> Schema::getFieldNames() const {
     return fieldNames;
 }
 
-bool Schema::empty() { return fields.empty(); }
+bool Schema::empty() const { return fields.empty(); }
 
 DataTypePtr Schema::stringToFieldType(const std::string& fieldNodeType, const std::string& fieldNodeLength) {
     if (fieldNodeType == "CHAR") {
@@ -341,12 +339,12 @@ SchemaPtr Schema::createFromSchemaType(const Configurations::SchemaTypePtr& sche
     for (const auto& schemaFieldDetail : schemaType->getSchemaFieldDetails()) {
         schema->addField(schemaFieldDetail.fieldName,
                          stringToFieldType(schemaFieldDetail.fieldType, schemaFieldDetail.variableLengthInBytes));
-    };
+    }
     return schema;
 }
 
-SchemaPtr Schema::updateSourceName(const std::string& srcName) {
-    for (auto& field : fields) {
+SchemaPtr Schema::updateSourceName(const std::string& srcName) const {
+    for (const auto& field : fields) {
         auto currName = Util::splitWithStringDelimiter<std::string>(field->getName(), ATTRIBUTE_NAME_SEPARATOR);
         std::ostringstream newName;
         newName << srcName;

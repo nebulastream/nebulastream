@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <fmt/core.h>
 #include <random>
 
 namespace NES {
@@ -43,7 +44,7 @@ class SchemaTest : public Testing::BaseUnitTest {
 
         std::vector<AttributeFieldPtr> rndFields;
         for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt) {
-            const auto fieldName = "field" + std::to_string(fieldCnt);
+            const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
             rndFields.emplace_back(AttributeField::create(fieldName, DataTypeFactory::createType(basicType)));
         }
@@ -207,21 +208,23 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest) {
     }
 
     {
+        using enum NES::BasicType;
         // Calculating the schema size for multiple fields
         auto testSchema = Schema::create()
-                              ->addField("field1", BasicType::UINT8)
-                              ->addField("field2", BasicType::UINT16)
-                              ->addField("field3", BasicType::INT32)
-                              ->addField("field4", BasicType::FLOAT32)
-                              ->addField("field5", BasicType::FLOAT64);
+                              ->addField("field1", UINT8)
+                              ->addField("field2", UINT16)
+                              ->addField("field3", INT32)
+                              ->addField("field4", FLOAT32)
+                              ->addField("field5", FLOAT64);
         EXPECT_EQ(testSchema->getSchemaSizeInBytes(), 1 + 2 + 4 + 4 + 8);
     }
 }
 
 TEST_F(SchemaTest, containsTest) {
+    using enum NES::BasicType;
     {
         // Checking contains for one fieldName
-        auto testSchema = Schema::create()->addField("field1", BasicType::UINT8);
+        auto testSchema = Schema::create()->addField("field1", UINT8);
         EXPECT_TRUE(testSchema->contains("field1"));
         EXPECT_FALSE(testSchema->contains("notExistingField1"));
     }
@@ -229,11 +232,11 @@ TEST_F(SchemaTest, containsTest) {
     {
         // Checking contains with multiple fields
         auto testSchema = Schema::create()
-                              ->addField("field1", BasicType::UINT8)
-                              ->addField("field2", BasicType::UINT16)
-                              ->addField("field3", BasicType::INT32)
-                              ->addField("field4", BasicType::FLOAT32)
-                              ->addField("field5", BasicType::FLOAT64);
+                              ->addField("field1", UINT8)
+                              ->addField("field2", UINT16)
+                              ->addField("field3", INT32)
+                              ->addField("field4", FLOAT32)
+                              ->addField("field5", FLOAT64);
 
         // Existing fields
         EXPECT_TRUE(testSchema->contains("field3"));
@@ -244,14 +247,15 @@ TEST_F(SchemaTest, containsTest) {
 }
 
 TEST_F(SchemaTest, getSourceNameQualifierTest) {
+    using enum NES::BasicType;
     // TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
     auto testSchema = Schema::create()
-                          ->addField(sourceName + "$field1", BasicType::UINT8)
-                          ->addField(sourceName + "$field2", BasicType::UINT16)
-                          ->addField(sourceName + "$field3", BasicType::INT32)
-                          ->addField(sourceName + "$field4", BasicType::FLOAT32)
-                          ->addField(sourceName + "$field5", BasicType::FLOAT64);
+                          ->addField(sourceName + "$field1", UINT8)
+                          ->addField(sourceName + "$field2", UINT16)
+                          ->addField(sourceName + "$field3", INT32)
+                          ->addField(sourceName + "$field4", FLOAT32)
+                          ->addField(sourceName + "$field5", FLOAT64);
 
     EXPECT_EQ(testSchema->getSourceNameQualifier(), sourceName);
 }

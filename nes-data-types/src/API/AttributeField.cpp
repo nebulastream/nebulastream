@@ -37,7 +37,7 @@ std::string AttributeField::toString() const {
     return ss.str();
 }
 
-bool AttributeField::isEqual(const AttributeFieldPtr& attr) {
+bool AttributeField::isEqual(const AttributeFieldPtr& attr) const {
     if (!attr) {
         return false;
     }
@@ -55,6 +55,6 @@ uint64_t AttributeField::hash() const {
     return hashValue;
 }
 
-AttributeFieldPtr AttributeField::copy() { return create(name, dataType); }
+AttributeFieldPtr AttributeField::copy() const { return create(name, dataType); }
 
 }// namespace NES

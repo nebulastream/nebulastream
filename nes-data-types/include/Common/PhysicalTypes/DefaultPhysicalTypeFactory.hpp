@@ -40,13 +40,14 @@ using TextPtr = std::shared_ptr<Text>;
 class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
   public:
     DefaultPhysicalTypeFactory();
+    ~DefaultPhysicalTypeFactory() override = default;
 
     /**
      * @brief Translates a nes data type into a corresponding physical type.
      * @param dataType
      * @return PhysicalTypePtr
      */
-    PhysicalTypePtr getPhysicalType(DataTypePtr dataType) override;
+    PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const override;
 
   private:
     /**
@@ -75,14 +76,14 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     * @param arrayType
     * @return PhysicalTypePtr
     */
-    PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType);
+    PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType) const;
 
     /**
     * @brief Translates a text data type into a corresponding physical type.
     * @param arrayType
     * @return PhysicalTypePtr
     */
-    PhysicalTypePtr getPhysicalType(const TextPtr& textType);
+    PhysicalTypePtr getPhysicalType(const TextPtr& textType) const;
 };
 
 }// namespace NES
