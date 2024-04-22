@@ -19,7 +19,7 @@ namespace NES::Runtime::Execution::Operators {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins) {
     for (const auto& _ : origins) {
-        watermarkProcessors.emplace_back(std::make_shared<Sequencing::NonBlockingMonotonicSeqQueue<OriginId>>());
+        watermarkProcessors.emplace_back(std::make_shared<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>());
     }
 };
 

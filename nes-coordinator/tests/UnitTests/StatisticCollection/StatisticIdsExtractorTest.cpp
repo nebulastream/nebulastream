@@ -68,7 +68,7 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
 
         auto logicalSource = LogicalSource::create("default_logical", Schema::create());
         for (auto i = 0; i < numberOfSources; ++i) {
-            auto physicalNode = TopologyNode::create(i, "localhost", 4000, 4002, 4, properties);
+            auto physicalNode = TopologyNode::create(WorkerId(i), "localhost", 4000, 4002, 4, properties);
             auto csvSourceType = CSVSourceType::create("default_logical", "default_physical_" + std::to_string(i));
             auto physicalSource = PhysicalSource::create(csvSourceType);
             auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());

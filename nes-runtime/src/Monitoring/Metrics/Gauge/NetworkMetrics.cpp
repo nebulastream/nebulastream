@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -68,7 +69,7 @@ void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<WorkerId>(nodeId);
     buffer[tupleIndex][cnt++].write<uint64_t>(timestamp);
 
     buffer[tupleIndex][cnt++].write<uint64_t>(interfaceName);
@@ -98,7 +99,7 @@ void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     uint64_t cnt = 0;
-    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    nodeId = buffer[tupleIndex][cnt++].read<WorkerId>();
     timestamp = buffer[tupleIndex][cnt++].read<uint64_t>();
 
     interfaceName = buffer[tupleIndex][cnt++].read<uint64_t>();

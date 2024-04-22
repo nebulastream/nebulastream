@@ -62,7 +62,7 @@ class NonKeyedSlicePreAggregationTest : public testing::Test {
     void emitWatermark(const NonKeyedSlicePreAggregation& slicePreAggregation,
                        ExecutionContext& context,
                        uint64_t wts,
-                       uint64_t originId,
+                       OriginId originId,
                        uint64_t sequenceNumber) {
         auto buffer = bufferManager->getBufferBlocking();
         buffer.setWatermark(wts);
@@ -70,7 +70,7 @@ class NonKeyedSlicePreAggregationTest : public testing::Test {
         buffer.setSequenceNumber(sequenceNumber);
         auto rb = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
         context.setWatermarkTs(wts);
-        context.setOrigin(originId);
+        context.setOrigin(originId.getRawValue());
         slicePreAggregation.close(context, rb);
     }
 
@@ -90,7 +90,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
         std::make_unique<EventTimeFunction>(readTs),
         {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType, readF2, "count")});
 
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -118,7 +118,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     ASSERT_EQ(stateStore->getLastSlice()->getEnd(), 30);
     value = static_cast<uint64_t*>(stateStore->getLastSlice()->getState()->ptr);
     ASSERT_EQ(*value, 1);
-    emitWatermark(slicePreAggregation, context, 22, 0, 1);
+    emitWatermark(slicePreAggregation, context, 22, INVALID_ORIGIN_ID, 1);
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto sliceMergeTask = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(sliceMergeTask->startSlice, 10);
@@ -143,7 +143,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
                                     {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
                                      std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -176,7 +176,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     value = static_cast<State*>(stateStore->getLastSlice()->getState()->ptr);
     ASSERT_EQ(value[0].sum, 42);
     ASSERT_EQ(value[0].count, 1);
-    emitWatermark(slicePreAggregation, context, 22, 0, 1);
+    emitWatermark(slicePreAggregation, context, 22, INVALID_ORIGIN_ID, 1);
     auto sliceMergeTask = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(sliceMergeTask->startSlice, 10);
     ASSERT_EQ(sliceMergeTask->endSlice, 20);

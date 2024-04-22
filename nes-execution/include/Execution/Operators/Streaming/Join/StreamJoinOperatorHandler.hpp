@@ -18,7 +18,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>

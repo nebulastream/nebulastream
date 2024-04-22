@@ -65,15 +65,18 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
     auto sinkOperators = decomposedQueryPlan->getSinkOperators();
 
     if (sourceOperators.empty() || sinkOperators.empty()) {
-        throw TypeInferenceException(decomposedQueryPlan->getDecomposedQueryPlanId(), "Found no source or sink operators");
+        throw TypeInferenceException(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryPlanId(), QueryId),
+                                     "Found no source or sink operators");
     }
 
-    performTypeInference(decomposedQueryPlan->getDecomposedQueryPlanId(), sourceOperators, sinkOperators);
+    performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryPlanId(), QueryId),
+                         sourceOperators,
+                         sinkOperators);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return decomposedQueryPlan;
 }
 
-void TypeInferencePhase::performTypeInference(uint64_t planId,
+void TypeInferencePhase::performTypeInference(QueryId planId,
                                               std::vector<SourceLogicalOperatorPtr> sourceOperators,
                                               std::vector<SinkLogicalOperatorPtr> sinkOperators) {
 

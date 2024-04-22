@@ -15,7 +15,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_
 #include <Execution/Operators/Streaming/StatisticCollection/AbstractSynopsesOperatorHandler.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators {

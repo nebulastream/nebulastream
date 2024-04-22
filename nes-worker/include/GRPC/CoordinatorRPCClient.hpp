@@ -16,7 +16,7 @@
 #define NES_WORKER_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <grpcpp/grpcpp.h>
@@ -99,7 +99,7 @@ class CoordinatorRPCClient {
      * @param newParentId
      * @return bool indicating success
      */
-    bool addParent(uint64_t parentId);
+    bool addParent(WorkerId parentId);
 
     /**
      * @brief method to replace old with new parent
@@ -107,14 +107,14 @@ class CoordinatorRPCClient {
      * @param newParentId id of the new parent
      * @return bool indicating success
      */
-    bool replaceParent(uint64_t oldParentId, uint64_t newParentId);
+    bool replaceParent(WorkerId oldParentId, WorkerId newParentId);
 
     /**
      * @brief method to remove a parent from a node
      * @param parentId: id of the parent to be removed
      * @return bool indicating success
      */
-    bool removeParent(uint64_t parentId);
+    bool removeParent(WorkerId parentId);
 
     /**
      * @brief method to register a node after the connection is established
@@ -140,18 +140,22 @@ class CoordinatorRPCClient {
      * @brief method to get own id form server
      * @return own id as listed in the graph
      */
-    uint64_t getId() const;
+    WorkerId getId() const;
 
     /**
      * @brief method to let the Coordinator know of the failure of a query
-     * @param queryId: Query Id of failed Query
+     * @param sharedQueryId: Query Id of failed Query
      * @param subQueryId: subQuery Id of failed Query
      * @param workerId: workerId where the Query failed
      * @param operatorId: operator Id of failed Query
      * @param errorMsg: more information about failure of the Query
      * @return bool indicating success
      */
-    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
+    bool notifyQueryFailure(SharedQueryId sharedQueryId,
+                            DecomposedQueryPlanId subQueryId,
+                            WorkerId workerId,
+                            OperatorId operatorId,
+                            std::string errorMsg);
 
     /**
       * @brief method to propagate new epoch timestamp to coordinator
@@ -168,7 +172,7 @@ class CoordinatorRPCClient {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding fixed coordinates as Location objects
      */
-    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
     getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius);
 
     /**
@@ -177,34 +181,34 @@ class CoordinatorRPCClient {
      * @param errorMsg
      * @return bool indicating success
      */
-    bool sendErrors(uint64_t workerId, std::string errorMsg);
+    bool sendErrors(WorkerId workerId, std::string errorMsg);
 
     /**
      * Checks and mark the query for soft stop
-     * @param queryId : the query id for which soft stop to be performed
+     * @param sharedQueryId : the query id for which soft stop to be performed
      * @return true if coordinator marks the query for soft stop else false
      */
-    bool checkAndMarkForSoftStop(QueryId queryId, DecomposedQueryPlanId subPlanId, OperatorId sourceId);
+    bool checkAndMarkForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OperatorId sourceId);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is triggered or not
-     * @param queryId: the query id to which the subquery plan belongs to
-     * @param querySubPlanId: the query sub plan id
+     * @param sharedQueryId: the query id to which the subquery plan belongs to
+     * @param decomposedQueryPlanId: the query sub plan id
      * @param sourceId: the source id
      * @return true if coordinator successfully recorded the information else false
      */
-    bool notifySourceStopTriggered(QueryId queryId,
-                                   DecomposedQueryPlanId querySubPlanId,
+    bool notifySourceStopTriggered(SharedQueryId sharedQueryId,
+                                   DecomposedQueryPlanId decomposedQueryPlanId,
                                    OperatorId sourceId,
                                    Runtime::QueryTerminationType queryTermination);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is completed or not
-     * @param queryId: the query id to which the subquery plan belongs to
-     * @param querySubPlanId: the query sub plan id
+     * @param sharedQueryId: the query id to which the subquery plan belongs to
+     * @param decomposedQueryPlanId: the query sub plan id
      * @return true if coordinator successfully recorded the information else false
      */
-    bool notifySoftStopCompleted(QueryId queryId, DecomposedQueryPlanId querySubPlanId);
+    bool notifySoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief this method is used by a mobile worker to inform the coordinator that location or time of the next expected reconnect
@@ -242,7 +246,7 @@ class CoordinatorRPCClient {
                               const std::vector<TopologyLinkInformation>& addedTopologyLinks);
 
   private:
-    uint64_t workerId;
+    WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::string address;
     std::shared_ptr<::grpc::Channel> rpcChannel;
     std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;

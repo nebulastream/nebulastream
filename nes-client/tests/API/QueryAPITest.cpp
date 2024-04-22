@@ -253,7 +253,7 @@ TEST_F(QueryAPITest, testQueryExpression) {
  */
 TEST_F(QueryAPITest, windowAggregationWithAs) {
 
-    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, 1);
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(1));
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addPhysicalSource("default_logical", sce);

@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <Util/QueryStateHistory.hpp>
@@ -141,7 +141,7 @@ class QueryCatalogEntry {
 
   private:
     QueryId queryId;
-    SharedQueryId sharedQueryId;
+    SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
     std::string queryString;
     Optimizer::PlacementStrategy queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;

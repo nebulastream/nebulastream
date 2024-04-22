@@ -52,7 +52,7 @@ std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t n
         randomInfos.emplace_back(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(rand())),
                                  Statistic::NeverTrigger::create(),
                                  nullptr,
-                                 rand(),
+                                 QueryId(rand()),
                                  Statistic::IngestionRate::create());
     }
     return randomInfos;

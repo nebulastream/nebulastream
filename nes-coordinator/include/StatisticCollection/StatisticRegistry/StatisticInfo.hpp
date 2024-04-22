@@ -15,7 +15,7 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICINFO_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICINFO_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <folly/Synchronized.h>
@@ -115,7 +115,7 @@ class StatisticInfo {
     Windowing::WindowTypePtr window;
     TriggerConditionPtr triggerCondition;
     std::function<void(CharacteristicPtr)> callBack;
-    QueryId queryId;
+    QueryId queryId = INVALID_QUERY_ID;
     MetricPtr metric;
 };
 using StatisticInfoWLock = std::shared_ptr<folly::Synchronized<StatisticInfo>::WLockedPtr>;

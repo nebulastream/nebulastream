@@ -16,7 +16,7 @@
 
 namespace NES::Exceptions {
 QueryPlacementAdditionException::QueryPlacementAdditionException(SharedQueryId sharedQueryId, const std::string& message)
-    : RequestExecutionException(sharedQueryId, message) {}
+    : RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message) {}
 
 const char* QueryPlacementAdditionException::what() const noexcept { return RequestExecutionException::what(); }
 

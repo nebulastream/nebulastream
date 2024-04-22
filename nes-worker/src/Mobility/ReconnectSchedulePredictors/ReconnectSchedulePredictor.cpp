@@ -73,7 +73,7 @@ std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSchedule(
     const DataTypes::Experimental::Waypoint& currentOwnLocation,
     const DataTypes::Experimental::GeoLocation& parentLocation,
-    const S2PointIndex<uint64_t>& fieldNodeIndex,
+    const S2PointIndex<WorkerId>& fieldNodeIndex,
     bool isIndexUpdated) {
     //if the device location has not changed, there are no new calculations to be made
     if (!locationBuffer.empty() && currentOwnLocation.getLocation() == locationBuffer.back().getLocation()) {
@@ -225,7 +225,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCovera
 #ifdef S2DEF
 bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleReconnects(
     const S2Point& currentParentLocation,
-    const S2PointIndex<uint64_t>& fieldNodeIndex) {
+    const S2PointIndex<WorkerId>& fieldNodeIndex) {
     double remainingTime;
     reconnectPoints.clear();
     if (!trajectoryLine) {
@@ -252,9 +252,9 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
     //initialize loop variables
     S1Angle currentUncoveredRemainingPathDistance(reconnectLocationOnPath, trajectoryLine->vertices_span()[1]);
     S1Angle minimumUncoveredRemainingPathDistance = currentUncoveredRemainingPathDistance;
-    S2ClosestPointQuery<uint64_t> query(&fieldNodeIndex);
+    S2ClosestPointQuery query(&fieldNodeIndex);
     S2Point nextReconnectLocationOnPath = reconnectLocationOnPath;
-    uint64_t reconnectParentId;
+    WorkerId reconnectParentId = INVALID_WORKER_NODE_ID;
     Timestamp estimatedReconnectTime = endOfCoverageETA;
     Timestamp nextEstimatedReconnectTime;
 
@@ -264,7 +264,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
     while (currentUncoveredRemainingPathDistance > S1Angle(defaultCoverageRadiusAngle)) {
 
         //find nodes which cover reconnectLocationOnPath
-        S2ClosestPointQuery<int>::PointTarget target(reconnectLocationOnPath);
+        S2ClosestPointQuery<WorkerId>::PointTarget target(reconnectLocationOnPath);
         auto closestNodeList = query.FindClosestPoints(&target);
 
         //iterate over all nodes which cover the reconnect location to find out which one will give us the longest coverage in the direction of the path end point

@@ -35,7 +35,11 @@
 #include <thread>
 
 #ifndef OPERATORID
-#define OPERATORID 1
+#define OPERATORID OperatorId(1)
+#endif
+
+#ifndef ORIGINID
+#define ORIGINID OriginId(1)
 #endif
 
 #ifndef NUMSOURCELOCALBUFFERS
@@ -105,7 +109,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          "earliest",
                                          kafkaSourceType,
                                          OPERATORID,
-                                         OPERATORID,
+                                         ORIGINID,
                                          INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
@@ -131,7 +135,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          "earliest",
                                          kafkaSourceType,
                                          OPERATORID,
-                                         OPERATORID,
+                                         ORIGINID,
                                          INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,

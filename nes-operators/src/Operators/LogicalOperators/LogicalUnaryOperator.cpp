@@ -56,7 +56,7 @@ bool LogicalUnaryOperator::inferSchema() {
 
 void LogicalUnaryOperator::inferInputOrigins() {
     // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> inputOriginIds;
+    std::vector<OriginId> inputOriginIds;
     for (auto child : this->children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();

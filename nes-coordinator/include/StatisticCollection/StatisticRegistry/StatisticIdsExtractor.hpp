@@ -16,7 +16,7 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICIDSEXTRACTOR_HPP_
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES {
 namespace Catalogs::Query {

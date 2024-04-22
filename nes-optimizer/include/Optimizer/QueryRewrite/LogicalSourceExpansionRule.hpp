@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>

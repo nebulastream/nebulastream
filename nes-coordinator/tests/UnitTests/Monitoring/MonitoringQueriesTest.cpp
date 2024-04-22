@@ -150,11 +150,11 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
         // test metrics
         for (uint64_t nodeId = 2; nodeId <= workerCnt + 1; nodeId++) {
-            Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
+            Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(WorkerId(nodeId));
             ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
                                                  storedMetrics,
                                                  expectedType,
-                                                 nodeId,
+                                                 WorkerId(nodeId),
                                                  2));
         }
 

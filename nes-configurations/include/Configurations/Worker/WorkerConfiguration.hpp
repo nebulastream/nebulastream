@@ -23,9 +23,10 @@
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Identifiers/NESStrongTypeYaml.hpp>
 #include <map>
 #include <string>
 
@@ -56,7 +57,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Id of the Worker.
      * This is used to uniquely identify workers within the cluster.
      */
-    UIntOption workerId = {WORKER_ID, std::to_string(INVALID_WORKER_NODE_ID), "Worker id.", std::make_shared<NumberValidation>()};
+    ScalarOption<WorkerId> workerId = {WORKER_ID, INVALID_WORKER_NODE_ID.toString(), "Worker id.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief IP of the Worker.
@@ -95,7 +96,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Parent ID of this node.
      */
-    UIntOption parentId = {PARENT_ID_CONFIG, "0", "Parent ID of this node.", std::make_shared<NumberValidation>()};
+    ScalarOption<WorkerId> parentId = {PARENT_ID_CONFIG, INVALID_WORKER_NODE_ID.toString(), "Parent ID of this node.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief The current log level. Controls the detail of log messages.

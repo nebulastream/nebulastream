@@ -14,6 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDWINDOWEMITACTION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDWINDOWEMITACTION_HPP_
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
+#include <Identifiers/Identifiers.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -24,7 +25,7 @@ class NonKeyedWindowEmitAction : public SliceMergingAction {
     NonKeyedWindowEmitAction(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                              const std::string& startTsFieldName,
                              const std::string& endTsFieldName,
-                             uint64_t resultOriginId);
+                             OriginId resultOriginId);
 
     void emitSlice(ExecutionContext& ctx,
                    ExecuteOperatorPtr& child,
@@ -39,7 +40,7 @@ class NonKeyedWindowEmitAction : public SliceMergingAction {
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::string startTsFieldName;
     const std::string endTsFieldName;
-    const uint64_t resultOriginId;
+    const OriginId resultOriginId;
 };
 }// namespace NES::Runtime::Execution::Operators
 

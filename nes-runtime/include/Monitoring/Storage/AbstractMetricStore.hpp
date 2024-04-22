@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Monitoring/Storage/MetricStoreType.hpp>
 #include <cstdint>
@@ -41,27 +42,27 @@ class AbstractMetricStore {
      * @param nodeId
      * @param metrics
     */
-    virtual void addMetrics(uint64_t nodeId, MetricPtr metrics) = 0;
+    virtual void addMetrics(WorkerId nodeId, MetricPtr metrics) = 0;
 
     /**
      * @brief Get newest metrics from store
      * @param nodeId
      * @return the metric
     */
-    virtual StoredNodeMetricsPtr getAllMetrics(uint64_t nodeId) = 0;
+    virtual StoredNodeMetricsPtr getAllMetrics(WorkerId nodeId) = 0;
 
     /**
      * @brief Remove all metrics for a given node.
      * @param true if metric existed and was removed, else false
     */
-    virtual bool removeMetrics(uint64_t nodeId) = 0;
+    virtual bool removeMetrics(WorkerId nodeId) = 0;
 
     /**
      * Checks if any kind of metrics are stored for a given node
      * @param nodeId
      * @return True if exists, else false
     */
-    virtual bool hasMetrics(uint64_t nodeId) = 0;
+    virtual bool hasMetrics(WorkerId nodeId) = 0;
 };
 }// namespace NES::Monitoring
 

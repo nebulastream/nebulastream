@@ -14,6 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
@@ -25,7 +26,7 @@ namespace NES::QueryCompilation {
 * @brief Returns the next free pipeline id
 * @return node id
 */
-uint64_t getNextPipelineId();
+PipelineId getNextPipelineId();
 
 /**
  * @brief Defines a single pipeline, which contains of a query plan of operators.
@@ -114,7 +115,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Returns the pipeline id
      * @return pipeline id.
      */
-    uint64_t getPipelineId() const;
+    PipelineId getPipelineId() const;
 
     /**
      * @brief Sets the type of an pipeline to Source, Sink, or Operator
@@ -151,7 +152,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @return true if operator pipeline
      */
     bool isOperatorPipeline() const;
-    const std::vector<uint64_t>& getOperatorIds() const;
+    const std::vector<OperatorId>& getOperatorIds() const;
 
     /**
      * @brief Creates a string representation of this OperatorPipeline
@@ -160,14 +161,14 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     std::string toString() const;
 
   protected:
-    OperatorPipeline(uint64_t pipelineId, Type pipelineType);
+    OperatorPipeline(PipelineId pipelineId, Type pipelineType);
 
   private:
-    uint64_t id;
+    PipelineId id;
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
     DecomposedQueryPlanPtr decomposedQueryPlan;
-    std::vector<uint64_t> operatorIds;
+    std::vector<OperatorId> operatorIds;
     Type pipelineType;
 };
 }// namespace NES::QueryCompilation

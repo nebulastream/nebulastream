@@ -15,7 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
 namespace z3 {

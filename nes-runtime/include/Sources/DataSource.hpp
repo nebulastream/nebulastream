@@ -17,7 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>

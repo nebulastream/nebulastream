@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
@@ -124,7 +124,7 @@ class QueryPlan {
         // Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
-        std::set<uint64_t> visitedOpIds;
+        std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators) {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
@@ -162,14 +162,14 @@ class QueryPlan {
      * @param operatorId: Id of the operator
      * @return true if the operator exists else false
      */
-    bool hasOperatorWithId(uint64_t operatorId);
+    bool hasOperatorWithId(OperatorId operatorId);
 
     /**
      * @brief Get operator node with input id if present
      * @param operatorId : the input operator id
      * @return operator with the input id
      */
-    OperatorPtr getOperatorWithOperatorId(uint64_t operatorId);
+    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId);
 
     /**
      * @brief Gets the operator node for the statistic id. This method traverses all operators in the query plan.

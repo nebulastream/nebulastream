@@ -43,28 +43,28 @@ TEST_F(TopologyChangeLogTest, testInsertingDelta) {
     TopologyChangeLog log1;
     log1.update(delta1);
 
-    auto addedChildren2 = log1.getAddedChildren(2);
+    auto addedChildren2 = log1.getAddedChildren(WorkerId(2));
     EXPECT_EQ(addedChildren2.size(), 1);
-    EXPECT_NE(std::find(addedChildren2.begin(), addedChildren2.end(), 1), addedChildren2.end());
-    auto addedChildren3 = log1.getAddedChildren(3);
+    EXPECT_NE(std::find(addedChildren2.begin(), addedChildren2.end(), WorkerId(1)), addedChildren2.end());
+    auto addedChildren3 = log1.getAddedChildren(WorkerId(3));
     EXPECT_EQ(addedChildren3.size(), 2);
-    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), 1), addedChildren3.end());
-    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), 5), addedChildren3.end());
-    auto addedChildren4 = log1.getAddedChildren(4);
+    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), WorkerId(1)), addedChildren3.end());
+    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), WorkerId(5)), addedChildren3.end());
+    auto addedChildren4 = log1.getAddedChildren(WorkerId(4));
     EXPECT_TRUE(addedChildren4.empty());
-    auto addedChildren5 = log1.getAddedChildren(5);
+    auto addedChildren5 = log1.getAddedChildren(WorkerId(5));
     EXPECT_TRUE(addedChildren5.empty());
 
-    auto removedChildren2 = log1.getRemovedChildren(2);
+    auto removedChildren2 = log1.getRemovedChildren(WorkerId(2));
     EXPECT_TRUE(removedChildren2.empty());
-    auto removedChildren3 = log1.getRemovedChildren(3);
+    auto removedChildren3 = log1.getRemovedChildren(WorkerId(3));
     EXPECT_EQ(removedChildren3.size(), 1);
-    EXPECT_NE(std::find(removedChildren3.begin(), removedChildren3.end(), 2), removedChildren3.end());
-    auto removedChildren4 = log1.getRemovedChildren(4);
+    EXPECT_NE(std::find(removedChildren3.begin(), removedChildren3.end(), WorkerId(2)), removedChildren3.end());
+    auto removedChildren4 = log1.getRemovedChildren(WorkerId(4));
     EXPECT_TRUE(removedChildren4.empty());
-    auto removedChildren5 = log1.getRemovedChildren(5);
+    auto removedChildren5 = log1.getRemovedChildren(WorkerId(5));
     EXPECT_EQ(removedChildren5.size(), 1);
-    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), 1), removedChildren5.end());
+    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(1)), removedChildren5.end());
 }
 
 TEST_F(TopologyChangeLogTest, testErasing) {
@@ -74,28 +74,28 @@ TEST_F(TopologyChangeLogTest, testErasing) {
     log1.update(delta1);
     log1.erase(delta2);
 
-    auto addedChildren2 = log1.getAddedChildren(2);
+    auto addedChildren2 = log1.getAddedChildren(WorkerId(2));
     EXPECT_EQ(addedChildren2.size(), 1);
-    EXPECT_NE(std::find(addedChildren2.begin(), addedChildren2.end(), 1), addedChildren2.end());
-    auto addedChildren3 = log1.getAddedChildren(3);
+    EXPECT_NE(std::find(addedChildren2.begin(), addedChildren2.end(), WorkerId(1)), addedChildren2.end());
+    auto addedChildren3 = log1.getAddedChildren(WorkerId(3));
     EXPECT_EQ(addedChildren3.size(), 2);
-    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), 1), addedChildren3.end());
-    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), 5), addedChildren3.end());
-    auto addedChildren4 = log1.getAddedChildren(4);
+    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), WorkerId(1)), addedChildren3.end());
+    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), WorkerId(5)), addedChildren3.end());
+    auto addedChildren4 = log1.getAddedChildren(WorkerId(4));
     EXPECT_TRUE(addedChildren4.empty());
-    auto addedChildren5 = log1.getAddedChildren(5);
+    auto addedChildren5 = log1.getAddedChildren(WorkerId(5));
     EXPECT_TRUE(addedChildren5.empty());
 
-    auto removedChildren2 = log1.getRemovedChildren(2);
+    auto removedChildren2 = log1.getRemovedChildren(WorkerId(2));
     EXPECT_TRUE(removedChildren2.empty());
-    auto removedChildren3 = log1.getRemovedChildren(3);
+    auto removedChildren3 = log1.getRemovedChildren(WorkerId(3));
     EXPECT_EQ(removedChildren3.size(), 1);
-    EXPECT_NE(std::find(removedChildren3.begin(), removedChildren3.end(), 2), removedChildren3.end());
-    auto removedChildren4 = log1.getRemovedChildren(4);
+    EXPECT_NE(std::find(removedChildren3.begin(), removedChildren3.end(), WorkerId(2)), removedChildren3.end());
+    auto removedChildren4 = log1.getRemovedChildren(WorkerId(4));
     EXPECT_TRUE(removedChildren4.empty());
-    auto removedChildren5 = log1.getRemovedChildren(5);
+    auto removedChildren5 = log1.getRemovedChildren(WorkerId(5));
     EXPECT_EQ(removedChildren5.size(), 1);
-    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), 1), removedChildren5.end());
+    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(1)), removedChildren5.end());
 }
 
 TEST_F(TopologyChangeLogTest, testAddingChangeLog) {
@@ -108,29 +108,29 @@ TEST_F(TopologyChangeLogTest, testAddingChangeLog) {
     log2.update(delta2);
     log1.add(log2);
 
-    auto addedChildren2 = log1.getAddedChildren(2);
+    auto addedChildren2 = log1.getAddedChildren(WorkerId(2));
     EXPECT_TRUE(addedChildren2.empty());
-    auto addedChildren3 = log1.getAddedChildren(3);
+    auto addedChildren3 = log1.getAddedChildren(WorkerId(3));
     EXPECT_EQ(addedChildren3.size(), 2);
-    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), 1), addedChildren3.end());
-    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), 5), addedChildren3.end());
-    auto addedChildren4 = log1.getAddedChildren(4);
+    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), WorkerId(1)), addedChildren3.end());
+    EXPECT_NE(std::find(addedChildren3.begin(), addedChildren3.end(), WorkerId(5)), addedChildren3.end());
+    auto addedChildren4 = log1.getAddedChildren(WorkerId(4));
     EXPECT_EQ(addedChildren4.size(), 1);
-    EXPECT_NE(std::find(addedChildren4.begin(), addedChildren4.end(), 2), addedChildren4.end());
-    auto addedChildren5 = log1.getAddedChildren(5);
+    EXPECT_NE(std::find(addedChildren4.begin(), addedChildren4.end(), WorkerId(2)), addedChildren4.end());
+    auto addedChildren5 = log1.getAddedChildren(WorkerId(5));
     EXPECT_TRUE(addedChildren5.empty());
 
-    auto removedChildren2 = log1.getRemovedChildren(2);
+    auto removedChildren2 = log1.getRemovedChildren(WorkerId(2));
     EXPECT_TRUE(removedChildren2.empty());
-    auto removedChildren3 = log1.getRemovedChildren(3);
+    auto removedChildren3 = log1.getRemovedChildren(WorkerId(3));
     EXPECT_TRUE(removedChildren3.empty());
-    auto removedChildren4 = log1.getRemovedChildren(4);
+    auto removedChildren4 = log1.getRemovedChildren(WorkerId(4));
     EXPECT_TRUE(removedChildren4.empty());
-    auto removedChildren5 = log1.getRemovedChildren(5);
+    auto removedChildren5 = log1.getRemovedChildren(WorkerId(5));
     EXPECT_EQ(removedChildren5.size(), 3);
-    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), 1), removedChildren5.end());
-    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), 2), removedChildren5.end());
-    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), 7), removedChildren5.end());
+    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(1)), removedChildren5.end());
+    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(2)), removedChildren5.end());
+    EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(7)), removedChildren5.end());
 }
 
 TEST_F(TopologyChangeLogTest, testRemovingInexistentEdge) {
@@ -148,8 +148,8 @@ TEST_F(TopologyChangeLogTest, testRemovingEmptyDelta) {
     log1.update(delta1);
     log1.erase(delta2);
 
-    EXPECT_EQ(log1.getAddedChildren(2), std::vector<uint64_t>{1});
-    EXPECT_EQ(log1.getRemovedChildren(3), std::vector<uint64_t>{2});
+    EXPECT_EQ(log1.getAddedChildren(WorkerId(2)), std::vector<WorkerId>{WorkerId(1)});
+    EXPECT_EQ(log1.getRemovedChildren(WorkerId(3)), std::vector<WorkerId>{WorkerId(2)});
 }
 
 TEST_F(TopologyChangeLogTest, testAddingEmptyDelta) {
@@ -159,8 +159,8 @@ TEST_F(TopologyChangeLogTest, testAddingEmptyDelta) {
     log1.update(delta1);
     log1.update(delta2);
 
-    EXPECT_EQ(log1.getAddedChildren(2), std::vector<uint64_t>{1});
-    EXPECT_EQ(log1.getRemovedChildren(3), std::vector<uint64_t>{2});
+    EXPECT_EQ(log1.getAddedChildren(WorkerId(2)), std::vector<WorkerId>{WorkerId(1)});
+    EXPECT_EQ(log1.getRemovedChildren(WorkerId(3)), std::vector<WorkerId>{WorkerId(2)});
 }
 
 TEST_F(TopologyChangeLogTest, testInsertingEmptyChangelog) {
@@ -172,7 +172,7 @@ TEST_F(TopologyChangeLogTest, testInsertingEmptyChangelog) {
     log2.update(delta2);
     log1.add(log2);
 
-    EXPECT_EQ(log1.getAddedChildren(2), std::vector<uint64_t>{1});
-    EXPECT_EQ(log1.getRemovedChildren(3), std::vector<uint64_t>{2});
+    EXPECT_EQ(log1.getAddedChildren(WorkerId(2)), std::vector<WorkerId>{WorkerId(1)});
+    EXPECT_EQ(log1.getRemovedChildren(WorkerId(3)), std::vector<WorkerId>{WorkerId(2)});
 }
 }// namespace NES

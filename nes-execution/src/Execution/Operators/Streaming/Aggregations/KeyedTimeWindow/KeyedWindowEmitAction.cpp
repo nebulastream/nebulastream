@@ -34,7 +34,7 @@ KeyedWindowEmitAction::KeyedWindowEmitAction(
     const uint64_t valueSize,
     const std::vector<std::string> resultKeyFields,
     const std::vector<PhysicalTypePtr> keyDataTypes,
-    const uint64_t resultOriginId)
+    const OriginId resultOriginId)
     : aggregationFunctions(aggregationFunctions), startTsFieldName(startTsFieldName), endTsFieldName(endTsFieldName),
       keySize(keySize), valueSize(valueSize), resultKeyFields(resultKeyFields), keyDataTypes(keyDataTypes),
       resultOriginId(resultOriginId) {}
@@ -48,7 +48,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                       Value<Boolean>& lastChunk,
                                       Value<MemRef>& globalSlice) const {
     ctx.setWatermarkTs(windowStart);
-    ctx.setOrigin(resultOriginId);
+    ctx.setOrigin(resultOriginId.getRawValue());
     ctx.setSequenceNumber(sequenceNumber);
     ctx.setChunkNumber(chunkNumber);
     ctx.setLastChunk(lastChunk);

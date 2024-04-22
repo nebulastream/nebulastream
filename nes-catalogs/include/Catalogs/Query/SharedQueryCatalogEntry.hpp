@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/QueryState.hpp>
 #include <Util/QueryStateHistory.hpp>
 #include <map>
@@ -34,7 +34,7 @@ namespace Catalogs::Query {
  */
 class SharedQueryCatalogEntry {
   public:
-    explicit SharedQueryCatalogEntry(SharedQueryId queryId, std::set<QueryId> queryIds, QueryState queryState);
+    explicit SharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::set<QueryId> queryIds, QueryState queryState);
 
     /**
      * @brief method to get the id of the query

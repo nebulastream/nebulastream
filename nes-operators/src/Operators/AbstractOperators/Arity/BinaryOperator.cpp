@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
-#include <Util/OperatorsUtil.hpp>
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
+#include <Util/OperatorsUtil.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
+#include <fmt/format.h>
 
 namespace NES {
 
@@ -61,21 +63,24 @@ std::vector<OriginId> BinaryOperator::getRightInputOriginIds() { return rightInp
 void BinaryOperator::setRightInputOriginIds(std::vector<OriginId> originIds) { this->rightInputOriginIds = originIds; }
 
 const std::vector<OriginId> BinaryOperator::getOutputOriginIds() const {
-    std::vector<uint64_t> outputOriginIds = leftInputOriginIds;
+    std::vector<OriginId> outputOriginIds = leftInputOriginIds;
     outputOriginIds.insert(outputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
     return outputOriginIds;
 }
 
 std::string BinaryOperator::toString() const {
-    std::stringstream out;
-    out << Operator::toString();
-    out << "leftInputSchema: " << leftInputSchema->toString() << "\n";
-    out << "rightInputSchema: " << rightInputSchema->toString() << "\n";
-    out << "outputSchema: " << outputSchema->toString() << "\n";
-    out << "distinctSchemas: " << Util::concatenateVectorAsString<SchemaPtr>(distinctSchemas);
-    out << "leftInputOriginIds: " << Util::concatenateVectorAsString<uint64_t>(leftInputOriginIds);
-    out << "rightInputOriginIds: " << Util::concatenateVectorAsString<uint64_t>(rightInputOriginIds);
-    return out.str();
+    return fmt::format("leftInputSchema: {}\n"
+                       "rightInputSchema: {}\n"
+                       "outputSchema: {}\n"
+                       "distinctSchemas: {}\n"
+                       "leftInputOriginIds: {}\n"
+                       "rightInputOriginIds: {}",
+                       leftInputSchema->toString(),
+                       rightInputSchema->toString(),
+                       outputSchema->toString(),
+                       Util::concatenateVectorAsString(distinctSchemas),
+                       fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
+                       fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
 }
 
 }// namespace NES

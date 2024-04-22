@@ -72,7 +72,7 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
-    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
+    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
     //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines) {
@@ -94,16 +94,16 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
+    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     // check if the particular pipeline already exist in the pipeline map.
     if (pipelineToExecutableMap.find(pipeline->getPipelineId()) != pipelineToExecutableMap.end()) {
-        return pipelineToExecutableMap[pipeline->getPipelineId()];
+        return pipelineToExecutableMap.at(pipeline->getPipelineId());
     }
 
     if (pipeline->isSinkPipeline()) {
         auto executableSink = processSink(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan);
-        pipelineToExecutableMap[pipeline->getPipelineId()] = executableSink;
+        pipelineToExecutableMap.insert({pipeline->getPipelineId(), executableSink});
         return executableSink;
     }
     if (pipeline->isOperatorPipeline()) {
@@ -114,7 +114,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                           nodeEngine,
                                                           pipelineQueryPlan,
                                                           pipelineToExecutableMap);
-        pipelineToExecutableMap[pipeline->getPipelineId()] = executablePipeline;
+        pipelineToExecutableMap.insert({pipeline->getPipelineId(), executablePipeline});
         return executablePipeline;
     }
     throw QueryCompilationException("The pipeline was of wrong type. It should be a sink pipeline or a operator pipeline");
@@ -127,7 +127,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
+    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     if (!pipeline->isSourcePipeline()) {
         NES_ERROR("This is not a source pipeline.");
@@ -220,7 +220,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
+    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto executableOperator = rootOperator->as<ExecutableOperator>();

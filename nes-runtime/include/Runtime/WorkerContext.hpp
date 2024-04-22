@@ -66,7 +66,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
-    std::unordered_map<uint64_t, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+    std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
 
   public:
     explicit WorkerContext(uint32_t workerId,

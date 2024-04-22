@@ -76,7 +76,7 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() {
 
 void LogicalBinaryOperator::inferInputOrigins() {
     // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> leftInputOriginIds;
+    std::vector<OriginId> leftInputOriginIds;
     for (auto child : this->getLeftOperators()) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();
@@ -85,7 +85,7 @@ void LogicalBinaryOperator::inferInputOrigins() {
     }
     this->leftInputOriginIds = leftInputOriginIds;
 
-    std::vector<uint64_t> rightInputOriginIds;
+    std::vector<OriginId> rightInputOriginIds;
     for (auto child : this->getRightOperators()) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();

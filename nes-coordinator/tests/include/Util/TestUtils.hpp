@@ -483,7 +483,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
         NES_TRACE("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
         //FIXME: handle vector of statistics properly in #977
-        auto statistics = nesCoordinator->getQueryStatistics(sharedQueryId);
+        auto statistics = nesCoordinator->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));
         if (statistics.empty()) {
             continue;
         }
@@ -538,12 +538,12 @@ template<typename Predicate = std::equal_to<uint64_t>>
 
 /**
      * @brief Check if the query is been stopped successfully within the timeout.
-     * @param queryId: Id of the query to be stopped
+     * @param sharedQueryId: Id of the query to be stopped
      * @param worker: the worker which the query runs on
      * @return true if successful
      */
 [[nodiscard]] bool
-checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout = defaultTimeout);
+checkStoppedOrTimeoutAtWorker(SharedQueryId sharedQueryId, NesWorkerPtr worker, std::chrono::seconds timeout = defaultTimeout);
 
 /**
  * @brief Check if the query has failed within the timeout.
@@ -847,14 +847,14 @@ class DummyQueryListener : public AbstractQueryStatusListener {
   public:
     virtual ~DummyQueryListener() {}
 
-    bool canTriggerEndOfStream(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
         return true;
     }
-    bool notifySourceTermination(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
         return true;
     }
-    bool notifyQueryFailure(QueryId, DecomposedQueryPlanId, std::string) override { return true; }
-    bool notifyQueryStatusChange(QueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
+    bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string) override { return true; }
+    bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
         return true;
     }
     bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }

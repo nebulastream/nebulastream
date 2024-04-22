@@ -155,7 +155,11 @@ class CollectTestSink : public SinkMedium {
      * @param numOfProducers: Also used to create a SinkMedium.
      */
     CollectTestSink(const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine, uint32_t numOfProducers = 1)
-        : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0) {
+        : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)),
+                     nodeEngine,
+                     numOfProducers,
+                     INVALID_SHARED_QUERY_ID,
+                     INVALID_DECOMPOSED_QUERY_PLAN_ID) {
         auto bufferManager = nodeEngine->getBufferManager(0);
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only support for row layouts");
     };

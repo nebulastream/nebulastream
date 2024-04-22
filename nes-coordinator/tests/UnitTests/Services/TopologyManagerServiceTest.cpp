@@ -73,22 +73,22 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
-    uint64_t nodeId =
+    auto nodeId =
         topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port, 5000, 6, properties, bandwidthInMbps, latencyInMs);
-    EXPECT_NE(nodeId, 0u);
+    EXPECT_NE(nodeId, INVALID_WORKER_NODE_ID);
 
-    uint64_t nodeId1 =
+    auto nodeId1 =
         topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 2, 5000, 6, properties, bandwidthInMbps, latencyInMs);
-    EXPECT_EQ(nodeId1, 2u);
+    EXPECT_EQ(nodeId1, WorkerId(2));
 
     //test register existing node
     // when trying to register with a workerId belonging to an active worker,
     // the next available workerId will be assigned instead
-    uint64_t nodeId2 = topology->registerWorker(2, ip, publish_port + 4, 5000, 6, properties, bandwidthInMbps, latencyInMs);
-    EXPECT_EQ(nodeId2, 3u);
+    auto nodeId2 = topology->registerWorker(WorkerId(2), ip, publish_port + 4, 5000, 6, properties, bandwidthInMbps, latencyInMs);
+    EXPECT_EQ(nodeId2, WorkerId(3));
 
     //test unregister not existing node
-    bool successUnregisterNotExistingNode = topology->unregisterWorker(552);
+    bool successUnregisterNotExistingNode = topology->unregisterWorker(WorkerId(552));
     EXPECT_FALSE(successUnregisterNotExistingNode);
 
     //test unregister existing node
@@ -96,13 +96,13 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     EXPECT_TRUE(successUnregisterExistingNode);
 
     //test register new node
-    uint64_t nodeId3 =
+    auto nodeId3 =
         topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 6, 5000, 6, properties, bandwidthInMbps, latencyInMs);
-    EXPECT_EQ(nodeId3, 4u);
+    EXPECT_EQ(nodeId3, WorkerId(4));
 
     //test register new node with misconfigured worker id
     //when trying to register with a workerId that belongs to an already registered worker,
     //the next available workerId will be assigned
-    uint64_t nodeId4 = topology->registerWorker(nodeId3, ip, publish_port + 8, 5000, 6, properties, bandwidthInMbps, latencyInMs);
-    EXPECT_EQ(nodeId4, 5u);
+    auto nodeId4 = topology->registerWorker(nodeId3, ip, publish_port + 8, 5000, 6, properties, bandwidthInMbps, latencyInMs);
+    EXPECT_EQ(nodeId4, WorkerId(5));
 }

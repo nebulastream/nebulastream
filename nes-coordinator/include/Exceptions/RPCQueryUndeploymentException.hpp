@@ -27,11 +27,11 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
     /**
      * @brief construct an exception
      * @param message: a string containing a description of the error that occured
-     * @param failedRpcExecutionNodeIds: the execution node ids of the workers that could not be reached vie rpc
+     * @param failedRpcWorkerIds: the execution node ids of the workers that could not be reached vie rpc
      * @param mode: the mode indicating if the rpc was a register, unregister, start or stop operation
      */
     explicit RPCQueryUndeploymentException(const std::string& message,
-                                           std::vector<WorkerId> failedRpcExecutionNodeIds,
+                                           std::vector<WorkerId> failedRpcWorkerIds,
                                            RpcClientMode mode);
 
     [[nodiscard]] const char* what() const noexcept override;
@@ -40,7 +40,7 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
      * @brief get a list of the nodes that could not be reached
      * @return a vector of node ids
      */
-    std::vector<WorkerId> getFailedExecutionNodeIds();
+    std::vector<WorkerId> getFailedWorkerIds();
 
     /**
      * @brief get the mode of the failed operation
@@ -50,7 +50,7 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
 
   private:
     std::string message;
-    std::vector<WorkerId> failedExecutionNodeIds;
+    std::vector<WorkerId> failedWorkerIds;
     RpcClientMode mode;
 };
 }// namespace NES::Exceptions

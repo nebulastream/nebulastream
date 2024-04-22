@@ -162,14 +162,13 @@ LocationIndex::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLoca
 #endif
 }
 
-void LocationIndex::addMobileNode(WorkerId topologyNodeId,
-                                  NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
+void LocationIndex::addMobileNode(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     workerGeoLocationMap.erase(topologyNodeId);
     workerGeoLocationMap.insert({topologyNodeId, geoLocation});
 }
 
-std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> LocationIndex::getAllNodeLocations() const {
-    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> locationVector;
+std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> LocationIndex::getAllNodeLocations() const {
+    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> locationVector;
     locationVector.reserve(workerGeoLocationMap.size());
     for (auto& [nodeId, geoLocation] : workerGeoLocationMap) {
         if (geoLocation.isValid()) {

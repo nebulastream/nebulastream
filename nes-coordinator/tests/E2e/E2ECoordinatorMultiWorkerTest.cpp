@@ -13,6 +13,7 @@
 */
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <BaseIntegrationTest.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -166,7 +167,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
     NES_INFO("query string submit={}", ss.str());
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").get<int>();
+    QueryId queryId = json_return.at("queryId").get<QueryId>();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: {}", queryId);
@@ -251,7 +252,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     string body = ss.str();
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").get<int>();
+    QueryId queryId = json_return.at("queryId").get<QueryId>();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: {}", queryId);
@@ -352,7 +353,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     NES_INFO("query string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    QueryId queryId = json_return.at("queryId").get<int>();
+    QueryId queryId = json_return.at("queryId").get<QueryId>();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: {}", queryId);

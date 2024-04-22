@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
@@ -80,7 +81,7 @@ class NetworkMetrics {
     bool operator==(const NetworkMetrics& rhs) const;
     bool operator!=(const NetworkMetrics& rhs) const;
 
-    uint64_t nodeId;
+    WorkerId nodeId;
     uint64_t timestamp;
     uint64_t interfaceName;
 

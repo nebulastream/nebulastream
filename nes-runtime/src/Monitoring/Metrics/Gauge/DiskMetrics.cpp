@@ -15,6 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -53,7 +54,7 @@ void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<WorkerId>(nodeId);
     buffer[tupleIndex][cnt++].write<uint64_t>(timestamp);
     buffer[tupleIndex][cnt++].write<uint64_t>(fBsize);
     buffer[tupleIndex][cnt++].write<uint64_t>(fFrsize);
@@ -69,7 +70,7 @@ void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     int cnt = 0;
-    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    nodeId = buffer[tupleIndex][cnt++].read<WorkerId>();
     timestamp = buffer[tupleIndex][cnt++].read<uint64_t>();
     fBsize = buffer[tupleIndex][cnt++].read<uint64_t>();
     fFrsize = buffer[tupleIndex][cnt++].read<uint64_t>();

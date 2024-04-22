@@ -322,16 +322,22 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
     //reconfiguration
     auto subPlanIdWrk3 = 30;
-    ASSERT_EQ(wrk2->getNodeEngine()->getDecomposedQueryIds(queryId).size(), 1);
-    auto oldSubplanId = wrk2->getNodeEngine()->getDecomposedQueryIds(queryId).front();
+    ASSERT_EQ(wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
+    auto oldSubplanId = wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
     auto wrk2Source = wrk2->getNodeEngine()->getExecutableQueryPlan(oldSubplanId)->getSources().front();
-    Network::NesPartition currentWrk1TargetPartition(queryId, wrk2Source->getOperatorId(), 0, 0);
+    Network::NesPartition currentWrk1TargetPartition(sharedQueryId,
+                                                     wrk2Source->getOperatorId(),
+                                                     PartitionId(0),
+                                                     SubpartitionId(0));
 
-    ASSERT_EQ(crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(queryId).size(), 1);
-    auto coordinatorSubplanId = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(queryId).front();
+    ASSERT_EQ(crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
+    auto coordinatorSubplanId = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
     auto coordinatorSource =
         crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
-    Network::NesPartition networkSourceCrdPartition(queryId, coordinatorSource->getOperatorId(), 0, 0);
+    Network::NesPartition networkSourceCrdPartition(sharedQueryId,
+                                                    coordinatorSource->getOperatorId(),
+                                                    PartitionId(0),
+                                                    SubpartitionId(0));
 
     auto oldWorker = wrk2;
     while (actualReconnects < numberOfReconnectsToPerform) {
@@ -432,19 +438,21 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         currentWrk1TargetPartition = networkSourceWrk3Partition;
 
         //verify that query has been undeployed from old parent
-        while (oldWorker->getNodeEngine()->getQueryStatus(queryId) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        while (oldWorker->getNodeEngine()->getQueryStatus(sharedQueryId)
+               != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
             NES_DEBUG("Query has not yet stopped on worker {}", oldWorker->getWorkerId());
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(oldWorker->getNodeEngine()->getQueryStatus(queryId), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
+        ASSERT_EQ(oldWorker->getNodeEngine()->getQueryStatus(sharedQueryId),
+                  Runtime::Execution::ExecutableQueryPlanStatus::Finished);
 
         oldWorker = wrk3;
         EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
                   Network::PartitionRegistrationStatus::Registered);
-        oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(queryId).front();
+        oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
 
         //check that query has left migrating state and is running again
         ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalog()));

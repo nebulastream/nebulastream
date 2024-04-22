@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 

@@ -98,7 +98,7 @@ TEST_F(AbstractMultiRequestTest, testOneMainThreadOneExecutor) {
     EXPECT_EQ(iterations % 2, 0);
     constexpr uint32_t additionsPerIteration = 3;
     constexpr uint32_t responseValue = iterations * additionsPerIteration;
-    RequestId requestId = 1;
+    auto requestId = RequestId(1);
     uint8_t maxRetries = 1;
     DummyRequest request(maxRetries, 0, responseValue, additionsPerIteration);
     request.setId(requestId);
@@ -117,7 +117,7 @@ TEST_F(AbstractMultiRequestTest, testOneMainThreadTwoExecutors) {
     EXPECT_EQ(iterations % 2, 0);
     constexpr uint32_t additionsPerIteration = 3;
     constexpr uint32_t responseValue = iterations * additionsPerIteration;
-    RequestId requestId = 1;
+    auto requestId = RequestId(1);
     std::vector<ResourceType> requiredResources;
     uint8_t maxRetries = 1;
     DummyRequest request(maxRetries, 0, responseValue, additionsPerIteration);

@@ -235,7 +235,7 @@ TEST_P(AsyncRequestProcessorTest, startAndDestroy) {
 
     //it should not be possible to submit a request after destruction
     auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, 10, 10);
-    EXPECT_FALSE(processor->runAsync(request));
+    EXPECT_EQ(processor->runAsync(request), INVALID_REQUEST_ID);
 }
 
 TEST_F(AsyncRequestProcessorTest, testWaitingForLock) {

@@ -16,7 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
@@ -131,12 +131,12 @@ class RequestHandlerService {
      * @warning: this method is primarily designed to be called only by the system.
      *
      * @param sharedQueryId : shared query plan id of the shared query plan to be stopped.
-     * @param querySubPlanId: id of the subquery plan that failed
+     * @param decomposedQueryPlanId: id of the subquery plan that failed
      * @param failureReason : reason for shared query plan failure.
      * @returns: true if successful
      */
     bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                          DecomposedQueryPlanId querySubPlanId,
+                                          DecomposedQueryPlanId decomposedQueryPlanId,
                                           const std::string& failureReason);
 
     /**

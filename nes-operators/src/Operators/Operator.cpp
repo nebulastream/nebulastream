@@ -232,11 +232,11 @@ void Operator::addAllProperties(const OperatorProperties& properties) {
 }
 
 OperatorId getNextOperatorId() {
-    static std::atomic_uint64_t id = INVALID_OPERATOR_ID;
-    return ++id;
+    static std::atomic_uint64_t id = INITIAL_OPERATOR_ID.getRawValue();
+    return OperatorId(id++);
 }
 
-OperatorId getNextStatisticId() {
+StatisticId getNextStatisticId() {
     static std::atomic<StatisticId> statisticId = INVALID_STATISTIC_ID;
     return ++statisticId;
 }

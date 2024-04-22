@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_REGISTRATIONMETRICS_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_REGISTRATIONMETRICS_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
@@ -93,7 +94,7 @@ class RegistrationMetrics {
     bool operator==(const RegistrationMetrics& rhs) const;
     bool operator!=(const RegistrationMetrics& rhs) const;
 
-    uint64_t nodeId;
+    WorkerId nodeId;
     uint64_t totalMemoryBytes;
     uint64_t cpuCoreNum;
     uint64_t totalCPUJiffies;//user+idle+system (This value can change everytime it is read via AbstractSystemResourcesReader)

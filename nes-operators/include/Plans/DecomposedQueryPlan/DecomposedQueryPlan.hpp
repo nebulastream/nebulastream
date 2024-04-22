@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/QueryState.hpp>
@@ -230,7 +230,7 @@ class DecomposedQueryPlan {
         // Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
-        std::set<uint64_t> visitedOpIds;
+        std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators) {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {

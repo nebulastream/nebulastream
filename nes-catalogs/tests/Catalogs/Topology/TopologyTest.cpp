@@ -37,9 +37,8 @@ class TopologyTest : public Testing::BaseUnitTest {
  * Create a new node. 
  */
 TEST_F(TopologyTest, createNode) {
-    uint64_t invalidId = 0;
 
-    auto const node1Id = 1u;
+    auto const node1Id = WorkerId(1u);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -49,9 +48,9 @@ TEST_F(TopologyTest, createNode) {
     auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     EXPECT_NE(physicalNode.get(), nullptr);
     EXPECT_EQ(physicalNode->toString(),
-              "PhysicalNode[id=" + std::to_string(node1Id) + ", ip=" + node1Address
+              "PhysicalNode[id=" + node1Id.toString() + ", ip=" + node1Address
                   + ", resourceCapacity=" + std::to_string(resources) + ", usedResource=0]");
-    EXPECT_NE(physicalNode->getId(), invalidId);
+    EXPECT_NE(physicalNode->getId(), INVALID_WORKER_NODE_ID);
     EXPECT_EQ(physicalNode->getId(), node1Id);
     EXPECT_EQ(physicalNode->getIpAddress(), node1Address);
     EXPECT_EQ(physicalNode->getGrpcPort(), grpcPort);
@@ -65,7 +64,7 @@ TEST_F(TopologyTest, removeRootNode) {
     auto rootWorkerNodeIds = topology->getRootWorkerNodeIds();
     EXPECT_TRUE(rootWorkerNodeIds.empty());
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -88,7 +87,7 @@ TEST_F(TopologyTest, removeAnExistingNode) {
     auto rootWorkerNodeIds = topology->getRootWorkerNodeIds();
     EXPECT_TRUE(rootWorkerNodeIds.empty());
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -99,7 +98,7 @@ TEST_F(TopologyTest, removeAnExistingNode) {
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    int node2Id = 2;
+    auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -118,7 +117,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     auto rootWorkerNodeIds = topology->getRootWorkerNodeIds();
     EXPECT_TRUE(rootWorkerNodeIds.empty());
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -129,13 +128,13 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    int node2Id = 2;
+    auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
 
-    int node3Id = 3;
+    auto node3Id = WorkerId(3);
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -145,7 +144,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     ASSERT_TRUE(success2);
     topology->removeTopologyNodeAsChild(node1Id, node3Id);
 
-    int node4Id = 4;
+    auto node4Id = WorkerId(4);
     std::string node4Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -158,7 +157,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     bool success = topology->unregisterWorker(node4Id);
     EXPECT_TRUE(success);
 
-    TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(4u);
+    TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(node4Id);
     EXPECT_TRUE(node == nullptr);
 }
 
@@ -168,7 +167,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
 TEST_F(TopologyTest, removeNodeFromEmptyTopology) {
     TopologyPtr topology = Topology::create();
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -186,7 +185,7 @@ TEST_F(TopologyTest, removeNodeFromEmptyTopology) {
 TEST_F(TopologyTest, createLink) {
     TopologyPtr topology = Topology::create();
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -197,13 +196,13 @@ TEST_F(TopologyTest, createLink) {
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    int node2Id = 2;
+    auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
 
-    int node3Id = 3;
+    auto node3Id = WorkerId(3);
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -216,7 +215,7 @@ TEST_F(TopologyTest, createLink) {
 TEST_F(TopologyTest, createExistingLink) {
     TopologyPtr topology = Topology::create();
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -226,7 +225,7 @@ TEST_F(TopologyTest, createExistingLink) {
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    int node2Id = 2;
+    auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -240,7 +239,7 @@ TEST_F(TopologyTest, removeLink) {
 
     TopologyPtr topology = Topology::create();
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -250,7 +249,7 @@ TEST_F(TopologyTest, removeLink) {
     node1Id = topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    int node2Id = 2;
+    auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -263,7 +262,7 @@ TEST_F(TopologyTest, removeLink) {
 TEST_F(TopologyTest, removeNonExistingLink) {
     TopologyPtr topology = Topology::create();
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -274,7 +273,7 @@ TEST_F(TopologyTest, removeNonExistingLink) {
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    int node2Id = 2;
+    auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -297,7 +296,7 @@ TEST_F(TopologyTest, printGraph) {
     std::vector<WorkerId> workers;
     int resource = 4;
     for (uint32_t i = 0; i < 7; ++i) {
-        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         workers.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
@@ -307,7 +306,7 @@ TEST_F(TopologyTest, printGraph) {
     // create sensors
     std::vector<WorkerId> sensors;
     for (uint32_t i = 7; i < 23; ++i) {
-        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         sensors.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
@@ -357,7 +356,7 @@ TEST_F(TopologyTest, printGraphWithoutAnything) {
 TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     TopologyPtr topology = Topology::create();
 
-    WorkerId node1Id = 1;
+    WorkerId node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -367,13 +366,13 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    WorkerId node2Id = 2;
+    WorkerId node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
 
-    WorkerId node3Id = 3;
+    WorkerId node3Id = WorkerId(3);
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -404,7 +403,7 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
     std::vector<WorkerId> workerIds;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         workerIds.emplace_back(i);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
@@ -440,7 +439,7 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
 TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     TopologyPtr topology = Topology::create();
 
-    int node1Id = 1;
+    auto node1Id = WorkerId(1);
     std::string node1Address = "localhost";
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -450,13 +449,13 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->addAsRootWorkerId(node1Id);
 
-    int node2Id = 2;
+    auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
 
-    int node3Id = 3;
+    auto node3Id = WorkerId(3);
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
@@ -489,7 +488,7 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
@@ -562,7 +561,7 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
@@ -788,7 +787,7 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i <= 6; ++i) {
-        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
@@ -855,7 +854,7 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i < 9; ++i) {
-        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
@@ -905,7 +904,7 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
 
     auto commonAncestor = pathFinder.findCommonAncestor(copyTopology);
     auto commonChild = pathFinder.findCommonAncestor(copyTopology);
-    EXPECT_EQ(commonAncestor->getId(), 4);
+    EXPECT_EQ(commonAncestor->getId(), WorkerId(4));
     EXPECT_EQ(commonAncestor->getId(), commonChild->getId());
 
     auto path = topology->findPathBetween(childNodes, parentNodes);

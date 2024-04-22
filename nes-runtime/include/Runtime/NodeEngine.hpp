@@ -146,26 +146,26 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id
-     * @param querySubPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
+     * @param decomposedQueryPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink on which to buffer data
      * @return bool indicating success
      */
-    bool bufferData(DecomposedQueryPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
+    bool bufferData(DecomposedQueryPlanId decomposedQueryPlanId, OperatorId uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief method to trigger the reconfiguration of a NetworkSink so that it points to a new downstream node.
      * @param newNodeId : the id of the new node
      * @param newHostname : the hostname of the new node
      * @param newPort : the port of the new node
-     * @param querySubPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
+     * @param decomposedQueryPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink to reconfigure.
      * @return bool indicating success
      */
-    bool updateNetworkSink(uint64_t newNodeId,
+    bool updateNetworkSink(WorkerId newNodeId,
                            const std::string& newHostname,
                            uint32_t newPort,
-                           DecomposedQueryPlanId querySubPlanId,
-                           uint64_t uniqueNetworkSinkDescriptorId);
+                           DecomposedQueryPlanId decomposedQueryPlanId,
+                           OperatorId uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief release all resource of the node engine
@@ -187,9 +187,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
     * @brief getter of node id
-    * @return NodeEngineId
+    * @return WorkerId
     */
-    uint64_t getNodeEngineId();
+    WorkerId getWorkerId();
 
     /**
      * @brief getter of network manager
@@ -267,10 +267,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief finds executable query plan for a given sub query id
-     * @param querySubPlanId query sub plan id
+     * @param decomposedQueryPlanId query sub plan id
      * @return executable query plan
      */
-    std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(uint64_t querySubPlanId) const;
+    std::shared_ptr<const Execution::ExecutableQueryPlan>
+    getExecutableQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId) const;
 
     /**
      * @brief finds sub query ids for a given query id
@@ -319,17 +320,17 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param newNodeId the id of the node hosting the new source
      * @param newHostname the hostname of the node hosting the new source
      * @param newPort the data port of the node hosting the new source
-     * @param querySubPlanId the id of the subplan containing the sink to be reconfigured
+     * @param decomposedQueryPlanId the id of the subplan containing the sink to be reconfigured
      * @param uniqueNetworkSinkDescriptorId the unique id of the network sink to be reconfigured
      * @param newPartition the partition of the new source
      * @param version the new version number of the sink to be reconfigured
      * @return true on success, false if sink was not found
      */
-    bool experimentalReconfigureNetworkSink(uint64_t newNodeId,
+    bool experimentalReconfigureNetworkSink(WorkerId newNodeId,
                                             const std::string& newHostname,
                                             uint32_t newPort,
-                                            DecomposedQueryPlanId querySubPlanId,
-                                            uint64_t uniqueNetworkSinkDescriptorId,
+                                            DecomposedQueryPlanId decomposedQueryPlanId,
+                                            OperatorId uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
 
@@ -358,7 +359,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         QueryCompilation::QueryCompilerPtr&&,
                         std::weak_ptr<AbstractQueryStatusListener>&&,
                         OpenCLManagerPtr&&,
-                        uint64_t nodeEngineId,
+                        WorkerId nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerWorker,
@@ -382,7 +383,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     OpenCLManagerPtr openCLManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;
-    [[maybe_unused]] uint64_t nodeEngineId;
+    [[maybe_unused]] WorkerId nodeEngineId;
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;

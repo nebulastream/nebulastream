@@ -37,8 +37,8 @@ Configurations::CoordinatorConfigurationPtr StorageHandler::getCoordinatorConfig
 
 RequestId StorageHandler::generateRequestId() {
     std::unique_lock lock(idMutex);
-    auto requestId = nextFreeRequestId;
-    nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
-    return requestId;
+    auto requestId = nextFreeRequestId.getRawValue();
+    nextFreeRequestId = RequestId((requestId % MAX_REQUEST_ID.getRawValue()) + 1);
+    return RequestId(requestId);
 }
 }// namespace NES::RequestProcessor

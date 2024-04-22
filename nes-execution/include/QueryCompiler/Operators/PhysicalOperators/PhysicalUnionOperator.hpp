@@ -37,7 +37,7 @@ class PhysicalUnionOperator : public PhysicalBinaryOperator {
                           const SchemaPtr& outputSchema);
     static PhysicalOperatorPtr
     create(OperatorId id, StatisticId statisticId, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
-    static PhysicalOperatorPtr create(StatisticId statisticId, OperatorId id, const SchemaPtr& schema);
+    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(StatisticId statisticId, const SchemaPtr& schema);
     std::string toString() const override;
     OperatorPtr copy() override;

@@ -66,7 +66,7 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test1");
     auto logicalSource = LogicalSource::create("default_logical", Schema::create());

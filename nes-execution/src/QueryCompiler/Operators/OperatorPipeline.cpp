@@ -18,18 +18,20 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <atomic>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <numeric>
 #include <sstream>
+#include <algorithm>
 #include <utility>
 
 namespace NES::QueryCompilation {
 
-uint64_t getNextPipelineId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
+PipelineId getNextPipelineId() {
+    static std::atomic_uint64_t id = INITIAL_PIPELINE_ID.getRawValue();
+    return PipelineId(id++);
 }
 
-OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
+OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType)
     : id(pipelineId),
       decomposedQueryPlan(
           DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID)),
@@ -116,23 +118,31 @@ void OperatorPipeline::prependOperator(OperatorPtr newRootOperator) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }
     if (newRootOperator->hasProperty("LogicalOperatorId")) {
-        operatorIds.push_back(std::any_cast<uint64_t>(newRootOperator->getProperty("LogicalOperatorId")));
+        operatorIds.push_back(std::any_cast<OperatorId>(newRootOperator->getProperty("LogicalOperatorId")));
     }
     this->decomposedQueryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
 }
 
-uint64_t OperatorPipeline::getPipelineId() const { return id; }
+PipelineId OperatorPipeline::getPipelineId() const { return id; }
 
 DecomposedQueryPlanPtr OperatorPipeline::getDecomposedQueryPlan() { return decomposedQueryPlan; }
 
-const std::vector<uint64_t>& OperatorPipeline::getOperatorIds() const { return operatorIds; }
+const std::vector<OperatorId>& OperatorPipeline::getOperatorIds() const { return operatorIds; }
 
+template<typename T>
+static std::vector<PipelineId> getIds(const std::vector<T>& pipelines) {
+    std::vector<PipelineId> ids;
+    std::transform(pipelines.begin(), pipelines.end(), std::back_inserter(ids), [](const auto& pipeline) {
+        return pipeline.get()->getPipelineId();
+    });
+    return ids;
+}
 std::string OperatorPipeline::toString() const {
     auto successorsStr = std::accumulate(successorPipelines.begin(),
                                          successorPipelines.end(),
                                          std::string(),
                                          [](const std::string& result, const OperatorPipelinePtr& succPipeline) {
-                                             auto succPipelineId = std::to_string(succPipeline->id);
+                                             auto succPipelineId = fmt::format("{}", succPipeline->id);
                                              return result.empty() ? succPipelineId : result + ", " + succPipelineId;
                                          });
 
@@ -141,15 +151,15 @@ std::string OperatorPipeline::toString() const {
                         predecessorPipelines.end(),
                         std::string(),
                         [](const std::string& result, const std::weak_ptr<OperatorPipeline>& predecessorPipeline) {
-                            auto predecessorPipelineId = std::to_string(predecessorPipeline.lock()->id);
+                            auto predecessorPipelineId = fmt::format("{}", predecessorPipeline.lock()->id);
                             return result.empty() ? predecessorPipelineId : result + ", " + predecessorPipelineId;
                         });
 
-    std::ostringstream oss;
-    oss << "- Id: " << id << ", Type: " << magic_enum::enum_name(pipelineType) << ", Successors: " << successorsStr
-        << ", Predecessors: " << predecessorsStr << std::endl
-        << "- QueryPlan: " << decomposedQueryPlan->toString();
-
-    return oss.str();
+    return fmt::format("- Id: {}, Type: {}, Successors: {}, Predecessors: {}\n- QueryPlan: {}",
+                       id,
+                       magic_enum::enum_name(pipelineType),
+                       successorsStr,
+                       predecessorsStr,
+                       decomposedQueryPlan->toString());
 }
 }// namespace NES::QueryCompilation

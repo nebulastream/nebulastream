@@ -13,7 +13,8 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cstdio>
@@ -79,14 +80,14 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 
     nlohmann::json jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(*restPort));
     NES_INFO("try to acc return Q1={}", jsonReturnQ1);
-    QueryId queryId1 = jsonReturnQ1["queryId"].get<int>();
+    QueryId queryId1 = jsonReturnQ1["queryId"].get<QueryId>();
     NES_INFO("Query ID1: {}", queryId1);
     ASSERT_NE(queryId1, INVALID_QUERY_ID);
 
     nlohmann::json jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(*restPort));
     NES_INFO("try to acc return Q2={}", jsonReturnQ2);
 
-    QueryId queryId2 = jsonReturnQ2["queryId"].get<int>();
+    QueryId queryId2 = jsonReturnQ2["queryId"].get<QueryId>();
     NES_INFO("Query ID2: {}", queryId2);
     ASSERT_NE(queryId2, INVALID_QUERY_ID);
 
@@ -169,9 +170,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     nlohmann::json jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(*restPort));
     nlohmann::json jsonReturnQ3 = TestUtils::startQueryViaRest(ssQuery3.str(), std::to_string(*restPort));
 
-    QueryId queryId1 = jsonReturnQ1["queryId"].get<int>();
-    QueryId queryId2 = jsonReturnQ2["queryId"].get<int>();
-    QueryId queryId3 = jsonReturnQ3["queryId"].get<int>();
+    QueryId queryId1 = jsonReturnQ1["queryId"].get<QueryId>();
+    QueryId queryId2 = jsonReturnQ2["queryId"].get<QueryId>();
+    QueryId queryId3 = jsonReturnQ3["queryId"].get<QueryId>();
 
     ASSERT_NE(queryId1, INVALID_QUERY_ID);
     ASSERT_NE(queryId2, INVALID_QUERY_ID);
@@ -281,8 +282,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     nlohmann::json jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(*restPort));
     NES_INFO("return from q2");
 
-    QueryId queryId1 = jsonReturnQ1["queryId"].get<int>();
-    QueryId queryId2 = jsonReturnQ2["queryId"].get<int>();
+    QueryId queryId1 = jsonReturnQ1["queryId"].get<QueryId>();
+    QueryId queryId2 = jsonReturnQ2["queryId"].get<QueryId>();
 
     ASSERT_NE(queryId1, INVALID_QUERY_ID);
     ASSERT_NE(queryId2, INVALID_QUERY_ID);
@@ -383,10 +384,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("return from query 2");
 
     NES_INFO("try to acc return");
-    QueryId queryId1 = json_return["queryId"].get<int>();
+    QueryId queryId1 = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID 1: {}", queryId1);
     ASSERT_NE(queryId1, INVALID_QUERY_ID);
-    QueryId queryId2 = json_return_Q2["queryId"].get<int>();
+    QueryId queryId2 = json_return_Q2["queryId"].get<QueryId>();
     NES_INFO("Query ID 2: {}", queryId2);
     ASSERT_NE(queryId2, INVALID_QUERY_ID);
 
@@ -489,10 +490,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     NES_INFO("return from query 2");
 
     NES_INFO("try to acc return");
-    QueryId queryId1 = json_return["queryId"].get<int>();
+    auto queryId1 = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID 1: {}", queryId1);
     ASSERT_NE(queryId1, INVALID_QUERY_ID);
-    QueryId queryId2 = json_return_Q2["queryId"].get<int>();
+    auto queryId2 = json_return_Q2["queryId"].get<QueryId>();
     NES_INFO("Query ID 2: {}", queryId2);
     ASSERT_NE(queryId2, INVALID_QUERY_ID);
 

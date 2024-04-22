@@ -16,7 +16,7 @@
 #define NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_STATISTICOPERATORHANDLER_HPP_
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>

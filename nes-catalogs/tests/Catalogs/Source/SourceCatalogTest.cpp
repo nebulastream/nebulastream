@@ -104,7 +104,7 @@ TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
@@ -125,7 +125,7 @@ TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
@@ -147,7 +147,7 @@ TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
@@ -182,7 +182,7 @@ TEST_F(SourceCatalogTest, testGetPhysicalSourceForLogicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
