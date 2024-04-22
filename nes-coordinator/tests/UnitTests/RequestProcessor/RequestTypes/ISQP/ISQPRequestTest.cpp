@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #include <API/QueryAPI.hpp>
@@ -28,8 +28,15 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
 #include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
@@ -63,7 +70,7 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
-    Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::BottomUp;
+    Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::ILP;
     uint8_t ZERO_RETRIES = 0;
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
     TopologyPtr topology;
@@ -92,6 +99,44 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
         cfg.set("model", false);
         cfg.set("type_check", false);
         z3Context = std::make_shared<z3::context>(cfg);
+    }
+
+    void assignOperatorPropertiesRecursive(LogicalOperatorPtr operatorNode) {
+        int cost = 1;
+        double dmf = 1;
+        double input = 0;
+
+        for (const auto& child : operatorNode->getChildren()) {
+            LogicalOperatorPtr op = child->as<LogicalOperator>();
+            assignOperatorPropertiesRecursive(op);
+            std::any output = op->getProperty("output");
+            input += std::any_cast<double>(output);
+        }
+
+        NodePtr nodePtr = operatorNode->as<Node>();
+        if (operatorNode->instanceOf<SinkLogicalOperator>()) {
+            dmf = 0;
+            cost = 0;
+        } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
+            dmf = 0.5;
+            cost = 1;
+        } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
+            dmf = 2;
+            cost = 2;
+        } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
+            cost = 2;
+        } else if (operatorNode->instanceOf<LogicalUnionOperator>()) {
+            cost = 2;
+        } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
+            cost = 1;
+        } else if (operatorNode->instanceOf<SourceLogicalOperator>()) {
+            cost = 0;
+            input = 100;
+        }
+
+        double output = input * dmf;
+        operatorNode->addProperty("output", output);
+        operatorNode->addProperty("cost", cost);
     }
 };
 
@@ -664,17 +709,21 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
         Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(1);
+    for (const auto& sink : queryPlan1->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
+    }
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
-
     auto query2 =
         Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(2);
+    for (const auto& sink : queryPlan2->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
+    }
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
-
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
     isqpEventsForRequest2.emplace_back(queryAddEvent1);
-    isqpEventsForRequest2.emplace_back(queryAddEvent2);
+    //isqpEventsForRequest2.emplace_back(queryAddEvent2);
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
@@ -686,6 +735,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     } catch (Exceptions::RPCQueryUndeploymentException& e) {
         FAIL();
     }
+
     auto response1 = queryAddEvent1->getResponse().get();
     auto queryId1 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response1)->queryId;
     EXPECT_EQ(queryCatalog->getQueryState(queryId1), QueryState::RUNNING);

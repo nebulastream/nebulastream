@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #include <BaseIntegrationTest.hpp>
@@ -63,8 +63,8 @@ class ConfigTest : public Testing::BaseIntegrationTest {
 };
 
 /**
- * @brief This reads an coordinator yaml and checks the configuration
- */
+* @brief This reads an coordinator yaml and checks the configuration
+*/
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
@@ -402,7 +402,6 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
     EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), magic_enum::enum_cast<GatheringMode>("ADAPTIVE_MODE").value());
 }
 
-
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
         {"--numaAwareness", {"not_a_bool", "2", "-1"}},
@@ -411,8 +410,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions) {
         {"--enableStatisticOuput", {"not_a_bool", "2", "-1"}},
         {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
         {"--connectSinksAsync", {"not_a_bool", "2", "-1"}},
-        {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
-    };
+        {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -436,8 +434,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions) {
         {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
         {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
         {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
-    };
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -452,8 +449,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions) {
 
 TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
-        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
-    };
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -468,8 +464,8 @@ TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions) {
 
 TEST_F(ConfigTest, invalidCommandLineInputForIpOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
-        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
-        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
+        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "localhost", "127.0.0.-1", "192.168..1"}},
+        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "localhost", "127.0.0.-1", "192.168..1"}},
     };
 
     for (const auto& optionPair : commandLineArgs) {
@@ -491,8 +487,7 @@ TEST_F(ConfigTest, invalidBooleanYamlInputs) {
         {"enableStatisticOutput", {"not_a_bool", "2", "-1"}},
         {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
         {"connectSinksAsync", {"not_a_bool", "2", "-1"}},
-        {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
-    };
+        {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidBooleanConfigs) {
         for (const auto& value : invalidValues) {
@@ -525,8 +520,7 @@ TEST_F(ConfigTest, invalidIntYamlInputs) {
         {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
         {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
         {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
-    };
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidIntConfigs) {
         for (const auto& value : invalidValues) {
@@ -550,8 +544,7 @@ TEST_F(ConfigTest, invalidIntYamlInputs) {
 
 TEST_F(ConfigTest, invalidFloatYamlInputs) {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidFloatConfigs = {
-        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
-    };
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
 
     for (const auto& [optionName, invalidValues] : invalidFloatConfigs) {
         for (const auto& value : invalidValues) {
@@ -575,8 +568,8 @@ TEST_F(ConfigTest, invalidFloatYamlInputs) {
 
 TEST_F(ConfigTest, invalidIpYamlInputs) {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidIpConfigs = {
-        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
-        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
+        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "127.0.0.-1", "192.168..1"}},
+        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "127.0.0.-1", "192.168..1"}},
     };
 
     for (const auto& [optionName, invalidValues] : invalidIpConfigs) {

@@ -76,7 +76,6 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
         std::map<OperatorId, z3::expr> operatorPositionMap;
         std::map<uint64_t, z3::expr> nodeUtilizationMap;
         std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToCopiedOperatorMap;
-        std::map<uint64_t, double> nodeMileageMap = computeMileage(copy.copiedPinnedDownStreamOperators);
 
         // 2. Construct the placementVariable, compute distance, utilization and mileages
         for (const auto& pinnedUpStreamOperator : copy.copiedPinnedUpStreamOperators) {
@@ -150,6 +149,9 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
             }
 
             //2.4 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
+
+            std::map<uint64_t, double> nodeMileageMap = computeMileage(copy.copiedPinnedDownStreamOperators);
+
             addConstraints(opt,
                            copy.copiedPinnedUpStreamOperators,
                            copy.copiedPinnedDownStreamOperators,
@@ -162,7 +164,6 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
 
         // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
         auto costNet = z3Context->int_val(0);// initialize the network cost with 0
-        double output;
         for (auto const& [operatorID, position] : operatorPositionMap) {
             LogicalOperatorPtr logicalOperator = operatorMap[operatorID]->as<LogicalOperator>();
             if (logicalOperator->getParents().empty()) {
@@ -178,7 +179,7 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
                     auto distance = operatorPositionMap.find(downStreamOperatorId)->second - position;
                     NES_DEBUG("Distance of {} to {} is: {}", operatorID, downStreamOperatorId, distance.to_string());
                     std::any prop = logicalOperator->getProperty("output");
-                    output = std::any_cast<double>(prop);
+                    double output = std::any_cast<double>(prop);
                     NES_DEBUG("Property output of {} is: {}", logicalOperator->getId(), output);
                     //Summing up the amount of data multiplied by the distance to the position of the next operator and adding it to already summed up values of the same kind
                     costNet = costNet + z3Context->real_val(std::to_string(output).c_str()) * distance;
@@ -296,6 +297,10 @@ void ILPStrategy::computeDistance(const TopologyNodePtr& node, std::map<uint64_t
     uint64_t childID = child->getId();
     if (mileages.find(childID) == mileages.end()) {
         computeDistance(child, mileages);
+    }
+    if (!node->getLinkProperty(childID) || !node->getLinkProperty(childID)->bandwidth) {
+        auto linkProperty = std::make_shared<LinkProperty>(512, 100);
+        node->addLinkProperty(childID, linkProperty);
     }
     mileages[topologyID] = 1.0 / node->getLinkProperty(childID)->bandwidth + mileages[childID];
 }
