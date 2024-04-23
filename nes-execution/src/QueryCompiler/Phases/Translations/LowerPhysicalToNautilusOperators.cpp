@@ -113,6 +113,7 @@
 #include <cstddef>
 #include <string_view>
 #include <utility>
+#include <Util/Execution.hpp>
 
 namespace NES::QueryCompilation {
 
@@ -456,25 +457,16 @@ LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(const PhysicalOpera
     const auto width = physicalCountMinBuild.getWidth();
     const auto depth = physicalCountMinBuild.getDepth();
     const auto metricHash = physicalCountMinBuild.getMetricHash();
-    const auto outputMemoryLayout = Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
+    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
     const auto statisticFormat = Statistic::CountMinStatisticFormat::create(outputMemoryLayout);
     const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
     const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
 
-    // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
+    // 2. Getting the windowSize, windowSlide, and timestampFieldName.
     const auto windowType = physicalCountMinBuild.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    const auto& windowSize = windowType->getSize().getTime();
-    const auto& windowSlide = windowType->getSlide().getTime();
     NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
                "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
-    const auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
-    auto timeStampFieldRecord =
-        std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeStampFieldName);
-    Runtime::Execution::Operators::TimeFunctionPtr timeFunction =
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
-    if (timeStampFieldName == "IngestionTime") {
-        timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
-    }
+    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
 
     // 3. Create operator handler
     auto countMinBuildOperatorHandler = CountMinOperatorHandler::create(windowSize, windowSlide,
@@ -505,25 +497,16 @@ LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(const PhysicalOp
     const auto fieldToTrackFieldName = physicalHLLBuildOperator.getNameOfFieldToTrack();
     const auto width = physicalHLLBuildOperator.getWidth();
     const auto metricHash = physicalHLLBuildOperator.getMetricHash();
-    const auto outputMemoryLayout = Util::createMemoryLayout(physicalHLLBuildOperator.getOutputSchema(), bufferSize);
+    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalHLLBuildOperator.getOutputSchema(), bufferSize);
     const auto statisticFormat = Statistic::HyperLogLogStatisticFormat::create(outputMemoryLayout);
     const auto inputOriginIds = physicalHLLBuildOperator.getInputOriginIds();
     const auto sendingPolicy = physicalHLLBuildOperator.getSendingPolicy();
 
     // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
     const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    const auto& windowSize = windowType->getSize().getTime();
-    const auto& windowSlide = windowType->getSlide().getTime();
     NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-               "Only a tumbling or sliding window is currently supported for HyperLogLogBuildOperator");
-    const auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
-    auto timeStampFieldRecord =
-        std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeStampFieldName);
-    Runtime::Execution::Operators::TimeFunctionPtr timeFunction =
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
-    if (timeStampFieldName == "IngestionTime") {
-        timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
-    }
+               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
+    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
 
     // 3. Create operator handler
     auto hyperLogLogBuildOperatorHandler = HyperLogLogOperatorHandler::create(windowSize,
@@ -743,9 +726,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             endTs,
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
-        auto timeBasedWindowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
-        auto windowSize = timeBasedWindowType->getSize().getTime();
-        auto windowSlide = timeBasedWindowType->getSlide().getTime();
+        const auto timeBasedWindowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto& [windowSize, windowSlide, _] = Util::getWindowingParameters(*timeBasedWindowType);
         auto actionHandler =
             std::make_shared<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
         operatorHandlers.emplace_back(actionHandler);
@@ -808,9 +790,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             resultKeyDataTypes,
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
-        auto timeBasedWindowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
-        auto windowSize = timeBasedWindowType->getSize().getTime();
-        auto windowSlide = timeBasedWindowType->getSlide().getTime();
+        const auto windowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto& [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
         auto actionHandler =
             std::make_shared<Runtime::Execution::Operators::KeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
         operatorHandlers.emplace_back(actionHandler);
