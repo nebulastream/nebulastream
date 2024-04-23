@@ -21,4 +21,4 @@ if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
 fi
 
 # Check license preamble
-python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
+python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1

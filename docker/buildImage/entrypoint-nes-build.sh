@@ -34,7 +34,7 @@ if [ $# -eq 1 ]; then
        EXTRA_CMAKE_FLAG="-DNES_USE_GPU=1 -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
     fi
   # Build NES
-  python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
+  python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1
   # We use ccache to reuse intermediate build files across ci runs.
   # All cached data is stored at /tmp/$os_$arch
   ccache --set-config=cache_dir=/cache_dir/
