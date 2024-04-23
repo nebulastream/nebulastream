@@ -165,12 +165,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 
     switch (task.getType()) {
         case Runtime::ReconfigurationType::UpdateVersion: {
-            NES_NOT_IMPLEMENTED();
-            if (!networkManager->getConnectSourceEventChannelsAsync()) {
-                NES_THROW_RUNTIME_ERROR(
-                    "Attempt to reconfigure a network source but asynchronous connecting of event channels is not "
-                    "activated. To use source reconfiguration allow asynchronous connecting in the the configuration");
-            }
+            //NES_NOT_IMPLEMENTED();
+//            if (!networkManager->getConnectSourceEventChannelsAsync()) {
+//                NES_THROW_RUNTIME_ERROR(
+//                    "Attempt to reconfigure a network source but asynchronous connecting of event channels is not "
+//                    "activated. To use source reconfiguration allow asynchronous connecting in the the configuration");
+//            }
             workerContext.releaseEventOnlyChannel(uniqueNetworkSourceIdentifier, terminationType);
             NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                       nesPartition.toString(),
@@ -352,26 +352,26 @@ void NetworkSource::markAsMigrated(uint64_t version) {
 bool NetworkSource::tryStartingNewVersion() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
     std::unique_lock lock(versionMutex);
-    //    if (nextSourceDescriptor) {
-    //        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
-    //        //check if the partition is still registered of if it was removed because no channels were connected
-    //        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-    //            auto newDescriptor = nextSourceDescriptor.value();
-    //            version = newDescriptor.getVersion();
-    //            sinkLocation = newDescriptor.getNodeLocation();
-    //            nesPartition = newDescriptor.getNesPartition();
-    //            nextSourceDescriptor = std::nullopt;
-    //            //bind the sink to the new partition
-    //            bind();
-    //            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-    //                                                                 -1,
-    //                                                                 Runtime::ReconfigurationType::UpdateVersion,
-    //                                                                 Runtime::Reconfigurable::shared_from_this());
-    //            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
-    //            return true;
-    //        }
-    //        return false;
-    //    }
+        if (nextSourceDescriptor) {
+            NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
+            //check if the partition is still registered of if it was removed because no channels were connected
+            if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+                auto newDescriptor = nextSourceDescriptor.value();
+                version = newDescriptor.getVersion();
+                sinkLocation = newDescriptor.getNodeLocation();
+                nesPartition = newDescriptor.getNesPartition();
+                nextSourceDescriptor = std::nullopt;
+                //bind the sink to the new partition
+                bind();
+                auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+                                                                     -1,
+                                                                     Runtime::ReconfigurationType::UpdateVersion,
+                                                                     Runtime::Reconfigurable::shared_from_this());
+                queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+                return true;
+            }
+            return false;
+        }
     if (migrated.has_value()) {
         //we have to check receive drian here, because otherwise we might migrate the source before the upstream has connected at all
         //todo: move load() here
@@ -424,13 +424,13 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
 
 OperatorId NetworkSource::getUniqueId() const { return uniqueNetworkSourceIdentifier; }
 
-//bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
-//    std::unique_lock lock(versionMutex);
-//    if (nesPartition != networkSourceDescriptor.getNesPartition()) {
-//        nextSourceDescriptor = networkSourceDescriptor;
-//        tryStartingNewVersion();
-//        return true;
-//    }
-//    return false;
-//}
+bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
+    std::unique_lock lock(versionMutex);
+    if (nesPartition != networkSourceDescriptor.getNesPartition()) {
+        nextSourceDescriptor = networkSourceDescriptor;
+        tryStartingNewVersion();
+        return true;
+    }
+    return false;
+}
 }// namespace NES::Network

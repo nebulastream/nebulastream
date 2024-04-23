@@ -995,11 +995,9 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         }
 
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
-                        //updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
-                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
-                        updatedDecomposedQueryPlan->setDecomposedQueryPlanId(PlanIdGenerator::getNextDecomposedQueryPlanId());
                         globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);

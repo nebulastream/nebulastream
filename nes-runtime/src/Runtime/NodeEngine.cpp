@@ -790,23 +790,23 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
         }
     }
     // iterate over all network sources and apply the reconfigurations
-//    for (auto& source : deployedPlan->getSources()) {
-//        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
-//        if (networkSource != nullptr) {
-//            for (auto& reconfiguredSource : reconfiguredDecomposedQueryPlan->getSourceOperators()) {
-//                auto reconfiguredNetworkSourceDescriptor =
-//                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
-//                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
-//                    NES_DEBUG("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
-//                              "decomposed query plan {}.",
-//                              reconfiguredNetworkSourceDescriptor->getUniqueId(),
-//                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
-//                              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
-//                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
-//                }
-//            }
-//        }
-//    }
+    for (auto& source : deployedPlan->getSources()) {
+        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
+        if (networkSource != nullptr) {
+            for (auto& reconfiguredSource : reconfiguredDecomposedQueryPlan->getSourceOperators()) {
+                auto reconfiguredNetworkSourceDescriptor =
+                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
+                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
+                    NES_DEBUG("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
+                              "decomposed query plan {}.",
+                              reconfiguredNetworkSourceDescriptor->getUniqueId(),
+                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
+                              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
+                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
+                }
+            }
+        }
+    }
     return true;
 }
 

@@ -175,7 +175,7 @@ class NetworkSource : public DataSource {
      * @param networkSourceDescriptor the new descriptor
      * @return true if the partition to be scheduled if different from the current one and the descriptor was scheduled.
      */
-    //bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
+    bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
 
     bool bind();
 
