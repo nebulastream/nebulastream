@@ -384,6 +384,83 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
     }
 }
 
+/* Test query placement with ILP strategy with a window query with default parameters*/
+TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategyWithDefaultParameters) {
+    setupTopologyAndSourceCatalogForILP();
+
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
+    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                        topologyForILP,
+                                                                                        typeInferencePhase,
+                                                                                        coordinatorConfiguration);
+
+    //Prepare query plan
+    Query query = Query::from("car")
+                      .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(1)))
+                      .byKey(Attribute("id"))
+                      .apply(Sum(Attribute("value")))
+                      .sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
+                                                             sourceCatalogForILP,
+                                                             Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
+
+    //Perform placement
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+    auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(lockedExecutionNodes.size(), 3U);
+    for (const auto& executionNode : lockedExecutionNodes) {
+        if (executionNode->operator*()->getId() == WorkerId(1)) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == WorkerId(2)) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            // assertion for window and watermark operator being placed after source
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperator>());
+            EXPECT_TRUE(
+                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]
+                            ->getChildren()[0]
+                            ->getChildren()[0]
+                            ->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == WorkerId(2)) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        }
+    }
+}
+
 TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
