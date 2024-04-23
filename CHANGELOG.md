@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.102](https://github.com/nebulastream/nebulastream/tree/v0.6.102) (2024-04-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.101...v0.6.102)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create custom method of getting windowSize, windowSlide, and timestampFieldName of a WindowType [\#4739](https://github.com/nebulastream/nebulastream/issues/4739)
+
 ## [v0.6.101](https://github.com/nebulastream/nebulastream/tree/v0.6.101) (2024-04-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.100...v0.6.101)
