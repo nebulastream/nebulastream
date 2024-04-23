@@ -37,7 +37,7 @@ then
     # Build NES
     mkdir -p /nebulastream/build
     cd /nebulastream/build
-    python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
+    python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_CODE_COVERAGE=ON -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSOR_FLOW=1 -DNES_USE_S2=1 ..
     make -j$NesBuildParallelism
 
