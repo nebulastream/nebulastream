@@ -161,10 +161,17 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
                 }
             }
 
-            //2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
+            //2.3 Check that all costs that are necessary for z3 solver are specified
+            for (auto pinnedDownstreamOperator : copy.copiedPinnedDownStreamOperators) {
+                if (!pinnedDownstreamOperator->hasProperty("cost") || !pinnedDownstreamOperator->hasProperty("output")) {
+                    assignOperatorDefaultProperties(pinnedDownstreamOperator);
+                }
+            }
+
+            //2.4 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
             addConstraints(opt,
-                           pinnedUpStreamOperators,
-                           pinnedDownStreamOperators,
+                           copy.copiedPinnedUpStreamOperators,
+                           copy.copiedPinnedDownStreamOperators,
                            topologyLockedPath,
                            placementVariables,
                            operatorPositionMap,
@@ -174,7 +181,6 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
 
         // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
         auto costNet = z3Context->int_val(0);// initialize the network cost with 0
-
         for (auto const& [operatorID, position] : operatorPositionMap) {
             LogicalOperatorPtr logicalOperator = operatorMap[operatorID]->as<LogicalOperator>();
             if (logicalOperator->getParents().empty()) {
@@ -189,15 +195,9 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
 
                     auto distance = operatorPositionMap.find(downStreamOperatorId)->second - position;
                     NES_DEBUG("Distance of {} to {} is: {}", operatorID, downStreamOperatorId, distance.to_string());
-                    double output;
-                    if (!logicalOperator->hasProperty("output")) {
-                        NES_DEBUG("Getting default operator output");
-                        output = getDefaultOperatorOutput(logicalOperator);
-                    } else {
-                        std::any prop = logicalOperator->getProperty("output");
-                        output = std::any_cast<double>(prop);
-                        NES_DEBUG("Property output of {} is: {}", logicalOperator->getId(), output);
-                    }
+                    std::any prop = logicalOperator->getProperty("output");
+                    double output = std::any_cast<double>(prop);
+                    NES_DEBUG("Property output of {} is: {}", logicalOperator->getId(), output);
                     //Summing up the amount of data multiplied by the distance to the position of the next operator and adding it to already summed up values of the same kind
                     costNet = costNet + z3Context->real_val(std::to_string(output).c_str()) * distance;
                 }
@@ -315,6 +315,10 @@ void ILPStrategy::computeDistance(const TopologyNodePtr& node, std::map<WorkerId
     auto childID = child->getId();
     if (mileages.find(childID) == mileages.end()) {
         computeDistance(child, mileages);
+    }
+    if (!node->getLinkProperty(childID) || !node->getLinkProperty(childID)->bandwidth) {
+        auto linkProperty = std::make_shared<LinkProperty>(512, 100);
+        node->addLinkProperty(childID, linkProperty);
     }
     mileages[topologyID] = 1.0 / node->getLinkProperty(childID)->bandwidth + mileages[childID];
 }
@@ -481,13 +485,13 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
             NES_DEBUG("{}", e.second.to_string());
         }
         // add to node utilization
-        int slots;
+
         if (!operatorNode->hasProperty("cost")) {
-            slots = getDefaultOperatorCost(operatorNode);
-        } else {
-            std::any prop = operatorNode->getProperty("cost");
-            slots = std::any_cast<int>(prop);
+            NES_ERROR("Cost for the operator id {} is missing", operatorNode->getId());
         }
+        std::any prop = operatorNode->getProperty("cost");
+        int slots = std::any_cast<int>(prop);
+
 
         auto iterator = nodeUtilizationMap.find(topologyID);
         if (iterator != nodeUtilizationMap.end()) {
@@ -552,39 +556,42 @@ void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizatio
 
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
 
-//FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-double ILPStrategy::getDefaultOperatorOutput(const LogicalOperatorPtr& operatorNode) {
-
+void ILPStrategy::assignOperatorDefaultProperties(LogicalOperatorPtr operatorNode) {
+    int cost = 1;
     double dmf = 1;
-    double input = 10;
+    double input = 0;
+
+    for (const auto& child : operatorNode->getChildren()) {
+        LogicalOperatorPtr op = child->as<LogicalOperator>();
+        assignOperatorDefaultProperties(op);
+        std::any output = op->getProperty("output");
+        input += std::any_cast<double>(output);
+    }
+
+    NodePtr nodePtr = operatorNode->as<Node>();
     if (operatorNode->instanceOf<SinkLogicalOperator>()) {
         dmf = 0;
+        cost = 0;
     } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
-        dmf = .5;
+        dmf = 0.5;
+        cost = 1;
     } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
         dmf = 2;
+        cost = 2;
+    } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
+        cost = 2;
+    } else if (operatorNode->instanceOf<LogicalUnionOperator>()) {
+        cost = 2;
+    } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
+        cost = 1;
     } else if (operatorNode->instanceOf<SourceLogicalOperator>()) {
+        cost = 0;
         input = 100;
     }
-    return dmf * input;
-}
 
-//FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-int ILPStrategy::getDefaultOperatorCost(const LogicalOperatorPtr& operatorNode) {
-
-    if (operatorNode->instanceOf<SinkLogicalOperator>()) {
-        return 0;
-    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
-        return 1;
-    } else if (operatorNode->instanceOf<LogicalMapOperator>() || operatorNode->instanceOf<LogicalJoinOperator>()
-               || operatorNode->instanceOf<LogicalUnionOperator>()) {
-        return 2;
-    } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
-        return 1;
-    } else if (operatorNode->instanceOf<SourceLogicalOperator>()) {
-        return 0;
-    }
-    return 2;
+    double output = input * dmf;
+    operatorNode->addProperty("output", output);
+    operatorNode->addProperty("cost", cost);
 }
 
 }// namespace NES::Optimizer

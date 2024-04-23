@@ -151,18 +151,10 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     void computeDistance(const TopologyNodePtr& node, std::map<WorkerId, double>& mileages);
 
     /**
-     * Get default operator output value
-     * @param operatorNode : the operator for which output values are needed
-     * @return weight for the output
+     * Assign default cost values
+     * @param operatorNode : the last operator to strat with
      */
-    double getDefaultOperatorOutput(const LogicalOperatorPtr& operatorNode);
-
-    /**
-     * Get default value for operator cost
-     * @param operatorNode : operator for which cost is to be computed
-     * @return weight indicating operator cost
-     */
-    int getDefaultOperatorCost(const LogicalOperatorPtr& operatorNode);
+    void assignOperatorDefaultProperties(const LogicalOperatorPtr operatorNode);
 };
 }// namespace NES::Optimizer
 
