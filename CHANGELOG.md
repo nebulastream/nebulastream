@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.101](https://github.com/nebulastream/nebulastream/tree/v0.6.101) (2024-04-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.100...v0.6.101)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ILP does not provide default cost properties [\#4807](https://github.com/nebulastream/nebulastream/issues/4807)
+
 ## [v0.6.100](https://github.com/nebulastream/nebulastream/tree/v0.6.100) (2024-04-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.99...v0.6.100)
