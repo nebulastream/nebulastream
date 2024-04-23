@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.103](https://github.com/nebulastream/nebulastream/tree/v0.6.103) (2024-04-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.102...v0.6.103)
+
+**Implemented enhancements:**
+
+- \[TASK\] License missing in CMakeLists [\#4796](https://github.com/nebulastream/nebulastream/issues/4796)
+
 ## [v0.6.102](https://github.com/nebulastream/nebulastream/tree/v0.6.102) (2024-04-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.101...v0.6.102)
