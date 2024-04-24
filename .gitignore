@@ -34,3 +34,6 @@ nes-asp/data/*.csv
 
 # Ignore log files
 *.log
+
+# Ignore cached cables
+tpch_cached_tables

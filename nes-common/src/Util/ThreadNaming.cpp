@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <cstdio>
+#include <cstdint>
 #include <cstring>
 #include <unistd.h>
 #ifdef _POSIX_THREADS
