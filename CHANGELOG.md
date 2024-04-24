@@ -1,5 +1,42 @@
 # Changelog
 
+## [v0.6.104](https://github.com/nebulastream/nebulastream/tree/v0.6.104) (2024-04-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.103...v0.6.104)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Topology::findCommonAncestor gives incorrect result [\#4323](https://github.com/nebulastream/nebulastream/issues/4323)
+- \[BUG\] Regression tests for elegant use cases are not working [\#3720](https://github.com/nebulastream/nebulastream/issues/3720)
+- \[BUG\] Create Elegant regression tests [\#3654](https://github.com/nebulastream/nebulastream/issues/3654)
+- Random Failing Query-controller-integration-tests [\#3576](https://github.com/nebulastream/nebulastream/issues/3576)
+- \[BUG\] Code Coverage Exceptions [\#3539](https://github.com/nebulastream/nebulastream/issues/3539)
+- \[BUG\] Code Coverage GRPC [\#3538](https://github.com/nebulastream/nebulastream/issues/3538)
+- \[BUG\] Code Coverage Rest [\#3537](https://github.com/nebulastream/nebulastream/issues/3537)
+- \[BUG\] Code Coverage Hashing [\#3536](https://github.com/nebulastream/nebulastream/issues/3536)
+- \[BUG\] Code Coverage Monitoring [\#3535](https://github.com/nebulastream/nebulastream/issues/3535)
+- \[BUG\] Code Coverage Spatial [\#3534](https://github.com/nebulastream/nebulastream/issues/3534)
+- \[BUG\] Code Cocerage Sources/Sinks [\#3533](https://github.com/nebulastream/nebulastream/issues/3533)
+- \[BUG\] Code Coverage Windows [\#3531](https://github.com/nebulastream/nebulastream/issues/3531)
+- \[BUG\] Test Coverage Compiler [\#3530](https://github.com/nebulastream/nebulastream/issues/3530)
+- \[BUG\] Randomly Failing Test: ProjectionTest.tumblingWindowQueryTestWithProjection [\#3326](https://github.com/nebulastream/nebulastream/issues/3326)
+- \[BUG\] Deep Hierarchy Test [\#3248](https://github.com/nebulastream/nebulastream/issues/3248)
+- \[BUG\] AllowedLatenessTest fails randomly  [\#3241](https://github.com/nebulastream/nebulastream/issues/3241)
+- \[BUG\] Projection-test fails randomly [\#3240](https://github.com/nebulastream/nebulastream/issues/3240)
+- Track Random Failing Tests [\#3238](https://github.com/nebulastream/nebulastream/issues/3238)
+- \[BUG\] Building NebulaStream with -DNES\_USE\_OPC=1 results in compilation error  [\#3220](https://github.com/nebulastream/nebulastream/issues/3220)
+- \[BUG\] Fix not thrown exception in window handler [\#2874](https://github.com/nebulastream/nebulastream/issues/2874)
+- \[BUG\] No error message if a query with a MQTT sink is submitted but no MQTT server is runnig [\#2731](https://github.com/nebulastream/nebulastream/issues/2731)
+- Visit all ToDos and FIXMEs in the codebase and address them where ever possible. [\#2576](https://github.com/nebulastream/nebulastream/issues/2576)
+- Randomly Failing Tests in BufferManagerTest [\#2437](https://github.com/nebulastream/nebulastream/issues/2437)
+- Add core dump to perform post-mortem analysis of crashes on CI [\#2424](https://github.com/nebulastream/nebulastream/issues/2424)
+- query-deployment-test fails [\#2420](https://github.com/nebulastream/nebulastream/issues/2420)
+- No Map functions between joins  [\#2359](https://github.com/nebulastream/nebulastream/issues/2359)
+- Randomly-Failing-Test ConcurrentWindowDeploymentTest.testCentralWindowEventTime [\#2258](https://github.com/nebulastream/nebulastream/issues/2258)
+- Bug in window concurrent test [\#2127](https://github.com/nebulastream/nebulastream/issues/2127)
+- Query API: Query construction with multiple Sinks [\#1693](https://github.com/nebulastream/nebulastream/issues/1693)
+- Enable SignatureTest [\#1672](https://github.com/nebulastream/nebulastream/issues/1672)
+
 ## [v0.6.103](https://github.com/nebulastream/nebulastream/tree/v0.6.103) (2024-04-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.102...v0.6.103)
