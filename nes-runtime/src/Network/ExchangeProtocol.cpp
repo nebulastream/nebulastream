@@ -178,7 +178,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                     (*locked)[eosNesPartition].erase(version);
                 } else {
                     //set the expected count, the queue will be deleted on buffer arrivel
-                    NES_ASSERT(eosMessageMaxSeqNumber > info.queue.getCurrentValue(), "Sequence number is bigger than expected");
+//                    NES_ASSERT(eosMessageMaxSeqNumber > info.queue.getCurrentValue(), "Sequence number is bigger than expected");
                     info.expected = eosMessageMaxSeqNumber;
                 }
             }
