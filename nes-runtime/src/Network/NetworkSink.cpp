@@ -410,6 +410,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
     auto topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
     NES_INFO("sending buffered data");
+    auto numBuffers = 0;
     while (topBuffer) {
         if (!topBuffer.value().getBuffer()) {
             NES_WARNING("buffer does not exist");
@@ -421,7 +422,9 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
         }
         NES_TRACE("buffer sent");
         topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+        numBuffers++;
     }
+    NES_ERROR("Sent {} buffers to node {}", numBuffers, nodeEngine->getParentId());
 }
 
 bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext) {
