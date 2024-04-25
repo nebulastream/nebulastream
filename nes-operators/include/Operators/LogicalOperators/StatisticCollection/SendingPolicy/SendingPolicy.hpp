@@ -49,7 +49,7 @@ class SendingPolicy {
      * @brief Returns the data type of the statistic sink.
      * @return Statistic::StatisticDataCodec
      */
-    virtual StatisticDataCodec getSinkDataCodec() const { return sinkDataCodec; };
+    virtual StatisticDataCodec getStatisticDataCodec() const { return sinkDataCodec; };
 
     /**
      * @brief Checks if the current SendingPolicy is of type SendingPolicyType
