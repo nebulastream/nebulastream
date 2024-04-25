@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.107](https://github.com/nebulastream/nebulastream/tree/v0.6.107) (2024-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.106...v0.6.107)
+
+**Implemented enhancements:**
+
+- \[TASK\] gitignore CMakeUserPresets.json [\#4788](https://github.com/nebulastream/nebulastream/issues/4788)
+
+## [v0.6.106](https://github.com/nebulastream/nebulastream/tree/v0.6.106) (2024-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.105...v0.6.106)
+
 ## [v0.6.105](https://github.com/nebulastream/nebulastream/tree/v0.6.105) (2024-04-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.104...v0.6.105)
