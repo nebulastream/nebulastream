@@ -43,7 +43,6 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
-
 #include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 #include <z3++.h>

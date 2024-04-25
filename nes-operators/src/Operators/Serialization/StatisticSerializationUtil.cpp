@@ -17,14 +17,16 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/ThresholdTrigger.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
-#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
 void StatisticSerializationUtil::serializeSendingPolicy(const Statistic::SendingPolicy& sendingPolicy,
                                                         SendingPolicyMessage& sendingPolicyMessage) {
+    sendingPolicyMessage.set_codec((SendingPolicyMessage_StatisticDataCodec) sendingPolicy.getSinkDataCodec());
     if (sendingPolicy.instanceOf<const Statistic::SendingPolicyAdaptive>()) {
         sendingPolicyMessage.mutable_details()->PackFrom(SendingPolicyMessage_SendingPolicyAdaptive());
     } else if (sendingPolicy.instanceOf<const Statistic::SendingPolicyASAP>()) {
@@ -63,12 +65,13 @@ void StatisticSerializationUtil::serializeDescriptorDetails(const Statistic::Win
 
 Statistic::SendingPolicyPtr
 StatisticSerializationUtil::deserializeSendingPolicy(const SendingPolicyMessage& sendingPolicyMessage) {
+    const auto codec = (Statistic::StatisticDataCodec)sendingPolicyMessage.codec();
     if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyAdaptive>()) {
-        return Statistic::SendingPolicyAdaptive::create();
+        return Statistic::SendingPolicyAdaptive::create(codec);
     } else if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyLazy>()) {
-        return Statistic::SendingPolicyLazy::create();
+        return Statistic::SendingPolicyLazy::create(codec);
     } else if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyASAP>()) {
-        return Statistic::SendingPolicyASAP::create();
+        return Statistic::SendingPolicyASAP::create(codec);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -108,12 +111,6 @@ StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescripto
     } else {
         NES_NOT_IMPLEMENTED();
     }
-
-    // 3. Deserializing sending policy and trigger condition
-    auto sendingPolicy = StatisticSerializationUtil::deserializeSendingPolicy(descriptorMessage.sendingpolicy());
-    auto triggerCondition = StatisticSerializationUtil::deserializeTriggerCondition(descriptorMessage.triggercondition());
-    statisticDescriptor->setSendingPolicy(sendingPolicy);
-    statisticDescriptor->setTriggerCondition(triggerCondition);
 
     return statisticDescriptor;
 }

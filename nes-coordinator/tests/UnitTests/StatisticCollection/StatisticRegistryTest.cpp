@@ -13,8 +13,8 @@
 */
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
+#include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
@@ -66,8 +66,8 @@ TEST_F(StatisticRegistryTest, singleStatisticTest) {
         Statistic::StatisticRegistry statisticRegistry;
         auto singleStatisticKey = createRandomStatisticKey(1)[0];
         auto singleStatisticInfo = createRandomStatisticInfo(1)[0];
-        statisticRegistry.insert(singleStatisticKey, singleStatisticInfo);
-        auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(singleStatisticKey);
+        statisticRegistry.insert(singleStatisticKey.hash(), singleStatisticInfo);
+        auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(singleStatisticKey.hash());
         auto tmp = (**returnedStatisticInfo);
         ASSERT_EQ(tmp, singleStatisticInfo);
     }
@@ -83,11 +83,11 @@ TEST_F(StatisticRegistryTest, multipleStatisticsTest) {
     Statistic::StatisticRegistry statisticRegistry;
 
     for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
-        statisticRegistry.insert(statisticKeys[i], statisticInfos[i]);
+        statisticRegistry.insert(statisticKeys[i].hash(), statisticInfos[i]);
     }
 
     for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
-        auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i]);
+        auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i].hash());
         ASSERT_EQ((**returnedStatisticInfo), statisticInfos[i]);
     }
 }
@@ -109,7 +109,7 @@ TEST_F(StatisticRegistryTest, complexConcurrentStatisticsTest) {
         allThreads.emplace_back([&currentPos, &statisticKeys, &statisticRegistry, &statisticInfos]() {
             auto nextUpdatePos = 0_u64;
             while ((nextUpdatePos = currentPos++) < NUMBER_OF_ENTRIES) {
-                statisticRegistry.insert(statisticKeys[nextUpdatePos], statisticInfos[nextUpdatePos]);
+                statisticRegistry.insert(statisticKeys[nextUpdatePos].hash(), statisticInfos[nextUpdatePos]);
             }
         });
     }
@@ -121,7 +121,7 @@ TEST_F(StatisticRegistryTest, complexConcurrentStatisticsTest) {
 
     // Comparing output
     for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
-        auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i]);
+        auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i].hash());
         ASSERT_EQ((**returnedStatisticInfo), statisticInfos[i]);
     }
 }

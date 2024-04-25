@@ -13,8 +13,8 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -24,8 +24,8 @@
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -107,9 +107,12 @@ QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr
 QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePtr window,
                                                          Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
                                                          Statistic::StatisticMetricHash metricHash,
+                                                         Statistic::SendingPolicyPtr sendingPolicy,
+                                                         Statistic::TriggerConditionPtr triggerCondition,
                                                          QueryPlanPtr queryPlan) {
     queryPlan = checkAndAddWatermarkAssignment(queryPlan, window);
-    auto op = LogicalOperatorFactory::createStatisticBuildOperator(window, statisticDescriptor, metricHash);
+    auto op = LogicalOperatorFactory::createStatisticBuildOperator(window, std::move(statisticDescriptor), metricHash,
+                                                                   sendingPolicy, triggerCondition);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

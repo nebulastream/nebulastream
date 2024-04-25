@@ -23,11 +23,13 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
+#include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -49,6 +51,9 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
         const auto metric = Statistic::IngestionRate::create();
         statisticDescriptor = Statistic::HyperLogLogDescriptor::create(metric->getField());
         metricHash = metric->hash();
+        sendingPolicy = Statistic::SendingPolicyASAP::create(Statistic::StatisticDataCodec::DEFAULT);
+        triggerCondition = Statistic::NeverTrigger::create();
+
 
         const auto numberOfSources = StatisticIdsExtractorTest::GetParam();
         sourceCatalog = setUpSourceCatalog(numberOfSources);
@@ -83,6 +88,8 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
     Statistic::WindowStatisticDescriptorPtr statisticDescriptor;
     Statistic::StatisticMetricHash metricHash;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Statistic::SendingPolicyPtr sendingPolicy;
+    Statistic::TriggerConditionPtr triggerCondition;
 };
 
 /**
@@ -91,7 +98,7 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
 TEST_P(StatisticIdsExtractorTest, oneOperator) {
     auto query = Query::from("default_logical")
                      .map(Attribute("f1") = Attribute("f1"))
-                     .buildStatistic(window, statisticDescriptor, metricHash)
+                     .buildStatistic(window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition)
                      .sink(FileSinkDescriptor::create(""));
 
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, expandAlsoOperators);
@@ -121,7 +128,7 @@ TEST_P(StatisticIdsExtractorTest, oneOperator) {
  */
 TEST_P(StatisticIdsExtractorTest, noOperators) {
     auto query = Query::from("default_logical")
-                     .buildStatistic(window, statisticDescriptor, metricHash)
+                     .buildStatistic(window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition)
                      .sink(FileSinkDescriptor::create(""));
 
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, expandAlsoOperators);
@@ -152,7 +159,7 @@ TEST_P(StatisticIdsExtractorTest, twoOperators) {
     auto query = Query::from("default_logical")
                      .filter(Attribute("f1") < 10)
                      .map(Attribute("f1") = Attribute("f1"))
-                     .buildStatistic(window, statisticDescriptor, metricHash)
+                     .buildStatistic(window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition)
                      .sink(FileSinkDescriptor::create(""));
 
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, expandAlsoOperators);
@@ -185,7 +192,7 @@ TEST_P(StatisticIdsExtractorTest, twoOperatorsAlreadyContainingWatermark) {
                      .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                      .filter(Attribute("f1") < 10)
                      .map(Attribute("f1") = Attribute("f1"))
-                     .buildStatistic(window, statisticDescriptor, metricHash)
+                     .buildStatistic(window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition)
                      .sink(FileSinkDescriptor::create(""));
 
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, expandAlsoOperators);

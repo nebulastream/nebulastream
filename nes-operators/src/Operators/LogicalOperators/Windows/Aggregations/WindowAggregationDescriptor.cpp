@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>

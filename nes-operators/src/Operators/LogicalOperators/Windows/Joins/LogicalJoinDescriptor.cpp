@@ -13,10 +13,10 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Types/WindowType.hpp>
 #include <utility>
 
 namespace NES::Join {

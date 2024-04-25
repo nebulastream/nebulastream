@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
@@ -61,14 +61,14 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
@@ -1401,6 +1401,9 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         sinkDescriptorMessage.set_sinkformattype(
             (SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticSinkFormatType)
                 statisticSinkDescriptor->getSinkFormatType());
+        sinkDescriptorMessage.set_sinkdatacodec(
+            (SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticDataCodec)
+                statisticSinkDescriptor->getSinkDataCodec());
         sinkDetails.mutable_sinkdescriptor()->PackFrom(sinkDescriptorMessage);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else {
@@ -1520,7 +1523,10 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         SerializableOperator_SinkDetails_StatisticSinkDescriptor serializedSinkDescriptor;
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         return Statistic::StatisticSinkDescriptor::create(
-            (Statistic::StatisticSinkFormatType) serializedSinkDescriptor.sinkformattype(),
+            // Be careful changing the order of the enum values, as this works as long as the order is the same in the
+            // cpp and the proto file
+            static_cast<Statistic::StatisticSynopsisType>(serializedSinkDescriptor.sinkformattype()),
+            static_cast<Statistic::StatisticDataCodec>(serializedSinkDescriptor.sinkdatacodec()),
             deserializedNumberOfOrigins);
 
     } else {
@@ -1781,15 +1787,18 @@ void OperatorSerializationUtil::serializeStatisticWindowOperator(
     auto statisticWindowDescriptor = statisticWindowOperator.getWindowStatisticDescriptor();
     ExpressionSerializationUtil::serializeExpression(statisticWindowDescriptor->getField(),
                                                      statisticWindowDescriptorMessage.mutable_field());
-    StatisticSerializationUtil::serializeSendingPolicy(*statisticWindowDescriptor->getSendingPolicy(),
-                                                       *statisticWindowDescriptorMessage.mutable_sendingpolicy());
-    StatisticSerializationUtil::serializeTriggerCondition(*statisticWindowDescriptor->getTriggerCondition(),
-                                                          *statisticWindowDescriptorMessage.mutable_triggercondition());
     StatisticSerializationUtil::serializeDescriptorDetails(*statisticWindowDescriptor, statisticWindowDescriptorMessage);
     statisticWindowDescriptorMessage.set_width(statisticWindowDescriptor->getWidth());
     statisticWindowDetails.mutable_statisticwindowdescriptor()->CopyFrom(statisticWindowDescriptorMessage);
 
-    // 3. Serializing the metric hash and then packing everything into serializedOperator
+    // 3. Serializing sending policy and trigger condition
+    StatisticSerializationUtil::serializeSendingPolicy(*statisticWindowOperator.getSendingPolicy(),
+                                                       *statisticWindowDetails.mutable_sendingpolicy());
+    StatisticSerializationUtil::serializeTriggerCondition(*statisticWindowOperator.getTriggerCondition(),
+                                                          *statisticWindowDetails.mutable_triggercondition());
+
+
+    // 4. Serializing the metric hash and then packing everything into serializedOperator
     statisticWindowDetails.set_metrichash(statisticWindowOperator.getMetricHash());
     serializedOperator.mutable_details()->PackFrom(statisticWindowDetails);
 }
@@ -1836,11 +1845,16 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOpe
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
     }
 
-    // 2. Deserializing the statistic descriptor, the metric hash, and then creating the operator
+    // 2. Deserializing sending policy and trigger condition
+    auto sendingPolicy = StatisticSerializationUtil::deserializeSendingPolicy(statisticWindowDetails.sendingpolicy());
+    auto triggerCondition = StatisticSerializationUtil::deserializeTriggerCondition(statisticWindowDetails.triggercondition());
+
+    // 3. Deserializing the statistic descriptor, the metric hash, and then creating the operator
     auto statisticDescriptor =
         StatisticSerializationUtil::deserializeDescriptor(statisticWindowDetails.statisticwindowdescriptor());
     auto metricHash = statisticWindowDetails.metrichash();
-    auto statisticWindowOperator = LogicalOperatorFactory::createStatisticBuildOperator(window, statisticDescriptor, metricHash);
+    auto statisticWindowOperator = LogicalOperatorFactory::createStatisticBuildOperator(window, statisticDescriptor, metricHash,
+                                                                                        sendingPolicy, triggerCondition);
 
     return statisticWindowOperator;
 }

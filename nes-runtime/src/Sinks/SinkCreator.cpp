@@ -224,7 +224,8 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
                                 SharedQueryId sharedQueryId,
                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                 uint64_t numberOfOrigins,
-                                Statistic::StatisticSinkFormatType sinkFormatType) {
+                                Statistic::StatisticSynopsisType sinkFormatType,
+                                Statistic::StatisticDataCodec sinkDataCodec) {
     // We can not use the existing SinkFormat, as the interface only returns a std::string. Therefore, we create our own
     // As the SinkMedium expects a SinkFormat, we choose here arbitrary one.
     auto sinkFormat = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
@@ -233,7 +234,8 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
     auto statisticSinkFormat =
         Statistic::StatisticFormatFactory::createFromSchema(schema,
                                                             nodeEngine->getBufferManager()->getBufferSize(),
-                                                            sinkFormatType);
+                                                            sinkFormatType,
+                                                            sinkDataCodec);
     return std::make_shared<Statistic::StatisticSink>(sinkFormat,
                                                       nodeEngine,
                                                       numOfProducers,

@@ -26,7 +26,7 @@ WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNod
 }
 
 WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNodePtr field, double error, double probability) {
-    const auto calcWidth = static_cast<uint64_t>(std::ceil(std::exp(1) / probability));
+    const auto calcWidth = static_cast<uint64_t>(std::ceil(std::exp(1) / (probability)));
     const auto calcDepth = static_cast<uint64_t>(std::ceil(std::log(1.0 / error)));
     return create(std::move(field), calcWidth, calcDepth);
 }
@@ -52,8 +52,6 @@ bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     if (rhs->instanceOf<CountMinDescriptor>()) {
         auto rhsCountMinDescriptor = rhs->as<CountMinDescriptor>();
         return field->equal(rhsCountMinDescriptor->field)
-            && *triggerCondition == *rhsCountMinDescriptor->triggerCondition
-            && *sendingPolicy == *rhsCountMinDescriptor->sendingPolicy
             && depth == rhsCountMinDescriptor->depth
             && width == rhsCountMinDescriptor->width;
     }

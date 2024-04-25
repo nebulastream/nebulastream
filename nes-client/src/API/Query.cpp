@@ -18,13 +18,13 @@
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -230,10 +230,14 @@ Query Query::from(const std::string& sourceName) {
 
 Query& Query::buildStatistic(Windowing::WindowTypePtr window,
                              Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                             Statistic::StatisticMetricHash metricHash) {
+                             Statistic::StatisticMetricHash metricHash,
+                             Statistic::SendingPolicyPtr sendingPolicy,
+                             Statistic::TriggerConditionPtr triggerCondition) {
     this->queryPlan = QueryPlanBuilder::addStatisticBuildOperator(std::move(window),
                                                                   std::move(statisticDescriptor),
                                                                   metricHash,
+                                                                  sendingPolicy,
+                                                                  triggerCondition,
                                                                   this->queryPlan);
     return *this;
 }

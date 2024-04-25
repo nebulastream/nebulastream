@@ -15,8 +15,8 @@
 #include <API/QueryAPI.hpp>
 #include <API/Windowing.hpp>
 #include <BaseUnitTest.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
+#include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>

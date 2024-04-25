@@ -15,8 +15,10 @@
 #include <BaseUnitTest.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -27,7 +29,7 @@ using namespace std::chrono_literals;
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
-                                      public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t>> {
+                                      public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, Statistic::StatisticDataCodec>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
@@ -36,14 +38,19 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
     SchemaPtr inputSchema, outputSchema;
     std::string fieldToBuildHyperLogLogOver = "f1";
     std::string timestampFieldName = "ts";
-    Statistic::AbstractStatisticFormatPtr statisticFormat;
+    Statistic::StatisticFormatPtr statisticFormat;
     Statistic::StatisticMetricHash metricHash;
-    Statistic::AbstractStatisticStorePtr testStatisticStore;
+    Statistic::StatisticStorePtr testStatisticStore;
+    Statistic::StatisticDataCodec statisticDataCodec;
+    Statistic::SendingPolicyPtr sendingPolicy;
+    Statistic::TriggerConditionPtr triggerCondition;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HyperLogLogBuildExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("QueryExecutionTest: Setup HyperLogLogBuildExecutionTest test class.");
     }
+
+
 
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -51,6 +58,7 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
         Testing::BaseUnitTest::SetUp();
         const auto numWorkerThreads = std::get<0>(HyperLogLogBuildExecutionTest::GetParam());
         sketchWidth = std::get<1>(HyperLogLogBuildExecutionTest::GetParam());
+        statisticDataCodec = std::get<2>(HyperLogLogBuildExecutionTest::GetParam());
 
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode, numWorkerThreads);
 
@@ -73,9 +81,10 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                            ->updateSourceName("test");
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        statisticFormat = Statistic::HyperLogLogStatisticFormat::create(
-            Runtime::MemoryLayouts::RowLayout::create(outputSchema, executionEngine->getBufferManager()->getBufferSize()));
+        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, executionEngine->getBufferManager()->getBufferSize(), Statistic::StatisticSynopsisType::HLL, statisticDataCodec);
         metricHash = 42;// Just some arbitrary number
+        sendingPolicy = Statistic::SendingPolicyASAP::create(statisticDataCodec);
+        triggerCondition = Statistic::NeverTrigger::create();
     }
 
     /* Will be called before a test is executed. */
@@ -106,7 +115,7 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
         auto window =
             SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
         auto query = TestQuery::from(testSourceDescriptor)
-                         .buildStatistic(window, hyperLogLogDescriptor, metricHash)
+                         .buildStatistic(window, hyperLogLogDescriptor, metricHash, sendingPolicy, triggerCondition)
                          .sink(testSinkDescriptor);
 
         // Creating query and submitting it to the execution engine
@@ -180,7 +189,7 @@ TEST_P(HyperLogLogBuildExecutionTest, singleInputTuple) {
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::HLL);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::HLL, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
     // Creating the hyperloglog descriptor and running the query
@@ -207,7 +216,7 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffers) {
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::HLL);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::HLL, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
     // Creating the hyperloglog descriptor and running the query
@@ -236,7 +245,7 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffersSlidingWindow) {
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::HLL);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::HLL, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
     // Creating the hyperloglog descriptor and running the query
@@ -251,13 +260,18 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffersSlidingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testHyperLogLog,
                         HyperLogLogBuildExecutionTest,
-                        ::testing::Combine(::testing::Values(1, 4, 8),              // numWorkerThread
-                                           ::testing::Values(4, 5, 6, 8, 10, 15, 20)// sketchWidth
+                        ::testing::Combine(::testing::Values(1, 4, 8),                // numWorkerThread
+                                           ::testing::Values(4, 5, 8, 10, 20),        // sketchWidth
+                                           ::testing::ValuesIn(                       // All possible sink data codec
+                                               magic_enum::enum_values<Statistic::StatisticDataCodec>())
                                            ),
                         [](const testing::TestParamInfo<HyperLogLogBuildExecutionTest::ParamType>& info) {
                             const auto numWorkerThread = std::get<0>(info.param);
                             const auto sketchWidth = std::get<1>(info.param);
-                            return std::to_string(numWorkerThread) + "Threads_" + std::to_string(sketchWidth) + "Width";
+                            const auto dataCodec = std::get<2>(info.param);
+                            return std::to_string(numWorkerThread) + "Threads_" +
+                                std::to_string(sketchWidth) + "Width" +
+                                std::string(magic_enum::enum_name(dataCodec));
                         });
 
 }// namespace NES::Runtime::Execution

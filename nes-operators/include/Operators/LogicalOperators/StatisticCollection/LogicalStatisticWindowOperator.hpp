@@ -16,7 +16,7 @@
 #define NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
@@ -27,7 +27,9 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
     LogicalStatisticWindowOperator(OperatorId id,
                                    Windowing::WindowTypePtr windowType,
                                    WindowStatisticDescriptorPtr windowStatisticDescriptor,
-                                   StatisticMetricHash metricHash);
+                                   StatisticMetricHash metricHash,
+                                   SendingPolicyPtr sendingPolicy,
+                                   TriggerConditionPtr triggerCondition);
 
     /**
      * @brief Infers the schema for this StatisticWindowOperatorNode
@@ -53,6 +55,20 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
      * @brief Infers the string signature
      */
     void inferStringSignature() override;
+
+
+    /**
+     * @brief Getter for the SendingPolicy
+     * @return SendingPolicyPtr
+     */
+    SendingPolicyPtr getSendingPolicy() const;
+
+
+    /**
+     * @brief Getter for the TriggerCondition
+     * @return TriggerConditionPtr
+     */
+    TriggerConditionPtr getTriggerCondition() const;
 
     /**
      * @brief Creates a string representation
@@ -88,6 +104,8 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
     Windowing::WindowTypePtr windowType;
     WindowStatisticDescriptorPtr windowStatisticDescriptor;
     StatisticMetricHash metricHash;
+    SendingPolicyPtr sendingPolicy;
+    TriggerConditionPtr triggerCondition;
 };
 
 }// namespace NES::Statistic

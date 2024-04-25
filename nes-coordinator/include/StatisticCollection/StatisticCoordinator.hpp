@@ -15,14 +15,14 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/ProbeExpression.hpp>
+#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <StatisticCollection/StatisticInterface.hpp>
-#include <StatisticCollection/StatisticKey.hpp>
-#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
+#include <Statistics/StatisticKey.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
+#include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <functional>
 
@@ -40,7 +40,7 @@ class StatisticCoordinator : public StatisticInterface {
      * @param queryCatalog
      */
     StatisticCoordinator(const RequestHandlerServicePtr& requestHandlerService,
-                         const AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
+                         const StatisticQueryGeneratorPtr& statisticQueryGenerator,
                          const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                          const TopologyPtr& topology);
 
@@ -101,10 +101,10 @@ class StatisticCoordinator : public StatisticInterface {
   private:
     RequestHandlerServicePtr requestHandlerService;
     StatisticIdsExtractor statisticIdsExtractor;
-    AbstractStatisticQueryGeneratorPtr statisticQueryGenerator;
+    StatisticQueryGeneratorPtr statisticQueryGenerator;
     StatisticRegistry statisticRegistry;
-    AbstractStatisticProbeHandlerPtr statisticProbeHandler;
-    AbstractStatisticCachePtr statisticCache;
+    StatisticProbeGeneratorPtr statisticProbeHandler;
+    StatisticCachePtr statisticCache;
     TopologyPtr topology;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     WorkerRPCClientPtr workerRpcClient;

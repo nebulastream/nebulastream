@@ -21,7 +21,7 @@ get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 # Add Library
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
-target_link_libraries(nes-execution PRIVATE nes-common nes-compiler nes-grpc nes-data-types nes-operators nes-configurations nes-runtime nes-nautilus)
+target_link_libraries(nes-execution PRIVATE nes-common nes-compiler nes-grpc nes-data-types nes-operators nes-configurations nes-runtime nes-nautilus nes-window-types nes-statistics)
 # target_link_libraries(nes-execution PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations)
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

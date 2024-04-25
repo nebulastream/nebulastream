@@ -17,7 +17,7 @@
 
 namespace NES::Statistic {
 
-StatisticManagerPtr StatisticManager::create(AbstractStatisticStorePtr statisticStore) {
+StatisticManagerPtr StatisticManager::create(StatisticStorePtr statisticStore) {
     return std::make_shared<StatisticManager>(StatisticManager(statisticStore));
 }
 
@@ -31,7 +31,7 @@ std::vector<StatisticValue<>> StatisticManager::getStatistics(const StatisticPro
     return statisticValues;
 }
 
-StatisticManager::StatisticManager(const AbstractStatisticStorePtr& statisticStore) : statisticStore(statisticStore) {}
+StatisticManager::StatisticManager(const StatisticStorePtr& statisticStore) : statisticStore(statisticStore) {}
 
-AbstractStatisticStorePtr StatisticManager::getStatisticStore() const { return statisticStore; }
+StatisticStorePtr StatisticManager::getStatisticStore() const { return statisticStore; }
 }// namespace NES::Statistic

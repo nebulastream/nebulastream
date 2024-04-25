@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>

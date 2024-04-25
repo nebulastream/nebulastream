@@ -14,8 +14,8 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
+#include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
@@ -69,7 +69,7 @@ namespace NES::Runtime::Execution::Util {
             return inputBuffers;
         }
 
-        void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::AbstractStatisticStorePtr statisticStore,
+        void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
                                          Statistic::StatisticMetricHash metricHash, uint64_t numberOfBitsInKey,
                                          uint64_t windowSize, uint64_t windowSlide, uint64_t width, uint64_t depth,
                                          const std::string& fieldToBuildCountMinOver,
@@ -120,7 +120,7 @@ namespace NES::Runtime::Execution::Util {
         }
 
         void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-                                            Statistic::AbstractStatisticStorePtr statisticStore,
+                                            Statistic::StatisticStorePtr statisticStore,
                                             Statistic::StatisticMetricHash metricHash,
                                             uint64_t windowSize,
                                             uint64_t windowSlide,

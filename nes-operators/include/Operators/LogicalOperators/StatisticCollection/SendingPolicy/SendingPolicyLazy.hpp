@@ -19,7 +19,7 @@
 namespace NES::Statistic {
 
 // defines for the sending policies. This way, we reduce the number of ()
-#define SENDING_LAZY SendingPolicyLazy::create()
+#define SENDING_LAZY(StatisticDataCodec) SendingPolicyLazy::create(StatisticDataCodec)
 
 /**
  * @brief Represents a sending policy, where a created statistic is send to the store, if it gets probed
@@ -43,7 +43,10 @@ class SendingPolicyLazy : public SendingPolicy {
      * @brief Creates a LAZY SendingPolicy
      * @return SendingPolicyPtr
      */
-    static SendingPolicyPtr create();
+    static SendingPolicyPtr create(StatisticDataCodec sinkDataCodec);
+
+  private:
+    explicit SendingPolicyLazy(StatisticDataCodec sinkDataCodec);
 };
 
 }// namespace NES::Statistic

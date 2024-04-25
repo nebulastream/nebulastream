@@ -15,10 +15,10 @@
 #include <API/AttributeField.hpp>
 
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/InvalidFieldException.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>

@@ -13,7 +13,7 @@
 */
 
 #include <Execution/Operators/Streaming/StatisticCollection/AbstractSynopsesOperatorHandler.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/SynopsesStatistic.hpp>
+#include <Statistics/Synopses/SynopsesStatistic.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -179,7 +179,7 @@ AbstractSynopsesOperatorHandler::mergeStatistics(const std::vector<Statistic::Ha
 AbstractSynopsesOperatorHandler::AbstractSynopsesOperatorHandler(const uint64_t windowSize,
                                                                  const uint64_t windowSlide,
                                                                  const Statistic::SendingPolicyPtr& sendingPolicy,
-                                                                 const Statistic::AbstractStatisticFormatPtr& statisticFormat,
+                                                                 const Statistic::StatisticFormatPtr& statisticFormat,
                                                                  const std::vector<OriginId>& inputOrigins)
     : sliceAssigner(windowSize, windowSlide), sendingPolicy(sendingPolicy), statisticFormat(statisticFormat),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)){}

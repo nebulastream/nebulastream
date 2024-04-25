@@ -52,7 +52,7 @@ class NeverTrigger : public TriggerCondition {
      * @brief Never returns true
      * @return Always false
      */
-    bool shallTrigger(const Statistic&) override;
+    bool shallTrigger(const ExpressionNode&) override;
 };
 
 }// namespace NES::Statistic

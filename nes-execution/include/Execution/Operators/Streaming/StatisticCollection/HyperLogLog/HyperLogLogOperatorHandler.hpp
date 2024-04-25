@@ -30,7 +30,7 @@ class HyperLogLogOperatorHandler : public AbstractSynopsesOperatorHandler {
     static HyperLogLogOperatorHandlerPtr create(const uint64_t windowSize,
                                                 const uint64_t windowSlide,
                                                 Statistic::SendingPolicyPtr sendingPolicy,
-                                                Statistic::AbstractStatisticFormatPtr statisticFormat,
+                                                Statistic::StatisticFormatPtr statisticFormat,
                                                 const uint64_t width,
                                                 const std::vector<OriginId>& inputOrigins);
 
@@ -40,7 +40,7 @@ class HyperLogLogOperatorHandler : public AbstractSynopsesOperatorHandler {
     HyperLogLogOperatorHandler(const uint64_t windowSize,
                                const uint64_t windowSlide,
                                const Statistic::SendingPolicyPtr& sendingPolicy,
-                               const Statistic::AbstractStatisticFormatPtr& statisticFormat,
+                               const Statistic::StatisticFormatPtr& statisticFormat,
                                const std::vector<OriginId>& inputOrigins,
                                const uint64_t width);
 

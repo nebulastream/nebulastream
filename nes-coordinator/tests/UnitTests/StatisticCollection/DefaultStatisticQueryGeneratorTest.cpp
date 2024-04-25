@@ -20,23 +20,23 @@
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
+#include <StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/BufferRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Cardinality.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
@@ -121,7 +121,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     constexpr auto EXPECTED_WIDTH = 9;
     const auto dataCharacteristic = DataCharacteristic::create(Cardinality::create(Over("f1")), "car", "car_1");
     const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-    const auto sendingPolicy = SENDING_ASAP;
+    const auto sendingPolicy = SENDING_ASAP(StatisticDataCodec::DEFAULT);
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
@@ -133,19 +133,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
-    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
     ASSERT_TRUE(descriptor->instanceOf<HyperLogLogDescriptor>());
     auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
-    auto operatorSendingPolicy = descriptor->getSendingPolicy();
-    auto operatorTriggerCondition = descriptor->getTriggerCondition();
     const auto expectedField = Over("car$f1");
     expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
     EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(expectedField));
-    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
-    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);
 }
 
@@ -167,7 +167,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     constexpr auto EXPECTED_DEPTH = 3;
     const auto dataCharacteristic = DataCharacteristic::create(Selectivity::create(Over("f1")), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
-    const auto sendingPolicy = SENDING_LAZY;
+    const auto sendingPolicy = SENDING_LAZY(StatisticDataCodec::DEFAULT);
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
@@ -179,19 +179,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
-    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
     ASSERT_TRUE(descriptor->instanceOf<CountMinDescriptor>());
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
-    auto operatorSendingPolicy = descriptor->getSendingPolicy();
-    auto operatorTriggerCondition = descriptor->getTriggerCondition();
     const auto expectedField = Over("car$f1");
     expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
     EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
-    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyLazy>(operatorSendingPolicy));
-    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
     EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
 }
@@ -217,7 +217,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     constexpr auto EXPECTED_DEPTH = 3;
     const auto dataCharacteristic = DataCharacteristic::create(IngestionRate::create(), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
-    const auto sendingPolicy = SENDING_LAZY;
+    const auto sendingPolicy = SENDING_LAZY(StatisticDataCodec::DEFAULT);
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
@@ -229,19 +229,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
-    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
     ASSERT_TRUE(descriptor->instanceOf<CountMinDescriptor>());
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
-    auto operatorSendingPolicy = descriptor->getSendingPolicy();
-    auto operatorTriggerCondition = descriptor->getTriggerCondition();
     const auto expectedField = Over("car$" + INGESTION_RATE_FIELD_NAME);
     expectedField->setStamp(DataTypeFactory::createType(BasicType::UINT64));
     EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
-    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyLazy>(operatorSendingPolicy));
-    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
     EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
 }
@@ -267,7 +267,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     constexpr auto EXPECTED_DEPTH = 3;
     const auto dataCharacteristic = DataCharacteristic::create(BufferRate::create(), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Hours(24), Seconds(60));
-    const auto sendingPolicy = SENDING_ADAPTIVE;
+    const auto sendingPolicy = SENDING_ADAPTIVE(StatisticDataCodec::DEFAULT);
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
@@ -279,19 +279,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
-    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
     ASSERT_TRUE(descriptor->instanceOf<CountMinDescriptor>());
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
-    auto operatorSendingPolicy = descriptor->getSendingPolicy();
-    auto operatorTriggerCondition = descriptor->getTriggerCondition();
     const auto expectedField = Over("car$" + BUFFER_RATE_FIELD_NAME);
     expectedField->setStamp(DataTypeFactory::createType(BasicType::UINT64));
     EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
-    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyAdaptive>(operatorSendingPolicy));
-    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
     EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
 }
@@ -314,7 +314,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     constexpr auto EXPECTED_DEPTH = 3;
     const auto dataCharacteristic = DataCharacteristic::create(MinVal::create(Over("f1")), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
-    const auto sendingPolicy = SENDING_LAZY;
+    const auto sendingPolicy = SENDING_LAZY(StatisticDataCodec::DEFAULT);
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
@@ -326,19 +326,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
-    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
     ASSERT_TRUE(descriptor->instanceOf<CountMinDescriptor>());
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
-    auto operatorSendingPolicy = descriptor->getSendingPolicy();
-    auto operatorTriggerCondition = descriptor->getTriggerCondition();
     const auto expectedField = Over("car$f1");
     expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
     EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
-    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyLazy>(operatorSendingPolicy));
-    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
     EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
 }
@@ -373,7 +373,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
     constexpr auto EXPECTED_WIDTH = 9;
     const auto dataCharacteristic = WorkloadCharacteristic::create(Cardinality::create(Over("f1")), queryId, operatorId);
     const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-    const auto sendingPolicy = SENDING_ASAP;
+    const auto sendingPolicy = SENDING_ASAP(StatisticDataCodec::DEFAULT);
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
@@ -385,19 +385,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
-    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
     ASSERT_TRUE(descriptor->instanceOf<HyperLogLogDescriptor>());
     auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
-    auto operatorSendingPolicy = descriptor->getSendingPolicy();
-    auto operatorTriggerCondition = descriptor->getTriggerCondition();
     const auto expectedField = Over("car$f1");
     expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
     EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(expectedField));
-    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
-    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);
 
     // Checking if the statistic query is correct, meaning that the source operator and the filter operator is still there
@@ -445,7 +445,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     constexpr auto EXPECTED_WIDTH = 9;
     const auto dataCharacteristic = WorkloadCharacteristic::create(Cardinality::create(Over("f1")), queryId, operatorId);
     const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-    const auto sendingPolicy = SENDING_ASAP;
+    const auto sendingPolicy = SENDING_ASAP(StatisticDataCodec::DEFAULT);
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
@@ -457,19 +457,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
-    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
     ASSERT_TRUE(descriptor->instanceOf<HyperLogLogDescriptor>());
     auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
-    auto operatorSendingPolicy = descriptor->getSendingPolicy();
-    auto operatorTriggerCondition = descriptor->getTriggerCondition();
     const auto expectedField = Over("car$f1");
     expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
     EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(expectedField));
-    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
-    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);
 
     // Checking if the statistic query is correct, meaning that the source operator, the filter operator and the join operator is still there

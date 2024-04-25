@@ -14,8 +14,9 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
+#include <Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -28,8 +29,11 @@
 
 namespace NES {
 
-class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<int> {
+class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<std::tuple<int, Statistic::StatisticDataCodec>> {
   public:
+    int numberOfStatistics;
+    Statistic::StatisticDataCodec statisticDataCodec;
+
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StatisticSinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatisticSinkTest class.");
@@ -42,6 +46,9 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();
+
+        // Getting the parameter values
+        std::tie(numberOfStatistics, statisticDataCodec) = GetParam();
     }
 
     /* Called after a single test. */
@@ -87,31 +94,17 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
      * @param bufferManager
      * @return Pair<Vector of TupleBuffers, Vector of Statistics>
      */
-    static std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
+    std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
     createRandomCountMinSketches(uint64_t numberOfSketches,
                                  const SchemaPtr& schema,
                                  const Runtime::BufferManagerPtr& bufferManager) {
-        std::vector<Runtime::TupleBuffer> createdBuffers;
         std::vector<Statistic::StatisticPtr> expectedStatistics;
         constexpr auto windowSize = 10;
 
-        auto buffer = bufferManager->getBufferBlocking();
-        uint64_t curBufTuplePos = 0;
-        const auto capacity = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
-
         for (auto curCnt = 0_u64; curCnt < numberOfSketches; ++curCnt) {
-            if (curBufTuplePos >= capacity) {
-                buffer.setNumberOfTuples(curBufTuplePos);
-                createdBuffers.emplace_back(buffer);
-                buffer = bufferManager->getBufferBlocking();
-                curBufTuplePos = 0;
-            }
-
             // Creating "random" values that represent of a CountMinStatistic for a tumbling window with a size of 10
             const Windowing::TimeMeasure startTs(windowSize * curCnt);
             const Windowing::TimeMeasure endTs(windowSize * (curCnt + 1));
-            const uint64_t statisticType = 42;
-            const uint64_t statisticHash = curCnt;
             const uint64_t width = rand() % 10 + 5;
             const uint64_t depth = rand() % 5 + 1;
             const uint64_t numberOfBitsInKey = 64;
@@ -127,31 +120,23 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
                 }
             }
 
-            // Now using the values for writing a tuple to the tuple buffer
-            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-            testBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_HASH_FIELD_NAME].write(statisticHash);
-            testBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_START].write(startTs.getTime());
-            testBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_END].write(endTs.getTime());
-            testBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_TYPE_FIELD_NAME].write(statisticType);
-            testBuffer[curBufTuplePos]["test$" + Statistic::OBSERVED_TUPLES_FIELD_NAME].write(countMin->getObservedTuples());
-            testBuffer[curBufTuplePos]["test$" + Statistic::WIDTH_FIELD_NAME].write(width);
-            testBuffer[curBufTuplePos]["test$" + Statistic::DEPTH_FIELD_NAME].write(depth);
-            testBuffer[curBufTuplePos]["test$" + Statistic::NUMBER_OF_BITS_IN_KEY].write(numberOfBitsInKey);
-            testBuffer[curBufTuplePos].writeVarSized("test$" + Statistic::STATISTIC_DATA_FIELD_NAME,
-                                                     countMin->getCountMinDataAsString(),
-                                                     bufferManager.get());
-            curBufTuplePos += 1;
-
             // Creating now the expected CountMinStatistic
             expectedStatistics.emplace_back(countMin);
         }
 
-        // If the current tuple buffer has tuples, but we have not emplaced it
-        if (curBufTuplePos > 0) {
-            buffer.setNumberOfTuples(curBufTuplePos);
-            createdBuffers.emplace_back(buffer);
-        }
-
+        // Writing the expected statistics into buffers via the statistic format
+        auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                                                   bufferManager->getBufferSize(),
+                                                                                   Statistic::StatisticSynopsisType::COUNT_MIN,
+                                                                                   statisticDataCodec);
+        std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
+        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+                       std::back_inserter(statisticsWithHashes),
+                       [](const auto& statistic) {
+                           static auto hash = 0;
+                           return std::make_pair(++hash, statistic);
+                       });
+        auto createdBuffers = statisticFormat->writeStatisticsIntoBuffers(statisticsWithHashes, *bufferManager);
         return {createdBuffers, expectedStatistics};
     }
 
@@ -162,31 +147,17 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
      * @param bufferManager
      * @return Pair<Vector of TupleBuffers, Vector of Statistics>
      */
-    static std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
+    std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
     createRandomHyperLogLogSketches(uint64_t numberOfSketches,
                                     const SchemaPtr& schema,
                                     const Runtime::BufferManagerPtr& bufferManager) {
-        std::vector<Runtime::TupleBuffer> createdBuffers;
         std::vector<Statistic::StatisticPtr> expectedStatistics;
         constexpr auto windowSize = 10;
 
-        auto buffer = bufferManager->getBufferBlocking();
-        uint64_t curBufTuplePos = 0;
-        const auto capacity = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
-
         for (auto curCnt = 0_u64; curCnt < numberOfSketches; ++curCnt) {
-            if (curBufTuplePos >= capacity) {
-                buffer.setNumberOfTuples(curBufTuplePos);
-                createdBuffers.emplace_back(buffer);
-                buffer = bufferManager->getBufferBlocking();
-                curBufTuplePos = 0;
-            }
-
             // Creating "random" values that represent of a HyperLogLogStatistics for a tumbling window with a size of 10
             const Windowing::TimeMeasure startTs(windowSize * curCnt);
             const Windowing::TimeMeasure endTs(windowSize * (curCnt + 1));
-            const uint64_t statisticType = 42;
-            const uint64_t statisticHash = curCnt;
             const uint64_t width = rand() % 10 + 5;
 
             // We simulate a filling of count min by randomly updating the sketch
@@ -197,32 +168,24 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
                 auto hash = rand();
                 hyperLogLog->update(hash);
             }
-            const auto estimate = hyperLogLog->getEstimate();
-
-            // Now using the values for writing a tuple to the tuple buffer
-            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-            testBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_HASH_FIELD_NAME].write(statisticHash);
-            testBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_START].write(startTs.getTime());
-            testBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_END].write(endTs.getTime());
-            testBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_TYPE_FIELD_NAME].write(statisticType);
-            testBuffer[curBufTuplePos]["test$" + Statistic::OBSERVED_TUPLES_FIELD_NAME].write(hyperLogLog->getObservedTuples());
-            testBuffer[curBufTuplePos]["test$" + Statistic::WIDTH_FIELD_NAME].write(width);
-            testBuffer[curBufTuplePos]["test$" + Statistic::ESTIMATE_FIELD_NAME].write(estimate);
-            testBuffer[curBufTuplePos].writeVarSized("test$" + Statistic::STATISTIC_DATA_FIELD_NAME,
-                                                     hyperLogLog->getHyperLogLogDataAsString(),
-                                                     bufferManager.get());
-            curBufTuplePos += 1;
 
             // Creating now the expected HyperLogLogStatistics
             expectedStatistics.emplace_back(hyperLogLog);
         }
 
-        // If the current tuple buffer has tuples, but we have not emplaced it
-        if (curBufTuplePos > 0) {
-            buffer.setNumberOfTuples(curBufTuplePos);
-            createdBuffers.emplace_back(buffer);
-        }
-
+        // Writing the expected statistics into buffers via the statistic format
+        auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                                                   bufferManager->getBufferSize(),
+                                                                                   Statistic::StatisticSynopsisType::HLL,
+                                                                                   statisticDataCodec);
+        std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
+        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+                       std::back_inserter(statisticsWithHashes),
+                       [](const auto& statistic) {
+                           static auto hash = 0;
+                           return std::make_pair(++hash, statistic);
+                       });
+        auto createdBuffers = statisticFormat->writeStatisticsIntoBuffers(statisticsWithHashes, *bufferManager);
         return {createdBuffers, expectedStatistics};
     }
 
@@ -233,7 +196,6 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
  * @brief Tests if our statistic sink can put CountMin-Sketches into the StatisticStore
  */
 TEST_P(StatisticSinkTest, testCountMin) {
-    const auto numberOfStatistics = StatisticSinkTest::GetParam();
     auto countMinStatisticSchema = Schema::create()
                                        ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
                                        ->addField(Statistic::DEPTH_FIELD_NAME, BasicType::UINT64)
@@ -255,7 +217,8 @@ TEST_P(StatisticSinkTest, testCountMin) {
                                              SharedQueryId(1),        // queryId
                                              DecomposedQueryPlanId(1),// querySubPlanId
                                              1,                       // numberOfOrigins
-                                             Statistic::StatisticSinkFormatType::COUNT_MIN);
+                                             Statistic::StatisticSynopsisType::COUNT_MIN,
+                                             statisticDataCodec);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 
     for (auto& buf : buffers) {
@@ -270,7 +233,6 @@ TEST_P(StatisticSinkTest, testCountMin) {
  * @brief Tests if our statistic sink can put HyperLogLog-Sketches into the StatisticStore
  */
 TEST_P(StatisticSinkTest, testHyperLogLog) {
-    const auto numberOfStatistics = StatisticSinkTest::GetParam();
     auto hyperLogLogStatisticSchema = Schema::create()
                                           ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
                                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
@@ -291,7 +253,8 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
                                              SharedQueryId(1),
                                              DecomposedQueryPlanId(1),
                                              1,// numberOfOrigins
-                                             Statistic::StatisticSinkFormatType::HLL);
+                                             Statistic::StatisticSynopsisType::HLL,
+                                             statisticDataCodec);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 
     for (auto& buf : buffers) {
@@ -304,8 +267,14 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
 
 INSTANTIATE_TEST_CASE_P(testStatisticSink,
                         StatisticSinkTest,
-                        ::testing::Values(1, 2, 10, 5000),// No. statistics
+                        ::testing::Combine(
+                            ::testing::Values(1, 2, 10, 5000), // No. statistics
+                            ::testing::ValuesIn(            // All possible statistic sink datatype
+                                magic_enum::enum_values<Statistic::StatisticDataCodec>())
+                            ),
                         [](const testing::TestParamInfo<StatisticSinkTest::ParamType>& info) {
-                            return std::string(std::to_string(info.param) + "_Statistics");
+                            const auto param = info.param;
+                            return std::to_string(std::get<0>(param)) + "_Statistics" +
+                                std::string(magic_enum::enum_name(std::get<1>(param)));
                         });
 }// namespace NES

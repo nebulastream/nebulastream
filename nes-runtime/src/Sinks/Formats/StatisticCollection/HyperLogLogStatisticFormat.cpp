@@ -13,7 +13,8 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -24,10 +25,12 @@
 
 namespace NES::Statistic {
 
-AbstractStatisticFormatPtr HyperLogLogStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout) {
+StatisticFormatPtr HyperLogLogStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                                              std::function<std::string (const std::string&)> postProcessingData,
+                                                              std::function<std::string (const std::string&)> preProcessingData) {
     const auto qualifierNameWithSeparator = memoryLayout->getSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     return std::make_shared<HyperLogLogStatisticFormat>(
-        HyperLogLogStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout)));
+        HyperLogLogStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData));
 }
 
 std::vector<std::pair<StatisticHash, StatisticPtr>>
@@ -67,7 +70,7 @@ HyperLogLogStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffe
         // Reading the HyperLogLogData that is stored as a string
         const auto hyperLogLogDataChildIdx =
             *reinterpret_cast<uint32_t*>(buffer.getBuffer() + hyperLogLogDataFieldOffset.value());
-        const auto hyperLogLogDataString = Runtime::MemoryLayouts::readVarSizedData(buffer, hyperLogLogDataChildIdx);
+        const auto hyperLogLogDataString = postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, hyperLogLogDataChildIdx));
 
         // Creating now a HyperLogLogStatistic from this
         auto hyperLogLog = HyperLogLogStatistic::create(Windowing::TimeMeasure(startTs),
@@ -133,7 +136,7 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
         const auto observedTuples = hyperLogLogStatistic->getObservedTuples();
         const auto width = hyperLogLogStatistic->getWidth();
         const auto estimate = hyperLogLogStatistic->getEstimate();
-        const auto data = hyperLogLogStatistic->getHyperLogLogDataAsString();
+        const auto data = preProcessingData(hyperLogLogStatistic->getHyperLogLogDataAsString());
 
         // 4. We choose to hardcode here the values. If we would to do it dynamically during the runtime, we would have to
         // do a lot of branches, as we do not have here the tracing from Nautilus.
@@ -177,8 +180,10 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
 }
 
 HyperLogLogStatisticFormat::HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                                       Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout)
-    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout)),
+                                                       Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                                       std::function<std::string (const std::string&)> postProcessingData,
+                                                       std::function<std::string (const std::string&)> preProcessingData)
+    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData),
       widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
       estimateFieldName(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME),
       hyperLogLogDataFieldName(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME) {}

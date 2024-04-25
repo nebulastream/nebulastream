@@ -19,7 +19,7 @@
 namespace NES::Statistic {
 
 // defines for the sending policies. This way, we reduce the number of ()
-#define SENDING_ADAPTIVE SendingPolicyAdaptive::create()
+#define SENDING_ADAPTIVE(StatisticDataCodec) SendingPolicyAdaptive::create(StatisticDataCodec)
 
 /**
  * @brief Represents a sending policy, where a created statistic is send to the store, depending on external factors
@@ -43,7 +43,10 @@ class SendingPolicyAdaptive : public SendingPolicy {
      * @brief Creates an ADAPTIVE SendingPolicy
      * @return SendingPolicyPtr
      */
-    static SendingPolicyPtr create();
+    static SendingPolicyPtr create(StatisticDataCodec sinkDataCodec);
+
+  private:
+    explicit SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec);
 };
 
 }// namespace NES::Statistic

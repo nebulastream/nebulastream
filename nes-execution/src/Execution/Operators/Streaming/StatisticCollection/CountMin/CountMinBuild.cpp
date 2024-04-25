@@ -14,8 +14,8 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
-#include <StatisticCollection/StatisticKey.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
+#include <Statistics/StatisticKey.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Util/Logger/Logger.hpp>

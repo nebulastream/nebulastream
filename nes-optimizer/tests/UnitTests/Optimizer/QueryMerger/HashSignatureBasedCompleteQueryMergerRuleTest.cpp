@@ -17,7 +17,7 @@
 #include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>

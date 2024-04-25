@@ -39,13 +39,13 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
@@ -189,7 +189,6 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
-
 }
 
 void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(Statistic::LogicalStatisticWindowOperator& logicalStatisticWindowOperator) {
@@ -204,23 +203,22 @@ void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(Statistic::Log
                                                                                                       countMinDescriptor->getDepth(),
                                                                                                       logicalStatisticWindowOperator.getMetricHash(),
                                                                                                       logicalStatisticWindowOperator.getWindowType(),
-                                                                                                      countMinDescriptor->getSendingPolicy());
+                                                                                                      logicalStatisticWindowOperator.getSendingPolicy());
         physicalCountMinBuildOperator->as<UnaryOperator>()->setInputOriginIds(logicalStatisticWindowOperator.getInputOriginIds());
         logicalStatisticWindowOperator.replace(physicalCountMinBuildOperator);
     } else if (statisticDescriptor->instanceOf<Statistic::HyperLogLogDescriptor>()) {
         const auto hyperLogLogDescriptor = statisticDescriptor->as<Statistic::HyperLogLogDescriptor>();
         auto physicalHyperLogLogBuildOperator = PhysicalOperators::PhysicalHyperLogLogBuildOperator::create(logicalStatisticWindowOperator.getStatisticId(),
-                                                                                                          logicalStatisticWindowOperator.getInputSchema(),
-                                                                                                          logicalStatisticWindowOperator.getOutputSchema(),
-                                                                                                          hyperLogLogDescriptor->getField()->getFieldName(),
-                                                                                                          hyperLogLogDescriptor->getWidth(),
-                                                                                                          logicalStatisticWindowOperator.getMetricHash(),
-                                                                                                          logicalStatisticWindowOperator.getWindowType(),
-                                                                                                          hyperLogLogDescriptor->getSendingPolicy());
+                                                                                                            logicalStatisticWindowOperator.getInputSchema(),
+                                                                                                            logicalStatisticWindowOperator.getOutputSchema(),
+                                                                                                            hyperLogLogDescriptor->getField()->getFieldName(),
+                                                                                                            hyperLogLogDescriptor->getWidth(),
+                                                                                                            logicalStatisticWindowOperator.getMetricHash(),
+                                                                                                            logicalStatisticWindowOperator.getWindowType(),
+                                                                                                            logicalStatisticWindowOperator.getSendingPolicy());
         physicalHyperLogLogBuildOperator->as<UnaryOperator>()->setInputOriginIds(logicalStatisticWindowOperator.getInputOriginIds());
         logicalStatisticWindowOperator.replace(physicalHyperLogLogBuildOperator);
-    }
-    else {
+    } else {
         NES_ERROR("We currently only support a CountMinStatisticDescriptor or HyperLogLogDescriptorStatisticDescriptor")
         NES_NOT_IMPLEMENTED();
     }

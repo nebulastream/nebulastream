@@ -15,9 +15,9 @@
 #include <BaseIntegrationTest.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <memory>
@@ -61,7 +61,7 @@ class StatisticCoordinatorTest : public Testing::BaseIntegrationTest {
     }
 
     Statistic::StatisticCoordinatorPtr statisticCoordinator;
-    Statistic::AbstractStatisticStorePtr statisticStore;
+    Statistic::StatisticStorePtr statisticStore;
     std::shared_ptr<NesCoordinator> nesCoordinator;
 };
 

@@ -37,7 +37,6 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>

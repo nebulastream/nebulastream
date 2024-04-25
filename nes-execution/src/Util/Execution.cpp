@@ -15,9 +15,8 @@
 #include <API/AttributeField.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <Util/Execution.hpp>
 #include <tuple>
 

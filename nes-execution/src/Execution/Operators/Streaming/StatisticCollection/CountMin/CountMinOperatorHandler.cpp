@@ -13,7 +13,7 @@
 */
 
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <random>
 
 namespace NES::Runtime::Execution::Operators {
@@ -22,7 +22,7 @@ CountMinOperatorHandlerPtr CountMinOperatorHandler::create(const uint64_t window
                                                            Statistic::SendingPolicyPtr sendingPolicy,
                                                            const uint64_t width,
                                                            const uint64_t depth,
-                                                           Statistic::AbstractStatisticFormatPtr statisticFormat,
+                                                           Statistic::StatisticFormatPtr statisticFormat,
                                                            const std::vector<OriginId>& inputOrigins,
                                                            const uint64_t numberOfBitsInKey) {
     return std::make_shared<CountMinOperatorHandler>(CountMinOperatorHandler(windowSize, windowSlide,
@@ -38,7 +38,7 @@ CountMinOperatorHandler::CountMinOperatorHandler(const uint64_t windowSize,
                                                  Statistic::SendingPolicyPtr sendingPolicy,
                                                  const uint64_t width,
                                                  const uint64_t depth,
-                                                 Statistic::AbstractStatisticFormatPtr statisticFormat,
+                                                 Statistic::StatisticFormatPtr statisticFormat,
                                                  const std::vector<OriginId>& inputOrigins,
                                                  const uint64_t numberOfBitsInKey)
     : AbstractSynopsesOperatorHandler(windowSize, windowSlide, sendingPolicy, statisticFormat, inputOrigins),

@@ -13,7 +13,7 @@
 */
 
 #include <BaseIntegrationTest.hpp>//
-#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>

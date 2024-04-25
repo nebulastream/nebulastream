@@ -14,7 +14,8 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Statistic.hpp>
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES::Statistic {
 
 class TriggerCondition;
@@ -23,10 +24,10 @@ class TriggerCondition {
   public:
     /**
      * @brief Checks if the corresponding callback should be called
-     * @param curStatistic
+     * @param triggerExpression
      * @return True or false
      */
-    [[maybe_unused]] virtual bool shallTrigger(const Statistic& curStatistic) = 0;
+    [[maybe_unused]] virtual bool shallTrigger(const ExpressionNode& triggerExpression) = 0;
 
     /**
      * @brief Checks for equality
@@ -34,6 +35,13 @@ class TriggerCondition {
      * @return True, if equal otherwise false
      */
     virtual bool operator==(const TriggerCondition& rhs) const = 0;
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if NOT equal otherwise false
+     */
+    virtual bool operator!=(const TriggerCondition& rhs) const;
 
     /**
      * @brief Checks if the current TriggerCondition is of type TriggerConditionType

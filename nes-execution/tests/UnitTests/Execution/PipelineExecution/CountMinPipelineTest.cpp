@@ -30,7 +30,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
-#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
@@ -57,7 +57,7 @@ class CountMinPipelineExecutionContext : public Runtime::Execution::PipelineExec
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class CountMinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
+class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<std::tuple<std::string, Statistic::StatisticDataCodec>> {
   public:
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
@@ -67,10 +67,12 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
     SchemaPtr inputSchema, outputSchema;
     const std::string fieldToBuildCountMinOver = "f1";
     const std::string timestampFieldName = "ts";
-    Statistic::AbstractStatisticStorePtr testStatisticStore;
+    Statistic::StatisticStorePtr testStatisticStore;
     Statistic::SendingPolicyPtr sendingPolicy;
-    Statistic::AbstractStatisticFormatPtr statisticFormat;
+    Statistic::StatisticFormatPtr statisticFormat;
     Statistic::StatisticMetricHash metricHash;
+    Statistic::StatisticDataCodec sinkDataCodec;
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CountMinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -81,11 +83,12 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
     void SetUp() override {
         BaseUnitTest::SetUp();
         NES_INFO("Setup CountMinPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(std::get<0>(GetParam()))) {
             GTEST_SKIP();
         }
         // Creating class members for being able to use them in all test cases
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::getPlugin(std::get<0>(GetParam())).get();
+        sinkDataCodec = std::get<1>(GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
         inputSchema = Schema::create()->addField(fieldToBuildCountMinOver, BasicType::UINT64)->addField(timestampFieldName, BasicType::UINT64);
@@ -98,8 +101,8 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                            ->addField(Statistic::DEPTH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        sendingPolicy = Statistic::SendingPolicyASAP::create();
-        statisticFormat = Statistic::CountMinStatisticFormat::create(Runtime::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize()));
+        sendingPolicy = Statistic::SendingPolicyASAP::create(sinkDataCodec);
+        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, bufferManager->getBufferSize(), Statistic::StatisticSynopsisType::COUNT_MIN, sinkDataCodec);
         metricHash = 42; // Just some arbitrary number
     }
 
@@ -221,11 +224,13 @@ TEST_P(CountMinPipelineTest, multipleInputBuffers) {
 
 INSTANTIATE_TEST_CASE_P(testCountMinPipeline,
                         CountMinPipelineTest,
-                        ::testing::Values("PipelineInterpreter",
-                                          "PipelineCompiler",
-                                          "CPPPipelineCompiler"),
+                        ::testing::Combine(
+                            ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                            ::testing::ValuesIn(magic_enum::enum_values<Statistic::StatisticDataCodec>())
+                                ),
                         [](const testing::TestParamInfo<CountMinPipelineTest::ParamType>& info) {
-                            return info.param;
+                            const auto param = info.param;
+                            return std::get<0>(param) + "_sinkDataCodec_" + std::string(magic_enum::enum_name(std::get<1>(param)));
                         });
 
 

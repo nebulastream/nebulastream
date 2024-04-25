@@ -20,6 +20,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <memory>
 
@@ -77,6 +78,7 @@ std::optional<uint64_t> MemoryLayout::getFieldOffset(uint64_t tupleIndex, std::s
         const auto fieldIndexValue = fieldIndex.value();
         return getFieldOffset(tupleIndex, fieldIndexValue);
     }
+    NES_ERROR("Field with name {} not found in schema {}", fieldName, schema->toString());
     return {};
 }
 

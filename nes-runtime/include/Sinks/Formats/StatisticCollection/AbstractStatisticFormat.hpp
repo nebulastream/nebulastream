@@ -15,7 +15,9 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
 #define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <StatisticCollection/StatisticKey.hpp>
+#include <Statistics/StatisticKey.hpp>
+#include <Statistics/Statistic.hpp>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -26,17 +28,24 @@ using StatisticPtr = std::shared_ptr<Statistic>;
 using HashStatisticPair = std::pair<StatisticHash, StatisticPtr>;
 
 class AbstractStatisticFormat;
-using AbstractStatisticFormatPtr = std::shared_ptr<AbstractStatisticFormat>;
+using StatisticFormatPtr = std::shared_ptr<AbstractStatisticFormat>;
 
 /**
- * @brief An interface for parsing (reading and creating) statistics from a TupleBuffer. The idea is that this format
- * is called in the StatisticSink and returns multiple statistics that are then inserted into a StatisticStorage
+ * @brief An interface for parsing (reading and creating) statistics from/to a TupleBuffer. The idea is that this format
+ * is called in the StatisticSink as well as the operator handler and returns multiple statistics that are then
+ * inserted into a StatisticStorage
  */
 class AbstractStatisticFormat {
   public:
-    explicit AbstractStatisticFormat(const Schema& schema, const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+    explicit AbstractStatisticFormat(const Schema& schema,
+                                     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                     std::function<std::string (const std::string&)> postProcessingData,
+                                     std::function<std::string (const std::string&)> preProcessingData);
+
     explicit AbstractStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+                                     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                     std::function<std::string (const std::string&)> postProcessingData,
+                                     std::function<std::string (const std::string&)> preProcessingData);
 
     /**
      * @brief Reads the statistics from the buffer
@@ -66,6 +75,8 @@ class AbstractStatisticFormat {
     const std::string statisticHashFieldName;
     const std::string statisticTypeFieldName;
     const std::string observedTuplesFieldName;
+    const std::function<std::string (const std::string&)> postProcessingData;
+    const std::function<std::string (const std::string&)> preProcessingData;
 };
 }// namespace NES::Statistic
 

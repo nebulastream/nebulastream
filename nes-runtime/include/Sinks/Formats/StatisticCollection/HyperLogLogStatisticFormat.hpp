@@ -24,12 +24,9 @@ namespace NES::Statistic {
  */
 class HyperLogLogStatisticFormat : public AbstractStatisticFormat {
   public:
-    /**
-     * @brief Factory method for creating a HyperLogLogStatisticFormat
-     * @param memoryLayout
-     * @return AbstractStatisticFormatPtr
-     */
-    static AbstractStatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                             std::function<std::string (const std::string&)> postProcessingData,
+                                             std::function<std::string (const std::string&)> preProcessingData);
     std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) override;
     [[nodiscard]] std::string toString() const override;
     std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
@@ -38,7 +35,9 @@ class HyperLogLogStatisticFormat : public AbstractStatisticFormat {
 
   private:
     HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
-                               Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+                               Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                               std::function<std::string (const std::string&)> postProcessingData,
+                               std::function<std::string (const std::string&)> preProcessingData);
 
     const std::string widthFieldName;
     const std::string estimateFieldName;

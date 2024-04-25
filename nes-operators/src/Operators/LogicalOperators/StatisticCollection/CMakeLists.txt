@@ -16,7 +16,6 @@ add_source_files(nes-operators
 )
 
 add_subdirectory(Descriptor)
-add_subdirectory(Characteristic)
+add_subdirectory(Metrics)
 add_subdirectory(SendingPolicy)
-add_subdirectory(Statistics)
 add_subdirectory(TriggerCondition)

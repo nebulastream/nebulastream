@@ -642,6 +642,12 @@ add_subdirectory(nes-client)
 add_subdirectory(nes-execution)
 # Add targets for nautilus
 add_subdirectory(nes-nautilus)
+# Add targets nes-expressions
+add_subdirectory(nes-expressions)
+# Add targets nes-statistics
+add_subdirectory(nes-statistics)
+# Add targets nes-window-types
+add_subdirectory(nes-window-types)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
 

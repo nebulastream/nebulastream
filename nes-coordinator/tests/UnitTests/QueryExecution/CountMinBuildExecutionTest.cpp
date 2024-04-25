@@ -15,8 +15,10 @@
 #include <BaseUnitTest.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -27,7 +29,7 @@ using namespace std::chrono_literals;
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
-                                   public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, uint64_t>> {
+                                   public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, uint64_t, Statistic::StatisticDataCodec>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
@@ -37,9 +39,12 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
     SchemaPtr inputSchema, outputSchema;
     std::string fieldToBuildCountMinOver = "f1";
     std::string timestampFieldName = "ts";
-    Statistic::AbstractStatisticFormatPtr statisticFormat;
+    Statistic::StatisticFormatPtr statisticFormat;
     Statistic::StatisticMetricHash metricHash;
-    Statistic::AbstractStatisticStorePtr testStatisticStore;
+    Statistic::StatisticStorePtr testStatisticStore;
+    Statistic::StatisticDataCodec statisticDataCodec;
+    Statistic::SendingPolicyPtr sendingPolicy;
+    Statistic::TriggerConditionPtr triggerCondition;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CountMinBuildExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -54,6 +59,7 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
         const auto numWorkerThreads = std::get<0>(CountMinBuildExecutionTest::GetParam());
         sketchWidth = std::get<1>(CountMinBuildExecutionTest::GetParam());
         sketchDepth = std::get<2>(CountMinBuildExecutionTest::GetParam());
+        statisticDataCodec = std::get<3>(CountMinBuildExecutionTest::GetParam());
 
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode, numWorkerThreads);
 
@@ -76,9 +82,10 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                            ->updateSourceName("test");
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        statisticFormat = Statistic::CountMinStatisticFormat::create(
-            Runtime::MemoryLayouts::RowLayout::create(outputSchema, executionEngine->getBufferManager()->getBufferSize()));
+        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, executionEngine->getBufferManager()->getBufferSize(), Statistic::StatisticSynopsisType::COUNT_MIN, statisticDataCodec);
         metricHash = 42;// Just some arbitrary number
+        sendingPolicy = Statistic::SendingPolicyASAP::create(statisticDataCodec);
+        triggerCondition = Statistic::NeverTrigger::create();
     }
 
     /* Will be called before a test is executed. */
@@ -109,7 +116,9 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
         auto window =
             SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
         auto query =
-            TestQuery::from(testSourceDescriptor).buildStatistic(window, countMinDescriptor, metricHash).sink(testSinkDescriptor);
+            TestQuery::from(testSourceDescriptor)
+                .buildStatistic(window, countMinDescriptor, metricHash,sendingPolicy, triggerCondition)
+                .sink(testSinkDescriptor);
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
@@ -181,7 +190,7 @@ TEST_P(CountMinBuildExecutionTest, singleInputTuple) {
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::COUNT_MIN);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::COUNT_MIN, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
     // Creating the count min descriptor and running the query
@@ -208,7 +217,7 @@ TEST_P(CountMinBuildExecutionTest, multipleInputBuffers) {
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::COUNT_MIN);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::COUNT_MIN, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
     // Creating the count min descriptor and running the query
@@ -237,7 +246,7 @@ TEST_P(CountMinBuildExecutionTest, multipleInputBuffersSlidingWindow) {
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::COUNT_MIN);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::COUNT_MIN, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
     // Creating the count min descriptor and running the query
@@ -254,13 +263,17 @@ INSTANTIATE_TEST_CASE_P(testCountMin,
                         CountMinBuildExecutionTest,
                         ::testing::Combine(::testing::Values(1, 4, 8),     // numWorkerThread
                                            ::testing::Values(1, 100, 4000),// sketchWidth
-                                           ::testing::Values(1, 5, 10)     // sketchDepth
+                                           ::testing::Values(1, 5, 10),    // sketchDepth
+                                           ::testing::ValuesIn(            // All possible statistic sink datatype
+                                               magic_enum::enum_values<Statistic::StatisticDataCodec>())
                                            ),
                         [](const testing::TestParamInfo<CountMinBuildExecutionTest::ParamType>& info) {
                             const auto numWorkerThread = std::get<0>(info.param);
                             const auto sketchWidth = std::get<1>(info.param);
                             const auto sketchDepth = std::get<2>(info.param);
+                            const auto dataCodec = std::get<3>(info.param);
                             return std::to_string(numWorkerThread) + "Threads_" + std::to_string(sketchWidth) + "Width_"
-                                + std::to_string(sketchDepth) + "Depth_";
+                                + std::to_string(sketchDepth) + "Depth_"  +
+                                std::string(magic_enum::enum_name(dataCodec));
                         });
 }// namespace NES::Runtime::Execution
