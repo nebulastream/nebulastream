@@ -22,7 +22,7 @@ namespace NES::Statistic {
 
 // Necessary for choosing the correct statistic format
 enum class StatisticSynopsisType : uint8_t { COUNT_MIN, HLL };
-enum class StatisticDataCodec : uint8_t { DEFAULT };
+enum class StatisticDataCodec : uint8_t { DEFAULT, RUN_LENGTH_ENCODED };
 
 /* Names for the field an infrastructure data source is writing the value into. As we could have multiple
  * infrastructure metrics per node, we must have unique identifying field names.
