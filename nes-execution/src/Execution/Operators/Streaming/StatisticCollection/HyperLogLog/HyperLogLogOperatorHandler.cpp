@@ -13,7 +13,7 @@
 */
 
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -25,7 +25,7 @@ Statistic::StatisticPtr HyperLogLogOperatorHandler::createInitStatistic(Windowin
 HyperLogLogOperatorHandlerPtr HyperLogLogOperatorHandler::create(const uint64_t windowSize,
                                                                  const uint64_t windowSlide,
                                                                  Statistic::SendingPolicyPtr sendingPolicy,
-                                                                 Statistic::AbstractStatisticFormatPtr statisticFormat,
+                                                                 Statistic::StatisticFormatPtr statisticFormat,
                                                                  const uint64_t width,
                                                                  const std::vector<OriginId>& inputOrigins) {
     return std::make_shared<HyperLogLogOperatorHandler>(HyperLogLogOperatorHandler(windowSize, windowSlide,
@@ -36,7 +36,7 @@ HyperLogLogOperatorHandlerPtr HyperLogLogOperatorHandler::create(const uint64_t 
 HyperLogLogOperatorHandler::HyperLogLogOperatorHandler(const uint64_t windowSize,
                                                        const uint64_t windowSlide,
                                                        const Statistic::SendingPolicyPtr& sendingPolicy,
-                                                       const Statistic::AbstractStatisticFormatPtr& statisticFormat,
+                                                       const Statistic::StatisticFormatPtr& statisticFormat,
                                                        const std::vector<OriginId>& inputOrigins,
                                                        const uint64_t width)
     : AbstractSynopsesOperatorHandler(windowSize, windowSlide, sendingPolicy, statisticFormat, inputOrigins), width(width) {}

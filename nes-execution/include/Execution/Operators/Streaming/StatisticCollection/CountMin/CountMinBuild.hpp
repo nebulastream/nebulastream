@@ -18,7 +18,7 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators {

@@ -30,24 +30,30 @@ class StatisticFormatFactory {
      * @param schema
      * @param bufferSize
      * @param type
-     * @return AbstractStatisticSinkFormatPtr
+     * @return StatisticFormatPtr
      */
-    static AbstractStatisticFormatPtr createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSinkFormatType type);
+    static StatisticFormatPtr
+    createFromSchema(SchemaPtr schema, uint64_t bufferSize,
+                                                       StatisticSynopsisType type, StatisticDataCodec sinkDataCodec);
 
   private:
     /**
      * @brief Creates a CountMinStatisticSinkFormat for this memoryLayout
      * @param memoryLayout
-     * @return AbstractStatisticSinkFormatPtr
+     * @return StatisticFormatPtr
      */
-    static AbstractStatisticFormatPtr createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+    static StatisticFormatPtr createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                                           std::function<std::string (const std::string&)> postProcessingData,
+                                                           std::function<std::string (const std::string&)> preProcessingData);
 
     /**
      * @brief Creates a HyperLogLogStatisticSinkFormat for this memoryLayout
      * @param memoryLayout
-     * @return AbstractStatisticSinkFormatPtr
+     * @return StatisticFormatPtr
      */
-    static AbstractStatisticFormatPtr createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+    static StatisticFormatPtr createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                                              std::function<std::string (const std::string&)> postProcessingData,
+                                                              std::function<std::string (const std::string&)> preProcessingData);
 };
 
 }// namespace NES::Statistic

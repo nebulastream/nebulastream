@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>

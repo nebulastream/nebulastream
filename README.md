@@ -35,12 +35,27 @@ The codebase is structured in the following components:
 | [nes-plugins](nes-plugins)               | This component contains all external plugins that system supports, e.g., tensorflow, omnx, arrow, etc.                                                    |
 | [nes-runtime](nes-runtime)               | This component contains all runtime components for the network stack and the memory managment                                                             |
 | [nes-coordinator](nes-coordinator)       | This component contains the coordinator and the executable.                                                                                               |
-| [nes-worker](nes-coordinator)            | This component contains the worker and the executable.                                                                                                    |
+| [nes-worker](nes-worker)                 | This component contains the worker and the executable.                                                                                                    |
+| [nes-statistics](nes-statistics)         | This component contains the statistic collection framework.                                                                                               |
+| [nes-window-types](nes-window-types)     | This component contains functionalities to define windows.                                                                                                |
+| [nes-expressions](nes-expressions)       | This component contains functionalities for our expressions.                                                                                              |
 
 ### Dependencies:
 
 ```mermaid
 graph TD;
+nes-statistics-->nes-common
+nes-statistics-->nes-grpc
+nes-statistics-->nes-data-types
+nes-statistics-->nes-expressions
+nes-statistics-->nes-window-types
+nes-statistics-->nes-catalogs
+nes-statistics-->nes-operators
+nes-expressions-->nes-common
+nes-expressions-->nes-data-types
+nes-window-types-->nes-common
+nes-window-types-->nes-data-types
+nes-window-types-->nes-expressions
 nes-benchmark-->nes-common
 nes-benchmark-->nes-data-types
 nes-benchmark-->nes-operators

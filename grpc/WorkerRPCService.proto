@@ -180,7 +180,8 @@ message ProbeStatisticsRequest {
   uint64 statisticHash = 1;
   uint64 startTs = 2;
   uint64 endTs = 3;
-  NES.SerializableExpression expression = 4;
+  uint64 granularity = 4;
+  NES.SerializableExpression expression = 5;
 }
 
 message StatisticReply {

@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -25,15 +25,19 @@
 
 namespace NES::Statistic {
 
-AbstractStatisticFormatPtr CountMinStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout) {
+StatisticFormatPtr CountMinStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                                           std::function<std::string (const std::string&)> postProcessingData,
+                                                           std::function<std::string (const std::string&)> preProcessingData) {
     const auto qualifierNameWithSeparator = memoryLayout->getSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     return std::make_shared<CountMinStatisticFormat>(
-        CountMinStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout)));
+        CountMinStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData));
 }
 
 CountMinStatisticFormat::CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                                 Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout)
-    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout)),
+                                                 Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                                                 std::function<std::string (const std::string&)> postProcessingData,
+                                                 std::function<std::string (const std::string&)> preProcessingData)
+    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData),
       widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
       depthFieldName(qualifierNameWithSeparator + DEPTH_FIELD_NAME),
       numberOfBitsInKeyFieldName(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY),
@@ -76,7 +80,7 @@ std::vector<HashStatisticPair> CountMinStatisticFormat::readStatisticsFromBuffer
 
         // Reading the CountMinData that is stored as a string
         const auto countMinDataChildIdx = *reinterpret_cast<uint32_t*>(buffer.getBuffer() + countMinDataFieldOffset.value());
-        const auto countMinDataString = Runtime::MemoryLayouts::readVarSizedData(buffer, countMinDataChildIdx);
+        const auto countMinDataString = postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, countMinDataChildIdx));
 
         // Creating now a CountMinStatistic from this
         auto countMinStatistic = CountMinStatistic::create(Windowing::TimeMeasure(startTs),
@@ -132,7 +136,7 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatis
         const auto width = countMinStatistic->getWidth();
         const auto depth = countMinStatistic->getDepth();
         const auto numberOfBitsInKey = countMinStatistic->getNumberOfBitsInKeyOffset();
-        const auto data = countMinStatistic->getCountMinDataAsString();
+        const auto data = preProcessingData(countMinStatistic->getCountMinDataAsString());
 
         // 4. We choose to hardcode here the values. If we would to do it dynamically during the runtime, we would have to
         // do a lot of branches, as we do not have here the tracing from Nautilus.

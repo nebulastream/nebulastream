@@ -11,9 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        DataTypeSerializationUtil.cpp
         DecomposedQueryPlanSerializationUtil.cpp
-        ExpressionSerializationUtil.cpp
         OperatorSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
         SchemaSerializationUtil.cpp

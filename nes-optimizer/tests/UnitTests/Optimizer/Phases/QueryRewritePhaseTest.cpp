@@ -21,8 +21,8 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>

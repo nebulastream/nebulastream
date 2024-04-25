@@ -14,15 +14,15 @@
 
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeUnit.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Measures/TimeUnit.hpp>
 
 #include <BaseIntegrationTest.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES::Windowing;

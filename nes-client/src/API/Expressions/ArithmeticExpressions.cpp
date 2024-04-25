@@ -15,18 +15,18 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/Expressions/Functions/FunctionExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
+#include <Expressions/Functions/FunctionExpressionNode.hpp>
 #include <utility>
 
 namespace NES {

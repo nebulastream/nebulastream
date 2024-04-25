@@ -14,8 +14,8 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -30,12 +30,12 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Util/QuerySignatures/DataTypeToZ3ExprUtil.hpp>

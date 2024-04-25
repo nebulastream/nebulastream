@@ -192,7 +192,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    pipelineQueryPlan->getQueryId(),
                                    pipelineQueryPlan->getQuerySubPlanId(),
                                    statisticSinkDescriptor->getNumberOfOrigins(),
-                                   statisticSinkDescriptor->getSinkFormatType());
+                                   statisticSinkDescriptor->getSinkFormatType(),
+                                   statisticSinkDescriptor->getSinkDataCodec());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

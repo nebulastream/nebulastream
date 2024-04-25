@@ -14,7 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -25,7 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Measures/TimeMeasure.hpp>
 
 namespace NES::Optimizer {
 

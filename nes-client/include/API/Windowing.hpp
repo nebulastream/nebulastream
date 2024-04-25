@@ -15,7 +15,7 @@
 #ifndef NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
 #define NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
 
-#include <Operators/LogicalOperators/Windows/Measures/TimeUnit.hpp>
+#include <Measures/TimeUnit.hpp>
 #include <memory>
 
 namespace NES {

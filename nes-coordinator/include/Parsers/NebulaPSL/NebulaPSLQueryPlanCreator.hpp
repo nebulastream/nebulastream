@@ -16,9 +16,9 @@
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>

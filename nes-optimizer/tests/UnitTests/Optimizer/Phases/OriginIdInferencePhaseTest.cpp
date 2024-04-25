@@ -34,7 +34,7 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>

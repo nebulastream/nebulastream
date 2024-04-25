@@ -26,9 +26,9 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

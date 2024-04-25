@@ -13,10 +13,10 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/BinaryExpressionNode.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -33,7 +33,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
+#include <Types/ContentBasedWindowType.hpp>
 #include <queue>
 
 namespace NES::Optimizer {

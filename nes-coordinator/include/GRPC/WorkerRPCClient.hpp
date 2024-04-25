@@ -19,7 +19,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
-#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
@@ -256,7 +256,7 @@ class WorkerRPCClient {
      * @param probeRequest
      * @return Vector of StatisticValues
      */
-    std::vector<Statistic::StatisticValue<>> probeStatistics(const Statistic::StatisticProbeRequestGRPC& probeRequest);
+    std::vector<Statistic::StatisticValue<>> probeStatistics(const std::string& address, const Statistic::StatisticProbeRequestGRPC& probeRequest);
 
   private:
     WorkerRPCClient() = default;

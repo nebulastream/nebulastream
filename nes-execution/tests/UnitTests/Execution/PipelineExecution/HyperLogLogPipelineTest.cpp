@@ -24,16 +24,17 @@
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
-
 
 namespace NES::Runtime::Execution {
 
@@ -57,7 +58,7 @@ class HyperLogLogPipelineExecutionContext : public Runtime::Execution::PipelineE
 };
 
 
-class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
+class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<std::tuple<std::string, Statistic::StatisticDataCodec>> {
   public:
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
@@ -67,10 +68,11 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public AbstractPip
     SchemaPtr inputSchema, outputSchema;
     const std::string fieldToBuildCountMinOver = "f1";
     const std::string timestampFieldName = "ts";
-    Statistic::AbstractStatisticStorePtr testStatisticStore;
+    Statistic::StatisticStorePtr testStatisticStore;
     Statistic::SendingPolicyPtr sendingPolicy;
-    Statistic::AbstractStatisticFormatPtr statisticFormat;
+    Statistic::StatisticFormatPtr statisticFormat;
     Statistic::StatisticMetricHash metricHash;
+    Statistic::StatisticDataCodec sinkDataCodec;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HyperLogLogPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -81,11 +83,12 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public AbstractPip
     void SetUp() override {
         BaseUnitTest::SetUp();
         NES_INFO("Setup HyperLogLogPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(std::get<0>(GetParam()))) {
             GTEST_SKIP();
         }
         // Creating class members for being able to use them in all test cases
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::getPlugin(std::get<0>(GetParam())).get();
+        sinkDataCodec = std::get<1>(GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
         inputSchema = Schema::create()->addField(fieldToBuildCountMinOver, BasicType::UINT64)->addField(timestampFieldName, BasicType::UINT64);
@@ -98,8 +101,8 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public AbstractPip
                            ->addField(Statistic::ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        sendingPolicy = Statistic::SendingPolicyASAP::create();
-        statisticFormat = Statistic::HyperLogLogStatisticFormat::create(Runtime::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize()));
+        sendingPolicy = Statistic::SendingPolicyASAP::create(sinkDataCodec);
+        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, bufferManager->getBufferSize(), Statistic::StatisticSynopsisType::HLL, sinkDataCodec);
         metricHash = 42; // Just some arbitrary number
     }
 
@@ -209,14 +212,15 @@ TEST_P(HyperLogLogPipelineTest, multipleInputBuffers) {
     }
 }
 
-
 INSTANTIATE_TEST_CASE_P(testHyperLogLogPipeline,
                         HyperLogLogPipelineTest,
-                        ::testing::Values("PipelineInterpreter",
-                                          "PipelineCompiler",
-                                          "CPPPipelineCompiler"),
+                        ::testing::Combine(
+                            ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                            ::testing::ValuesIn(magic_enum::enum_values<Statistic::StatisticDataCodec>())
+                                ),
                         [](const testing::TestParamInfo<HyperLogLogPipelineTest::ParamType>& info) {
-                            return info.param;
+                            const auto param = info.param;
+                            return std::get<0>(param) + "_sinkDataCodec_" + std::string(magic_enum::enum_name(std::get<1>(param)));
                         });
 
 

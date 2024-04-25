@@ -28,9 +28,9 @@ class DefaultStatisticStore : public AbstractStatisticStore {
   public:
     /**
      * @brief Creates a DefaultStatisticStore
-     * @return AbstractStatisticStorePtr
+     * @return StatisticStorePtr
      */
-    static AbstractStatisticStorePtr create();
+    static StatisticStorePtr create();
 
     std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
                                             const Windowing::TimeMeasure& startTs,

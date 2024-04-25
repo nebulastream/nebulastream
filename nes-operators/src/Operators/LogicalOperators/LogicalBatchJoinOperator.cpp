@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>

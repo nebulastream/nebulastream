@@ -19,7 +19,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>

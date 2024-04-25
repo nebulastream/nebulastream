@@ -38,6 +38,10 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <iostream>

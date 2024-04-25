@@ -22,7 +22,7 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>

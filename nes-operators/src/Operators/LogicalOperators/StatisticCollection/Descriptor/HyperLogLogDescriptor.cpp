@@ -50,8 +50,6 @@ bool HyperLogLogDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const
     if (rhs->instanceOf<HyperLogLogDescriptor>()) {
         auto rhsHyperLogLogDescriptor = rhs->as<HyperLogLogDescriptor>();
         return field->equal(rhsHyperLogLogDescriptor->field)
-            && *triggerCondition == *rhsHyperLogLogDescriptor->triggerCondition
-            && *sendingPolicy == *rhsHyperLogLogDescriptor->sendingPolicy
             && width == rhsHyperLogLogDescriptor->width;
     }
     return false;

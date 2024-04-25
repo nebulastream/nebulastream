@@ -13,8 +13,8 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>

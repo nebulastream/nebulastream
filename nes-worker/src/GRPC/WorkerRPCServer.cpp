@@ -18,7 +18,7 @@
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -214,6 +214,7 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
     Statistic::StatisticProbeRequest probeRequest(request->statistichash(),
                                                   Windowing::TimeMeasure(request->startts()),
                                                   Windowing::TimeMeasure(request->endts()),
+                                                  Windowing::TimeMeasure(request->granularity()),
                                                   Statistic::ProbeExpression(probeExpression));
 
     // Getting all statistics that match the probe request

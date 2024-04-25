@@ -75,8 +75,11 @@ LogicalUnaryOperatorPtr
 LogicalOperatorFactory::createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
                                                      const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
                                                      const Statistic::StatisticMetricHash metricHash,
+                                                     const Statistic::SendingPolicyPtr sendingPolicy,
+                                                     const Statistic::TriggerConditionPtr triggerCondition,
                                                      OperatorId id) {
-    return std::make_shared<Statistic::LogicalStatisticWindowOperator>(id, window, statisticDescriptor, metricHash);
+    return std::make_shared<Statistic::LogicalStatisticWindowOperator>(id, window, statisticDescriptor, metricHash, sendingPolicy,
+                                                                      triggerCondition);
 }
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createInferModelOperator(std::string model,

@@ -15,6 +15,7 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_
 
+#include <StatisticIdentifiers.hpp>
 #include <string>
 #include <memory>
 
@@ -28,6 +29,7 @@ using SendingPolicyPtr = std::shared_ptr<SendingPolicy>;
  */
 class SendingPolicy {
   public:
+    explicit SendingPolicy(StatisticDataCodec sinkDataCodec) : sinkDataCodec(sinkDataCodec) {}
 
     /**
      * @brief Checks for equality
@@ -35,6 +37,19 @@ class SendingPolicy {
      * @return True, if equal otherwise false
      */
     virtual bool operator==(const SendingPolicy& rhs) const = 0;
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if NOT equal otherwise false
+     */
+    virtual bool operator!=(const SendingPolicy& rhs) const {return !(*this == rhs); };
+
+    /**
+     * @brief Returns the data type of the statistic sink.
+     * @return Statistic::StatisticDataCodec
+     */
+    virtual StatisticDataCodec getSinkDataCodec() const { return sinkDataCodec; };
 
     /**
      * @brief Checks if the current SendingPolicy is of type SendingPolicyType
@@ -60,6 +75,9 @@ class SendingPolicy {
      * @brief Virtual destructor
      */
     virtual ~SendingPolicy() = default;
+
+  protected:
+    StatisticDataCodec sinkDataCodec;
 };
 }// namespace NES::Statistic
 

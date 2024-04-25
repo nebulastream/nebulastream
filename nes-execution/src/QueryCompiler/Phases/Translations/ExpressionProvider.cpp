@@ -30,21 +30,21 @@
 #include <Execution/Expressions/LogicalExpressions/NegateExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/OrExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/Functions/FunctionExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/Functions/FunctionExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
 namespace NES::QueryCompilation {
 using namespace Runtime::Execution::Expressions;

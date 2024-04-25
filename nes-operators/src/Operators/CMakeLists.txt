@@ -16,6 +16,5 @@ add_source_files(nes-operators
 
 add_subdirectory(Exceptions)
 add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
 add_subdirectory(Serialization)
 add_subdirectory(LogicalOperators)

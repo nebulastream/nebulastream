@@ -24,8 +24,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
@@ -40,8 +40,8 @@
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>

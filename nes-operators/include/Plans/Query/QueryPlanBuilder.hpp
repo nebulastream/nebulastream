@@ -81,12 +81,16 @@ class QueryPlanBuilder {
      * @param window
      * @param statisticDescriptor: Descriptor for the synopsis
      * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
+     * @param sendingPolicy: Policy so when and how to send the data
+     * @param triggerCondition: Policy when and how to call the callback method
      * @param queryPlan the queryPlan the synopsis is added to
      * @return the updated queryPlanPtr
      */
     static QueryPlanPtr addStatisticBuildOperator(Windowing::WindowTypePtr window,
                                                   Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
                                                   Statistic::StatisticMetricHash metricHash,
+                                                  Statistic::SendingPolicyPtr sendingPolicy,
+                                                  Statistic::TriggerConditionPtr triggerCondition,
                                                   QueryPlanPtr queryPlan);
 
     /**

@@ -14,7 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {

@@ -18,9 +18,14 @@ namespace NES::Statistic {
 
 std::string SendingPolicyASAP::toString() const { return "ASAP"; }
 
-SendingPolicyPtr SendingPolicyASAP::create() { return std::make_shared<SendingPolicyASAP>(); }
+SendingPolicyPtr SendingPolicyASAP::create(StatisticDataCodec sinkDataCodec) {
+    return std::make_shared<SendingPolicyASAP>(SendingPolicyASAP(sinkDataCodec));
+}
 
 bool SendingPolicyASAP::operator==(const SendingPolicy& rhs) const {
     return rhs.instanceOf<const SendingPolicyASAP>();
 }
+
+SendingPolicyASAP::SendingPolicyASAP(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec) {}
+
 }// namespace NES::Statistic

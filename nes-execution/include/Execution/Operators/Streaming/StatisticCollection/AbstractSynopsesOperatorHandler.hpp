@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
-#include <StatisticCollection/StatisticKey.hpp>
+#include <Statistics/StatisticKey.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
@@ -36,7 +36,7 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
     AbstractSynopsesOperatorHandler(const uint64_t windowSize,
                                     const uint64_t windowSlide,
                                     const Statistic::SendingPolicyPtr& sendingPolicy,
-                                    const Statistic::AbstractStatisticFormatPtr& statisticFormat,
+                                    const Statistic::StatisticFormatPtr& statisticFormat,
                                     const std::vector<OriginId>& inputOrigins);
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
@@ -81,10 +81,10 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
   private:
     // For now, we simply use our existing statistic store, even though, we only store one type of statistic.
     // This might not be the most efficient, but this way, we have the most flexibility moving forward.
-    std::vector<Statistic::AbstractStatisticStorePtr> operatorStatisticStores;
+    std::vector<Statistic::StatisticStorePtr> operatorStatisticStores;
     SliceAssigner sliceAssigner;
     Statistic::SendingPolicyPtr sendingPolicy;
-    const Statistic::AbstractStatisticFormatPtr statisticFormat;
+    const Statistic::StatisticFormatPtr statisticFormat;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
 };
 

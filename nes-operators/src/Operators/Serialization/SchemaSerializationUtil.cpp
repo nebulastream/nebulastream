@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Operators/Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger/Logger.hpp>

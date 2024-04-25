@@ -63,7 +63,7 @@ namespace NES::Runtime::Execution::Util {
 * @param fieldToBuildCountMinOver
 * @param timestampFieldName
 */
-        void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::AbstractStatisticStorePtr statisticStore,
+        void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
                                          Statistic::StatisticMetricHash metricHash, uint64_t numberOfBitsInKey,
                                          uint64_t windowSize, uint64_t windowSlide, uint64_t width, uint64_t depth,
                                          const std::string& fieldToBuildCountMinOver,
@@ -80,7 +80,7 @@ namespace NES::Runtime::Execution::Util {
 * @param fieldToBuildCountMinOver
 * @param timestampFieldName
 */
-        void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::AbstractStatisticStorePtr statisticStore,
+        void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
                                             Statistic::StatisticMetricHash metricHash, uint64_t windowSize, uint64_t windowSlide,
                                             uint64_t width, const std::string& fieldToBuildCountMinOver,
                                             const std::string& timestampFieldName);

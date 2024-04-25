@@ -33,7 +33,7 @@ class CountMinOperatorHandler : public AbstractSynopsesOperatorHandler {
                                              Statistic::SendingPolicyPtr sendingPolicy,
                                              const uint64_t width,
                                              const uint64_t depth,
-                                             Statistic::AbstractStatisticFormatPtr statisticFormat,
+                                             Statistic::StatisticFormatPtr statisticFormat,
                                              const std::vector<OriginId>& inputOrigins,
                                              const uint64_t numberOfBitsInKey);
 
@@ -46,7 +46,7 @@ class CountMinOperatorHandler : public AbstractSynopsesOperatorHandler {
                             Statistic::SendingPolicyPtr sendingPolicy,
                             const uint64_t width,
                             const uint64_t depth,
-                            Statistic::AbstractStatisticFormatPtr statisticFormat,
+                            Statistic::StatisticFormatPtr statisticFormat,
                             const std::vector<OriginId>& inputOrigins,
                             const uint64_t numberOfBitsInKey);
 

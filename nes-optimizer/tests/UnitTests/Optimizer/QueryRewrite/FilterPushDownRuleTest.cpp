@@ -26,10 +26,10 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>

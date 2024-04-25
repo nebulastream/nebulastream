@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
-#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES::Statistic {
 std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
@@ -45,9 +47,9 @@ std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const Characteris
     for (const auto& statisticId : newStatisticIds) {
         StatisticKey newKey(metric, statisticId);
         statisticKeysForThisTrackRequest.emplace_back(newKey);
-        if (!statisticRegistry.contains(newKey)) {
+        if (!statisticRegistry.contains(newKey.hash())) {
             StatisticInfo statisticInfo(window, triggerCondition, callBack, queryId, metric);
-            statisticRegistry.insert(newKey, statisticInfo);
+            statisticRegistry.insert(newKey.hash(), statisticInfo);
         }
     }
 
@@ -57,7 +59,7 @@ std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const Characteris
 
 std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
                                                                const Windowing::WindowTypePtr& window) {
-    return trackStatistic(characteristic, window, SENDING_LAZY);
+    return trackStatistic(characteristic, window, SENDING_LAZY(StatisticDataCodec::DEFAULT));
 }
 
 std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
@@ -74,13 +76,13 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
                                                    const bool&,// #4682 will implement this
                                                    std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) {
     // 1. Check if there exist a statistic for this key
-    if (!statisticRegistry.contains(statisticKey)) {
+    if (!statisticRegistry.contains(statisticKey.hash())) {
         NES_INFO("Could not find a statistic collection query for StatisticKey={}", statisticKey.toString());
         return {};
     }
 
     // 2. Check if the statistic is tracked with the same granularity as wished
-    const auto statisticInfo = statisticRegistry.getStatisticInfoWithGranularity(statisticKey, granularity);
+    const auto statisticInfo = statisticRegistry.getStatisticInfoWithGranularity(statisticKey.hash(), granularity);
     if (!statisticInfo.has_value()) {
         NES_INFO("Could not find a statistic collection query for StatisticKey={} with granularity={}",
                  statisticKey.toString(),
@@ -89,13 +91,15 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
     }
 
     // 3. Getting all probe requests of nodes that we have to query for the statistic
-    StatisticProbeRequest statisticProbeRequest(statisticKey.hash(), startTs, endTs, probeExpression);
-    const auto allProbeRequests = statisticProbeHandler->getProbeRequests(statisticRegistry, statisticProbeRequest, *topology);
+    StatisticProbeRequest statisticProbeRequest(statisticKey.hash(), startTs, endTs, granularity, probeExpression);
+    const auto allProbeRequests = statisticProbeHandler->generateProbeRequests(statisticRegistry, *statisticCache, statisticProbeRequest, topology->getAllRegisteredNodeIds());
 
     // 4. Receive all statistics by sending the probe requests to the nodes
     ProbeResult<> probeResult;
     for (const auto& probeRequest : allProbeRequests) {
-        const auto statisticValues = workerRpcClient->probeStatistics(probeRequest);
+        const auto topologyNode = topology->getCopyOfTopologyNodeWithId(probeRequest.workerId);
+        const auto gRPCAddress = topologyNode->getIpAddress() + ":" + std::to_string(topologyNode->getGrpcPort());
+        const auto statisticValues = workerRpcClient->probeStatistics(gRPCAddress, probeRequest);
         for (const auto& stat : statisticValues) {
             probeResult.addStatisticValue(stat);
 
@@ -126,15 +130,15 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
 }
 
 QueryId StatisticCoordinator::getStatisticQueryId(const StatisticKey& statisticKey) const {
-    return statisticRegistry.getQueryId(statisticKey);
+    return statisticRegistry.getQueryId(statisticKey.hash());
 }
 
 StatisticCoordinator::StatisticCoordinator(const RequestHandlerServicePtr& requestHandlerService,
-                                           const AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
+                                           const StatisticQueryGeneratorPtr& statisticQueryGenerator,
                                            const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                            const TopologyPtr& topology)
     : requestHandlerService(requestHandlerService), statisticQueryGenerator(statisticQueryGenerator),
-      statisticProbeHandler(DefaultStatisticProbeHandler::create()), statisticCache(DefaultStatisticCache::create()),
+      statisticProbeHandler(DefaultStatisticProbeGenerator::create()), statisticCache(DefaultStatisticCache::create()),
       topology(topology), queryCatalog(queryCatalog), workerRpcClient(WorkerRPCClient::create()) {}
 
 StatisticCoordinator::~StatisticCoordinator() = default;

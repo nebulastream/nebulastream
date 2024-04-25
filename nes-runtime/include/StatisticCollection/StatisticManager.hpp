@@ -15,7 +15,7 @@
 #ifndef NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICMANAGER_HPP_
 #define NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICMANAGER_HPP_
 
-#include <StatisticCollection/StatisticRequests.hpp>
+#include <Statistics/StatisticRequests.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 
 namespace NES::Statistic {
@@ -25,16 +25,16 @@ using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
 
 class StatisticManager {
   public:
-    static StatisticManagerPtr create(AbstractStatisticStorePtr statisticStore);
+    static StatisticManagerPtr create(StatisticStorePtr statisticStore);
 
     std::vector<StatisticValue<>> getStatistics(const StatisticProbeRequest& probeRequest);
 
-    AbstractStatisticStorePtr getStatisticStore() const;
+    StatisticStorePtr getStatisticStore() const;
 
   private:
-    explicit StatisticManager(const AbstractStatisticStorePtr& statisticStore);
+    explicit StatisticManager(const StatisticStorePtr& statisticStore);
 
-    AbstractStatisticStorePtr statisticStore;
+    StatisticStorePtr statisticStore;
 };
 
 }// namespace NES::Statistic

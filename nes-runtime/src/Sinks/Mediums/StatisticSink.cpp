@@ -57,8 +57,8 @@ StatisticSink::StatisticSink(const SinkFormatPtr& sinkFormat,
                              SharedQueryId sharedQueryId,
                              DecomposedQueryPlanId decomposedQueryPlanId,
                              uint64_t numberOfOrigins,
-                             AbstractStatisticStorePtr statisticStore,
-                             AbstractStatisticFormatPtr statisticSinkFormat)
+                             StatisticStorePtr statisticStore,
+                             StatisticFormatPtr statisticSinkFormat)
     : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
       statisticStore(std::move(statisticStore)), statisticSinkFormat(std::move(statisticSinkFormat)) {}
 }// namespace NES::Statistic

@@ -16,9 +16,9 @@
 #define NES_NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
 
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <cstdint>
 #include <tuple>
 

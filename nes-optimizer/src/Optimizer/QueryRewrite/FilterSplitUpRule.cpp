@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>

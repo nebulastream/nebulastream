@@ -13,7 +13,8 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <utility>

@@ -15,24 +15,24 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
+#include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
+#include <StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/BufferRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Cardinality.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
 
-AbstractStatisticQueryGeneratorPtr DefaultStatisticQueryGenerator::create() {
+StatisticQueryGeneratorPtr DefaultStatisticQueryGenerator::create() {
     return std::make_shared<DefaultStatisticQueryGenerator>();
 }
 
@@ -45,35 +45,32 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
     // Creating the synopsisDescriptor depending on the metric type
     const auto metricType = characteristic.getType();
     WindowStatisticDescriptorPtr statisticDescriptor;
-    StatisticSinkFormatType sinkFormatType;
+    StatisticSynopsisType synopsisType;
     if (metricType->instanceOf<Selectivity>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
+        synopsisType = StatisticSynopsisType::COUNT_MIN;
     } else if (metricType->instanceOf<IngestionRate>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
+        synopsisType = StatisticSynopsisType::COUNT_MIN;
     } else if (metricType->instanceOf<BufferRate>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
+        synopsisType = StatisticSynopsisType::COUNT_MIN;
     } else if (metricType->instanceOf<Cardinality>()) {
         statisticDescriptor = HyperLogLogDescriptor::create(metricType->getField());
-        sinkFormatType = StatisticSinkFormatType::HLL;
+        synopsisType = StatisticSynopsisType::HLL;
     } else if (metricType->instanceOf<MinVal>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
+        synopsisType = StatisticSynopsisType::COUNT_MIN;
     } else {
         NES_NOT_IMPLEMENTED();
     }
-
-    // Setting the trigger condition and sending policy
-    statisticDescriptor->setTriggerCondition(triggerCondition);
-    statisticDescriptor->setSendingPolicy(sendingPolicy);
 
     /*
      * For a workload characteristic, we have to copy all operators before the operator we are interested in.
      * This way, we create an additional query but, as we are copying the operators beforehand, we can use query merging
      * to only have one running query
      */
+    const auto statisticDataCodec = sendingPolicy->getSinkDataCodec();
     if (characteristic.instanceOf<WorkloadCharacteristic>()) {
         const auto workloadCharacteristic = characteristic.as<const WorkloadCharacteristic>();
         const auto queryId = workloadCharacteristic->getQueryId();
@@ -86,9 +83,11 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
         // Creating statistic operator and statistic sink
         auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(std::move(window),
                                                                                            std::move(statisticDescriptor),
-                                                                                           metricType->hash());
+                                                                                           metricType->hash(),
+                                                                                           sendingPolicy,
+                                                                                           triggerCondition);
         auto statisticSinkOperator =
-            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(sinkFormatType), INVALID_WORKER_NODE_ID);
+            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec), INVALID_WORKER_NODE_ID);
         statisticBuildOperator->addParent(statisticSinkOperator);
 
         // As we are operating on a queryPlanCopy, we can replace the operatorUnderTest with a statistic build operator
@@ -117,8 +116,8 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
         }
 
         const auto query = Query::from(logicalSourceName)
-                               .buildStatistic(window, statisticDescriptor, metricType->hash())
-                               .sink(StatisticSinkDescriptor::create(sinkFormatType));
+                               .buildStatistic(window, statisticDescriptor, metricType->hash(), sendingPolicy, triggerCondition)
+                               .sink(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec));
         NES_DEBUG("Created query: {}", query.getQueryPlan()->toString());
         return query;
     }

@@ -16,11 +16,9 @@
 #define NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_STATISTICSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <StatisticIdentifiers.hpp>
 
 namespace NES::Statistic {
-
-// Necessary for choosing the correct sink format
-enum class StatisticSinkFormatType : uint8_t { COUNT_MIN, HLL };
 
 /**
  * @brief Descriptor for the StatisticSink. Merely stores the StatisticSinkFormatType
@@ -34,15 +32,22 @@ class StatisticSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr create(StatisticSinkFormatType sinkFormatType, uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec,
+                                    uint64_t numberOfOrigins = 1);
 
     std::string toString() const override;
     bool equal(const SinkDescriptorPtr& other) override;
-    StatisticSinkFormatType getSinkFormatType() const;
+    StatisticSynopsisType getSinkFormatType() const;
+    StatisticDataCodec getSinkDataCodec() const;
 
   private:
-    explicit StatisticSinkDescriptor(StatisticSinkFormatType sinkFormatType, uint64_t numberOfOrigins);
-    StatisticSinkFormatType sinkFormatType;
+    explicit StatisticSinkDescriptor(StatisticSynopsisType sinkFormatType,
+                                     StatisticDataCodec sinkDataCodec,
+                                     uint64_t numberOfOrigins);
+
+  private:
+    StatisticSynopsisType sinkFormatType;
+    StatisticDataCodec sinkDataCodec;
 };
 
 }// namespace NES::Statistic

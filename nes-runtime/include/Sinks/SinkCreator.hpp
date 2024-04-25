@@ -254,6 +254,7 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
  * @param decomposedQueryPlanId
  * @param numberOfOrigins
  * @param sinkFormatType
+ * @param sinkDataCodec
  * @return DataSinkPtr
  */
 DataSinkPtr createStatisticSink(const SchemaPtr& schema,
@@ -262,7 +263,8 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
                                 SharedQueryId sharedQueryId,
                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                 uint64_t numberOfOrigins,
-                                Statistic::StatisticSinkFormatType sinkFormatType);
+                                Statistic::StatisticSynopsisType sinkFormatType,
+                                Statistic::StatisticDataCodec sinkDataCodec);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

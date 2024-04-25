@@ -17,4 +17,5 @@ add_source_files(nes-common
         CoordinatesOutOfRangeException.cpp
         InvalidArgumentException.cpp
         RequestExecutionException.cpp
+        InvalidFieldException.cpp
 )

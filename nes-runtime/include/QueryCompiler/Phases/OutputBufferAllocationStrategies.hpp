@@ -20,7 +20,7 @@ namespace NES::QueryCompilation {
 enum class OutputBufferAssignmentStrategy : uint8_t {
     // this strategy copies each field individually
     FIELD_COPY,
-    // This strategy copies the whole record with an singe assignment
+    // This strategy copies the whole record with a single assignment
     RECORD_COPY
 };
 

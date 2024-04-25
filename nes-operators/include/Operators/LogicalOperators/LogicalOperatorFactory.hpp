@@ -15,9 +15,9 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
 
-#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/Operator.hpp>
@@ -103,6 +103,8 @@ class LogicalOperatorFactory {
      * @param window: Window properties
      * @param statisticDescriptor: Descriptor on how to build the statistic
      * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
+     * @param sendingPolicy: Policy so when and how to send the data
+     * @param triggerCondition: Policy when and how to call the callback method
      * @param id: The id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorNodePtr
      */
@@ -110,6 +112,8 @@ class LogicalOperatorFactory {
     createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
                                  const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
                                  const Statistic::StatisticMetricHash metricHash,
+                                 const Statistic::SendingPolicyPtr sendingPolicy,
+                                 const Statistic::TriggerConditionPtr triggerCondition,
                                  OperatorId id = getNextOperatorId());
 
     /**

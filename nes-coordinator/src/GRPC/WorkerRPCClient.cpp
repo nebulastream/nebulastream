@@ -18,12 +18,10 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Statistics/StatisticValue.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -484,8 +482,8 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
 }
 
 std::vector<Statistic::StatisticValue<>>
-WorkerRPCClient::probeStatistics(const Statistic::StatisticProbeRequestGRPC& probeRequest) {
-    NES_DEBUG("Requesting statistics from {}", probeRequest.address);
+WorkerRPCClient::probeStatistics(const std::string& address, const Statistic::StatisticProbeRequestGRPC& probeRequest) {
+    NES_DEBUG("Requesting statistics from {}", address);
 
     // 1. Building the request
     ClientContext context;
@@ -497,7 +495,7 @@ WorkerRPCClient::probeStatistics(const Statistic::StatisticProbeRequestGRPC& pro
     ExpressionSerializationUtil::serializeExpression(probeRequest.probeExpression.getProbeExpression(), expressionDetails);
 
     // 2. Sending the request and building a reply
-    auto chan = grpc::CreateChannel(probeRequest.address, grpc::InsecureChannelCredentials());
+    auto chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     auto workerStub = WorkerRPCService::NewStub(chan);
     ProbeStatisticsReply reply;
     auto status = workerStub->ProbeStatistics(&context, request, &reply);

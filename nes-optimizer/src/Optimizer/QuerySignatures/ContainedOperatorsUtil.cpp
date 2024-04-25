@@ -15,8 +15,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -26,10 +26,10 @@
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>

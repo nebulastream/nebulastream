@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -66,21 +67,21 @@
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeUnit.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeUnit.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/SlidingWindow.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
@@ -458,9 +459,10 @@ LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(const PhysicalOpera
     const auto depth = physicalCountMinBuild.getDepth();
     const auto metricHash = physicalCountMinBuild.getMetricHash();
     const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
-    const auto statisticFormat = Statistic::CountMinStatisticFormat::create(outputMemoryLayout);
     const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
     const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
+    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
+    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalCountMinBuild.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::COUNT_MIN, sinkDataCodec);
 
     // 2. Getting the windowSize, windowSlide, and timestampFieldName.
     const auto windowType = physicalCountMinBuild.getWindowType()->as<Windowing::TimeBasedWindowType>();
@@ -493,14 +495,14 @@ LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(const PhysicalOp
     using namespace Runtime::Execution::Operators;
 
     // 1. Getting all the necessary variables for the operator and its handler
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
     const auto fieldToTrackFieldName = physicalHLLBuildOperator.getNameOfFieldToTrack();
     const auto width = physicalHLLBuildOperator.getWidth();
     const auto metricHash = physicalHLLBuildOperator.getMetricHash();
     const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalHLLBuildOperator.getOutputSchema(), bufferSize);
-    const auto statisticFormat = Statistic::HyperLogLogStatisticFormat::create(outputMemoryLayout);
     const auto inputOriginIds = physicalHLLBuildOperator.getInputOriginIds();
     const auto sendingPolicy = physicalHLLBuildOperator.getSendingPolicy();
+    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
+    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalHLLBuildOperator.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::HLL, sinkDataCodec);
 
     // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
     const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
