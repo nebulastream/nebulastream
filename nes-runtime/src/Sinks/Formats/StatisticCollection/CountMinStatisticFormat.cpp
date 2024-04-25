@@ -13,11 +13,11 @@
 */
 
 #include <API/Schema.hpp>
-#include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <utility>
@@ -26,8 +26,8 @@
 namespace NES::Statistic {
 
 StatisticFormatPtr CountMinStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                           std::function<std::string (const std::string&)> postProcessingData,
-                                                           std::function<std::string (const std::string&)> preProcessingData) {
+                                                   std::function<std::string(const std::string&)> postProcessingData,
+                                                   std::function<std::string(const std::string&)> preProcessingData) {
     const auto qualifierNameWithSeparator = memoryLayout->getSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     return std::make_shared<CountMinStatisticFormat>(
         CountMinStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData));
@@ -35,8 +35,8 @@ StatisticFormatPtr CountMinStatisticFormat::create(Runtime::MemoryLayouts::Memor
 
 CountMinStatisticFormat::CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
                                                  Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                 std::function<std::string (const std::string&)> postProcessingData,
-                                                 std::function<std::string (const std::string&)> preProcessingData)
+                                                 std::function<std::string(const std::string&)> postProcessingData,
+                                                 std::function<std::string(const std::string&)> preProcessingData)
     : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData),
       widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
       depthFieldName(qualifierNameWithSeparator + DEPTH_FIELD_NAME),
@@ -80,7 +80,8 @@ std::vector<HashStatisticPair> CountMinStatisticFormat::readStatisticsFromBuffer
 
         // Reading the CountMinData that is stored as a string
         const auto countMinDataChildIdx = *reinterpret_cast<uint32_t*>(buffer.getBuffer() + countMinDataFieldOffset.value());
-        const auto countMinDataString = postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, countMinDataChildIdx));
+        const auto countMinDataString =
+            postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, countMinDataChildIdx));
 
         // Creating now a CountMinStatistic from this
         auto countMinStatistic = CountMinStatistic::create(Windowing::TimeMeasure(startTs),

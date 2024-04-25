@@ -21,10 +21,10 @@
 #include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Measures/TimeCharacteristic.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 

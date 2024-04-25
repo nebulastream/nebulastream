@@ -14,12 +14,12 @@
 
 #include <API/Schema.hpp>
 #include <Exceptions/RpcException.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Statistics/StatisticValue.hpp>
 #include <Util/Mobility/GeoLocation.hpp>

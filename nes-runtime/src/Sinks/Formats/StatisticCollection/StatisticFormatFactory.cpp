@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Statistic {
-StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema, uint64_t bufferSize,
-                                         StatisticSynopsisType type,
-                                         StatisticDataCodec sinkDataCodec) {
+StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema,
+                                                            uint64_t bufferSize,
+                                                            StatisticSynopsisType type,
+                                                            StatisticDataCodec sinkDataCodec) {
     // 1. We decide what memoryLayout we should use
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     switch (schema->getLayoutType()) {
@@ -36,15 +37,19 @@ StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema, ui
         }
         default: NES_NOT_IMPLEMENTED();
     }
-    
+
     // 2. We decide how the post- and preprocessing functions should be, i.e., do we perform some compression for example
-    std::function<std::string (const std::string&)> postProcessingData;
-    std::function<std::string (const std::string&)> preProcessingData;
+    std::function<std::string(const std::string&)> postProcessingData;
+    std::function<std::string(const std::string&)> preProcessingData;
 
     switch (sinkDataCodec) {
         case StatisticDataCodec::DEFAULT: {
-            postProcessingData = [](const std::string& data) { return data; };
-            preProcessingData = [](const std::string& data) { return data; };
+            postProcessingData = [](const std::string& data) {
+                return data;
+            };
+            preProcessingData = [](const std::string& data) {
+                return data;
+            };
             break;
         }
     }
@@ -58,15 +63,15 @@ StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema, ui
 
 StatisticFormatPtr
 StatisticFormatFactory::createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
-                                             std::function<std::string (const std::string&)> postProcessingData,
-                                             std::function<std::string (const std::string&)> preProcessingData) {
+                                             std::function<std::string(const std::string&)> postProcessingData,
+                                             std::function<std::string(const std::string&)> preProcessingData) {
     return CountMinStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
 }
 
 StatisticFormatPtr
 StatisticFormatFactory::createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
-                                                std::function<std::string (const std::string&)> postProcessingData,
-                                                std::function<std::string (const std::string&)> preProcessingData) {
+                                                std::function<std::string(const std::string&)> postProcessingData,
+                                                std::function<std::string(const std::string&)> preProcessingData) {
     return HyperLogLogStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
 }
 

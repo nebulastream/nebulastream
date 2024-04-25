@@ -92,7 +92,10 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
 
     // 3. Getting all probe requests of nodes that we have to query for the statistic
     StatisticProbeRequest statisticProbeRequest(statisticKey.hash(), startTs, endTs, granularity, probeExpression);
-    const auto allProbeRequests = statisticProbeHandler->generateProbeRequests(statisticRegistry, *statisticCache, statisticProbeRequest, topology->getAllRegisteredNodeIds());
+    const auto allProbeRequests = statisticProbeHandler->generateProbeRequests(statisticRegistry,
+                                                                               *statisticCache,
+                                                                               statisticProbeRequest,
+                                                                               topology->getAllRegisteredNodeIds());
 
     // 4. Receive all statistics by sending the probe requests to the nodes
     ProbeResult<> probeResult;

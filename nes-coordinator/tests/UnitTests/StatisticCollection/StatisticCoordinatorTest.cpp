@@ -15,9 +15,9 @@
 #include <BaseIntegrationTest.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
 #include <Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <memory>

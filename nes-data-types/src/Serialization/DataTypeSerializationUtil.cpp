@@ -19,8 +19,8 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <SerializableDataType.pb.h>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <vector>
 namespace NES {

@@ -15,8 +15,8 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
 #define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Statistics/StatisticKey.hpp>
 #include <Statistics/Statistic.hpp>
+#include <Statistics/StatisticKey.hpp>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -39,13 +39,13 @@ class AbstractStatisticFormat {
   public:
     explicit AbstractStatisticFormat(const Schema& schema,
                                      Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                     std::function<std::string (const std::string&)> postProcessingData,
-                                     std::function<std::string (const std::string&)> preProcessingData);
+                                     std::function<std::string(const std::string&)> postProcessingData,
+                                     std::function<std::string(const std::string&)> preProcessingData);
 
     explicit AbstractStatisticFormat(const std::string& qualifierNameWithSeparator,
                                      Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                     std::function<std::string (const std::string&)> postProcessingData,
-                                     std::function<std::string (const std::string&)> preProcessingData);
+                                     std::function<std::string(const std::string&)> postProcessingData,
+                                     std::function<std::string(const std::string&)> preProcessingData);
 
     /**
      * @brief Reads the statistics from the buffer
@@ -75,8 +75,8 @@ class AbstractStatisticFormat {
     const std::string statisticHashFieldName;
     const std::string statisticTypeFieldName;
     const std::string observedTuplesFieldName;
-    const std::function<std::string (const std::string&)> postProcessingData;
-    const std::function<std::string (const std::string&)> preProcessingData;
+    const std::function<std::string(const std::string&)> postProcessingData;
+    const std::function<std::string(const std::string&)> preProcessingData;
 };
 }// namespace NES::Statistic
 

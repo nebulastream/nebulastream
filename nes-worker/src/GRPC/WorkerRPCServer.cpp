@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>

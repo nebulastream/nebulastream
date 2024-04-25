@@ -20,13 +20,13 @@
 #include <API/Windowing.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

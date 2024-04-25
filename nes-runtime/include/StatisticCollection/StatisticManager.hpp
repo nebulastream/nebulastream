@@ -15,8 +15,8 @@
 #ifndef NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICMANAGER_HPP_
 #define NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICMANAGER_HPP_
 
-#include <Statistics/StatisticRequests.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
+#include <Statistics/StatisticRequests.hpp>
 
 namespace NES::Statistic {
 

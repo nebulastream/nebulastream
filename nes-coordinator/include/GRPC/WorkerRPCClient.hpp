@@ -256,7 +256,8 @@ class WorkerRPCClient {
      * @param probeRequest
      * @return Vector of StatisticValues
      */
-    std::vector<Statistic::StatisticValue<>> probeStatistics(const std::string& address, const Statistic::StatisticProbeRequestGRPC& probeRequest);
+    std::vector<Statistic::StatisticValue<>> probeStatistics(const std::string& address,
+                                                             const Statistic::StatisticProbeRequestGRPC& probeRequest);
 
   private:
     WorkerRPCClient() = default;
