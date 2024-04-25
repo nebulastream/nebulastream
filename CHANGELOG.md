@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.105](https://github.com/nebulastream/nebulastream/tree/v0.6.105) (2024-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.104...v0.6.105)
+
+**Implemented enhancements:**
+
+- \[TASK\] Creating additional modules [\#4826](https://github.com/nebulastream/nebulastream/issues/4826)
+
 ## [v0.6.104](https://github.com/nebulastream/nebulastream/tree/v0.6.104) (2024-04-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.103...v0.6.104)
