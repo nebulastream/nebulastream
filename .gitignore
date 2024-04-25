@@ -13,6 +13,7 @@
 # Build files
 build
 cmake-build*
+CMakeUserPresets.json
 debug*
 
 # Deb file
@@ -24,6 +25,7 @@ venv
 
 # Nes files
 .z3-trace
+tpch_cached_tables
 
 # Visual Studio Code Folders
 .cache
