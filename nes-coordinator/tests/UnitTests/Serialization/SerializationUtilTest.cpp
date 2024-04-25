@@ -29,6 +29,7 @@
 #include <Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Expressions/CaseExpressionNode.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
@@ -39,6 +40,7 @@
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Expressions/WhenExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
@@ -57,24 +59,22 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Types/ThresholdWindow.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <google/protobuf/util/json_util.h>
@@ -399,7 +399,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
     {
         // Testing for all StatisticSinkFormatType, if we can serialize a statistic sink
-        constexpr auto numberOfOrigins = 42; // just some arbitrary number
+        constexpr auto numberOfOrigins = 42;// just some arbitrary number
         for (auto sinkFormatType : magic_enum::enum_values<Statistic::StatisticSynopsisType>()) {
             for (auto sinkDataCodec : magic_enum::enum_values<Statistic::StatisticDataCodec>()) {
                 auto sink = Statistic::StatisticSinkDescriptor::create(sinkFormatType, sinkDataCodec, numberOfOrigins);
@@ -720,9 +720,11 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
                 auto metric = Statistic::IngestionRate::create();
                 auto statisticDescriptor = Statistic::CountMinDescriptor::create(metric->getField());
                 auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-                auto statisticBuildOperator =
-                    LogicalOperatorFactory::createStatisticBuildOperator(windowType, statisticDescriptor, metric->hash(),
-                                                                         sendingPolicy, triggerCondition);
+                auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
+                                                                                                   statisticDescriptor,
+                                                                                                   metric->hash(),
+                                                                                                   sendingPolicy,
+                                                                                                   triggerCondition);
                 statisticBuildOperator->setStatisticId(getNextStatisticId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
                 auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);

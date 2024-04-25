@@ -15,12 +15,12 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICINTERFACE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICINTERFACE_HPP_
 
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
-#include <Statistics/StatisticValue.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Statistics/StatisticKey.hpp>
+#include <Statistics/StatisticValue.hpp>
 #include <functional>
 
 namespace NES::Statistic {

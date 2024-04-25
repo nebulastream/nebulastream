@@ -15,9 +15,6 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
-#include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
-#include <StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
@@ -27,14 +24,15 @@
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
+#include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
+#include <StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
 
-StatisticQueryGeneratorPtr DefaultStatisticQueryGenerator::create() {
-    return std::make_shared<DefaultStatisticQueryGenerator>();
-}
+StatisticQueryGeneratorPtr DefaultStatisticQueryGenerator::create() { return std::make_shared<DefaultStatisticQueryGenerator>(); }
 
 Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic& characteristic,
                                                            const Windowing::WindowTypePtr& window,
@@ -87,7 +85,8 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
                                                                                            sendingPolicy,
                                                                                            triggerCondition);
         auto statisticSinkOperator =
-            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec), INVALID_WORKER_NODE_ID);
+            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec),
+                                                       INVALID_WORKER_NODE_ID);
         statisticBuildOperator->addParent(statisticSinkOperator);
 
         // As we are operating on a queryPlanCopy, we can replace the operatorUnderTest with a statistic build operator

@@ -13,9 +13,9 @@
 */
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>

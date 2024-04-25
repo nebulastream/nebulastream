@@ -14,22 +14,23 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Statistics/Synopses/CountMinStatistic.hpp>
-#include <Statistics/Synopses/HyperLogLogStatistic.hpp>
-#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <StatisticIdentifiers.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
+#include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
 
 namespace NES {
 
-class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<std::tuple<int, Statistic::StatisticDataCodec>> {
+class StatisticSinkTest : public Testing::BaseIntegrationTest,
+                          public ::testing::WithParamInterface<std::tuple<int, Statistic::StatisticDataCodec>> {
   public:
     int numberOfStatistics;
     Statistic::StatisticDataCodec statisticDataCodec;
@@ -130,7 +131,8 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
                                                                                    Statistic::StatisticSynopsisType::COUNT_MIN,
                                                                                    statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(),
+                       expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
@@ -179,7 +181,8 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
                                                                                    Statistic::StatisticSynopsisType::HLL,
                                                                                    statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(),
+                       expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
@@ -267,14 +270,12 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
 
 INSTANTIATE_TEST_CASE_P(testStatisticSink,
                         StatisticSinkTest,
-                        ::testing::Combine(
-                            ::testing::Values(1, 2, 10, 5000), // No. statistics
-                            ::testing::ValuesIn(            // All possible statistic sink datatype
-                                magic_enum::enum_values<Statistic::StatisticDataCodec>())
-                            ),
+                        ::testing::Combine(::testing::Values(1, 2, 10, 5000),// No. statistics
+                                           ::testing::ValuesIn(              // All possible statistic sink datatype
+                                               magic_enum::enum_values<Statistic::StatisticDataCodec>())),
                         [](const testing::TestParamInfo<StatisticSinkTest::ParamType>& info) {
                             const auto param = info.param;
-                            return std::to_string(std::get<0>(param)) + "_Statistics" +
-                                std::string(magic_enum::enum_name(std::get<1>(param)));
+                            return std::to_string(std::get<0>(param)) + "_Statistics"
+                                + std::string(magic_enum::enum_name(std::get<1>(param)));
                         });
 }// namespace NES

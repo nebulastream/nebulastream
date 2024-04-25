@@ -27,8 +27,8 @@ class CountMinStatisticFormat : public AbstractStatisticFormat {
     static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                             std::function<std::string (const std::string&)> postProcessingData,
-                                             std::function<std::string (const std::string&)> preProcessingData);
+                                     std::function<std::string(const std::string&)> postProcessingData,
+                                     std::function<std::string(const std::string&)> preProcessingData);
 
     std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) override;
 
@@ -39,9 +39,10 @@ class CountMinStatisticFormat : public AbstractStatisticFormat {
                                                                  Runtime::BufferManager& bufferManager) override;
 
   private:
-    CountMinStatisticFormat(const std::string& qualifierNameWithSeparator, Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                            std::function<std::string (const std::string&)> postProcessingData,
-                            std::function<std::string (const std::string&)> preProcessingData);
+    CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
+                            Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                            std::function<std::string(const std::string&)> postProcessingData,
+                            std::function<std::string(const std::string&)> preProcessingData);
 
     const std::string widthFieldName;
     const std::string depthFieldName;

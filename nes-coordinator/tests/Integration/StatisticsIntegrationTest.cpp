@@ -19,8 +19,8 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -28,11 +28,11 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
-#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtils.hpp>

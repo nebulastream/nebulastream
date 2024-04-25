@@ -15,9 +15,9 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Types/ThresholdWindow.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>

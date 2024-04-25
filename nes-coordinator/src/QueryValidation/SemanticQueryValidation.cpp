@@ -16,8 +16,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>

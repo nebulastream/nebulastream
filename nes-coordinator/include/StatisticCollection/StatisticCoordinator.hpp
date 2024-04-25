@@ -15,15 +15,15 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
 #include <GRPC/WorkerRPCClient.hpp>
-#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
+#include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <StatisticCollection/StatisticInterface.hpp>
-#include <Statistics/StatisticKey.hpp>
 #include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
-#include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
+#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <Statistics/StatisticKey.hpp>
 #include <functional>
 
 namespace NES::Statistic {

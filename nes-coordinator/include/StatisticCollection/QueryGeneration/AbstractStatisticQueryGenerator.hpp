@@ -17,9 +17,9 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
+#include <StatisticCollection/Characteristic/Characteristic.hpp>
 
 namespace NES::Statistic {
 
