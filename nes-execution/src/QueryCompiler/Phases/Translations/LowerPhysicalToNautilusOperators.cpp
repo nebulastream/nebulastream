@@ -458,11 +458,11 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
     const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
     const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
-    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
+    const auto statisticDataCodec = sendingPolicy->getStatisticDataCodec();
     const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalCountMinBuild.getOutputSchema(),
                                                                                      bufferSize,
                                                                                      Statistic::StatisticSynopsisType::COUNT_MIN,
-                                                                                     sinkDataCodec);
+                                                                                     statisticDataCodec);
 
     // 2. Getting the windowSize, windowSlide, and timestampFieldName.
     const auto windowType = physicalCountMinBuild.getWindowType()->as<Windowing::TimeBasedWindowType>();
@@ -505,11 +505,11 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalHLLBuildOperator.getOutputSchema(), bufferSize);
     const auto inputOriginIds = physicalHLLBuildOperator.getInputOriginIds();
     const auto sendingPolicy = physicalHLLBuildOperator.getSendingPolicy();
-    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
+    const auto statisticDataCodec = sendingPolicy->getStatisticDataCodec();
     const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalHLLBuildOperator.getOutputSchema(),
                                                                                      bufferSize,
                                                                                      Statistic::StatisticSynopsisType::HLL,
-                                                                                     sinkDataCodec);
+                                                                                     statisticDataCodec);
 
     // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
     const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();

@@ -68,7 +68,7 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
      * This way, we create an additional query but, as we are copying the operators beforehand, we can use query merging
      * to only have one running query
      */
-    const auto statisticDataCodec = sendingPolicy->getSinkDataCodec();
+    const auto statisticDataCodec = sendingPolicy->getStatisticDataCodec();
     if (characteristic.instanceOf<WorkloadCharacteristic>()) {
         const auto workloadCharacteristic = characteristic.as<const WorkloadCharacteristic>();
         const auto queryId = workloadCharacteristic->getQueryId();

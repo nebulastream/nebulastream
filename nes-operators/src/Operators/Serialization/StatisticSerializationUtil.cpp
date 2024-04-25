@@ -26,7 +26,7 @@
 namespace NES {
 void StatisticSerializationUtil::serializeSendingPolicy(const Statistic::SendingPolicy& sendingPolicy,
                                                         SendingPolicyMessage& sendingPolicyMessage) {
-    sendingPolicyMessage.set_codec((SendingPolicyMessage_StatisticDataCodec) sendingPolicy.getSinkDataCodec());
+    sendingPolicyMessage.set_codec((SendingPolicyMessage_StatisticDataCodec) sendingPolicy.getStatisticDataCodec());
     if (sendingPolicy.instanceOf<const Statistic::SendingPolicyAdaptive>()) {
         sendingPolicyMessage.mutable_details()->PackFrom(SendingPolicyMessage_SendingPolicyAdaptive());
     } else if (sendingPolicy.instanceOf<const Statistic::SendingPolicyASAP>()) {
