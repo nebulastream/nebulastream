@@ -48,15 +48,15 @@ class NLJBuildPipelineExecutionContext : public PipelineExecutionContext {
   public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID,// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef) {
-            },
-            [](TupleBuffer&) {
-            },
-            {nljOperatorHandler}) {}
+              INVALID_PIPELINE_ID,             // mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef) {
+              },
+              [](TupleBuffer&) {
+              },
+              {nljOperatorHandler}) {}
 };
 
 class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
@@ -64,17 +64,17 @@ class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
     std::vector<TupleBuffer> emittedBuffers;
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID,// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef) {
-                //                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            [](TupleBuffer&) {
-                //                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            {nljOperatorHandler}) {}
+              INVALID_PIPELINE_ID,             // mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef) {
+                  //                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              [](TupleBuffer&) {
+                  //                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              {nljOperatorHandler}) {}
 };
 
 class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
@@ -104,8 +104,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
 
         leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
-        rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")
-                          ->updateSourceName("test2");
+        rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test2");
 
         joinFieldNameLeft = leftSchema->get(1)->getName();
         joinFieldNameRight = rightSchema->get(1)->getName();

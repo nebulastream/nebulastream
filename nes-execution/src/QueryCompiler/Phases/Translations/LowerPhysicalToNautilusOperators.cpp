@@ -445,16 +445,19 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     NES_NOT_IMPLEMENTED();
 }
 
-Runtime::Execution::Operators::ExecutableOperatorPtr
-LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
-                                                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-                                                             uint64_t bufferSize) {
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(
+    const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+    uint64_t bufferSize) {
     using namespace Runtime::Execution::Operators;
 
     // 1. Getting all the necessary variables for the operator and its handler
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
     const auto fieldToTrackFieldName = physicalCountMinBuild.getNameOfFieldToTrack();
-    const auto numberOfBitsInKey = 8 * defaultPhysicalTypeFactory.getPhysicalType(physicalCountMinBuild.getInputSchema()->getField(fieldToTrackFieldName)->getDataType())->size();
+    const auto numberOfBitsInKey = 8
+        * defaultPhysicalTypeFactory
+              .getPhysicalType(physicalCountMinBuild.getInputSchema()->getField(fieldToTrackFieldName)->getDataType())
+              ->size();
     const auto width = physicalCountMinBuild.getWidth();
     const auto depth = physicalCountMinBuild.getDepth();
     const auto metricHash = physicalCountMinBuild.getMetricHash();
@@ -462,7 +465,10 @@ LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(const PhysicalOpera
     const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
     const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
     const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalCountMinBuild.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::COUNT_MIN, sinkDataCodec);
+    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalCountMinBuild.getOutputSchema(),
+                                                                                     bufferSize,
+                                                                                     Statistic::StatisticSynopsisType::COUNT_MIN,
+                                                                                     sinkDataCodec);
 
     // 2. Getting the windowSize, windowSlide, and timestampFieldName.
     const auto windowType = physicalCountMinBuild.getWindowType()->as<Windowing::TimeBasedWindowType>();
@@ -471,10 +477,14 @@ LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(const PhysicalOpera
     auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
 
     // 3. Create operator handler
-    auto countMinBuildOperatorHandler = CountMinOperatorHandler::create(windowSize, windowSlide,
+    auto countMinBuildOperatorHandler = CountMinOperatorHandler::create(windowSize,
+                                                                        windowSlide,
                                                                         sendingPolicy,
-                                                                        width, depth, statisticFormat,
-                                                                        inputOriginIds, numberOfBitsInKey);
+                                                                        width,
+                                                                        depth,
+                                                                        statisticFormat,
+                                                                        inputOriginIds,
+                                                                        numberOfBitsInKey);
     operatorHandlers.push_back(countMinBuildOperatorHandler);
     auto handlerIndex = operatorHandlers.size() - 1;
 
@@ -488,10 +498,10 @@ LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(const PhysicalOpera
                                            std::move(timeFunction));
 }
 
-Runtime::Execution::Operators::ExecutableOperatorPtr
-LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
-                                                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-                                                             uint64_t bufferSize) {
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(
+    const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+    uint64_t bufferSize) {
     using namespace Runtime::Execution::Operators;
 
     // 1. Getting all the necessary variables for the operator and its handler
@@ -502,7 +512,10 @@ LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(const PhysicalOp
     const auto inputOriginIds = physicalHLLBuildOperator.getInputOriginIds();
     const auto sendingPolicy = physicalHLLBuildOperator.getSendingPolicy();
     const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalHLLBuildOperator.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::HLL, sinkDataCodec);
+    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalHLLBuildOperator.getOutputSchema(),
+                                                                                     bufferSize,
+                                                                                     Statistic::StatisticSynopsisType::HLL,
+                                                                                     sinkDataCodec);
 
     // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
     const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
@@ -511,20 +524,13 @@ LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(const PhysicalOp
     auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
 
     // 3. Create operator handler
-    auto hyperLogLogBuildOperatorHandler = HyperLogLogOperatorHandler::create(windowSize,
-                                                                              windowSlide,
-                                                                              sendingPolicy,
-                                                                              statisticFormat,
-                                                                              width,
-                                                                              inputOriginIds);
+    auto hyperLogLogBuildOperatorHandler =
+        HyperLogLogOperatorHandler::create(windowSize, windowSlide, sendingPolicy, statisticFormat, width, inputOriginIds);
     operatorHandlers.push_back(hyperLogLogBuildOperatorHandler);
     auto handlerIndex = operatorHandlers.size() - 1;
 
     // 4. Creating the operator
-    return std::make_shared<HyperLogLogBuild>(handlerIndex,
-                                              fieldToTrackFieldName,
-                                              metricHash,
-                                              std::move(timeFunction));
+    return std::make_shared<HyperLogLogBuild>(handlerIndex, fieldToTrackFieldName, metricHash, std::move(timeFunction));
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
@@ -728,7 +734,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             endTs,
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
-        const auto timeBasedWindowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto timeBasedWindowType =
+            physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
         const auto& [windowSize, windowSlide, _] = Util::getWindowingParameters(*timeBasedWindowType);
         auto actionHandler =
             std::make_shared<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreHandler>(windowSize, windowSlide);

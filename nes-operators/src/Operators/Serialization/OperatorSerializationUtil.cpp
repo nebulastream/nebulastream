@@ -533,18 +533,12 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
 
         using enum Windowing::WindowAggregationDescriptor::Type;
         switch (aggregation->getType()) {
-            case Count: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
-                break;
-            case Max: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
-                break;
-            case Min: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
-                break;
-            case Sum: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
-                break;
-            case Avg: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
-                break;
-            case Median: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
-                break;
+            case Count: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT); break;
+            case Max: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX); break;
+            case Min: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN); break;
+            case Sum: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM); break;
+            case Avg: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG); break;
+            case Median: windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN); break;
             default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
         }
     }
@@ -963,7 +957,8 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(nesPartition.getOperatorId().getRawValue());
         networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(nesPartition.getPartitionId().getRawValue());
         networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(nesPartition.getQueryId().getRawValue());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(nesPartition.getSubpartitionId().getRawValue());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(
+            nesPartition.getSubpartitionId().getRawValue());
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_port(nodeLocation.getPort());
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_hostname(nodeLocation.getHostname());
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_nodeid(nodeLocation.getNodeId().getRawValue());
