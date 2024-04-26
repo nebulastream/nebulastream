@@ -76,11 +76,11 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 //workerRPCClient->registerQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext);
                 workerRPCClient->registerQuery(grpcAddress, decomposedQueryPlan);
                 // Update decomposed query plan status
-                queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                              decomposedQueryPlanId,
-                                                              decomposedQueryPlanVersion,
-                                                              decomposedQueryPlanState,
-                                                              workerId);
+//                queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                              decomposedQueryPlanId,
+//                                                              decomposedQueryPlanVersion,
+//                                                              decomposedQueryPlanState,
+//                                                              workerId);
                 //asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Register});
                 break;
             }
@@ -88,11 +88,11 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 if (requestType == RequestType::AddQuery) {
                     // Update decomposed query plan status
                     workerRPCClient->migrateSubplans(grpcAddress, {decomposedQueryPlan->getDecomposedQueryPlanId()}, decomposedQueryPlanVersion);
-                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
-                                                                  decomposedQueryPlanVersion,
-                                                                  decomposedQueryPlanState,
-                                                                  workerId);
+//                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                                  decomposedQueryPlanId,
+//                                                                  decomposedQueryPlanVersion,
+//                                                                  decomposedQueryPlanState,
+//                                                                  workerId);
                 } else if (requestType == RequestType::StopQuery) {
                     sharedQueryState = QueryState::STOPPED;
                     // workerRPCClient->stopQueryAsync(grpcAddress,
@@ -102,11 +102,11 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                     //                                 queueForDeploymentContext);
                     workerRPCClient->stopQuery(grpcAddress, sharedQueryId, decomposedQueryPlanId, Runtime::QueryTerminationType::HardStop);
                     // Update decomposed query plan status
-                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
-                                                                  decomposedQueryPlanVersion,
-                                                                  QueryState::MARKED_FOR_HARD_STOP,
-                                                                  workerId);
+//                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                                  decomposedQueryPlanId,
+//                                                                  decomposedQueryPlanVersion,
+//                                                                  QueryState::MARKED_FOR_HARD_STOP,
+//                                                                  workerId);
                     // asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
                 } else if (requestType == RequestType::FailQuery) {
                     sharedQueryState = QueryState::FAILED;
@@ -121,11 +121,11 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                                                     decomposedQueryPlanId,
                                                     Runtime::QueryTerminationType::Failure);
                     // Update decomposed query plan status
-                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
-                                                                  decomposedQueryPlanVersion,
-                                                                  QueryState::MARKED_FOR_FAILURE,
-                                                                  workerId);
+//                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                                  decomposedQueryPlanId,
+//                                                                  decomposedQueryPlanVersion,
+//                                                                  QueryState::MARKED_FOR_FAILURE,
+//                                                                  workerId);
                     //asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
                 } else {
                     NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
@@ -160,43 +160,43 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
                 //workerRPCClient->startQueryAsync(grpcAddress, sharedQueryId, decomposedQueryPlanId, queueForDeploymentContext);
                 workerRPCClient->startQuery(grpcAddress, sharedQueryId, decomposedQueryPlanId);
                 // Update decomposed query plan status
-                queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                              decomposedQueryPlanId,
-                                                              decomposedQueryPlanVersion,
-                                                              QueryState::RUNNING,
-                                                              workerId);
+//                queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                              decomposedQueryPlanId,
+//                                                              decomposedQueryPlanVersion,
+//                                                              QueryState::RUNNING,
+//                                                              workerId);
                 //asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Start});
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
                 if (requestType == RequestType::AddQuery) {
                     // Update decomposed query plan status
-                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
-                                                                  decomposedQueryPlanVersion,
-                                                                  QueryState::MIGRATING,
-                                                                  workerId);
+//                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                                  decomposedQueryPlanId,
+//                                                                  decomposedQueryPlanVersion,
+//                                                                  QueryState::MIGRATING,
+//                                                                  workerId);
                 } else if (requestType == RequestType::StopQuery) {
                     // Unregister the decomposed query plan
                     //workerRPCClient->unregisterQueryAsync(grpcAddress, sharedQueryId, queueForDeploymentContext);
                     workerRPCClient->unregisterQuery(grpcAddress, sharedQueryId);
                     // Update decomposed query plan status
-                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
-                                                                  decomposedQueryPlanVersion,
-                                                                  QueryState::STOPPED,
-                                                                  workerId);
+//                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                                  decomposedQueryPlanId,
+//                                                                  decomposedQueryPlanVersion,
+//                                                                  QueryState::STOPPED,
+//                                                                  workerId);
                     //asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Unregister});
                 } else if (requestType == RequestType::FailQuery) {
                     // Unregister the decomposed query plan
                     //workerRPCClient->unregisterQueryAsync(grpcAddress, sharedQueryId, queueForDeploymentContext);
                     workerRPCClient->unregisterQuery(grpcAddress, sharedQueryId);
                     // Update decomposed query plan status
-                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
-                                                                  decomposedQueryPlanVersion,
-                                                                  QueryState::FAILED,
-                                                                  workerId);
+//                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+//                                                                  decomposedQueryPlanId,
+//                                                                  decomposedQueryPlanVersion,
+//                                                                  QueryState::FAILED,
+//                                                                  workerId);
                     //asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Unregister});
                 } else {
                     NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
