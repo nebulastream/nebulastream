@@ -1,0 +1,75 @@
+name: NES Code Coverage
+
+# A code coverage check should be triggered, when the workflow is manually dispatched
+on:
+  workflow_dispatch:
+    inputs:
+      trigger-value:
+        description: 'Trigger for checking code coverage.'
+        required: false
+        default: 'No_Value'
+jobs:
+  build-x64-linux-code-coverage:
+   name: "Code Coverage Pipeline"
+   if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
+   runs-on: [ self-hosted, linux, X64, Build ]
+   timeout-minutes: 300
+   strategy:
+     fail-fast: false
+     matrix:
+       include:
+         - osversion: ubuntu-20_04
+           require_build: "true"
+           require_test: "false"
+   steps:
+     - uses: AutoModality/action-clean@v1
+     - uses: actions/checkout@v4
+       with:
+         ssh-key: ${{ secrets.CI_SECRET }}
+         ssh-strict: 'false'
+         fetch-depth: '0'
+     - name: Cancel Previous Runs
+       uses: styfle/cancel-workflow-action@0.12.1
+       with:
+         access_token: ${{ secrets.NES_CI_SECRET }}
+     - name: Build Docker
+       id: builddocker
+       if: github.event_name != 'workflow_dispatch'
+       continue-on-error: true
+       working-directory: ${{ github.workspace }}/docker/buildImage
+       run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+     - name: Run tests
+       if: github.event_name != 'workflow_dispatch'
+       run: |
+         docker run --name ${{ github.run_id }}_cc_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="4" -eNesBuildParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-cc.sh nes_build_${{ matrix.osversion }}
+     - name: Run Code Coverage Analysis
+       uses: irongut/CodeCoverageSummary@v1.3.0
+       with:
+         filename: build/coverage.xml
+         badge: true
+         fail_below_min: true
+         format: markdown
+         hide_branch_rate: false
+         hide_complexity: true
+         indicators: true
+         output: both
+         thresholds: '30 75'
+     - name: Add Coverage PR Comment
+       uses: marocchino/sticky-pull-request-comment@v2
+       if: github.event_name == 'pull_request'
+       with:
+         recreate: true
+         path: code-coverage-results.md
+     - name: docker cleanup
+       if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+       run: |
+         docker rm -f ${{ github.run_id }}_cc_${{ matrix.osversion }}_build
+     - name: Notify Slack
+       uses: 8398a7/action-slack@v3.16.2
+       with:
+         status: ${{ job.status }}
+         author_name: ${{ github.actor }}
+       env:
+         GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
+         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+       if: always()
