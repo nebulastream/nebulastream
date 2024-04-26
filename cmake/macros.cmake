@@ -205,15 +205,28 @@ macro(get_nes_log_level_value NES_LOGGING_VALUE)
     endif ()
 endmacro(get_nes_log_level_value NES_LOGGING_VALUE)
 
-function(download_file url filename)
-    message("Download: ${url}")
-    file(REMOVE ${filename})
-    if (NOT EXISTS ${filename})
+function(cached_fetch_and_extract url dest)
+    # WARNING: the `dest` directory must not exist before the initial configure run,
+    #          e.g. this function breaks with e.g. dest set to CMAKE_BINARY_DIR
+    #
+    # This is so that copying only happens when `dest` does not exist, to speed up reconfiguration,
+    # since copying the NES deps and clang has takes roughly 2.5s while reconfiguration takes ~15s.
+    message(STATUS "Fetching ${dest} from cache ${CMAKE_DEPS_CACHE_DIR} or form url ${url}")
+    string(REGEX REPLACE "/" "_"  filename ${url})  # url to filename
+    string(REPLACE ":" "_"  filename ${filename})  # filename to filename
+    string(REPLACE ".com" "_"  filename ${filename})  # filename to filename
+    string(REGEX REPLACE "^(.*)(.tar)?\\.[A-Za-z0-9]+$" "\\1" extracted ${filename})  # remove last suffix and maybe .tar, i.e. foo.7z -> foo, bar.tar.gz -> bar
+    message(STATUS "Cache filename zipped: ${filename}")
+    message(STATUS "Cache filename extracted: ${extracted}")
+    set(FRESH_DOWNLOAD FALSE)
+    if (NOT EXISTS ${CMAKE_DEPS_CACHE_DIR}/${filename})
+        message(STATUS "File ${filename} not cached, downloading!")
+        set(FRESH_DOWNLOAD TRUE)
         set(CURRENT_ITERATION "0")
         set(MAX_RETRIES "3")
         while (CURRENT_ITERATION LESS MAX_RETRIES)
             # Throws an error if download is inactive for 10s
-            file(DOWNLOAD ${url} ${filename} SHOW_PROGRESS TIMEOUT 0 INACTIVITY_TIMEOUT 10 STATUS DOWNLOAD_STATUS)
+            file(DOWNLOAD ${url} ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp SHOW_PROGRESS TIMEOUT 0 INACTIVITY_TIMEOUT 10 STATUS DOWNLOAD_STATUS)
             # Retrieve download status info
             list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
             list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
@@ -225,14 +238,39 @@ function(download_file url filename)
                 message(STATUS "Error occurred during download: ${ERROR_MESSAGE}")
                 message(STATUS "Retry attempt ${CURRENT_ITERATION}/${MAX_RETRIES}")
                 # Remove created (incomplete) file which failed to get downloaded
-                file(REMOVE ${filename})
+                file(REMOVE ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp)
             endif ()
         endwhile ()
         if (CURRENT_ITERATION EQUAL MAX_RETRIES)
             message(FATAL_ERROR "Aborting: retry attempts exceeded while failing to download ${url}")
         endif ()
+        file(RENAME ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp ${CMAKE_DEPS_CACHE_DIR}/${filename})
     endif ()
-endfunction(download_file)
+    set(FRESH_EXTRACT FALSE)
+    if (FRESH_DOWNLOAD OR (NOT EXISTS ${CMAKE_DEPS_CACHE_DIR}/${extracted}))
+        set(FRESH_EXTRACT TRUE)
+        message(STATUS "File/Dir ${extracted} not cached, extracting!")
+        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted})
+        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
+        file(ARCHIVE_EXTRACT INPUT ${CMAKE_DEPS_CACHE_DIR}/${filename} DESTINATION ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
+        file(RENAME ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp ${CMAKE_DEPS_CACHE_DIR}/${extracted})
+        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
+    endif ()
+    if (FRESH_EXTRACT OR (NOT EXISTS ${dest}))
+        message(STATUS "Copying from cache to ${dest}!")
+        file(REMOVE_RECURSE ${dest})
+        file(REMOVE_RECURSE ${dest}_tmp)
+        file(COPY ${CMAKE_DEPS_CACHE_DIR}/${extracted}/ DESTINATION ${dest}_tmp)
+        get_filename_component(dest_name ${dest} NAME)
+        if (EXISTS ${dest}_tmp/${dest_name})
+            # remove duplicate dest folder name
+            file(RENAME ${dest}_tmp/${dest_name} ${dest})
+        else()
+            file(RENAME ${dest}_tmp/ ${dest})
+        endif()
+        file(REMOVE_RECURSE ${dest}_tmp)
+    endif ()
+endfunction()
 
 function(get_linux_lsb_release_information)
     find_program(LSB_RELEASE_EXEC lsb_release)

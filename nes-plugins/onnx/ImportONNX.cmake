@@ -33,15 +33,11 @@ set(ONNX_BINARY_VERSION "v${ONNX_VERSION}")
 set(ONNX_COMPRESSED_BINARY_NAME "onnxruntime-${ONNX_TARGET}-${ONNX_VERSION}.tgz")
 set(ONNX_FOLDER_NAME "onnxruntime-${ONNX_TARGET}-${ONNX_VERSION}")
 set(ONNX_COMPRESSED_FILE ${CMAKE_CURRENT_BINARY_DIR}/${ONNX_COMPRESSED_BINARY_NAME})
-IF (NOT EXISTS ${ONNX_COMPRESSED_FILE})
-    message(STATUS "ONNX binaries at ${CLANG_COMPRESSED_FILE} do not exist!")
-    download_file(https://github.com/microsoft/onnxruntime/releases/download/${ONNX_BINARY_VERSION}/${ONNX_COMPRESSED_BINARY_NAME} ${ONNX_COMPRESSED_FILE}_tmp)
-    file(RENAME ${ONNX_COMPRESSED_FILE}_tmp ${ONNX_COMPRESSED_FILE})
-endif ()
-IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${ONNX_FOLDER_NAME})
-    message(STATUS "Un-compress clang binaries!")
-    file(ARCHIVE_EXTRACT INPUT ${ONNX_COMPRESSED_FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-endif ()
+
+cached_fetch_and_extract(
+    https://github.com/microsoft/onnxruntime/releases/download/${ONNX_BINARY_VERSION}/${ONNX_COMPRESSED_BINARY_NAME}
+    ${CMAKE_CURRENT_BINARY_DIR}/${ONNX_FOLDER_NAME}
+)
 
 set(onnxruntime_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/${ONNX_FOLDER_NAME}/include)
 set(onnxruntime_LIBRARIES onnxruntime)
