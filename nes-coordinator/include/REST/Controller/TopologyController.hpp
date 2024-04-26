@@ -160,8 +160,10 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             nlohmann::json reqJson = nlohmann::json::parse(req);
             auto completionQueue = std::make_shared<CompletionQueue>();
             startBufferingOnAllSources(reqJson, completionQueue);
+            NES_ERROR("Sent buffering messges666666666666666666666666666666666666666666666666666666")
             auto events = createEvents(reqJson);
             requestHandlerService->queueISQPRequest(events);
+            NES_ERROR("Inserted request messges666666666666666666666666666666666666666666666666666666")
             //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
 //            if (success) {
 //                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
@@ -176,6 +178,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             std::vector<RpcAsyncRequest> asyncRequests;
             asyncRequests.emplace_back(RpcAsyncRequest{completionQueue, RpcClientMode::Unregister});
             workerRPCClient->checkAsyncResult(asyncRequests);
+            NES_ERROR("received results messges666666666666666666666666666666666666666666666666666666")
             return createResponse(Status::CODE_200, response.dump());
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());

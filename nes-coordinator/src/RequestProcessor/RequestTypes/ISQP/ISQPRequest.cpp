@@ -120,6 +120,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPAddNodeResponse>(workerId, true));
             }
         }
+        NES_ERROR("applied change events --------------------------------------------------------------------------------------------")
 
         // Identify affected operator placements
         for (const auto& event : events) {
@@ -137,6 +138,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPRemoveQueryResponse>(true));
             }
         }
+        NES_ERROR("whatever  events --------------------------------------------------------------------------------------------")
 
         // Fetch affected SQPs and call in parallel operator placement amendment phase
         auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -144,6 +146,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
+        NES_ERROR("start instances for sqp {} events --------------------------------------------------------------------------------------------", sharedQueryPlans.size())
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,
