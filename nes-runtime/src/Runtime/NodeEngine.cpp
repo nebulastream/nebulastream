@@ -757,7 +757,7 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
 
 bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
+    NES_ERROR("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
               reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
     auto deployedPlanIterator = deployedExecutableQueryPlans.find(reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
@@ -778,7 +778,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
                 if (reconfiguredNetworkSinkDescriptor
                     && reconfiguredNetworkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
-                    NES_DEBUG("Reconfiguring the network sink {} with new descriptor for shared query plan {} and the decomposed "
+                    NES_ERROR("Reconfiguring the network sink {} with new descriptor for shared query plan {} and the decomposed "
                               "query plan {}.",
                               reconfiguredNetworkSinkDescriptor->getUniqueId(),
                               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
@@ -797,7 +797,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                 auto reconfiguredNetworkSourceDescriptor =
                     std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
                 if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
-                    NES_DEBUG("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
+                    NES_ERROR("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
                               "decomposed query plan {}.",
                               reconfiguredNetworkSourceDescriptor->getUniqueId(),
                               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
@@ -807,6 +807,9 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
             }
         }
     }
+    NES_ERROR("Succesfully reconfigured query plan {} the decomposed query plan {} for reconfiguration.",
+              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
+              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
     return true;
 }
 
