@@ -40,19 +40,10 @@ if (NES_SELF_HOSTING)
         message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} is not supported")
     endif ()
 
-    set(CLANG_COMPRESSED_FILE ${CMAKE_CURRENT_BINARY_DIR}/${CLANG_COMPRESSED_BINARY_NAME}_${LLVM_BINARY_VERSION}.7z)
-    IF (NOT EXISTS ${CLANG_COMPRESSED_FILE})
-        message(STATUS "NES Clang binaries at ${CLANG_COMPRESSED_FILE} do not exist!")
-        download_file(https://github.com/nebulastream/clang-binaries/releases/download/${LLVM_BINARY_VERSION}/${CLANG_COMPRESSED_BINARY_NAME}.7z
-                ${CLANG_COMPRESSED_FILE}_tmp)
-        file(RENAME ${CLANG_COMPRESSED_FILE}_tmp ${CLANG_COMPRESSED_FILE})
-    endif ()
-    IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME})
-        message(STATUS "Un-compress clang binaries!")
-        file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}_tmp)
-        file(ARCHIVE_EXTRACT INPUT ${CLANG_COMPRESSED_FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}_tmp PATTERNS clang)
-        file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}_tmp ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME})
-    endif ()
+    cached_fetch_and_extract(
+        https://github.com/nebulastream/clang-binaries/releases/download/${LLVM_BINARY_VERSION}/${CLANG_COMPRESSED_BINARY_NAME}.7z
+        ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}
+   )
 
     message(STATUS "Self-host compilation of NES from ${LLVM_FOLDER_NAME}")
     # CMAKE_<LANG>_COMPILER are only set the first time a build tree is configured.

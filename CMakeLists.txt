@@ -92,6 +92,7 @@ endif ()
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+set(CMAKE_DEPS_CACHE_DIR "${CMAKE_SOURCE_DIR}/.cache/cmake-deps")
 include(cmake/ImportDependencies.cmake)
 include(cmake/ImportLLVM.cmake)
 project(NES LANGUAGES C CXX)

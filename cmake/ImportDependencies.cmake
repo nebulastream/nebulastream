@@ -109,22 +109,11 @@ else (NES_USE_PREBUILD_DEPENDENCIES)
         set(COMPRESSED_BINARY_NAME ${BINARY_NAME})
     endif ()
 
-    set(COMPRESSED_FILE ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z)
+    cached_fetch_and_extract(
+        https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${COMPRESSED_BINARY_NAME}.7z
+        ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}
+    )
 
-    IF (NOT EXISTS ${COMPRESSED_FILE})
-        message(STATUS "NES dependencies do not exist!")
-        file(REMOVE ${COMPRESSED_FILE})
-        download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${COMPRESSED_BINARY_NAME}.7z
-                ${COMPRESSED_FILE}_tmp)
-        file(RENAME ${COMPRESSED_FILE}_tmp ${COMPRESSED_FILE})
-    endif ()
-    IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
-        message(STATUS "EXTRACT dependencies!")
-        file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}_tmp)
-        file(ARCHIVE_EXTRACT INPUT ${COMPRESSED_FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}_tmp)
-        file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}_tmp/${BINARY_NAME} ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
-        file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}_tmp)
-    endif ()
     # Set toolchain file to use prebuild dependencies.
     message(STATUS "Set toolchain file for prebuild dir.")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/scripts/buildsystems/vcpkg.cmake")
