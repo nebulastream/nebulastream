@@ -14,14 +14,15 @@
 
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_MEASURES_TIMEUNIT_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_MEASURES_TIMEUNIT_HPP_
-#include <Measures/WindowMeasure.hpp>
 #include <cstdint>
+#include <string>
+
 namespace NES::Windowing {
 
 /**
  * A time based window measure.
  */
-class TimeUnit : public WindowMeasure {
+class TimeUnit {
   public:
     explicit TimeUnit(uint64_t offset);
 
@@ -35,7 +36,7 @@ class TimeUnit : public WindowMeasure {
      * @brief Creates a string representation
      * @return std::string
      */
-    std::string toString() const override;
+    [[nodiscard]] std::string toString() const;
 
     /**
      * @brief Compares for equality
@@ -44,10 +45,40 @@ class TimeUnit : public WindowMeasure {
      */
     bool equals(const TimeUnit& other) const;
 
+    /**
+     * @brief A time unit in Milliseconds.
+     * @return TimeUnit
+     */
+    static TimeUnit Milliseconds();
+
+    /**
+     * @brief A time unit in Seconds.
+     * @return TimeUnit
+     */
+    static TimeUnit Seconds();
+
+    /**
+     * @brief A time unit in Minutes.
+     * @return TimeUnit
+     */
+    static TimeUnit Minutes();
+
+    /**
+     * @brief A time unit in Hours.
+     * @return TimeUnit
+     */
+    static TimeUnit Hours();
+
+    /**
+     * @brief A time unit in Days.
+     * @return TimeUnit
+     */
+    static TimeUnit Days();
+
   private:
     uint64_t multiplier;
 };
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_MEASURES_TIMEUNIT_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_MEASURES_TIMEUNIT_HPP_

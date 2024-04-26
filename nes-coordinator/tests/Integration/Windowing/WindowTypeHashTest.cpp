@@ -13,11 +13,11 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TimeUnit.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Measures/TimeUnit.hpp>
 
 #include <BaseIntegrationTest.hpp>
 #include <Types/SlidingWindow.hpp>

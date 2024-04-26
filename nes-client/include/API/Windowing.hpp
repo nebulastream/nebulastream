@@ -15,7 +15,7 @@
 #ifndef NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
 #define NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
 
-#include <Measures/TimeUnit.hpp>
+#include <API/TimeUnit.hpp>
 #include <memory>
 
 namespace NES {
@@ -141,6 +141,12 @@ Windowing::TimeMeasure Minutes(uint64_t minutes);
 Windowing::TimeMeasure Hours(uint64_t hours);
 
 /**
+ * @brief A time measure in Days.
+ * @return TimeMeasure
+ */
+Windowing::TimeMeasure Days(uint64_t days);
+
+/**
  * @brief A time unit in Milliseconds.
  * @return TimeUnit
  */
@@ -165,10 +171,10 @@ Windowing::TimeUnit Minutes();
 Windowing::TimeUnit Hours();
 
 /**
- * @brief A time measure in Days.
- * @return TimeMeasure
+ * @brief A time unit in Days.
+ * @return TimeUnit
  */
-Windowing::TimeMeasure Days(uint64_t days);
+Windowing::TimeUnit Days();
 
 /**
  * @brief This function provides access to the creation ts (ingestion ts) of an individual record.

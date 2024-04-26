@@ -13,5 +13,4 @@
 add_source_files(nes-window-types
         TimeCharacteristic.cpp
         TimeMeasure.cpp
-        TimeUnit.cpp
 )
