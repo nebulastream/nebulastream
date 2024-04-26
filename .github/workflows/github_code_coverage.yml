@@ -2,6 +2,9 @@ name: NES Code Coverage
 
 # A code coverage check should be triggered, when the workflow is manually dispatched
 on:
+  push:
+    branches:
+      - '4846-add-codecoverage-gh-workflow'
   workflow_dispatch:
     inputs:
       trigger-value:
