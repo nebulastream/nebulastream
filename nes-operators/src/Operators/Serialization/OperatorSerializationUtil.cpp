@@ -581,15 +581,16 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         auto serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
+        auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
-            auto multiplier = serializedTimeCharacteristic.multiplier();
             window = Windowing::TumblingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window =
+                Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                              Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
@@ -598,15 +599,18 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         auto serializedSlidingWindow = SerializableOperator_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         auto serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
+        auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(
+                Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
+                Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window =
+                Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                             Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                             Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
@@ -645,6 +649,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
     auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
+    timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMultiplier());
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
         timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
@@ -704,13 +709,16 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         const auto& serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
+        auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
-                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(
+                Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
+                Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window =
+                Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                              Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
@@ -719,15 +727,18 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
         auto serializedSlidingWindow = SerializableOperator_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         const auto& serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
+        auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(
+                Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
+                Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window =
+                Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                             Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                             Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
