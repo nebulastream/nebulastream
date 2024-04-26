@@ -172,6 +172,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             //Prepare the response
             nlohmann::json response;
             response["success"] = success;
+            std::vector<RpcAsyncRequest> asyncRequests;
+            asyncRequests.emplace_back(RpcAsyncRequest{completionQueue, RpcClientMode::Unregister});
+            workerRPCClient->checkAsyncResult(asyncRequests);
             return createResponse(Status::CODE_200, response.dump());
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
