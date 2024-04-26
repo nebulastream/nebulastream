@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_
+
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -44,5 +45,5 @@ class MapPythonUDF : public ExecutableOperator {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_
+#endif // NAUTILUS_PYTHON_UDF_ENABLED
 #endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_

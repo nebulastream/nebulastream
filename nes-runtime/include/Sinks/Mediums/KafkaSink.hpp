@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef ENABLE_KAFKA_BUILD
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+
+#ifdef ENABLE_KAFKA_BUILD
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -97,5 +98,5 @@ class KafkaSink : public SinkMedium {
 using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
 }// namespace NES
-#endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif // ENABLE_KAFKA_BUILD
 #endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
