@@ -258,4 +258,4 @@ class CollectTestSink : public SinkMedium {
 
 }// namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ISQPEVENT_HPP
-#define NES_ISQPEVENT_HPP
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEventPriority.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -85,4 +85,4 @@ class ISQPEvent : public std::enable_shared_from_this<ISQPEvent> {
 };
 }// namespace NES::RequestProcessor
 
-#endif//NES_ISQPEVENT_HPP
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_ARROWSOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_ARROWSOURCE_HPP_
+#ifndef NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCE_HPP_
+#define NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCE_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -181,4 +181,4 @@ class ArrowSource : public DataSource {
 using ArrowSourcePtr = std::shared_ptr<ArrowSource>;
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SOURCES_ARROWSOURCE_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCE_HPP_

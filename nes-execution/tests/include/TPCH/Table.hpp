@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
-#define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
+#ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
+#define NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -131,4 +131,4 @@ class TableBuilder {
 
 }// namespace NES::Runtime
 
-#endif//NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_

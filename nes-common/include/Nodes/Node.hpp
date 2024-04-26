@@ -416,4 +416,4 @@ class Node : public std::enable_shared_from_this<Node> {
 };
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_NODES_NODE_HPP_
+#endif // NES_COMMON_INCLUDE_NODES_NODE_HPP_

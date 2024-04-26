@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPEFORMAT_HPP_
-#define NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPEFORMAT_HPP_
+#ifndef NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_
+#define NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_
 #include <Identifiers/NESStrongType.hpp>
 #include <fmt/core.h>
 
@@ -29,4 +29,4 @@ struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::
     }
 };
 }// namespace fmt
-#endif//NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPEFORMAT_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_

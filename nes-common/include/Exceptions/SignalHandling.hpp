@@ -55,4 +55,4 @@ void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener);
 
 }// namespace NES::Exceptions
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_SIGNALHANDLING_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_SIGNALHANDLING_HPP_

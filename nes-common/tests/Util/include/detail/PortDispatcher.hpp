@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COMMON_TESTS_UTIL_SRC_PORTDISPATCHER_HPP_
-#define NES_NES_COMMON_TESTS_UTIL_SRC_PORTDISPATCHER_HPP_
+#ifndef NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_
+#define NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_
 #include <Util/FileMutex.hpp>
 #include <atomic>
 #include <detail/SharedMemoryFixedVector.hpp>
@@ -54,4 +54,4 @@ PortDispatcher& getPortDispatcher();
 }// namespace detail
 }// namespace NES::Testing
 
-#endif//NES_NES_COMMON_TESTS_UTIL_SRC_PORTDISPATCHER_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_

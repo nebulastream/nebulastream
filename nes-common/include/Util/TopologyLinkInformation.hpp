@@ -42,4 +42,4 @@ class TopologyLinkInformation {
     WorkerId downstreamTopologyNode;
 };
 }// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_

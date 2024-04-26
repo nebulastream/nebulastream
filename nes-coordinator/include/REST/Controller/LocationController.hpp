@@ -81,4 +81,4 @@ class LocationController : public oatpp::web::server::api::ApiController {
 };
 }// namespace NES::REST::Controller
 #include OATPP_CODEGEN_END(ApiController)
-#endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_

@@ -170,4 +170,4 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
 }// namespace REST::Controller
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
-#endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
-#define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
+#ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
+#define NES_EXECUTION_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
 
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -42,4 +42,4 @@ class PipelinePlan {
 };
 
 }// namespace NES::Runtime::Execution
-#endif//NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_

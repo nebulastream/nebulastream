@@ -305,4 +305,4 @@ class WorkerContext {
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_

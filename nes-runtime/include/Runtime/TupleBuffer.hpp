@@ -360,4 +360,4 @@ T* allocateWithin(TupleBuffer& buffer) {
 };
 
 }// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_

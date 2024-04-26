@@ -98,4 +98,4 @@ class DeploymentContext {
 };
 }// namespace Optimizer
 }// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_

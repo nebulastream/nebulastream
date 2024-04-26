@@ -36,4 +36,4 @@ double degreesToRadians(double degrees);
 
 }// namespace NES::SpatialUtils
 
-#endif// NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_

@@ -79,8 +79,8 @@
  *  simple kernels.
  */
 
-#ifndef NES_COORDINATOR_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
-#define NES_COORDINATOR_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
+#ifndef NES_RUNTIME_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
+#define NES_RUNTIME_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
 
 #ifndef JITIFY_THREAD_SAFE
 #define JITIFY_THREAD_SAFE 1
@@ -4249,4 +4249,4 @@ inline KernelLauncher KernelInstantiation::configure_1d_max_occupancy(int max_bl
 #pragma pop_macro("min")
 #pragma pop_macro("strtok_r")
 #endif
-#endif// NES_COORDINATOR_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_JITIFY_JITIFY_HPP_

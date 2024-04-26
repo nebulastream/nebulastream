@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPEJSON_HPP_
-#define NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPEJSON_HPP_
+#ifndef NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_
+#define NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_
 #include <Identifiers/NESStrongType.hpp>
 #include <nlohmann/json.hpp>
 
@@ -32,4 +32,4 @@ struct adl_serializer<NES::NESStrongType<T, Tag, invalid, initial>> {
 };
 }// namespace nlohmann
 
-#endif//NES_COMMON_INCLUDE_UTIL_NESSTRONGTYPEJSON_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_

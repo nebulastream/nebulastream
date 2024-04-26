@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COMMON_TESTS_UTIL_BaseUnitTest_HPP_
-#define NES_NES_COMMON_TESTS_UTIL_BaseUnitTest_HPP_
+#ifndef NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
+#define NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
 #include <Exceptions/ErrorListener.hpp>
 #include <atomic>
 #include <future>
@@ -74,4 +74,4 @@ class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, pub
 
 }// namespace NES::Testing
 
-#endif//NES_NES_COMMON_TESTS_UTIL_BaseUnitTest_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_

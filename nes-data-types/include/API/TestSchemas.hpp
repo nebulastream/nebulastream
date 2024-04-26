@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTSCHEMAS_HPP
-#define NES_TESTSCHEMAS_HPP
+#ifndef NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
+#define NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
 
 #include <API/Schema.hpp>
 #include <stdexcept>
@@ -29,4 +29,4 @@ class TestSchemas {
 };
 }// namespace NES
 
-#endif//NES_TESTSCHEMAS_HPP
+#endif // NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_

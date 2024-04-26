@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
+#ifndef NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
+#define NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
 
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -34,4 +34,4 @@ std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
 
 } // namespace NES::QueryCompilation::Util
 
-#endif//NES_NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_

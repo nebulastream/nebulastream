@@ -51,4 +51,4 @@ class DumpHelper {
 };
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_

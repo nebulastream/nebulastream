@@ -21,4 +21,4 @@ namespace NES {
 std::string collectAndPrintStacktrace();
 std::string collectStacktrace();
 }// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_STACKTRACELOADER_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_STACKTRACELOADER_HPP_

@@ -114,4 +114,4 @@ class SerialStorageHandler : public StorageHandler {
     Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
 };
 }// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_

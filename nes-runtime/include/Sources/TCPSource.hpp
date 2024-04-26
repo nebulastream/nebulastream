@@ -128,4 +128,4 @@ class TCPSource : public DataSource {
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_

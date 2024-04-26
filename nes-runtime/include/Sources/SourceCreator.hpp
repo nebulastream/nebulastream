@@ -533,4 +533,4 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 }// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_

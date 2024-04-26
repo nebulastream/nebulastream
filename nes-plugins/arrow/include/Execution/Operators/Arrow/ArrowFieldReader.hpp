@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
+#ifndef NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
+#define NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/Operator.hpp>
@@ -61,4 +61,4 @@ class ArrowFieldReader : public AbstractArrowFieldReader {
 std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFromSchema(const SchemaPtr& schema);
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_

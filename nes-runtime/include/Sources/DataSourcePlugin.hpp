@@ -54,4 +54,4 @@ class DataSourcePlugin {
 using SourcePluginRegistry = Util::PluginRegistry<DataSourcePlugin>;
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_

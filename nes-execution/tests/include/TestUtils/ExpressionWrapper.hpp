@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
-#define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
+#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
+#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
 
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -69,4 +69,4 @@ class TernaryExpressionWrapper {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif//NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_

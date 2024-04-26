@@ -46,4 +46,4 @@ class ExecutionNodeNotFoundException : public RequestExecutionException {
     WorkerId id;
 };
 }// namespace NES::Exceptions
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

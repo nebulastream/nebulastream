@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
-#define NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
+#ifndef NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_
+#define NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_
 
 #include <Identifiers/NESStrongType.hpp>
 #include <cstdint>
@@ -68,4 +68,4 @@ static constexpr SequenceNumber INVALID_SEQ_NUMBER = 0;
 
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_

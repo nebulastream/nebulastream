@@ -33,4 +33,4 @@ class LocationProviderException : public std::exception {
     std::string message;
 };
 }// namespace NES::Spatial::Exception
-#endif// NES_RUNTIME_INCLUDE_EXCEPTIONS_LOCATIONPROVIDEREXCEPTION_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXCEPTIONS_LOCATIONPROVIDEREXCEPTION_HPP_

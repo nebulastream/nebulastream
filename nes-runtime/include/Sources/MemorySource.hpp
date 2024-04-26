@@ -106,4 +106,4 @@ using MemorySourcePtr = std::shared_ptr<MemorySource>;
 
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_MEMORYSOURCE_HPP_

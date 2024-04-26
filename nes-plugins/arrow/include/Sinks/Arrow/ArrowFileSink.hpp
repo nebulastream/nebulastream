@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_ArrowFileSink_HPP_
-#define NES_CORE_INCLUDE_SINKS_MEDIUMS_ArrowFileSink_HPP_
+#ifndef NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_
+#define NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <arrow/csv/type_fwd.h>
@@ -127,4 +127,4 @@ class ArrowFileSink : public SinkMedium {
 using ArrowFileSinkPtr = std::shared_ptr<ArrowFileSink>;
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_ArrowFileSink_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_

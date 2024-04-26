@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_JAVAUDFDESCRIPTORBUILDER_H
-#define NES_JAVAUDFDESCRIPTORBUILDER_H
+#ifndef NES_OPERATORS_TESTS_INCLUDE_UTIL_JAVAUDFDESCRIPTORBUILDER_HPP_
+#define NES_OPERATORS_TESTS_INCLUDE_UTIL_JAVAUDFDESCRIPTORBUILDER_HPP_
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
@@ -124,4 +124,4 @@ class JavaUDFDescriptorBuilder {
 
 }// namespace NES::Catalogs::UDF
 
-#endif//NES_JAVAUDFDESCRIPTORBUILDER_H
+#endif // NES_OPERATORS_TESTS_INCLUDE_UTIL_JAVAUDFDESCRIPTORBUILDER_HPP_

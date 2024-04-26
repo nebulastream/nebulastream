@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
-#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
+#ifndef NES_STATISTICS_INCLUDE_STATISTICS_STATISTIC_HPP_
+#define NES_STATISTICS_INCLUDE_STATISTICS_STATISTIC_HPP_
 
 #include <Statistics/StatisticValue.hpp>
 #include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
@@ -149,4 +149,4 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
 };
 }// namespace NES::Statistic
 
-#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTIC_HPP_

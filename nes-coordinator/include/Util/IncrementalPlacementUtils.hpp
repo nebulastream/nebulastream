@@ -71,4 +71,4 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
 
 }// namespace Experimental
 }// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_
+#endif // NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_

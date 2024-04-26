@@ -307,4 +307,4 @@ void updateAtomicMax(std::atomic<T>& curVal, const T& newVal) {
 
 }// namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_COMMON_HPP_

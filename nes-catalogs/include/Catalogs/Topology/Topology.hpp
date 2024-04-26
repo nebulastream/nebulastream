@@ -418,4 +418,4 @@ class Topology {
     std::atomic_uint64_t topologyNodeIdCounter = INITIAL_WORKER_NODE_ID.getRawValue();
 };
 }// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

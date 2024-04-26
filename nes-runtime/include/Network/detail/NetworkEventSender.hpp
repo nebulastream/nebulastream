@@ -75,4 +75,4 @@ class NetworkEventSender : public BaseChannelType {
 };
 }// namespace NES::Network::detail
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_

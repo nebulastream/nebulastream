@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
-#define NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
+#ifndef NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_
+#define NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_
 
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
@@ -91,4 +91,4 @@ struct StatisticProbeRequestGRPC : public StatisticProbeRequest {
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_

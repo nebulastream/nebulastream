@@ -33,4 +33,4 @@ const std::string DOWNSTREAM_LOGICAL_OPERATOR_ID =
     "DOWNSTREAM_LOGICAL_OPERATOR_ID";// Property containing the id of the next downstream non system operator of a system generated operator
 }// namespace NES::Optimizer
 
-#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTCONSTANTS_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTCONSTANTS_HPP_

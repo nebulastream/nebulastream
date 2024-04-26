@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_TESTS_UTIL_BaseIntegrationTest_HPP_
-#define NES_TESTS_UTIL_BaseIntegrationTest_HPP_
+#ifndef NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_
+#define NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_
 
 #include <BaseUnitTest.hpp>
 #include <BorrowedPort.hpp>
@@ -81,4 +81,4 @@ class BaseIntegrationTest : public Testing::BaseUnitTest {
 };
 }// namespace NES::Testing
 
-#endif//NES_TESTS_UTIL_BaseIntegrationTest_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_

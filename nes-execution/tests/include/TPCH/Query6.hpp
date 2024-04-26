@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_QUERY6_HPP_
-#define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_QUERY6_HPP_
+#ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_
+#define NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -133,4 +133,4 @@ class TPCH_Query6 {
 };
 
 }// namespace NES::Runtime::Execution
-#endif//NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_QUERY6_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_

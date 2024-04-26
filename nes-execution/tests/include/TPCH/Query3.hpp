@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query3_HPP_
-#define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query3_HPP_
+#ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY3_HPP_
+#define NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY3_HPP_
 
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -253,4 +253,4 @@ class TPCH_Query3 {
 };
 
 }// namespace NES::Runtime::Execution
-#endif//NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query3_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY3_HPP_

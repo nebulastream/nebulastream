@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ISQPREQUEST_HPP
-#define NES_ISQPREQUEST_HPP
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <thread>
@@ -150,4 +150,4 @@ class ISQPRequest : public AbstractUniRequest {
 }// namespace RequestProcessor
 }// namespace NES
 
-#endif//NES_ISQPREQUEST_HPP
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_

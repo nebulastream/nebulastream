@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICINTERFACE_HPP_
-#define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICINTERFACE_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICINTERFACE_HPP_
+#define NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICINTERFACE_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
@@ -69,4 +69,4 @@ class StatisticInterface {
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICINTERFACE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICINTERFACE_HPP_
