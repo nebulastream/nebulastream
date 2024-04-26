@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.108](https://github.com/nebulastream/nebulastream/tree/v0.6.108) (2024-04-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.107...v0.6.108)
+
+### Bug Fixes 🐛
+
+- Inconsistent Output for MultiJoins  [\#2357](https://github.com/nebulastream/nebulastream/issues/2357)
+
 ## [v0.6.107](https://github.com/nebulastream/nebulastream/tree/v0.6.107) (2024-04-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.106...v0.6.107)
