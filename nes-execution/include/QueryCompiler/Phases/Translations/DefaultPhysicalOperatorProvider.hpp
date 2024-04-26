@@ -18,6 +18,7 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <vector>
 namespace NES::QueryCompilation {
 
@@ -43,8 +44,8 @@ struct WindowOperatorProperties {
  */
 struct StreamJoinOperators {
     StreamJoinOperators(const LogicalOperatorPtr& operatorNode,
-                            const OperatorPtr& leftInputOperator,
-                            const OperatorPtr& rightInputOperator)
+                        const OperatorPtr& leftInputOperator,
+                        const OperatorPtr& rightInputOperator)
         : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator) {}
     const LogicalOperatorPtr& operatorNode;
     const OperatorPtr& leftInputOperator;
@@ -59,19 +60,19 @@ struct StreamJoinConfigs {
                       const std::string& joinFieldNameRight,
                       const uint64_t windowSize,
                       const uint64_t windowSlide,
-                      const std::string& timeStampFieldNameLeft,
-                      const std::string& timeStampFieldNameRight,
+                      const TimestampField& timeStampFieldLeft,
+                      const TimestampField& timeStampFieldRight,
                       const QueryCompilation::StreamJoinStrategy& joinStrategy)
         : joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowSize(windowSize),
-          windowSlide(windowSlide), timeStampFieldNameLeft(timeStampFieldNameLeft),
-          timeStampFieldNameRight(timeStampFieldNameRight), joinStrategy(joinStrategy) {}
+          windowSlide(windowSlide), timeStampFieldLeft(timeStampFieldLeft), timeStampFieldRight(timeStampFieldRight),
+          joinStrategy(joinStrategy) {}
 
     const std::string& joinFieldNameLeft;
     const std::string& joinFieldNameRight;
     const uint64_t windowSize;
     const uint64_t windowSlide;
-    const std::string& timeStampFieldNameLeft;
-    const std::string& timeStampFieldNameRight;
+    const TimestampField& timeStampFieldLeft;
+    const TimestampField& timeStampFieldRight;
     const QueryCompilation::StreamJoinStrategy& joinStrategy;
 };
 
@@ -191,9 +192,8 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param schema the operator schema
      * @param children the upstream operators
      */
-    OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator,
-                                              SchemaPtr schema,
-                                              std::vector<OperatorPtr> children);
+    OperatorPtr
+    getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
   private:
     /**
@@ -202,7 +202,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param operatorNode
      */
     std::shared_ptr<Node> replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties,
-                                                             const LogicalOperatorPtr& operatorNode);
+                                                         const LogicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a join operator for the nautilus query compiler
@@ -216,7 +216,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param windowType
      * @return {
      */
-    [[nodiscard]] std::tuple<std::string, std::string>
+    [[nodiscard]] std::tuple<TimestampField, TimestampField>
     getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
                              const Windowing::TimeBasedWindowTypePtr& windowType) const;
 
@@ -236,10 +236,9 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @return StreamJoinOperatorHandlerPtr
      */
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators,
-                                 const StreamJoinConfigs& streamJoinConfig);
+    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
 };
 
 }// namespace NES::QueryCompilation
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
