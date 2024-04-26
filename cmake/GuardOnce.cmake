@@ -30,6 +30,9 @@ macro(project_enable_fixguards)
         COMMAND python3 -m guardonce.guard2once -r -e="*/include/Version/version.hpp" nes-common/include/
         COMMAND python3 -m guardonce.once2guard -r -e="*/include/Version/version.hpp" -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-common/include/
 
+        COMMAND python3 -m guardonce.guard2once -r nes-common/tests/Util/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-common/tests/Util/include/
+
         COMMAND python3 -m guardonce.guard2once -r nes-compiler/include/
         COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-compiler/include/
 
@@ -48,17 +51,41 @@ macro(project_enable_fixguards)
         COMMAND python3 -m guardonce.guard2once -r nes-execution/include/
         COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-execution/include/
 
+        COMMAND python3 -m guardonce.guard2once -r nes-execution/tests/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-execution/tests/include/
+
+        COMMAND python3 -m guardonce.guard2once -r nes-expressions/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-expressions/include/
+
         COMMAND python3 -m guardonce.guard2once -r nes-nautilus/include/
         COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-nautilus/include/
 
         COMMAND python3 -m guardonce.guard2once -r nes-operators/include/
         COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-operators/include/
 
+        COMMAND python3 -m guardonce.guard2once -r nes-operators/tests/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-operators/tests/include/
+
         COMMAND python3 -m guardonce.guard2once -r nes-optimizer/include/
         COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-optimizer/include/
 
+        COMMAND python3 -m guardonce.guard2once -r nes-plugins/arrow/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-plugins/arrow/include/
+
+        COMMAND python3 -m guardonce.guard2once -r nes-plugins/onnx/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-plugins/onnx/include/
+
+        COMMAND python3 -m guardonce.guard2once -r nes-plugins/tensorflow/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-plugins/tensorflow/include/
+
         COMMAND python3 -m guardonce.guard2once -r nes-runtime/include/
         COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-runtime/include/
+
+        COMMAND python3 -m guardonce.guard2once -r nes-statistics/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-statistics/include/
+
+        COMMAND python3 -m guardonce.guard2once -r nes-window-types/include/
+        COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-window-types/include/
 
         COMMAND python3 -m guardonce.guard2once -r nes-worker/include/
         COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-worker/include/
