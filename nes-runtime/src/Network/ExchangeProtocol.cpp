@@ -113,7 +113,7 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
         }
     }
 
-    NES_WARNING("ExchangeProtocol: ClientAnnouncement received for {} NOT REGISTERED", msg.getChannelId().toString());
+    NES_ERROR("ExchangeProtocol: ClientAnnouncement received for {} NOT REGISTERED", msg.getChannelId().toString());
     protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError));
     return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
 }
