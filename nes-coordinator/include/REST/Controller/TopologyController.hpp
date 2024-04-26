@@ -161,17 +161,18 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             auto completionQueue = std::make_shared<CompletionQueue>();
             startBufferingOnAllSources(reqJson, completionQueue);
             auto events = createEvents(reqJson);
-            bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
-            //todo: do we have to collect the response of the async events?
-            if (success) {
-                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
-            } else {
-                NES_ERROR("TopologyController::handlePost:addParent: Failed");
-                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
-            }
+            requestHandlerService->queueISQPRequest(events);
+            //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
+//            if (success) {
+//                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
+//            } else {
+//                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+//                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
+//            }
             //Prepare the response
             nlohmann::json response;
-            response["success"] = success;
+//            response["success"] = success;
+            response["success"] = true;
             std::vector<RpcAsyncRequest> asyncRequests;
             asyncRequests.emplace_back(RpcAsyncRequest{completionQueue, RpcClientMode::Unregister});
             workerRPCClient->checkAsyncResult(asyncRequests);
