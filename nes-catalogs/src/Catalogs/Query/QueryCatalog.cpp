@@ -259,6 +259,7 @@ bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                    QueryState newDecomposedQueryState,
                                                    WorkerId workerId) {
+    return true;
 
     switch (newDecomposedQueryState) {
         case QueryState::MARKED_FOR_DEPLOYMENT: {
