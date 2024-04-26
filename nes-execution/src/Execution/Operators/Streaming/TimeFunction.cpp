@@ -16,21 +16,25 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <utility>
+
 namespace NES::Runtime::Execution::Operators {
 
 void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuffer&) {
     // nop
 }
 
-EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression)
-    : timestampExpression(std::move(timestampExpression)) {}
+EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
+    : unit(unit), timestampExpression(std::move(timestampExpression)) {}
 
 Nautilus::Value<UInt64> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
     Value<UInt64> ts = this->timestampExpression->execute(record).as<UInt64>();
-    ctx.setCurrentTs(ts);
-    return ts;
+    auto timeMultiplier = Value<UInt64>(unit.getMultiplier());
+    auto tsInMillies = (ts * timeMultiplier).as<UInt64>();
+    ctx.setCurrentTs(tsInMillies);
+    return tsInMillies;
 }
 
 void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) {

@@ -274,7 +274,7 @@ std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(const MemoryLayou
     std::vector<Aggregation::AggregationFunctionPtr> aggregationFunctions = {std::move(aggregationFunction)};
     auto slicePreAggregation =
         std::make_shared<Operators::NonKeyedSlicePreAggregation>(0 /*handler index*/,
-                                                                 std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                                 std::make_unique<Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
                                                                  aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
 

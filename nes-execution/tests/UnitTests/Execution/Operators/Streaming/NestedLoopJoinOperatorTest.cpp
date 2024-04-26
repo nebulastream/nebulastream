@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include "API/TimeUnit.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -35,7 +37,6 @@
 #include <Util/Common.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <random>
-#include <API/TestSchemas.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -269,7 +270,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
         auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
@@ -278,7 +280,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 

@@ -13,9 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
-#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
-#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
+#include <API/TimeUnit.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -66,22 +64,16 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeUnit.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/TumblingWindow.hpp>
-#include <Types/SlidingWindow.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
@@ -109,12 +101,20 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <Util/Core.hpp>
+#include <Util/Execution.hpp>
 #include <cstddef>
 #include <string_view>
 #include <utility>
-#include <Util/Execution.hpp>
 
 namespace NES::QueryCompilation {
 
@@ -379,11 +379,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto windowSize = buildOperatorHandler->getWindowSize();
         auto windowSlide = buildOperatorHandler->getWindowSlide();
 
+        const auto& timestampField = buildOperator->getTimeStampField();
         auto timeStampFieldRecord =
-            std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
+            std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timestampField.getName());
         Operators::TimeFunctionPtr timeFunction =
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
-        if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord, timestampField.getUnit());
+        if (timestampField.isIngestionTime()) {
             timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
         }
 
@@ -832,7 +833,9 @@ LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWi
         // For event time fields, we look up the reference field name and create an expression to read the field.
         auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
         auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
-        return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampField);
+        return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
+            timeStampField,
+            timeWindow->getTimeCharacteristic()->getTimeUnit());
     }
     NES_THROW_RUNTIME_ERROR("Timefunction could not be created for the following window definition: " << timeWindow->toString());
 }
@@ -963,7 +966,8 @@ LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Exec
             wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
         auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
         auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(fieldExpression));
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(fieldExpression,
+                                                                               eventTimeWatermarkStrategy->getTimeUnit()));
         return watermarkAssignmentOperator;
     } else if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
         auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::IngestionTimeWatermarkAssignment>(

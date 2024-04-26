@@ -144,7 +144,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftEntrySize,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -154,7 +154,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightEntrySize,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+            std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 

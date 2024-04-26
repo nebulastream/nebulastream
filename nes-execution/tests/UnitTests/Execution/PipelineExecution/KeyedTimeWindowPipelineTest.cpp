@@ -93,7 +93,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     std::vector<PhysicalTypePtr> types = {integerType};
     auto slicePreAggregation =
         std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
-                                                              std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                              std::make_unique<Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
                                                               keyFields,
                                                               types,
                                                               aggregationFunctions,
@@ -201,7 +201,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     std::vector<PhysicalTypePtr> keyTypes = {integerType, integerType};
     auto slicePreAggregation =
         std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
-                                                              std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                              std::make_unique<Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
                                                               keyFields,
                                                               keyTypes,
                                                               aggregationFunctions,

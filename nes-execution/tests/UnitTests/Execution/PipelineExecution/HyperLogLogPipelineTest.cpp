@@ -142,7 +142,7 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public ::testing::
 
         // 3. Building the count min operator
         const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldName);
-        auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField);
+        auto timeFunction = std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds());
         auto countMinOperator = std::make_shared<Operators::HyperLogLogBuild>(operatorHandlerIndex,
                                                                            fieldToBuildCountMinOver,
                                                                            metricHash,
