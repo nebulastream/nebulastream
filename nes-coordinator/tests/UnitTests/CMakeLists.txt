@@ -162,7 +162,7 @@ add_nes_unit_test(convert-logical-to-physical-sink-tests "Phases/ConvertLogicalT
 add_nes_unit_test(convert-logical-to-physical-source-tests "Phases/ConvertLogicalToPhysicalSourceTest.cpp")
 
 # SerializationUtilTest
-add_nes_unit_test(serialize-operator-test "Serialization/SerializationUtilTest.cpp")
+add_nes_unit_test(serialize-operator-test "Serialization/SerializationUtilTest.cpp" "Serialization/TimeWindowSerializationTest.cpp")
 
 ### SourceCatalogService Tests ###
 add_nes_unit_test(source-catalog-service-tests "Services/SourceCatalogServiceTest.cpp")

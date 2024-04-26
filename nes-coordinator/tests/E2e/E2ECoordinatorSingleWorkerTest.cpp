@@ -804,6 +804,150 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(response == 0);
 }
 
+TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits) {
+    NES_INFO("start coordinator");
+    std::string testFile = getTestResourceFolder() / "testWindowExecutionWithDifferentTimeUnits_output.csv";
+    NES_INFO("testFile = {}", testFile);
+    remove(testFile.c_str());
+
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    std::stringstream schema;
+    schema << "{\"logicalSourceName\" : \"window_data\",\"schema\" "
+              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::INT32))->"
+              "addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
+    schema << endl;
+
+    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(
+             std::string(TEST_DATA_DIRECTORY)
+             + "window_increasing_timesteps.csv"),//I created a new file to open and close a threshold window
+         TestUtils::physicalSourceName("window_data"),
+         TestUtils::logicalSourceName("window_data"),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::enableSlicingWindowing()});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
+    auto testWithUnits = [&](const auto& event, const auto& size, const auto& slide, const auto& expectedContent) {
+        std::stringstream ss;
+        ss << "{\"userQuery\" : ";
+        ss << R"("Query::from(\"window_data\"))";
+        ss << fmt::format(".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\"), {}()), {}(2), {}(1)))",
+                          event,
+                          size,
+                          slide);
+        ss << R"(.apply(Count()))";
+        ss << R"(.sink(FileSinkDescriptor::create(\")";
+        ss << testFile;
+        ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
+        ss << R"(;","placement" : "BottomUp"})";
+        ss << endl;
+
+        auto q = ss.str();
+
+        NES_INFO("string submit={}", q);
+
+        nlohmann::json json_return = TestUtils::startQueryViaRest(q, std::to_string(*restPort));
+
+        NES_INFO("try to acc return");
+        QueryId queryId = json_return["queryId"].get<QueryId>();
+        NES_INFO("Query ID: {}", queryId);
+        EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+        EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+        EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+        int response = remove(testFile.c_str());
+        EXPECT_EQ(response, 0);
+    };
+
+    testWithUnits("Milliseconds",
+                  "Milliseconds",
+                  "Milliseconds",
+                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+1,3,2
+2,4,2
+3,5,1
+1000,1002,1
+2000,2002,1
+3000,3002,1
+60000,60002,1
+120000,120002,1
+180000,180002,1
+3600000,3600002,1
+7200000,7200002,1
+10800000,10800002,1
+86400000,86400002,1
+172800000,172800002,1
+259200000,259200002,1
+)");
+
+    // Items in Window 1(0s-2s): [1ms,2ms,3ms,1000ms], 2(1s-3s): [1000ms, 2000ms]
+    testWithUnits("Milliseconds",
+                  "Seconds",
+                  "Seconds",
+                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+0,2000,4
+1000,3000,2
+2000,4000,2
+3000,5000,1
+60000,62000,1
+120000,122000,1
+180000,182000,1
+3600000,3602000,1
+7200000,7202000,1
+10800000,10802000,1
+86400000,86402000,1
+172800000,172802000,1
+259200000,259202000,1
+)");
+
+    // Items in Window 1(1s-3s): [1s, 2s], 2(2s-4s): [2s, 3s]
+    testWithUnits("Seconds",
+                  "Seconds",
+                  "Seconds",
+                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+1000,3000,2
+2000,4000,2
+3000,5000,1
+1000000,1002000,1
+2000000,2002000,1
+3000000,3002000,1
+60000000,60002000,1
+120000000,120002000,1
+180000000,180002000,1
+3600000000,3600002000,1
+7200000000,7200002000,1
+10800000000,10800002000,1
+86400000000,86400002000,1
+172800000000,172800002000,1
+259200000000,259200002000,1
+)");
+
+    testWithUnits("Milliseconds",
+                  "Minutes",
+                  "Minutes",
+                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+0,120000,7
+60000,180000,2
+120000,240000,2
+180000,300000,1
+3600000,3720000,1
+7200000,7320000,1
+10800000,10920000,1
+86400000,86520000,1
+172800000,172920000,1
+259200000,259320000,1
+)");
+}
+
 //TODO #3801 fixing bykey()
 TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMByKey) {
     NES_INFO("start coordinator");

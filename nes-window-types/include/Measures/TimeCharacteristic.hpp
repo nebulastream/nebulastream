@@ -16,7 +16,7 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_MEASURES_TIMECHARACTERISTIC_HPP_
 
 #include <API/AttributeField.hpp>
-#include <Measures/TimeUnit.hpp>
+#include <API/TimeUnit.hpp>
 #include <Expressions/ExpressionNode.hpp>
 
 namespace NES::Windowing {
@@ -39,12 +39,14 @@ class TimeCharacteristic final {
 
     /**
      * @brief Factory to create a time characteristic for ingestion time window
+     * @param unit the time unit of the ingestion time
      * @return TimeCharacteristicPtr
      */
     static TimeCharacteristicPtr createIngestionTime();
 
     /**
      * @brief Factory to create a event time window with an time extractor on a specific field.
+     * @param unit the time unit of the EventTime, defaults to milliseconds
      * @param field the field from which we want to extract the time.
      * @return
      */
