@@ -65,5 +65,5 @@ macro(project_enable_fixguards)
 
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
-    message(" -- guardonce utility to fix ifdefs is available via the 'fix-guards' target")
+    message(STATUS "guardonce utility to fix include guards is available via the 'fix-guards' target")
 endmacro(project_enable_fixguards)
