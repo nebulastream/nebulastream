@@ -15,6 +15,7 @@
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <sstream>
 
 namespace NES::Statistic {
 

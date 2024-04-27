@@ -33,9 +33,8 @@ target_include_directories(nes-runtime PUBLIC
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     include(CMakeFindDependencyMacro)
-    find_dependency(gflags CONFIG REQUIRED) # required on macos
     find_package(folly CONFIG REQUIRED)
-    target_link_libraries(nes-runtime PRIVATE Folly::folly)
+    target_link_libraries(nes-runtime PRIVATE folly::folly)
     target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
 endif ()
 
