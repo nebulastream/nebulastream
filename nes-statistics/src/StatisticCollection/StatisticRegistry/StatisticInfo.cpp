@@ -14,6 +14,7 @@
 
 #include <Types/WindowType.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
+#include <sstream>
 
 namespace NES::Statistic {
 StatisticInfo::StatisticInfo(const Windowing::WindowTypePtr window,
