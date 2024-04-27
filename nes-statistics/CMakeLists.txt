@@ -19,7 +19,7 @@ find_package(folly CONFIG REQUIRED)
 
 # Add Library
 add_library(nes-statistics SHARED ${NES_STATISTICS_SOURCE_FILES})
-target_link_libraries(nes-statistics PRIVATE nes-common nes-grpc nes-data-types nes-expressions nes-window-types nes-catalogs nes-operators Folly::folly)
+target_link_libraries(nes-statistics PRIVATE nes-common nes-grpc nes-data-types nes-expressions nes-window-types nes-catalogs nes-operators folly::folly)
 target_include_directories(nes-statistics PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

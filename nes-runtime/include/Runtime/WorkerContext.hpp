@@ -24,8 +24,10 @@
 #include <folly/ThreadLocal.h>
 #include <future>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <unordered_map>
+
 //namespace NES::Network {
 //class NesPartition;
 //}
