@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.109](https://github.com/nebulastream/nebulastream/tree/v0.6.109) (2024-04-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.108...v0.6.109)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate loading only needed stuff from folly library [\#4510](https://github.com/nebulastream/nebulastream/issues/4510)
+
 ## [v0.6.108](https://github.com/nebulastream/nebulastream/tree/v0.6.108) (2024-04-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.107...v0.6.108)
