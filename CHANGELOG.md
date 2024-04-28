@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.110](https://github.com/nebulastream/nebulastream/tree/v0.6.110) (2024-04-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.109...v0.6.110)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create Concurrent Amendment Handler [\#4698](https://github.com/nebulastream/nebulastream/issues/4698)
+
 ## [v0.6.109](https://github.com/nebulastream/nebulastream/tree/v0.6.109) (2024-04-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.108...v0.6.109)
