@@ -17,7 +17,7 @@ get_source(nes-window-types NES_STATISTICS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-window-types SHARED ${NES_STATISTICS_SOURCE_FILES})
-target_link_libraries(nes-window-types PUBLIC nes-common nes-data-types nes-expressions)
+target_link_libraries(nes-window-types PUBLIC nes-expressions)
 target_include_directories(nes-window-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

@@ -25,7 +25,7 @@ SerialStorageHandler::SerialStorageHandler(StorageDataStructures& storageDataStr
       globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       queryCatalog(std::move(storageDataStructures.queryCatalog)), sourceCatalog(std::move(storageDataStructures.sourceCatalog)),
-      udfCatalog(std::move(storageDataStructures.udfCatalog)) {}
+      udfCatalog(std::move(storageDataStructures.udfCatalog)), amendmentQueue(std::move(storageDataStructures.amendmentQueue)) {}
 
 StorageHandlerPtr SerialStorageHandler::create(StorageDataStructures storageDataStructures) {
     return std::make_shared<SerialStorageHandler>(storageDataStructures);
@@ -54,4 +54,6 @@ Catalogs::UDF::UDFCatalogPtr SerialStorageHandler::getUDFCatalogHandle(const Req
 Configurations::CoordinatorConfigurationPtr SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
     return {&*coordinatorConfiguration, UnlockDeleter()};
 }
+
+Optimizer::UMPMCAmendmentQueuePtr SerialStorageHandler::getAmendmentQueue() { return {&*amendmentQueue, UnlockDeleter()}; }
 }// namespace NES::RequestProcessor

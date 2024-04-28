@@ -35,6 +35,8 @@ Catalogs::UDF::UDFCatalogPtr StorageHandler::getUDFCatalogHandle(RequestId) { NE
 
 Configurations::CoordinatorConfigurationPtr StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
 
+Optimizer::UMPMCAmendmentQueuePtr StorageHandler::getAmendmentQueue() { NES_NOT_IMPLEMENTED(); }
+
 RequestId StorageHandler::generateRequestId() {
     std::unique_lock lock(idMutex);
     auto requestId = nextFreeRequestId.getRawValue();

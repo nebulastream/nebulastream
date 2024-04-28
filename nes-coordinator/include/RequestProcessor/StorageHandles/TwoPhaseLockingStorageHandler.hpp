@@ -134,6 +134,8 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
 
     Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId) override;
 
+    Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override;
+
     /**
      * @brief Used for testing
      * @param resource The resource for which the current ticket number should be queried
@@ -179,6 +181,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
 
     ResourceHolderData coordinatorConfigurationHolder;
     ResourceHolderData topologyHolder;
@@ -187,6 +190,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     ResourceHolderData globalQueryPlanHolder;
     ResourceHolderData sourceCatalogHolder;
     ResourceHolderData udfCatalogHolder;
+    ResourceHolderData amendmentQueueHolder;
 };
 }// namespace NES::RequestProcessor
 

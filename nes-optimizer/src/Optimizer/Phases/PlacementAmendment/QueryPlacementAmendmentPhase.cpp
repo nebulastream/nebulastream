@@ -17,7 +17,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>

@@ -16,8 +16,6 @@
 #define NES_ISQPREQUEST_HPP
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
-#include <folly/MPMCQueue.h>
-#include <folly/concurrency/UnboundedQueue.h>
 #include <thread>
 
 namespace NES {
@@ -65,15 +63,25 @@ using ISQPRemoveLinkEventPtr = std::shared_ptr<ISQPRemoveLinkEvent>;
  * @brief Response to the execution of the ISQP request with the success, start time, and end time.
  */
 struct ISQPRequestResponse : AbstractRequestResponse {
-    explicit ISQPRequestResponse(uint64_t start, uint64_t end, bool success) : start(start), end(end), success(success){};
-    uint64_t start;
-    uint64_t end;
+    explicit ISQPRequestResponse(uint64_t processingStartTime,
+                                 uint64_t amendmentStartTime,
+                                 uint64_t processingEndTime,
+                                 uint64_t numOfSQPAffected,
+                                 uint64_t numOfFailedPlacements,
+                                 bool success)
+        : processingStartTime(processingStartTime), amendmentStartTime(amendmentStartTime), processingEndTime(processingEndTime),
+          numOfSQPAffected(numOfSQPAffected), numOfFailedPlacements(numOfFailedPlacements), success(success){};
+    uint64_t processingStartTime;
+    uint64_t amendmentStartTime;
+    uint64_t processingEndTime;
+    uint64_t numOfSQPAffected;
+    uint64_t numOfFailedPlacements;
     bool success;
 };
 using ISQPRequestResponsePtr = std::shared_ptr<ISQPRequestResponse>;
 
-class PlacementAmemderInstance;
-using PlacementAmemderInstancePtr = std::unique_ptr<PlacementAmemderInstance>;
+class PlacementAmendmentInstance;
+using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
 /**
  * @brief This is a meta request that is capable of handling a batch of external events.
@@ -137,42 +145,6 @@ class ISQPRequest : public AbstractUniRequest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    folly::USPMCQueue<PlacementAmemderInstancePtr, false> amendmentInstanceQueue;
-    std::vector<std::thread> amendmentRunners;
-};
-
-/**
- * @brief class representing the placement amender instance
- */
-class PlacementAmemderInstance {
-  public:
-    static PlacementAmemderInstancePtr create(SharedQueryPlanPtr sharedQueryPlan,
-                                              Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                              TopologyPtr topology,
-                                              Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                              Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                              Catalogs::Query::QueryCatalogPtr queryCatalog);
-
-    PlacementAmemderInstance(SharedQueryPlanPtr sharedQueryPlan,
-                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                             TopologyPtr topology,
-                             Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                             Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                             Catalogs::Query::QueryCatalogPtr queryCatalog);
-
-    /**
-     * @brief Perform the placement amendment
-     * @return true if success else false
-     */
-    bool execute();
-
-  private:
-    SharedQueryPlanPtr sharedQueryPlan;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    TopologyPtr topology;
-    Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
 
 }// namespace RequestProcessor

@@ -15,8 +15,8 @@ add_subdirectory(src)
 get_source(nes-client NES_CLIENT_SOURCE_FILES)
 
 # Add Library
-add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
-target_link_libraries(nes-client PUBLIC nes-data-types nes-operators nes-expressions nes-statistics nes-window-types)
+add_library(nes-client ${NES_CLIENT_SOURCE_FILES})
+target_link_libraries(nes-client PRIVATE nes-operators)
 target_link_libraries(nes-client PRIVATE cpr::cpr ${CURL_LIBRARIES} nes-grpc nes-common)
 target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

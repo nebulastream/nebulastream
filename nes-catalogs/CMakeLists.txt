@@ -15,16 +15,17 @@ add_subdirectory(src)
 
 get_source(nes-catalogs NES_CATALOGS_SOURCE_FILES)
 
-# Find folly
-find_package(folly CONFIG REQUIRED)
-
 # Add Library
-add_library(nes-catalogs SHARED ${NES_CATALOGS_SOURCE_FILES})
-target_link_libraries(nes-catalogs PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations nes-expressions folly::folly)
+add_library(nes-catalogs ${NES_CATALOGS_SOURCE_FILES})
+target_link_libraries(nes-catalogs PUBLIC nes-operators)
 target_include_directories(nes-catalogs PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+
+# Find folly
+find_package(folly CONFIG REQUIRED)
+target_link_libraries(nes-catalogs PRIVATE folly::folly)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

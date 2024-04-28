@@ -14,18 +14,20 @@
 add_subdirectory(src)
 get_source(nes-statistics NES_STATISTICS_SOURCE_FILES)
 
-# Find folly
-find_package(folly CONFIG REQUIRED)
-
 # Add Library
 add_library(nes-statistics SHARED ${NES_STATISTICS_SOURCE_FILES})
-target_link_libraries(nes-statistics PRIVATE nes-common nes-grpc nes-data-types nes-expressions nes-window-types nes-catalogs nes-operators folly::folly)
+target_link_libraries(nes-statistics PUBLIC nes-operators)
 target_include_directories(nes-statistics PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 register_public_header_dir(nes-statistics ${CMAKE_CURRENT_SOURCE_DIR}/include/StatisticCollection StatisticCollection)
 register_public_header_dir(nes-statistics ${CMAKE_CURRENT_SOURCE_DIR}/include/Statistics Statistics)
+
+# Find folly
+find_package(folly CONFIG REQUIRED)
+target_link_libraries(nes-statistics PRIVATE folly::folly)
+
 
 
 #Add the nes statistics and headers to cpack

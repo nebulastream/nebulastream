@@ -28,9 +28,11 @@ TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(StorageDataStructur
       globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       queryCatalog(std::move(storageDataStructures.queryCatalog)), sourceCatalog(std::move(storageDataStructures.sourceCatalog)),
-      udfCatalog(std::move(storageDataStructures.udfCatalog)), coordinatorConfigurationHolder(INVALID_REQUEST_ID),
-      topologyHolder(INVALID_REQUEST_ID), globalExecutionPlanHolder(INVALID_REQUEST_ID), queryCatalogHolder(INVALID_REQUEST_ID),
-      globalQueryPlanHolder(INVALID_REQUEST_ID), sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID) {}
+      udfCatalog(std::move(storageDataStructures.udfCatalog)), amendmentQueue(std::move(storageDataStructures.amendmentQueue)),
+      coordinatorConfigurationHolder(INVALID_REQUEST_ID), topologyHolder(INVALID_REQUEST_ID),
+      globalExecutionPlanHolder(INVALID_REQUEST_ID), queryCatalogHolder(INVALID_REQUEST_ID),
+      globalQueryPlanHolder(INVALID_REQUEST_ID), sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID),
+      amendmentQueueHolder(INVALID_REQUEST_ID) {}
 
 std::shared_ptr<TwoPhaseLockingStorageHandler>
 TwoPhaseLockingStorageHandler::create(StorageDataStructures storageDataStructures) {
@@ -171,6 +173,8 @@ Configurations::CoordinatorConfigurationPtr TwoPhaseLockingStorageHandler::getCo
     }
     return coordinatorConfiguration;
 }
+
+Optimizer::UMPMCAmendmentQueuePtr TwoPhaseLockingStorageHandler::getAmendmentQueue() { return amendmentQueue; }
 
 TicketId TwoPhaseLockingStorageHandler::getCurrentTicket(ResourceType resource) { return getHolder(resource).currentTicket; }
 
