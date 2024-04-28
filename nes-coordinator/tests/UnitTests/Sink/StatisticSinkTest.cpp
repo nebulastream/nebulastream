@@ -20,8 +20,8 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Sinks/SinkCreator.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
+#include <Sinks/SinkCreator.hpp>
 #include <StatisticIdentifiers.hpp>
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
