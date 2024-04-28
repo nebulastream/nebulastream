@@ -112,6 +112,7 @@ void AsyncRequestProcessor::runningRoutine() {
                 if (multiRequest->isDone()) {
                     asyncRequestQueue.pop_front();
                     lock.unlock();
+                    cv.notify_all();
                     NES_ERROR("Multi request removed from queue. {} remain requests in queue", asyncRequestQueue.size());
                     continue;
                 }
@@ -124,6 +125,7 @@ void AsyncRequestProcessor::runningRoutine() {
             }
 
             lock.unlock();
+            cv.notify_all();
 
             NES_ERROR("Executing request")
             //execute request logic
