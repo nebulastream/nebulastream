@@ -24,5 +24,5 @@ set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 
 add_library(nes-operators-test-util SHARED
         "src/Util/JavaUdfDescriptorBuilder.cpp")
-target_link_libraries(nes-operators-test-util PRIVATE nes-operators nes-common nes-data-types)
+target_link_libraries(nes-operators-test-util PRIVATE nes-operators)
 target_include_directories(nes-operators-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

@@ -33,6 +33,7 @@ class SerialStorageHandler : public StorageHandler {
      * -globalQueryPlan
      * -sourceCatalog
      * -udfCatalog
+     * -amendmentQueue
      * -lockManager
      * @return shared pointer to the serial storage manager
      */
@@ -87,6 +88,8 @@ class SerialStorageHandler : public StorageHandler {
      */
     Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId) override;
 
+    Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override;
+
     /**
      * @brief constructor
      * @param storageDataStructures a struct containing pointers to the following data structures:
@@ -108,6 +111,7 @@ class SerialStorageHandler : public StorageHandler {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
 };
 }// namespace NES::RequestProcessor
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_

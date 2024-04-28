@@ -17,15 +17,13 @@ include(GNUInstallDirs)
 
 # Add nes-coordinator library
 get_source(nes-coordinator NES_COORDINATOR_SOURCE_FILES)
-add_library(nes-coordinator SHARED ${NES_COORDINATOR_SOURCE_FILES})
+add_library(nes-coordinator ${NES_COORDINATOR_SOURCE_FILES})
 
-# Find folly
-find_package(folly CONFIG REQUIRED)
 
 target_include_directories(nes-coordinator PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes-coordinator PRIVATE nes-common nes-grpc nes-operators nes-compiler nes-catalogs nes-runtime nes-optimizer nes-worker nes-client nes-data-types nes-configurations nes-execution nes-nautilus nes-window-types folly::folly)
+target_link_libraries(nes-coordinator PUBLIC nes-optimizer nes-worker nes-client)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-coordinator REUSE_FROM nes-common)
 endif ()
@@ -34,6 +32,10 @@ endif ()
 find_package(oatpp REQUIRED)
 target_link_libraries(nes-coordinator PRIVATE oatpp::oatpp oatpp::oatpp-test)
 target_link_libraries(nes-coordinator PRIVATE cpr::cpr)
+
+# Find folly
+find_package(folly CONFIG REQUIRED)
+target_link_libraries(nes-coordinator PRIVATE folly::folly)
 
 # Antlr
 # Currently antlr dose not come with an own cmake file
@@ -53,7 +55,7 @@ endforeach ()
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator PRIVATE  nes-common nes-coordinator nes-catalogs nes-configurations )
+target_link_libraries(nesCoordinator PRIVATE  nes-coordinator)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

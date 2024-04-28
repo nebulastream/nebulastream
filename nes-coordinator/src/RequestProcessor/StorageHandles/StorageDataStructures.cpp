@@ -21,8 +21,10 @@ StorageDataStructures::StorageDataStructures(Configurations::CoordinatorConfigur
                                              GlobalQueryPlanPtr globalQueryPlan,
                                              Catalogs::Query::QueryCatalogPtr queryCatalog,
                                              Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                             Catalogs::UDF::UDFCatalogPtr udfCatalog)
+                                             Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                                             Optimizer::UMPMCAmendmentQueuePtr amendmentQueue)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), topology(std::move(topology)),
       globalExecutionPlan(std::move(globalExecutionPlan)), globalQueryPlan(std::move(globalQueryPlan)),
-      queryCatalog(std::move(queryCatalog)), sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
+      queryCatalog(std::move(queryCatalog)), sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)),
+      amendmentQueue(std::move(amendmentQueue)) {}
 }// namespace NES::RequestProcessor

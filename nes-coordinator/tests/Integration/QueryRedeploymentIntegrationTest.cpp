@@ -394,7 +394,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
                                                                       crd->getGlobalQueryPlan(),
                                                                       crd->getQueryCatalog(),
                                                                       crd->getSourceCatalog(),
-                                                                      crd->getUDFCatalog());
+                                                                      crd->getUDFCatalog(),
+                                                                      crd->getPlacementAmendmentQueue());
         auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
         std::vector<TopologyLinkInformation> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
         std::vector<TopologyLinkInformation> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};

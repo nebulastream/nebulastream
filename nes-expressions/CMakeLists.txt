@@ -16,7 +16,7 @@ get_source(nes-expressions NES_EXPRESSIONS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-expressions SHARED ${NES_EXPRESSIONS_SOURCE_FILES})
-target_link_libraries(nes-expressions PRIVATE nes-common nes-data-types)
+target_link_libraries(nes-expressions PUBLIC nes-data-types)
 target_include_directories(nes-expressions PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

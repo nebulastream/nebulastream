@@ -73,6 +73,7 @@
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
+#include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD

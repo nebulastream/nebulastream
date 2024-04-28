@@ -63,6 +63,7 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -84,6 +85,7 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
 
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
+        amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     }
 
     z3::ContextPtr context;
@@ -108,7 +110,8 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
                                                                   globalQueryPlan,
                                                                   queryCatalog,
                                                                   sourceCatalog,
-                                                                  udfCatalog);
+                                                                  udfCatalog,
+                                                                  amendmentQueue);
 
     auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
 
