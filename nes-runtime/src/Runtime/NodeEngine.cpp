@@ -630,7 +630,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
                                    DecomposedQueryPlanId querySubPlanId,
                                    uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
-    NES_ERROR("NodeEngine: Received request to update Network Sink");
+    NES_DEBUG("NodeEngine: Received request to update Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
     if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
@@ -668,7 +668,7 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                                     uint64_t uniqueNetworkSinkDescriptorId,
                                                     Network::NesPartition newPartition,
                                                     DecomposedQueryPlanVersion version) {
-    NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
+    NES_DEBUG("NodeEngine: Received request to reconfigure Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
     if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
@@ -757,7 +757,7 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
 
 bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {
     std::unique_lock lock(engineMutex);
-    NES_ERROR("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
+    NES_DEBUG("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
               reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
     auto deployedPlanIterator = deployedExecutableQueryPlans.find(reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
@@ -807,7 +807,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
             }
         }
     }
-    NES_ERROR("Succesfully reconfigured query plan {} the decomposed query plan {} for reconfiguration.",
+    NES_DEBUG("Succesfully reconfigured query plan {} the decomposed query plan {} for reconfiguration.",
               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
               reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
     return true;
