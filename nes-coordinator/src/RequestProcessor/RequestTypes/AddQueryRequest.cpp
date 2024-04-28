@@ -335,6 +335,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         //23. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
+        NES_ERROR("Deploy query{}", queryId);
+
         // Iterate over deployment context and update execution plan
         for (const auto& deploymentContext : deploymentContexts) {
             auto executionNodeId = deploymentContext->getWorkerId();
@@ -367,6 +369,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                     NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
+        NES_ERROR("Query deployment complete for query: {}", queryId);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);
