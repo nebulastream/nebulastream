@@ -246,15 +246,15 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryCatalog->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
         //3. Execute type inference phase
-        NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
+        NES_ERROR("Performing Query type inference phase for query:  {}", queryId);
         queryPlan = typeInferencePhase->execute(queryPlan);
 
         //4. Set memory layout of each logical operator
-        NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
+        NES_ERROR("Performing query choose memory layout phase:  {}", queryId);
         queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
         //5. Perform query re-write
-        NES_DEBUG("Performing Query rewrite phase for query:  {}", queryId);
+        NES_ERROR("Performing Query rewrite phase for query:  {}", queryId);
         queryPlan = queryRewritePhase->execute(queryPlan);
 
         //6. Add the updated query plan to the query catalog
@@ -289,18 +289,18 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryPlan = originIdInferencePhase->execute(queryPlan);
 
         //15. Set memory layout of each logical operator in the rewritten query
-        NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
+        NES_ERROR("Performing query choose memory layout phase:  {}", queryId);
         queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
         //16. Add the updated query plan to the query catalog
         queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
         //17. Add the updated query plan to the global query plan
-        NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
+        NES_ERROR("Performing Query type inference phase for query:  {}", queryId);
         globalQueryPlan->addQueryPlan(queryPlan);
 
         //18. Perform query merging for newly added query plan
-        NES_DEBUG("Applying Query Merger Rules as Query Merging is enabled.");
+        NES_ERROR("Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
 
         //19. Get the shared query plan id for the added query
@@ -327,7 +327,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryCatalog->linkSharedQuery(queryId, sharedQueryId);
 
         //21. Perform placement of updated shared query plan
-        NES_DEBUG("Performing Operator placement for shared query plan");
+        NES_ERROR("Performing Operator placement for shared query plan");
         auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //22. Perform deployment of re-placed shared query plan
