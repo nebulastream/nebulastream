@@ -64,6 +64,7 @@ ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
     try {
+        NES_ERROR("ISQP Lock resources --------------------------------------------------------------------------------------------")
         auto processingStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         topology = storageHandle->getTopologyHandle(requestId);
@@ -76,6 +77,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
         auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
 
+        NES_ERROR("Resources locked ISQP Start updating topology --------------------------------------------------------------------------------------------")
         // Apply all topology events
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -120,7 +122,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPAddNodeResponse>(workerId, true));
             }
         }
-        NES_ERROR("applied change events --------------------------------------------------------------------------------------------")
+        NES_ERROR("Changed topology, identify affected placements --------------------------------------------------------------------------------------------")
 
         // Identify affected operator placements
         for (const auto& event : events) {
@@ -138,7 +140,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPRemoveQueryResponse>(true));
             }
         }
-        NES_ERROR("whatever  events --------------------------------------------------------------------------------------------")
+        NES_ERROR("Identified placements, start amendment instances --------------------------------------------------------------------------------------------")
 
         // Fetch affected SQPs and call in parallel operator placement amendment phase
         auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
