@@ -62,9 +62,11 @@ RequestId AsyncRequestProcessor::runAsync(AbstractRequestPtr request) {
     }
     RequestId requestId = storageHandler->generateRequestId();
     request->setId(requestId);
-    std::unique_lock lock(workMutex);
-    asyncRequestQueue.emplace_back(std::move(request));
-    NES_ERROR("Request added to queue. {} requests in queue", asyncRequestQueue.size());
+    {
+        std::unique_lock lock(workMutex);
+        asyncRequestQueue.emplace_back(std::move(request));
+        NES_ERROR("Request added to queue. {} requests in queue", asyncRequestQueue.size());
+    }
     cv.notify_all();
     return requestId;
 }
@@ -100,6 +102,7 @@ void AsyncRequestProcessor::runningRoutine() {
     while (true) {
         std::unique_lock lock(workMutex);
         while (asyncRequestQueue.empty()) {
+            NES_ERROR("Async request queue is empty, waiting for requests")
             cv.wait(lock);
         }
         if (running) {
