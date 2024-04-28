@@ -146,7 +146,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         placementAmendmentQueue->enqueue(amendmentInstance);
     }
 
-    uint64_t numOfFailedPlacements=0;
+    uint64_t numOfFailedPlacements = 0;
     // Wait for all amendment runners to finish processing
     for (auto& completedAmendment : completedAmendments) {
         if (!completedAmendment.get()) {
