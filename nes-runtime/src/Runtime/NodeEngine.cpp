@@ -778,7 +778,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
                 if (reconfiguredNetworkSinkDescriptor
                     && reconfiguredNetworkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
-                    NES_ERROR("Reconfiguring the network sink {} with new descriptor for shared query plan {} and the decomposed "
+                    NES_DEBUG("Reconfiguring the network sink {} with new descriptor for shared query plan {} and the decomposed "
                               "query plan {}.",
                               reconfiguredNetworkSinkDescriptor->getUniqueId(),
                               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
