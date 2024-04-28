@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Util/magicenum/magic_enum.hpp"
 #include <Exceptions/AccessNonLockedResourceException.hpp>
 #include <Exceptions/StorageHandlerAcquireResourcesException.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
@@ -50,15 +51,19 @@ void TwoPhaseLockingStorageHandler::acquireResources(const RequestId requestId, 
     //sort the resource list to ensure that resources are acquired in a deterministic order for deadlock prevention
     std::sort(requiredResources.begin(), requiredResources.end());
 
+    NES_ERROR("Request {} trying to acquire {} resources", requestId, requiredResources.size());
     //lock the resources
     for (const auto& type : requiredResources) {
-        NES_TRACE("Request {} trying to acquire resource {}", requestId, (uint8_t) type);
+        NES_ERROR("Request {} trying to acquire resource {}", requestId, magic_enum::enum_name(type));
         lockResource(type, requestId);
+        NES_ERROR("Request {} acquired resource {}", requestId, magic_enum::enum_name(type));
     }
+    NES_ERROR("Request {} acquired resources", requestId)
 }
 
 void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) {
     //iterate over all resources
+    NES_ERROR("Request {} releaseing resources resources", requestId);
     for (const auto resourceType : resourceTypeList) {
         auto& holder = getHolder(resourceType);
 
