@@ -174,6 +174,7 @@ void AddQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exc
 
 std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
     try {
+        NES_ERROR("Executing AddQueryRequest with queryId: {}", queryId);
         NES_DEBUG("Acquiring required resources.");
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
@@ -370,6 +371,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);
     }
+    NES_ERROR("Finished Executing AddQueryRequest with queryId: {}", queryId);
     return {};
 }
 
