@@ -369,12 +369,12 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                     NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
-        NES_ERROR("Query deployment complete for query: {}", queryId);
+        NES_DEBUG("Query deployment complete for query: {}", queryId);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);
     }
-    NES_ERROR("Finished Executing AddQueryRequest with queryId: {}", queryId);
+    NES_DEBUG("Finished Executing AddQueryRequest with queryId: {}", queryId);
     return {};
 }
 

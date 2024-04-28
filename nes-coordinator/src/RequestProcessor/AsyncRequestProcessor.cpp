@@ -102,7 +102,7 @@ void AsyncRequestProcessor::runningRoutine() {
     while (true) {
         std::unique_lock lock(workMutex);
         while (asyncRequestQueue.empty()) {
-            NES_ERROR("Async request queue is empty, waiting for requests")
+            NES_DEBUG("Async request queue is empty, waiting for requests")
             cv.wait(lock);
         }
         if (running) {
