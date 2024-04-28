@@ -376,7 +376,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief get the opened tcp descriptor if there is one
      */
-    std::optional<int> getTcpDescriptor(std::string sourceName) const;
+    std::optional<int> getTcpDescriptor(std::string sourceName);
     void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
   private:
     WorkerId nodeId;
@@ -403,6 +403,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool sourceSharing;
     bool timestampOutPutSources;
     std::map<std::string, int> tcpDescriptor;
+    std::mutex tcpDescriptorMutex;
     std::atomic<WorkerId> parentId;
 };
 

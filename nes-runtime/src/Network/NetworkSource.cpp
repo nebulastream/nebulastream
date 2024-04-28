@@ -108,7 +108,9 @@ bool NetworkSource::start() {
                                                     decomposedQueryPlanId,
                                                     Runtime::ReconfigurationType::Initialize,
                                                     shared_from_base<DataSource>());
+            NES_DEBUG("inserting reconfig message to start source")
             queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, newReconf, true);
+            NES_DEBUG("completed blockign reconfig to start source ")
             break;// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on {}", nesPartition);

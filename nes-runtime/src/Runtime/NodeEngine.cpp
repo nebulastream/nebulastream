@@ -830,7 +830,8 @@ const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManag
 
 bool NodeEngine::getTimesStampOutputSources() { return timestampOutPutSources; }
 
-std::optional<int> NodeEngine::getTcpDescriptor(std::string sourceName) const {
+std::optional<int> NodeEngine::getTcpDescriptor(std::string sourceName) {
+    std::unique_lock lock(tcpDescriptorMutex);
     if (tcpDescriptor.contains(sourceName)) {
         return tcpDescriptor.at(sourceName);
     }
@@ -838,6 +839,7 @@ std::optional<int> NodeEngine::getTcpDescriptor(std::string sourceName) const {
 }
 
 void NodeEngine::setTcpDescriptor(std::string sourceName, int tcpDescriptor) {
+    std::unique_lock lock(tcpDescriptorMutex);
     if (this->tcpDescriptor.contains(sourceName)) {
         NES_ERROR("NodeEngine: TCP descriptor already set");
     }
