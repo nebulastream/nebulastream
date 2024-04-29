@@ -16,10 +16,9 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/CircularBuffer.hpp>
+#include <Util/MMapCircularBuffer.hpp>
 
 namespace NES {
 
@@ -73,21 +72,6 @@ class TCPSource : public DataSource {
     bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
     /**
-     * @brief search from the back (first inputted item) to the front for the given search token
-     * @token to search for
-     * @return number of places until first occurrence of token (place of token not included)
-     */
-    uint64_t sizeUntilSearchToken(char token);
-
-    /**
-     * @brief pop number of values given and fill temp with popped values. If popTextDevider true, pop one more value and discard
-     * @param numberOfValuesToPop number of values to pop and fill temp with
-     * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
-     * @return true if number of values to pop successfully popped, false otherwise
-     */
-    bool popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTextDivider);
-
-    /**
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
      */
@@ -116,6 +100,13 @@ class TCPSource : public DataSource {
     void close() override;
 
   private:
+    /**
+     * \brief converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
+     * \param data data memory segment which contains the buffersize
+     * \return buffersize
+     */
+    [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;
+
     std::vector<PhysicalTypePtr> physicalTypes;
     ParserPtr inputParser;
     int connection = -1;
@@ -123,8 +114,7 @@ class TCPSource : public DataSource {
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
-    CircularBuffer<char> circularBuffer;
-    char* messageBuffer;
+    MMapCircularBuffer circularBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES

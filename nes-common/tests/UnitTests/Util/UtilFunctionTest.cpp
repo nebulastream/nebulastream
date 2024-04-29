@@ -34,6 +34,24 @@ TEST(UtilFunctionTest, replaceNothing) {
     EXPECT_TRUE(replacedString == origin);
 }
 
+TEST(UtilFunctionTest, trimWhiteSpaces) {
+    EXPECT_EQ(NES::Util::trimWhiteSpaces("   1234  "), "1234");
+    EXPECT_EQ(NES::Util::trimWhiteSpaces("   12  34  "), "12  34");
+    EXPECT_EQ(NES::Util::trimWhiteSpaces("     "), "");
+    EXPECT_EQ(NES::Util::trimWhiteSpaces(""), "");
+}
+
+TEST(UtilFunctionTest, trimChar) {
+    EXPECT_EQ(NES::Util::trimChar("   1234  ", ' '), "1234");
+    EXPECT_EQ(NES::Util::trimChar("   12  34  ", ' '), "12  34");
+    EXPECT_EQ(NES::Util::trimChar("     ", ' '), "");
+    EXPECT_EQ(NES::Util::trimChar("", ' '), "");
+
+    EXPECT_EQ(NES::Util::trimChar("1234,", ','), "1234");
+    EXPECT_EQ(NES::Util::trimChar(Util::trimWhiteSpaces(" 1234, "), ','), "1234");
+    EXPECT_EQ(NES::Util::trimWhiteSpaces(Util::trimChar(" 1234 ,", ',')), "1234");
+}
+
 TEST(UtilFunctionTest, replaceOnceWithOneFinding) {
     std::string origin = "I do  have the search string nebula in me, but only once.";
     std::string search = "nebula";

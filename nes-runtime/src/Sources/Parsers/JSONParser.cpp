@@ -28,7 +28,7 @@ JSONParser::JSONParser(uint64_t numberOfSchemaFields,
     : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
       physicalTypes(std::move(physicalTypes)) {}
 
-bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
+bool JSONParser::writeInputTupleToTupleBuffer(std::string_view jsonTuple,
                                               uint64_t tupleCount,
                                               Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema,
@@ -62,8 +62,8 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
         }
         //JSON stings are send with " or '. We do not want to save these chars to our strings, though. Hence, we need to trim
         //the strings. This behavior can be improved with a JSON library in the future.
-        jsonValue = NES::Util::trim(jsonValue, '"');
-        jsonValue = NES::Util::trim(jsonValue, '\'');
+        jsonValue = NES::Util::trimChar(jsonValue, '"');
+        jsonValue = NES::Util::trimChar(jsonValue, '\'');
         writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, schema, tupleCount, bufferManager);
     }
     return true;

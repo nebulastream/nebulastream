@@ -49,6 +49,7 @@ message SerializablePhysicalSourceType{
   enum InputFormat{
       JSON = 0;
       CSV = 1;
+      NES_BINARY = 2;
   };
 
   enum TCPDecideMessageSize{

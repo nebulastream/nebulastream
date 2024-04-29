@@ -848,6 +848,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
             case Configurations::InputFormat::CSV:
                 mqttSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
                 break;
+            case Configurations::InputFormat::NES_BINARY: NES_NOT_IMPLEMENTED();
         }
         serializedPhysicalSourceType->mutable_specificphysicalsourcetype()->PackFrom(mqttSerializedSourceConfig);
         //init serializable mqtt source descriptor
@@ -907,6 +908,9 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
                 break;
             case Configurations::InputFormat::CSV:
                 tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
+                break;
+            case Configurations::InputFormat::NES_BINARY:
+                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_NES_BINARY);
                 break;
         }
 
