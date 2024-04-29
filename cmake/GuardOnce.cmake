@@ -1,11 +1,3 @@
-# TODO: make it run only on changed and new header files. The changed header files
-# can be obtained via
-# git ls-files ${CMAKE_CURRENT_SOURCE_DIR}/include/ -m
-# and
-# git ls-files ${CMAKE_CURRENT_SOURCE_DIR}/include/ --others --exclude-standard
-# somehow the output of git-ls has to redirected to guard2once, it does not read
-# input from files. One possible workaround could be write the output of a custom
-# command to a file which is then read in a string and passed to guard2once?
 macro(project_enable_fixguards)
     include(FetchContent)
     FetchContent_Declare(guardonce
