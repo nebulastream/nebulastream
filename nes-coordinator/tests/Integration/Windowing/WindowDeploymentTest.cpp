@@ -64,12 +64,15 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    // Expected output
-    auto expectedOutput = "0, 60000, 1, 9\n"
-                          "0, 60000, 12, 1\n"
-                          "0, 60000, 4, 1\n"
-                          "0, 60000, 11, 5\n"
-                          "0, 60000, 16, 2\n";
+    // Expected output, Output in ms
+    auto expectedOutput = "960000, 1020000, 1, 1\n"
+                          "960000, 1020000, 12, 1\n"
+                          "960000, 1020000, 4, 1\n"
+                          "1980000, 2040000, 1, 2\n"
+                          "1980000, 2040000, 11, 2\n"
+                          "1980000, 2040000, 16, 2\n"
+                          "3000000, 3060000, 1, 6\n"
+                          "3000000, 3060000, 11, 3\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
