@@ -2,8 +2,8 @@
  * Copyright(c) 2010-2014 Intel Corporation
  */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_RTE_MEMORY_H_
-#define NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_RTE_MEMORY_H_
+#ifndef _RTE_MEMCPY_X86_64_H_
+#define _RTE_MEMCPY_X86_64_H_
 
 /**
  * @file
@@ -814,4 +814,4 @@ static inline void* rte_memcpy(void* dst, const void* src, size_t n) {
 }
 #endif
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_RTE_MEMORY_H_
+#endif /* _RTE_MEMCPY_X86_64_H_ */

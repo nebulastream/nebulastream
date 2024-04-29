@@ -1,5 +1,5 @@
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
+#ifndef __APEX_MEMMOVE_H__
+#define __APEX_MEMMOVE_H__
 
 //	apex_memmove written by Trevor Herselman in 2014
 
