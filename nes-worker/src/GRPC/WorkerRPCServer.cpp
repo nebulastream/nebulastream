@@ -190,7 +190,7 @@ Status WorkerRPCServer::StartBufferingOnAllSinks(ServerContext* ,
                                                  const StartBufferingRequest* request,
                                                  StartBufferingReply* reply) {
     //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
-    NES_ERROR("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
+    NES_DEBUG("Stop sending data to node {}, buffer until connected to node {}", nodeEngine->getParentId(), request->parent());
     nodeEngine->setParentId(request->parent());
     auto success = true;
     if (success) {
