@@ -14,4 +14,5 @@ add_source_files(nes-runtime
         Parser.cpp
         JSONParser.cpp
         CSVParser.cpp
+        NESBinaryParser.cpp
 )

@@ -12,44 +12,41 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESPARSER_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESPARSER_HPP_
 
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES {
-class JSONParser : public Parser {
+
+class NESBinaryParser;
+using NESParserPtr = std::shared_ptr<NESBinaryParser>;
+/**
+ * Parser for NebulasSteram
+ */
+class NESBinaryParser : public Parser {
 
   public:
     /**
-   * @brief public constructor for JSON input data parser
-   * @param numberOfSchemaFields number of schema fields
-   * @param schemaKeys vector with schema keys to identify the keys in the json object
-   * @param physicalTypes vector with physical data types
+   * @brief public constructor for NES input data parser
    */
-    JSONParser(uint64_t numberOfSchemaFields,
-               std::vector<std::string> schemaKeys,
-               std::vector<NES::PhysicalTypePtr> physicalTypes);
+    NESBinaryParser();
 
     /**
-   * @brief takes a json tuple as string, parses it using cpprest and calls Parser::writeFieldValueToTupleBuffer() for every value in the tuple
-   * @param jsonTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
+   * @brief takes a binary nes tuple buffer as string_view and copies it into a TupleBuffer
+   * @param binaryBuffer: string value that is cast to the PhysicalType and written to the TupleBuffer
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    bool writeInputTupleToTupleBuffer(std::string_view jsonTuple,
+    bool writeInputTupleToTupleBuffer(std::string_view binaryBuffer,
                                       uint64_t tupleCount,
                                       Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager) override;
-
-  private:
-    uint64_t numberOfSchemaFields;
-    std::vector<std::string> schemaKeys;
-    std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
+
 }// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#endif// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESPARSER_HPP_

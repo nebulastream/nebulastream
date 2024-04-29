@@ -16,6 +16,7 @@
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace NES {
@@ -53,7 +54,7 @@ class Parser {
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    virtual bool writeInputTupleToTupleBuffer(const std::string& inputTuple,
+    virtual bool writeInputTupleToTupleBuffer(std::string_view inputTuple,
                                               uint64_t tupleCount,
                                               Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema,

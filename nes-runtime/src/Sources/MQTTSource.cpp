@@ -101,6 +101,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
         case Configurations::InputFormat::CSV:
             inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
             break;
+        case Configurations::InputFormat::NES_BINARY: NES_NOT_IMPLEMENTED();
     }
 
     NES_DEBUG("MQTTSource::MQTTSource: Init MQTTSource to {} with client id: {}.", serverAddress, clientId);
