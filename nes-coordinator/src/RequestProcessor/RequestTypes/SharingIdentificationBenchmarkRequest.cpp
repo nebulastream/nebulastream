@@ -22,7 +22,6 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/RequestHandlerService.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
@@ -83,7 +82,6 @@
 #include <string>
 #include <utility>
 
-#include  <iostream>
 // TODO: reorganize header files
 
 namespace {
@@ -176,7 +174,7 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-        optimizerConfigurations.queryMergerRule = queryMergerRule; //TODO ?
+        optimizerConfigurations.queryMergerRule = queryMergerRule; 
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
@@ -192,7 +190,6 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
                                                        coordinatorConfiguration->optimizer.performAdvanceSemanticValidation);
 
         setupPhysicalSources(sourceCatalog);
-        std::cout<<"MergerRule is"<<optimizerConfigurations.queryMergerRule.toString();
 
         uint64_t totalOperators = 0;
         std::vector<QueryId> queryIds = {};
@@ -228,19 +225,23 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
 
             //4. Perform query re-write
             NES_DEBUG("Performing Query rewrite phase for query:  {}", queryId);
-            queryPlan = queryRewritePhase->execute(queryPlan);
+            queryPlan = queryRewritePhase->execute(queryPlan); // ?
 
             //6. Execute type inference phase on rewritten query plan
-            queryPlan = typeInferencePhase->execute(queryPlan);//TODO: ?
+            NES_DEBUG("Performing Type inference phase for rewritten query:  {}", queryId);
+            queryPlan = typeInferencePhase->execute(queryPlan);
 
             //7. Perform signature inference phase for sharing identification among query plans
+            NES_DEBUG("Perform signature inference phase for sharing identification among query plans:  {}", queryId);
             signatureInferencePhase->execute(queryPlan);
 
             //8. Perform topology specific rewrites to the query plan
+            NES_DEBUG("Perform topology specific rewrites to the query plan:  {}", queryId);
             queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
             //10. Perform type inference over re-written query plan
-            queryPlan = typeInferencePhase->execute(queryPlan);//TODO: ?
+            NES_DEBUG("Perform type inference over re-written query plan:  {}", queryId);
+            queryPlan = typeInferencePhase->execute(queryPlan);
 
             //compute totalOperators before merge
             totalOperators = totalOperators + PlanIterator(queryPlan).snapshot().size();
@@ -264,19 +265,6 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             unsigned long planSize = PlanIterator(sqp->getQueryPlan()).snapshot().size();
             mergedOperators = mergedOperators + planSize;
         }
-
-        std::cout << "==================" << std::endl;
-        for(auto& sqp: allSQP) {
-            auto sqpId = sqp->getId();
-            auto queryIds = globalQueryPlan->getQueryIds(sqpId);
-            std::cout << sqpId <<"\t:[";
-            for(const auto& queryId:queryIds) {
-                std::cout << queryId << ", ";
-            }
-            std::cout << "]" << std::endl;
-        }
-
-        // NES_INFO("Total operators" + std::to_string(totalOperators) + " , merged operators" + std::to_string(mergedOperators));
 
         //Compute efficiency
         float efficiency = (((float) totalOperators - (float) mergedOperators) / (float) totalOperators) * 100.0;
