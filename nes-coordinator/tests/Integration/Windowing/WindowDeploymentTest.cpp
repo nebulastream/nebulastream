@@ -25,11 +25,19 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <absl/strings/str_format.h>
 #include <iostream>
 
 using namespace std;
 
 namespace NES {
+
+namespace Runtime::MemoryLayouts {
+template<typename Sink>
+void AbslStringify(Sink& sink, TestTupleBuffer e) {
+    absl::Format(&sink, "%s", e.toString(e.getMemoryLayout()->getSchema(), true));
+}
+}// namespace Runtime::MemoryLayouts
 
 using namespace Configurations;
 
@@ -81,7 +89,7 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+    EXPECT_EQ(expectedBuffers, actualBuffers);
 }
 
 /**

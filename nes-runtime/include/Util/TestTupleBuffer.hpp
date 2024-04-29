@@ -336,7 +336,7 @@ class TestTupleBuffer {
      */
     class TupleIterator : public std::iterator<std::input_iterator_tag,// iterator_category
                                                DynamicTuple,           // value_type
-                                               DynamicTuple,           // difference_type
+                                               size_t,                 // difference_type
                                                DynamicTuple*,          // pointer
                                                DynamicTuple            // reference
                                                > {
@@ -523,7 +523,21 @@ class TestTupleBuffer {
         }
     }
 
-  private:
+    /**
+     * Two TestTupleBuffer are Equal if:
+     *    - Their MemoryLayout machtes
+     *    - Their TupleBufferData Matches tuple by tuple including VarSizedData
+     * Equality does not address:
+     *    - MemoryLocations,
+     *    - Buffer ControlBlock state
+     *    - Order of ChildBufferIndicies
+     * @param lhs TestTupleBuffer
+     * @param rhs TestTupleBuffer
+     * @return
+     */
+    friend bool operator==(const TestTupleBuffer& lhs, const TestTupleBuffer& rhs);
+    friend bool operator!=(const TestTupleBuffer& lhs, const TestTupleBuffer& rhs) { return !(lhs == rhs); }
+
     const MemoryLayoutPtr memoryLayout;
     mutable TupleBuffer buffer;
 };

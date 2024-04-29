@@ -22,6 +22,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <cstdint>
 #include <numeric>
 #include <utility>
 
@@ -178,6 +179,57 @@ std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer) {
     auto str = buf.toString(buffer.memoryLayout->getSchema());
     os << str;
     return os;
+}
+
+bool operator==(const TestTupleBuffer& lhs, const TestTupleBuffer& rhs) {
+    if (*lhs.getMemoryLayout() != *rhs.getMemoryLayout()) {
+        return false;
+    }
+
+    auto schema = lhs.getMemoryLayout()->getSchema();
+
+    auto isVarSized = [](const AttributeField& f) {
+        return f.getDataType()->isText();
+    };
+
+    auto varSizedEquality = [&lhs, &rhs](uint32_t childIndexLeft, uint32_t childIndexRight) {
+        NES_ASSERT(childIndexLeft < lhs.buffer.getNumberOfChildrenBuffer()
+                       && childIndexRight < rhs.buffer.getNumberOfChildrenBuffer(),
+                   "Child Index Buffer Out Of Bound");
+        auto left = lhs.buffer.loadChildBuffer(childIndexLeft);
+        auto right = rhs.buffer.loadChildBuffer(childIndexRight);
+
+        auto leftSizeInBytes = *left.getBuffer<uint32_t>();
+        auto rightSizeInBytes = *right.getBuffer<uint32_t>();
+
+        if (leftSizeInBytes != rightSizeInBytes) {
+            return false;
+        }
+
+        return std::equal(left.getBuffer(),
+                          left.getBuffer() + leftSizeInBytes + sizeof(leftSizeInBytes),
+                          right.getBuffer(),
+                          right.getBuffer() + rightSizeInBytes + sizeof(rightSizeInBytes));
+    };
+
+    auto tupleEquality = [=, &schema](const DynamicTuple& lhs, const DynamicTuple& rhs) {
+        for (size_t field_index = 0; const auto& field : schema->fields) {
+            if (isVarSized(*field) && !varSizedEquality(lhs[field_index].read<uint32_t>(), rhs[field_index].read<uint32_t>())) {
+            } else if (lhs[field_index] != rhs[field_index]) {
+                return false;
+            }
+            field_index++;
+        }
+
+        return true;
+    };
+
+    auto bufferEquality = [tupleEquality](const TestTupleBuffer& lhs, const TestTupleBuffer& rhs) {
+        auto numberOfTupleEquality = lhs.getNumberOfTuples() == rhs.getNumberOfTuples();
+        return numberOfTupleEquality && std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), tupleEquality);
+    };
+
+    return bufferEquality(lhs, rhs);
 }
 
 TestTupleBuffer::TupleIterator TestTupleBuffer::begin() const { return TupleIterator(*this); }

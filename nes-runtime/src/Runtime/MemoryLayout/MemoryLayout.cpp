@@ -91,9 +91,16 @@ uint64_t MemoryLayout::getBufferSize() const { return bufferSize; }
 const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const { return physicalTypes; }
 
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const {
+    auto physicalTypeEquality = std::equal(physicalTypes.begin(),
+                                           physicalTypes.end(),
+                                           rhs.physicalTypes.begin(),
+                                           rhs.physicalTypes.end(),
+                                           [](const auto& a, const auto& b) {
+                                               return *a == *b;
+                                           });
+
     return bufferSize == rhs.bufferSize && schema->equals(rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
-        && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes
-        && nameFieldIndexMap == rhs.nameFieldIndexMap;
+        && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypeEquality && nameFieldIndexMap == rhs.nameFieldIndexMap;
 }
 
 bool MemoryLayout::operator!=(const MemoryLayout& rhs) const { return !(rhs == *this); }
