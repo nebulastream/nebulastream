@@ -12,7 +12,7 @@
 
 
 add_source_files(nes-runtime
-        apex_memmove.cpp
+#        apex_memmove.cpp
         BufferStorage.cpp
         BufferManager.cpp
         FixedSizeBufferPool.cpp

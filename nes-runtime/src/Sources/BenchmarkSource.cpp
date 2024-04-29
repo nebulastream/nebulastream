@@ -14,7 +14,6 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Runtime/internal/apex_memmove.hpp>
 #ifdef HAS_AVX
 #include <Runtime/internal/rte_memory.h>
 #endif
@@ -138,13 +137,6 @@ void BenchmarkSource::runningRoutine() {
 #else
                     NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
 #endif
-                    break;
-                }
-                case SourceMode::COPY_BUFFER_SIMD_APEX: {
-                    buffer = bufferManager->getBufferBlocking();
-                    apex_memcpy(buffer.getBuffer(),
-                                numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
-                                buffer.getBufferSize());
                     break;
                 }
                 case SourceMode::CACHE_COPY: {
