@@ -424,7 +424,7 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
         topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
         numBuffers++;
     }
-    NES_ERROR("Sent {} buffers to node {}", numBuffers, nodeEngine->getParentId());
+    NES_DEBUG("Sent {} buffers to node {}", numBuffers, nodeEngine->getParentId());
 }
 
 bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext) {

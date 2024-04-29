@@ -65,7 +65,7 @@ RequestId AsyncRequestProcessor::runAsync(AbstractRequestPtr request) {
     {
         std::unique_lock lock(workMutex);
         asyncRequestQueue.emplace_back(std::move(request));
-        NES_ERROR("Request added to queue. {} requests in queue", asyncRequestQueue.size());
+        NES_DEBUG("Request added to queue. {} requests in queue", asyncRequestQueue.size());
     }
     cv.notify_all();
     return requestId;
@@ -116,30 +116,30 @@ void AsyncRequestProcessor::runningRoutine() {
                     asyncRequestQueue.pop_front();
                     lock.unlock();
                     cv.notify_all();
-                    NES_ERROR("Multi request removed from queue. {} remain requests in queue", asyncRequestQueue.size());
+                    NES_DEBUG("Multi request removed from queue. {} remain requests in queue", asyncRequestQueue.size());
                     continue;
                 }
-                NES_ERROR("Multi request selected in queue, request will remaing in queue. {} remain requests in queue", asyncRequestQueue.size());
+                NES_DEBUG("Multi request selected in queue, request will remaing in queue. {} remain requests in queue", asyncRequestQueue.size());
             } else {
                 // if the request is not a multirequest it will not have to acquire more threads than the current one.
                 // it can be removed from the queue
                 asyncRequestQueue.pop_front();
-                NES_ERROR("Uni request retrieved from queue. {} remain requests in queue", asyncRequestQueue.size());
+                NES_DEBUG("Uni request retrieved from queue. {} remain requests in queue", asyncRequestQueue.size());
             }
 
             lock.unlock();
             cv.notify_all();
 
-            NES_ERROR("Executing request")
+            NES_DEBUG("Executing request")
             //execute request logic
             std::vector<AbstractRequestPtr> nextRequests = abstractRequest->execute(storageHandler);
-            NES_ERROR("Finished Executing request, {} follow up requests", nextRequests.size())
+            NES_DEBUG("Finished Executing request, {} follow up requests", nextRequests.size())
 
             //queue follow up requests
             for (auto followUpRequest : nextRequests) {
                 runAsync(std::move(followUpRequest));
             }
-            NES_ERROR("Follow up requests queued")
+            NES_DEBUG("Follow up requests queued")
         } else {
             cv.notify_all();
             break;
