@@ -130,19 +130,19 @@ class WorkerConfiguration : public BaseConfiguration {
      * Controls how much memory is consumed by the system.
      */
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
-                                                       "1024",
+                                                       "4096",
                                                        "Number buffers in global buffer pool.", std::make_shared<NumberValidation>()};
     /**
      * @brief Indicates how many buffers a single worker thread can allocate.
      */
-    UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, "128", "Number buffers in task local buffer pool.", std::make_shared<NumberValidation>()};
+    UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, "512", "Number buffers in task local buffer pool.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Indicates how many buffers a single data source can allocate.
      * This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
      */
     UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
-                                                         "64",
+                                                         "256",
                                                          "Number buffers in source local buffer pool.", std::make_shared<NumberValidation>()};
 
     /**
