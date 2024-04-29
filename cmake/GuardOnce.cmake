@@ -18,8 +18,8 @@ macro(project_enable_fixguards)
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-client/include/
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-client/include/
 
-        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r -e="*version.hpp" nes-common/include/
-        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -e="*version.hpp" -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-common/include/
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r -e="*version.hpp" -e="*backward.hpp" -e="*base64.h" -e="*libcuckoo/*" -e="*magicenum/*" nes-common/include/
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -e="*version.hpp" -e="*backward.hpp" -e="*base64.h" -e="*libcuckoo/*" -e="*magicenum/*" -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-common/include/
 
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-common/tests/Util/include/
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-common/tests/Util/include/
@@ -39,8 +39,8 @@ macro(project_enable_fixguards)
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-data-types/include/
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-data-types/include/
 
-        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-execution/include/
-        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-execution/include/
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r -e="*digestible.h" -e="*HyperLogLog.hpp" -e="*Yaml.hpp" nes-execution/include/
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -e="*digestible.h" -e="*HyperLogLog.hpp" -e="*Yaml.hpp" -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-execution/include/
 
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-execution/tests/include/
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-execution/tests/include/
@@ -69,8 +69,8 @@ macro(project_enable_fixguards)
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-plugins/tensorflow/include/
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-plugins/tensorflow/include/
 
-        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-runtime/include/
-        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-runtime/include/
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r -e="*apex_memmove.hpp" -e="*jitify.hpp" -e="*JNI.hpp" -e="*rte_memory.h" nes-runtime/include/
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -e="*apex_memmove.hpp" -e="*jitify.hpp" -e="*JNI.hpp" -e="*rte_memory.h" -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-runtime/include/
 
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-statistics/include/
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-statistics/include/
