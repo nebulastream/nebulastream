@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.111](https://github.com/nebulastream/nebulastream/tree/v0.6.111) (2024-04-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.110...v0.6.111)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enforce newline at end-of-file via clang-format [\#4839](https://github.com/nebulastream/nebulastream/issues/4839)
+
 ## [v0.6.110](https://github.com/nebulastream/nebulastream/tree/v0.6.110) (2024-04-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.109...v0.6.110)
