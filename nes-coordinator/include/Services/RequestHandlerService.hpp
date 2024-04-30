@@ -33,7 +33,7 @@ namespace NES {
 namespace Windowing {
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
-} // namespace Windowing
+}// namespace Windowing
 
 namespace Statistic {
 class Characteristic;
@@ -48,7 +48,6 @@ using SendingPolicyPtr = std::shared_ptr<SendingPolicy>;
 using AbstractStatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
 using StatisticRegistryPtr = std::shared_ptr<StatisticRegistry>;
 }// namespace Statistic
-
 
 namespace Optimizer {
 class SyntacticQueryValidation;
@@ -203,7 +202,7 @@ class RequestHandlerService {
      * @return Vector of StatisticKeys
      */
     std::vector<Statistic::StatisticKey> trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
-                                                         const Windowing::WindowTypePtr& window);
+                                                               const Windowing::WindowTypePtr& window);
 
   private:
     /**

@@ -42,10 +42,10 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
@@ -91,7 +91,10 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         topology);
     }
 
     z3::ContextPtr context;

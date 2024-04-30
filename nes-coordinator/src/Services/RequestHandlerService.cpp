@@ -18,6 +18,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
@@ -34,10 +36,8 @@
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/QueryGeneration/AbstractStatisticQueryGenerator.hpp>
 #include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
@@ -192,7 +192,8 @@ RequestHandlerService::trackStatisticRequest(const Statistic::CharacteristicPtr&
 }
 
 std::vector<Statistic::StatisticKey>
-RequestHandlerService::trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window) {
+RequestHandlerService::trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
+                                             const Windowing::WindowTypePtr& window) {
     return trackStatisticRequest(characteristic,
                                  window,
                                  Statistic::NeverTrigger::create(),

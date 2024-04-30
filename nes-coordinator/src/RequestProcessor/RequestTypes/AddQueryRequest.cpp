@@ -202,8 +202,10 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
-        auto topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations, statisticProbeHandler);
+        auto topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                                                      sourceCatalog,
+                                                                                                      optimizerConfigurations,
+                                                                                                      statisticProbeHandler);
         auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         auto memoryLayoutSelectionPhase =

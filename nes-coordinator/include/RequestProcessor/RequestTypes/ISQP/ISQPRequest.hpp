@@ -23,7 +23,7 @@ namespace NES {
 namespace Statistic {
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-} // namespace Statistic
+}// namespace Statistic
 
 namespace Optimizer {
 class GlobalExecutionPlan;
