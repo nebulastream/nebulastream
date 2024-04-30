@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.113](https://github.com/nebulastream/nebulastream/tree/v0.6.113) (2024-04-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.112...v0.6.113)
+
+**Implemented enhancements:**
+
+- \[TASK\] Fix the fix-guards target [\#4842](https://github.com/nebulastream/nebulastream/issues/4842)
+
 ## [v0.6.112](https://github.com/nebulastream/nebulastream/tree/v0.6.112) (2024-04-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.111...v0.6.112)
