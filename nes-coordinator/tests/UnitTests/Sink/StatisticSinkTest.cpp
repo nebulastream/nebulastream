@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/NesThread.hpp>
@@ -25,7 +26,10 @@
 #include <StatisticIdentifiers.hpp>
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/Core.hpp>
+#include <Statistics/StatisticUtil.hpp>
 #include <gmock/gmock-matchers.h>
 
 namespace NES {
@@ -162,7 +166,7 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
             const Windowing::TimeMeasure endTs(windowSize * (curCnt + 1));
             const uint64_t width = rand() % 10 + 5;
 
-            // We simulate a filling of count min by randomly updating the sketch
+            // We simulate a filling of hyperloglog by randomly updating the sketch
             const auto numberOfTuplesToInsert = rand() % 100 + 100;
             auto hyperLogLog =
                 Statistic::HyperLogLogStatistic::createInit(startTs, endTs, width)->as<Statistic::HyperLogLogStatistic>();
@@ -190,6 +194,58 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
         auto createdBuffers = statisticFormat->writeStatisticsIntoBuffers(statisticsWithHashes, *bufferManager);
         return {createdBuffers, expectedStatistics};
     }
+
+    /**
+     * @brief Creates #numberOfSketches random Reservoir Samples
+     * @param numberOfSamples
+     * @param schema
+     * @param bufferManager
+     * @return Pair<Vector of TupleBuffers, Vector of Statistics>
+     */
+    std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
+    createRandomReservoirSampleStatistics(uint64_t numberOfSamples,
+                                          const SchemaPtr& schema,
+                                          const Runtime::BufferManagerPtr& bufferManager,
+                                          const SchemaPtr sampleSchema) {
+        std::vector<Statistic::StatisticPtr> expectedStatistics;
+        constexpr auto windowSize = 10;
+
+        for (auto curCnt = 0_u64; curCnt < numberOfSamples; ++curCnt) {
+            // Creating "random" values that represent of a Reservoir Samples for a tumbling window with a size of 10
+            const Windowing::TimeMeasure startTs(windowSize * curCnt);
+            const Windowing::TimeMeasure endTs(windowSize * (curCnt + 1));
+            const uint64_t sampleSize = rand() % 10 + 5;
+            auto sampleMemoryLayout = Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
+
+            // We simulate a filling of a sample by writing random values into the reservoir.
+            const auto sample = Statistic::ReservoirSampleStatistic::createInit(startTs, endTs, sampleSize, sampleMemoryLayout->getSchema())->as<Statistic::ReservoirSampleStatistic>();
+            auto* reservoirSpace = sample->getReservoirSpace();
+            for (auto i = 0_u64; i < sampleSize; ++i) {
+                int8_t rndVal = rand();
+                std::memcpy(reservoirSpace + i * sizeof(int8_t), &rndVal, sizeof(int8_t));
+            }
+
+            // Creating now the expected ReservoirSamples
+            expectedStatistics.emplace_back(sample);
+        }
+
+        // Writing the expected statistics into buffers via the statistic format
+        auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                                                   bufferManager->getBufferSize(),
+                                                                                   Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE,
+                                                                                   statisticDataCodec);
+        std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
+        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+                       std::back_inserter(statisticsWithHashes),
+                       [](const auto& statistic) {
+                           static auto hash = 0;
+                           return std::make_pair(++hash, statistic);
+                       });
+        auto createdBuffers = statisticFormat->writeStatisticsIntoBuffers(statisticsWithHashes, *bufferManager);
+        return {createdBuffers, expectedStatistics};
+    }
+
+
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 };
@@ -256,6 +312,45 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
                                              DecomposedQueryPlanId(1),
                                              1,// numberOfOrigins
                                              Statistic::StatisticSynopsisType::HLL,
+                                             statisticDataCodec);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
+
+    for (auto& buf : buffers) {
+        EXPECT_TRUE(statisticSink->writeData(buf, wctx));
+    }
+
+    auto storedStatistics = nodeEngine->getStatisticManager()->getStatisticStore()->getAllStatistics();
+    EXPECT_TRUE(sameStatisticsInVectors(storedStatistics, expectedStatistics));
+}
+
+/**
+ * @brief Tests if our statistic sink can put Reservoir Samples into the StatisticStore
+ */
+TEST_P(StatisticSinkTest, testReservoirSample) {
+    auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    auto reservoirSampleStatisticSchema = Schema::create()
+                                                  ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
+                                                  ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                                  ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+                                                  ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
+                                                  ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
+                                                  ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
+                                                  ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
+                                                  ->copyFields(inputSchema)
+                                                  ->updateSourceName("test");
+    auto sampleSchema = Statistic::StatisticUtil::createSampleSchema(inputSchema);
+
+
+    // Creating the number of buffers
+    auto [buffers, expectedStatistics] =
+        createRandomReservoirSampleStatistics(numberOfStatistics, reservoirSampleStatisticSchema, nodeEngine->getBufferManager(), sampleSchema);
+    auto statisticSink = createStatisticSink(reservoirSampleStatisticSchema,
+                                             nodeEngine,
+                                             1,// numOfProducers
+                                             SharedQueryId(1),
+                                             DecomposedQueryPlanId(1),
+                                             1,// numberOfOrigins
+                                             Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE,
                                              statisticDataCodec);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 

@@ -37,11 +37,11 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
     explicit Statistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples);
 
     /**
-     * @brief Returns the statistic value for this statistic, i.e., a selectivity of 0.5
-     * @param probeExpression: The expression for probing the statistic, e.g., Selectivity("f1" > 4)
-     * @return StatisticValue<>
+     * @brief Returns the pointer to the start of the statistic data, e.g., the reservoir for a reservoir sample or the
+     * 2-D array for a CountMin operator
+     * @return Void pointer
      */
-    [[nodiscard]] virtual StatisticValue<> getStatisticValue(const ProbeExpression& probeExpression) const = 0;
+    virtual void* getStatisticData() const = 0;
 
     /**
      * @brief Checks for equality
@@ -134,6 +134,12 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
      * @return uint64_t
      */
     uint64_t getObservedTuples() const;
+
+    /**
+     * @brief Increments the observedTuples by the given amount
+     * @param tuples
+     */
+    void incrementObservedTuples(uint64_t tuples = 1);
 
     /**
      * @brief virtual destructor

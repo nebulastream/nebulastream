@@ -17,10 +17,15 @@
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Nautilus/Interface/Hash/H3Hash.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>

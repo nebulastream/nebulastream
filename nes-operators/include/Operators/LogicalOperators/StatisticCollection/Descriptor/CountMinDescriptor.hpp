@@ -63,10 +63,11 @@ class CountMinDescriptor : public WindowStatisticDescriptor {
 
     /**
      * @brief Adds the fields special to a CountMin descriptor
+     * @param inputSchema
      * @param outputSchema
      * @param qualifierNameWithSeparator
      */
-    void addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) override;
+    void addDescriptorFields(Schema& inputSchema, Schema& outputSchema, const std::string& qualifierNameWithSeparator) override;
 
     /**
      * @brief Getter for the depth

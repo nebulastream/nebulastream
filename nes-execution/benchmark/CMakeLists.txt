@@ -27,9 +27,12 @@ find_package(benchmark)
 
 function(add_nes_benchmarks TARGET_NAME FILE_PATH)
     add_executable(${TARGET_NAME} ${FILE_PATH})
-    target_link_libraries(${TARGET_NAME} nes-execution-benchmark benchmark::benchmark nes-nautilus)
+    target_link_libraries(${TARGET_NAME} nes-execution-benchmark benchmark::benchmark nes-nautilus nes-window-types nes-client nes-execution-test-util )
     message(STATUS "Added benchmark ${TARGET_NAME}")
 endfunction()
+
+add_subdirectory(StatisticProbe)
+
 
 add_nes_benchmarks(nautilus-tracing-benchmark "Nautilus/BenchmarkTracing.cpp")
 add_executable(tpch-benchmark "TPCH/TPCHBenchmark.cpp")

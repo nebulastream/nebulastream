@@ -15,4 +15,5 @@ add_source_files(nes-runtime
         StatisticFormatFactory.cpp
         CountMinStatisticFormat.cpp
         HyperLogLogStatisticFormat.cpp
+        ReservoirSampleStatisticFormat.cpp
 )

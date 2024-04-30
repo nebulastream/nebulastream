@@ -23,6 +23,8 @@ Windowing::TimeMeasure Statistic::getEndTs() const { return endTs; }
 
 uint64_t Statistic::getObservedTuples() const { return observedTuples; }
 
+void Statistic::incrementObservedTuples(uint64_t tuples) { observedTuples += tuples; }
+
 bool Statistic::operator==(const Statistic& other) const { return this->equal(other); }
 
 Statistic::Statistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples)

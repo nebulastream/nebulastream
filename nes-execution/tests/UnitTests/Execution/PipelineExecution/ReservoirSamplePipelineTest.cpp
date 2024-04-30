@@ -1,0 +1,248 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <API/Schema.hpp>
+#include <BaseUnitTest.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/ReservoirSample/ReservoirSampleBuild.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/ReservoirSample/ReservoirSampleOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Util/TestTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
+#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES::Runtime::Execution {
+
+class ReservoirSamplePipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+  public:
+    ReservoirSamplePipelineExecutionContext(BufferManagerPtr bufferManager, OperatorHandlerPtr operatorHandler)
+        : PipelineExecutionContext(
+              PipelineId(1),         // mock pipeline id
+              DecomposedQueryPlanId(1),         // mock query id
+              bufferManager,
+              1, // numberOfWorkerThreads
+              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                  this->emittedBuffers.emplace_back(std::move(buffer));
+              },
+              [this](TupleBuffer& buffer) {
+                  this->emittedBuffers.emplace_back(std::move(buffer));
+              },
+              {operatorHandler}){};
+
+    std::vector<Runtime::TupleBuffer> emittedBuffers;
+};
+
+class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
+                                    public ::testing::WithParamInterface<std::tuple<std::string,
+                                                                                    Statistic::StatisticDataCodec,
+                                                                                    bool>> {
+  public:
+    ExecutablePipelineProvider* provider;
+    BufferManagerPtr bufferManager;
+    WorkerContextPtr workerContext;
+    std::shared_ptr<ReservoirSamplePipelineExecutionContext> pipelineExecutionContext;
+    Nautilus::CompilationOptions options;
+    SchemaPtr inputSchema, outputSchema;
+    const std::string fieldToBuildReservoirSampleOver = "f1";
+    const std::string timestampFieldName = "ts";
+    Statistic::StatisticStorePtr testStatisticStore;
+    Statistic::SendingPolicyPtr sendingPolicy;
+    Statistic::StatisticFormatPtr statisticFormat;
+    Statistic::StatisticMetricHash metricHash;
+    Statistic::StatisticDataCodec sinkDataCodec;
+    Runtime::MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout;
+
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("ReservoirSamplePipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ReservoirSamplePipelineTest test class.");
+    }
+    
+    /* Will be called before a test is executed. */
+    void SetUp() override {
+        BaseUnitTest::SetUp();
+        NES_INFO("Setup ReservoirSamplePipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(std::get<0>(GetParam()))) {
+            GTEST_SKIP();
+        }
+        // Creating class members for being able to use them in all test cases
+        provider = ExecutablePipelineProviderRegistry::getPlugin(std::get<0>(GetParam())).get();
+        sinkDataCodec = std::get<1>(GetParam());
+        bufferManager = std::make_shared<Runtime::BufferManager>();
+        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        inputSchema = Schema::create()
+                          ->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64)
+                          ->addField(timestampFieldName, BasicType::UINT64);
+        outputSchema = Schema::create()->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+                           ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
+                           ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
+        testStatisticStore = Statistic::DefaultStatisticStore::create();
+        sendingPolicy = Statistic::SendingPolicyASAP::create(sinkDataCodec);
+        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, bufferManager->getBufferSize(), Statistic::StatisticSynopsisType::COUNT_MIN, sinkDataCodec);
+        metricHash = 42; // Just some arbitrary number
+
+        // Creating the sampleMemoryLayout
+        const auto keepAllFields = std::get<2>(GetParam());
+        const auto sampleSchema = keepAllFields ? inputSchema : Schema::create()->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64);
+        if (sampleSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+            sampleMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(sampleSchema, bufferManager->getBufferSize());
+        } else if (sampleSchema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+            sampleMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(sampleSchema, bufferManager->getBufferSize());
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
+    }
+
+    /* Will be called after a test is executed. */
+    void TearDown() override {
+        NES_INFO("Tear down ReservoirSamplePipelineTest test case.");
+        BaseUnitTest::TearDown();
+    }
+
+    /**
+     * @brief Creates an executable pipeline Scan --> ReservoirSampleBuildOperator
+     * @param windowSize
+     * @param windowSlide
+     * @param sampleSize
+     * @param inputOrigins
+     * @return ExecutablePipelineStage
+     */
+    std::unique_ptr<ExecutablePipelineStage> createExecutablePipeline(uint64_t windowSize, uint64_t windowSlide,
+                                                                      uint64_t sampleSize,
+                                                                      const std::vector<OriginId>& inputOrigins) {
+        // 1. Creating the scan operator
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
+        auto scanMemoryProvider = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProvider));
+
+        // 2. Creating the reservoir sample operator handler
+        auto reservoirSampleOperatorHandler = Operators::ReservoirSampleOperatorHandler::create(windowSize,
+                                                                                                windowSlide,
+                                                                                                sendingPolicy,
+                                                                                                sampleSize,
+                                                                                                sampleMemoryLayout,
+                                                                                                statisticFormat,
+                                                                                                inputOrigins);
+        pipelineExecutionContext = std::make_shared<ReservoirSamplePipelineExecutionContext>(bufferManager, reservoirSampleOperatorHandler);
+        reservoirSampleOperatorHandler->start(pipelineExecutionContext, 0);
+        constexpr auto operatorHandlerIndex = 0;
+
+        // 3. Building the reservoir sample operator
+        const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldName);
+        auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField);
+        auto reservoirSampleOperator = std::make_shared<Operators::ReservoirSampleBuild>(operatorHandlerIndex,
+                                                                                         metricHash,
+                                                                                         std::move(timeFunction),
+                                                                                         sampleMemoryLayout->getBufferSize(),
+                                                                                         sampleMemoryLayout->getSchema());
+
+        // 4. Building the pipeline and creating an executable version
+        auto pipelineBuild = std::make_shared<PhysicalOperatorPipeline>();
+        scanOperator->setChild(reservoirSampleOperator);
+        pipelineBuild->setRootOperator(scanOperator);
+        return provider->create(pipelineBuild, options);
+    }
+};
+
+/**
+ * @brief Here we test, if we create a reservoir sample  for a single input tuple
+ */
+TEST_P(ReservoirSamplePipelineTest, singleInputTuple) {
+    constexpr auto windowSize = 10, windowSlide = 10, sampleSize = 10;
+    const std::vector<OriginId> inputOrigins = {OriginId(0)};
+    auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins);
+
+    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildReservoirSampleOver, timestampFieldName);
+    executablePipeline->setup(*pipelineExecutionContext);
+    for (auto& buf : inputBuffers) {
+        executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);
+
+        // Now doing the same thing for the test reservoir sample
+        auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
+        Util::updateTestReservoirSampleStatistic(dynamicBuffer, testStatisticStore, metricHash, windowSize, windowSlide, sampleSize, timestampFieldName, sampleMemoryLayout);
+    }
+
+    for (auto& emitBuf : pipelineExecutionContext->emittedBuffers) {
+        auto createdReservoirSampleStatistics = statisticFormat->readStatisticsFromBuffer(emitBuf);
+        for (auto& [statisticHash, reservoirSampleStatistic] : createdReservoirSampleStatistics) {
+            auto expectedStatistics = testStatisticStore->getStatistics(statisticHash, reservoirSampleStatistic->getStartTs(), reservoirSampleStatistic->getEndTs());
+            EXPECT_EQ(expectedStatistics.size(), 1);
+            EXPECT_TRUE(expectedStatistics[0]->equal(*reservoirSampleStatistic));
+        }
+    }
+}
+
+/**
+ * @brief Here we test, if we create multiple reservoir sample for multiple input buffers
+ */
+TEST_P(ReservoirSamplePipelineTest, multipleInputBuffers) {
+    constexpr auto windowSize = 1000, windowSlide = 1000, sampleSize = 1000;
+    const std::vector<OriginId> inputOrigins = {OriginId(0)};
+    auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins);
+
+    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildReservoirSampleOver, timestampFieldName);
+    executablePipeline->setup(*pipelineExecutionContext);
+    for (auto& buf : inputBuffers) {
+        executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);
+
+        // Now doing the same thing for the test reservoir sample
+        auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
+        Util::updateTestReservoirSampleStatistic(dynamicBuffer, testStatisticStore, metricHash, windowSize, windowSlide, sampleSize, timestampFieldName, sampleMemoryLayout);
+    }
+
+    for (auto& emitBuf : pipelineExecutionContext->emittedBuffers) {
+        auto createdReservoirSampleStatistics = statisticFormat->readStatisticsFromBuffer(emitBuf);
+        for (auto& [statisticHash, reservoirSampleStatistic] : createdReservoirSampleStatistics) {
+            auto expectedStatistics = testStatisticStore->getStatistics(statisticHash, reservoirSampleStatistic->getStartTs(), reservoirSampleStatistic->getEndTs());
+            EXPECT_EQ(expectedStatistics.size(), 1);
+            EXPECT_TRUE(expectedStatistics[0]->equal(*reservoirSampleStatistic));
+        }
+    }
+}
+
+
+INSTANTIATE_TEST_CASE_P(testReservoirSamplePipeline,
+                        ReservoirSamplePipelineTest,
+                        ::testing::Combine(
+                            ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                            ::testing::ValuesIn(magic_enum::enum_values<Statistic::StatisticDataCodec>()),
+                            ::testing::Values(false, true) // Keeping all fields in the output schema
+                                ),
+                        [](const testing::TestParamInfo<ReservoirSamplePipelineTest::ParamType>& info) {
+                            const auto param = info.param;
+                            const auto keepAllFields = std::get<2>(info.param) ? "ALL_FIELDS" : "1FIELD";
+                            return std::get<0>(param) + "_sinkDataCodec_" +
+                                std::string(magic_enum::enum_name(std::get<1>(param))) + "_" +
+                                keepAllFields;
+                        });
+
+
+} // namespace NES::Runtime::Execution

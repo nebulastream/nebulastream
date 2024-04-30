@@ -36,7 +36,7 @@ WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpression
 HyperLogLogDescriptor::HyperLogLogDescriptor(const FieldAccessExpressionNodePtr& field, const uint64_t width)
     : WindowStatisticDescriptor(field, width) {}
 
-void HyperLogLogDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
+void HyperLogLogDescriptor::addDescriptorFields(Schema&, Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
     outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, BasicType::UINT64);
     outputSchema.addField(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME, BasicType::FLOAT64);
     outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);

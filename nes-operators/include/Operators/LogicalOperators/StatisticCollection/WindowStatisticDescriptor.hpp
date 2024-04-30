@@ -62,7 +62,7 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      * @param outputSchema
      * @param qualifierNameWithSeparator
      */
-    virtual void addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) = 0;
+    virtual void addDescriptorFields(Schema& inputSchema, Schema& outputSchema, const std::string& qualifierNameWithSeparator) = 0;
 
     /**
      * @brief Infers all stamps for the descriptor

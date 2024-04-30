@@ -59,7 +59,7 @@ StatisticPtr CountMinStatistic::createInit(const Windowing::TimeMeasure& startTs
 
 void CountMinStatistic::update(uint64_t row, uint64_t col) {
     // 1. Incrementing the observed tuples as we have seen one more
-    observedTuples += 1;
+    incrementObservedTuples(1);
 
     // 2. Calculating the position, as we store a 2-d array in a 1-d vector.
     const auto pos = row * width + col;
@@ -77,37 +77,6 @@ CountMinStatistic::CountMinStatistic(const Windowing::TimeMeasure& startTs,
                                      const std::vector<uint64_t>& countMinData)
     : SynopsesStatistic(startTs, endTs, observedTuples), width(width), depth(depth), numberOfBitsInKey(numberOfBitsInKey),
       countMinData(countMinData) {}
-
-StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& probeExpression) const {
-    const auto expression = probeExpression.getProbeExpression();
-    if (!expression->instanceOf<EqualsExpressionNode>()) {
-        NES_THROW_RUNTIME_ERROR("For now, we can only get the statistic for a FieldAssignmentExpressionNode!");
-    }
-    const auto equalExpression = expression->as<EqualsExpressionNode>();
-    const auto leftExpr = equalExpression->getLeft();
-    const auto rightExpr = equalExpression->getRight();
-    // We expect that one expression is a constant value and the other a field access expression
-    if (!((leftExpr->instanceOf<ConstantValueExpressionNode>() && rightExpr->instanceOf<FieldAccessExpressionNode>())
-          || (leftExpr->instanceOf<FieldAccessExpressionNode>() && rightExpr->instanceOf<ConstantValueExpressionNode>()))) {
-        NES_THROW_RUNTIME_ERROR(
-            "For now, we expect that one expression is a constant value and the other a field access expression!");
-    }
-
-    // Getting the constant value and the field access
-    const auto constantExpression = leftExpr->instanceOf<ConstantValueExpressionNode>() ? leftExpr : rightExpr;
-    const auto constantValue = constantExpression->as<ConstantValueExpressionNode>()->getConstantValue();
-    const auto basicValue = constantValue->as<BasicValue>();
-
-    // Iterating over each row. Calculating the column and then taking the minimum over all rows
-    uint64_t minCount = UINT64_MAX;
-    for (auto row = 0_u64; row < depth; ++row) {
-        const auto hashValue = StatisticUtil::getH3HashValue(*basicValue, row, depth, numberOfBitsInKey);
-        const auto column = hashValue % width;
-        minCount = std::min(minCount, countMinData[row * width + column]);
-    }
-
-    return StatisticValue<>(minCount, startTs, endTs);
-}
 
 bool CountMinStatistic::equal(const Statistic& other) const {
     if (other.instanceOf<CountMinStatistic>()) {
@@ -154,7 +123,13 @@ void CountMinStatistic::merge(const SynopsesStatistic& other) {
         return;
     }
 
-    // 2. We can only merge a count min sketch with the same dimensions
+    // 2. We can only merge statistics with the same period
+    if (!startTs.equals(other.getStartTs()) || !endTs.equals(other.getEndTs())) {
+        NES_ERROR("Can not merge HyperLogLog statistics with different periods");
+        return;
+    }
+
+    // 3. We can only merge a count min sketch with the same dimensions
     auto otherCountMinStatistic = other.as<const CountMinStatistic>();
     if (depth != otherCountMinStatistic->depth || width != otherCountMinStatistic->width) {
         NES_ERROR("Can not combine sketches <{},{}> and <{},{}>, as they do not share the same dimensions",
@@ -165,13 +140,18 @@ void CountMinStatistic::merge(const SynopsesStatistic& other) {
         return;
     }
 
-    // 3. We merge the count min counters by simply adding them up
+    // 4. We merge the count min counters by simply adding them up
     for (auto i = 0_u64; i < countMinData.size(); ++i) {
         countMinData[i] += otherCountMinStatistic->countMinData[i];
     }
 
-    // 4. Increment the observedTuples
+    // 5. Increment the observedTuples
     observedTuples += otherCountMinStatistic->observedTuples;
+}
+
+void* CountMinStatistic::getStatisticData() const {
+    // We have to cast away the const, as Nautilus currently only translates void* to a MemRef
+    return const_cast<uint64_t*>(countMinData.data());
 }
 
 }// namespace NES::Statistic

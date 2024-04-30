@@ -32,6 +32,21 @@ class StatisticUtil {
      * @return uint64_t
      */
     static uint64_t getH3HashValue(BasicValue& value, uint64_t row, uint64_t depth, uint64_t numberOfBitsInKey);
+
+    /**
+     * @brief Compares the field with the basic value.
+     * @param leftField
+     * @param value
+     * @return True, if the field is equal to the value, false otherwise
+     */
+    static bool compareFieldWithBasicValue(const int8_t* leftField, const BasicValue& value);
+
+    /**
+     * @brief Creates a sample schema that drops all statistic fields from the input schema
+     * @param inputSchema: Schema that contains statistic fields
+     * @return SchemaPtr
+     */
+    static SchemaPtr createSampleSchema(const Schema& inputSchema);
 };
 
 }// namespace NES::Statistic

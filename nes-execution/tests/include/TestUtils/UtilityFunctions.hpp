@@ -54,6 +54,24 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
                                                            const bool isIngestionTime = false);
 
 /**
+ * @brief Creates a ReservoirSample (if none exists) in the statisticStore and adds the tuple to the sample (if it should).
+ * @param testTupleBuffer
+ * @param statisticStore
+ * @param metricHash
+ * @param windowSize
+ * @param windowSlide
+ * @param sampleSize
+ * @param timestampFieldName
+ * @param sampleMemoryLayout
+ */
+void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                        Statistic::StatisticStorePtr statisticStore,
+                                        Statistic::StatisticMetricHash metricHash,
+                                        uint64_t windowSize, uint64_t windowSlide, uint64_t sampleSize,
+                                        const std::string& timestampFieldName,
+                                        MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout);
+
+/**
 * @brief Creates a CountMinSketch (if none exists) in the statisticStore and updates the counter at <row,col>
 * @param testTupleBuffer
 * @param statisticStore

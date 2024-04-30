@@ -25,6 +25,7 @@ add_nes_unit_test(map-python-udf-query-execution-test "MapPythonUDFExecutionTest
 add_nes_unit_test(stream-join-execution-test "StreamJoinExecutionTest.cpp")
 add_nes_unit_test(count-min-build-execution-test "CountMinBuildExecutionTest.cpp")
 add_nes_unit_test(hyper-log-log-build-execution-test "HyperLogLogBuildExecutionTest.cpp")
+add_nes_unit_test(reservoir-sample-build-execution-test "ReservoirSampleBuildExecutionTest.cpp")
 add_nes_unit_test(limit-query-execution-test "LimitQueryExecutionTest.cpp")
 
 add_subdirectory(Windowing)

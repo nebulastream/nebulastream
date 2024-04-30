@@ -10,8 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Probing)
+
 add_source_files(nes-execution
         PhysicalCountMinBuildOperator.cpp
         PhysicalHyperLogLogBuildOperator.cpp
         PhysicalSynopsisBuildOperator.cpp
+        PhysicalReservoirSampleBuildOperator.cpp
 )

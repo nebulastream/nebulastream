@@ -63,7 +63,7 @@ class HyperLogLogStatistic : public SynopsesStatistic {
 
     static StatisticPtr createInit(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t bitWidth);
 
-    StatisticValue<> getStatisticValue(const ProbeExpression& probeExpression) const override;
+    void* getStatisticData() const override;
     bool equal(const Statistic& other) const override;
     std::string toString() const override;
     void merge(const SynopsesStatistic& other) override;

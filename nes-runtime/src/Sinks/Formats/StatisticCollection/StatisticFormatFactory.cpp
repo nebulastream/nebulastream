@@ -60,6 +60,7 @@ StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema,
     switch (type) {
         case StatisticSynopsisType::COUNT_MIN: return createCountMinFormat(memoryLayout, postProcessingData, preProcessingData);
         case StatisticSynopsisType::HLL: return createHyperLogLogFormat(memoryLayout, postProcessingData, preProcessingData);
+        case StatisticSynopsisType::RESERVOIR_SAMPLE: return createReservoirSampleFormat(memoryLayout, postProcessingData, preProcessingData);
     }
 }
 
@@ -75,6 +76,13 @@ StatisticFormatFactory::createHyperLogLogFormat(const Runtime::MemoryLayouts::Me
                                                 std::function<std::string(const std::string&)> postProcessingData,
                                                 std::function<std::string(const std::string&)> preProcessingData) {
     return HyperLogLogStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
+}
+
+StatisticFormatPtr
+StatisticFormatFactory::createReservoirSampleFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                                    std::function<std::string(const std::string&)> postProcessingData,
+                                                    std::function<std::string(const std::string&)> preProcessingData) {
+    return ReservoirSampleStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
 }
 
 }// namespace NES::Statistic

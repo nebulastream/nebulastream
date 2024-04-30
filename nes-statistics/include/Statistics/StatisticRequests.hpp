@@ -17,6 +17,7 @@
 
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
+#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>

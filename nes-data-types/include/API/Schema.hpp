@@ -85,6 +85,7 @@ class Schema {
      * @return a copy of this schema.
      */
     SchemaPtr copyFields(const SchemaPtr& otherSchema);
+    SchemaPtr copyFields(const Schema& otherSchema);
 
     /**
      * @brief appends a AttributeField to the schema and returns a copy of this schema.
@@ -112,6 +113,12 @@ class Schema {
      * @param field
      */
     void removeField(const AttributeFieldPtr& field);
+
+    /**
+     * @brief removes a AttributeField from the schema that belongs to the given field name
+     * @param fieldName
+     */
+    void removeField(const std::string_view fieldName);
 
     /**
      * @brief Replaces a field, which is already part of the schema.
