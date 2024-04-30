@@ -49,7 +49,7 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
     const auto metricType = characteristic.getType();
     WindowStatisticDescriptorPtr statisticDescriptor;
     if (metricType->instanceOf<Selectivity>()) {
-        statisticDescriptor = CountMinDescriptor::create(metricType->getField());
+        statisticDescriptor = ReservoirSampleDescriptor::create(metricType->getField());
     } else if (metricType->instanceOf<IngestionRate>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
     } else if (metricType->instanceOf<BufferRate>()) {
