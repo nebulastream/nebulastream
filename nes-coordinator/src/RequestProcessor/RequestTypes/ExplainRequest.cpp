@@ -68,7 +68,8 @@ ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(nullptr) {}
@@ -102,6 +103,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
         auto coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
+        auto statisticProbeHandler = storageHandler->getStatisticProbeHandler(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
@@ -117,7 +119,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         auto topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
+            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations, statisticProbeHandler);
         auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         auto memoryLayoutSelectionPhase =

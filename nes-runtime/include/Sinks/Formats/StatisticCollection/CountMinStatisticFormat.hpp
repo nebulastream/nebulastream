@@ -41,8 +41,8 @@ class CountMinStatisticFormat : public AbstractStatisticFormat {
   private:
     CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
                             Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                            std::function<std::string(const std::string&)> postProcessingData,
-                            std::function<std::string(const std::string&)> preProcessingData);
+                            std::function<std::string (const std::string&)> postProcessingData,
+                            std::function<std::string (const std::string&)> preProcessingData);
 
     const std::string widthFieldName;
     const std::string depthFieldName;

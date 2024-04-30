@@ -46,7 +46,10 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
-#include <StatisticCollection/StatisticCoordinator.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
@@ -95,6 +98,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     cfg.set("type_check", false);
     auto z3Context = std::make_shared<z3::context>(cfg);
 
+    // For now, we hardcode the usage of the DefaultStatisticQueryGenerator, see issue #4687
+    auto statisticRegistry = Statistic::StatisticRegistry::create();
+    statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry, Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
     RequestProcessor::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
                                                                      topology,
                                                                      globalExecutionPlan,
@@ -102,7 +108,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                      queryCatalog,
                                                                      sourceCatalog,
                                                                      udfCatalog,
-                                                                     placementAmendmentQueue};
+                                                                     placementAmendmentQueue,
+                                                                     statisticProbeHandler};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     requestHandlerService = std::make_shared<RequestHandlerService>(this->coordinatorConfiguration->optimizer,
@@ -111,18 +118,14 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                     sourceCatalog,
                                                                     udfCatalog,
                                                                     asyncRequestExecutor,
-                                                                    z3Context);
+                                                                    z3Context,
+                                                                    Statistic::DefaultStatisticQueryGenerator::create(),
+                                                                    statisticRegistry);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
     monitoringService = std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalog, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
-
-    // For now, we hardcode the usage of the DefaultStatisticQueryGenerator, see issue #4687
-    statisticCoordinator = std::make_shared<Statistic::StatisticCoordinator>(getRequestHandlerService(),
-                                                                             Statistic::DefaultStatisticQueryGenerator::create(),
-                                                                             getQueryCatalog(),
-                                                                             topology);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -134,7 +137,7 @@ NesCoordinator::~NesCoordinator() {
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
 
-Statistic::StatisticCoordinatorPtr NesCoordinator::getStatisticCoordinator() { return statisticCoordinator; }
+Statistic::StatisticProbeHandlerPtr NesCoordinator::getStatisticProbeHandler() const { return statisticProbeHandler; }
 
 Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }

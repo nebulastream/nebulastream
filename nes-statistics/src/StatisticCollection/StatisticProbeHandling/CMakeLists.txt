@@ -13,5 +13,7 @@
 add_source_files(nes-statistics
         AbstractStatisticProbeGenerator.cpp
         DefaultStatisticProbeGenerator.cpp
+        StatisticProbeHandler.cpp
         ProbeExpression.cpp
+        gRPC/WorkerStatisticRPCClient.cpp
 )

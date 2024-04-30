@@ -26,8 +26,8 @@
 namespace NES::Statistic {
 
 StatisticFormatPtr HyperLogLogStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                      std::function<std::string(const std::string&)> postProcessingData,
-                                                      std::function<std::string(const std::string&)> preProcessingData) {
+                                                              std::function<std::string (const std::string&)> postProcessingData,
+                                                              std::function<std::string (const std::string&)> preProcessingData) {
     const auto qualifierNameWithSeparator = memoryLayout->getSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     return std::make_shared<HyperLogLogStatisticFormat>(
         HyperLogLogStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData));
@@ -182,8 +182,8 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
 
 HyperLogLogStatisticFormat::HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
                                                        Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                       std::function<std::string(const std::string&)> postProcessingData,
-                                                       std::function<std::string(const std::string&)> preProcessingData)
+                                                       std::function<std::string (const std::string&)> postProcessingData,
+                                                       std::function<std::string (const std::string&)> preProcessingData)
     : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData),
       widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
       estimateFieldName(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME),

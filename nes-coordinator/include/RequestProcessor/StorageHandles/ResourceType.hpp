@@ -31,6 +31,7 @@ enum class ResourceType : uint8_t {
     GlobalQueryPlan,
     UdfCatalog,
     CoordinatorConfiguration,
+    StatisticProbeHandler,
 };
 
 const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
@@ -39,7 +40,8 @@ const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
                                                     ResourceType::SourceCatalog,
                                                     ResourceType::GlobalExecutionPlan,
                                                     ResourceType::GlobalQueryPlan,
-                                                    ResourceType::UdfCatalog};
+                                                    ResourceType::UdfCatalog,
+                                                    ResourceType::StatisticProbeHandler};
 }// namespace NES::RequestProcessor
 
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_

@@ -1530,8 +1530,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         return Statistic::StatisticSinkDescriptor::create(
             // Be careful changing the order of the enum values, as this works as long as the order is the same in the
             // cpp and the proto file
-            static_cast<Statistic::StatisticSynopsisType>(serializedSinkDescriptor.sinkformattype()),
-            static_cast<Statistic::StatisticDataCodec>(serializedSinkDescriptor.sinkdatacodec()),
+            (Statistic::StatisticSynopsisType) serializedSinkDescriptor.sinkformattype(),
+            (Statistic::StatisticDataCodec) serializedSinkDescriptor.sinkdatacodec(),
             deserializedNumberOfOrigins);
 
     } else {

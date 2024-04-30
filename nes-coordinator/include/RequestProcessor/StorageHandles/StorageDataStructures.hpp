@@ -56,6 +56,11 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
+namespace Statistic {
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
+} // namespace Statistic
+
 namespace RequestProcessor {
 /**
  * @brief This struct contains smart pointers to the data structures which coordinator requests operate on.
@@ -68,7 +73,8 @@ struct StorageDataStructures {
                           Catalogs::Query::QueryCatalogPtr queryCatalog,
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                           Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                          Optimizer::UMPMCAmendmentQueuePtr amendmentQueue);
+                          Optimizer::UMPMCAmendmentQueuePtr amendmentQueue,
+                          Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
 
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
@@ -78,6 +84,7 @@ struct StorageDataStructures {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 }// namespace RequestProcessor
 }// namespace NES

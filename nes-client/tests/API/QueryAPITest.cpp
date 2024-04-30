@@ -38,15 +38,14 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>

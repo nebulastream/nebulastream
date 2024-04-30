@@ -40,6 +40,10 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/Logger/Logger.hpp>
 
 using namespace NES;
@@ -66,8 +70,10 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
         auto optimizerConfiguration = OptimizerConfiguration();
+        auto statisticRegistry = Statistic::StatisticRegistry::create();
+        auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry, Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
         topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(), sourceCatalog, optimizerConfiguration);
+            Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(), sourceCatalog, optimizerConfiguration, statisticProbeHandler);
     }
 
     void setupTopologyNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {

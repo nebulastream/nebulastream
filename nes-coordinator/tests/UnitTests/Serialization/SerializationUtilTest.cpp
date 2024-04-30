@@ -399,7 +399,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
     {
         // Testing for all StatisticSinkFormatType, if we can serialize a statistic sink
-        constexpr auto numberOfOrigins = 42;// just some arbitrary number
+        constexpr auto numberOfOrigins = 42; // just some arbitrary number
         for (auto sinkFormatType : magic_enum::enum_values<Statistic::StatisticSynopsisType>()) {
             for (auto sinkDataCodec : magic_enum::enum_values<Statistic::StatisticDataCodec>()) {
                 auto sink = Statistic::StatisticSinkDescriptor::create(sinkFormatType, sinkDataCodec, numberOfOrigins);
@@ -720,11 +720,9 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
                 auto metric = Statistic::IngestionRate::create();
                 auto statisticDescriptor = Statistic::CountMinDescriptor::create(metric->getField());
                 auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-                auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
-                                                                                                   statisticDescriptor,
-                                                                                                   metric->hash(),
-                                                                                                   sendingPolicy,
-                                                                                                   triggerCondition);
+                auto statisticBuildOperator =
+                    LogicalOperatorFactory::createStatisticBuildOperator(windowType, statisticDescriptor, metric->hash(),
+                                                                         sendingPolicy, triggerCondition);
                 statisticBuildOperator->setStatisticId(getNextStatisticId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
                 auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);

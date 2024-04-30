@@ -20,6 +20,11 @@
 
 namespace NES {
 
+namespace Statistic {
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
+} // namespace Statistic
+
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -145,6 +150,7 @@ class ISQPRequest : public AbstractUniRequest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 
 }// namespace RequestProcessor

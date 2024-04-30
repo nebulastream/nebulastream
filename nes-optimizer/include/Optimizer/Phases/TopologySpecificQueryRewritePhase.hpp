@@ -31,6 +31,11 @@ class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
 
+namespace Statistic {
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
+}// namespace Statistic
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -60,7 +65,8 @@ class TopologySpecificQueryRewritePhase {
      */
     static TopologySpecificQueryRewritePhasePtr create(TopologyPtr topology,
                                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                       Configurations::OptimizerConfiguration optimizerConfiguration);
+                                                       Configurations::OptimizerConfiguration optimizerConfiguration,
+                                                       Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -72,10 +78,12 @@ class TopologySpecificQueryRewritePhase {
   private:
     explicit TopologySpecificQueryRewritePhase(TopologyPtr topology,
                                                const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                               Configurations::OptimizerConfiguration optimizerConfiguration);
+                                               Configurations::OptimizerConfiguration optimizerConfiguration,
+                                               Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
     TopologyPtr topology;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     Configurations::OptimizerConfiguration optimizerConfiguration;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_

@@ -52,7 +52,8 @@ ISQPRequest::ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventP
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       z3Context(z3Context), events(events) {}
 
@@ -72,6 +73,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
     sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
     auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
+    statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
 
     // Apply all topology events
     for (const auto& event : events) {
@@ -311,7 +313,7 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificQueryRewritePhase =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, coordinatorConfiguration->optimizer);
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, coordinatorConfiguration->optimizer, statisticProbeHandler);
     auto signatureInferencePhase =
         Optimizer::SignatureInferencePhase::create(z3Context, coordinatorConfiguration->optimizer.queryMergerRule);
     auto queryMergerPhase = Optimizer::QueryMergerPhase::create(z3Context, coordinatorConfiguration->optimizer);

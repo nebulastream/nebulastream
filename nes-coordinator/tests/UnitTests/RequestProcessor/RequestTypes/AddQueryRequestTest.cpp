@@ -41,6 +41,10 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -60,6 +64,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     z3::ContextPtr z3Context;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
@@ -89,6 +94,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         z3Context = std::make_shared<z3::context>();
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
     }
 };
 
@@ -111,7 +117,8 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
 
     //Create new entry in query catalog service
     queryCatalog->createQueryCatalogEntry("query string",

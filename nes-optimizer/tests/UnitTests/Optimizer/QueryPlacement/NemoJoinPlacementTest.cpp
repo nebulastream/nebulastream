@@ -42,6 +42,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <gtest/gtest.h>
@@ -157,7 +161,8 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
     static std::tuple<SharedQueryId, GlobalExecutionPlanPtr> runPlacement(const Query& query,
                                                                           const TopologyPtr& topology,
                                                                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                          const OptimizerConfiguration& optimizerConfig) {
+                                                                          const OptimizerConfiguration& optimizerConfig,
+                                                                          const Statistic::StatisticProbeHandlerPtr& statisticProbeHandler) {
         std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
@@ -174,7 +179,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
         typeInferencePhase->execute(testQueryPlan);
 
         auto topologySpecificQueryRewrite =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig);
+            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig, statisticProbeHandler);
         topologySpecificQueryRewrite->execute(testQueryPlan);
         typeInferencePhase->execute(testQueryPlan);
 
@@ -227,6 +232,8 @@ TEST_F(NemoJoinPlacementTest, testNemoJoin) {
     const std::vector<WorkerId>& sourceNodes = {WorkerId(5), WorkerId(6), WorkerId(7), WorkerId(8), WorkerId(9), WorkerId(10)};
     auto topology = setupTopology(3, 3, 2);
     auto sourceCatalog = setupJoinSourceCatalog(sourceNodes);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
+
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.joinOptimizationMode = DistributedJoinOptimizationMode::MATRIX;
@@ -239,7 +246,7 @@ TEST_F(NemoJoinPlacementTest, testNemoJoin) {
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
 
-    auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig);
+    auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig, statisticProbeHandler);
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
     auto executionNodes = executionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);

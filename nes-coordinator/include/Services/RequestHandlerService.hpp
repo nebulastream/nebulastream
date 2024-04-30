@@ -17,6 +17,8 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
+#include <Statistics/StatisticKey.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
@@ -27,6 +29,27 @@ using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES {
+
+namespace Windowing {
+class WindowType;
+using WindowTypePtr = std::shared_ptr<WindowType>;
+} // namespace Windowing
+
+namespace Statistic {
+class Characteristic;
+class TriggerCondition;
+class SendingPolicy;
+class AbstractStatisticQueryGenerator;
+class StatisticRegistry;
+
+using CharacteristicPtr = std::shared_ptr<Characteristic>;
+using TriggerConditionPtr = std::shared_ptr<TriggerCondition>;
+using SendingPolicyPtr = std::shared_ptr<SendingPolicy>;
+using AbstractStatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
+using StatisticRegistryPtr = std::shared_ptr<StatisticRegistry>;
+}// namespace Statistic
+
+
 namespace Optimizer {
 class SyntacticQueryValidation;
 using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
@@ -85,7 +108,9 @@ class RequestHandlerService {
                                    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                    const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                    const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
-                                   const z3::ContextPtr& z3Context);
+                                   const z3::ContextPtr& z3Context,
+                                   const Statistic::AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
+                                   const Statistic::StatisticRegistryPtr& statisticRegistry);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -156,6 +181,30 @@ class RequestHandlerService {
      */
     bool queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
 
+    /**
+     * @brief Processes a track requests by mapping it to a statistic query and returning the statistic keys
+     * @param characteristic: What type of the statistic is being tracked, i.e, data, infrastructure, or workload
+     * @param window: Over what window to track the statistics over
+     * @param triggerCondition: Condition to trigger the callback function. Is being called, if a statistic is created
+     * @param sendingPolicy: Policy to send the data to the statistic sink
+     * @param callBack: Function that should be called, if triggerCondition evaluates to true
+     * @return: Vector of StatisticKeys
+     */
+    std::vector<Statistic::StatisticKey> trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
+                                                               const Windowing::WindowTypePtr& window,
+                                                               const Statistic::TriggerConditionPtr& triggerCondition,
+                                                               const Statistic::SendingPolicyPtr& sendingPolicy,
+                                                               std::function<void(Statistic::CharacteristicPtr)> callBack);
+
+    /**
+     * @brief Processes a track requests by mapping it to a statistic query and returning the statistic keys
+     * @param characteristic: What type of the statistic is being tracked, i.e, data, infrastructure, or workload
+     * @param window: Over what window to track the statistics over
+     * @return Vector of StatisticKeys
+     */
+    std::vector<Statistic::StatisticKey> trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
+                                                         const Windowing::WindowTypePtr& window);
+
   private:
     /**
      * Assign unique operator ids to the incoming query plan from a client.
@@ -170,6 +219,9 @@ class RequestHandlerService {
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     NES::RequestProcessor::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
+    Statistic::AbstractStatisticQueryGeneratorPtr statisticQueryGenerator;
+    Statistic::StatisticRegistryPtr statisticRegistry;
+    Statistic::StatisticIdsExtractor statisticIdsExtractor;
 };
 
 }// namespace NES

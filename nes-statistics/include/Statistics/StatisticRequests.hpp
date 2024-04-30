@@ -66,6 +66,10 @@ struct StatisticProbeRequest : public StatisticRequest {
                                    const ProbeExpression& probeExpression)
         : StatisticRequest(statisticHash), startTs(startTs), endTs(endTs), probeExpression(probeExpression),
           granularity(granularity) {}
+
+    explicit StatisticProbeRequest(const StatisticHash& statisticHash,
+                                   const Windowing::TimeMeasure& granularity,
+                                   const ProbeExpression& probeExpression) : StatisticProbeRequest(statisticHash, Windowing::TimeMeasure(0), Windowing::TimeMeasure(UINT64_MAX), granularity, probeExpression) {}
     const Windowing::TimeMeasure startTs;
     const Windowing::TimeMeasure endTs;
     const ProbeExpression probeExpression;

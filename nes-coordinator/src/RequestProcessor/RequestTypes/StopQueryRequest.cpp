@@ -45,7 +45,8 @@ StopQueryRequest::StopQueryRequest(QueryId queryId, uint8_t maxRetries)
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(queryId) {}
 

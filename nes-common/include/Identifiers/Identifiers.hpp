@@ -34,7 +34,8 @@ using DecomposedQueryPlanId = NESStrongType<uint64_t, struct DecomposedQueryPlan
 using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>;// a unique identifier of the worker node or topology node
 using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
 
-using StatisticId = uint64_t;// Unique identifier across the system so that we can track statistic over the item
+// Unique identifier across the system so that we can track statistic over the item, for more information take a look at the StatisticKey class
+using StatisticId = uint64_t;
 using DecomposedQueryPlanVersion = uint16_t;
 using WatermarkTs = uint64_t;
 using SequenceNumber = uint64_t;

@@ -133,8 +133,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -180,8 +179,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -231,8 +229,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -282,8 +279,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -330,8 +326,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -390,8 +385,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -463,8 +457,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
