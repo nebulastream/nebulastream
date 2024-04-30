@@ -15,8 +15,8 @@
 #include <BaseUnitTest.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
@@ -28,8 +28,9 @@ namespace NES::Runtime::Execution {
 using namespace std::chrono_literals;
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
-                                      public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, Statistic::StatisticDataCodec>> {
+class HyperLogLogBuildExecutionTest
+    : public Testing::BaseUnitTest,
+      public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, Statistic::StatisticDataCodec>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
@@ -79,7 +80,11 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                            ->updateSourceName("test");
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, executionEngine->getBufferManager()->getBufferSize(), Statistic::StatisticSynopsisType::HLL, statisticDataCodec);
+        statisticFormat =
+            Statistic::StatisticFormatFactory::createFromSchema(outputSchema,
+                                                                executionEngine->getBufferManager()->getBufferSize(),
+                                                                Statistic::StatisticSynopsisType::HLL,
+                                                                statisticDataCodec);
         metricHash = 42;// Just some arbitrary number
         sendingPolicy = Statistic::SendingPolicyASAP::create(statisticDataCodec);
         triggerCondition = Statistic::NeverTrigger::create();
@@ -258,18 +263,16 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffersSlidingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testHyperLogLog,
                         HyperLogLogBuildExecutionTest,
-                        ::testing::Combine(::testing::Values(1, 4, 8),                // numWorkerThread
-                                           ::testing::Values(4, 5, 8, 10, 20),        // sketchWidth
-                                           ::testing::ValuesIn(                       // All possible sink data codec
-                                               magic_enum::enum_values<Statistic::StatisticDataCodec>())
-                                           ),
+                        ::testing::Combine(::testing::Values(1, 4, 8),        // numWorkerThread
+                                           ::testing::Values(4, 5, 8, 10, 20),// sketchWidth
+                                           ::testing::ValuesIn(               // All possible sink data codec
+                                               magic_enum::enum_values<Statistic::StatisticDataCodec>())),
                         [](const testing::TestParamInfo<HyperLogLogBuildExecutionTest::ParamType>& info) {
                             const auto numWorkerThread = std::get<0>(info.param);
                             const auto sketchWidth = std::get<1>(info.param);
                             const auto dataCodec = std::get<2>(info.param);
-                            return std::to_string(numWorkerThread) + "Threads_" +
-                                std::to_string(sketchWidth) + "Width" +
-                                std::string(magic_enum::enum_name(dataCodec));
+                            return std::to_string(numWorkerThread) + "Threads_" + std::to_string(sketchWidth) + "Width"
+                                + std::string(magic_enum::enum_name(dataCodec));
                         });
 
 }// namespace NES::Runtime::Execution

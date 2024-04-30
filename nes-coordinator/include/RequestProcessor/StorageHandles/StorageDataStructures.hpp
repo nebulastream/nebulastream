@@ -59,7 +59,7 @@ using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 namespace Statistic {
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-} // namespace Statistic
+}// namespace Statistic
 
 namespace RequestProcessor {
 /**

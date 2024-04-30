@@ -313,7 +313,10 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificQueryRewritePhase =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, coordinatorConfiguration->optimizer, statisticProbeHandler);
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                             sourceCatalog,
+                                                             coordinatorConfiguration->optimizer,
+                                                             statisticProbeHandler);
     auto signatureInferencePhase =
         Optimizer::SignatureInferencePhase::create(z3Context, coordinatorConfiguration->optimizer.queryMergerRule);
     auto queryMergerPhase = Optimizer::QueryMergerPhase::create(z3Context, coordinatorConfiguration->optimizer);

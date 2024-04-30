@@ -24,10 +24,10 @@
 #include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 
 namespace NES::RequestProcessor {
 class TwoPhaseLockingStorageHandlerTest : public Testing::BaseUnitTest {
@@ -47,7 +47,10 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          topology);
     auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
@@ -78,7 +81,10 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          topology);
     auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
@@ -88,7 +94,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
                                                                     sourceCatalog,
                                                                     udfCatalog,
                                                                     amendmentQueue,
-                                                                    statisticProbeHandler});    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
+                                                                    statisticProbeHandler});
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
 }
 
@@ -101,7 +108,10 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          topology);
     auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
@@ -111,7 +121,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
                                                                     sourceCatalog,
                                                                     udfCatalog,
                                                                     amendmentQueue,
-                                                                    statisticProbeHandler});    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology}));
+                                                                    statisticProbeHandler});
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology}));
     ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId1, {}), std::exception);
 }
 
@@ -128,7 +139,10 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          topology);
     auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
@@ -138,7 +152,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
                                                                     sourceCatalog,
                                                                     udfCatalog,
                                                                     amendmentQueue,
-                                                                    statisticProbeHandler});    thread = std::make_shared<std::thread>([&twoPLAccessHandle, queryId2]() {
+                                                                    statisticProbeHandler});
+    thread = std::make_shared<std::thread>([&twoPLAccessHandle, queryId2]() {
         ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2,
                                                             {ResourceType::Topology,
                                                              ResourceType::GlobalExecutionPlan,
@@ -146,7 +161,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
                                                              ResourceType::GlobalQueryPlan,
                                                              ResourceType::SourceCatalog,
                                                              ResourceType::UdfCatalog,
-                                                            ResourceType::StatisticProbeHandler}));
+                                                             ResourceType::StatisticProbeHandler}));
     });
     thread->join();
 
@@ -218,7 +233,10 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          topology);
     auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     std::vector<ResourceType> resourceVector = {ResourceType::Topology,
                                                 ResourceType::GlobalExecutionPlan,
@@ -236,7 +254,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
                                                                     sourceCatalog,
                                                                     udfCatalog,
                                                                     amendmentQueue,
-                                                                    statisticProbeHandler});    std::vector<std::thread> threads;
+                                                                    statisticProbeHandler});
+    std::vector<std::thread> threads;
     threads.reserve(numThreads);
     for (uint64_t underlying_request_id = 1; underlying_request_id < numThreads; ++underlying_request_id) {
         const auto i = RequestId(underlying_request_id);

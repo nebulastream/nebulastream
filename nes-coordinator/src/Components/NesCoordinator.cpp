@@ -47,9 +47,9 @@
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
@@ -100,7 +100,10 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     // For now, we hardcode the usage of the DefaultStatisticQueryGenerator, see issue #4687
     auto statisticRegistry = Statistic::StatisticRegistry::create();
-    statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry, Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
+    statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry,
+                                                                     Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                     Statistic::DefaultStatisticCache::create(),
+                                                                     topology);
     RequestProcessor::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
                                                                      topology,
                                                                      globalExecutionPlan,

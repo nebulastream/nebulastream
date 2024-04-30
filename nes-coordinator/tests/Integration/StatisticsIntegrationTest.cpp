@@ -19,19 +19,19 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <Services/RequestHandlerService.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
+#include <Services/RequestHandlerService.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -95,7 +95,6 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
         probeHandler = nesCoordinator->getStatisticProbeHandler();
         nesCoordinator->getSourceCatalogService()->registerLogicalSource(logicalSourceName, testInputSchema);
         NES_DEBUG("Coordinator started successfully");
-
 
         // Create workers
         for (uint64_t i = 0; i < numberOfWorkers; ++i) {

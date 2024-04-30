@@ -21,22 +21,23 @@ namespace NES::Statistic {
 
 AbstractStatisticFormat::AbstractStatisticFormat(const Schema& schema,
                                                  Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                 std::function<std::string (const std::string&)> postProcessingData,
-                                                 std::function<std::string (const std::string&)> preProcessingData)
+                                                 std::function<std::string(const std::string&)> postProcessingData,
+                                                 std::function<std::string(const std::string&)> preProcessingData)
     : AbstractStatisticFormat(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator(),
                               memoryLayout,
-                              postProcessingData, preProcessingData) {}
+                              postProcessingData,
+                              preProcessingData) {}
 
 AbstractStatisticFormat::AbstractStatisticFormat(const std::string& qualifierNameWithSeparator,
                                                  Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                 std::function<std::string (const std::string&)> postProcessingData,
-                                                 std::function<std::string (const std::string&)> preProcessingData)
+                                                 std::function<std::string(const std::string&)> postProcessingData,
+                                                 std::function<std::string(const std::string&)> preProcessingData)
     : memoryLayout(std::move(memoryLayout)), startTsFieldName(qualifierNameWithSeparator + BASE_FIELD_NAME_START),
       endTsFieldName(qualifierNameWithSeparator + BASE_FIELD_NAME_END),
       statisticHashFieldName(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME),
       statisticTypeFieldName(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME),
-      observedTuplesFieldName(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME),
-      postProcessingData(postProcessingData), preProcessingData(preProcessingData) {}
+      observedTuplesFieldName(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME), postProcessingData(postProcessingData),
+      preProcessingData(preProcessingData) {}
 
 AbstractStatisticFormat::~AbstractStatisticFormat() = default;
 

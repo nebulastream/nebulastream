@@ -118,8 +118,10 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-        auto topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations, statisticProbeHandler);
+        auto topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                                                      sourceCatalog,
+                                                                                                      optimizerConfigurations,
+                                                                                                      statisticProbeHandler);
         auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         auto memoryLayoutSelectionPhase =
