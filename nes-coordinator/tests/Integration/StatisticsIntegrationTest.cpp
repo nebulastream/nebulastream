@@ -19,7 +19,6 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -179,6 +178,9 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
     auto window = Windowing::TumblingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize));
     auto allStatisticKeys = requestHandlerService->trackStatisticRequest(characteristic, window);
     ASSERT_FALSE(allStatisticKeys.empty());
+    for (const auto& statisticKey : allStatisticKeys) {
+        NES_DEBUG("Retrieved Statistic key: {} and statistic hash: {}", statisticKey.toString(), statisticKey.hash());
+    }
 
     // Waiting till all statistic queries are done creating the statistic. This works, as the lambda source is finite
     for (const auto& statisticKey : allStatisticKeys) {
@@ -193,6 +195,7 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
     std::vector<StatisticKey> statisticKeysWithProbeResult;
     for (const auto& statisticKey : allStatisticKeys) {
         // Trying to probe the statistics
+        NES_DEBUG("Probing statistic key: {} and statistic hash: {}", statisticKey.toString(), statisticKey.hash());
         const StatisticProbeRequest probeRequest(statisticKey.hash(),
                                                  Milliseconds(windowSize),
                                                  ProbeExpression(expressionNodePtr));
@@ -210,7 +213,7 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-    testDefaultStatisticStore,
+    testStatisticsIntegration,
     StatisticsIntegrationTest,
     ::testing::Combine(::testing::Values(1, 2, 3),    // No. workers
                        ::testing::Values(1, 5, 10),   // No. buffers to produce

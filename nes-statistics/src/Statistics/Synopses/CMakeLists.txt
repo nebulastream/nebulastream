@@ -14,4 +14,5 @@ add_source_files(nes-statistics
         SynopsesStatistic.cpp
         CountMinStatistic.cpp
         HyperLogLogStatistic.cpp
+        ReservoirSampleStatistic.cpp
 )

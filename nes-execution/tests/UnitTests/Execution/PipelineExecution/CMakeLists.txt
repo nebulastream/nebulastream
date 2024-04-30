@@ -27,6 +27,7 @@ add_nes_execution_test(execution-batch-join-pipeline-test "BatchJoinPipelineTest
 add_nes_execution_test(execution-limit-pipeline-test "LimitPipelineTest.cpp")
 add_nes_execution_test(count-min-pipeline-test "CountMinPipelineTest.cpp")
 add_nes_execution_test(hyper-log-log-pipeline-test "HyperLogLogPipelineTest.cpp")
+add_nes_execution_test(reservoir-sample-pipeline-test "ReservoirSamplePipelineTest.cpp")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_nes_execution_test(execution-javamapudf-pipeline-test "MapJavaUDFPipelineTest.cpp")

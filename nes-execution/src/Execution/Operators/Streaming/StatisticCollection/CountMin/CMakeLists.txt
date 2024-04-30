@@ -13,4 +13,5 @@
 add_source_files(nes-execution
         CountMinOperatorHandler.cpp
         CountMinBuild.cpp
+        CountMinProbe.cpp
 )

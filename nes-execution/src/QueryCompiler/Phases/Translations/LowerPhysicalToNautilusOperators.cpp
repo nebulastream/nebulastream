@@ -61,6 +61,8 @@
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/ReservoirSample/ReservoirSampleBuild.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/ReservoirSample/ReservoirSampleOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
@@ -91,6 +93,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalCountMinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalHyperLogLogBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalReservoirSampleBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
@@ -425,6 +428,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto hyperLogLogBuildOperator = lowerHyperLogLogBuildOperator(*physicalHyperLogLog, operatorHandlers, bufferSize);
         parentOperator->setChild(hyperLogLogBuildOperator);
         return hyperLogLogBuildOperator;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalReservoirSampleBuildOperator>()) {
+        const auto physicalReservoirSample = operatorNode->as<const PhysicalOperators::PhysicalReservoirSampleBuildOperator>();
+        auto reservoirSampleBuildOperator = lowerReservoirSampleBuildOperator(*physicalReservoirSample, operatorHandlers, bufferSize);
+        parentOperator->setChild(reservoirSampleBuildOperator);
+        return reservoirSampleBuildOperator;
+
     }
 
     // Check if a plugin is registered that handles this physical operator
@@ -490,6 +499,50 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
                                            depth,
                                            metricHash,
                                            std::move(timeFunction));
+}
+
+Runtime::Execution::Operators::ExecutableOperatorPtr
+LowerPhysicalToNautilusOperators::lowerReservoirSampleBuildOperator(
+    const PhysicalOperators::PhysicalReservoirSampleBuildOperator& physicalReservoirSampleBuildOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+    uint64_t bufferSize) {
+
+    using namespace Runtime::Execution::Operators;
+
+    // 1. Getting all the necessary variables for the operator and its handler
+    const auto fieldToTrackFieldName = physicalReservoirSampleBuildOperator.getNameOfFieldToTrack();
+    const auto sampleSize = physicalReservoirSampleBuildOperator.getSampleSize();
+    const auto metricHash = physicalReservoirSampleBuildOperator.getMetricHash();
+    const auto inputOriginIds = physicalReservoirSampleBuildOperator.getInputOriginIds();
+    const auto sendingPolicy = physicalReservoirSampleBuildOperator.getSendingPolicy();
+    const auto sinkDataCodec = sendingPolicy->getStatisticDataCodec();
+    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalReservoirSampleBuildOperator.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE, sinkDataCodec);
+
+    // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
+    const auto windowType = physicalReservoirSampleBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
+    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
+               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
+    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
+
+    // 3. Create operator handler
+    const auto sampleSchema = Statistic::StatisticUtil::createSampleSchema(physicalReservoirSampleBuildOperator.getOutputSchema());
+    auto memoryLayout = ::NES::Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
+    auto reservoirSampleBuildOperatorHandler = ReservoirSampleOperatorHandler::create(windowSize,
+                                                                                      windowSlide,
+                                                                                      sendingPolicy,
+                                                                                      sampleSize,
+                                                                                      memoryLayout,
+                                                                                      statisticFormat,
+                                                                                      inputOriginIds);
+    operatorHandlers.push_back(reservoirSampleBuildOperatorHandler);
+    auto handlerIndex = operatorHandlers.size() - 1;
+
+    // 4. Creating the operator
+    return std::make_shared<ReservoirSampleBuild>(handlerIndex,
+                                                  metricHash,
+                                                  std::move(timeFunction),
+                                                  sampleSize,
+                                                  sampleSchema);
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(

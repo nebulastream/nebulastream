@@ -37,13 +37,14 @@ WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNod
 
 uint64_t CountMinDescriptor::getDepth() const { return depth; }
 
-void CountMinDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
+void CountMinDescriptor::addDescriptorFields(Schema&, Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
     using enum BasicType;
     outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, UINT64);
     outputSchema.addField(qualifierNameWithSeparator + DEPTH_FIELD_NAME, UINT64);
     outputSchema.addField(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY, UINT64);
     outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, TEXT);
 }
+
 CountMinDescriptor::~CountMinDescriptor() = default;
 
 std::string CountMinDescriptor::toString() { return "CountMinDescriptor"; }

@@ -15,12 +15,14 @@
 #include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/ThresholdTrigger.hpp>
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -58,6 +60,11 @@ void StatisticSerializationUtil::serializeDescriptorDetails(const Statistic::Win
         descriptorMessage.mutable_details()->PackFrom(countMinDetails);
     } else if (descriptor.instanceOf<const Statistic::HyperLogLogDescriptor>()) {
         descriptorMessage.mutable_details()->PackFrom(StatisticWindowDescriptorMessage_HyperLogLogDetails());
+    } else if (descriptor.instanceOf<const Statistic::ReservoirSampleDescriptor>()) {
+        auto reservoirSampleDescriptor = descriptor.as<const Statistic::ReservoirSampleDescriptor>();
+        StatisticWindowDescriptorMessage_ReservoirSampleDetails reservoirSampleDetails;
+        reservoirSampleDetails.set_keeponlyrequiredfield(reservoirSampleDescriptor->isKeepOnlyRequiredField());
+        descriptorMessage.mutable_details()->PackFrom(reservoirSampleDetails);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -110,6 +117,10 @@ StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescripto
         descriptorMessage.details().UnpackTo(&hyperLogLogDetails);
         statisticDescriptor =
             Statistic::HyperLogLogDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width());
+    } else if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_ReservoirSampleDetails>()) {
+        StatisticWindowDescriptorMessage_ReservoirSampleDetails reservoirSampleDetails;
+        descriptorMessage.details().UnpackTo(&reservoirSampleDetails);
+        statisticDescriptor = Statistic::ReservoirSampleDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width(), reservoirSampleDetails.keeponlyrequiredfield());
     } else {
         NES_NOT_IMPLEMENTED();
     }

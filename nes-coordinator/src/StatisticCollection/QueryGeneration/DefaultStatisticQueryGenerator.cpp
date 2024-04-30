@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
@@ -45,8 +46,8 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
     WindowStatisticDescriptorPtr statisticDescriptor;
     StatisticSynopsisType synopsisType;
     if (metricType->instanceOf<Selectivity>()) {
-        statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::COUNT_MIN;
+        statisticDescriptor = ReservoirSampleDescriptor::create(metricType->getField());
+        synopsisType = StatisticSynopsisType::RESERVOIR_SAMPLE;
     } else if (metricType->instanceOf<IngestionRate>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
         synopsisType = StatisticSynopsisType::COUNT_MIN;
@@ -60,7 +61,9 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
         synopsisType = StatisticSynopsisType::COUNT_MIN;
     } else {
-        NES_NOT_IMPLEMENTED();
+        // As a fallback, we use a sample. This might not be the best choice, but it is better than nothing
+        statisticDescriptor = ReservoirSampleDescriptor::create(metricType->getField());
+        synopsisType = StatisticSynopsisType::RESERVOIR_SAMPLE;
     }
 
     /*

@@ -39,6 +39,8 @@ class StatisticFormatFactory {
     /**
      * @brief Creates a CountMinStatisticSinkFormat for this memoryLayout
      * @param memoryLayout
+     * @param postProcessingData
+     * @param preProcessingData
      * @return StatisticFormatPtr
      */
     static StatisticFormatPtr createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
@@ -48,11 +50,24 @@ class StatisticFormatFactory {
     /**
      * @brief Creates a HyperLogLogStatisticSinkFormat for this memoryLayout
      * @param memoryLayout
+     * @param postProcessingData
+     * @param preProcessingData
      * @return StatisticFormatPtr
      */
     static StatisticFormatPtr createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
                                                       std::function<std::string(const std::string&)> postProcessingData,
                                                       std::function<std::string(const std::string&)> preProcessingData);
+
+    /**
+     * @brief Creates a ReservoirSampleStatisticSinkFormat for this memoryLayout
+     * @param memoryLayout
+     * @param postProcessingData
+     * @param preProcessingData
+     * @return StatisticFormatPtr
+     */
+    static StatisticFormatPtr createReservoirSampleFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                                                  std::function<std::string (const std::string&)> postProcessingData,
+                                                                  std::function<std::string (const std::string&)> preProcessingData);
 };
 
 }// namespace NES::Statistic

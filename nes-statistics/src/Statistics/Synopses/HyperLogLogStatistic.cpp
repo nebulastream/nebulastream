@@ -68,20 +68,6 @@ HyperLogLogStatistic::HyperLogLogStatistic(const Windowing::TimeMeasure& startTs
     alphaMM = alpha * registerSize * registerSize;
 }
 
-StatisticValue<> HyperLogLogStatistic::getStatisticValue(const ProbeExpression&) const {
-    // If the estimate is not calculated yet, we throw an exception
-#ifdef __APPLE__
-    if (std::isnan(estimate)) {
-        NES_THROW_RUNTIME_ERROR("HyperLogLogStatistic has no estimate value. Please call performEstimation() first.");
-    }
-#else
-    if (isnanl(estimate)) {
-        NES_THROW_RUNTIME_ERROR("HyperLogLogStatistic has no estimate value. Please call performEstimation() first.");
-    }
-#endif
-    return StatisticValue<>(estimate, startTs, endTs);
-}
-
 bool HyperLogLogStatistic::equal(const Statistic& other) const {
     if (other.instanceOf<HyperLogLogStatistic>()) {
         auto otherHyperLogLogStatistic = other.as<const HyperLogLogStatistic>();
@@ -114,28 +100,34 @@ void HyperLogLogStatistic::merge(const SynopsesStatistic& other) {
         return;
     }
 
-    // 2. We can only merge if the bit bitWidth and the register size are the same
+    // 2. We can only merge statistics with the same period
+    if (!startTs.equals(other.getStartTs()) || !endTs.equals(other.getEndTs())) {
+        NES_ERROR("Can not merge HyperLogLog statistics with different periods");
+        return;
+    }
+
+    // 3. We can only merge if the bit bitWidth and the register size are the same
     auto otherHyperLogLog = other.as<const HyperLogLogStatistic>();
     if (bitWidth != otherHyperLogLog->bitWidth || registerSize != otherHyperLogLog->registerSize) {
         NES_ERROR("Bit bitWidth or register size is different. Therefore, we skipped merging them together");
         return;
     }
 
-    // 3. We merge the registers by getting the maximum value of the two registers
+    // 4. We merge the registers by getting the maximum value of the two registers
     for (auto i = 0_u64; i < registers.size(); ++i) {
         registers[i] = std::max(registers[i], otherHyperLogLog->registers[i]);
     }
 
-    // 4. We add the observed tuples together
+    // 5. We add the observed tuples together
     observedTuples += otherHyperLogLog->observedTuples;
 
-    // 5. Calculating the new estimate, as we have changed the registers
+    // 6. Calculating the new estimate, as we have changed the registers
     performEstimation();
 }
 
 void HyperLogLogStatistic::update(uint64_t hash) {
     // Incrementing the observed tuples as we have seen one more
-    observedTuples += 1;
+    incrementObservedTuples(1);
 
     // Rank is the position of the leftmost 1-bit in the binary representation of the hash
     const auto index = hash >> (64 - bitWidth);
@@ -168,6 +160,8 @@ void HyperLogLogStatistic::performEstimation() {
 uint64_t HyperLogLogStatistic::getWidth() const { return bitWidth; }
 
 double HyperLogLogStatistic::getEstimate() const { return estimate; }
+
+void* HyperLogLogStatistic::getStatisticData() const { return const_cast<uint8_t*>(registers.data()); }
 
 std::string HyperLogLogStatistic::getHyperLogLogDataAsString() const {
     const auto dataSizeBytes = registers.size() * sizeof(uint8_t);

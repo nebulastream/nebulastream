@@ -54,7 +54,12 @@ uint64_t Schema::getSchemaSizeInBytes() const {
 }
 
 SchemaPtr Schema::copyFields(const SchemaPtr& otherSchema) {
-    for (const AttributeFieldPtr& attribute : otherSchema->fields) {
+    return copyFields(*otherSchema);
+}
+
+SchemaPtr Schema::copyFields(const Schema& otherSchema) {
+    fields.reserve(otherSchema.fields.size());
+    for (const AttributeFieldPtr& attribute : otherSchema.fields) {
         fields.push_back(attribute->copy());
     }
     return copy();
@@ -74,14 +79,14 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
 SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, data)); }
 
 void Schema::removeField(const AttributeFieldPtr& field) {
-    auto it = fields.begin();
-    while (it != fields.end()) {
-        if (it->get()->getName() == field->getName()) {
-            fields.erase(it);
-            break;
-        }
-        it++;
-    }
+    removeField(field->getName());
+}
+
+void Schema::removeField(const std::string_view fieldName) {
+    auto removeIt = std::remove_if(fields.begin(), fields.end(), [fieldName](const auto& f){
+        return f->getName() == fieldName;
+    });
+    fields.erase(removeIt, fields.end());
 }
 
 void Schema::replaceField(const std::string& name, const DataTypePtr& type) {

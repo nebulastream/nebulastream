@@ -46,6 +46,7 @@ uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) 
     auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
     return fieldOffset;
 }
+
 const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const { return columnOffsets; }
 
 }// namespace NES::Runtime::MemoryLayouts

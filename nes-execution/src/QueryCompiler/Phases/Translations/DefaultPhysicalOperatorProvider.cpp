@@ -32,6 +32,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
@@ -59,6 +60,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalCountMinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalHyperLogLogBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalReservoirSampleBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
@@ -222,6 +224,19 @@ void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(
         physicalHyperLogLogBuildOperator->as<UnaryOperator>()->setInputOriginIds(
             logicalStatisticWindowOperator.getInputOriginIds());
         logicalStatisticWindowOperator.replace(physicalHyperLogLogBuildOperator);
+    } else if (statisticDescriptor->instanceOf<Statistic::ReservoirSampleDescriptor>()) {
+        const auto reservoirSampleDescriptor = statisticDescriptor->as<Statistic::ReservoirSampleDescriptor>();
+        auto physicalReservoirSampleBuildOperator =
+            PhysicalOperators::PhysicalReservoirSampleBuildOperator::create(logicalStatisticWindowOperator.getStatisticId(),
+                                                                           logicalStatisticWindowOperator.getInputSchema(),
+                                                                           logicalStatisticWindowOperator.getOutputSchema(),
+                                                                           reservoirSampleDescriptor->getWidth(),
+                                                                           logicalStatisticWindowOperator.getMetricHash(),
+                                                                           logicalStatisticWindowOperator.getWindowType(),
+                                                                           logicalStatisticWindowOperator.getSendingPolicy());
+        physicalReservoirSampleBuildOperator->as<UnaryOperator>()->setInputOriginIds(
+            logicalStatisticWindowOperator.getInputOriginIds());
+        logicalStatisticWindowOperator.replace(physicalReservoirSampleBuildOperator);
     } else {
         NES_ERROR("We currently only support a CountMinStatisticDescriptor or HyperLogLogDescriptorStatisticDescriptor")
         NES_NOT_IMPLEMENTED();

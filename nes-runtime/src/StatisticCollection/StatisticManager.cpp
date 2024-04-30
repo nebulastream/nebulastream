@@ -13,6 +13,11 @@
 */
 
 #include <StatisticCollection/StatisticManager.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
+#include <Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
+#include <Util/Core.hpp>
+#include <Util/StatisticProbeUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
@@ -25,7 +30,26 @@ std::vector<StatisticValue<>> StatisticManager::getStatistics(const StatisticPro
     auto statistics = statisticStore->getStatistics(probeRequest.statisticHash, probeRequest.startTs, probeRequest.endTs);
     std::vector<StatisticValue<>> statisticValues;
     for (const auto& statistic : statistics) {
-        statisticValues.emplace_back(statistic->getStatisticValue(probeRequest.probeExpression));
+        // We might rewrite this later to use the query compiler. For now, we solve this not in the most efficient way.
+        if (statistic->instanceOf<ReservoirSampleStatistic>()) {
+            const auto reservoirSample = statistic->as<ReservoirSampleStatistic>();
+            const auto sampleSchema = reservoirSample->getSchema();
+            const auto sampleSizeInBytes = reservoirSample->getSampleSize() * sampleSchema->getSchemaSizeInBytes();
+            const auto memoryLayout = Util::createMemoryLayout(sampleSchema, sampleSizeInBytes);
+            auto statisticValue = StatisticProbeUtil::probeReservoirSample(*reservoirSample,
+                                                                           probeRequest.probeExpression,
+                                                                           memoryLayout);
+            statisticValues.emplace_back(statisticValue);
+        } else if (statistic->instanceOf<HyperLogLogStatistic>()) {
+            const auto hyperLogLog = statistic->as<HyperLogLogStatistic>();
+            statisticValues.emplace_back(StatisticValue<>(hyperLogLog->getEstimate(), hyperLogLog->getStartTs(), hyperLogLog->getEndTs()));
+        } else if (statistic->instanceOf<CountMinStatistic>()) {
+            const auto countMin = statistic->as<CountMinStatistic>();
+            auto statisticValue = StatisticProbeUtil::probeCountMin(*countMin, probeRequest.probeExpression);
+            statisticValues.emplace_back(statisticValue);
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
     }
 
     return statisticValues;

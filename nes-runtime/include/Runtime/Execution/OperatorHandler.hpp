@@ -46,7 +46,7 @@ class OperatorHandler : public Reconfigurable {
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
     /**
-     * @brief Default deconstructor
+     * @brief Default destructor
      */
     ~OperatorHandler() override = default;
 

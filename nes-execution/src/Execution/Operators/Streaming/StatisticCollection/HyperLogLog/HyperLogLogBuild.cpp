@@ -70,7 +70,7 @@ void HyperLogLogBuild::open(ExecutionContext& executionCtx, RecordBuffer& record
 void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    // 1. Get the memRef to the CountMin sketch
+    // 1. Get the memRef to the HyperLogLog sketch
     auto timestampVal = timeFunction->getTs(ctx, record);
     auto hllMemRef = Nautilus::FunctionCall("getHLLRefProxy",
                                             getHLLRefProxy,

@@ -47,7 +47,8 @@ bool LogicalStatisticWindowOperator::inferSchema() {
     outputSchema->addField(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME, UINT64);
     outputSchema->addField(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME, UINT64);
     outputSchema->addField(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME, UINT64);
-    windowStatisticDescriptor->addDescriptorFields(*outputSchema, qualifierNameWithSeparator);
+
+    windowStatisticDescriptor->addDescriptorFields(*inputSchema, *outputSchema, qualifierNameWithSeparator);
 
     NES_DEBUG("OutputSchema is = {}", outputSchema->toString());
 

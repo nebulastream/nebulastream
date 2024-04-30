@@ -59,6 +59,7 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
@@ -710,7 +711,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         // Testing for all possible combinations of sending policies and trigger conditions, if we can serialize a
-        // statistic build operator correctly
+        // statistic build operator with a count min descriptor correctly
         auto allPossibleSendingPolicies = {Statistic::SENDING_ASAP(Statistic::StatisticDataCodec::DEFAULT),
                                            Statistic::SENDING_ASAP(Statistic::StatisticDataCodec::RUN_LENGTH_ENCODED),
                                            Statistic::SENDING_ADAPTIVE(Statistic::StatisticDataCodec::DEFAULT),
@@ -730,6 +731,38 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
                 auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
                 EXPECT_TRUE(statisticBuildOperator->equal(deserializedOperator));
+            }
+        }
+    }
+
+    {
+        // Testing for all possible combinations of sending policies and trigger conditions, if we can serialize a
+        // statistic build operator with a reservoir sample descriptor correctly
+        auto allPossibleSendingPolicies = {Statistic::SENDING_ASAP(Statistic::StatisticDataCodec::DEFAULT),
+                                           Statistic::SENDING_ASAP(Statistic::StatisticDataCodec::RUN_LENGTH_ENCODED),
+                                           Statistic::SENDING_ADAPTIVE(Statistic::StatisticDataCodec::DEFAULT),
+                                           Statistic::SENDING_ADAPTIVE(Statistic::StatisticDataCodec::RUN_LENGTH_ENCODED),
+                                           Statistic::SENDING_LAZY(Statistic::StatisticDataCodec::DEFAULT),
+                                           Statistic::SENDING_LAZY(Statistic::StatisticDataCodec::RUN_LENGTH_ENCODED)};
+        auto allPossibleTriggerCondition = {Statistic::NeverTrigger::create()};
+        auto allPossibleKeepOnlyRequiredField = {false, true};
+        for (auto sendingPolicy : allPossibleSendingPolicies) {
+            for (auto triggerCondition : allPossibleTriggerCondition) {
+                for (auto keepOnlyRequiredField : allPossibleKeepOnlyRequiredField) {
+                    auto metric = Statistic::IngestionRate::create();
+                    auto statisticDescriptor = Statistic::ReservoirSampleDescriptor::create(metric->getField(),
+                                                                                            keepOnlyRequiredField);
+                    auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
+                    auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
+                                                                                                       statisticDescriptor,
+                                                                                                       metric->hash(),
+                                                                                                       sendingPolicy,
+                                                                                                       triggerCondition);
+                    statisticBuildOperator->setStatisticId(getNextStatisticId());
+                    auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
+                    auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+                    EXPECT_TRUE(statisticBuildOperator->equal(deserializedOperator));
+                }
             }
         }
     }

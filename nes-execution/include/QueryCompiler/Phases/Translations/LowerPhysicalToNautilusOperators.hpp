@@ -251,6 +251,19 @@ class LowerPhysicalToNautilusOperators {
                                   std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
                                   uint64_t bufferSize);
 
+    /**
+     * @brief Lowers a physicalReservoirSample to a ReservoirSample
+     * @param physicalReservoirSampleBuildOperator
+     * @param operatorHandlers
+     * @param bufferSize
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerReservoirSampleBuildOperator(const PhysicalOperators::PhysicalReservoirSampleBuildOperator& physicalReservoirSampleBuildOperator,
+                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                                      uint64_t bufferSize);
+
+
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
