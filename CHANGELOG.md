@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.114](https://github.com/nebulastream/nebulastream/tree/v0.6.114) (2024-04-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.113...v0.6.114)
+
+**Implemented enhancements:**
+
+- \[TASK\] Using Statistics in the Optimizer [\#4784](https://github.com/nebulastream/nebulastream/issues/4784)
+
 ## [v0.6.113](https://github.com/nebulastream/nebulastream/tree/v0.6.113) (2024-04-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.112...v0.6.113)
