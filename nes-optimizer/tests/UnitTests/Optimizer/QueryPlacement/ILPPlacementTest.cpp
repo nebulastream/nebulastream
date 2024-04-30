@@ -46,6 +46,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
@@ -117,6 +121,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         auto physicalSource = PhysicalSource::create(csvSourceType);
         auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId);
         sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
     }
 
     void assignOperatorPropertiesRecursive(LogicalOperatorPtr operatorNode) {
@@ -159,6 +164,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
 
     Catalogs::Source::SourceCatalogPtr sourceCatalogForILP;
     TopologyPtr topologyForILP;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 
 /* First test of formulas with Z3 solver */
@@ -267,7 +273,8 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -333,7 +340,8 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
@@ -410,7 +418,8 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategyWithDefaultParamet
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
@@ -488,7 +497,8 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
@@ -568,7 +578,8 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -636,7 +647,8 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -720,7 +732,8 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan1);
     topologySpecificQueryRewrite->execute(queryPlan2);
@@ -920,7 +933,8 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan1);
     topologySpecificQueryRewrite->execute(queryPlan2);
@@ -1129,7 +1143,8 @@ TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan1);
     topologySpecificQueryRewrite->execute(queryPlan2);
@@ -1252,7 +1267,8 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
-                                                             Configurations::OptimizerConfiguration());
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 

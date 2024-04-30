@@ -37,6 +37,8 @@ Configurations::CoordinatorConfigurationPtr StorageHandler::getCoordinatorConfig
 
 Optimizer::UMPMCAmendmentQueuePtr StorageHandler::getAmendmentQueue() { NES_NOT_IMPLEMENTED(); }
 
+Statistic::StatisticProbeHandlerPtr StorageHandler::getStatisticProbeHandler(RequestId) { NES_NOT_IMPLEMENTED(); }
+
 RequestId StorageHandler::generateRequestId() {
     std::unique_lock lock(idMutex);
     auto requestId = nextFreeRequestId.getRawValue();

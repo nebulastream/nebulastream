@@ -50,6 +50,10 @@
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -69,6 +73,7 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
     z3::ContextPtr z3Context;
     Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
 
@@ -86,6 +91,7 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
         udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
         coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
         amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
         z3::config cfg;
         cfg.set("timeout", 50000);
         cfg.set("model", false);
@@ -128,7 +134,8 @@ TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents) {
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest = ISQPRequest::create(z3Context, isqpEvents, ZERO_RETRIES);
     constexpr auto requestId = RequestId(1);
     isqpRequest->setId(requestId);
@@ -178,7 +185,8 @@ TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -257,7 +265,8 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -351,7 +360,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -453,7 +463,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -558,7 +569,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -665,7 +677,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -774,7 +787,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -888,7 +902,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -1002,7 +1017,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
@@ -1122,7 +1138,8 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue});
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);

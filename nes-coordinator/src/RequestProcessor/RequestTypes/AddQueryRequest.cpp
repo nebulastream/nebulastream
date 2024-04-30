@@ -74,7 +74,8 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(queryParsingService) {}
@@ -89,7 +90,8 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(nullptr) {}
@@ -183,6 +185,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
         auto coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
+        auto statisticProbeHandler = storageHandler->getStatisticProbeHandler(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
@@ -200,7 +203,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
         auto topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
+            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations, statisticProbeHandler);
         auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         auto memoryLayoutSelectionPhase =

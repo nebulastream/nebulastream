@@ -43,7 +43,6 @@ class AbstractStatisticProbeGenerator {
                                                                          const AbstractStatisticCache& cache,
                                                                          const StatisticProbeRequest& probeRequest,
                                                                          const std::vector<WorkerId>& allWorkerIds) = 0;
-
     virtual ~AbstractStatisticProbeGenerator();
 };
 

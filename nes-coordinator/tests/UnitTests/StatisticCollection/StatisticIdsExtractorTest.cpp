@@ -54,6 +54,7 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
         sendingPolicy = Statistic::SendingPolicyASAP::create(Statistic::StatisticDataCodec::DEFAULT);
         triggerCondition = Statistic::NeverTrigger::create();
 
+
         const auto numberOfSources = StatisticIdsExtractorTest::GetParam();
         sourceCatalog = setUpSourceCatalog(numberOfSources);
     }

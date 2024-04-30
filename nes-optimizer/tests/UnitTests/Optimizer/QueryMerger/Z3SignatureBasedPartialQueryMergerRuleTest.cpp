@@ -42,6 +42,10 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
@@ -56,6 +60,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest 
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -111,6 +116,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest 
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry5);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
     }
 };
 
@@ -121,7 +127,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -201,7 +208,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -288,7 +296,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     // Prepare
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -349,7 +358,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -445,7 +455,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -527,7 +538,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();

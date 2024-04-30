@@ -70,6 +70,11 @@ class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
 
+namespace Statistic {
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
+}// namespace Statistic
+
 namespace RequestProcessor {
 
 static constexpr RequestId MAX_REQUEST_ID = RequestId(std::numeric_limits<RequestId::Underlying>::max());
@@ -155,6 +160,13 @@ class StorageHandler {
      * @return shared pointer to folly multi producer multi consumer queue
      */
     virtual Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue();
+
+    /**
+     * @brief Get the statistic probe handler
+     * @param requestId the id of the request which calls this function
+     * @return  a handle to the statistic probe handler
+     */
+    virtual Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler(RequestId requestId);
 
     /**
      * @brief obtain a new request id

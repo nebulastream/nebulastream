@@ -19,19 +19,19 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
-#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
-#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -46,7 +46,8 @@ namespace NES {
 class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
                                   public ::testing::WithParamInterface<std::tuple<int, int, int, Statistic::MetricPtr>> {
   public:
-    Statistic::StatisticCoordinatorPtr statCoordinator;
+    RequestHandlerServicePtr requestHandlerService;
+    Statistic::StatisticProbeHandlerPtr probeHandler;
     std::vector<NesWorkerPtr> allWorkers;
     NesCoordinatorPtr nesCoordinator;
     SchemaPtr testInputSchema;
@@ -90,9 +91,11 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
         nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         auto coordinatorRPCPort = nesCoordinator->startCoordinator(/**blocking**/ false);
         EXPECT_NE(coordinatorRPCPort, 0UL);
-        statCoordinator = nesCoordinator->getStatisticCoordinator();
+        requestHandlerService = nesCoordinator->getRequestHandlerService();
+        probeHandler = nesCoordinator->getStatisticProbeHandler();
         nesCoordinator->getSourceCatalogService()->registerLogicalSource(logicalSourceName, testInputSchema);
         NES_DEBUG("Coordinator started successfully");
+
 
         // Create workers
         for (uint64_t i = 0; i < numberOfWorkers; ++i) {
@@ -175,12 +178,12 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
     // Creating the trackStatistic request. Once we fix issue #4778 and #4776, we can call it for each physical source name
     auto characteristic = DataCharacteristic::create(metric, logicalSourceName, physicalSourceNames[0]);
     auto window = Windowing::TumblingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize));
-    auto allStatisticKeys = statCoordinator->trackStatistic(characteristic, window);
+    auto allStatisticKeys = requestHandlerService->trackStatisticRequest(characteristic, window);
     ASSERT_FALSE(allStatisticKeys.empty());
 
     // Waiting till all statistic queries are done creating the statistic. This works, as the lambda source is finite
     for (const auto& statisticKey : allStatisticKeys) {
-        const auto queryId = statCoordinator->getStatisticQueryId(statisticKey);
+        const auto queryId = probeHandler->getStatisticQueryId(statisticKey);
         if (!TestUtils::checkStoppedOrTimeout(queryId, nesCoordinator->getQueryCatalog())) {
             NES_ERROR("Statistic query did not stop in time.");
             ASSERT_FALSE(true);
@@ -191,12 +194,10 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
     std::vector<StatisticKey> statisticKeysWithProbeResult;
     for (const auto& statisticKey : allStatisticKeys) {
         // Trying to probe the statistics
-        auto probeResult = statCoordinator->probeStatistic(statisticKey,
-                                                           Seconds(0),
-                                                           Days(1'000),// We just need a large enough timestamp here
-                                                           Milliseconds(windowSize),
-                                                           ProbeExpression(expressionNodePtr),
-                                                           false);
+        const StatisticProbeRequest probeRequest(statisticKey.hash(),
+                                                 Milliseconds(windowSize),
+                                                 ProbeExpression(expressionNodePtr));
+        auto probeResult = probeHandler->probeStatistic(probeRequest);
         if (!probeResult.getProbeItems().empty()) {
             statisticKeysWithProbeResult.emplace_back(statisticKey);
         } else {

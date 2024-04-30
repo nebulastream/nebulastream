@@ -42,7 +42,8 @@ FailQueryRequest::FailQueryRequest(const SharedQueryId sharedQueryId,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
                           ResourceType::GlobalExecutionPlan,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       sharedQueryId(sharedQueryId), decomposedQueryPlanId(failedDecomposedPlanId), failureReason(failureReason) {}
 

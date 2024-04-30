@@ -16,7 +16,7 @@ get_source(nes-statistics NES_STATISTICS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-statistics SHARED ${NES_STATISTICS_SOURCE_FILES})
-target_link_libraries(nes-statistics PUBLIC nes-operators)
+target_link_libraries(nes-statistics PUBLIC nes-operators nes-catalogs)
 target_include_directories(nes-statistics PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

@@ -32,8 +32,8 @@ class Server;
 namespace NES {
 
 namespace Statistic {
-class StatisticCoordinator;
-using StatisticCoordinatorPtr = std::shared_ptr<StatisticCoordinator>;
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
 }// namespace Statistic
 
 namespace Runtime {
@@ -228,7 +228,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     NesWorkerPtr getNesWorker();
 
-    Statistic::StatisticCoordinatorPtr getStatisticCoordinator();
+    Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler() const;
 
   private:
     /**
@@ -263,7 +263,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     LocationServicePtr locationService;
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
     Optimizer::UMPMCAmendmentQueuePtr placementAmendmentQueue;
-    Statistic::StatisticCoordinatorPtr statisticCoordinator;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

@@ -251,14 +251,6 @@ class WorkerRPCClient {
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
-    /**
-     * @brief method to probe a statistic
-     * @param probeRequest
-     * @return Vector of StatisticValues
-     */
-    std::vector<Statistic::StatisticValue<>> probeStatistics(const std::string& address,
-                                                             const Statistic::StatisticProbeRequestGRPC& probeRequest);
-
   private:
     WorkerRPCClient() = default;
 };

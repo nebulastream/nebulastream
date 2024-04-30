@@ -20,6 +20,7 @@
 
 namespace NES::Statistic {
 
+
 /**
  * @brief Descriptor for the StatisticSink. Merely stores the StatisticSinkFormatType
  */

@@ -23,6 +23,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 class SerialStorageHandlerTest : public Testing::BaseUnitTest {
@@ -43,6 +47,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), topology);
     auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     StorageDataStructures storageDataStructures = {coordinatorConfiguration,
                                                    topology,
@@ -51,7 +56,8 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
                                                    queryCatalog,
                                                    sourceCatalog,
                                                    udfCatalog,
-                                                   amendmentQueue};
+                                                   amendmentQueue,
+                                                   statisticProbeHandler};
     auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
 
     //test if we can obtain the resource we passed to the constructor
@@ -61,6 +67,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle(requestId).get());
     ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle(requestId).get());
     ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle(requestId).get());
+    ASSERT_EQ(statisticProbeHandler.get(), serialAccessHandle->getStatisticProbeHandler(requestId).get());
 }
 
 }// namespace NES::RequestProcessor::Experimental

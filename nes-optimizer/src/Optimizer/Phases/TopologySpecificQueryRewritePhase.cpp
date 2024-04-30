@@ -16,6 +16,7 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedMatrixJoinRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeInterface.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -23,21 +24,26 @@ namespace NES::Optimizer {
 TopologySpecificQueryRewritePhasePtr
 TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                          Configurations::OptimizerConfiguration optimizerConfiguration) {
+                                          Configurations::OptimizerConfiguration optimizerConfiguration,
+                                          Statistic::StatisticProbeHandlerPtr statisticProbeHandler) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
-        TopologySpecificQueryRewritePhase(topology, sourceCatalog, optimizerConfiguration));
+        TopologySpecificQueryRewritePhase(topology, sourceCatalog, optimizerConfiguration, statisticProbeHandler));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
     TopologyPtr topology,
     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-    Configurations::OptimizerConfiguration optimizerConfiguration)
-    : topology(topology), optimizerConfiguration(optimizerConfiguration) {
+    Configurations::OptimizerConfiguration optimizerConfiguration,
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler)
+    : topology(topology), optimizerConfiguration(optimizerConfiguration), statisticProbeHandler(statisticProbeHandler) {
     logicalSourceExpansionRule =
         LogicalSourceExpansionRule::create(sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion);
 }
 
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
+    // We simply write this line here to make sure that the statisticProbeHandler can be used in the optimizer.
+    ((void) statisticProbeHandler);
+
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
     if (optimizerConfiguration.joinOptimizationMode == DistributedJoinOptimizationMode::MATRIX) {
         auto matrixJoinRule = DistributedMatrixJoinRule::create(optimizerConfiguration, topology);

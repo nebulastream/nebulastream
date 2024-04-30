@@ -55,6 +55,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -99,6 +100,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
             Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
     }
 };
 
@@ -662,7 +664,8 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,
-                                                                                    Configurations::OptimizerConfiguration());
+                                                                                    Configurations::OptimizerConfiguration(),
+                                                                                    statisticProbeHandler);
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 
@@ -721,7 +724,8 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,
-                                                                                    Configurations::OptimizerConfiguration());
+                                                                                    Configurations::OptimizerConfiguration(),
+                                                                                    statisticProbeHandler);
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 

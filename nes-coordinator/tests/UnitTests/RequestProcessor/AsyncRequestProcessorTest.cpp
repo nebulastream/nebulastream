@@ -225,7 +225,7 @@ class AsyncRequestProcessorTest : public Testing::BaseUnitTest, public testing::
         coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
         coordinatorConfig->requestExecutorThreads = numThreads;
         StorageDataStructures storageDataStructures =
-            {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+            {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
         return std::make_shared<AsyncRequestProcessor>(storageDataStructures);
     }
 };

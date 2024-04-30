@@ -11,7 +11,3 @@
 # limitations under the License.
 
 add_subdirectory(QueryGeneration)
-
-add_source_files(nes-coordinator
-        StatisticCoordinator.cpp
-)

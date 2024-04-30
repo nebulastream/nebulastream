@@ -75,9 +75,6 @@ add_nes_unit_test(default-statistic-store-test "StatisticCollection/DefaultStati
 ### StatisticIdsExtractorTest ###
 add_nes_unit_test(statistic-ids-extractor-test "StatisticCollection/StatisticIdsExtractorTest.cpp")
 
-### StatisticCoordinatorTest ###
-add_nes_unit_test(statistic-coordinator-test "StatisticCollection/StatisticCoordinatorTest.cpp")
-
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "Runtime/AsyncTaskExecutorTest.cpp")
 
