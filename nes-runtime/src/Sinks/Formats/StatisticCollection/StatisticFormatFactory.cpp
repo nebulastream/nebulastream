@@ -17,9 +17,10 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/ReservoirSampleStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/CompressionMethods.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Statistic {
 StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema,
                                                             uint64_t bufferSize,
