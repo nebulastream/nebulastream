@@ -112,13 +112,6 @@ class WorkerContext {
     void setObjectRefCnt(void* object, uint32_t refCnt);
 
     /**
-     * @brief Increase the ref cnt of a given object
-     * @param object the object that we want to ref count
-     * @return the prev ref cnt
-     */
-    uint32_t increaseObjectRefCnt(void* object);
-
-    /**
      * @brief Reduces by one the ref cnt. It deletes the object as soon as ref cnt reaches 0.
      * @param object the object that we want to ref count
      * @return the prev ref cnt

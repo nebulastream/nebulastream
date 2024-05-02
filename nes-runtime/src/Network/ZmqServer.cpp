@@ -17,7 +17,6 @@
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -221,7 +220,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
         }
     }
 
-    // At this point, we need to shutdown the handlers
+    // At this point, we need to shut down the handlers
     if (!keepRunning) {
         for (auto& t : handlerThreads) {
             t->join();

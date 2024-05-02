@@ -18,7 +18,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <iomanip>
@@ -174,7 +173,7 @@ bool ExecutableQueryPlan::stop() {
     }
 
     if (expected == Execution::ExecutableQueryPlanStatus::Stopped) {
-        return true;// we have tried to stop the same QEP twice..
+        return true;// we have tried to stop the same QEP twice.
     }
     NES_ERROR("Something is wrong with query {} as it was not possible to stop", decomposedQueryPlanId);
     // if we get there it mean the CAS failed and expected is the current value

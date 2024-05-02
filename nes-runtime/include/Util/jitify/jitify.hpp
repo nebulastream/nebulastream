@@ -2399,7 +2399,7 @@ inline void detect_and_add_cuda_arch(std::vector<std::string>& options) {
     //         on older versions of CUDA.
     // TODO: It would be better to detect this somehow, rather than hard-coding it
 
-    // Tegra chips do not have forwards compatibility so we need to special case
+    // Tegra chips do not have forwards compatibility, so we need to special case
     // them.
     bool is_tegra = ((cc_major == 3 && cc_minor == 2) ||// Logan
                      (cc_major == 5 && cc_minor == 3) ||// Erista

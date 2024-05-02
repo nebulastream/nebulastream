@@ -23,7 +23,6 @@
 #include <Sources/MQTTSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cassert>
@@ -230,7 +229,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer
 bool MQTTSource::connect() {
     if (!connected) {
         NES_DEBUG("MQTTSource was !connect now connect: connected");
-        // connect with user name and password
+        // connect with username and password
         try {
             //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
             auto connOpts =

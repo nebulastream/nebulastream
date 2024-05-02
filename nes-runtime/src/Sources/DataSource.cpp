@@ -248,7 +248,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
                 std::rethrow_exception(expPtr);
             }
         } catch (std::exception const& e) {// it would not work if you pass by value
-            // i leave the following lines just as a reminder:
+            // I leave the following lines just as a reminder:
             // here we do not need to call notifySourceFailure because it is done from the main thread
             // the only reason to call notifySourceFailure is when the main thread was not stated
             if (!wasStarted) {
@@ -483,11 +483,6 @@ uint64_t DataSource::getNumBuffersToProcess() const { return numberOfBuffersToPr
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
 std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts() { return {Schema::MemoryLayoutType::ROW_LAYOUT}; }
-
-bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
-    auto supportedLayouts = getSupportedLayouts();
-    return std::find(supportedLayouts.begin(), supportedLayouts.end(), schema->getLayoutType()) != supportedLayouts.end();
-}
 
 Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() {
     auto buffer = bufferManager->getBufferBlocking();

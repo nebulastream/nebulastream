@@ -135,7 +135,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
     std::promise<NetworkChannelPtr> promise;
     auto future = promise.get_future();
 
-    //create a promise that is passed back to the caller an can be used to abort the connection process
+    //create a promise that is passed back to the caller and can be used to abort the connection process
     std::promise<bool> abortConnectionPromise;
     auto abortConnectionFuture = abortConnectionPromise.get_future();
 
@@ -209,7 +209,7 @@ NetworkManager::registerSubpartitionEventProducerAsync(const NodeLocation& nodeL
     std::promise<EventOnlyNetworkChannelPtr> promise;
     auto future = promise.get_future();
 
-    //create a promise that is passed back to the caller an can be used to abort the connection process
+    //create a promise that is passed back to the caller and can be used to abort the connection process
     std::promise<bool> abortConnectionPromise;
     auto abortConnectionFuture = abortConnectionPromise.get_future();
 

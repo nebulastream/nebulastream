@@ -36,7 +36,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         DecomposedQueryPlanVersion version = 0,
                                         std::optional<std::future<bool>> abortConnection = std::nullopt) {
     NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0,
-                    "Cannot use indefinite retries without suppliying a future to abort connection");
+                    "Cannot use indefinite retries without supplying a future to abort connection");
     std::chrono::milliseconds backOffTime = waitTime;
     constexpr auto nameHelper = []() {
         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
@@ -121,7 +121,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     if (errorMsg.isPartitionDeleted()) {
                         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
                             // for an event-only channel it's ok to get this message
-                            // it means the producer is already done so it wont be able
+                            // it means the producer is already done so, it won't be able
                             // to receive any event. We should figure out if this case must be
                             // handled somewhere else. For instance, what does this mean for FT and upstream backup?
                             NES_ERROR("EventOnlyNetworkChannel: Received partition deleted error from server {}", socketAddr);

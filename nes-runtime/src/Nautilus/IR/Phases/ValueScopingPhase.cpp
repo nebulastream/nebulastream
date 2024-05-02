@@ -66,7 +66,7 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
         toVisitBlocks.pop();
         visitedBlocks.emplace(currentBlock.get());
         auto nextBlocks = currentBlock->getNextBlockInvocations();
-        // We iterate over all of the operations of the currentBlock.
+        // We iterate over all the operations of the currentBlock.
         for (auto& operation : currentBlock->getOperations()) {
             // The current operation is a non-terminator- or return operation. We check whether the operation uses
             // the currentBlock's arguments, and if so, we check whether we can replace the arguments, with their
@@ -125,7 +125,7 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
                     // Add nextBlock to toVisitBlocks, if this terminatorOp is the last yet unused terminatorOp leading
                     // to the nextBlock (loop-back-edges are not counted).
                     // Reason: We cannot remove merge-block args before we traversed all non-loop-back terminator
-                    // operations that point to the merge-block. Otherwise we cannot be sure which operations to remove
+                    // operations that point to the merge-block. Otherwise, we cannot be sure which operations to remove
                     // from the terminator operations (e.g. branchOpArgs:5, nextBlockArgs: 3, which to remove? Could
                     // match, but unnecessarily complex).
                     if (!(nextBlockInvocation->getNextBlock()->isMergeBlock())) {

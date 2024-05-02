@@ -137,11 +137,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     Execution::ExecutableQueryPlanStatus getQepStatus(DecomposedQueryPlanId id);
 
     /**
-    * @brief get general statistics of QueryManager and Buffer Manager
-    */
-    std::string getQueryManagerStatistics();
-
-    /**
      * @brief Provides the QEP object for an id
      * @param id the plan to lookup
      * @return the QEP or null, if not found
@@ -393,14 +388,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @return next task id
      */
     uint64_t getNextTaskId();
-
-    /**
-     * @brief injects epoch barrier in all network sinks
-     * @param epochBarrier max timestamp of current epoch
-     * @param queryId query id
-     * @param source current operator
-     */
-    void injectEpochMarker(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
 
   protected:
     WorkerId nodeEngineId;

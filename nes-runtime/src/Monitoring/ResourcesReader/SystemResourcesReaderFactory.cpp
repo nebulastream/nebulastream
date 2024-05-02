@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/Logger/Logger.hpp>

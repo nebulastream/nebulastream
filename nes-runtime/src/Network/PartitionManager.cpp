@@ -16,7 +16,6 @@
 #include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Runtime/Events.hpp>
-#include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Logger/Logger.hpp>
 
 // Note that we updated the PartitionManager's logic:
@@ -122,7 +121,7 @@ DecomposedQueryPlanVersion PartitionManager::getVersion(NesPartition partition) 
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
         return it->second.getVersion();
     }
-    NES_ASSERT(false, "Trying to check version of inexistent partition");
+    NES_ASSERT(false, "Trying to check version of non-existent partition");
     return false;
 }
 

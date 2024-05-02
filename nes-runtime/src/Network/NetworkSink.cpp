@@ -78,7 +78,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
                         "Trying to write to invalid channel while no connection is in progress");
 
-        //check if connection was established and buffer it is has not yest been established
+        //check if connection was established and buffer it has not yest been established
         if (!retrieveNewChannelAndUnbuffer(workerContext)) {
             NES_TRACE("context {} buffering data", workerContext.getId());
             workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);

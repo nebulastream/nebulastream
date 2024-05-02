@@ -157,11 +157,6 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
     /**
-     * @brief atomically increment number of producers for this pipeline
-     */
-    void incrementProducerCount();
-
-    /**
      * @brief Get query plan id.
      * @return QueryId.
      */
