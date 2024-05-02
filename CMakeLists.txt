@@ -65,6 +65,7 @@ option(NES_USE_GPU "Build with GPU acceleration" OFF)
 option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
 option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
 option(NES_BUILD_PLUGIN_ONNX "Build ONNX Plugin support" OFF)
+option(NES_BUILD_PLUGIN_CUDA "Build CUDA Plugin" OFF)
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")

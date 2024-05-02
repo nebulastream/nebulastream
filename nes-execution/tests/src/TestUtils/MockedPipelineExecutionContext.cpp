@@ -22,14 +22,15 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<Opera
 MockedPipelineExecutionContext::MockedPipelineExecutionContext() : MockedPipelineExecutionContext(true) {}
 
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(bool logSeenSeqChunk)
-    : MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr>(), logSeenSeqChunk) {}
+    : MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr>(), logSeenSeqChunk, nullptr) {}
 
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler,
-                                                               bool logSeenSeqChunk)
+                                                               bool logSeenSeqChunk,
+                                                               BufferManagerPtr bufferManager)
     : PipelineExecutionContext(
         INVALID_PIPELINE_ID,// mock pipeline id
         INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
-        nullptr,
+        bufferManager,
         1,
         [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef) {
               if (logSeenSeqChunk) {

@@ -24,7 +24,7 @@
 namespace NES::Runtime::Execution {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler, bool logSeenSeqChunk);
+    explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler, bool logSeenSeqChunk, BufferManagerPtr bufferManager = nullptr);
     explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler);
     explicit MockedPipelineExecutionContext(bool logSeenSeqChunk);
     explicit MockedPipelineExecutionContext();
