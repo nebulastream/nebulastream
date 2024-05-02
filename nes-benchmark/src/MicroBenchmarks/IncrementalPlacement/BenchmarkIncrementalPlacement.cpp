@@ -59,19 +59,18 @@ Catalogs::UDF::UDFCatalogPtr udfCatalog;
 class ErrorHandler : public Exceptions::ErrorListener {
   public:
     virtual void onFatalError(int signalNumber, std::string callstack) override {
-        if(callstack.empty()){
+        if (callstack.empty()) {
             std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] ";
-        }
-        else{
-            std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack;
+        } else {
+            std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
+                      << callstack;
         }
     }
 
     virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
-        if(callstack.empty()){
+        if (callstack.empty()) {
             std::cout << "onFatalException: exception=[" << exception->what() << "] ";
-        }
-        else{
+        } else {
             std::cout << "onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack;
         }
     }

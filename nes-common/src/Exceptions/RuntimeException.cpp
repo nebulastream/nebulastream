@@ -30,7 +30,7 @@ RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, co
     : errorMessage(std::move(msg)) {
     auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
     auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
-    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level){
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
         if (stacktrace.empty()) {
             errorMessage.append(" (no stacktrace available) ");
         } else {
@@ -46,7 +46,7 @@ RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, co
 RuntimeException::RuntimeException(std::string msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {
     auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
     auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
-    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level){
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
         if (stacktrace.empty()) {
             errorMessage.append(" (no stacktrace available) ");
         } else {
