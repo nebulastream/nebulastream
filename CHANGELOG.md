@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.115](https://github.com/nebulastream/nebulastream/tree/v0.6.115) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.114...v0.6.115)
+
+**Implemented enhancements:**
+
+- \[TASK\] Reservoir sample [\#4798](https://github.com/nebulastream/nebulastream/issues/4798)
+- \[TASK\] check remaining uses of collectAndPrintStackTrace\(\) and replace with collectstacktrace\(\) if necessary [\#4793](https://github.com/nebulastream/nebulastream/issues/4793)
+- \[TASK\] Add "Enable NES\_DEBUG" message to errors, when stack traces are hidden [\#4791](https://github.com/nebulastream/nebulastream/issues/4791)
+
 ## [v0.6.114](https://github.com/nebulastream/nebulastream/tree/v0.6.114) (2024-04-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.113...v0.6.114)
