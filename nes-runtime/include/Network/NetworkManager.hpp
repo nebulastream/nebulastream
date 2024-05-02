@@ -223,7 +223,7 @@ class NetworkManager {
      * @return a pair consisting of a future containing the data network channel on completion and a promise that aborts the connection process when
      * its value is set (abortion not yet implemented)
      */
-    //todo #4490: implement aborting connection attempt if returend promise is set
+    //todo #4490: implement aborting connection attempt if returned promise is set
     std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>>
     registerSubpartitionEventProducerAsync(const NodeLocation& nodeLocation,
                                            const NesPartition& nesPartition,

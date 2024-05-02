@@ -21,7 +21,6 @@
 
 namespace NES::Runtime {
 namespace detail {
-static backward::SignalHandling sh;
 
 /// called when a signal is intercepted
 void nesErrorHandler(int signal) {

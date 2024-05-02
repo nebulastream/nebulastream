@@ -17,8 +17,6 @@
 #include <Sources/ZmqSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
-#include <cstring>
-
 #include <sstream>
 #include <string>
 #include <utility>

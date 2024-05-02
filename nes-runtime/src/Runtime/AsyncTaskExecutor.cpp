@@ -14,7 +14,6 @@
 
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/HardwareManager.hpp>
-#include <Util/Logger//Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <exception>
 #include <numeric>

@@ -315,26 +315,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
     /**
-     * @brief This function is only to be used for experiments. Do not call from other classes. reconfigure the network sink to point to a new source. Buffer all tuples that are received while the new connection
-     * is being established.
-     * @param newNodeId the id of the node hosting the new source
-     * @param newHostname the hostname of the node hosting the new source
-     * @param newPort the data port of the node hosting the new source
-     * @param decomposedQueryPlanId the id of the subplan containing the sink to be reconfigured
-     * @param uniqueNetworkSinkDescriptorId the unique id of the network sink to be reconfigured
-     * @param newPartition the partition of the new source
-     * @param version the new version number of the sink to be reconfigured
-     * @return true on success, false if sink was not found
-     */
-    bool experimentalReconfigureNetworkSink(WorkerId newNodeId,
-                                            const std::string& newHostname,
-                                            uint32_t newPort,
-                                            DecomposedQueryPlanId decomposedQueryPlanId,
-                                            OperatorId uniqueNetworkSinkDescriptorId,
-                                            Network::NesPartition newPartition,
-                                            DecomposedQueryPlanVersion version);
-
-    /**
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
      * connections from a new upstream sink. Reconfigured sinks will scheduled a pending change of the downstream source
      * to which they send their data.

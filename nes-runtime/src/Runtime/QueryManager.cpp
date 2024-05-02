@@ -14,11 +14,10 @@
 
 /* TODO
  * add to Reconfig... constructors:
- -1, // any querID
+ -1, // any query ID
  */
 
 #include <Network/NetworkSink.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -301,7 +300,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
-            // we need to think if we wanna remove this after a soft stop
+            // we need to think if we want to remove this after a soft stop
             //            queryToStatisticsMap.erase(qepId);
             NES_DEBUG("AbstractQueryManager: removed running QEP  {}", qepId);
             break;

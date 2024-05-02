@@ -24,8 +24,6 @@
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/Core.hpp>
-#include <Util/Logger//Logger.hpp>
 #include <iostream>
 #include <memory>
 #include <stack>
@@ -264,7 +262,7 @@ void DynamicQueryManager::updateStatistics(const Task& task,
 #ifndef LIGHT_WEIGHT_STATISTICS
     if (queryToStatisticsMap.contains(decomposedQueryPlanId)) {
         auto statistics = queryToStatisticsMap.find(decomposedQueryPlanId);
-        // with multiple queryIdAndCatalogEntryMapping this wont be correct
+        // with multiple queryIdAndCatalogEntryMapping this won't be correct
         auto qSize = taskQueue.size();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
     }
@@ -515,7 +513,7 @@ void MultiQueueQueryManager::poisonWorkers() {
 
     for (auto u{0ul}; u < taskQueues.size(); ++u) {
         for (auto i{0ul}; i < numberOfThreadsPerQueue; ++i) {
-            NES_DEBUG("Add poision for queue= {}  and thread= {}", u, i);
+            NES_DEBUG("Add position for queue= {}  and thread= {}", u, i);
             taskQueues[u].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     }

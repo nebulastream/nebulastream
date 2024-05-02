@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/NetworkManager.hpp>
@@ -332,7 +331,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO: add check if still queryIdAndCatalogEntryMapping are running
     //TODO @Steffen: does it make sense to have force stop still?
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
-    //TODO @all: error handling, e.g., is it an error if the query is stopped but not undeployed? @Steffen?
+    //TODO @all: error handling, e.g., is it an error if the query is stopped but not non-deployed? @Steffen?
 
     bool expected = true;
     if (!isRunning.compare_exchange_strong(expected, false)) {
@@ -544,7 +543,7 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
         std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
     } else {
         NES_ERROR("onFatalError: signal [{}] error [{}] callstack {}", signalNumber, strerror(errno), callstack);
-        std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+        std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it won't harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
         std::cerr << "Callstack:\n " << callstack << std::endl;
@@ -642,53 +641,6 @@ bool NodeEngine::updateNetworkSink(WorkerId newNodeId,
             //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
             //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
             NES_NOT_IMPLEMENTED();
-            return true;
-        }
-        //query sub plan did not have network sink with specified id
-        NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                  decomposedQueryPlanId,
-                  uniqueNetworkSinkDescriptorId);
-        return false;
-    }
-}
-
-bool NodeEngine::experimentalReconfigureNetworkSink(WorkerId newNodeId,
-                                                    const std::string& newHostname,
-                                                    uint32_t newPort,
-                                                    DecomposedQueryPlanId decomposedQueryPlanId,
-                                                    OperatorId uniqueNetworkSinkDescriptorId,
-                                                    Network::NesPartition newPartition,
-                                                    DecomposedQueryPlanVersion version) {
-    NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
-    Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
-    std::unique_lock lock(engineMutex);
-    if (deployedExecutableQueryPlans.find(decomposedQueryPlanId) == deployedExecutableQueryPlans.end()) {
-        NES_DEBUG("Deployed QEP with ID:  {}  not found", decomposedQueryPlanId);
-        return false;
-    } else {
-        auto qep = deployedExecutableQueryPlans.at(decomposedQueryPlanId);
-        auto networkSinks = qep->getSinks();
-        Network::NetworkSinkPtr networkSink;
-        //make sure that query sub plan has network sink with specified id
-        auto it = std::find_if(networkSinks.begin(),
-                               networkSinks.end(),
-                               [uniqueNetworkSinkDescriptorId, &networkSink](const DataSinkPtr& dataSink) {
-                                   networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
-                                   return networkSink
-                                       && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
-                               });
-        if (it != networkSinks.end()) {
-            auto waitTime = std::chrono::milliseconds(0);//wait time will be ignored
-            auto retries = 0;                            //retries will be ignored
-            auto numberOfOrigins = 0;                    //number of origins will be ignored
-            auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(newNodeLocation,
-                                                                                     newPartition,
-                                                                                     waitTime,
-                                                                                     retries,
-                                                                                     version,
-                                                                                     numberOfOrigins,
-                                                                                     uniqueNetworkSinkDescriptorId);
-            networkSink->configureNewSinkDescriptor(*reconfiguredSinkDescriptor->as<Network::NetworkSinkDescriptor>());
             return true;
         }
         //query sub plan did not have network sink with specified id

@@ -13,10 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <iostream>
 #include <utility>
 
 namespace NES {

@@ -234,13 +234,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     virtual std::vector<Schema::MemoryLayoutType> getSupportedLayouts();
 
     /**
-     * @brief This function checks if the layout of schema can be found in the implementation of getSupportedLayouts()
-     * @param schema
-     * @return
-     */
-    bool checkSupportedLayoutTypes(SchemaPtr& schema);
-
-    /**
      * @brief API method called upon receiving an event.
      * @note Currently has no behaviour. We need to overwrite DataEmitter::onEvent for compliance.
      * @param event
