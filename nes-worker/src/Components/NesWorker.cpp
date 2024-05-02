@@ -581,7 +581,7 @@ bool NesWorker::notifyErrors(WorkerId pWorkerId, std::string errorMsg) {
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
     std::string errorMsg;
     if (callstack.empty()) {
-        NES_ERROR("onFatalError: signal [{}] error [{}] ", signalNumber, strerror(errno));
+        NES_ERROR("onFatalError: signal [{}] error [{}] (enable NES_DEBUG to view stacktrace)", signalNumber, strerror(errno));
         std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Signal:" << std::to_string(signalNumber) << std::endl;
@@ -608,12 +608,12 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack) {
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string callstack) {
     std::string errorMsg;
     if (callstack.empty()) {
-        NES_ERROR("onFatalException: exception=[{}] ", ptr->what());
+        NES_ERROR("onFatalException: exception=[{}] (enable NES_DEBUG to view stacktrace)", ptr->what());
         std::cerr << "NesWorker failed fatally" << std::endl;
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Exception: " << ptr->what() << std::endl;
         // save errors in errorMsg
-        errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + callstack;
+        errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] ";
     } else {
         NES_ERROR("onFatalException: exception=[{}] callstack={}", ptr->what(), callstack);
         std::cerr << "NesWorker failed fatally" << std::endl;

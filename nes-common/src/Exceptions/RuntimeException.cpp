@@ -28,16 +28,34 @@ namespace NES::Exceptions {
 
 RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location)
     : errorMessage(std::move(msg)) {
-    if (!stacktrace.empty()) {
-        errorMessage.append(":: callstack:\n");
-        errorMessage.append(stacktrace);
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level){
+        if (stacktrace.empty()) {
+            errorMessage.append(" (no stacktrace available) ");
+        } else {
+            errorMessage.append(":: callstack:\n");
+            errorMessage.append(stacktrace);
+        }
+    } else {
+        errorMessage.append(" (enable NES_DEBUG to view stacktrace) ");
     }
     NES_ERROR("{} at {}", errorMessage, location);
 }
 
 RuntimeException::RuntimeException(std::string msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {
-    errorMessage.append(":: callstack:\n");
-    errorMessage.append(stacktrace);
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level){
+        if (stacktrace.empty()) {
+            errorMessage.append(" (no stacktrace available) ");
+        } else {
+            errorMessage.append(":: callstack:\n");
+            errorMessage.append(stacktrace);
+        }
+    } else {
+        errorMessage.append(" (enable NES_DEBUG to view stacktrace) ");
+    }
 }
 
 const char* RuntimeException::what() const noexcept { return errorMessage.c_str(); }
