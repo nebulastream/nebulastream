@@ -21,8 +21,8 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
-#include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
+#include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
