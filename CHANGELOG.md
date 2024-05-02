@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.6.117](https://github.com/nebulastream/nebulastream/tree/v0.6.117) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.116...v0.6.117)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove Bucketing from Master [\#4827](https://github.com/nebulastream/nebulastream/issues/4827)
+- \[TASK\] Replace folly dependency with a lightweight patched version [\#4799](https://github.com/nebulastream/nebulastream/issues/4799)
+- \[FEATURE\] Add support for variable sized data larger than the specified PAGE\_SIZE [\#4638](https://github.com/nebulastream/nebulastream/issues/4638)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Build fails / tests cannot be run because of linking issue [\#4773](https://github.com/nebulastream/nebulastream/issues/4773)
+
+#### Operators 
+
+- \[Feature\] Different Data Types for StreamJoin [\#3638](https://github.com/nebulastream/nebulastream/issues/3638)
+
 ## [v0.6.116](https://github.com/nebulastream/nebulastream/tree/v0.6.116) (2024-05-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.115...v0.6.116)
