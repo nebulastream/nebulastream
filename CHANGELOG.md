@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.118](https://github.com/nebulastream/nebulastream/tree/v0.6.118) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.117...v0.6.118)
+
+**Implemented enhancements:**
+
+- \[TASK\] Code quality improvement for nes-runtime [\#4499](https://github.com/nebulastream/nebulastream/issues/4499)
+
 ## [v0.6.117](https://github.com/nebulastream/nebulastream/tree/v0.6.117) (2024-05-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.116...v0.6.117)
