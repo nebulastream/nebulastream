@@ -26,6 +26,7 @@ class PagedVectorVarSizedRef;
 struct VarSizedDataEntryMapValue {
     uint8_t* entryPtr;
     uint32_t entryLength;
+    uint64_t entryBufIdx;
 };
 
 /**
