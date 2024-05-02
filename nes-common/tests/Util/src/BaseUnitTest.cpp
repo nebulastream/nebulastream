@@ -39,7 +39,7 @@ void BaseUnitTest::TearDown() {
 void BaseUnitTest::onFatalError(int signalNumber, std::string callstack) {
     if (callstack.empty()) {
         NES_ERROR("onFatalError: signal [{}] error [{}] (enable NES_DEBUG to view stacktrace)", signalNumber, strerror(errno));
-    } else{
+    } else {
         NES_ERROR("onFatalError: signal [{}] error [{}] callstack [{}]", signalNumber, strerror(errno), callstack);
     }
     failTest();
