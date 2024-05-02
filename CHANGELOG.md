@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.116](https://github.com/nebulastream/nebulastream/tree/v0.6.116) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.115...v0.6.116)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrate Vectorization Phase in CUDA Backend for Nautilus [\#4800](https://github.com/nebulastream/nebulastream/issues/4800)
+
 ## [v0.6.115](https://github.com/nebulastream/nebulastream/tree/v0.6.115) (2024-05-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.114...v0.6.115)
