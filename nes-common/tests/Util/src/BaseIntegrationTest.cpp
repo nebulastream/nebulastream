@@ -98,8 +98,8 @@ void BaseIntegrationTest::TearDown() {
 
 void BaseIntegrationTest::onFatalError(int signalNumber, std::string callstack) {
     if (callstack.empty()) {
-        NES_ERROR("onFatalError: signal [{}] error [{}]", signalNumber, strerror(errno));
-    } else {
+        NES_ERROR("onFatalError: signal [{}] error [{}] (enable NES_DEBUG to view stacktrace)", signalNumber, strerror(errno));
+    } else{
         NES_ERROR("onFatalError: signal [{}] error [{}] callstack: {}", signalNumber, strerror(errno), callstack);
     }
     failTest();
@@ -107,8 +107,8 @@ void BaseIntegrationTest::onFatalError(int signalNumber, std::string callstack) 
 
 void BaseIntegrationTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
     if (callstack.empty()) {
-        NES_ERROR("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
-    } else {
+        NES_ERROR("onFatalException: exception=[{}] (enable NES_DEBUG to view stacktrace)", exception->what());
+    } else{
         NES_ERROR("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
     }
     failTest();

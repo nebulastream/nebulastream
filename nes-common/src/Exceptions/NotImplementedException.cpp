@@ -18,6 +18,6 @@
 namespace NES::Exceptions {
 
 NotImplementedException::NotImplementedException(std::string msg, const std::source_location location)
-    : RuntimeException(msg, collectAndPrintStacktrace(), location) {}
+    : RuntimeException(msg, collectStacktrace(), location) {}
 
 }// namespace NES::Exceptions

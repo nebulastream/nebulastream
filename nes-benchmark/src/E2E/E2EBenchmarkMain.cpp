@@ -32,16 +32,20 @@ class BenchmarkRunner : public NES::Exceptions::ErrorListener {
   public:
     void onFatalError(int signalNumber, std::string callStack) override {
         std::ostringstream fatalErrorMessage;
-        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
-                          << callStack;
-
+        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] ";
+        if(!callStack.empty()){
+            fatalErrorMessage << "callstack=\n" << callStack;
+        }
         NES_FATAL_ERROR("{}", fatalErrorMessage.str());
         std::cerr << fatalErrorMessage.str() << std::endl;
     }
 
     void onFatalException(std::shared_ptr<std::exception> exceptionPtr, std::string callStack) override {
         std::ostringstream fatalExceptionMessage;
-        fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
+        fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] ";
+        if(!callStack.empty()){
+            fatalExceptionMessage << "callstack=\n" << callStack;
+        }
         NES_FATAL_ERROR("{}", fatalExceptionMessage.str());
         std::cerr << fatalExceptionMessage.str() << std::endl;
     }
