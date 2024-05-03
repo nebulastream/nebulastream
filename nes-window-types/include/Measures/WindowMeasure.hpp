@@ -25,8 +25,11 @@ class WindowMeasure {
      * @return std::string
      */
     virtual std::string toString() const = 0;
+
+  public:
+    virtual ~WindowMeasure() = default;
 };
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_MEASURES_WINDOWMEASURE_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_MEASURES_WINDOWMEASURE_HPP_

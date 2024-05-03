@@ -23,5 +23,6 @@ add_source_files(nes-execution
         SourceSharingDataSourceProvider.cpp
         LowerPhysicalToNautilusOperators.cpp
         ExpressionProvider.cpp
+        TimestampField.cpp
 )
 

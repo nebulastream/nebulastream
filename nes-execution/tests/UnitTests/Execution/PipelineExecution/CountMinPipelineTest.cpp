@@ -146,7 +146,7 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
 
         // 3. Building the count min operator
         const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldName);
-        auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField);
+        auto timeFunction = std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds());
         auto countMinOperator = std::make_shared<Operators::CountMinBuild>(operatorHandlerIndex,
                                                                            fieldToBuildCountMinOver,
                                                                            numberOfBitsInKey,

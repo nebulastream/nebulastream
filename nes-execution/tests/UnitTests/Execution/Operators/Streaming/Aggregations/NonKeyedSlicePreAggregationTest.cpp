@@ -87,7 +87,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
     auto slicePreAggregation = NonKeyedSlicePreAggregation(
         0 /*handler index*/,
-        std::make_unique<EventTimeFunction>(readTs),
+        std::make_unique<EventTimeFunction>(readTs, Windowing::TimeUnit::Milliseconds()),
         {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType, readF2, "count")});
 
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
@@ -139,7 +139,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
 
     auto slicePreAggregation =
         NonKeyedSlicePreAggregation(0 /*handler index*/,
-                                    std::make_unique<EventTimeFunction>(readTs),
+                                    std::make_unique<EventTimeFunction>(readTs, Windowing::TimeUnit::Milliseconds()),
                                     {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
                                      std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 

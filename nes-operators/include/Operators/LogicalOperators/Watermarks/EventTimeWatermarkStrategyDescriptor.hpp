@@ -17,7 +17,7 @@
 
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Measures/TimeMeasure.hpp>
-#include <Measures/TimeUnit.hpp>
+#include <API/TimeUnit.hpp>
 namespace NES::Windowing {
 
 class EventTimeWatermarkStrategyDescriptor;

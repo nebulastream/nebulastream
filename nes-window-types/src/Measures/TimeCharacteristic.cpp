@@ -82,7 +82,7 @@ uint64_t TimeCharacteristic::hash() const {
     if (field) {
         hashValue=hashValue * 0x9e3779b1 + field->hash();
     }
-    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(unit.getMultiplier());
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(unit.getMillisecondsConversionMultiplier());
     return hashValue;
 }
 
