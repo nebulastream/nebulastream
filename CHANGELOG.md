@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.120](https://github.com/nebulastream/nebulastream/tree/v0.6.120) (2024-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.119...v0.6.120)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Windows are only able to handle MS accuracy as timestamp [\#2868](https://github.com/nebulastream/nebulastream/issues/2868)
+
 ## [v0.6.119](https://github.com/nebulastream/nebulastream/tree/v0.6.119) (2024-05-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.118...v0.6.119)
