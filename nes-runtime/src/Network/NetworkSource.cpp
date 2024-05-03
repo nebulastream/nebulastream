@@ -354,15 +354,18 @@ void NetworkSource::markAsMigrated(uint64_t version) {
 bool NetworkSource::tryStartingNewVersion() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
     std::unique_lock lock(versionMutex);
-        if (nextSourceDescriptor) {
+        if (!scheduledDescriptors.empty()) {
+//        if (nextSourceDescriptor) {
             NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
             //check if the partition is still registered of if it was removed because no channels were connected
             if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-                auto newDescriptor = nextSourceDescriptor.value();
+//                auto newDescriptor = nextSourceDescriptor.value();
+                auto newDescriptor = scheduledDescriptors.front();
                 version = newDescriptor.getVersion();
                 sinkLocation = newDescriptor.getNodeLocation();
                 nesPartition = newDescriptor.getNesPartition();
-                nextSourceDescriptor = std::nullopt;
+//                nextSourceDescriptor = std::nullopt;
+                scheduledDescriptors.pop_front();
                 //bind the sink to the new partition
                 bind();
                 auto reconfMessage = Runtime::ReconfigurationMessage(-1,
@@ -429,7 +432,8 @@ OperatorId NetworkSource::getUniqueId() const { return uniqueNetworkSourceIdenti
 bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
     std::unique_lock lock(versionMutex);
     if (nesPartition != networkSourceDescriptor.getNesPartition()) {
-        nextSourceDescriptor = networkSourceDescriptor;
+//        nextSourceDescriptor = networkSourceDescriptor;
+        scheduledDescriptors.push_back(networkSourceDescriptor);
         tryStartingNewVersion();
         return true;
     }

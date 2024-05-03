@@ -190,7 +190,8 @@ class NetworkSource : public DataSource {
     const uint8_t retryTimes;
     [[maybe_unused]] DecomposedQueryPlanVersion version;
     const uint64_t uniqueNetworkSourceIdentifier;
-    std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
+    //std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
+    std::deque<NetworkSourceDescriptor> scheduledDescriptors;
     std::optional<uint64_t> migrated;
     std::optional<uint64_t> receivedDrain;
     std::recursive_mutex versionMutex;
