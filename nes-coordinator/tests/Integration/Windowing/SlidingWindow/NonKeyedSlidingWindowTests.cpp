@@ -290,12 +290,13 @@ TEST_F(NonKeyedSlidingWindowTests, testWindowExecutionWithDifferentTimeUnits) {
     };
 
     auto schema = Schema::create()
-                         ->addField("timestamp", DataTypeFactory::createUInt64())
-                         ->addField("key", DataTypeFactory::createUInt64());
+                      ->addField("timestamp", DataTypeFactory::createUInt64())
+                      ->addField("key", DataTypeFactory::createUInt64());
 
-    auto queryWithWindowOperator = Query::from("tuples")
-                                       .window(SlidingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Milliseconds(2), Milliseconds(1)))
-                                       .apply(Count());
+    auto queryWithWindowOperator =
+        Query::from("tuples")
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Milliseconds(2), Milliseconds(1)))
+            .apply(Count());
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("tuples", schema)

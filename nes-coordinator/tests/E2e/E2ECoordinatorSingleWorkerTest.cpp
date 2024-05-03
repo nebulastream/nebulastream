@@ -937,7 +937,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
 259200000000,259200002000,1
 )");
 
-
     // WindoeDefintiation Unit >> EventTime. More obscure unit multiplier because of minutes
     // Items in Window 1(0min-2min): [1ms, 2ms, 3ms, 1s, 2s, 3s, 1min], 2(2min-4min): [2min, 3min]...
     testWithUnits("Milliseconds",
