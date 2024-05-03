@@ -358,11 +358,16 @@ bool NetworkSource::tryStartingNewVersion() {
 //        if (nextSourceDescriptor) {
             NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
             //check if the partition is still registered of if it was removed because no channels were connected
-            if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+//            if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+            auto newDescriptor = scheduledDescriptors.front();
+            if (receivedDrain.has_value()
+                //todo: the version check is actually obsolete, as the a new version can only be started after a drain now
+                && (receivedDrain.value() == newDescriptor.getVersion() || receivedDrain.value() == 0)
+                && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
 //                auto newDescriptor = nextSourceDescriptor.value();
-                auto newDescriptor = scheduledDescriptors.front();
                 version = newDescriptor.getVersion();
                 sinkLocation = newDescriptor.getNodeLocation();
+                receivedDrain = std::nullopt;
                 nesPartition = newDescriptor.getNesPartition();
 //                nextSourceDescriptor = std::nullopt;
                 scheduledDescriptors.pop_front();
