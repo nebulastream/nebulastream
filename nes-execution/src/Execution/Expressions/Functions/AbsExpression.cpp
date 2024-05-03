@@ -29,17 +29,36 @@ AbsExpression::AbsExpression(const NES::Runtime::Execution::Expressions::Express
   * @param n double
   * @return double
   */
-double calculateAbs(double n) { return std::abs(n); }
+double calculateAbsFloat(double n) { return std::abs(n); }
+double calculateAbsDouble(double n) { return std::abs(n); }
+int64_t calculateAbsSignedInt64(int64_t n) { return std::abs(n); }
+int32_t calculateAbsSignedInt32(int32_t n) { return std::abs(n); }
+int16_t calculateAbsSignedInt16(int16_t n) { return std::abs(n); }
+int8_t calculateAbsSignedInt8(int8_t n) { return std::abs(n); }
 
 Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
 
-    // TODO: missing support for int: issue #3682
     if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateAbs", calculateAbs, subValue.as<Float>());
+        return FunctionCall<>("calculateAbsFloat", calculateAbsFloat, subValue.as<Float>());
 
     } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateAbs", calculateAbs, subValue.as<Double>());
+        return FunctionCall<>("calculateAbsDouble", calculateAbsDouble, subValue.as<Double>());
+
+    } else if (subValue->isType<UInt64>() || subValue->isType<UInt32>() || subValue->isType<UInt16>() || subValue->isType<UInt8>()) {
+        return subValue;
+
+    } else if (subValue->isType<Int64>()) {
+        return FunctionCall<>("calculateAbsSignedInt64", calculateAbsSignedInt64, subValue.as<Int64>());
+
+    } else if (subValue->isType<Int32>()) {
+        return FunctionCall<>("calculateAbsSignedInt32", calculateAbsSignedInt32, subValue.as<Int32>());
+
+    } else if (subValue->isType<Int16>()) {
+        return FunctionCall<>("calculateAbsSignedInt16", calculateAbsSignedInt16, subValue.as<Int16>());
+
+    } else if (subValue->isType<Int8>()) {
+        return FunctionCall<>("calculateAbsSignedInt8", calculateAbsSignedInt8, subValue.as<Int8>());
 
     } else {
         throw Exceptions::NotImplementedException(
