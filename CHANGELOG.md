@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.119](https://github.com/nebulastream/nebulastream/tree/v0.6.119) (2024-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.118...v0.6.119)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Nautilus ABS Function Only Works for Doubles [\#3682](https://github.com/nebulastream/nebulastream/issues/3682)
+
 ## [v0.6.118](https://github.com/nebulastream/nebulastream/tree/v0.6.118) (2024-05-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.117...v0.6.118)
