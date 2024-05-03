@@ -21,6 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <deque>
 
 namespace NES::Runtime {
 class BaseEvent;
