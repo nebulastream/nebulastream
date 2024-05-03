@@ -163,7 +163,7 @@ struct Record {
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     if (timestampAndWriteToSocket) {
-        NES_DEBUG("write data to sink with descriptor {} for {}", sockfd, filePath)
+//        NES_DEBUG("write data to sink with descriptor {} for {}", sockfd, filePath)
         std::unique_lock lock(writeMutex);
 //        std::string bufferContent;
         //auto schema = sinkFormat->getSchemaPtr();
@@ -189,7 +189,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         //        receivedBuffers.push_back(bufferContent);
         //        arrivalTimestamps.push_back(getTimestamp());
 
-        NES_DEBUG("finished writing to sink with descriptor {} for {}", sockfd, filePath)
+        //NES_DEBUG("finished writing to sink with descriptor {} for {}", sockfd, filePath)
         return true;
     }
     return writeDataToFile(inputBuffer);
