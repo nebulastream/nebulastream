@@ -3,10 +3,10 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Identifiers.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <nlohmann/json.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
 
 namespace z3 {
 class context;
@@ -17,6 +17,15 @@ namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+class QueryDeploymentPhase;
+using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
+
+class QueryUndeploymentPhase;
+using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
+
+class QueryPlacementAmendmentPhase;
+using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentPhase>;
 
 namespace Catalogs {
 namespace Source {
@@ -43,14 +52,16 @@ class SharingIdentificationBenchmarkRequest : public AbstractUniRequest {
                                           const Optimizer::PlacementStrategy queryPlacementStrategy,
                                           const uint8_t maxRetries,
                                           const z3::ContextPtr& z3Context,
-                                          const QueryParsingServicePtr& queryParsingService);
+                                          const QueryParsingServicePtr& queryParsingService,
+                                          const bool deploy);
 
     static SharingIdentificationBenchmarkRequestPtr create(const std::vector<std::string>& queryStrings,
                                                            const Optimizer::QueryMergerRule queryMergerRule,
                                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
                                                            const uint8_t maxRetries,
                                                            const z3::ContextPtr& z3Context,
-                                                           const QueryParsingServicePtr& queryParsingService);
+                                                           const QueryParsingServicePtr& queryParsingService,
+                                                           const bool deploy = false);
 
   protected:
     /**
@@ -94,8 +105,9 @@ class SharingIdentificationBenchmarkRequest : public AbstractUniRequest {
     Optimizer::PlacementStrategy queryPlacementStrategy;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
+    bool deploy = false;
 
 };//class SharingIdentificationBenchmarkRequest
 }// namespace RequestProcessor
 }// namespace NES
-#endif//NES_SHARINGIDENTIFICATIONBENCHMARKREQUEST_HPP
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_SHARINGIDENTIFICATIONBENCHMARKREQUEST_HPP

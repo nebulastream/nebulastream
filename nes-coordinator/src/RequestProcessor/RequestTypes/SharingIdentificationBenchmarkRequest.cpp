@@ -98,7 +98,8 @@ SharingIdentificationBenchmarkRequest::SharingIdentificationBenchmarkRequest(
     const Optimizer::PlacementStrategy queryPlacementStrategy,
     const uint8_t maxRetries,
     const z3::ContextPtr& z3Context,
-    const QueryParsingServicePtr& queryParsingService)
+    const QueryParsingServicePtr& queryParsingService,
+    const bool deploy)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -107,8 +108,8 @@ SharingIdentificationBenchmarkRequest::SharingIdentificationBenchmarkRequest(
                           ResourceType::SourceCatalog,
                           ResourceType::CoordinatorConfiguration},
                          maxRetries),
-      queryStrings(queryStrings), queryMergerRule(queryMergerRule),
-      queryPlacementStrategy(queryPlacementStrategy), z3Context(z3Context), queryParsingService(queryParsingService) {}
+      queryStrings(queryStrings), queryMergerRule(queryMergerRule), queryPlacementStrategy(queryPlacementStrategy),
+      z3Context(z3Context), queryParsingService(queryParsingService), deploy(deploy) {}
 
 SharingIdentificationBenchmarkRequestPtr
 SharingIdentificationBenchmarkRequest::create(const std::vector<std::string>& queryStrings,
@@ -116,14 +117,16 @@ SharingIdentificationBenchmarkRequest::create(const std::vector<std::string>& qu
                                               const Optimizer::PlacementStrategy queryPlacementStrategy,
                                               const uint8_t maxRetries,
                                               const z3::ContextPtr& z3Context,
-                                              const QueryParsingServicePtr& queryParsingService) {
+                                              const QueryParsingServicePtr& queryParsingService,
+                                              const bool deploy) {
 
     return std::make_shared<SharingIdentificationBenchmarkRequest>(queryStrings,
                                                                    queryMergerRule,
                                                                    queryPlacementStrategy,
                                                                    maxRetries,
                                                                    z3Context,
-                                                                   queryParsingService);
+                                                                   queryParsingService,
+                                                                   deploy);
 }
 
 void SharingIdentificationBenchmarkRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
@@ -138,9 +141,8 @@ SharingIdentificationBenchmarkRequest::rollBack([[maybe_unused]] std::exception_
 void SharingIdentificationBenchmarkRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exception,
                                                                [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
-
-void setupPhysicalSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalSource=1) { //TODO
-    for (uint64_t j = 0; j < 4; j++) { //TODO: parameterize
+void setupPhysicalSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalSource = 1) {//TODO: Call once
+    for (uint64_t j = 0; j < 4; j++) {                                                      //TODO: parameterize
         LogicalSourcePtr logicalSource = sourceCatalog->getLogicalSource("example" + std::to_string(j + 1));
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             //Create physical source
@@ -151,7 +153,6 @@ void setupPhysicalSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalS
         }
     }
 }
-
 
 std::vector<AbstractRequestPtr>
 SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
@@ -172,9 +173,15 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-
+        auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                            topology,
+                                                                                            typeInferencePhase,
+                                                                                            coordinatorConfiguration);
+        auto queryDeploymentPhase =
+            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
+        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-        optimizerConfigurations.queryMergerRule = queryMergerRule; 
+        optimizerConfigurations.queryMergerRule = queryMergerRule;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
@@ -225,7 +232,7 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
 
             //4. Perform query re-write
             NES_DEBUG("Performing Query rewrite phase for query:  {}", queryId);
-            queryPlan = queryRewritePhase->execute(queryPlan); // ?
+            queryPlan = queryRewritePhase->execute(queryPlan);// ?
 
             //6. Execute type inference phase on rewritten query plan
             NES_DEBUG("Performing Type inference phase for rewritten query:  {}", queryId);
@@ -249,6 +256,7 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             //16. Add the updated query plan to the global query plan
             NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
             globalQueryPlan->addQueryPlan(queryPlan);
+
         }//end of for-loop
 
         //17. Perform query merging for newly added query plan
@@ -278,9 +286,46 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         // respond to the calling service with the needed data
         responsePromise.set_value(std::make_shared<BenchmarkQueryResponse>(response));
 
-        //clear old queries after one query-merging run
-        queryCatalogService->clearQueries();
-        globalQueryPlan->reset();
+        if (!deploy)
+            return {};
+
+        //18. Get the shared query plan id for the added query
+        auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+            throw Exceptions::SharedQueryPlanNotFoundException(
+                "Could not find shared query id in global query plan. Shared query id is invalid.",
+                sharedQueryId);
+        }
+
+        //19. Get the shared query plan for the added query
+        auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+        if (!sharedQueryPlan) {
+            throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
+                                                               sharedQueryId);
+        }
+
+        //20. If the shared query plan is not new but updated an existing shared query plan, we first need to undeploy that plan
+        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
+
+            NES_DEBUG("Shared Query Plan is non empty and an older version is already "
+                      "running.");
+            //20.1 First undeploy the running shared query plan with the shared query plan id
+            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::UPDATED);
+        }
+        //21. Perform placement of updated shared query plan
+        NES_DEBUG("Performing Operator placement for shared query plan");
+        if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {// TODO: check????
+            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
+                                                              "QueryProcessingService: Failed to perform query placement for "
+                                                              "query plan with shared query id: "
+                                                                  + std::to_string(sharedQueryId));
+        }
+
+        //22. Perform deployment of re-placed shared query plan
+        queryDeploymentPhase->execute(sharedQueryPlan);
+
+        //23. Update the shared query plan as deployed
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());

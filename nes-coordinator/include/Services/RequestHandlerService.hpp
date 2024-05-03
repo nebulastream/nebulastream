@@ -206,9 +206,16 @@ class RequestHandlerService {
                                                                const Windowing::WindowTypePtr& window);
 
     nlohmann::json
-    validateAndQueueSharingIdentificationBenchmarkRequest(const std::vector<std::string>& queryStrings,
+    validateAndQueueSharingIdentificatinoBenchmarkRequest(const std::vector<std::string>& queryStrings,
                                                           const Optimizer::QueryMergerRule queryMergerRule,
-                                                          const Optimizer::PlacementStrategy queryPlacementStrategy);
+                                                          const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                                          const bool deploy);
+
+    /**
+     * @brief Clear existing queries
+     * @returns: true if successful
+     */
+    bool validateAndQueueClearQueryRequest();
 
   private:
     /**

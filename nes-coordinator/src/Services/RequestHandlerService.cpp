@@ -28,6 +28,7 @@
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/ClearQueryBenchmarkRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/SharingIdentificationBenchmarkRequest.hpp>
@@ -126,19 +127,28 @@ bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId share
     return returnedSharedQueryId != INVALID_SHARED_QUERY_ID;
 }
 
-nlohmann::json RequestHandlerService::validateAndQueueSharingIdentificationBenchmarkRequest(
+nlohmann::json RequestHandlerService::validateAndQueueSharingIdentificatinoBenchmarkRequest(
     const std::vector<std::string>& queryStrings,
     const Optimizer::QueryMergerRule queryMergerRule,
-    const Optimizer::PlacementStrategy queryPlacementStrategy) {
+    const Optimizer::PlacementStrategy queryPlacementStrategy,
+    bool deploy) {
     auto benchmarkRequest = RequestProcessor::SharingIdentificationBenchmarkRequest::create(queryStrings,
                                                                                             queryMergerRule,
                                                                                             queryPlacementStrategy,
                                                                                             RequestProcessor::DEFAULT_RETRIES,
                                                                                             z3Context,
-                                                                                            queryParsingService);
+                                                                                            queryParsingService,
+                                                                                            deploy);
     asyncRequestExecutor->runAsync(benchmarkRequest);
     auto future = benchmarkRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::BenchmarkQueryResponse>(future.get())->jsonResponse;
+}
+
+bool RequestHandlerService::validateAndQueueClearQueryRequest() {
+    auto clearQueryRequest = RequestProcessor::ClearQueryBenchmarkRequest::create(RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(clearQueryRequest);
+    auto future = clearQueryRequest->getFuture();
+    return std::static_pointer_cast<RequestProcessor::ClearQueryBenchmarkResponse>(future.get())->success;
 }
 
 void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {

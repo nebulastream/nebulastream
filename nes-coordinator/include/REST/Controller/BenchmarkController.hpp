@@ -21,7 +21,6 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
-
 namespace NES {
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
@@ -93,17 +92,67 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
             std::string req = request.getValue("{}");
             nlohmann::json requestJson = nlohmann::json::parse(req);
 
-//            const auto workloadType = requestJson["workloadType"].get<std::string>();
-//            const auto noOfQueries = requestJson["noOfQueries"].get<uint64_t>();
+            //            const auto workloadType = requestJson["workloadType"].get<std::string>();
+            //            const auto noOfQueries = requestJson["noOfQueries"].get<uint64_t>();
             const std::vector<std::string> queryStrings = requestJson["queries"].get<std::vector<std::string>>();
             const auto queryMergerRule = static_cast<Optimizer::QueryMergerRule>(requestJson["queryMergerRule"].get<uint8_t>());
 
             //send the queryset from request
 
-            const auto response = requestHandlerService->validateAndQueueSharingIdentificationBenchmarkRequest(
+            const auto response = requestHandlerService->validateAndQueueSharingIdentificatinoBenchmarkRequest(
                 queryStrings,
                 queryMergerRule,
-                Optimizer::PlacementStrategy::TopDown);
+                Optimizer::PlacementStrategy::TopDown,
+                false); // no deploy
+
+            // clear queries
+            requestHandlerService->validateAndQueueClearQueryRequest();
+            return createResponse(Status::CODE_200, response.dump());//serialize
+
+        } catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (const MapEntryNotFoundException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (nlohmann::json::exception& e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
+        }
+    }
+
+    ENDPOINT("POST", "/macro", macro, BODY_STRING(String, request)) {
+
+        NES_INFO("receive request with parameters");
+        try {
+            std::string req = request.getValue("{}");
+            nlohmann::json requestJson = nlohmann::json::parse(req);
+            
+            //            const auto workloadType = requestJson["workloadType"].get<std::string>();
+            //            const auto noOfQueries = requestJson["noOfQueries"].get<uint64_t>();
+            const auto clear = requestJson["clear"].get<bool>();
+
+            if(clear) {
+                const auto success = requestHandlerService->validateAndQueueClearQueryRequest();
+                nlohmann::json response;
+                response["success"] = success;
+                return createResponse(Status::CODE_200, response.dump());
+            }
+            const std::vector<std::string> queryStrings = requestJson["queries"].get<std::vector<std::string>>();
+            const auto queryMergerRule = static_cast<Optimizer::QueryMergerRule>(requestJson["queryMergerRule"].get<uint8_t>());
+
+            //send the queryset from request
+
+            const auto response = requestHandlerService->validateAndQueueSharingIdentificatinoBenchmarkRequest(
+                queryStrings,
+                queryMergerRule,
+                Optimizer::PlacementStrategy::TopDown,
+                true); // deploy
 
             return createResponse(Status::CODE_200, response.dump());//serialize
 
@@ -124,11 +173,10 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
         }
     }
 
-
     ENDPOINT("POST", "/test", test, BODY_STRING(String, request)) {
         std::string req = request.getValue("{}");
 
-        const auto response=
+        const auto response =
             R"(
  {
    "sharedQueryPlans": {
@@ -209,7 +257,6 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
 
         return createResponse(Status::CODE_200, response.dump());//serialize
     }
-
 
   private:
     RequestHandlerServicePtr requestHandlerService;
