@@ -14,6 +14,7 @@
 
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/Util/PlanJsonGenerator.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -27,20 +28,17 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
 std::string PlanJsonGenerator::getOperatorType(const OperatorPtr& operatorNode) {
-    NES_INFO("Util: getting the type of the operator");
+    NES_TRACE("Util: getting the type of the operator");
 
     std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperator>()) {
-        if (operatorNode->as<SourceLogicalOperator>()
-                ->getSourceDescriptor()
-                ->instanceOf<Network::NetworkSourceDescriptor>()) {
+        if (operatorNode->as<SourceLogicalOperator>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
             operatorType = "SOURCE_SYS";
         } else {
             operatorType = "SOURCE";

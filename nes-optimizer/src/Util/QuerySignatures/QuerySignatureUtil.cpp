@@ -618,7 +618,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     //    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
     //Compute the expression for window size and slide
-    auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+    auto multiplier = timeCharacteristic->getTimeUnit().getMillisecondsConversionMultiplier();
     uint64_t length = 0;
     uint64_t slide = 0;
     if (windowType->instanceOf<Windowing::TumblingWindow>()) {
@@ -731,7 +731,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         windowExpression.insert({"window-id", std::make_shared<z3::expr>(windowId)});
 
         //Compute the expression for window size and slide
-        auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+        auto multiplier = timeCharacteristic->getTimeUnit().getMillisecondsConversionMultiplier();
         if (timeBasedWindowType->instanceOf<Windowing::TumblingWindow>()) {
             auto tumblingWindow = timeBasedWindowType->as<Windowing::TumblingWindow>();
             length = tumblingWindow->getSize().getTime() * multiplier;

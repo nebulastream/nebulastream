@@ -12,17 +12,27 @@
     limitations under the License.
 */
 
-#include <Measures/TimeUnit.hpp>
+#include <API/TimeUnit.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing {
 
 TimeUnit::TimeUnit(uint64_t offset) : multiplier(offset){};
 
-uint64_t TimeUnit::getMultiplier() const { return multiplier; }
+uint64_t TimeUnit::getMillisecondsConversionMultiplier() const { return multiplier; }
 
 std::string TimeUnit::toString() const { return fmt::format("TimeUnit: multiplier= {}", std::to_string(multiplier)); }
 
 bool TimeUnit::equals(const TimeUnit& other) const { return this->multiplier == other.multiplier; }
+
+TimeUnit TimeUnit::Milliseconds() { return TimeUnit(1); }
+
+TimeUnit TimeUnit::Seconds() { return TimeUnit(1000); }
+
+TimeUnit TimeUnit::Minutes() { return TimeUnit(1000 * 60); }
+
+TimeUnit TimeUnit::Hours() { return TimeUnit(1000 * 60 * 60); }
+
+TimeUnit TimeUnit::Days() { return TimeUnit(1000 * 60 * 60 * 24); }
 
 }// namespace NES::Windowing

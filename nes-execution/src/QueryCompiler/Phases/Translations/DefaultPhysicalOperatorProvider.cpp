@@ -21,6 +21,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
@@ -39,13 +40,6 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/TumblingWindow.hpp>
-#include <Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
@@ -73,6 +67,12 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/WindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
@@ -93,16 +93,16 @@ bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorPtr& op
 void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode) {
     auto operatorOutputSchema = operatorNode->getOutputSchema();
     // A demultiplex operator has the same output schema as its child operator.
-    auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorNode->getStatisticId(),
-                                                                                      operatorOutputSchema);
+    auto demultiplexOperator =
+        PhysicalOperators::PhysicalDemultiplexOperator::create(operatorNode->getStatisticId(), operatorOutputSchema);
     demultiplexOperator->setOutputSchema(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
 }
 
 void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode) {
     // the unionOperator operator has the same schema as the output schema of the operator node.
-    auto unionOperator = PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getStatisticId(),
-                                                                          operatorNode->getOutputSchema());
+    auto unionOperator =
+        PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getStatisticId(), operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndChildNodes(unionOperator);
 }
 
@@ -191,32 +191,36 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(Statistic::LogicalStatisticWindowOperator& logicalStatisticWindowOperator) {
+void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(
+    Statistic::LogicalStatisticWindowOperator& logicalStatisticWindowOperator) {
     const auto statisticDescriptor = logicalStatisticWindowOperator.getWindowStatisticDescriptor();
     if (statisticDescriptor->instanceOf<Statistic::CountMinDescriptor>()) {
         const auto countMinDescriptor = statisticDescriptor->as<Statistic::CountMinDescriptor>();
-        auto physicalCountMinBuildOperator = PhysicalOperators::PhysicalCountMinBuildOperator::create(logicalStatisticWindowOperator.getStatisticId(),
-                                                                                                      logicalStatisticWindowOperator.getInputSchema(),
-                                                                                                      logicalStatisticWindowOperator.getOutputSchema(),
-                                                                                                      countMinDescriptor->getField()->getFieldName(),
-                                                                                                      countMinDescriptor->getWidth(),
-                                                                                                      countMinDescriptor->getDepth(),
-                                                                                                      logicalStatisticWindowOperator.getMetricHash(),
-                                                                                                      logicalStatisticWindowOperator.getWindowType(),
-                                                                                                      logicalStatisticWindowOperator.getSendingPolicy());
+        auto physicalCountMinBuildOperator =
+            PhysicalOperators::PhysicalCountMinBuildOperator::create(logicalStatisticWindowOperator.getStatisticId(),
+                                                                     logicalStatisticWindowOperator.getInputSchema(),
+                                                                     logicalStatisticWindowOperator.getOutputSchema(),
+                                                                     countMinDescriptor->getField()->getFieldName(),
+                                                                     countMinDescriptor->getWidth(),
+                                                                     countMinDescriptor->getDepth(),
+                                                                     logicalStatisticWindowOperator.getMetricHash(),
+                                                                     logicalStatisticWindowOperator.getWindowType(),
+                                                                     logicalStatisticWindowOperator.getSendingPolicy());
         physicalCountMinBuildOperator->as<UnaryOperator>()->setInputOriginIds(logicalStatisticWindowOperator.getInputOriginIds());
         logicalStatisticWindowOperator.replace(physicalCountMinBuildOperator);
     } else if (statisticDescriptor->instanceOf<Statistic::HyperLogLogDescriptor>()) {
         const auto hyperLogLogDescriptor = statisticDescriptor->as<Statistic::HyperLogLogDescriptor>();
-        auto physicalHyperLogLogBuildOperator = PhysicalOperators::PhysicalHyperLogLogBuildOperator::create(logicalStatisticWindowOperator.getStatisticId(),
-                                                                                                            logicalStatisticWindowOperator.getInputSchema(),
-                                                                                                            logicalStatisticWindowOperator.getOutputSchema(),
-                                                                                                            hyperLogLogDescriptor->getField()->getFieldName(),
-                                                                                                            hyperLogLogDescriptor->getWidth(),
-                                                                                                            logicalStatisticWindowOperator.getMetricHash(),
-                                                                                                            logicalStatisticWindowOperator.getWindowType(),
-                                                                                                            logicalStatisticWindowOperator.getSendingPolicy());
-        physicalHyperLogLogBuildOperator->as<UnaryOperator>()->setInputOriginIds(logicalStatisticWindowOperator.getInputOriginIds());
+        auto physicalHyperLogLogBuildOperator =
+            PhysicalOperators::PhysicalHyperLogLogBuildOperator::create(logicalStatisticWindowOperator.getStatisticId(),
+                                                                        logicalStatisticWindowOperator.getInputSchema(),
+                                                                        logicalStatisticWindowOperator.getOutputSchema(),
+                                                                        hyperLogLogDescriptor->getField()->getFieldName(),
+                                                                        hyperLogLogDescriptor->getWidth(),
+                                                                        logicalStatisticWindowOperator.getMetricHash(),
+                                                                        logicalStatisticWindowOperator.getWindowType(),
+                                                                        logicalStatisticWindowOperator.getSendingPolicy());
+        physicalHyperLogLogBuildOperator->as<UnaryOperator>()->setInputOriginIds(
+            logicalStatisticWindowOperator.getInputOriginIds());
         logicalStatisticWindowOperator.replace(physicalHyperLogLogBuildOperator);
     } else {
         NES_ERROR("We currently only support a CountMinStatisticDescriptor or HyperLogLogDescriptorStatisticDescriptor")
@@ -243,8 +247,8 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPt
                                         + unionOperator->getLeftInputSchema()->toString() + " but right "
                                         + unionOperator->getRightInputSchema()->toString());
     }
-    auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getStatisticId(),
-                                                                                  unionOperator->getLeftInputSchema());
+    auto physicalUnionOperator =
+        PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getStatisticId(), unionOperator->getLeftInputSchema());
     operatorNode->replace(physicalUnionOperator);
 }
 
@@ -302,15 +306,15 @@ void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOpera
 }
 
 OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator,
-                                                                           SchemaPtr outputSchema,
-                                                                           std::vector<OperatorPtr> children) {
+                                                                       SchemaPtr outputSchema,
+                                                                       std::vector<OperatorPtr> children) {
     if (children.empty()) {
         throw QueryCompilationException("There should be at least one child for the join operator " + joinOperator->toString());
     }
 
     if (children.size() > 1) {
-        auto demultiplexOperator = PhysicalOperators::PhysicalUnionOperator::create(joinOperator->getStatisticId(),
-                                                                                    std::move(outputSchema));
+        auto demultiplexOperator =
+            PhysicalOperators::PhysicalUnionOperator::create(joinOperator->getStatisticId(), std::move(outputSchema));
         demultiplexOperator->setOutputSchema(joinOperator->getOutputSchema());
         demultiplexOperator->addParent(joinOperator);
         for (const auto& child : children) {
@@ -340,7 +344,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
     NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
                "Only a tumbling or sliding window is currently supported for StreamJoin");
 
-    const auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
+    const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(joinOperator, windowType);
     const auto leftInputOperator =
         getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     const auto rightInputOperator =
@@ -352,8 +356,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                              joinFieldNameRight,
                                              windowSize,
                                              windowSlide,
-                                             timeStampFieldNameLeft,
-                                             timeStampFieldNameRight,
+                                             timeStampFieldLeft,
+                                             timeStampFieldRight,
                                              joinStrategy);
 
     StreamJoinOperatorHandlerPtr joinOperatorHandler;
@@ -370,7 +374,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
 
     auto createBuildOperator = [&](const SchemaPtr& inputSchema,
                                    JoinBuildSideType buildSideType,
-                                   const std::string& timeStampField,
+                                   const TimestampField& timeStampField,
                                    const std::string& joinFieldName) {
         return PhysicalOperators::PhysicalStreamJoinBuildOperator::create(operatorNode->getStatisticId(),
                                                                           inputSchema,
@@ -385,11 +389,11 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
 
     const auto leftJoinBuildOperator = createBuildOperator(joinOperator->getLeftInputSchema(),
                                                            JoinBuildSideType::Left,
-                                                           streamJoinConfig.timeStampFieldNameLeft,
+                                                           streamJoinConfig.timeStampFieldLeft,
                                                            streamJoinConfig.joinFieldNameLeft);
     const auto rightJoinBuildOperator = createBuildOperator(joinOperator->getRightInputSchema(),
                                                             JoinBuildSideType::Right,
-                                                            streamJoinConfig.timeStampFieldNameRight,
+                                                            streamJoinConfig.timeStampFieldRight,
                                                             streamJoinConfig.joinFieldNameRight);
     const auto joinProbeOperator =
         PhysicalOperators::PhysicalStreamJoinProbeOperator::create(operatorNode->getStatisticId(),
@@ -476,12 +480,12 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
     }
 }
 
-std::tuple<std::string, std::string>
+std::tuple<TimestampField, TimestampField>
 DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
                                                           const Windowing::TimeBasedWindowTypePtr& windowType) const {
     if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
         NES_DEBUG("Skip eventime identification as we use ingestion time");
-        return {"IngestionTime", "IngestionTime"};
+        return {TimestampField::IngestionTime(), TimestampField::IngestionTime()};
     } else {
 
         // FIXME Once #3407 is done, we can change this to get the left and right fieldname
@@ -507,7 +511,8 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
                    "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
         NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
 
-        return {timeStampFieldNameLeft, timeStampFieldNameRight};
+        return {TimestampField::EventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic()->getTimeUnit()),
+                TimestampField::EventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic()->getTimeUnit())};
     }
 }
 

@@ -18,6 +18,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -44,7 +45,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       const JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName,
+                                      TimestampField timestampField,
                                       const std::string& joinFieldName,
                                       QueryCompilation::StreamJoinStrategy joinStrategy,
                                       QueryCompilation::WindowingStrategy windowingStrategy);
@@ -66,7 +67,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       const JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName,
+                                      TimestampField timestampField,
                                       const std::string& joinFieldName,
                                       QueryCompilation::StreamJoinStrategy joinStrategy,
                                       QueryCompilation::WindowingStrategy windowingStrategy);
@@ -88,7 +89,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
                                              const SchemaPtr& outputSchema,
                                              const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                              const JoinBuildSideType buildSide,
-                                             const std::string& timeStampFieldName,
+                                             TimestampField timestampField,
                                              const std::string& joinFieldName,
                                              QueryCompilation::StreamJoinStrategy joinStrategy,
                                              QueryCompilation::WindowingStrategy windowingStrategy);
@@ -120,7 +121,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
      * @brief Getter for the timestamp fieldname
      * @return String
      */
-    const std::string& getTimeStampFieldName() const;
+    const TimestampField& getTimeStampField() const;
 
     /**
      * @brief Getter for the timestamp join field name
@@ -129,9 +130,9 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
     const std::string& getJoinFieldName() const;
 
   private:
-    std::string timeStampFieldName;
+    TimestampField timeStampField;
     std::string joinFieldName;
     JoinBuildSideType buildSide;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINBUILDOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINBUILDOPERATOR_HPP_

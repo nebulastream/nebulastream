@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <API/TimeUnit.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -266,7 +267,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         hashJoinProbeHelper.joinFieldNameLeft,
         QueryCompilation::JoinBuildSideType::Left,
         hashJoinProbeHelper.leftSchema->getSchemaSizeInBytes(),
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
     auto hashJoinBuildRight = std::make_shared<Operators::HJBuildSlicing>(
@@ -275,7 +276,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         hashJoinProbeHelper.joinFieldNameRight,
         QueryCompilation::JoinBuildSideType::Right,
         hashJoinProbeHelper.rightSchema->getSchemaSizeInBytes(),
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+        std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
 
@@ -553,7 +554,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTest) {
         joinFieldNameLeft,
         isLeftSide,
         leftSchema->getSchemaSizeInBytes(),
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
 
@@ -581,7 +582,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestRight) {
         joinFieldNameRight,
         isLeftSide,
         rightSchema->getSchemaSizeInBytes(),
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
@@ -610,7 +611,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
         joinFieldNameLeft,
         isLeftSide,
         leftSchema->getSchemaSizeInBytes(),
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
 
@@ -642,7 +643,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultipleWindows) {
         joinFieldNameLeft,
         isLeftSide,
         leftSchema->getSchemaSizeInBytes(),
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
 

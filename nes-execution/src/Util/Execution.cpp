@@ -21,24 +21,26 @@
 #include <tuple>
 
 namespace NES::QueryCompilation::Util {
-    std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
-        getWindowingParameters(Windowing::TimeBasedWindowType& windowType) {
-        const auto& windowSize = windowType.getSize().getTime();
-        const auto& windowSlide = windowType.getSlide().getTime();
-        const auto type = windowType.getTimeCharacteristic()->getType();
+std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
+getWindowingParameters(Windowing::TimeBasedWindowType& windowType) {
+    const auto& windowSize = windowType.getSize().getTime();
+    const auto& windowSlide = windowType.getSlide().getTime();
+    const auto type = windowType.getTimeCharacteristic()->getType();
 
-        switch (type) {
-            case Windowing::TimeCharacteristic::Type::IngestionTime: {
-                auto timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
-                return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
-            }
-            case Windowing::TimeCharacteristic::Type::EventTime: {
-                const auto& timeStampFieldName = windowType.getTimeCharacteristic()->getField()->getName();
-                auto timeStampFieldRecord =
-                    std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeStampFieldName);
-                auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
-                return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
-            }
+    switch (type) {
+        case Windowing::TimeCharacteristic::Type::IngestionTime: {
+            auto timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+            return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
+        }
+        case Windowing::TimeCharacteristic::Type::EventTime: {
+            const auto& timeStampFieldName = windowType.getTimeCharacteristic()->getField()->getName();
+            auto timeStampFieldRecord =
+                std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeStampFieldName);
+            auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
+                timeStampFieldRecord,
+                windowType.getTimeCharacteristic()->getTimeUnit());
+            return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
         }
     }
-} // namespace NES::QueryCompilation::Util
+}
+}// namespace NES::QueryCompilation::Util

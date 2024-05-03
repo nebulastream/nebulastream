@@ -84,7 +84,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
 
     auto slicePreAggregation =
         KeyedSlicePreAggregation(0 /*handler index*/,
-                                 std::make_unique<EventTimeFunction>(readTs),
+                                 std::make_unique<EventTimeFunction>(readTs, Windowing::TimeUnit::Milliseconds()),
                                  {readKey},
                                  {integerType},
                                  {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readV1, "sum")},

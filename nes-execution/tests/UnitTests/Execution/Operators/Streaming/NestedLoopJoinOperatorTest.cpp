@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <API/TimeUnit.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -35,7 +37,6 @@
 #include <Util/Common.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <random>
-#include <API/TestSchemas.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -48,15 +49,15 @@ class NLJBuildPipelineExecutionContext : public PipelineExecutionContext {
   public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID,// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef) {
-            },
-            [](TupleBuffer&) {
-            },
-            {nljOperatorHandler}) {}
+              INVALID_PIPELINE_ID,             // mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef) {
+              },
+              [](TupleBuffer&) {
+              },
+              {nljOperatorHandler}) {}
 };
 
 class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
@@ -64,17 +65,17 @@ class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
     std::vector<TupleBuffer> emittedBuffers;
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID,// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef) {
-                //                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            [](TupleBuffer&) {
-                //                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            {nljOperatorHandler}) {}
+              INVALID_PIPELINE_ID,             // mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef) {
+                  //                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              [](TupleBuffer&) {
+                  //                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              {nljOperatorHandler}) {}
 };
 
 class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
@@ -104,8 +105,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
 
         leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
-        rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")
-                          ->updateSourceName("test2");
+        rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test2");
 
         joinFieldNameLeft = leftSchema->get(1)->getName();
         joinFieldNameRight = rightSchema->get(1)->getName();
@@ -270,7 +270,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
         auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
@@ -279,7 +280,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
