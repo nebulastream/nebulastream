@@ -18,6 +18,7 @@
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/ReservoirSampleStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/DDSketchStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Util/CompressionMethods.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -62,6 +63,7 @@ StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema,
         case StatisticSynopsisType::COUNT_MIN: return createCountMinFormat(memoryLayout, postProcessingData, preProcessingData);
         case StatisticSynopsisType::HLL: return createHyperLogLogFormat(memoryLayout, postProcessingData, preProcessingData);
         case StatisticSynopsisType::RESERVOIR_SAMPLE: return createReservoirSampleFormat(memoryLayout, postProcessingData, preProcessingData);
+        case StatisticSynopsisType::DD_SKETCH: return createDDSketchFormat(memoryLayout, postProcessingData, preProcessingData);
     }
 }
 
@@ -84,6 +86,13 @@ StatisticFormatFactory::createReservoirSampleFormat(const Runtime::MemoryLayouts
                                                     std::function<std::string(const std::string&)> postProcessingData,
                                                     std::function<std::string(const std::string&)> preProcessingData) {
     return ReservoirSampleStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
+}
+
+StatisticFormatPtr
+StatisticFormatFactory::createDDSketchFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                             std::function<std::string(const std::string&)> postProcessingData,
+                                             std::function<std::string(const std::string&)> preProcessingData) {
+    return DDSketchStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
 }
 
 }// namespace NES::Statistic

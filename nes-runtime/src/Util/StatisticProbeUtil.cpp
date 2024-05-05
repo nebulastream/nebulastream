@@ -128,6 +128,31 @@ StatisticValue<> StatisticProbeUtil::probeHyperLogLog(const HyperLogLogStatistic
     }
     #endif
     return StatisticValue<>(estimate, startTs, endTs);
-
 }
+
+StatisticValue<> StatisticProbeUtil::probeDDSketch(const DDSketchStatistic& statistic, const ProbeExpression& probeExpression) {
+    const auto expression = probeExpression.getProbeExpression();
+    if (!expression->instanceOf<EqualsExpressionNode>()) {
+        NES_THROW_RUNTIME_ERROR("For now, we can only get the statistic for a FieldAssignmentExpressionNode!");
+    }
+    const auto equalExpression = expression->as<EqualsExpressionNode>();
+    const auto leftExpr = equalExpression->getLeft();
+    const auto rightExpr = equalExpression->getRight();
+    // We expect that one expression is a constant value and the other a field access expression
+    if (!((leftExpr->instanceOf<ConstantValueExpressionNode>() && rightExpr->instanceOf<FieldAccessExpressionNode>()) ||
+          (leftExpr->instanceOf<FieldAccessExpressionNode>() && rightExpr->instanceOf<ConstantValueExpressionNode>()))) {
+        NES_THROW_RUNTIME_ERROR("For now, we expect that one expression is a constant value and the other a field access expression!");
+    }
+
+    // Getting the constant value and the field access
+    const auto constantExpression = leftExpr->instanceOf<ConstantValueExpressionNode>() ? leftExpr : rightExpr;
+    const auto constantValue = constantExpression->as<ConstantValueExpressionNode>()->getConstantValue();
+    const auto basicValue = constantValue->as<BasicValue>();
+    const double quantile = std::stod(basicValue->value);
+
+    // Getting the value for the quantile from the DD-Sketch
+    const auto value = statistic.getValueAtQuantile(quantile);
+    return StatisticValue<>(value, statistic.getStartTs(), statistic.getEndTs());
+}
+
 } // namespace NES::Statistic

@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <set>
 #include <vector>
 
 namespace NES {
@@ -296,6 +297,16 @@ void updateAtomicMax(std::atomic<T>& curVal, const T& newVal) {
     while (prev_value < newVal && !curVal.compare_exchange_weak(prev_value, newVal)) {
     }
 };
+
+template <typename Iterator>
+bool containsSameItems(Iterator start1, Iterator end1, Iterator start2, Iterator end2) {
+    // Convert the iterable objects into sets
+    std::set<typename Iterator::value_type> set1(start1, end1);
+    std::set<typename Iterator::value_type> set2(start2, end2);
+
+    // Compare the sets
+    return set1 == set2;
+}
 
 }// namespace NES::Util
 

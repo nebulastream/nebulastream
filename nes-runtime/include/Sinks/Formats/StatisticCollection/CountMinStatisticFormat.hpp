@@ -24,8 +24,6 @@ namespace NES::Statistic {
  */
 class CountMinStatisticFormat : public AbstractStatisticFormat {
   public:
-    static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
-
     static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
                                      std::function<std::string(const std::string&)> postProcessingData,
                                      std::function<std::string(const std::string&)> preProcessingData);

@@ -95,7 +95,7 @@ void AbstractSynopsesOperatorHandler::checkStatisticsSending(const BufferMetaDat
                        });
     }
 
-    // Merging the count min sketches according to their timestamp and hash
+    // Merging the synopses according to their timestamp and hash
     auto combinedStatisticsToSend = mergeStatistics(allStatisticsPlusHashesToSend);
 
     // If there are no statistics, then just return

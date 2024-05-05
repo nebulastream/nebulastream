@@ -165,8 +165,7 @@ void* HyperLogLogStatistic::getStatisticData() const { return const_cast<uint8_t
 
 std::string HyperLogLogStatistic::getHyperLogLogDataAsString() const {
     const auto dataSizeBytes = registers.size() * sizeof(uint8_t);
-    std::string hyperLogLogStr;
-    hyperLogLogStr.resize(dataSizeBytes);
+    std::string hyperLogLogStr(dataSizeBytes, 0);
     std::memcpy(hyperLogLogStr.data(), registers.data(), dataSizeBytes);
     return hyperLogLogStr;
 }

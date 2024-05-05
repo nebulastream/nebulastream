@@ -27,6 +27,7 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
+#include <Statistics/Synopses/DDSketchStatistic.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/Core.hpp>
 #include <Statistics/StatisticUtil.hpp>
@@ -245,6 +246,55 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
         return {createdBuffers, expectedStatistics};
     }
 
+    /**
+     * @brief Creates #numberOfSketches random DD-Sketches
+     * @param numberOfSketches
+     * @param schema
+     * @param bufferManager
+     * @return Pair<Vector of TupleBuffers, Vector of Statistics>
+     */
+    std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
+    createRandomDDSketches(uint64_t numberOfSketches, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
+        std::vector<Statistic::StatisticPtr> expectedStatistics;
+        constexpr auto windowSize = 10;
+
+        for (auto curCnt = 0_u64; curCnt < numberOfSketches; ++curCnt) {
+            // Creating "random" values that represent of a Reservoir Samples for a tumbling window with a size of 10
+            const Windowing::TimeMeasure startTs(windowSize * curCnt);
+            const Windowing::TimeMeasure endTs(windowSize * (curCnt + 1));
+            const uint64_t numberOfBuckets = rand() % 10 + 5;
+            const double error = rand() % 1 + 0.01;
+            const double gamma = (1 + error) / (1 - error);
+            const auto numberOfUpdates = rand() % 100 + 100;
+
+            // We simulate a filling of a sample by writing random values into the reservoir.
+            const auto ddSketch = Statistic::DDSketchStatistic::createInit(startTs, endTs, numberOfBuckets, gamma)->as<Statistic::DDSketchStatistic>();
+            for (auto i = 0; i < numberOfUpdates; ++i) {
+                auto logFloorIndex = rand() % 10000;
+                auto weight = rand() % 10000;
+                ddSketch->addValue(logFloorIndex, weight);
+            }
+
+            // Creating now the expected ReservoirSamples
+            expectedStatistics.emplace_back(ddSketch);
+        }
+
+        // Writing the expected statistics into buffers via the statistic format
+        auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                                                   bufferManager->getBufferSize(),
+                                                                                   Statistic::StatisticSynopsisType::DD_SKETCH,
+                                                                                   statisticDataCodec);
+        std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
+        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+                       std::back_inserter(statisticsWithHashes),
+                       [](const auto& statistic) {
+                           static auto hash = 0;
+                           return std::make_pair(++hash, statistic);
+                       });
+        auto createdBuffers = statisticFormat->writeStatisticsIntoBuffers(statisticsWithHashes, *bufferManager);
+        return {createdBuffers, expectedStatistics};
+    }
+
 
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
@@ -312,6 +362,42 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
                                              DecomposedQueryPlanId(1),
                                              1,// numberOfOrigins
                                              Statistic::StatisticSynopsisType::HLL,
+                                             statisticDataCodec);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
+
+    for (auto& buf : buffers) {
+        EXPECT_TRUE(statisticSink->writeData(buf, wctx));
+    }
+
+    auto storedStatistics = nodeEngine->getStatisticManager()->getStatisticStore()->getAllStatistics();
+    EXPECT_TRUE(sameStatisticsInVectors(storedStatistics, expectedStatistics));
+}
+
+/**
+ * @brief Tests if our statistic sink can put DDSKetches into the StatisticStore
+ */
+TEST_P(StatisticSinkTest, testDDSketch) {
+    auto ddSketchStatisticSchema = Schema::create()
+                                          ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
+                                          ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                          ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+                                          ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
+                                          ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
+                                          ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
+                                          ->addField(Statistic::GAMMA_FIELD_NAME, BasicType::FLOAT64)
+                                          ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
+                                          ->updateSourceName("test");
+
+    // Creating the number of buffers
+    auto [buffers, expectedStatistics] =
+        createRandomDDSketches(numberOfStatistics, ddSketchStatisticSchema, nodeEngine->getBufferManager());
+    auto statisticSink = createStatisticSink(ddSketchStatisticSchema,
+                                             nodeEngine,
+                                             1,// numOfProducers
+                                             SharedQueryId(1),
+                                             DecomposedQueryPlanId(1),
+                                             1,// numberOfOrigins
+                                             Statistic::StatisticSynopsisType::DD_SKETCH,
                                              statisticDataCodec);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 

@@ -16,4 +16,5 @@ add_source_files(nes-runtime
         CountMinStatisticFormat.cpp
         HyperLogLogStatisticFormat.cpp
         ReservoirSampleStatisticFormat.cpp
+        DDSketchStatisticFormat.cpp
 )

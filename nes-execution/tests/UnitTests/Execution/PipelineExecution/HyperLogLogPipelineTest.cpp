@@ -170,10 +170,11 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest,
 TEST_P(HyperLogLogPipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, width = 4;
     const std::vector inputOrigins = {OriginId(1)};
+    constexpr auto numberOfTuples = 1;
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, inputOrigins);
 
     auto inputBuffers =
-        Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+        Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);
@@ -207,10 +208,11 @@ TEST_P(HyperLogLogPipelineTest, singleInputTuple) {
 TEST_P(HyperLogLogPipelineTest, multipleInputBuffers) {
     constexpr auto windowSize = 1000, windowSlide = 1000, width = 8;
     const std::vector inputOrigins = {OriginId(1)};
+    constexpr auto numberOfTuples = 100'000;
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, inputOrigins);
 
     auto inputBuffers =
-        Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+        Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);

@@ -179,11 +179,12 @@ class CountMinPipelineTest : public Testing::BaseUnitTest,
 TEST_P(CountMinPipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, width = 32, depth = 3;
     constexpr auto numberOfBitsInKey = sizeof(64) * 8;
+    constexpr auto numberOfTuples = 1;
     const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
     auto inputBuffers =
-        Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+        Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);
@@ -217,13 +218,14 @@ TEST_P(CountMinPipelineTest, singleInputTuple) {
  * @brief Here we test, if we create multiple count min sketches for multiple input buffers, but also for larger sketches
  */
 TEST_P(CountMinPipelineTest, multipleInputBuffers) {
-    constexpr auto windowSize = 1000, windowSlide = 1000, width = 8096, depth = 10;
+    constexpr auto windowSize = 100, windowSlide = 100, width = 8096, depth = 10;
     constexpr auto numberOfBitsInKey = sizeof(64) * 8;
+    constexpr auto numberOfTuples = 1'000;
     const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
     auto inputBuffers =
-        Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+        Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);

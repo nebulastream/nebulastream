@@ -24,12 +24,14 @@
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/DDSketchDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Quantile.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
@@ -336,6 +338,52 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
     EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
+}
+
+/**
+ * @brief Tests if a query is generated correctly for a quantile, the outcome should be a DDSketch
+ */
+TEST_F(DefaultStatisticQueryGeneratorTest, quantile) {
+    using namespace NES::Statistic;
+    using namespace Windowing;
+
+    // Adding here the specific descriptor fields
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(GAMMA_FIELD_NAME, BasicType::FLOAT64)
+                                    ->updateSourceName("car");
+
+    constexpr auto EXPECTED_GAMMA = (1 + 0.05) / (1 - 0.05);
+    constexpr auto EXPECTED_NUMBER_OF_SKETCHES = 1024;
+    const auto dataCharacteristic = DataCharacteristic::create(Quantile::create(Over("f1")), "car", "car_1");
+    const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Days(60), Seconds(10));
+    const auto sendingPolicy = SENDING_LAZY(StatisticDataCodec::DEFAULT);
+    const auto triggerCondition = NeverTrigger::create();
+
+    // Creating a statistic query and running the typeInference
+    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
+                                                                                    window,
+                                                                                    sendingPolicy,
+                                                                                    triggerCondition,
+                                                                                    *queryCatalog);
+    typeInferencePhase->execute(statisticQuery.getQueryPlan());
+
+    // Checking if the operator is correct
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
+
+    // Checking if the descriptor is correct
+    ASSERT_TRUE(descriptor->instanceOf<DDSketchDescriptor>());
+    auto ddSketchDescriptor = descriptor->as<DDSketchDescriptor>();
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(ddSketchDescriptor->getField()->equal(expectedField));
+    EXPECT_EQ(ddSketchDescriptor->getWidth(), EXPECTED_NUMBER_OF_SKETCHES);
+    EXPECT_EQ(ddSketchDescriptor->calculateGamma(), EXPECTED_GAMMA);
 }
 
 /**

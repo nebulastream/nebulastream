@@ -29,6 +29,7 @@
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Quantile.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
@@ -170,7 +171,7 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
  */
 TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
     using namespace Statistic;
-    auto expressionNodePtr = (Attribute(fieldNameToTrack) == 1);
+    auto expressionNodePtr = (Attribute(fieldNameToTrack) == 0.95);
     EXPECT_EQ(expressionNodePtr->instanceOf<EqualsExpressionNode>(), true);
 
     // Creating the trackStatistic request. Once we fix issue #4778 and #4776, we can call it for each physical source name
@@ -220,7 +221,8 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(1, 10, 1000),// Window size
                        ::testing::Values(             // Different Metrics
                            Statistic::Cardinality::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
-                           Statistic::Selectivity::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)))),
+                           Statistic::Selectivity::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
+                           Statistic::Quantile::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)))),
     [](const testing::TestParamInfo<StatisticsIntegrationTest::ParamType>& info) {
         return std::string(std::to_string(std::get<0>(info.param)) + "Workers_" + std::to_string(std::get<1>(info.param))
                            + "NumberOfBuffers_" + std::to_string(std::get<2>(info.param)) + "WindowSize_"

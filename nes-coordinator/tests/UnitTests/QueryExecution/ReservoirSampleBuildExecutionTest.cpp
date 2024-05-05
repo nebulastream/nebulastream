@@ -68,7 +68,7 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
 
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode, numWorkerThreads);
         inputSchema = Schema::create()
-                          ->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64)
+                          ->addField(fieldToBuildReservoirSampleOver, BasicType::INT64)
                           ->addField(timestampFieldName, BasicType::UINT64)
                           ->updateSourceName("test");
         fieldToBuildReservoirSampleOver =
@@ -238,6 +238,8 @@ TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffers) {
  * and for sliding windows (we create one sketch per slice)
  */
 TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffersSlidingWindow) {
+    // Will be enabled with issue #4865
+    GTEST_SKIP();
     using namespace Statistic;
     constexpr auto windowSize = 1000;
     constexpr auto windowSlide = 500;

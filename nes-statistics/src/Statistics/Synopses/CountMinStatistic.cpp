@@ -110,8 +110,7 @@ uint64_t CountMinStatistic::getNumberOfBitsInKeyOffset() const { return numberOf
 
 std::string CountMinStatistic::getCountMinDataAsString() const {
     const auto dataSizeBytes = countMinData.size() * sizeof(uint64_t);
-    std::string countMinStr;
-    countMinStr.resize(dataSizeBytes);
+    std::string countMinStr(dataSizeBytes, 0);
     std::memcpy(countMinStr.data(), countMinData.data(), dataSizeBytes);
     return countMinStr;
 }

@@ -15,4 +15,5 @@ add_source_files(nes-statistics
         CountMinStatistic.cpp
         HyperLogLogStatistic.cpp
         ReservoirSampleStatistic.cpp
+        DDSketchStatistic.cpp
 )

@@ -37,7 +37,7 @@ class ChainedHashMapRef;
  *
  * @attention
  * 1. This hash map is *not* thread save and allows for no concurrent accesses
- * 2. This hash map dose not clears the content of the entry. So its up to the user to initialize values correctly.
+ * 2. This hash map does not clear the content of the entry. So its up to the user to initialize values correctly.
  */
 class ChainedHashMap {
   public:

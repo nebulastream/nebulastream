@@ -16,6 +16,7 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
+#include <Statistics/Synopses/DDSketchStatistic.hpp>
 #include <Util/Core.hpp>
 #include <Util/StatisticProbeUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -46,6 +47,10 @@ std::vector<StatisticValue<>> StatisticManager::getStatistics(const StatisticPro
         } else if (statistic->instanceOf<CountMinStatistic>()) {
             const auto countMin = statistic->as<CountMinStatistic>();
             auto statisticValue = StatisticProbeUtil::probeCountMin(*countMin, probeRequest.probeExpression);
+            statisticValues.emplace_back(statisticValue);
+        } else if (statistic->instanceOf<DDSketchStatistic>()) {
+            const auto ddSketch = statistic->as<DDSketchStatistic>();
+            auto statisticValue = StatisticProbeUtil::probeDDSketch(*ddSketch, probeRequest.probeExpression);
             statisticValues.emplace_back(statisticValue);
         } else {
             NES_NOT_IMPLEMENTED();

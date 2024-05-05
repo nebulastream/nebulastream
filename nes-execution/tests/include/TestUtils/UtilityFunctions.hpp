@@ -116,6 +116,24 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
                                     const std::string& timestampFieldName);
 
 /**
+ * @brief Creates a DDSketch (if none exists) in the statisticStore and updates the sketch
+ * @param testTupleBuffer
+ * @param statisticStore
+ * @param metricHash
+ * @param windowSize
+ * @param windowSlide
+ * @param numberOfBuckets
+ * @param gamma
+ * @param fieldToBuildDDSketchOver
+ * @param timestampFieldName
+ */
+void updateTestDDSketchStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
+                                 Statistic::StatisticMetricHash metricHash, uint64_t windowSize, uint64_t windowSlide,
+                                 uint64_t numberOfBuckets, double gamma, const std::string& fieldToBuildDDSketchOver,
+                                 const std::string& timestampFieldName);
+
+
+/**
 * @brief Creates a TupleBuffer from recordPtr
 * @param recordPtr
 * @param schema

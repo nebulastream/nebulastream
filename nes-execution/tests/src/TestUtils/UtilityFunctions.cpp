@@ -26,6 +26,7 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
+#include <Statistics/Synopses/DDSketchStatistic.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
@@ -90,14 +91,111 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
     return inputBuffers;
 }
 
-void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+
+void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                        Statistic::StatisticStorePtr statisticStore,
+                                        Statistic::StatisticMetricHash metricHash,
+                                        uint64_t windowSize, uint64_t windowSlide, uint64_t sampleSize,
+                                        const std::string& timestampFieldName,
+                                        MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout) {
+
+    // For each tuple in the buffer, we get the corresponding reservoir sample statistic and then update it accordingly
+    auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
+    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
+    for (auto tuple : testTupleBuffer) {
+        auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+        auto ts = tuple[timestampFieldName].read<uint64_t>();
+        auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
+        auto endTs = Windowing::TimeMeasure(sliceAssigner.getSliceEndTs(ts));
+
+        auto allReservoirSampleStatistics = statisticStore->getStatistics(statisticHash, startTs, endTs);
+        Statistic::StatisticPtr sampleStatistic;
+        if (allReservoirSampleStatistics.empty()) {
+            sampleStatistic = Statistic::ReservoirSampleStatistic::createInit(startTs, endTs, sampleSize, sampleMemoryLayout->getSchema());
+            statisticStore->insertStatistic(statisticHash, sampleStatistic);
+            NES_DEBUG("Created and inserted new countMinStatistic = {} for statisticHash = {}",
+                      sampleStatistic->toString(), statisticHash);
+        } else {
+            sampleStatistic = allReservoirSampleStatistics[0];
+        }
+        const auto reservoirSample = sampleStatistic->as<Statistic::ReservoirSampleStatistic>();
+        const auto nextIndexInSample = reservoirSample->getNextRandomInteger();
+        if (nextIndexInSample < reservoirSample->getSampleSize()) {
+            // Writing the data now via the provided memory layout
+            auto& schema = sampleMemoryLayout->getSchema();
+            const auto reservoirBaseAddress = reservoirSample->getReservoirSpace();
+            DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+            for (uint64_t i = 0; i < schema->getSize(); i++) {
+                auto& fieldName = schema->fields[i]->getName();
+                const auto fieldOffset = sampleMemoryLayout->getFieldOffset(nextIndexInSample, i);
+                const auto fieldAddress = reservoirBaseAddress + fieldOffset;
+                auto valueAddress = tuple[i].getAddressPointer();
+
+                // Writing the data by copying the data from the tuple to the reservoir space
+                const auto physicalType = defaultPhysicalTypeFactory.getPhysicalType(schema->fields[i]->getDataType());
+                std::memcpy(fieldAddress, valueAddress, physicalType->size());
+            }
+        }
+
+        // Incrementing the number of observed tuples
+        reservoirSample->incrementObservedTuples();
+    }
+
+}
+
+void updateTestDDSketchStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
                                  Statistic::StatisticStorePtr statisticStore,
                                  Statistic::StatisticMetricHash metricHash,
-                                 uint64_t numberOfBitsInKey,
                                  uint64_t windowSize,
                                  uint64_t windowSlide,
-                                 uint64_t width,
-                                 uint64_t depth,
+                                 uint64_t numberOfBuckets,
+                                 double gamma,
+                                 const std::string& fieldToBuildDDSketchOver,
+                                 const std::string& timestampFieldName) {
+    // For each tuple in the buffer, we get the corresponding DD-Sketch statistic and then update it accordingly
+    auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
+    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
+    for (auto tuple : testTupleBuffer){
+        auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+        auto ts = tuple[timestampFieldName].read<uint64_t>();
+        auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
+        auto endTs = Windowing::TimeMeasure(sliceAssigner.getSliceEndTs(ts));
+
+        auto allDDSketchStatistics = statisticStore->getStatistics(statisticHash, startTs, endTs);
+        Statistic::StatisticPtr statistic;
+        if (allDDSketchStatistics.empty()) {
+            statistic = Statistic::DDSketchStatistic::createInit(startTs, endTs, numberOfBuckets, gamma);
+            statisticStore->insertStatistic(statisticHash, statistic);
+            NES_DEBUG("Created and inserted new ddSketchStatistic = {} for statisticHash = {}",
+                      statistic->toString(), statisticHash);
+        } else {
+            statistic = allDDSketchStatistics[0];
+        }
+
+        // Updating the DD-Sketch statistic now
+        auto ddSketchStatistic = statistic->as<Statistic::DDSketchStatistic>();
+        auto value = tuple[fieldToBuildDDSketchOver].read<int64_t>();
+        // We have to do this here, as the gamma value is being stored as a string in the descriptor.
+        // During the lowering, it is converted from a string to a double. This means that there might be some loss of precision.
+        const auto gammaLog10 = std::stod(std::to_string(std::log10(gamma)));
+        if (value < 0) {
+            Statistic::DDSketchStatistic::LogFloorIndex logFloorIndex = std::floor(std::log10(-value) / gammaLog10);
+            logFloorIndex = (-1 * logFloorIndex) - 1;
+            ddSketchStatistic->addValue(logFloorIndex);
+        } else if (value > 0) {
+            Statistic::DDSketchStatistic::LogFloorIndex logFloorIndex = std::floor(std::log10(value) / gammaLog10);
+            logFloorIndex += 1;
+            ddSketchStatistic->addValue(logFloorIndex);
+        } else {
+            auto logFloorIndex = 0;
+            ddSketchStatistic->addValue(logFloorIndex);
+        }
+    }
+}
+
+void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
+                                 Statistic::StatisticMetricHash metricHash, uint64_t numberOfBitsInKey,
+                                 uint64_t windowSize, uint64_t windowSlide, uint64_t width, uint64_t depth,
                                  const std::string& fieldToBuildCountMinOver,
                                  const std::string& timestampFieldName) {
 
