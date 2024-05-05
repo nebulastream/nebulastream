@@ -387,6 +387,52 @@ TEST_F(DefaultStatisticQueryGeneratorTest, quantile) {
 }
 
 /**
+ * @brief Tests if a query is generated correctly for a quantile, the outcome should be a DDSketch
+ */
+TEST_F(DefaultStatisticQueryGeneratorTest, quantile) {
+    using namespace NES::Statistic;
+    using namespace Windowing;
+
+    // Adding here the specific descriptor fields
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(GAMMA_FIELD_NAME, BasicType::FLOAT64)
+                                    ->updateSourceName("car");
+
+    constexpr auto EXPECTED_GAMMA = (1 + 0.05) / (1 - 0.05);
+    constexpr auto EXPECTED_NUMBER_OF_SKETCHES = 1024;
+    const auto dataCharacteristic = DataCharacteristic::create(Quantile::create(Over("f1")), "car", "car_1");
+    const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Days(60), Seconds(10));
+    const auto sendingPolicy = SENDING_LAZY(StatisticDataCodec::DEFAULT);
+    const auto triggerCondition = NeverTrigger::create();
+
+    // Creating a statistic query and running the typeInference
+    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
+                                                                                    window,
+                                                                                    sendingPolicy,
+                                                                                    triggerCondition,
+                                                                                    *queryCatalog);
+    typeInferencePhase->execute(statisticQuery.getQueryPlan());
+
+    // Checking if the operator is correct
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
+    auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
+    auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
+    EXPECT_EQ(*operatorSendingPolicy, *sendingPolicy);
+    EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
+
+    // Checking if the descriptor is correct
+    ASSERT_TRUE(descriptor->instanceOf<DDSketchDescriptor>());
+    auto ddSketchDescriptor = descriptor->as<DDSketchDescriptor>();
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(ddSketchDescriptor->getField()->equal(expectedField));
+    EXPECT_EQ(ddSketchDescriptor->getWidth(), EXPECTED_NUMBER_OF_SKETCHES);
+    EXPECT_EQ(ddSketchDescriptor->calculateGamma(), EXPECTED_GAMMA);
+}
+
+/**
  * @brief Tests if we create a statistic query for collecting cardinality of a map operator
  */
 TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCardinality) {
