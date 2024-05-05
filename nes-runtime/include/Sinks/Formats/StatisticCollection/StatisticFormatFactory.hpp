@@ -21,12 +21,12 @@
 namespace NES::Statistic {
 
 /**
- * @brief Factory for creating StatisticSinkFormat
+ * @brief Factory for creating StatisticFormat
  */
 class StatisticFormatFactory {
   public:
     /**
-     * @brief Creates the corresponding StatisticSinkFormat for the type.
+     * @brief Creates the corresponding StatisticFormat for the type.
      * @param schema
      * @param bufferSize
      * @param type
@@ -37,7 +37,7 @@ class StatisticFormatFactory {
 
   private:
     /**
-     * @brief Creates a CountMinStatisticSinkFormat for this memoryLayout
+     * @brief Creates a CountMinStatisticFormat for this memoryLayout
      * @param memoryLayout
      * @param postProcessingData
      * @param preProcessingData
@@ -48,7 +48,7 @@ class StatisticFormatFactory {
                                                    std::function<std::string(const std::string&)> preProcessingData);
 
     /**
-     * @brief Creates a HyperLogLogStatisticSinkFormat for this memoryLayout
+     * @brief Creates a HyperLogLogStatisticFormat for this memoryLayout
      * @param memoryLayout
      * @param postProcessingData
      * @param preProcessingData
@@ -59,7 +59,7 @@ class StatisticFormatFactory {
                                                       std::function<std::string(const std::string&)> preProcessingData);
 
     /**
-     * @brief Creates a ReservoirSampleStatisticSinkFormat for this memoryLayout
+     * @brief Creates a ReservoirSampleStatisticFormat for this memoryLayout
      * @param memoryLayout
      * @param postProcessingData
      * @param preProcessingData
@@ -68,6 +68,17 @@ class StatisticFormatFactory {
     static StatisticFormatPtr createReservoirSampleFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
                                                                   std::function<std::string (const std::string&)> postProcessingData,
                                                                   std::function<std::string (const std::string&)> preProcessingData);
+    
+    /**
+     * @brief Creates a DDSketchStatisticFormat for this memoryLayout
+     * @param memoryLayout 
+     * @param postProcessingData 
+     * @param preProcessingData 
+     * @return StatisticFormatPtr
+     */
+    static StatisticFormatPtr createDDSketchFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                                   std::function<std::string(const std::string&)> postProcessingData,
+                                                   std::function<std::string(const std::string&)> preProcessingData);
 };
 
 }// namespace NES::Statistic

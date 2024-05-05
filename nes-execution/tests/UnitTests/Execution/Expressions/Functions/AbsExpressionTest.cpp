@@ -40,7 +40,7 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat) {
     {
         auto resultValue = expression.eval(Value<Float>((float) -17.4));
         ASSERT_EQ(resultValue, (float) 17.4);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
     }
 
     // Double

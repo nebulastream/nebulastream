@@ -10,9 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-operators
-        CountMinDescriptor.cpp
-        HyperLogLogDescriptor.cpp
-        ReservoirSampleDescriptor.cpp
-        DDSketchDescriptor.cpp
+add_source_files(nes-execution
+        DDSketchBuild.cpp
+        DDSketchOperatorHandler.cpp
 )

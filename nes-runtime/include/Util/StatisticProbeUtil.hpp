@@ -20,6 +20,7 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <Statistics/Synopses/DDSketchStatistic.hpp>
 #include <Statistics/Statistic.hpp>
 namespace NES::Statistic {
 class StatisticProbeUtil {
@@ -29,6 +30,7 @@ class StatisticProbeUtil {
                                                  const ProbeExpression& probeExpression,
                                                  const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
     static StatisticValue<> probeHyperLogLog(const HyperLogLogStatistic& hyperLogLogStatistic, const ProbeExpression& probeExpression);
+    static StatisticValue<> probeDDSketch(const DDSketchStatistic& statistic, const ProbeExpression& probeExpression);
 };
 } // namespace NES::Statistic
 #endif//NES_NES_EXECUTION_INCLUDE_UTIL_STATISTICPROBEUTIL_HPP_

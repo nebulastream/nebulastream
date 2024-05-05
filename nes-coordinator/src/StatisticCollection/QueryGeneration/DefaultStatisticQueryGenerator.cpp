@@ -18,12 +18,14 @@
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/DDSketchDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Quantile.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
@@ -60,6 +62,9 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
     } else if (metricType->instanceOf<MinVal>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
         synopsisType = StatisticSynopsisType::COUNT_MIN;
+    } else if (metricType->instanceOf<Quantile>()) {
+        statisticDescriptor = DDSketchDescriptor::create(metricType->getField());
+        synopsisType = StatisticSynopsisType::DD_SKETCH;
     } else {
         // As a fallback, we use a sample. This might not be the best choice, but it is better than nothing
         statisticDescriptor = ReservoirSampleDescriptor::create(metricType->getField());

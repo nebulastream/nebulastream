@@ -20,6 +20,8 @@
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
+#include <Execution/Expressions/Functions/AbsExpression.hpp>
+#include <Execution/Expressions/Functions/FloorExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -32,8 +34,10 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
@@ -51,7 +55,13 @@ using namespace Runtime::Execution::Expressions;
 
 std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode) {
     NES_INFO("Lower Expression {}", expressionNode->toString())
-    if (auto andNode = expressionNode->as_if<AndExpressionNode>()) {
+    if (auto floorNode = expressionNode->as_if<FloorExpressionNode>()) {
+        auto child = lowerExpression(floorNode->getChildren()[0]->as<ExpressionNode>());
+        return std::make_shared<FloorExpression>(child);
+    } else if (auto absNode = expressionNode->as_if<AbsExpressionNode>()) {
+        auto child = lowerExpression(absNode->getChildren()[0]->as<ExpressionNode>());
+        return std::make_shared<AbsExpression>(child);
+    } else if (auto andNode = expressionNode->as_if<AndExpressionNode>()) {
         auto leftNautilusExpression = lowerExpression(andNode->getLeft());
         auto rightNautilusExpression = lowerExpression(andNode->getRight());
         return std::make_shared<AndExpression>(leftNautilusExpression, rightNautilusExpression);

@@ -17,4 +17,5 @@ add_source_files(nes-operators
         StatisticMetric.cpp
         MinVal.cpp
         Selectivity.cpp
+        Quantile.cpp
 )

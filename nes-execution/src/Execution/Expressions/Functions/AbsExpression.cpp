@@ -29,7 +29,7 @@ AbsExpression::AbsExpression(const NES::Runtime::Execution::Expressions::Express
   * @param n double
   * @return double
   */
-double calculateAbsFloat(double n) { return std::abs(n); }
+float calculateAbsFloat(float n) { return std::abs(n); }
 double calculateAbsDouble(double n) { return std::abs(n); }
 int64_t calculateAbsSignedInt64(int64_t n) { return std::abs(n); }
 int32_t calculateAbsSignedInt32(int32_t n) { return std::abs(n); }
@@ -63,7 +63,7 @@ Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
 
     } else {
         throw Exceptions::NotImplementedException(
-            "This expression is only defined on a numeric input argument that is ether Float or Double.");
+            "This expression is only defined on a numeric input argument.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AbsExpression>> absFunction("abs");

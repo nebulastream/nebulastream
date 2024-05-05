@@ -65,6 +65,8 @@
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/ReservoirSample/ReservoirSampleBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/ReservoirSample/ReservoirSampleOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/DDSketch/DDSketchBuild.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/DDSketch/DDSketchOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
@@ -96,6 +98,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalCountMinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalHyperLogLogBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalReservoirSampleBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalDDSketchBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
@@ -457,6 +460,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(reservoirSampleBuildOperator);
         return reservoirSampleBuildOperator;
 
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalDDSketchBuildOperator>()) {
+        const auto physicalDDSketch = operatorNode->as<const PhysicalOperators::PhysicalDDSketchBuildOperator>();
+        auto ddSketchBuildOperator = lowerDDSketchBuildOperator(*physicalDDSketch, operatorHandlers, bufferSize);
+        parentOperator->setChild(ddSketchBuildOperator);
+        return ddSketchBuildOperator;
     }
 
     // Check if a plugin is registered that handles this physical operator
@@ -501,6 +509,7 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
                "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
     auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
+    NES_ASSERT(windowSize == windowSlide, "Only tumbling windows or sliding windows with size == slide are supported for now!");
 
     // 3. Create operator handler
     auto countMinBuildOperatorHandler = CountMinOperatorHandler::create(windowSize,
@@ -541,11 +550,12 @@ LowerPhysicalToNautilusOperators::lowerReservoirSampleBuildOperator(
     const auto sinkDataCodec = sendingPolicy->getStatisticDataCodec();
     const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalReservoirSampleBuildOperator.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE, sinkDataCodec);
 
-    // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
+    // 2. Getting the windowSize, windowSlide, and timestampFieldName.
     const auto windowType = physicalReservoirSampleBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
+    NES_ASSERT(windowType->instanceOf<Windowing::TimeBasedWindowType>(),
+               "Only time-based windows are currently supported for ReservoirSampleBuild");
     auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
+    NES_ASSERT(windowSize == windowSlide, "Only tumbling windows or sliding windows with size == slide are supported for now!");
 
     // 3. Create operator handler
     const auto sampleSchema = Statistic::StatisticUtil::createSampleSchema(physicalReservoirSampleBuildOperator.getOutputSchema());
@@ -568,6 +578,54 @@ LowerPhysicalToNautilusOperators::lowerReservoirSampleBuildOperator(
                                                   sampleSchema);
 }
 
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerDDSketchBuildOperator(
+    const PhysicalOperators::PhysicalDDSketchBuildOperator& physicalDDSketchBuildOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+    uint64_t bufferSize) {
+    using namespace Runtime::Execution::Operators;
+    // 1. Getting all the necessary variables for the operator and its handler
+    const auto fieldToTrackFieldName = physicalDDSketchBuildOperator.getNameOfFieldToTrack();
+    const auto numberOfPreAllocatedBuckets = physicalDDSketchBuildOperator.getNumberOfPreAllocatedBuckets();
+    const auto gamma = physicalDDSketchBuildOperator.getGamma();
+    const auto metricHash = physicalDDSketchBuildOperator.getMetricHash();
+    const auto inputOriginIds = physicalDDSketchBuildOperator.getInputOriginIds();
+    const auto sendingPolicy = physicalDDSketchBuildOperator.getSendingPolicy();
+    const auto statisticDataCodec = sendingPolicy->getStatisticDataCodec();
+    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalDDSketchBuildOperator.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
+
+    // 2. Getting the windowSize, windowSlide, and timestampFieldName.
+    const auto windowType = physicalDDSketchBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
+    NES_ASSERT(windowType->instanceOf<Windowing::TimeBasedWindowType>(),
+               "Only time-based windows are currently supported for ReservoirSampleBuild");
+    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
+    NES_ASSERT(windowSize == windowSlide, "Only tumbling windows or sliding windows with size == slide are supported for now!");
+
+    // 3. Create operator handler
+    auto hyperLogLogBuildOperatorHandler = DDSketchOperatorHandler::create(windowSize,
+                                                                           windowSlide,
+                                                                           sendingPolicy,
+                                                                           numberOfPreAllocatedBuckets,
+                                                                           gamma,
+                                                                           statisticFormat,
+                                                                           inputOriginIds);
+    operatorHandlers.push_back(hyperLogLogBuildOperatorHandler);
+    auto handlerIndex = operatorHandlers.size() - 1;
+
+    // 4. Lowering all expressions
+    auto calcLogFloorIndexExpressions = expressionProvider->lowerExpression(physicalDDSketchBuildOperator.getCalcLogFloorIndexExpressions());
+    auto greaterThanZeroExpression = expressionProvider->lowerExpression(physicalDDSketchBuildOperator.getGreaterThanZeroExpression());
+    auto lessThanZeroExpression = expressionProvider->lowerExpression(physicalDDSketchBuildOperator.getLessThanZeroExpression());
+
+    // 5. Creating the operator
+    return std::make_shared<DDSketchBuild>(handlerIndex,
+                                           fieldToTrackFieldName,
+                                           metricHash,
+                                           std::move(timeFunction),
+                                           calcLogFloorIndexExpressions,
+                                           greaterThanZeroExpression,
+                                           lessThanZeroExpression);
+}
+
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(
     const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
@@ -587,11 +645,12 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
                                                                                      Statistic::StatisticSynopsisType::HLL,
                                                                                      statisticDataCodec);
 
-    // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
+    // 2. Getting the windowSize, windowSlide, and timestampFieldName.
     const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
+    NES_ASSERT(windowType->instanceOf<Windowing::TimeBasedWindowType>(),
+               "Only time-based windows are currently supported for ReservoirSampleBuild");
     auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
+    NES_ASSERT(windowSize == windowSlide, "Only tumbling windows or sliding windows with size == slide are supported for now!");
 
     // 3. Create operator handler
     auto hyperLogLogBuildOperatorHandler =

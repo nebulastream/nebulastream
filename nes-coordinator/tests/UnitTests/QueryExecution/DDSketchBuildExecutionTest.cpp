@@ -14,32 +14,31 @@
 
 #include <BaseUnitTest.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/DDSketchDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
-#include <Statistics/StatisticUtil.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
-#include <Util/Core.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution {
 using namespace std::chrono_literals;
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
-                                          public ::testing::WithParamInterface<std::tuple<uint64_t,
-                                                                                          uint64_t,
-                                                                                          Statistic::StatisticDataCodec,
-                                                                                          bool>> {
+class DDSketchBuildExecutionTest : public Testing::BaseUnitTest,
+                                   public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, double, Statistic::StatisticDataCodec>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    uint64_t sampleSize;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
+    uint64_t numberOfPreAllocatedBuckets;
+    double relativeError;
     SchemaPtr inputSchema, outputSchema;
-    std::string fieldToBuildReservoirSampleOver = "f1";
+    std::string fieldToBuildDDSketchOver = "f1";
     std::string timestampFieldName = "ts";
     Statistic::StatisticFormatPtr statisticFormat;
     Statistic::StatisticMetricHash metricHash;
@@ -47,33 +46,32 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
     Statistic::StatisticDataCodec statisticDataCodec;
     Statistic::SendingPolicyPtr sendingPolicy;
     Statistic::TriggerConditionPtr triggerCondition;
-    Runtime::MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout;
-    bool keepOnlyRequiredField;
-
 
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("ReservoirSampleBuildExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("QueryExecutionTest: Setup ReservoirSampleBuildExecutionTest test class.");
+        NES::Logger::setupLogging("DDSketchBuildExecutionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("QueryExecutionTest: Setup DDSketchBuildExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES_INFO("QueryExecutionTest: Setup ReservoirSampleBuildExecutionTest test class.");
+        NES_INFO("QueryExecutionTest: Setup DDSketchBuildExecutionTest test class.");
         Testing::BaseUnitTest::SetUp();
-        const auto curTestCaseParams = ReservoirSampleBuildExecutionTest::GetParam();
-        const auto numWorkerThreads = std::get<0>(ReservoirSampleBuildExecutionTest::GetParam());
-        sampleSize = std::get<1>(ReservoirSampleBuildExecutionTest::GetParam());
-        statisticDataCodec = std::get<2>(ReservoirSampleBuildExecutionTest::GetParam());
-        keepOnlyRequiredField = std::get<3>(GetParam());
+        const auto curTestCaseParams = DDSketchBuildExecutionTest::GetParam();
+        const auto numWorkerThreads = std::get<0>(DDSketchBuildExecutionTest::GetParam());
+        numberOfPreAllocatedBuckets = std::get<1>(DDSketchBuildExecutionTest::GetParam());
+        relativeError = std::get<2>(DDSketchBuildExecutionTest::GetParam());
+        statisticDataCodec = std::get<3>(DDSketchBuildExecutionTest::GetParam());
 
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode, numWorkerThreads);
+
         inputSchema = Schema::create()
-                          ->addField(fieldToBuildReservoirSampleOver, BasicType::INT64)
+                          ->addField(fieldToBuildDDSketchOver, BasicType::INT64)
                           ->addField(timestampFieldName, BasicType::UINT64)
                           ->updateSourceName("test");
-        fieldToBuildReservoirSampleOver =
-            inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldToBuildReservoirSampleOver;
+        fieldToBuildDDSketchOver =
+            inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldToBuildDDSketchOver;
         timestampFieldName = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + timestampFieldName;
+
         outputSchema = Schema::create()
                            ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
@@ -81,45 +79,40 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
-                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
-        if (keepOnlyRequiredField) {
-            outputSchema->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64);
-        } else {
-            outputSchema->copyFields(inputSchema);
-        }
-        outputSchema = outputSchema->updateSourceName("test");
-
+                           ->addField(Statistic::GAMMA_FIELD_NAME, BasicType::FLOAT64)
+                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                           ->updateSourceName("test");
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, executionEngine->getBufferManager()->getBufferSize(), Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
+        statisticFormat =
+            Statistic::StatisticFormatFactory::createFromSchema(outputSchema,
+                                                                executionEngine->getBufferManager()->getBufferSize(),
+                                                                Statistic::StatisticSynopsisType::DD_SKETCH,
+                                                                statisticDataCodec);
         metricHash = 42;// Just some arbitrary number
         sendingPolicy = Statistic::SendingPolicyASAP::create(statisticDataCodec);
         triggerCondition = Statistic::NeverTrigger::create();
-
-        // Creating the sampleMemoryLayout
-        const auto sampleSchema = keepOnlyRequiredField ? Schema::create()->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64) : Statistic::StatisticUtil::createSampleSchema(inputSchema);
-        sampleMemoryLayout = NES::Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_INFO("QueryExecutionTest: Tear down ReservoirSampleBuildExecutionTest test case.");
+        NES_INFO("QueryExecutionTest: Tear down DDSketchBuildExecutionTest test case.");
         EXPECT_TRUE(executionEngine->stop());
         Testing::BaseUnitTest::TearDown();
     }
 
     /**
-     * @brief Runs the statistic query and checks if the created reservoir sample are correct by creating
-     * reservoir sample on our own and then comparing expected versus actual
+     * @brief Runs the statistic query and checks if the created DDSketch sketches are correct by creating
+     * DDSketch sketches on our own and then comparing expected versus actual
      * @param testSourceDescriptor
      * @param testSinkDescriptor
-     * @param reservoirSampleDescriptor
+     * @param ddSketchDescriptor
      * @param windowSize
      * @param windowSlide
      * @param allInputBuffers
      */
     void runQueryAndCheckCorrectness(SourceDescriptorPtr testSourceDescriptor,
                                      SinkDescriptorPtr testSinkDescriptor,
-                                     Statistic::WindowStatisticDescriptorPtr reservoirSampleDescriptor,
+                                     Statistic::WindowStatisticDescriptorPtr ddSketchDescriptor,
                                      uint64_t windowSize,
                                      uint64_t windowSlide,
                                      std::vector<TupleBuffer> allInputBuffers) {
@@ -127,27 +120,27 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
         // Creating the query
         auto window =
             SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
-        auto query =
-            TestQuery::from(testSourceDescriptor)
-                .buildStatistic(window, reservoirSampleDescriptor, metricHash, sendingPolicy, triggerCondition)
-                .sink(testSinkDescriptor);
+        auto query = TestQuery::from(testSourceDescriptor)
+                         .buildStatistic(window, ddSketchDescriptor, metricHash, sendingPolicy, triggerCondition)
+                         .sink(testSinkDescriptor);
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-        auto decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(0),
-                                                               SharedQueryId(0),
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(defaultDecomposedQueryPlanId),
+                                                               SharedQueryId(defaultSharedQueryId),
                                                                INVALID_WORKER_NODE_ID,
                                                                query.getQueryPlan()->getRootOperators());
         auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
-        // Emitting the input buffers and creating the expected reservoir sample  in testStatisticStore
+        // Emitting the input buffers and creating the expected DDSketch sketches in testStatisticStore
         auto source = executionEngine->getDataSource(plan, 0);
         for (auto buf : allInputBuffers) {
             source->emitBuffer(buf);
 
-            // Now creating the expected reservoir sample  in testStatisticStore
+            // Now creating the expected DDSketch sketches in testStatisticStore
             auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
-            Util::updateTestReservoirSampleStatistic(dynamicBuffer, testStatisticStore, metricHash, windowSize, windowSlide, sampleSize, timestampFieldName, sampleMemoryLayout);
+            const auto gamma = ddSketchDescriptor->as<Statistic::DDSketchDescriptor>()->calculateGamma();
+            Util::updateTestDDSketchStatistic(dynamicBuffer, testStatisticStore, metricHash, windowSize, windowSlide, numberOfPreAllocatedBuckets, gamma, fieldToBuildDDSketchOver, timestampFieldName);
         }
 
         // Giving the execution engine time to process the tuples, so that we do not just test our terminate() implementation
@@ -168,76 +161,85 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
 
         // Checking the correctness
         NES_DEBUG("Built all statistics. Now checking for correctness...");
-        for (auto& [statisticHash, reservoirSampleStatistic] : nodeEngineStatisticStore->getAllStatistics()) {
-            NES_DEBUG("Searching for statisticHash = {} reservoirSampleStatistic = {}", statisticHash, reservoirSampleStatistic->toString());
+        for (auto& [statisticHash, ddSketchStatistic] : nodeEngineStatisticStore->getAllStatistics()) {
+            NES_DEBUG("Searching for statisticHash = {} ddSketchStatistic = {}", statisticHash, ddSketchStatistic->toString());
             auto expectedStatistics =
-                testStatisticStore->getStatistics(statisticHash, reservoirSampleStatistic->getStartTs(), reservoirSampleStatistic->getEndTs());
+                testStatisticStore->getStatistics(statisticHash, ddSketchStatistic->getStartTs(), ddSketchStatistic->getEndTs());
             EXPECT_EQ(expectedStatistics.size(), 1);
             NES_DEBUG("Found for statisticHash = {} expectedStatistics = {}", statisticHash, expectedStatistics[0]->toString());
-            EXPECT_TRUE(expectedStatistics[0]->equal(*reservoirSampleStatistic));
+            if (!expectedStatistics[0]->equal(*ddSketchStatistic)) {
+                std::ofstream file("expectedStatistics.txt");
+                file << expectedStatistics[0]->toString() << std::endl;
+                file.close();
+
+                std::ofstream file2("actualStatistics.txt");
+                file2 << ddSketchStatistic->toString() << std::endl;
+                file2.close();
+            }
+            ASSERT_TRUE(expectedStatistics[0]->equal(*ddSketchStatistic));
         }
     }
 };
 
 /**
- * @brief Here we test, if we create a reservoir sample sketch for a single input tuple
+ * @brief Here we test, if we create a DDSketch sketch for a single input tuple
  */
-TEST_P(ReservoirSampleBuildExecutionTest, singleInputTuple) {
+TEST_P(DDSketchBuildExecutionTest, singleInputTuple) {
     using namespace Statistic;
     constexpr auto windowSize = 10;
     constexpr auto numberOfTuples = 1;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
-                                                                   fieldToBuildReservoirSampleOver,
+                                                                   fieldToBuildDDSketchOver,
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
-    // Creating the reservoir sample descriptor and running the query
-    auto reservoirSampleDescriptor = ReservoirSampleDescriptor::create(Over(fieldToBuildReservoirSampleOver), sampleSize, keepOnlyRequiredField);
+    // Creating the DDSketch descriptor and running the query
+    auto ddSketchDescriptor = DDSketchDescriptor::create(Over(fieldToBuildDDSketchOver), relativeError, numberOfPreAllocatedBuckets);
     runQueryAndCheckCorrectness(testSourceDescriptor,
                                 testSinkDescriptor,
-                                reservoirSampleDescriptor,
+                                ddSketchDescriptor,
                                 windowSize,
                                 windowSize,
                                 allInputBuffers);
 }
 
 /**
- * @brief Here we test, if we create multiple reservoir sample for multiple input buffers, but also for larger
+ * @brief Here we test, if we create multiple DDSketch sketches for multiple input buffers, but also for larger sketches
  */
-TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffers) {
+TEST_P(DDSketchBuildExecutionTest, multipleInputBuffers) {
     using namespace Statistic;
     constexpr auto windowSize = 1000;
-    constexpr auto numberOfTuples = 10'000;
+    constexpr auto numberOfTuples = 1'000;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
-                                                                   fieldToBuildReservoirSampleOver,
+                                                                   fieldToBuildDDSketchOver,
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
-    // Creating the reservoir sample descriptor and running the query
-    auto reservoirSampleDescriptor = ReservoirSampleDescriptor::create(Over(fieldToBuildReservoirSampleOver), sampleSize, keepOnlyRequiredField);
+    // Creating the DDSketch descriptor and running the query
+    auto ddSketchDescriptor = DDSketchDescriptor::create(Over(fieldToBuildDDSketchOver), relativeError, numberOfPreAllocatedBuckets);
     runQueryAndCheckCorrectness(testSourceDescriptor,
                                 testSinkDescriptor,
-                                reservoirSampleDescriptor,
+                                ddSketchDescriptor,
                                 windowSize,
                                 windowSize,
                                 allInputBuffers);
 }
 
 /**
- * @brief Here we test, if we create multiple reservoir sample  for multiple input buffers, but also for larger 
+ * @brief Here we test, if we create multiple DDSketch sketches for multiple input buffers, but also for larger sketches
  * and for sliding windows (we create one sketch per slice)
  */
-TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffersSlidingWindow) {
+TEST_P(DDSketchBuildExecutionTest, multipleInputBuffersSlidingWindow) {
     // Will be enabled with issue #4865
     GTEST_SKIP();
     using namespace Statistic;
@@ -247,38 +249,38 @@ TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffersSlidingWindow) {
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
-                                                                   fieldToBuildReservoirSampleOver,
+                                                                   fieldToBuildDDSketchOver,
                                                                    timestampFieldName);
 
     // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
-    // Creating the reservoir sample descriptor and running the query
-    auto reservoirSampleDescriptor = ReservoirSampleDescriptor::create(Over(fieldToBuildReservoirSampleOver), sampleSize, keepOnlyRequiredField);
+    // Creating the DDSketch descriptor and running the query
+    auto ddSketchDescriptor = DDSketchDescriptor::create(Over(fieldToBuildDDSketchOver), relativeError, numberOfPreAllocatedBuckets);
     runQueryAndCheckCorrectness(testSourceDescriptor,
                                 testSinkDescriptor,
-                                reservoirSampleDescriptor,
+                                ddSketchDescriptor,
                                 windowSize,
                                 windowSlide,
                                 allInputBuffers);
 }
 
-INSTANTIATE_TEST_CASE_P(testReservoirSample,
-                        ReservoirSampleBuildExecutionTest,
-                        ::testing::Combine(::testing::Values(1),     // numWorkerThread, we can only test with one thread, as the merging + building of local samples is not deterministic
-                                           ::testing::Values(1, 100, 5000),// sampleSize
-                                           ::testing::ValuesIn(            // All possible statistic data codecs
-                                               magic_enum::enum_values<Statistic::StatisticDataCodec>()),
-                                           ::testing::Values(false, true) // Keeping all fields in the output schema
-                                           ),
-                        [](const testing::TestParamInfo<ReservoirSampleBuildExecutionTest::ParamType>& info) {
+INSTANTIATE_TEST_CASE_P(testDDSketch,
+                        DDSketchBuildExecutionTest,
+                        ::testing::Combine(::testing::Values(1, 4, 8),             // numWorkerThread
+                                           ::testing::Values(10, 2048),            // numberOfPreAllocatedBuckets
+                                           ::testing::Values(0.5, 0.25, 0.1, 0.01),// relative error
+                                           ::testing::ValuesIn(                    // All possible statistic sink datatype
+                                               magic_enum::enum_values<Statistic::StatisticDataCodec>())),
+                        [](const testing::TestParamInfo<DDSketchBuildExecutionTest::ParamType>& info) {
                             const auto numWorkerThread = std::get<0>(info.param);
-                            const auto sampleSize = std::get<1>(info.param);
-                            const auto dataCodec = std::get<2>(info.param);
-                            const auto keepOnlyRequiredField = std::get<3>(info.param) ? "1FIELD": "ALL_FIELDS";
-                            return std::to_string(numWorkerThread) + "Threads_" + std::to_string(sampleSize) + "Width_" +
-                                std::string(magic_enum::enum_name(dataCodec)) + "_" +
-                                keepOnlyRequiredField;
+                            const auto numberOfPreAllocatedBuckets = std::get<1>(info.param);
+                            auto relativeError = std::to_string(std::get<2>(info.param));
+                            Util::findAndReplaceAll(relativeError, ".", std::string("_"));
+                            const auto dataCodec = std::get<3>(info.param);
+                            return std::to_string(numWorkerThread) + "Threads_" + std::to_string(numberOfPreAllocatedBuckets) + "numberOfPreAllocatedBuckets_"
+                                + relativeError + "relativeError_"  +
+                                std::string(magic_enum::enum_name(dataCodec));
                         });
 }// namespace NES::Runtime::Execution

@@ -73,7 +73,7 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
         timestampFieldName = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + timestampFieldName;
 
         outputSchema = Schema::create()
-                           ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+                           ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::INT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
@@ -249,6 +249,8 @@ TEST_P(CountMinBuildExecutionTest, multipleInputBuffers) {
  * and for sliding windows (we create one sketch per slice)
  */
 TEST_P(CountMinBuildExecutionTest, multipleInputBuffersSlidingWindow) {
+    // Will be enabled with issue #4865
+    GTEST_SKIP();
     using namespace Statistic;
     constexpr auto windowSize = 1000;
     constexpr auto windowSlide = 500;

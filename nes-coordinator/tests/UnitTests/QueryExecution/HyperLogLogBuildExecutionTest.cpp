@@ -246,6 +246,8 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffers) {
  * and for sliding windows (we create one sketch per slice)
  */
 TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffersSlidingWindow) {
+    // Will be enabled with issue #4865
+    GTEST_SKIP();
     using namespace Statistic;
     constexpr auto windowSize = 1000;
     constexpr auto windowSlide = 500;

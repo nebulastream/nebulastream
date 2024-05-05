@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/DDSketchDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
@@ -65,6 +66,11 @@ void StatisticSerializationUtil::serializeDescriptorDetails(const Statistic::Win
         StatisticWindowDescriptorMessage_ReservoirSampleDetails reservoirSampleDetails;
         reservoirSampleDetails.set_keeponlyrequiredfield(reservoirSampleDescriptor->isKeepOnlyRequiredField());
         descriptorMessage.mutable_details()->PackFrom(reservoirSampleDetails);
+    } else if (descriptor.instanceOf<const Statistic::DDSketchDescriptor>()) {
+        auto ddSketchDescriptor = descriptor.as<const Statistic::DDSketchDescriptor>();
+        StatisticWindowDescriptorMessage_DDSketchDetails ddSketchDetails;
+        ddSketchDetails.set_relativeerror(ddSketchDescriptor->getRelativeError());
+        descriptorMessage.mutable_details()->PackFrom(ddSketchDetails);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -121,6 +127,10 @@ StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescripto
         StatisticWindowDescriptorMessage_ReservoirSampleDetails reservoirSampleDetails;
         descriptorMessage.details().UnpackTo(&reservoirSampleDetails);
         statisticDescriptor = Statistic::ReservoirSampleDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width(), reservoirSampleDetails.keeponlyrequiredfield());
+    } else if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_DDSketchDetails>()) {
+        StatisticWindowDescriptorMessage_DDSketchDetails ddSketchDetails;
+        descriptorMessage.details().UnpackTo(&ddSketchDetails);
+        statisticDescriptor = Statistic::DDSketchDescriptor::create(expression->as<FieldAccessExpressionNode>(), ddSketchDetails.relativeerror(), descriptorMessage.width());
     } else {
         NES_NOT_IMPLEMENTED();
     }

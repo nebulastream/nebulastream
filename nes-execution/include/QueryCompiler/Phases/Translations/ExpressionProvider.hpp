@@ -20,6 +20,7 @@
 namespace NES {
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+class ConstantValueExpressionNode;
 class FunctionExpression;
 
 namespace Runtime::Execution::Expressions {

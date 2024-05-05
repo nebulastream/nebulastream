@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Util/Core.hpp>
 #include <BaseUnitTest.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -66,7 +67,7 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
     WorkerContextPtr workerContext;
     std::shared_ptr<ReservoirSamplePipelineExecutionContext> pipelineExecutionContext;
     Nautilus::CompilationOptions options;
-    SchemaPtr inputSchema, outputSchema;
+    SchemaPtr inputSchema, outputSchema, sampleSchema;
     const std::string fieldToBuildReservoirSampleOver = "f1";
     const std::string timestampFieldName = "ts";
     Statistic::StatisticStorePtr testStatisticStore;
@@ -74,7 +75,6 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
     Statistic::StatisticFormatPtr statisticFormat;
     Statistic::StatisticMetricHash metricHash;
     Statistic::StatisticDataCodec sinkDataCodec;
-    Runtime::MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -95,7 +95,7 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
         inputSchema = Schema::create()
-                          ->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64)
+                          ->addField(fieldToBuildReservoirSampleOver, BasicType::INT64)
                           ->addField(timestampFieldName, BasicType::UINT64);
         outputSchema = Schema::create()->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
@@ -111,14 +111,7 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
 
         // Creating the sampleMemoryLayout
         const auto keepAllFields = std::get<2>(GetParam());
-        const auto sampleSchema = keepAllFields ? inputSchema : Schema::create()->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64);
-        if (sampleSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
-            sampleMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(sampleSchema, bufferManager->getBufferSize());
-        } else if (sampleSchema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-            sampleMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(sampleSchema, bufferManager->getBufferSize());
-        } else {
-            NES_NOT_IMPLEMENTED();
-        }
+        sampleSchema = keepAllFields ? inputSchema : Schema::create()->addField(fieldToBuildReservoirSampleOver, BasicType::INT64);
     }
 
     /* Will be called after a test is executed. */
@@ -137,7 +130,8 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
      */
     std::unique_ptr<ExecutablePipelineStage> createExecutablePipeline(uint64_t windowSize, uint64_t windowSlide,
                                                                       uint64_t sampleSize,
-                                                                      const std::vector<OriginId>& inputOrigins) {
+                                                                      const std::vector<OriginId>& inputOrigins,
+                                                                      const Runtime::MemoryLayouts::MemoryLayoutPtr& sampleMemoryLayout) {
         // 1. Creating the scan operator
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
         auto scanMemoryProvider = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
@@ -178,9 +172,11 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
 TEST_P(ReservoirSamplePipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, sampleSize = 10;
     const std::vector<OriginId> inputOrigins = {OriginId(0)};
-    auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins);
+    constexpr auto numberOfTuples = 1;
+    auto sampleMemoryLayout = NES::Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
+    auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins, sampleMemoryLayout);
 
-    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildReservoirSampleOver, timestampFieldName);
+    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildReservoirSampleOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);
@@ -206,9 +202,11 @@ TEST_P(ReservoirSamplePipelineTest, singleInputTuple) {
 TEST_P(ReservoirSamplePipelineTest, multipleInputBuffers) {
     constexpr auto windowSize = 1000, windowSlide = 1000, sampleSize = 1000;
     const std::vector<OriginId> inputOrigins = {OriginId(0)};
-    auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins);
+    constexpr auto numberOfTuples = 100'000;
+    auto sampleMemoryLayout = NES::Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
+    auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins, sampleMemoryLayout);
 
-    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildReservoirSampleOver, timestampFieldName);
+    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildReservoirSampleOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);

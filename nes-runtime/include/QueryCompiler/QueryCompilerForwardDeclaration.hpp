@@ -167,6 +167,7 @@ using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 class PhysicalCountMinBuildOperator;
 class PhysicalHyperLogLogBuildOperator;
 class PhysicalReservoirSampleBuildOperator;
+class PhysicalDDSketchBuildOperator;
 }// namespace PhysicalOperators
 
 }// namespace QueryCompilation

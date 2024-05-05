@@ -25,35 +25,46 @@ Log10Expression::Log10Expression(const NES::Runtime::Execution::Expressions::Exp
 /**
  * @brief This method calculates the log10 for x.
  * This function is basically a wrapper for std::log10 and enables us to use it in our execution engine framework.
- * @param x double
+ * @param x: Value to perform log10(x)
  * @return double
  */
-double calculateLog10(double x) { return std::log10(x); }
+double calculateLog10U8(uint8_t x) { return std::log10(x); }
+double calculateLog10U16(uint16_t x) { return std::log10(x); }
+double calculateLog10U32(uint32_t x) { return std::log10(x); }
+double calculateLog10U64(uint64_t x) { return std::log10(x); }
+
+double calculateLog10I8(int8_t x) { return std::log10(x); }
+double calculateLog10I16(int16_t x) { return std::log10(x); }
+double calculateLog10I32(int32_t x) { return std::log10(x); }
+double calculateLog10I64(int64_t x) { return std::log10(x); }
+
+double calculateLog10F32(float x) { return std::log10(x); }
+double calculateLog10F64(double x) { return std::log10(x); }
 
 Value<> Log10Expression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<Int8>());
+        return FunctionCall<>("calculateLog10I8", calculateLog10I8, subValue.as<Int8>());
     } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<Int16>());
+        return FunctionCall<>("calculateLog10I16", calculateLog10I16, subValue.as<Int16>());
     } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<Int32>());
+        return FunctionCall<>("calculateLog10I32", calculateLog10I32, subValue.as<Int32>());
     } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<Int64>());
+        return FunctionCall<>("calculateLog10I64", calculateLog10I64, subValue.as<Int64>());
     } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<UInt8>());
+        return FunctionCall<>("calculateLog10U8", calculateLog10U8, subValue.as<UInt8>());
     } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<UInt16>());
+        return FunctionCall<>("calculateLog10U16", calculateLog10U16, subValue.as<UInt16>());
     } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<UInt32>());
+        return FunctionCall<>("calculateLog10U32", calculateLog10U32, subValue.as<UInt32>());
     } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<UInt64>());
+        return FunctionCall<>("calculateLog10U64", calculateLog10U64, subValue.as<UInt64>());
     } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<Float>());
+        return FunctionCall<>("calculateLog10F32", calculateLog10F32, subValue.as<Float>());
     } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<Double>());
+        return FunctionCall<>("calculateLog10F64", calculateLog10F64, subValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
