@@ -151,7 +151,7 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
 
         // 3. Building the reservoir sample operator
         const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldName);
-        auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField);
+        auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds());
         auto reservoirSampleOperator = std::make_shared<Operators::ReservoirSampleBuild>(operatorHandlerIndex,
                                                                                          metricHash,
                                                                                          std::move(timeFunction),
