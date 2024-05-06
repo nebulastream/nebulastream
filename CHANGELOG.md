@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.122](https://github.com/nebulastream/nebulastream/tree/v0.6.122) (2024-05-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.121...v0.6.122)
+
+**Implemented enhancements:**
+
+- \[TASK\] fix tests in JoinDeploymentTest [\#4740](https://github.com/nebulastream/nebulastream/issues/4740)
+
 ## [v0.6.121](https://github.com/nebulastream/nebulastream/tree/v0.6.121) (2024-05-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.120...v0.6.121)
