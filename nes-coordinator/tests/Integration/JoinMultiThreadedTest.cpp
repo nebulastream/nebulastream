@@ -356,10 +356,10 @@ TEST_P(JoinMultiThreadedTest, testThreeJoins) {
                                       ->addField(createField("timestamp", BasicType::UINT64))
                                       ->updateSourceName("test3");
     const auto inputSchemaFourth = Schema::create()
-                                      ->addField(createField("id4", BasicType::UINT64))
-                                      ->addField(createField("value4", BasicType::UINT64))
-                                      ->addField(createField("timestamp", BasicType::UINT64))
-                                      ->updateSourceName("test4");
+                                       ->addField(createField("id4", BasicType::UINT64))
+                                       ->addField(createField("value4", BasicType::UINT64))
+                                       ->addField(createField("timestamp", BasicType::UINT64))
+                                       ->updateSourceName("test4");
     const auto joinFieldNameLeft = "test1$id";
     const auto joinSchemaLeftRight =
         Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
