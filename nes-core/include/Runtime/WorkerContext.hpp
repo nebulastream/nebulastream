@@ -20,6 +20,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <HDFS/HDFSClient.hpp>
 #include <cstdint>
 #include <memory>
 #include <queue>
@@ -149,6 +150,19 @@ class WorkerContext {
     void trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp);
 
     /**
+     * @brief This method writes tuples to the remote storage
+     * @param nesPartitionId partition id
+     * @param data data
+     */
+    void writeToHDFS(Network::NesPartition nesPartitionId, const std::vector<NES::Runtime::TupleBuffer>& data);
+
+    /**
+     * @brief This method serializes buffers
+     * @param buffer buffer to serialize
+     */
+    std::vector<char> serializeBuffer(const NES::Runtime::TupleBuffer& buffer);
+
+        /**
      * @brief removes a registered network channel with a termination type
      * @param id of the operator that we want to store the output channel
      * @param type the termination type

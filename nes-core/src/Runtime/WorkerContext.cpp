@@ -123,7 +123,32 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         storageFile.flush();
     }
 }
-    
+
+void WorkerContext::writeToHDFS(Network::NesPartition nesPartitionId, const std::vector<NES::Runtime::TupleBuffer>& data) {
+    HDFSClient hdfsClient("hdfs-hostname", 9000); // Example HDFS host and port
+    std::string filePath = "/path/on/hdfs/partition_" + std::to_string(nesPartitionId) + ".bin";
+
+    for (const auto& buffer : data) {
+        // Serialize the buffer into a binary format
+        std::vector<char> binaryData = serializeBuffer(buffer);
+
+        // Write serialized data to HDFS
+        hdfsClient.writeToFile(filePath, binaryData);
+    }
+}
+
+std::vector<char> WorkerContext::serializeBuffer(const NES::Runtime::TupleBuffer& buffer) {
+    // Convert TupleBuffer to a binary representation
+    // This is a placeholder. Actual implementation will depend on the structure of TupleBuffer and the desired format.
+    std::vector<char> binaryData;
+    // Example: serialize each element in TupleBuffer to binary
+    for (const auto& element : buffer) {
+        // Serialize element; this is pseudo-code
+        // binaryData.insert(binaryData.end(), element.begin(), element.end());
+    }
+    return binaryData;
+}
+
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
