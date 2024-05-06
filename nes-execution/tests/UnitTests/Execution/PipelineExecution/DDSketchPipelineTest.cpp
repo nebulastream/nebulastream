@@ -161,7 +161,7 @@ class DDSketchPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
         const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldName);
 
         // 3.3. Creating the time function and then the operator
-        auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField);
+        auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds());
         auto ddSketchOperator = std::make_shared<Operators::DDSketchBuild>(operatorHandlerIndex,
                                                                            fieldToBuildDDSketchOver,
                                                                            metricHash,
