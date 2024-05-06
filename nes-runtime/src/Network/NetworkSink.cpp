@@ -240,9 +240,18 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
 
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId(), version);
+                //workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId(), version);
+                auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), 1000);
+                if (channel) {
+                    workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel));
+                } else {
+                    NES_ASSERT(false,
+                               "Could not connect to channel with partition "
+                                   << nesPartition.toString() << " receiver node " << receiverLocation.getNodeId() << "with uri "
+                                   << receiverLocation.createZmqURI() << " before eos of type"
+                                   << magic_enum::enum_name(terminationType));
+                }
             }
-
             clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition, newVersion);
             break;
         }

@@ -362,7 +362,7 @@ bool NetworkSource::tryStartingNewVersion() {
             auto newDescriptor = scheduledDescriptors.front();
             if (receivedDrain.has_value()
                 //todo: the version check is actually obsolete, as the a new version can only be started after a drain now
-                && (receivedDrain.value() == newDescriptor.getVersion() || receivedDrain.value() == 0)
+                // && (receivedDrain.value() == newDescriptor.getVersion() || receivedDrain.value() == 0)
                 && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
 //                auto newDescriptor = nextSourceDescriptor.value();
                 version = newDescriptor.getVersion();
