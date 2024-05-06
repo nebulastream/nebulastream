@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.121](https://github.com/nebulastream/nebulastream/tree/v0.6.121) (2024-05-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.120...v0.6.121)
+
+**Implemented enhancements:**
+
+- \[TASK\] DataDog Sketch [\#4860](https://github.com/nebulastream/nebulastream/issues/4860)
+- \[TASK\] Remove CompiledDummyPlan.hpp [\#4843](https://github.com/nebulastream/nebulastream/issues/4843)
+- \[TASK\] Implement statistic \(de-\)compression [\#4794](https://github.com/nebulastream/nebulastream/issues/4794)
+
 ## [v0.6.120](https://github.com/nebulastream/nebulastream/tree/v0.6.120) (2024-05-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.119...v0.6.120)
