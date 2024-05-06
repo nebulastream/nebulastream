@@ -282,7 +282,7 @@ bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId child
 }
 
 bool Topology::addLinkProperty(WorkerId parentWorkerId, WorkerId childWorkerId, uint64_t bandwidthInMBPS, uint64_t latencyInMS) {
-    NES_INFO("Adding link properties between parent node {} and child node {}", childWorkerId, parentWorkerId);
+    NES_INFO("Adding link properties between parent node {} and child node {}", parentWorkerId, childWorkerId);
 
     if (parentWorkerId == childWorkerId) {
         NES_WARNING("Can not add link property to self.");

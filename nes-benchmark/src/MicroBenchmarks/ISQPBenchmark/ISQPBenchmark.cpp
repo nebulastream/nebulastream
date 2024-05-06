@@ -231,8 +231,8 @@ void setupTopology(uint16_t rootNodes,
     // Add link properties between leaf and intermediate nodes
     std::vector<RequestProcessor::ISQPEventPtr> addLinkPropertyEvents;
     for (const auto& rootWorkerId : rootWorkerIds) {
-        for (const auto& leafWorkerId : leafWorkerIds) {
-            auto addLinkPropertyEvent = RequestProcessor::ISQPAddLinkPropertyEvent::create(rootWorkerId, leafWorkerId, 1, 1);
+        for (const auto& intermediateWorkerId : intermediateWorkerIds) {
+            auto addLinkPropertyEvent = RequestProcessor::ISQPAddLinkPropertyEvent::create(rootWorkerId, intermediateWorkerId, 1, 1);
             addLinkPropertyEvents.emplace_back(addLinkPropertyEvent);
         }
     }

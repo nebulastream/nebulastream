@@ -13,6 +13,7 @@ limitations under the License.
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/PathFinder.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -31,6 +32,7 @@ limitations under the License.
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <charconv>
 #include <z3++.h>
 
 namespace NES::Optimizer {
@@ -56,6 +58,24 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
       z3Context(z3Context) {}
 
+static std::pair<OperatorId, WorkerId> deconstructTopologyId(std::string_view topologyId, const char* separator) {
+    uint64_t operatorId;
+    uint64_t executionNodeId;
+    auto operatorIdSubstring = topologyId.substr(0, topologyId.find(separator));
+    auto executionNodeSubstr = topologyId.substr(topologyId.find(separator) + 1);
+
+    if (std::from_chars(operatorIdSubstring.data(), operatorIdSubstring.data() + operatorIdSubstring.length(), operatorId).ec
+        == std::errc::invalid_argument) {
+        NES_THROW_RUNTIME_ERROR("Could not parse OperatorId: " << topologyId);
+    }
+    if (std::from_chars(executionNodeSubstr.data(), executionNodeSubstr.data() + executionNodeSubstr.length(), executionNodeId).ec
+        == std::errc::invalid_argument) {
+        NES_THROW_RUNTIME_ERROR("Could not parse ExecutionNodeId: " << topologyId);
+    }
+
+    return {OperatorId(operatorId), WorkerId(executionNodeId)};
+}
+
 PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
@@ -63,6 +83,9 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
 
     try {
         NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
+        NES_INFO("Processing {} num of upstream and {} num of downstream optrs",
+                 pinnedUpStreamOperators.size(),
+                 pinnedDownStreamOperators.size());
 
         // 1. Create copy of the query plan
         auto copy =
@@ -74,11 +97,14 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
         z3::optimize opt(*z3Context);
         std::map<std::string, z3::expr> placementVariables;
         std::map<OperatorId, z3::expr> operatorPositionMap;
-        std::map<uint64_t, z3::expr> nodeUtilizationMap;
+        std::map<WorkerId, z3::expr> nodeUtilizationMap;
         std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToCopiedOperatorMap;
+        auto nodeMileageMap = computeMileage(copy.copiedPinnedDownStreamOperators);
 
         // 2. Construct the placementVariable, compute distance, utilization and mileages
         for (const auto& pinnedUpStreamOperator : copy.copiedPinnedUpStreamOperators) {
+
+            NES_DEBUG("PIIIIIIIIIINNNNNNNNNNNNNNNNNNNED Optr {}", pinnedUpStreamOperator->toString());
 
             //2.1 Find all path between pinned upstream and downstream operators
             std::vector<NodePtr> operatorPath;
@@ -126,21 +152,6 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
                 }
             }
 
-            //2.2 Find path between pinned upstream and downstream topology node
-            auto upstreamPinnedNodeId = std::any_cast<WorkerId>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-
-            auto downstreamPinnedNodeId =
-                std::any_cast<WorkerId>(operatorPath.back()->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID));
-
-            auto topologyLockedPath = std::vector<TopologyNodeWLock>();
-            for (auto workerId : workerNodeIdsInBFS) {
-                auto topologyNode = lockedTopologyNodeMap.find(workerId);
-                if (topologyNode != lockedTopologyNodeMap.end()) {
-                    // Recteate topological path
-                    topologyLockedPath.emplace_back(topologyNode->second);
-                }
-            }
-
             //2.3 Check that all costs that are necessary for z3 solver are specified
             for (auto pinnedDownstreamOperator : copy.copiedPinnedDownStreamOperators) {
                 if (!pinnedDownstreamOperator->hasProperty("cost") || !pinnedDownstreamOperator->hasProperty("output")) {
@@ -149,13 +160,9 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
             }
 
             //2.4 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
-
-            std::map<uint64_t, double> nodeMileageMap = computeMileage(copy.copiedPinnedDownStreamOperators);
-
             addConstraints(opt,
                            copy.copiedPinnedUpStreamOperators,
                            copy.copiedPinnedDownStreamOperators,
-                           topologyLockedPath,
                            placementVariables,
                            operatorPositionMap,
                            nodeUtilizationMap,
@@ -192,7 +199,7 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
         // Over-utilization cost = sum of the over-utilization of all nodes
         auto overUtilizationCost = z3Context->int_val(0);// initialize the over-utilization cost with 0
         for (auto const& [topologyID, utilization] : nodeUtilizationMap) {
-            std::string overUtilizationId = "S" + std::to_string(topologyID);
+            std::string overUtilizationId = fmt::format("S{}", topologyID);
             auto currentOverUtilization = z3Context->int_const(overUtilizationId.c_str());// an integer expression of the slack
 
             // Obtain the available slot in the current node
@@ -235,17 +242,23 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
         std::map<OperatorPtr, TopologyNodePtr> operatorToTopologyNodeMap;
         for (auto const& [topologyID, P] : placementVariables) {
             if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
-                uint64_t operatorId = std::stoi(topologyID.substr(0, topologyID.find(',')));
-                uint64_t topologyNodeId = std::stoi(topologyID.substr(topologyID.find(',') + 1));
+                auto [operatorId, nodeId] = deconstructTopologyId(topologyID, KEY_SEPARATOR);
 
                 auto operatorIdToCopiedOperator = operatorIdToCopiedOperatorMap.find(operatorId);
                 LogicalOperatorPtr logicalOperator;
                 if (operatorIdToCopiedOperator != operatorIdToCopiedOperatorMap.end()) {
                     logicalOperator = operatorIdToCopiedOperator->second;
                 }
-                TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyNodeId];
+                TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[nodeId];
                 if (!logicalOperator->hasProperty(PINNED_WORKER_ID)) {
-                    logicalOperator->addProperty(PINNED_WORKER_ID, topologyNodeId);
+                    logicalOperator->addProperty(PINNED_WORKER_ID, nodeId);
+                    NES_DEBUG("Optr {} is pinned on {}",
+                              logicalOperator->toString(),
+                              std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID)));
+                } else {
+                    NES_DEBUG("Optr {} is pinned on {}",
+                              logicalOperator->toString(),
+                              std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID)));
                 }
                 // collect the solution to operatorToTopologyNodeMap
                 operatorToTopologyNodeMap.insert(std::make_pair(logicalOperator, topologyNode));
@@ -274,27 +287,29 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
     }
 }
 
-std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators) {
-    std::map<uint64_t, double> mileageMap;// (topologyId, M)
+std::map<WorkerId, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators) {
+    std::map<WorkerId, double> mileageMap;// (topologyId, M)
     // populate the distance map
     for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
-        auto nodeId = std::any_cast<uint64_t>(pinnedDownStreamOperator->getProperty(PINNED_WORKER_ID));
+        auto nodeId = std::any_cast<WorkerId>(pinnedDownStreamOperator->getProperty(PINNED_WORKER_ID));
         auto topologyNode = workerIdToTopologyNodeMap[nodeId];
         computeDistance(topologyNode, mileageMap);
     }
     return mileageMap;
 }
 
-void ILPStrategy::computeDistance(const TopologyNodePtr& node, std::map<uint64_t, double>& mileages) {
-    uint64_t topologyID = node->getId();
+void ILPStrategy::computeDistance(const TopologyNodePtr& node, std::map<WorkerId, double>& mileages) {
+    auto topologyID = node->getId();
     auto& children = node->getChildren();
     if (children.empty()) {
         mileages[topologyID] = 0.0;
         return;
     }
 
+    // if the current node is not a root node, recursively compute the mileage of its first parent
+    // assuming a node only has a single parent
     TopologyNodePtr child = children[0]->as<TopologyNode>();
-    uint64_t childID = child->getId();
+    auto childID = child->getId();
     if (mileages.find(childID) == mileages.end()) {
         computeDistance(child, mileages);
     }
@@ -308,15 +323,145 @@ void ILPStrategy::computeDistance(const TopologyNodePtr& node, std::map<uint64_t
 void ILPStrategy::addConstraints(z3::optimize& opt,
                                  const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                 std::vector<TopologyNodeWLock>& topologyNodePath,
                                  std::map<std::string, z3::expr>& placementVariables,
                                  std::map<OperatorId, z3::expr>& operatorDistanceMap,
-                                 std::map<uint64_t, z3::expr>& nodeUtilizationMap,
-                                 std::map<uint64_t, double>& nodeMileageMap) {
+                                 std::map<WorkerId, z3::expr>& nodeUtilizationMap,
+                                 std::map<WorkerId, double>& nodeMileageMap) {
+
+    // Compute a map for potential pinning locations by doing static analysis
+    std::unordered_map<OperatorId, std::vector<WorkerId>> potentialOperatorPinningLocation;
+
+    // Temp container for iteration
+    std::queue<LogicalOperatorPtr> operatorsToProcess;
+    for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        operatorsToProcess.emplace(pinnedUpStreamOperator);
+    }
+
+    //FIXME: there is few short coming of the trailing algorithm (More may exists):
+    // 1. Possible missing pinning locations can occur as the possible pining locations of an operator is only dependent on
+    //    the upstream operators. For example: If an operator is connected to a Union operator that is serving to multiple
+    //    downstream operators located on different nodes. This union operator can only be placed on topology nodes that can
+    //    reach the downstream operators. Any further connected downstream operator to this union operator will therefore also
+    //    be constrained to the possible pinning locations of the union. This can result in missed pinning opportunities.
+    // 2. It assumes that connected most upstream and most downstream operators are always pinned (this is in general an
+    //    assumption in our system. I can not think of an example where this won't be the case.)
+
+    // Iterate over all operators and find the possible pining locations
+    while (!operatorsToProcess.empty()) {
+
+        auto operatorToProcess = operatorsToProcess.front();
+        operatorsToProcess.pop();
+        auto operatorId = operatorToProcess->getId();
+
+        if (operatorToProcess->hasProperty(PINNED_WORKER_ID)) {
+            auto pinnedWorkerId = std::any_cast<OperatorId>(operatorToProcess->getProperty(PINNED_WORKER_ID));
+            potentialOperatorPinningLocation[operatorToProcess->getId()] = {pinnedWorkerId};
+        } else {// Compute the possible pinning locations
+
+            bool upstreamAnalyzed = true;
+            bool connectedToPinnedOperator = false;
+            // 1. Check if all upstream operators are analyzed and their potential pinning locations are identified.
+            // 2. Check if connected to pinned upstream operator.
+            auto& upstreamOperators = operatorToProcess->getChildren();
+            for (const auto& upstreamOperator : upstreamOperators) {
+                auto logicalOperator = upstreamOperator->as<LogicalOperator>();
+                auto upstreamOperatorId = logicalOperator->getId();
+                if (!potentialOperatorPinningLocation.contains(upstreamOperatorId)) {
+                    upstreamAnalyzed = false;
+                    break;
+                }
+                if (logicalOperator->hasProperty(PINNED_WORKER_ID)) {
+                    connectedToPinnedOperator = true;
+                }
+            }
+
+            if (!upstreamAnalyzed) {
+                continue;
+            }
+
+            if (connectedToPinnedOperator) {
+                // Fetch all connected upstream and downstream operators
+                auto connectedPinnedUpstreamNodes = operatorToProcess->getAllLeafNodes();
+                auto connectedPinnedDownstreamNodes = operatorToProcess->getAllRootNodes();
+
+                std::vector<TopologyNodePtr> upstreamWorkers;
+                // Fetch the pinned workerId
+                for (const auto& connectedPinnedUpstreamNode : connectedPinnedUpstreamNodes) {
+                    if (!connectedPinnedUpstreamNode->as_if<LogicalOperator>()->hasProperty(PINNED_WORKER_ID)) {
+                        NES_ERROR("The connected leaf nodes should always carry pinning location");
+                        throw std::logic_error("The connected leaf nodes should always carry pinning location");
+                    }
+                    auto workerId = std::any_cast<WorkerId>(
+                        connectedPinnedUpstreamNode->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID));
+                    upstreamWorkers.emplace_back(workerIdToTopologyNodeMap[workerId]);
+                }
+
+                std::vector<TopologyNodePtr> downstreamWorkers;
+                // Fetch the pinned workerId
+                for (const auto& connectedPinnedDownstreamNode : connectedPinnedDownstreamNodes) {
+                    if (!connectedPinnedDownstreamNode->as_if<LogicalOperator>()->hasProperty(PINNED_WORKER_ID)) {
+                        NES_ERROR("The connected root nodes should always carry pinning location");
+                        throw std::logic_error("The connected root nodes should always carry pinning location");
+                    }
+                    auto workerId = std::any_cast<WorkerId>(
+                        connectedPinnedDownstreamNode->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID));
+                    downstreamWorkers.emplace_back(workerIdToTopologyNodeMap[workerId]);
+                }
+
+                // Find common topology nodes
+                auto commonWorkerNodes = pathFinder->findNodesBetween(upstreamWorkers, downstreamWorkers);
+
+                // Possible pinning locations
+                std::vector<WorkerId> possiblePinningLocations;
+                for (const auto& commonWorkerNode : commonWorkerNodes) {
+                    possiblePinningLocations.emplace_back(commonWorkerNode->getId());
+                }
+                // Store potential pinning locations
+                potentialOperatorPinningLocation[operatorId] = possiblePinningLocations;
+            } else {// Compute the possible locations based on the connected upstream operators
+
+                std::vector<WorkerId> possiblePinningLocations;
+                for (const auto& upstreamOperator : upstreamOperators) {
+                    // If possible pinning location not computed then assign the possible locations of the upstream operator
+                    if (possiblePinningLocations.empty()) {
+                        possiblePinningLocations =
+                            potentialOperatorPinningLocation[upstreamOperator->as_if<LogicalOperator>()->getId()];
+                    } else {// Compute intersection with upstream operator to find common worker nodes
+                        // Note: we are not using std::set_intersection to preserve the workerId order
+
+                        // Fetch the possible pinning locations of the upstream operator
+                        std::vector<WorkerId> upstreamOperatorPossiblePinningLocations =
+                            potentialOperatorPinningLocation[upstreamOperator->as_if<LogicalOperator>()->getId()];
+
+                        // Remove the element from the possible pinning locations if the worker id is not listed
+                        // in the possible pinning location of the upstream operator
+                        possiblePinningLocations.erase(
+                            std::remove_if(possiblePinningLocations.begin(),
+                                           possiblePinningLocations.end(),
+                                           [&](WorkerId workerId) {
+                                               // return true if element not in the upstream Operator's Possible Pinning locations
+                                               return std::find(upstreamOperatorPossiblePinningLocations.begin(),
+                                                                upstreamOperatorPossiblePinningLocations.end(),
+                                                                workerId)
+                                                   == upstreamOperatorPossiblePinningLocations.end();
+                                           }),
+                            possiblePinningLocations.end());
+                    }
+                }
+                // Store potential pinning locations
+                potentialOperatorPinningLocation[operatorId] = possiblePinningLocations;
+            }
+        }
+
+        // Add to the list of operators to be processed
+        const auto& downstreamOperators = operatorToProcess->getParents();
+        std::for_each(downstreamOperators.begin(), downstreamOperators.end(), [&](const NodePtr& operatorNode) {
+            operatorsToProcess.emplace(operatorNode->as<LogicalOperator>());
+        });
+    }
 
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         auto pID = pinnedUpStreamOperator->getId();
-        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
 
         //if operator is already placed we move to its downstream operators
         if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
@@ -328,7 +473,6 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
                 if (!(downStreamNode->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED)) {
                     identifyPinningLocation(downStreamNode->as<LogicalOperator>(),
-                                            topologyNodePath,
                                             opt,
                                             placementVariables,
                                             pinnedDownStreamOperators,
@@ -342,7 +486,6 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             }
         } else {
             identifyPinningLocation(pinnedUpStreamOperator,
-                                    topologyNodePath,
                                     opt,
                                     placementVariables,
                                     pinnedDownStreamOperators,
@@ -354,26 +497,24 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
 }
 
 void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOperatorNode,
-                                          std::vector<TopologyNodeWLock>& topologyNodePath,
                                           z3::optimize& opt,
                                           std::map<std::string, z3::expr>& placementVariable,
                                           const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                           std::map<OperatorId, z3::expr>& operatorDistanceMap,
-                                          std::map<uint64_t, z3::expr>& nodeUtilizationMap,
-                                          std::map<uint64_t, double>& nodeMileageMap) {
+                                          std::map<WorkerId, z3::expr>& nodeUtilizationMap,
+                                          std::map<WorkerId, double>& nodeMileageMap) {
     auto operatorNode = currentOperatorNode->as<LogicalOperator>();
     OperatorId operatorID = operatorNode->getId();
     NES_DEBUG("Handling operatorNode {} with id: {}", operatorNode->toString(), operatorID);
 
     //node was already treated
-    if (operatorMap.find(operatorID) != operatorMap.end()) {
+    if (operatorMap.contains(operatorID)) {
         NES_DEBUG("Skipping: Operator {} was found on operatorMap", operatorID);
         // Initialize the path constraint variable to 0
         auto pathConstraint = z3Context->int_val(0);
-        for (uint64_t j = 0; j < topologyNodePath.size(); j++) {
-            TopologyNodePtr topologyNode = (*topologyNodePath[j])->operator->()->as<TopologyNode>();
-            uint64_t topologyID = topologyNode->getId();
-            std::string variableID = std::to_string(operatorID) + KEY_SEPARATOR + std::to_string(topologyID);
+        for (uint64_t j = 0; j < workerNodeIdsInBFS.size(); j++) {
+            auto topologyID = workerNodeIdsInBFS[j];
+            std::string variableID = fmt::format("{}{}{}", operatorID, KEY_SEPARATOR, topologyID);
             auto iter = placementVariable.find(variableID);
             if (iter != placementVariable.end()) {
                 pathConstraint = pathConstraint + iter->second;
@@ -389,24 +530,30 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
     auto D_i = this->z3Context->int_val(0);
 
     //for the current operatorNode we iterate here through all topologyNodes and calculate costs, possibility of placement etc.
-    for (uint64_t j = 0; j < topologyNodePath.size(); j++) {
+    for (uint64_t j = 0; j < workerNodeIdsInBFS.size(); j++) {
 
-        TopologyNodePtr topologyNode = (*topologyNodePath[j])->operator->()->as<TopologyNode>();
-        uint64_t topologyID = topologyNode->getId();
+        auto topologyID = workerNodeIdsInBFS[j];
         NES_DEBUG("Handling topologyNode with id: {}", topologyID);
 
         //create placement variable and constraint to {0,1}
-        std::string variableID = std::to_string(operatorID) + this->KEY_SEPARATOR + std::to_string(topologyID);
+        std::string variableID = fmt::format("{}{}{}", operatorID, KEY_SEPARATOR, topologyID);
         auto P_IJ = this->z3Context->int_const(variableID.c_str());
         if (operatorNode->getOperatorState() == OperatorState::PLACED) {
             break;
         }
-        if ((operatorNode->instanceOf<SinkLogicalOperator>() && j == topologyNodePath.size() - 1)
-            || (operatorNode->instanceOf<SourceLogicalOperator>() && j == 0)) {
+
+        if (operatorNode->hasProperty(PINNED_WORKER_ID)) {
+            auto pinnedWorkerId = std::any_cast<OperatorId>(operatorNode->getProperty(PINNED_WORKER_ID));
+            if (pinnedWorkerId == topologyID) {
+                opt.add(P_IJ == 1);
+            } else {
+                opt.add(P_IJ == 0);
+            }
+        } else if ((operatorNode->instanceOf<SinkLogicalOperator>() && j == workerNodeIdsInBFS.size() - 1)
+                   || (operatorNode->instanceOf<SourceLogicalOperator>() && j == 0)) {
             NES_DEBUG("Handling a source or a sink on right topology node");
             opt.add(P_IJ == 1);//placement of all sources and final sinks is fixed
-
-        } else if ((operatorNode->instanceOf<SinkLogicalOperator>() && j != topologyNodePath.size() - 1)
+        } else if ((operatorNode->instanceOf<SinkLogicalOperator>() && j != workerNodeIdsInBFS.size() - 1)
                    || (operatorNode->instanceOf<SourceLogicalOperator>() && j != 0)) {
             NES_DEBUG("Handling a source or a sink on wrong topology node");
             opt.add(P_IJ == 0);//source or sink on wrong topologyNode mustn't be placed
@@ -416,12 +563,11 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
             // Initialize P_IJ_stored
             int sizeOfPIJ_stored_out = operatorNode->getChildren().size() + 1;//all children + operatorNode itself
             int sizeOfPIJ_stored_in = j + 1;
-            std::vector<std::vector<z3::expr>> P_IJ_stored(sizeOfPIJ_stored_out,
-                                                           std::vector<z3::expr>(sizeOfPIJ_stored_in, P_IJ));
+            std::vector P_IJ_stored(sizeOfPIJ_stored_out, std::vector<z3::expr>(sizeOfPIJ_stored_in, P_IJ));
 
             // Create constraint
             NES_DEBUG("Placing operator {} on topology {}", operatorID, topologyID);
-            auto variableID_new = std::to_string(operatorID) + this->KEY_SEPARATOR + std::to_string(topologyID);
+            auto variableID_new = fmt::format("{}{}{}", operatorID, KEY_SEPARATOR, topologyID);
             auto PIJ = this->z3Context->int_const(variableID_new.c_str());
             uint64_t counter = 1;
             z3::expr checkChildren = (PIJ == 1);
@@ -430,17 +576,15 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
             // lower topology node than the current operatorNode (or the same)
             for (auto child : operatorNode->getChildren()) {
                 if (!child->instanceOf<SourceLogicalOperator>()) {
-                    int childID = child->as<LogicalOperator>()->getId();
-                    auto id = std::to_string(childID) + this->KEY_SEPARATOR
-                        + std::to_string((*topologyNodePath[j])->operator->()->as<TopologyNode>()->getId());
+                    auto childID = child->as<LogicalOperator>()->getId();
+                    auto id = fmt::format("{}{}{}", childID, KEY_SEPARATOR, workerNodeIdsInBFS[j]);
                     auto P_IJ_child = this->z3Context->int_const(id.c_str());
                     z3::expr checkTopologyNodes = (P_IJ_child == 1);
 
                     // Iterating over all positions of topologyNodePath up to the current one
                     for (uint64_t n = 0; n < j;
                          ++n) {// n < j here and n == j in initialising checkTopologyNodes means we actually check n <= j
-                        auto variableID_loop = std::to_string(childID) + this->KEY_SEPARATOR
-                            + std::to_string((*topologyNodePath[n])->operator->()->as<TopologyNode>()->getId());
+                        auto variableID_loop = fmt::format("{}{}{}", childID, KEY_SEPARATOR, workerNodeIdsInBFS[n]);
                         auto P_IJ_nodes = this->z3Context->int_const(variableID_loop.c_str());
                         P_IJ_stored[counter][n] = P_IJ_nodes;
                         // see if for all the children c of the operator nodes one topologyNode (n) before the current
@@ -464,9 +608,12 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
             NES_DEBUG("{}", e.second.to_string());
         }
         // add to node utilization
-        int slots;
+
+        if (!operatorNode->hasProperty("cost")) {
+            NES_ERROR("Cost for the operator id {} is missing", operatorNode->getId());
+        }
         std::any prop = operatorNode->getProperty("cost");
-        slots = std::any_cast<int>(prop);
+        int slots = std::any_cast<int>(prop);
 
         auto iterator = nodeUtilizationMap.find(topologyID);
         if (iterator != nodeUtilizationMap.end()) {
@@ -495,7 +642,6 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
         NES_DEBUG("parent for {} is {}", operatorID, parent->as<LogicalOperator>()->getId());
         if (!(currentOperatorNode->getOperatorState() == OperatorState::PLACED)) {
             identifyPinningLocation(parent->as<LogicalOperator>(),
-                                    topologyNodePath,
                                     opt,
                                     placementVariable,
                                     pinnedDownStreamOperators,
@@ -511,8 +657,7 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
 bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables) {
     for (const auto& placementMapping : placementVariables) {
         auto key = placementMapping.first;
-        uint64_t operatorId = std::stoi(key.substr(0, key.find(KEY_SEPARATOR)));
-        uint64_t topologyNodeId = std::stoi(key.substr(key.find(KEY_SEPARATOR) + 1));
+        auto [operatorId, topologyNodeId] = deconstructTopologyId(key, KEY_SEPARATOR);
 
         if (z3Model.eval(placementMapping.second).get_numeral_int() == 1) {
             NES_DEBUG("Pinning operator with ID {}", operatorId);

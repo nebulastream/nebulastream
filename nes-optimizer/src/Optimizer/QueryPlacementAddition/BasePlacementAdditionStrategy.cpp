@@ -89,11 +89,11 @@ void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalO
         }
     }
 
-//    std::stringstream ss;
-//    for (const auto& workerId : workerNodeIdsInBFS){
-//        ss<<workerId<<",";
-//    }
-//    NES_ERROR("Addition: {}", ss.str());
+    //    std::stringstream ss;
+    //    for (const auto& workerId : workerNodeIdsInBFS){
+    //        ss<<workerId<<",";
+    //    }
+    //    NES_ERROR("Addition: {}", ss.str());
 
     // 4. Raise exception if unable to select and lock all topology nodes in the path
     if (!success) {
@@ -517,7 +517,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
     // }
     //
 
-    // Iterate over all computed sub query plans and add network source and sink operators.
+    // Iterate over all computed decomposed query plans and add network source and sink operators.
     for (const auto& [workerId, decomposedQueryPlans] : computedDecomposedQueryPlans) {
         auto downstreamTopologyNode = getTopologyNode(workerId);
 
@@ -526,6 +526,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 
             // shared query id
             auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
+
+            NES_DEBUG("Computed Decomposed query plan ID {} for the shared query plan {}",
+                      decomposedQueryPlan->getDecomposedQueryPlanId(),
+                      sharedQueryId);
+            NES_DEBUG("Decomposed query plan {}", decomposedQueryPlan->toString());
 
             // 2. Fetch all logical operators whose upstream logical operators are missing.
             // In the previous call, we stored this information by setting the property
@@ -537,6 +542,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                 }
             }
 
+            NES_DEBUG("Step {}", 3);
             // 3. Iterate over all candidate operators and add network source sink operators
             for (const auto& candidateOperator : candidateOperators) {
 
@@ -560,6 +566,9 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                 // upstream logical operators.
                 for (const auto& upstreamOperator : originalCopiedOperator->getChildren()) {
 
+                    NES_DEBUG("Connected upstream operator {}",
+                              upstreamOperator->toString())
+
                     // 6. Fetch the id of the topology node hosting the upstream operator to connect.
                     const auto& upstreamOperatorToConnect = upstreamOperator->as<LogicalOperator>();
                     auto upstreamWorkerId = std::any_cast<WorkerId>(upstreamOperatorToConnect->getProperty(PINNED_WORKER_ID));
@@ -576,6 +585,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                     // 9. Find topology nodes connecting the iterated workerId and pinnedUpstreamWorkerId.
                     std::vector<TopologyNodePtr> topologyNodesBetween =
                         pathFinder->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
+
+                    NES_DEBUG("Num of nodes between topology node {} and {} is {}",
+                              upstreamTopologyNode->toString(),
+                              downstreamTopologyNode->toString(),
+                              topologyNodesBetween.size())
 
                     DecomposedQueryPlanPtr querySubPlanWithUpstreamOperator;
 
@@ -636,8 +650,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             } else if (decomposedPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
                                 // The candidate operator is not in the placed state but it is connected to a placed downstream operator
                                 // therefore connected downstream operator prop should be explored
-                                for (const auto& placedOperator : decomposedQueryPlan->getAllOperators()){
-                                    if(placedOperator->as_if<LogicalOperator>()->getOperatorState() == OperatorState::PLACED){
+                                for (const auto& placedOperator : decomposedQueryPlan->getAllOperators()) {
+                                    if (placedOperator->as_if<LogicalOperator>()->getOperatorState() == OperatorState::PLACED) {
                                         decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
                                             placedOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
                                         break;
@@ -645,7 +659,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                 }
 
                                 // Check if found a decomposed query plan
-                                if(decomposedPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID){
+                                if (decomposedPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
                                     NES_ERROR("No placed operator found to retrieve original decomposed query plan.")
                                     throw Exceptions::RuntimeException(
                                         "No placed operator found to retrieve original decomposed query plan.");
@@ -710,6 +724,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                         }
                     }
 
+                    NES_DEBUG("Step {}", 15);
+                    if (!operatorToConnectInMatchedPlan) {
+                        NES_DEBUG(
+                            "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                    }
                     std::map<OperatorId, std::vector<SysPlanMetaData>> downStreamOperatorToConnectedSysPlansMetaDataMap;
                     // 15. Add metadata about the plans and topology nodes hosting the system generated operators.
                     if (operatorToConnectInMatchedPlan->hasProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS)) {
@@ -721,6 +740,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                         connectedSysDecomposedPlanDetails;
                     operatorToConnectInMatchedPlan->addProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS,
                                                                 downStreamOperatorToConnectedSysPlansMetaDataMap);
+                    NES_DEBUG("Step {}", 16);
                 }
             }
         }

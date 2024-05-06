@@ -61,7 +61,6 @@ CopiedPinnedOperators::create(const std::set<LogicalOperatorPtr>& pinnedUpStream
             copyOfPinnedDownStreamOperators.emplace(operatorCopy);
         }
 
-        // Add to the list of topology nodes for which locks are acquired
         const auto& downstreamOperators = operatorToProcess->getParents();
         std::for_each(downstreamOperators.begin(), downstreamOperators.end(), [&](const NodePtr& operatorNode) {
             // only process downstream operators that are either directly or indirectly connected to pinned downstream

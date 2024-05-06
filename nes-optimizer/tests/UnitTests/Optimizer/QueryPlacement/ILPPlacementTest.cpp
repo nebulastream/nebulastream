@@ -97,26 +97,44 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         topologyForILP->registerWorker(middleNodeId, "localhost", 123, 124, 10, properties, 0,0);
         topologyForILP->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
-        WorkerId srcNodeId = 3;
-        topologyForILP->registerWorker(srcNodeId, "localhost", 123, 124, 3, properties, 0,0);
-        topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
-        topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+        WorkerId srcNodeId1 = 3;
+        topologyForILP->registerWorker(srcNodeId1, "localhost", 123, 124, 3, properties, 0,0);
+        topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId1);
+        topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
 
-        topologyForILP->addLinkProperty(middleNodeId, srcNodeId, 512, 100);
+        WorkerId srcNodeId2 = 4;
+        topologyForILP->registerWorker(srcNodeId2, "localhost", 123, 124, 3, properties, 0,0);
+        topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId2);
+        topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
+
+        topologyForILP->addLinkProperty(middleNodeId, srcNodeId1, 512, 100);
+        topologyForILP->addLinkProperty(middleNodeId, srcNodeId2, 512, 100);
         topologyForILP->addLinkProperty(rootNodeId, middleNodeId, 512, 100);
 
-        auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-        const std::string sourceName = "car";
-
         sourceCatalogForILP = std::make_shared<Catalogs::Source::SourceCatalog>();
-        sourceCatalogForILP->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalogForILP->getLogicalSource(sourceName);
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
-        csvSourceType->setGatheringInterval(0);
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(csvSourceType);
-        auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId);
-        sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
+
+        auto schema1 = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        const std::string sourceName1 = "car";
+        sourceCatalogForILP->addLogicalSource(sourceName1, schema1);
+        auto logicalSource1 = sourceCatalogForILP->getLogicalSource(sourceName1);
+        CSVSourceTypePtr csvSourceType1 = CSVSourceType::create(sourceName1, "test2");
+        csvSourceType1->setGatheringInterval(0);
+        csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource1 = PhysicalSource::create(csvSourceType1);
+        auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, srcNodeId1);
+        sourceCatalogForILP->addPhysicalSource(sourceName1, sourceCatalogEntry1);
+
+        auto schema2 = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        const std::string sourceName2 = "truck";
+        sourceCatalogForILP->addLogicalSource(sourceName2, schema2);
+        auto logicalSource2 = sourceCatalogForILP->getLogicalSource(sourceName2);
+        CSVSourceTypePtr csvSourceType2 = CSVSourceType::create(sourceName2, "test2");
+        csvSourceType2->setGatheringInterval(0);
+        csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource2 = PhysicalSource::create(csvSourceType2);
+        auto sourceCatalogEntry2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, srcNodeId2);
+        sourceCatalogForILP->addPhysicalSource(sourceName2, sourceCatalogEntry2);
+
     }
 
     void assignOperatorPropertiesRecursive(LogicalOperatorPtr operatorNode) {
@@ -1165,7 +1183,7 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     //Prepare query plan
-    Query query = Query::from("car").unionWith(Query::from("car")).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").unionWith(Query::from("truck")).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {

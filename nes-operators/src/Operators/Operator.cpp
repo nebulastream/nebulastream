@@ -193,7 +193,9 @@ void Operator::addProperty(const std::string& key, const std::any value) { prope
 
 std::any Operator::getProperty(const std::string& key) { return properties[key]; }
 
-bool Operator::hasProperty(const std::string& key) { return properties.find(key) != properties.end(); }
+bool Operator::hasProperty(const std::string& key) {
+    return properties.contains(key);
+}
 
 void Operator::removeProperty(const std::string& key) { properties.erase(key); }
 
