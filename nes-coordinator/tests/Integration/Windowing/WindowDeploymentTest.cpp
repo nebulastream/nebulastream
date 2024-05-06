@@ -47,8 +47,8 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
 
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Minutes(1)))
-                     .byKey(Attribute("value"))
-                     .apply(Sum(Attribute("id")));
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -93,8 +93,8 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
-                     .byKey(Attribute("value"))
-                     .apply(Sum(Attribute("id")));
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -187,7 +187,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("id")));
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -226,7 +226,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
-                     .apply(Sum(Attribute("id")));
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -709,8 +709,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                                       .byKey(Attribute("value"))
-                                       .apply(Max(Attribute("id")));
+                                       .byKey(Attribute("id"))
+                                       .apply(Max(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("car", "car1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");

@@ -41,7 +41,6 @@ class MultipleWindowsTest : public Testing::BaseIntegrationTest {
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
-    //TODO use testSchemas with Issue#4746
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     auto workerConfig = WorkerConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -54,10 +53,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -117,7 +113,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
-    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -128,10 +123,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -213,7 +205,6 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
-    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -224,10 +215,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -300,7 +288,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
-    //TODO use testSchemas with Issue#4746
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -310,10 +297,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -399,7 +383,6 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
-    //TODO use testSchemas with Issue#4746
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -409,10 +392,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -483,7 +463,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
-    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -493,10 +472,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -586,7 +562,6 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
  * @brief Test all three windows in a row
  */
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
-    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -596,10 +571,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -716,10 +688,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -874,10 +843,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 

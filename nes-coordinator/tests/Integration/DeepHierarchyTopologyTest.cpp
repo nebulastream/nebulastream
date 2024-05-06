@@ -534,14 +534,14 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     auto query = Query::from("window")
                      .filter(Attribute("value") < 15)
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-                     .byKey(Attribute("value"))
-                     .apply(Sum(Attribute("id")))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)))
-                     .byKey(Attribute("value"))
-                     .apply(Sum(Attribute("id")))
-                     .filter(Attribute("value") < 10)
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
+                     .filter(Attribute("id") < 10)
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
-                     .apply(Sum(Attribute("id")));
+                     .apply(Sum(Attribute("value")));
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 

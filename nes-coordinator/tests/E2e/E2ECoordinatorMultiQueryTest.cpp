@@ -336,8 +336,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))"
-              "->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              ":\"Schema::create()->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"value\\\",BasicType::UINT64))"
               "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit={}", schema.str());
@@ -439,8 +439,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))"
-              "->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              ":\"Schema::create()->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"value\\\",BasicType::UINT64))"
               "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit={}", schema.str());
