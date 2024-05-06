@@ -155,8 +155,8 @@ TEST_F(KeyedTumblingWindowTests, testSimpleWindowEventTime) {
 
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .byKey(Attribute("value"))
-                     .apply(Sum(Attribute("id")));
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create("window", "window1");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");

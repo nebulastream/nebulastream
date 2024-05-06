@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -75,10 +76,7 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
                                   uint64_t layers,
                                   uint64_t nodesPerNode,
                                   uint64_t leafNodesPerNode) {
-        auto inputSchema = Schema::create()
-                               ->addField("key", DataTypeFactory::createUInt32())
-                               ->addField("value", DataTypeFactory::createUInt32())
-                               ->addField("timestamp", DataTypeFactory::createUInt64());
+        const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                       .setJoinStrategy(joinStrategy)
@@ -140,8 +138,8 @@ TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
     };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))
-                      .where(Attribute("value"))
-                      .equalsTo(Attribute("value"))
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     // create flat topology with 1 coordinator and 4 sources

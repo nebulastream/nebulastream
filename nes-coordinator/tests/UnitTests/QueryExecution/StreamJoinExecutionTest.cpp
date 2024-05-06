@@ -258,7 +258,6 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
 * Test deploying join with same data and same schema
  * */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
-    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -278,17 +277,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
         }
     };
 
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value", BasicType::UINT64)
-                                ->addField("id", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
-
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("value", BasicType::UINT64)
-                                 ->addField("id", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
@@ -304,7 +294,6 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
  * Test deploying join with same data but different names in the schema
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
-    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -323,17 +312,9 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInpu
                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("value2", BasicType::UINT64)
-                                 ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
@@ -341,7 +322,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInpu
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
@@ -349,7 +330,6 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInpu
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) {
-    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -368,17 +348,9 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) 
                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("value2", BasicType::UINT64)
-                                 ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
@@ -386,7 +358,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) 
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
@@ -394,7 +366,6 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) 
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
-    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -412,16 +383,9 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
                 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("win", BasicType::UINT64)
-                                ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
@@ -429,7 +393,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
@@ -437,7 +401,6 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
-    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -456,17 +419,9 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("value2", BasicType::UINT64)
-                                 ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto windowSlide = Milliseconds(500);
@@ -475,12 +430,11 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
-    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -498,17 +452,9 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value1", BasicType::UINT64)
-                                ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("value2", BasicType::UINT64)
-                                 ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto windowSlide = Milliseconds(250);
@@ -517,7 +463,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window7.csv", "window7.csv", "window_sink7.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
@@ -525,7 +471,6 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
-    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -543,16 +488,9 @@ TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
                 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("win", BasicType::UINT64)
-                                ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto windowSlide = Milliseconds(500);
@@ -561,7 +499,7 @@ TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 

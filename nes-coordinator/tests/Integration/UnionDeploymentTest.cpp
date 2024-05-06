@@ -47,8 +47,8 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         // Setup schemas.
         schemaCarTruck = TestSchemas::getSchemaTemplate("id_val_u64");
         schemaRubyDiamond = Schema::create()
-                                ->addField(createField("value", BasicType::UINT32))
                                 ->addField(createField("id", BasicType::UINT32))
+                                ->addField(createField("value", BasicType::UINT32))
                                 ->addField(createField("timestamp", BasicType::INT32));
     }
 
@@ -145,14 +145,14 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
                                   .setupTopology();
 
     // Expected output
-    auto expectedOutput = "1, 12, 2\n"
-                          "2, 11, 2\n"
-                          "2, 16, 2\n"
-                          "3, 11, 2\n"
-                          "1, 12, 1001\n"
-                          "2, 11, 2001\n"
-                          "2, 16, 2002\n"
-                          "3, 11, 3001\n";
+    auto expectedOutput = "12, 1, 2\n"
+                          "11, 2, 2\n"
+                          "16, 2, 2\n"
+                          "11, 3, 2\n"
+                          "12, 1, 1001\n"
+                          "11, 2, 2001\n"
+                          "16, 2, 2002\n"
+                          "11, 3, 3001\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -194,7 +194,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? value * 1000 : 2;
-        expectedOutput << value << ", " << id << ", " << timestamp << "\n";
+        expectedOutput << id << ", " << value << ", " << timestamp << "\n";
     }
 
     // Run the query and get the actual dynamic buffers
@@ -238,7 +238,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? 2 : 1;
-        expectedOutput << value << ", " << id << ", " << timestamp << "\n";
+        expectedOutput << id << ", " << value << ", " << timestamp << "\n";
     }
 
     // Run the query and get the actual dynamic buffers

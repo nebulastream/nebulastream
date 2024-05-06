@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -121,29 +122,26 @@ TEST_P(MultiThreadedTest, DISABLED_testFilterQuery) {
             return value == rhs.value && id == rhs.id && timestamp == rhs.timestamp;
         }
     };
-    const auto inputSchema = Schema::create()
-                                 ->addField(createField("test1$value", BasicType::UINT64))
-                                 ->addField(createField("test1$id", BasicType::UINT64))
-                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto& outputSchema = inputSchema;
 
     const std::string fileNameBuffers("window.csv");
     const std::vector<ResultRecord> expectedTuples = {{1, 1, 1000},
-                                                      {1, 12, 1001},
-                                                      {1, 4, 1002},
-                                                      {2, 1, 2000},
-                                                      {2, 11, 2001},
-                                                      {2, 16, 2002},
-                                                      {3, 1, 3000},
-                                                      {3, 11, 3001},
-                                                      {3, 1, 3003},
-                                                      {3, 1, 3200},
-                                                      {4, 1, 4000},
-                                                      {5, 1, 5000},
-                                                      {6, 1, 6000},
-                                                      {7, 1, 7000},
-                                                      {8, 1, 8000},
-                                                      {9, 1, 9000}};
+                                                      {12, 1, 1001},
+                                                      {4, 1, 1002},
+                                                      {1, 2, 2000},
+                                                      {11, 2, 2001},
+                                                      {16, 2, 2002},
+                                                      {1, 3, 3000},
+                                                      {11, 3, 3001},
+                                                      {1, 3, 3003},
+                                                      {1, 3, 3200},
+                                                      {1, 4, 4000},
+                                                      {1, 5, 5000},
+                                                      {1, 6, 6000},
+                                                      {1, 7, 7000},
+                                                      {1, 8, 8000},
+                                                      {1, 9, 9000}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -165,11 +163,8 @@ TEST_P(MultiThreadedTest, testProjectQuery) {
 
         bool operator==(const ResultRecord& rhs) const { return id == rhs.id; }
     };
-    const auto inputSchema = Schema::create()
-                                 ->addField(createField("test1$value", BasicType::UINT64))
-                                 ->addField(createField("test1$id", BasicType::UINT64))
-                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto outputSchema = Schema::create()->addField(createField("test1$id", BasicType::UINT64));
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto outputSchema = TestSchemas::getSchemaTemplate("id_u64")->updateSourceName("test1");
 
     const std::string fileNameBuffers("window.csv");
     const std::vector<ResultRecord> expectedTuples = {{1}, {12}, {4}, {1}, {11}, {16}, {1}, {11}, {1}, {1}, {1}, {1}, {1}, {1}};
@@ -225,14 +220,8 @@ std::ostream& operator<<(std::ostream& os, const KeyedResultRecord& record) {
 //todo 4254: re-enable after crashes are fixed
 TEST_P(MultiThreadedTest, DISABLED_testNonKeyedEventTimeTumblingWindowAggregation) {
 
-    const auto inputSchema = Schema::create()
-                                 ->addField(createField("test1$value", BasicType::UINT64))
-                                 ->addField(createField("test1$id", BasicType::UINT64))
-                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto outputSchema = Schema::create()
-                                  ->addField(createField("test1$start", BasicType::UINT64))
-                                  ->addField(createField("test1$end", BasicType::UINT64))
-                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto outputSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test1");
 
     const std::string fileNameBuffers("window.csv");
     const std::vector<NonKeyedResultRecord> expectedTuples = {
@@ -259,14 +248,8 @@ TEST_P(MultiThreadedTest, DISABLED_testNonKeyedEventTimeTumblingWindowAggregatio
 
 TEST_P(MultiThreadedTest, testNonKeyedEventTimeSlidingWindowAggregation) {
 
-    const auto inputSchema = Schema::create()
-                                 ->addField(createField("test1$value", BasicType::UINT64))
-                                 ->addField(createField("test1$id", BasicType::UINT64))
-                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto outputSchema = Schema::create()
-                                  ->addField(createField("test1$start", BasicType::UINT64))
-                                  ->addField(createField("test1$end", BasicType::UINT64))
-                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto outputSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test1");
 
     const std::string fileNameBuffers("window.csv");
     const std::vector<NonKeyedResultRecord> expectedTuples = {
@@ -296,14 +279,8 @@ TEST_P(MultiThreadedTest, testNonKeyedEventTimeSlidingWindowAggregation) {
 
 TEST_P(MultiThreadedTest, testKeyedEventTimeTumblingWindowAggregation) {
 
-    const auto inputSchema = Schema::create()
-                                 ->addField(createField("test1$value", BasicType::UINT64))
-                                 ->addField(createField("test1$id", BasicType::UINT64))
-                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto outputSchema = Schema::create()
-                                  ->addField(createField("test1$start", BasicType::UINT64))
-                                  ->addField(createField("test1$end", BasicType::UINT64))
-                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto outputSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test1");
 
     const std::string fileNameBuffers("window.csv");
     const std::vector<KeyedResultRecord> expectedTuples = {
@@ -334,14 +311,8 @@ TEST_P(MultiThreadedTest, testKeyedEventTimeTumblingWindowAggregation) {
 //todo 4254: re-enable after crashes are fixed
 TEST_P(MultiThreadedTest, DISABLED_testMultipleNonKeyedEventTimeTumblingWindows) {
 
-    const auto inputSchema = Schema::create()
-                                 ->addField(createField("test1$value", BasicType::UINT64))
-                                 ->addField(createField("test1$id", BasicType::UINT64))
-                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto outputSchema = Schema::create()
-                                  ->addField(createField("test1$start", BasicType::UINT64))
-                                  ->addField(createField("test1$end", BasicType::UINT64))
-                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto outputSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test1");
 
     const std::string fileNameBuffers("window.csv");
     const std::vector<NonKeyedResultRecord> expectedTuples =
@@ -355,7 +326,7 @@ TEST_P(MultiThreadedTest, DISABLED_testMultipleNonKeyedEventTimeTumblingWindows)
                            .filter(Attribute("value") < 12)// this is merely to keep the number of output tuples under control
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                            .apply(Sum(Attribute("value")))
-                           .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
+                           .window(TumblingWindow::of(EventTime(Attribute("id2")), Seconds(2)))
                            .apply(Sum(Attribute("value")))
                            .sink(testSinkDescriptor);
 
@@ -370,10 +341,7 @@ TEST_P(MultiThreadedTest, DISABLED_testMultipleNonKeyedEventTimeTumblingWindows)
 
 TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeTumblingWindows) {
 
-    const auto inputSchema = Schema::create()
-                                 ->addField(createField("test1$value", BasicType::UINT64))
-                                 ->addField(createField("test1$id", BasicType::UINT64))
-                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto outputSchema = Schema::create()
                                   ->addField(createField("test1$start", BasicType::UINT64))
                                   ->addField(createField("test1$end", BasicType::UINT64))
