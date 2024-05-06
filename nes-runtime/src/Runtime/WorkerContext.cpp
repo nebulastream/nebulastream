@@ -296,6 +296,7 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
     auto& [futureReference, promiseReference] = iteratorOperatorId->second.value();
     Network::NetworkChannelPtr channel = nullptr;
     for (uint64_t i = 0; i < retries; ++i) {
+        NES_ERROR("wating for channel to connect with id {}", operatorId);
         if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             channel = futureReference.get();
             break;
