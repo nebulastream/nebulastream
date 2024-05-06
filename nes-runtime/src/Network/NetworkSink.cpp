@@ -241,7 +241,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 //workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId(), version);
-                auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), 1000);
+                auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), 10000);
                 if (channel) {
                     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel));
                 } else {
