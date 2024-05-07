@@ -7,12 +7,12 @@ LogLevel: LOG_ERROR
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
-NumOfRuns: 1
+NumOfRuns: 7
 # Initial queries to deploy
-InitialQueries: 1
+InitialQueries: 1024
 
 RunConfig:
-  - QueryPlacementStrategy: ILP
+  - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: false
     PlacementAmendmentThreadCount: 1
     PlacementAmendmentMode: PESSIMISTIC
@@ -22,41 +22,33 @@ RunConfig:
     ConfNum: 1
   - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentThreadCount: 8
     PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 1
+    BatchSize: 8
     NumOfRemoveQueries: 0
-    NumOfAddQueries: 1
-    ConfNum: 1
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    NumOfRemoveQueries: 0
-#    NumOfAddQueries: 8
-#    ConfNum: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    NumOfRemoveQueries: 0
-#    NumOfAddQueries: 8
-#    ConfNum: 3
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    NumOfRemoveQueries: 0
-#    NumOfAddQueries: 8
-#    ConfNum: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    NumOfRemoveQueries: 0
-#    NumOfAddQueries: 8
-#    ConfNum: 5
+    NumOfAddQueries: 8
+    ConfNum: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 8
+    ConfNum: 3
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 8
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 8
+    ConfNum: 4
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 8
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 8
+    ConfNum: 5
