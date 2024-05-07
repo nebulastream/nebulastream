@@ -162,7 +162,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             startBufferingOnAllSources(reqJson, completionQueue);
             //NES_ERROR("Sent buffering messges666666666666666666666666666666666666666666666666666666")
             auto events = createEvents(reqJson);
-            requestHandlerService->queueISQPRequest(events);
+            requestHandlerService->queueISQPRequest(events, false);
 //            NES_ERROR("Inserted request messges666666666666666666666666666666666666666666666666666666")
             //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
 //            if (success) {

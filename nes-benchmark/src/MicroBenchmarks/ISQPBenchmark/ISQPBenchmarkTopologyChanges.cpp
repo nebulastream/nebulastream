@@ -153,7 +153,7 @@ void setupTopology(uint16_t rootNodes,
                                                                                       properties));
     }
 
-    requestHandlerService->queueISQPRequest(rootISQPAddNodeEvents);
+    requestHandlerService->queueISQPRequest(rootISQPAddNodeEvents, true);
 
     std::vector<RequestProcessor::ISQPEventPtr> intermediateISQPAddNodeEvents;
     for (uint16_t counter = 0; counter < intermediateNodes; counter++) {
@@ -166,7 +166,7 @@ void setupTopology(uint16_t rootNodes,
                                                        UINT16_MAX,
                                                        properties));
     }
-    requestHandlerService->queueISQPRequest(intermediateISQPAddNodeEvents);
+    requestHandlerService->queueISQPRequest(intermediateISQPAddNodeEvents, true);
 
     std::vector<RequestProcessor::ISQPEventPtr> leafISQPAddNodeEvents;
     for (uint16_t counter = 0; counter < sourceNodes; counter++) {
@@ -178,7 +178,7 @@ void setupTopology(uint16_t rootNodes,
                                                                                       UINT16_MAX,
                                                                                       properties));
     }
-    requestHandlerService->queueISQPRequest(leafISQPAddNodeEvents);
+    requestHandlerService->queueISQPRequest(leafISQPAddNodeEvents, true);
 
     // Fetch worker Ids
     std::vector<WorkerId> rootWorkerIds = topology->getRootWorkerNodeIds();
@@ -211,7 +211,7 @@ void setupTopology(uint16_t rootNodes,
             linkRemoveEvents.emplace_back(linkRemoveEvent);
         }
     }
-    requestHandlerService->queueISQPRequest(linkRemoveEvents);
+    requestHandlerService->queueISQPRequest(linkRemoveEvents, true);
 
     // Add connection between leaf and intermediate nodes
     std::vector<RequestProcessor::ISQPEventPtr> linkAddEvents;
@@ -232,7 +232,7 @@ void setupTopology(uint16_t rootNodes,
         // Intermediate worker id
         baseStationToConnectedWorkerIds[intermediateWorkerId] = connectedLeafNodeIds;
     }
-    requestHandlerService->queueISQPRequest(linkAddEvents);
+    requestHandlerService->queueISQPRequest(linkAddEvents, true);
 
     // Add link properties between leaf and intermediate nodes
     std::vector<RequestProcessor::ISQPEventPtr> addLinkPropertyEvents;
@@ -257,7 +257,7 @@ void setupTopology(uint16_t rootNodes,
             }
         }
     }
-    requestHandlerService->queueISQPRequest(addLinkPropertyEvents);
+    requestHandlerService->queueISQPRequest(addLinkPropertyEvents, true);
 
     //Create execution Nodes
     for (const auto& workerId : rootWorkerIds) {
@@ -532,7 +532,7 @@ int main(int argc, const char* argv[]) {
                     initialISQPEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
                 }
                 std::cout << "_______________________________Placing initial queries" << std::endl;
-                requestHandlerService->queueISQPRequest(initialISQPEvents);
+                requestHandlerService->queueISQPRequest(initialISQPEvents, true);
                 std::cout << "*******************************Initial queries placed" << std::endl;
 
                 uint64_t numOfTopologyChangeEvents = 4000;
@@ -605,7 +605,7 @@ int main(int argc, const char* argv[]) {
                     auto requestEventTime =
                         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                             .count();
-                    auto response = requestHandlerService->queueISQPRequest(isqpBatch);
+                    auto response = requestHandlerService->queueISQPRequest(isqpBatch, true);
                     batchResponses.emplace_back(
                         std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>(count,
                                                                                                  requestEventTime,

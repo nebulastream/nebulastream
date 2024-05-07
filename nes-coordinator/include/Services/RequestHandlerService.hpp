@@ -157,7 +157,8 @@ class RequestHandlerService {
      * @param isqpEvents a vector of ISQP requests to be handled
      * @return response to the execution of the request
      */
-    RequestProcessor::ISQPRequestResponsePtr queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
+    RequestProcessor::ISQPRequestResponsePtr queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents,
+                                                              bool waitForResponse);
 
   private:
     /**

@@ -138,13 +138,17 @@ bool RequestHandlerService::queueNodeRelocationRequest(const std::vector<Topolog
     return changeResponse->success;
 }
 
-RequestProcessor::ISQPRequestResponsePtr RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents) {
+RequestProcessor::ISQPRequestResponsePtr
+RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents, bool waitForResponse) {
 
     auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES, true);
-    asyncRequestExecutor->runAsync(isqpRequest);
     auto future = isqpRequest->getFuture();
-    auto changeResponse = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
-    return changeResponse;
+    asyncRequestExecutor->runAsync(isqpRequest);
+    if (waitForResponse) {
+        auto changeResponse = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
+        return changeResponse;
+    }
+    return {};
 }
 
 }// namespace NES
