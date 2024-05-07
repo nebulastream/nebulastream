@@ -1183,7 +1183,7 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     //Prepare query plan
-    Query query = Query::from("car").unionWith(Query::from("truck")).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").filter(Attribute("id") == 1).unionWith(Query::from("truck").filter(Attribute("id") == 1)).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {

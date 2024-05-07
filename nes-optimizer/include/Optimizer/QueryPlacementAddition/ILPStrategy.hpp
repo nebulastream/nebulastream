@@ -108,6 +108,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      */
     void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
                                  z3::optimize& opt,
+                                 std::unordered_map<OperatorId, std::vector<WorkerId>> potentialOperatorPinningLocation,
                                  std::map<std::string, z3::expr>& placementVariable,
                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                  std::map<OperatorId, z3::expr>& operatorDistanceMap,
