@@ -28,14 +28,14 @@
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -90,20 +90,20 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
         WorkerId rootNodeId = 1;
-        topologyForILP->registerWorker(rootNodeId, "localhost", 123, 124, 100, properties, 0,0);
+        topologyForILP->registerWorker(rootNodeId, "localhost", 123, 124, 100, properties, 0, 0);
         topologyForILP->addAsRootWorkerId(rootNodeId);
 
         WorkerId middleNodeId = 2;
-        topologyForILP->registerWorker(middleNodeId, "localhost", 123, 124, 10, properties, 0,0);
+        topologyForILP->registerWorker(middleNodeId, "localhost", 123, 124, 10, properties, 0, 0);
         topologyForILP->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
         WorkerId srcNodeId1 = 3;
-        topologyForILP->registerWorker(srcNodeId1, "localhost", 123, 124, 3, properties, 0,0);
+        topologyForILP->registerWorker(srcNodeId1, "localhost", 123, 124, 3, properties, 0, 0);
         topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId1);
         topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
 
         WorkerId srcNodeId2 = 4;
-        topologyForILP->registerWorker(srcNodeId2, "localhost", 123, 124, 3, properties, 0,0);
+        topologyForILP->registerWorker(srcNodeId2, "localhost", 123, 124, 3, properties, 0, 0);
         topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId2);
         topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
 
@@ -134,7 +134,6 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         auto physicalSource2 = PhysicalSource::create(csvSourceType2);
         auto sourceCatalogEntry2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, srcNodeId2);
         sourceCatalogForILP->addPhysicalSource(sourceName2, sourceCatalogEntry2);
-
     }
 
     void assignOperatorPropertiesRecursive(LogicalOperatorPtr operatorNode) {
@@ -383,12 +382,9 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
             OperatorPtr actualRootOperator = actualRootOperators[0];
             // assertion for window and watermark operator being placed after source
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperator>());
             EXPECT_TRUE(
-                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperator>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]
-                            ->getChildren()[0]
-                            ->getChildren()[0]
-                            ->instanceOf<SourceLogicalOperator>());
+                actualRootOperator->getChildren()[0]->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
         } else if (executionNode->operator*()->getId() == 3) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -461,12 +457,9 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
             OperatorPtr actualRootOperator = actualRootOperators[0];
             // assertion for window and watermark operator being placed after source
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperator>());
             EXPECT_TRUE(
-                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperator>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]
-                            ->getChildren()[0]
-                            ->getChildren()[0]
-                            ->instanceOf<SourceLogicalOperator>());
+                actualRootOperator->getChildren()[0]->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
         } else if (executionNode->operator*()->getId() == 3) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -479,7 +472,6 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
         }
     }
 }
-
 
 /* Test query placement with ILP strategy - simple map query */
 TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
@@ -547,7 +539,6 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
         }
     }
 }
-
 
 /* Test query placement with ILP strategy - simple query of source - filter - map - sink */
 TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
@@ -722,7 +713,6 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
             }
         }
     }
-
 
     //Here we add two partially equivalent queries to build a shared query plan to generate change logs
     // Add the new operators to the query plan
@@ -1013,7 +1003,6 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     }
 }
 
-
 /* Test query placement with ILP strategy for query: source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
 TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) {
 
@@ -1183,7 +1172,10 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     //Prepare query plan
-    Query query = Query::from("car").filter(Attribute("id") == 1).unionWith(Query::from("truck").filter(Attribute("id") == 1)).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car")
+                      .filter(Attribute("id") == 1)
+                      .unionWith(Query::from("truck").filter(Attribute("id") == 1))
+                      .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
@@ -1206,18 +1198,28 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
     auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
 
     //Assertion
-    ASSERT_EQ(lockedExecutionNodes.size(), 3U);
+    ASSERT_EQ(lockedExecutionNodes.size(), 4U);
     for (const auto& executionNode : lockedExecutionNodes) {
         if (executionNode->operator*()->getId() == 3) {
             // place filter on source node
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 2U);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
             std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+        } else if (executionNode->operator*()->getId() == 4) {
+            // place filter on source node
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
         } else if (executionNode->operator*()->getId() == 2) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -1235,7 +1237,5 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
             OperatorPtr actualRootOperator = actualRootOperators[0];
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
         }
-
     }
-
 }

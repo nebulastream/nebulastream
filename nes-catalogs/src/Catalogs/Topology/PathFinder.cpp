@@ -198,6 +198,7 @@ std::vector<TopologyNodePtr> PathFinder::findNodesBetween(std::vector<TopologyNo
                                                           std::vector<TopologyNodePtr> destinationNodes) {
     NES_DEBUG("Topology: Find a common ancestor node for the input children nodes.");
     TopologyNodePtr commonAncestorForChildren = findCommonAncestor(std::move(sourceNodes));
+
     if (!commonAncestorForChildren) {
         NES_WARNING("Topology: Unable to find a common ancestor node for the input child node.");
         return {};
@@ -205,11 +206,11 @@ std::vector<TopologyNodePtr> PathFinder::findNodesBetween(std::vector<TopologyNo
 
     NES_DEBUG("Topology: Find a common child node for the input parent nodes.");
     TopologyNodePtr commonChildForParents = findCommonChild(std::move(destinationNodes));
+
     if (!commonChildForParents) {
         NES_WARNING("Topology: Unable to find a common child node for the input parent nodes.");
         return {};
     }
-
     return findNodesBetween(commonAncestorForChildren, commonChildForParents);
 }
 

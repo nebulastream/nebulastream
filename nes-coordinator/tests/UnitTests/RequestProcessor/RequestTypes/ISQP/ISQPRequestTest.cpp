@@ -723,7 +723,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
     isqpEventsForRequest2.emplace_back(queryAddEvent1);
-    //isqpEventsForRequest2.emplace_back(queryAddEvent2);
+    isqpEventsForRequest2.emplace_back(queryAddEvent2);
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);

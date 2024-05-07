@@ -103,9 +103,6 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
 
         // 2. Construct the placementVariable, compute distance, utilization and mileages
         for (const auto& pinnedUpStreamOperator : copy.copiedPinnedUpStreamOperators) {
-
-            NES_DEBUG("PIIIIIIIIIINNNNNNNNNNNNNNNNNNNED Optr {}", pinnedUpStreamOperator->toString());
-
             //2.1 Find all path between pinned upstream and downstream operators
             std::vector<NodePtr> operatorPath;
             std::queue<LogicalOperatorPtr> toProcess;
@@ -384,7 +381,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                 auto connectedPinnedUpstreamNodes = operatorToProcess->getAllLeafNodes();
                 auto connectedPinnedDownstreamNodes = operatorToProcess->getAllRootNodes();
 
-                std::vector<TopologyNodePtr> upstreamWorkers;
+                std::vector<TopologyNodePtr> upstreamTopologyNodes;
                 // Fetch the pinned workerId
                 for (const auto& connectedPinnedUpstreamNode : connectedPinnedUpstreamNodes) {
                     if (!connectedPinnedUpstreamNode->as_if<LogicalOperator>()->hasProperty(PINNED_WORKER_ID)) {
@@ -393,10 +390,20 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                     }
                     auto workerId = std::any_cast<WorkerId>(
                         connectedPinnedUpstreamNode->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID));
-                    upstreamWorkers.emplace_back(workerIdToTopologyNodeMap[workerId]);
+
+                    // Check if the topology node was already added
+                    bool alreadyAdded = std::find_if(upstreamTopologyNodes.begin(),
+                                                     upstreamTopologyNodes.end(),
+                                                     [&](TopologyNodePtr topologyNode) {
+                                                         return topologyNode->getId() == workerId;
+                                                     })
+                        != upstreamTopologyNodes.end();
+                    if (!alreadyAdded) {
+                        upstreamTopologyNodes.emplace_back(workerIdToTopologyNodeMap[workerId]);
+                    }
                 }
 
-                std::vector<TopologyNodePtr> downstreamWorkers;
+                std::vector<TopologyNodePtr> downstreamTopologyNodes;
                 // Fetch the pinned workerId
                 for (const auto& connectedPinnedDownstreamNode : connectedPinnedDownstreamNodes) {
                     if (!connectedPinnedDownstreamNode->as_if<LogicalOperator>()->hasProperty(PINNED_WORKER_ID)) {
@@ -405,15 +412,31 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                     }
                     auto workerId = std::any_cast<WorkerId>(
                         connectedPinnedDownstreamNode->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID));
-                    downstreamWorkers.emplace_back(workerIdToTopologyNodeMap[workerId]);
+                    // Check if the topology node was already added
+                    bool alreadyAdded = std::find_if(downstreamTopologyNodes.begin(),
+                                                     downstreamTopologyNodes.end(),
+                                                     [&](TopologyNodePtr topologyNode) {
+                                                         return topologyNode->getId() == workerId;
+                                                     })
+                        != downstreamTopologyNodes.end();
+                    if (!alreadyAdded) {
+                        downstreamTopologyNodes.emplace_back(workerIdToTopologyNodeMap[workerId]);
+                    }
                 }
 
                 // Find common topology nodes
-                auto commonWorkerNodes = pathFinder->findNodesBetween(upstreamWorkers, downstreamWorkers);
+                auto commonTopologyNodes = pathFinder->findNodesBetween(upstreamTopologyNodes, downstreamTopologyNodes);
 
                 // Possible pinning locations
                 std::vector<WorkerId> possiblePinningLocations;
-                for (const auto& commonWorkerNode : commonWorkerNodes) {
+
+                // If only one upstream topology node then add the upstream topology node to the possible pinning location
+                if (upstreamTopologyNodes.size() == 1) {
+                    possiblePinningLocations.emplace_back(upstreamTopologyNodes[0]->getId());
+                }
+
+                // Iterate over common topology nodes to compute remaining possible pinning locations
+                for (const auto& commonWorkerNode : commonTopologyNodes) {
                     possiblePinningLocations.emplace_back(commonWorkerNode->getId());
                 }
                 // Store potential pinning locations
@@ -553,7 +576,6 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
 
             if (operatorNode->instanceOf<SinkLogicalOperator>() || operatorNode->instanceOf<SourceLogicalOperator>()) {
                 NES_DEBUG("Handling a source or a sink on right topology node");
-
                 if (canBePlaced) {
                     opt.add(P_IJ == 1);
                 } else {
@@ -572,40 +594,50 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
                 auto variableID_new = fmt::format("{}{}{}", operatorID, KEY_SEPARATOR, topologyID);
                 auto PIJ = this->z3Context->int_const(variableID_new.c_str());
                 uint64_t counter = 1;
-                z3::expr checkChildren = (PIJ == 0);
+                z3::expr operatorPinningConstraint = (PIJ == 0);
                 if (canBePlaced) {
-                    checkChildren = (PIJ == 1);
-
+                    operatorPinningConstraint = (PIJ == 1);
                     // Iterating over all children of the current operator node to make sure that children should be placed on a
                     // lower topology node than the current operatorNode (or the same)
                     for (auto child : operatorNode->getChildren()) {
-                        if (!child->instanceOf<SourceLogicalOperator>()) {
-                            auto childID = child->as<LogicalOperator>()->getId();
-                            auto id = fmt::format("{}{}{}", childID, KEY_SEPARATOR, workerNodeIdsInBFS[j]);
-                            auto P_IJ_child = this->z3Context->int_const(id.c_str());
-                            z3::expr checkTopologyNodes = (P_IJ_child == 1);
+                        auto childID = child->as<LogicalOperator>()->getId();
+                        auto id = fmt::format("{}{}{}", childID, KEY_SEPARATOR, workerNodeIdsInBFS[j]);
+                        auto P_IJ_child = this->z3Context->int_const(id.c_str());
 
-                            // Iterating over all positions of topologyNodePath up to the current one
-                            for (uint64_t n = 0; n < j;
-                                 ++n) {// n < j here and n == j in initialising checkTopologyNodes means we actually check n <= j
-                                auto variableID_loop = fmt::format("{}{}{}", childID, KEY_SEPARATOR, workerNodeIdsInBFS[n]);
-                                auto P_IJ_nodes = this->z3Context->int_const(variableID_loop.c_str());
-                                P_IJ_stored[counter][n] = P_IJ_nodes;
+                        //Fetch the potential pinning locations
+                        auto potentialUpstreamOperatorPinningLocations = potentialOperatorPinningLocation[childID];
+
+                        z3::expr_vector upstreamOperatorPinningConstraints(*z3Context);
+                        // Iterating over all positions of topologyNodePath up to the current one
+                        for (uint64_t n = 0; n <= j; ++n) {
+                            // n < j here and n == j in initialising checkTopologyNodes means we actually check n <= j
+                            auto variableID_loop = fmt::format("{}{}{}", childID, KEY_SEPARATOR, workerNodeIdsInBFS[n]);
+                            auto P_IJ_nodes = this->z3Context->int_const(variableID_loop.c_str());
+                            P_IJ_stored[counter][n] = P_IJ_nodes;
+
+                            bool canUpstreamOperatorBePlaced = (std::find(potentialUpstreamOperatorPinningLocations.begin(),
+                                                                          potentialUpstreamOperatorPinningLocations.end(),
+                                                                          workerNodeIdsInBFS[n])
+                                                                != potentialUpstreamOperatorPinningLocations.end());
+                            if (canUpstreamOperatorBePlaced) {
                                 // see if for all the children c of the operator nodes one topologyNode (n) before the current
                                 // one or the current one exists where it (child of operatorNode) is placed
-                                checkTopologyNodes = (checkTopologyNodes || (P_IJ_stored[counter][n] == 1));
+                                upstreamOperatorPinningConstraints.push_back((P_IJ_stored[counter][n] == 1));
                             }
-                            checkChildren = (checkChildren && checkTopologyNodes);
-                            counter++;
                         }
+                        if (!upstreamOperatorPinningConstraints.empty()) {
+                            operatorPinningConstraint =
+                                (operatorPinningConstraint && z3::mk_or(upstreamOperatorPinningConstraints));
+                        }
+                        counter++;
                     }
                 }
                 //either we do NOT place current operatorNode on current topologyNode (first half)
                 //or we place it but then for all children must be true: they are placed not after the current operatorNode
                 //add that condition to the optimizer
-                opt.add(checkChildren);
+                opt.add((P_IJ == 0) || operatorPinningConstraint);
 
-                NES_DEBUG("Print the condition {}", (checkChildren).to_string());
+                NES_DEBUG("Print the condition {}", (operatorPinningConstraint).to_string());
             }
 
             placementVariable.insert(std::make_pair(variableID, P_IJ));
