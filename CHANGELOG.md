@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.124](https://github.com/nebulastream/nebulastream/tree/v0.6.124) (2024-05-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.123...v0.6.124)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Running make format on different platforms results in files being formatted differently [\#3221](https://github.com/nebulastream/nebulastream/issues/3221)
+
 ## [v0.6.123](https://github.com/nebulastream/nebulastream/tree/v0.6.123) (2024-05-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.122...v0.6.123)
