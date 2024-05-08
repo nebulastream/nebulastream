@@ -72,7 +72,11 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                                                       const ErrorHandlerPtr& errorHandler,
                                                       const RequestHandlerServicePtr requestHandlerService) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<TopologyController>(objectMapper, std::move(topology), completeRouterPrefix, errorHandler, requestHandlerService);
+        return std::make_shared<TopologyController>(objectMapper,
+                                                    std::move(topology),
+                                                    completeRouterPrefix,
+                                                    errorHandler,
+                                                    requestHandlerService);
     }
 
     ENDPOINT("GET", "", getTopology) {
@@ -163,22 +167,22 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             //NES_ERROR("Sent buffering messges666666666666666666666666666666666666666666666666666666")
             auto events = createEvents(reqJson);
             requestHandlerService->queueISQPRequest(events, false);
-//            NES_ERROR("Inserted request messges666666666666666666666666666666666666666666666666666666")
+            //            NES_ERROR("Inserted request messges666666666666666666666666666666666666666666666666666666")
             //bool success = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(requestHandlerService->queueISQPRequest(events))->success;
-//            if (success) {
-//                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
-//            } else {
-//                NES_ERROR("TopologyController::handlePost:addParent: Failed");
-//                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
-//            }
+            //            if (success) {
+            //                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
+            //            } else {
+            //                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+            //                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
+            //            }
             //Prepare the response
             nlohmann::json response;
-//            response["success"] = success;
+            //            response["success"] = success;
             response["success"] = true;
             std::vector<RpcAsyncRequest> asyncRequests;
             asyncRequests.emplace_back(RpcAsyncRequest{completionQueue, RpcClientMode::Unregister});
             workerRPCClient->checkAsyncResult(asyncRequests);
-//            NES_ERROR("received results messges666666666666666666666666666666666666666666666666666666")
+            //            NES_ERROR("received results messges666666666666666666666666666666666666666666666666666666")
             return createResponse(Status::CODE_200, response.dump());
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -231,6 +235,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
     //start buffering at all child nodes from the json
     void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
+
+        // std::set<uint64_t> buffer_only;
+        std::set<uint64_t> moving;
         for (const auto& worker : reqJson) {
             std::string action = worker["action"].get<std::string>();
             if (action == "add" || action == "buffer") {
@@ -244,7 +251,34 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 //construct the adress
                 std::string address = ipAddress + ":" + std::to_string(grpcPort);
                 workerRPCClient->startBufferingAsync(address, completionQueue, parentId);
+
+                moving.insert(childId);
+                if (!sourceNodeMapInitialized) {
+                    mobileNodes.push_back(childId);
+                }
+                //buffer_only.insert(sourceNodeMaps[childId].begin(), sourceNodeMaps[parentId].end());
             }
+        }
+        sourceNodeMapInitialized = true;
+
+        //erase all moving node ids from the buffer only set
+        // for (const auto& node : moving) {
+        //     buffer_only.erase(node);
+        // }
+
+        //for (const auto& worker : buffer_only) {
+        for (const auto& worker : mobileNodes) {
+            if (moving.contains(worker)) {
+                continue;
+            }
+            auto node = topology->lockTopologyNode(worker);
+            //get the adress of the node
+            auto ipAddress = node->operator*()->getIpAddress();
+            //get the grpc port
+            auto grpcPort = node->operator*()->getGrpcPort();
+            //construct the adress
+            std::string address = ipAddress + ":" + std::to_string(grpcPort);
+            workerRPCClient->startBufferingAsync(address, completionQueue, -1);
         }
     }
 
@@ -298,6 +332,11 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     ErrorHandlerPtr errorHandler;
     RequestHandlerServicePtr requestHandlerService;
     WorkerRPCClientPtr workerRPCClient;
+    // std::unordered_map<uint64_t, std::vector<uint64_t>> sourceNodeMaps;
+    bool sourceNodeMapInitialized;
+    // SourceCatalogPtr sourceCatalog;
+
+    std::vector<uint64_t> mobileNodes;
 };
 }// namespace REST::Controller
 }// namespace NES
