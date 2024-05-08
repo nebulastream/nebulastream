@@ -55,7 +55,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                        const TopologyPtr& topology,
                        const oatpp::String& completeRouterPrefix,
                        const ErrorHandlerPtr& errorHandler,
-                       const RequestHandlerServicePtr requestHandlerService)
+                       const RequestHandlerServicePtr requestHandlerService, )
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(topology),
           errorHandler(errorHandler), requestHandlerService(requestHandlerService), workerRPCClient(WorkerRPCClient::create()) {}
 
@@ -237,6 +237,18 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
 
         // std::set<uint64_t> buffer_only;
+        if (!sourceNodeMapInitialized) {
+            //auto mobileNodeJson =  topology->getMobileNodes();
+            auto nodeIds = topology->getAllRegisteredNodeIds();
+            for (const auto& nodeId : nodeIds) {
+                auto node = topology->lockTopologyNode(nodeId);
+                if (node->operator*()->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+                    NES_ERROR("adding node {} to mobile nodes", nodeId);
+                    mobileNodes.push_back(nodeId);
+                }
+            }
+            sourceNodeMapInitialized = true;
+        }
         std::set<uint64_t> moving;
         for (const auto& worker : reqJson) {
             std::string action = worker["action"].get<std::string>();
@@ -253,18 +265,10 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 workerRPCClient->startBufferingAsync(address, completionQueue, parentId);
 
                 moving.insert(childId);
-                if (!sourceNodeMapInitialized) {
-                    NES_ERROR("Pushing id {} to list of mobile nodes", worker)
-                    mobileNodes.push_back(childId);
-                }
                 //buffer_only.insert(sourceNodeMaps[childId].begin(), sourceNodeMaps[parentId].end());
             }
         }
 
-        if (!sourceNodeMapInitialized) {
-            sourceNodeMapInitialized = true;
-            return;
-        }
 
         //erase all moving node ids from the buffer only set
         // for (const auto& node : moving) {
@@ -340,7 +344,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     RequestHandlerServicePtr requestHandlerService;
     WorkerRPCClientPtr workerRPCClient;
     // std::unordered_map<uint64_t, std::vector<uint64_t>> sourceNodeMaps;
-    bool sourceNodeMapInitialized;
+    bool sourceNodeMapInitialized = false;
     // SourceCatalogPtr sourceCatalog;
 
     std::vector<uint64_t> mobileNodes;
