@@ -11,3 +11,4 @@
 # limitations under the License.
 
 add_subdirectory(Vectorization)
+add_subdirectory(Runtime)
