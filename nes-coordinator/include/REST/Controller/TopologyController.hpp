@@ -237,18 +237,6 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
 
         // std::set<uint64_t> buffer_only;
-        if (!sourceNodeMapInitialized) {
-            //auto mobileNodeJson =  topology->getMobileNodes();
-            auto nodeIds = topology->getAllRegisteredNodeIds();
-            for (const auto& nodeId : nodeIds) {
-                auto node = topology->lockTopologyNode(nodeId);
-                if (node->operator*()->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-                    NES_ERROR("adding node {} to mobile nodes", nodeId);
-                    mobileNodes.push_back(nodeId);
-                }
-            }
-            sourceNodeMapInitialized = true;
-        }
         std::set<uint64_t> moving;
         for (const auto& worker : reqJson) {
             std::string action = worker["action"].get<std::string>();
@@ -269,6 +257,22 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
         }
 
+        if (!requestHandlerService->isIncrementalPlacementEnabled()) {
+            return;
+        }
+
+        if (!sourceNodeMapInitialized) {
+            //auto mobileNodeJson =  topology->getMobileNodes();
+            auto nodeIds = topology->getAllRegisteredNodeIds();
+            for (const auto& nodeId : nodeIds) {
+                auto node = topology->lockTopologyNode(nodeId);
+                if (node->operator*()->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+                    NES_ERROR("adding node {} to mobile nodes", nodeId);
+                    mobileNodes.push_back(nodeId);
+                }
+            }
+            sourceNodeMapInitialized = true;
+        }
 
         //erase all moving node ids from the buffer only set
         // for (const auto& node : moving) {

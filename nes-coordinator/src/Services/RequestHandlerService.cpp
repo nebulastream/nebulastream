@@ -151,4 +151,8 @@ RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQP
     return {};
 }
 
+bool RequestHandlerService::isIncrementalPlacementEnabled() {
+    return optimizerConfiguration.enableIncrementalPlacement;
+}
+
 }// namespace NES

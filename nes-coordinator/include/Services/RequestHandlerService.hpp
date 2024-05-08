@@ -159,6 +159,7 @@ class RequestHandlerService {
      */
     RequestProcessor::ISQPRequestResponsePtr queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents,
                                                               bool waitForResponse);
+    bool isIncrementalPlacementEnabled();
 
   private:
     /**
