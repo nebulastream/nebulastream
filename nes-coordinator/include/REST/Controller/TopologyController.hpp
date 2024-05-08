@@ -233,7 +233,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
         for (const auto& worker : reqJson) {
             std::string action = worker["action"].get<std::string>();
-            if (action == "add") {
+            if (action == "add" || action == "buffer") {
                 uint64_t childId = worker["childId"].get<uint64_t>();
                 uint64_t parentId = worker["parentId"].get<uint64_t>();
                 auto node = topology->lockTopologyNode(childId);

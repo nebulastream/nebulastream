@@ -314,7 +314,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     //const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
     WorkerId getParentId() const;
-    void setParentId(WorkerId newParent);
+    void setParentId(int64_t newParent);
+    void setParentIdIfInvalid(WorkerId newParent);
     void initializeParentId(WorkerId newParent);
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
@@ -404,7 +405,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool timestampOutPutSources;
     std::map<std::string, int> tcpDescriptor;
     std::mutex tcpDescriptorMutex;
-    std::atomic<WorkerId> parentId;
+    std::atomic<int64_t> parentId;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

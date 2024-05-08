@@ -321,6 +321,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             networkManager->unregisterSubpartitionProducer(nesPartition);
 
             receiverLocation = versionUpdate.nodeLocation;
+            nodeEngine->setParentIdIfInvalid(receiverLocation.getNodeId());
             nesPartition = versionUpdate.partition;
             version = versionUpdate.version;
             messageSequenceNumber = 0;
