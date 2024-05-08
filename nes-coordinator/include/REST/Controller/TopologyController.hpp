@@ -254,12 +254,17 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
                 moving.insert(childId);
                 if (!sourceNodeMapInitialized) {
+                    NES_ERROR("Pushing id {} to list of mobile nodes")
                     mobileNodes.push_back(childId);
                 }
                 //buffer_only.insert(sourceNodeMaps[childId].begin(), sourceNodeMaps[parentId].end());
             }
         }
-        sourceNodeMapInitialized = true;
+
+        if (!sourceNodeMapInitialized) {
+            sourceNodeMapInitialized = true;
+            return;
+        }
 
         //erase all moving node ids from the buffer only set
         // for (const auto& node : moving) {
@@ -269,8 +274,10 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         //for (const auto& worker : buffer_only) {
         for (const auto& worker : mobileNodes) {
             if (moving.contains(worker)) {
+                NES_ERROR("worker {} is moving, do not send another buffering request")
                 continue;
             }
+            NES_ERROR("worker {} is not moving, send buffering request")
             auto node = topology->lockTopologyNode(worker);
             //get the adress of the node
             auto ipAddress = node->operator*()->getIpAddress();
