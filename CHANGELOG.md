@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.123](https://github.com/nebulastream/nebulastream/tree/v0.6.123) (2024-05-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.122...v0.6.123)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate CUDA Kernel Wrapper to CUDA Plugin [\#4815](https://github.com/nebulastream/nebulastream/issues/4815)
+
 ## [v0.6.122](https://github.com/nebulastream/nebulastream/tree/v0.6.122) (2024-05-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.121...v0.6.122)
