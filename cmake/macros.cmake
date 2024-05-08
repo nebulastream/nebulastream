@@ -99,7 +99,15 @@ macro(project_enable_clang_format)
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/tests,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/include")
-    if (NOT ${CLANG_FORMAT_EXECUTABLE} STREQUAL "CLANG_FORMAT_EXE-NOTFOUND")
+    if (NOT NES_SELF_HOSTING)
+        message(WARNING "Not using self-hosting compiler, thus 'format' is disabled")
+        add_custom_target(format
+                          COMMAND echo -e "\nPlease use NES_SELF_HOST=1 to have uniform clang-format version\n"
+                          COMMAND exit 1)
+        add_custom_target(format-check
+                          COMMAND echo -e "\nPlease use NES_SELF_HOST=1 to have uniform clang-format version\n"
+                          COMMAND exit 1)
+    elseif (CLANG_FORMAT_EXECUTABLE)
         message(STATUS "clang-format found, whole source formatting enabled through 'format' target.")
         add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} --fix USES_TERMINAL)
         add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} USES_TERMINAL)
