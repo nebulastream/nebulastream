@@ -46,7 +46,7 @@ VectorizedNonKeyedPreAggregation::VectorizedNonKeyedPreAggregation(
 
 }
 
-// TODO Move this method out of this source file to a more sensible place.
+// TODO #4829 Move this method out of this source file to a more sensible place.
 static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
     auto ref = createNextValueReference(builtInVariable->getType());
     Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
@@ -104,7 +104,7 @@ void VectorizedNonKeyedPreAggregation::execute(ExecutionContext& ctx, RecordBuff
             if (threadId == 0) {
                 auto sliceStore = FunctionCall("getSliceStore", getSliceStore);
                 sliceStore.store(aggregate);
-                // TODO Timestamp for ingestion time is set in ctx in open() method which happens after kernel compilation.
+                // TODO #4831 Timestamp for ingestion time is set in ctx in open() method which happens after kernel compilation.
                 // auto timeFunction = nonKeyedSlicePreAggregationOperator->getTimeFunction();
                 // auto record = memoryProvider->read(projections, bufferAddress, recordIndex);
                 // auto timestampValue = timeFunction->getTs(ctx, record);
