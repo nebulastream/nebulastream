@@ -55,7 +55,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                        const TopologyPtr& topology,
                        const oatpp::String& completeRouterPrefix,
                        const ErrorHandlerPtr& errorHandler,
-                       const RequestHandlerServicePtr requestHandlerService, )
+                       const RequestHandlerServicePtr requestHandlerService)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(topology),
           errorHandler(errorHandler), requestHandlerService(requestHandlerService), workerRPCClient(WorkerRPCClient::create()) {}
 
