@@ -142,4 +142,8 @@ void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) co
                            ctx.getWatermarkTs());
 }
 
+const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& NonKeyedSlicePreAggregation::getAggregationFunctions() {
+    return aggregationFunctions;
+}
+
 }// namespace NES::Runtime::Execution::Operators

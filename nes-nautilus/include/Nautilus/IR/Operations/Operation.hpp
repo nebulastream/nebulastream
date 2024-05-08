@@ -61,6 +61,8 @@ class Operation {
         ReturnOp,
         StoreOp,
         SubOp,
+        ConstAddressOp,
+        BuiltinVariableOp,
     };
 
     explicit Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp);

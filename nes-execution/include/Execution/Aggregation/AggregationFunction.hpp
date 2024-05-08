@@ -29,6 +29,12 @@ class AggregationFunction {
     AggregationFunction(PhysicalTypePtr inputType,
                         PhysicalTypePtr resultType,
                         Expressions::ExpressionPtr inputExpression,
+                        Nautilus::Record::RecordFieldIdentifier inputFieldIdentifier,
+                        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+
+    AggregationFunction(PhysicalTypePtr inputType,
+                        PhysicalTypePtr resultType,
+                        Expressions::ExpressionPtr inputExpression,
                         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /**
@@ -63,13 +69,17 @@ class AggregationFunction {
      */
     virtual uint64_t getSize() = 0;
 
+    const Nautilus::Record::RecordFieldIdentifier& getInputFieldIdentifier();
+
     virtual ~AggregationFunction();
 
   protected:
     const PhysicalTypePtr inputType;
     const PhysicalTypePtr resultType;
     const Expressions::ExpressionPtr inputExpression;
+    const Nautilus::Record::RecordFieldIdentifier inputFieldIdentifier;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
+
 
     /**
      * @brief Load a value from a memref as a specific pyhsical type

@@ -11,11 +11,12 @@
 # limitations under the License.
 
 add_source_files(
-    nes-cuda
-    StagingHandler.cpp
-    Unvectorize.cpp
-    VectorizableOperator.cpp
-    Vectorize.cpp
-    VectorizedMap.cpp
-    VectorizedSelection.cpp
+        nes-cuda
+        StagingHandler.cpp
+        Unvectorize.cpp
+        VectorizableOperator.cpp
+        Vectorize.cpp
+        VectorizedMap.cpp
+        VectorizedSelection.cpp
+        VectorizedNonKeyedPreAggregation.cpp
 )
