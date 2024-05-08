@@ -257,7 +257,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
         }
 
-        if (!requestHandlerService->isIncrementalPlacementEnabled()) {
+        if (requestHandlerService->isIncrementalPlacementEnabled()) {
             return;
         }
 
