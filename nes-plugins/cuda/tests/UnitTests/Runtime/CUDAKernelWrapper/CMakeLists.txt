@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(MemoryLayouts)
-
-
+### CUDA Kernel Wrapper Tests ###
+add_nes_runtime_test(cuda-kernel-wrapper-unit-test-gpu "CUDAKernelWrapperUnitTest.cpp")
+target_link_libraries(cuda-kernel-wrapper-unit-test-gpu nes-cuda)
