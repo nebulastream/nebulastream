@@ -421,6 +421,7 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
             break;
         }
         if (!writeBufferedData(topBuffer.value(), workerContext)) {
+            workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), topBuffer.value());
             NES_WARNING("could not send all data from buffer");
             break;
         }
