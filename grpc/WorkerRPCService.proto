@@ -205,7 +205,7 @@ message ProbeStatisticsReply {
 }
 
 message StartBufferingRequest {
-  int64 parent = 1;
+  uint64 parent = 1;
 }
 
 message StartBufferingReply {
