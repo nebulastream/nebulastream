@@ -254,6 +254,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           Runtime::NesThread::getId());
                 break;
             }
+            nodeEngine->setParentIdIfInvalid(receiverLocation.getNodeId());
             retrieveNewChannelAndUnbuffer(workerContext);
             break;
         }
@@ -321,7 +322,6 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             networkManager->unregisterSubpartitionProducer(nesPartition);
 
             receiverLocation = versionUpdate.nodeLocation;
-            nodeEngine->setParentIdIfInvalid(receiverLocation.getNodeId());
             nesPartition = versionUpdate.partition;
             version = versionUpdate.version;
             messageSequenceNumber = 0;
