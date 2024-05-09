@@ -850,7 +850,10 @@ const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { r
 
 WorkerId NodeEngine::getParentId() const { return parentId; }
 
-void NodeEngine::setParentId(int64_t newParent) { parentId.store(newParent); }
+void NodeEngine::setParentId(int64_t newParent) {
+    NES_ERROR("set parent id to {}", newParent);
+    parentId.store(newParent);
+}
 
 void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
     int64_t expected = -1;
