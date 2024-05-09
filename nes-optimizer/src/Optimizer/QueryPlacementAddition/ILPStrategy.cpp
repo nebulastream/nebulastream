@@ -42,7 +42,7 @@ BasePlacementStrategyPtr ILPStrategy::create(const GlobalExecutionPlanPtr& globa
                                              const TypeInferencePhasePtr& typeInferencePhase,
                                              PlacementAmendmentMode placementAmendmentMode) {
     z3::config cfg;
-    cfg.set("timeout", 1000);
+    cfg.set("timeout", 1000000);
     cfg.set("model", false);
     cfg.set("type_check", false);
     const auto& z3Context = std::make_shared<z3::context>(cfg);
@@ -224,8 +224,16 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
                      + weightOverUtilization * overUtilizationCost);// where the actual optimization happen
 
         // 6. Check if we have solution, return false if that is not the case
-        if (z3::sat != opt.check()) {
-            NES_ERROR("Solver failed.");
+        z3::check_result result;
+        uint8_t maxRetryCount = 4;
+        uint8_t retryCount = 0;
+        while (((result = opt.check()) == z3::unknown) && retryCount < maxRetryCount) {
+            retryCount++;
+            NES_ERROR("Solver Retrying");
+        }
+
+        if (z3::sat != result) {
+            NES_ERROR("Solver failed for {} with {}.", sharedQueryId, result);
             return {false, {}};
         }
 
