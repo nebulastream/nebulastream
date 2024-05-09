@@ -55,7 +55,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      * HybridCompleteQueryMergerRule
      */
     EnumOption<Optimizer::QueryMergerRule> queryMergerRule = {QUERY_MERGER_RULE_CONFIG,
-                                                              Optimizer::QueryMergerRule::DefaultQueryMergerRule,
+                                                              Optimizer::QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule,
                                                               "The rule to be used for performing query merging"};
 
     /**
@@ -115,7 +115,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      */
     EnumOption<Optimizer::PlacementAmendmentMode> placementAmendmentMode = {
         PLACEMENT_AMENDMENT_MODE_CONFIG,
-        Optimizer::PlacementAmendmentMode::PESSIMISTIC,
+        Optimizer::PlacementAmendmentMode::OPTIMISTIC,
         "selects the placement amender mode to use [PESSIMISTIC|OPTIMISTIC]"};
 
     /**
