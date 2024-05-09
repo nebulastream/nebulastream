@@ -858,7 +858,12 @@ void NodeEngine::setParentId(int64_t newParent) {
 void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
     NES_ERROR("trying to overwrite invalid parent id with {}", newParent);
     int64_t expected = -1;
-    parentId.compare_exchange_strong(expected, newParent);
+    auto success = parentId.compare_exchange_strong(expected, newParent);
+    if (success) {
+        NES_ERROR("overwrote id {}", expected);
+    } else {
+        NES_ERROR("did not overwrite id {}", expected);
+    }
 }
 
 void NodeEngine::initializeParentId(WorkerId newParent) {
