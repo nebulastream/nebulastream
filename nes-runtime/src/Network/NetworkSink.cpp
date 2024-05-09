@@ -254,6 +254,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           Runtime::NesThread::getId());
                 break;
             }
+            nodeEngine->setParentIdIfInvalid(receiverLocation.getNodeId());
             retrieveNewChannelAndUnbuffer(workerContext);
             break;
         }
@@ -328,7 +329,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             break;
         }
         case Runtime::ReconfigurationType::ConnectionEstablished: {
-            nodeEngine->setParentIdIfInvalid(receiverLocation.getNodeId());
+            // nodeEngine->setParentIdIfInvalid(receiverLocation.getNodeId());
         }
         default: {
             break;
