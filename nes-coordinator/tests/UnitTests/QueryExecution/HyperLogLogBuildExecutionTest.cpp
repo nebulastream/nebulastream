@@ -116,8 +116,7 @@ class HyperLogLogBuildExecutionTest
                                      std::vector<TupleBuffer> allInputBuffers) {
 
         // Creating the query
-        auto window =
-            SlidingWindow::of(timeCharacteristic, Milliseconds(windowSize), Milliseconds(windowSlide));
+        auto window = SlidingWindow::of(timeCharacteristic, Milliseconds(windowSize), Milliseconds(windowSlide));
         auto query = TestQuery::from(testSourceDescriptor)
                          .buildStatistic(window, hyperLogLogDescriptor, metricHash, sendingPolicy, triggerCondition)
                          .sink(testSinkDescriptor);
