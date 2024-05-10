@@ -117,4 +117,16 @@ bool SourceCatalogService::reset() {
     std::unique_lock<std::mutex> lock(sourceCatalogMutex);
     return sourceCatalog->reset();
 }
+
+bool SourceCatalogService::addKeyDistributionEntry(const Catalogs::Source::SourceCatalogEntryPtr& entry,
+                                                   std::set<uint64_t> keys) {
+    std::unique_lock<std::mutex> lock(sourceCatalogMutex);
+    if (sourceCatalog->getKeyDistributionMap().contains(entry)) {
+        NES_WARNING("SourceCatalogService::addKeyDistributionEntry: entry {} already exists, overwriting values",
+                    entry->toString());
+    }
+    sourceCatalog->getKeyDistributionMap()[entry] = std::move(keys);
+    return true;
+}
+
 }//namespace NES

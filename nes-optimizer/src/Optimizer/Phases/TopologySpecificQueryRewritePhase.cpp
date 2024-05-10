@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedMatrixJoinRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedNemoJoinRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeInterface.hpp>
 #include <utility>
@@ -35,7 +37,8 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
     Configurations::OptimizerConfiguration optimizerConfiguration,
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler)
-    : topology(topology), optimizerConfiguration(optimizerConfiguration), statisticProbeHandler(statisticProbeHandler) {
+    : topology(topology), optimizerConfiguration(optimizerConfiguration), statisticProbeHandler(statisticProbeHandler),
+      sourceCatalog(sourceCatalog) {
     logicalSourceExpansionRule =
         LogicalSourceExpansionRule::create(sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion);
 }
@@ -48,6 +51,10 @@ QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) 
     if (optimizerConfiguration.joinOptimizationMode == DistributedJoinOptimizationMode::MATRIX) {
         auto matrixJoinRule = DistributedMatrixJoinRule::create(optimizerConfiguration, topology);
         queryPlan = matrixJoinRule->apply(queryPlan);
+    } else if (optimizerConfiguration.joinOptimizationMode == DistributedJoinOptimizationMode::NEMO) {
+        auto nemoJoinRule =
+            DistributedNemoJoinRule::create(optimizerConfiguration, topology, sourceCatalog->getKeyDistributionMap());
+        queryPlan = nemoJoinRule->apply(queryPlan);
     }
     return queryPlan;
 }
