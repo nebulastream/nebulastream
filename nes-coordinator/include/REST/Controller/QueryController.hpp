@@ -211,6 +211,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("POST", "/execute-multiple-queries", submitMultiQuery, BODY_STRING(String, request)) {
         try {
+            NES_ERROR("addign multiple queries")
             //nlohmann::json library has trouble parsing Oatpp String type
             //we extract a std::string from the Oatpp String type to then be parsed
             //            std::string req = request.getValue("{}");
@@ -221,6 +222,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
             //iterate over list in json and create requests
             for (auto& requestJson : requestListJson) {
+                NES_ERROR("adding query to list of queries to deploy");
 
                 auto error = validateUserRequest(requestJson);
                 if (error.has_value()) {

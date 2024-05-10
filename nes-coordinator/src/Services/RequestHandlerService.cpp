@@ -58,6 +58,7 @@ RequestHandlerService::RequestHandlerService(Configurations::OptimizerConfigurat
 
 void RequestHandlerService::validateAndQueueMultiQueryRequest(std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings) {
 
+    NES_ERROR("adding {} queries using isqp request", queryStrings.size());
     //vector of add query events
     std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
 
