@@ -105,6 +105,7 @@ void PlacementAmendmentInstance::execute() {
         //deployment phase
         auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
+        NES_ERROR("Deployed query with shared query id: {}", sharedQueryId);
     }
     //Mark as completed
     completionPromise.set_value(true);
