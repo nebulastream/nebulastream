@@ -26,6 +26,7 @@
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
@@ -54,6 +55,25 @@ RequestHandlerService::RequestHandlerService(Configurations::OptimizerConfigurat
                                                                          udfCatalog,
                                                                          optimizerConfiguration.performAdvanceSemanticValidation);
 }
+
+void RequestHandlerService::validateAndQueueMultiQueryRequest(std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings) {
+
+    //vector of add query events
+    std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
+
+    for (const auto& query : queryStrings) {
+        auto queryPlan = syntacticQueryValidation->validate(query.first);
+        if (queryPlan == nullptr) {
+            NES_THROW_RUNTIME_ERROR("Query validation failed.");
+        }
+        auto addQueryEvent = RequestProcessor::ISQPAddQueryEvent::create(queryPlan, query.second);
+        isqpEvents.push_back(addQueryEvent);
+    }
+    auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES, true);
+    auto future = isqpRequest->getFuture();
+    asyncRequestExecutor->runAsync(isqpRequest);
+}
+
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                                const Optimizer::PlacementStrategy placementStrategy) {

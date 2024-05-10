@@ -19,6 +19,7 @@
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
@@ -190,6 +191,74 @@ class QueryController : public oatpp::web::server::api::ApiController {
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
+            return createResponse(Status::CODE_202, response.dump());
+        } catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (const MapEntryNotFoundException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (nlohmann::json::exception& e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
+        }
+    }
+
+    ENDPOINT("POST", "/execute-multiple-queries", submitMultiQuery, BODY_STRING(String, request)) {
+        try {
+            //nlohmann::json library has trouble parsing Oatpp String type
+            //we extract a std::string from the Oatpp String type to then be parsed
+            //            std::string req = request.getValue("{}");
+            std::string req = request.getValue("[]");
+
+            nlohmann::json requestListJson = nlohmann::json::parse(req);
+            std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings;
+
+            //iterate over list in json and create requests
+            for (auto& requestJson : requestListJson) {
+
+                auto error = validateUserRequest(requestJson);
+                if (error.has_value()) {
+                    return error.value();
+                }
+                if (!validatePlacementStrategy(requestJson["placement"].get<std::string>())) {
+                    std::string errorMessage = "Invalid Placement Strategy: " + requestJson["placement"].get<std::string>()
+                        + ". Further info can be found at https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                }
+                auto userQuery = requestJson["userQuery"].get<std::string>();
+
+                std::string placementStrategyString = DEFAULT_PLACEMENT_STRATEGY_TYPE;
+
+                if (requestJson.contains("placement")) {
+                    if (!validatePlacementStrategy(placementStrategyString = requestJson["placement"].get<std::string>())) {
+                        NES_ERROR("QueryController: handlePost -execute-query: Invalid Placement Strategy Type provided: {}",
+                                  placementStrategyString);
+                        std::string errorMessage = "Invalid Placement Strategy Type provided: " + placementStrategyString
+                            + ". Valid Placement Strategies are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.";
+                        return errorHandler->handleError(Status::CODE_400, errorMessage);
+                    } else {
+                        placementStrategyString = requestJson["placement"].get<std::string>();
+                    }
+                }
+
+                auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
+                NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
+                          userQuery,
+                          placementStrategyString);
+                queryStrings.push_back(std::make_pair(userQuery, placement));
+            }
+
+            //            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);
+            requestHandlerService->validateAndQueueMultiQueryRequest(queryStrings);
+            //Prepare the response
+            nlohmann::json response;
+            response["queryId"] = 0;
             return createResponse(Status::CODE_202, response.dump());
         } catch (const InvalidQueryException& exc) {
             NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "

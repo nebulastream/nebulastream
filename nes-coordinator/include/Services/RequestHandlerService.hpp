@@ -161,6 +161,8 @@ class RequestHandlerService {
                                                               bool waitForResponse);
     bool isIncrementalPlacementEnabled();
 
+    void validateAndQueueMultiQueryRequest(std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings);
+
   private:
     /**
      * Assign unique operator ids to the incoming query plan from a client.

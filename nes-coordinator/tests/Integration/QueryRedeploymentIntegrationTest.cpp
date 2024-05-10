@@ -334,10 +334,27 @@ TEST_P(QueryRedeploymentIntegrationTest, testCentralReconnects) {
     wrk2->replaceParent(crd->getNesWorker()->getWorkerId(), wrkBelowCrd->getWorkerId());
 
     //start query
-    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")"
-            + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
-        Optimizer::PlacementStrategy::BottomUp);
+//    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
+//        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")"
+//            + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+//        Optimizer::PlacementStrategy::BottomUp);
+
+    nlohmann::json events = nlohmann::json::array();
+
+    nlohmann::json executeEvent{};
+    executeEvent["userQuery"] = R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")"
+                + testFile + R"(", "CSV_FORMAT", "APPEND"));)";
+    executeEvent["placement"] = "BottomUp";
+    events.push_back(executeEvent);
+    auto asyncResp = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-multiple-queries"},
+                                    cpr::Header{{"Content-Type", "application/json"}},
+                                    cpr::Body{events.dump()},
+                                    cpr::ConnectTimeout{3000},
+                                    cpr::Timeout{30000});
+    asyncResp.wait();
+
+    // todo: properly obtain query id
+    QueryId queryId = crd->getQueryCatalog()->getAllQueryEntries()[0]["queryId"];
     auto networkSinkWrk3Id = 31;
     auto networkSrcWrk3Id = 32;
 

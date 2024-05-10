@@ -418,6 +418,7 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     }
     //Link both catalogs
     queryCatalog->linkSharedQuery(queryId, sharedQueryId);
+    NES_ERROR("Added query {} with shared query id {} to query catalog", queryId, sharedQueryId);
     return queryId;
 }
 
