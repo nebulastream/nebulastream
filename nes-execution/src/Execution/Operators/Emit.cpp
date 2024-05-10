@@ -71,6 +71,7 @@ void Emit::emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& recordBuffer, c
     recordBuffer.setSequenceNr(ctx.getSequenceNumber());
     recordBuffer.setChunkNr(ctx.getNextChunkNr());
     recordBuffer.setLastChunk(lastChunk);
+    recordBuffer.setCreationTs(ctx.getCurrentTs());
     ctx.emitBuffer(recordBuffer);
 
     if (lastChunk == true) {
