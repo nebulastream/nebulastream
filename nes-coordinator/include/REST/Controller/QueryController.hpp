@@ -218,7 +218,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             std::string req = request.getValue("[]");
 
             nlohmann::json requestListJson = nlohmann::json::parse(req);
-            std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings;
+            std::vector<std::string> queryStrings;
 
             //iterate over list in json and create requests
             for (auto& requestJson : requestListJson) {
@@ -253,11 +253,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                           userQuery,
                           placementStrategyString);
-                queryStrings.push_back(std::make_pair(userQuery, placement));
+//                queryStrings.push_back(std::make_pair(userQuery, placement));
+                queryStrings.push_back(userQuery);
             }
 
             //            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);
-            requestHandlerService->validateAndQueueMultiQueryRequest(queryStrings);
+            requestHandlerService->validateAndQueueMultiQueryRequestParallel(queryStrings);
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = 0;

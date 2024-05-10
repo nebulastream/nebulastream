@@ -161,8 +161,9 @@ class RequestHandlerService {
                                                               bool waitForResponse);
     bool isIncrementalPlacementEnabled();
 
-    void validateAndQueueMultiQueryRequest(std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings);
+    void validateAndQueueMultiQueryRequest(std::vector<std::pair<std::string, Optimizer::PlacementStrategy>> queryStrings, uint64_t duplicationFactor = 1);
 
+    void validateAndQueueMultiQueryRequestParallel(std::vector<std::string> queries);
   private:
     /**
      * Assign unique operator ids to the incoming query plan from a client.
@@ -177,6 +178,8 @@ class RequestHandlerService {
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     NES::RequestProcessor::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
+    void validateAndQueueMultiQueryRequest(std::vector<std::string, Optimizer::PlacementStrategy> queryStrings,
+                                           uint64_t duplicationFactor);
 };
 
 }// namespace NES
