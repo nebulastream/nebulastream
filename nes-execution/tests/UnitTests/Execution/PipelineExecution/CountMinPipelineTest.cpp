@@ -91,7 +91,7 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
         sinkDataCodec = std::get<1>(GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
-        inputSchema = Schema::create()->addField(fieldToBuildCountMinOver, BasicType::UINT64)->addField(timestampFieldName, BasicType::UINT64);
+        inputSchema = Schema::create()->addField(fieldToBuildCountMinOver, BasicType::INT64)->addField(timestampFieldName, BasicType::UINT64);
         outputSchema = Schema::create()->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
@@ -169,7 +169,7 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
 TEST_P(CountMinPipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, width = 32, depth = 3;
     constexpr auto numberOfBitsInKey = sizeof(64) * 8;
-    const std::vector inputOrigins = {OriginId(0)};
+    const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
@@ -198,7 +198,7 @@ TEST_P(CountMinPipelineTest, singleInputTuple) {
 TEST_P(CountMinPipelineTest, multipleInputBuffers) {
     constexpr auto windowSize = 1000, windowSlide = 1000, width = 8096, depth = 10;
     constexpr auto numberOfBitsInKey = sizeof(64) * 8;
-    const std::vector inputOrigins = {OriginId(0)};
+    const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);

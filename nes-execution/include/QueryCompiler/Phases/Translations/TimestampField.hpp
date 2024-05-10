@@ -47,6 +47,8 @@ class TimestampField {
      */
     [[nodiscard]] const std::string& getName() const;
 
+    [[nodiscard]] const TimeFunctionType& getTimeFunctionType() const;
+
 
     /**
      * Builds the TimeFunction

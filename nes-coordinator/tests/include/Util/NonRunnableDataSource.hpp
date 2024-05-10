@@ -45,6 +45,12 @@ class NonRunnableDataSource : public NES::DefaultSource {
 
     void emitBuffer(Runtime::TupleBuffer& buffer);
 
+    /**
+     * @brief #4888 discusses, if we should rename the method
+     * @param buffer
+     */
+    void emitWork(Runtime::TupleBuffer& buffer) override;
+
   private:
     std::promise<bool> canTerminate;
 };
