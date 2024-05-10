@@ -64,7 +64,7 @@ void RequestHandlerService::validateAndQueueMultiQueryRequest(std::vector<std::p
 
     auto count = 0;
     for (const auto& query : queryStrings) {
-        NES_ERROR("validating query {}", queryStrings.size());
+        NES_ERROR("validating query {}", count);
         auto queryPlan = syntacticQueryValidation->validate(query.first);
         if (queryPlan == nullptr) {
             NES_THROW_RUNTIME_ERROR("Query validation failed.");
