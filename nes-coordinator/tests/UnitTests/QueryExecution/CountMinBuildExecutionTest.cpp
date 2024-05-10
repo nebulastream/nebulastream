@@ -18,12 +18,12 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
-#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 
 namespace NES::Runtime::Execution {
 using namespace std::chrono_literals;
@@ -120,8 +120,7 @@ class CountMinBuildExecutionTest
                                      std::vector<TupleBuffer> allInputBuffers) {
 
         // Creating the query
-        auto window =
-            SlidingWindow::of(timeCharacteristic, Milliseconds(windowSize), Milliseconds(windowSlide));
+        auto window = SlidingWindow::of(timeCharacteristic, Milliseconds(windowSize), Milliseconds(windowSlide));
         auto query = TestQuery::from(testSourceDescriptor)
                          .buildStatistic(window, countMinDescriptor, metricHash, sendingPolicy, triggerCondition)
                          .sink(testSinkDescriptor);
