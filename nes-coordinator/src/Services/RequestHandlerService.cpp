@@ -62,16 +62,19 @@ void RequestHandlerService::validateAndQueueMultiQueryRequest(std::vector<std::p
     //vector of add query events
     std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
 
+    auto count = 0;
     for (const auto& query : queryStrings) {
+        NES_ERROR("validating query {}", queryStrings.size());
         auto queryPlan = syntacticQueryValidation->validate(query.first);
         if (queryPlan == nullptr) {
             NES_THROW_RUNTIME_ERROR("Query validation failed.");
         }
         auto addQueryEvent = RequestProcessor::ISQPAddQueryEvent::create(queryPlan, query.second);
         isqpEvents.push_back(addQueryEvent);
+        count++;
     }
+    NES_ERROR("queue isqp request");
     auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES, true);
-    auto future = isqpRequest->getFuture();
     asyncRequestExecutor->runAsync(isqpRequest);
 }
 
