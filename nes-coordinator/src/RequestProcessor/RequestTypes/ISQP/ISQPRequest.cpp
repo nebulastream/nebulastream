@@ -133,6 +133,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 handleRemoveLinkRequest(event->as<ISQPRemoveLinkEvent>());
                 event->response.set_value(std::make_shared<ISQPRemoveLinkResponse>(true));
             } else if (event->instanceOf<ISQPAddQueryEvent>()) {
+                NES_ERROR("handleAddQueryRequest");
                 auto queryId = handleAddQueryRequest(event->as<ISQPAddQueryEvent>());
                 event->response.set_value(std::make_shared<ISQPAddQueryResponse>(queryId));
             } else if (event->instanceOf<ISQPRemoveQueryEvent>()) {
@@ -150,6 +151,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         std::vector<std::future<bool>> completedAmendments;
         //NES_ERROR("start instances for sqp {} events --------------------------------------------------------------------------------------------", sharedQueryPlans.size())
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
+            NES_ERROR("Creating amendment instance for shared query plan {}", sharedQueryPlan->getId());
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,
                                                                                           topology,
