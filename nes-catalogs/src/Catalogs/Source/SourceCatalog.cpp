@@ -281,4 +281,10 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Sc
     return true;
 }
 
+void SourceCatalog::setKeyDistributionMap(std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& distributionMap) {
+    this->keyDistributionMap = distributionMap;
+}
+
+std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& SourceCatalog::getKeyDistributionMap() { return keyDistributionMap; }
+
 }// namespace NES::Catalogs::Source

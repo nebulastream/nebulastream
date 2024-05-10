@@ -33,6 +33,8 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 
+#include <filesystem>
+
 namespace NES {
 
 /**
@@ -127,6 +129,8 @@ namespace TestUtils {
 
 [[nodiscard]] std::string enableNemoPlacement() { return "--optimizer.enableNemoPlacement=true"; }
 
+[[nodiscard]] std::string enableNemoJoin() { return "--optimizer.distributedJoinOptimizationMode=NEMO"; }
+
 [[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
     return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);
 }
@@ -143,8 +147,13 @@ namespace TestUtils {
    * @return coordinator process, which terminates if it leaves the scope
    */
 [[nodiscard]] Util::Subprocess startCoordinator(std::initializer_list<std::string> list) {
-    NES_INFO("Start coordinator");
-    return {std::string(PATH_TO_BINARY_DIR) + "/nes-coordinator/nesCoordinator", list};
+    auto crdPath = std::string(PATH_TO_BINARY_DIR) + "/nes-coordinator/nesCoordinator";
+    if (std::filesystem::exists(crdPath)) {
+        NES_INFO("Start coordinator");
+    } else {
+        NES_ERROR("TestUtils: Coordinator binary does not exist in {}", crdPath);
+    }
+    return {crdPath, list};
 }
 
 /**
@@ -153,8 +162,13 @@ namespace TestUtils {
      * @return worker process, which terminates if it leaves the scope
      */
 [[nodiscard]] Util::Subprocess startWorker(std::initializer_list<std::string> flags) {
-    NES_INFO("Start worker");
-    return {std::string(PATH_TO_BINARY_DIR) + "/nes-worker/nesWorker", flags};
+    auto workerPath = std::string(PATH_TO_BINARY_DIR) + "/nes-worker/nesWorker";
+    if (std::filesystem::exists(workerPath)) {
+        NES_INFO("Start worker");
+    } else {
+        NES_ERROR("TestUtils: Worker binary does not exist in {}", workerPath);
+    }
+    return {workerPath, flags};
 }
 
 /**
@@ -714,6 +728,20 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffe
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
     NES_DEBUG("startQueryViaRest: status ={}", result.dump());
+
+    return result;
+}
+
+[[nodiscard]] nlohmann::json addSourceStatistics(const string& queryString, const std::string& restPort) {
+    nlohmann::json json_return;
+
+    std::string url = BASE_URL + restPort + "/v1/nes/sourceCatalog/addSourceStatistics";
+    nlohmann::json jsonReturn;
+    auto future = cpr::PostAsync(cpr::Url{url}, cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{queryString});
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    NES_DEBUG("addSourceStatistics: status ={}", result.dump());
 
     return result;
 }

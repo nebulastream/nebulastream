@@ -25,8 +25,6 @@ add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInference
         "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/StatisticIdInferenceTest.cpp"
         "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp"
-        "UnitTests/Optimizer/QueryPlacement/DistributedMatrixJoinPlacementTest.cpp"
-        "UnitTests/Optimizer/QueryPlacement/NemoJoinPlacementTest.cpp"
         "UnitTests/Optimizer/QuerySignatures/QuerySignatureUtilTests.cpp"
         "UnitTests/Optimizer/QuerySignatures/QueryContainmentIdentificationTest.cpp"
         "UnitTests/Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRuleTest.cpp"
@@ -47,6 +45,10 @@ add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInference
         "UnitTests/Optimizer/QueryRewrite/RenameSourceToProjectOperatorRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/BinaryOperatorSortRuleTest.cpp")
+
+### NEMO Placement Tests ###
+add_nes_unit_test(distributed-matrix-join-test "UnitTests/Optimizer/QueryPlacement/DistributedMatrixJoinPlacementTest.cpp")
+add_nes_unit_test(nemo-join-placement-test "UnitTests/Optimizer/QueryPlacement/NemoJoinPlacementTest.cpp")
 
 ### Global Query Plan Tests ###
 add_nes_unit_test(global-query-plan-tests "UnitTests/Plans/Global/Query/GlobalQueryPlanTest.cpp")

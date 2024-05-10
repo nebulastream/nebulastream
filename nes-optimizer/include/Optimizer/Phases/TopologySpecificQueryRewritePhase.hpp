@@ -84,6 +84,7 @@ class TopologySpecificQueryRewritePhase {
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     Configurations::OptimizerConfiguration optimizerConfiguration;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_

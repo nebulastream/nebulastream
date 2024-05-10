@@ -46,10 +46,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 
@@ -111,7 +111,14 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
                         leafNodes++;
                     }
                     nodeId++;
-                    topology->registerWorker(WorkerId(nodeId), "localhost", 4000 + nodeId, 5000 + nodeId, resources, properties, 0, 0);
+                    topology->registerWorker(WorkerId(nodeId),
+                                             "localhost",
+                                             4000 + nodeId,
+                                             5000 + nodeId,
+                                             resources,
+                                             properties,
+                                             0,
+                                             0);
                     topology->removeTopologyNodeAsChild(WorkerId(rootId), WorkerId(nodeId));
                     topology->addTopologyNodeAsChild(parent, WorkerId(nodeId));
                     nodes.emplace_back(nodeId);
@@ -156,11 +163,12 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
     /**
      * Performs an operator placement based on the given query, topology, source catalog and optimizer config.
      */
-    static std::tuple<SharedQueryId, GlobalExecutionPlanPtr> runPlacement(const Query& query,
-                                                                     const TopologyPtr& topology,
-                                                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                     const OptimizerConfiguration& optimizerConfig,
-                                                                     const Statistic::StatisticProbeHandlerPtr statisticProbeHandler) {
+    static std::tuple<SharedQueryId, GlobalExecutionPlanPtr>
+    runPlacement(const Query& query,
+                 const TopologyPtr& topology,
+                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                 const OptimizerConfiguration& optimizerConfig,
+                 const Statistic::StatisticProbeHandlerPtr statisticProbeHandler) {
         std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
@@ -230,8 +238,10 @@ TEST_F(DistributedMatrixJoinPlacementTest, testMatrixJoin) {
     const std::vector<WorkerId>& sourceNodes = {WorkerId(2), WorkerId(3), WorkerId(4), WorkerId(5)};
     auto topology = setupTopology(2, 3, 4);
     auto sourceCatalog = setupJoinSourceCatalog(sourceNodes);
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
-
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          Topology::create());
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.joinOptimizationMode = DistributedJoinOptimizationMode::MATRIX;

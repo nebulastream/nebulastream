@@ -246,11 +246,14 @@ class TestHarness {
     /**
      * @brief Method to setup the topology
      * @param crdConfigFunctor A function pointer to specify the config changes of the CoordinatorConfiguration
+     * @param distributionList A distribution of keys of each source for joins in JSON format
      * @return the TestHarness
      */
-    TestHarness& setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor =
-                                   [](CoordinatorConfigurationPtr) {
-                                   });
+    TestHarness& setupTopology(
+        std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor =
+            [](CoordinatorConfigurationPtr) {
+            },
+        const std::vector<nlohmann::json>& distributionList = {});
 
     /**
      * @brief Runs the query based on the given operator, pushed elements, and number of workers.

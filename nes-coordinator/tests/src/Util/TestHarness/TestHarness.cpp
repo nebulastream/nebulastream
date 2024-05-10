@@ -62,14 +62,13 @@ TestHarness& TestHarness::setWindowingStrategy(QueryCompilation::WindowingStrate
 }
 
 void TestHarness::checkAndAddLogicalSources() {
+    auto sourceCatalog = nesCoordinator->getSourceCatalog();
 
     for (const auto& logicalSource : logicalSources) {
-
         auto logicalSourceName = logicalSource->getLogicalSourceName();
         auto schema = logicalSource->getSchema();
 
         // Check if logical source already exists
-        auto sourceCatalog = nesCoordinator->getSourceCatalog();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
             NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
                       logicalSourceName);
@@ -315,7 +314,8 @@ std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
     return TestUtils::createTestTupleBuffers(tupleBuffers, schema);
 }
 
-TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor) {
+TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor,
+                                        const std::vector<nlohmann::json>& distributionList) {
     if (!validationDone) {
         NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
     }
@@ -388,6 +388,34 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
                 NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find setup topology in given timeout.");
             }
         }
+    }
+
+    // set up the key distribution
+    auto sourceCatalog = nesCoordinator->getSourceCatalog();
+    if (!distributionList.empty()) {
+        for (auto jsonFields : distributionList) {
+            auto workerId = WorkerId(jsonFields["topologyNodeId"]);
+            std::string logSourceName = jsonFields["logicalSource"];
+            std::string phSourceName = jsonFields["physicalSource"];
+            std::string fieldName = jsonFields["fieldName"];
+            std::string value = jsonFields["value"];
+
+            Catalogs::Source::SourceCatalogEntryPtr catalogEntry;
+            std::vector<Catalogs::Source::SourceCatalogEntryPtr> physicalSources =
+                sourceCatalog->getPhysicalSources(logSourceName);
+            for (const auto& phSource : physicalSources) {
+                if (phSource->getLogicalSource()->getLogicalSourceName() == logSourceName
+                    && phSource->getPhysicalSource()->getPhysicalSourceName() == phSourceName
+                    && phSource->getTopologyNodeId() == workerId) {
+                    catalogEntry = phSource;
+                    std::set<uint64_t> vals = {std::stoull(value)};
+                    sourceCatalog->getKeyDistributionMap()[catalogEntry] = {vals};
+                    break;
+                }
+            }
+        }
+    } else {
+        NES_DEBUG("TestHarness: Key distribution list is empty.")
     }
     topologySetupDone = true;
     return *this;

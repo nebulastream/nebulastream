@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <set>
 
 namespace NES {
 
@@ -108,6 +109,14 @@ class SourceCatalogService {
      * @return vector containing source catalog entry
      */
     std::vector<Catalogs::Source::SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
+
+
+    /**
+     * Adds the key distribution for a given source catalog entry.
+     * @param catalogEntry
+     * @return true if success, else false
+     */
+    bool addKeyDistributionEntry(const Catalogs::Source::SourceCatalogEntryPtr& entry, std::set<uint64_t> keys);
 
     /**
      * @brief Reset source catalog by clearing it from all physical and logical sources

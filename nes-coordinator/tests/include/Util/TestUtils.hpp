@@ -329,6 +329,12 @@ template<typename T>
 [[nodiscard]] std::string enableNemoPlacement();
 
 /**
+ * @brief Creates the command line argument for enabling nemo join
+ * @return Command line argument
+ */
+[[nodiscard]] std::string enableNemoJoin();
+
+/**
  * @brief Creates the command line argument for setting the threshold of the distributed window child
  * @param val
  * @return Command line argument
@@ -679,6 +685,13 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
  * @return if stopped
  */
 [[nodiscard]] nlohmann::json startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
+
+/**
+ * @brief This method is used for adding source statistics
+ * @param query string
+ * @return if stopped
+ */
+[[nodiscard]] nlohmann::json addSourceStatistics(const string& queryString, const std::string& restPort = "8081");
 
 /**
  * @brief This method is used for making a monitoring rest call.
