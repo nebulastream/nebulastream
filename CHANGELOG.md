@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.126](https://github.com/nebulastream/nebulastream/tree/v0.6.126) (2024-05-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.125...v0.6.126)
+
+**Implemented enhancements:**
+
+- \[BUG\] Bug in Ingestion time handling [\#4880](https://github.com/nebulastream/nebulastream/issues/4880)
+
 ## [v0.6.125](https://github.com/nebulastream/nebulastream/tree/v0.6.125) (2024-05-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.124...v0.6.125)
