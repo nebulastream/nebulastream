@@ -1,5 +1,26 @@
 # Changelog
 
+## [v0.6.125](https://github.com/nebulastream/nebulastream/tree/v0.6.125) (2024-05-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.124...v0.6.125)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Enable partial joins in NES [\#4587](https://github.com/nebulastream/nebulastream/issues/4587)
+- \[TASK\]\[Expressions\] Extend Support for Arithmetical Functions [\#3540](https://github.com/nebulastream/nebulastream/issues/3540)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix configuration to disable distributed window rule [\#2884](https://github.com/nebulastream/nebulastream/issues/2884)
+
+#### Monitoring 🚥
+
+- Config file to generate MonitoringPlan [\#1353](https://github.com/nebulastream/nebulastream/issues/1353)
+
+### Miscellaneous Issues ✌️
+
+- Enable execution of queries in monitoring emulation experiments [\#1768](https://github.com/nebulastream/nebulastream/issues/1768)
+
 ## [v0.6.124](https://github.com/nebulastream/nebulastream/tree/v0.6.124) (2024-05-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.123...v0.6.124)
