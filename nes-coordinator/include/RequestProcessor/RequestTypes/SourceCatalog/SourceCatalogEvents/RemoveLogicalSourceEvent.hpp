@@ -14,13 +14,13 @@
 
 #ifndef REMOVELOGICALSOURCEEVENT_HPP
 #define REMOVELOGICALSOURCEEVENT_HPP
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/SourceCatalogEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateSourceCatalogEvent.hpp>
 
 namespace NES::RequestProcessor {
 class RemoveLogicalSourceEvent;
 using RemoveLogicalSourceEventPtr = std::shared_ptr<RemoveLogicalSourceEvent>;
 
-class RemoveLogicalSourceEvent : public SourceCatalogEvent {
+class RemoveLogicalSourceEvent : public UpdateSourceCatalogEvent {
   public:
     /**
      * @brief Create a new event

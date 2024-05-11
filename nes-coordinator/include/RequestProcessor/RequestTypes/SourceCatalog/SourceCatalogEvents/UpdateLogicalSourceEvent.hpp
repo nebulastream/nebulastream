@@ -15,12 +15,12 @@
 #ifndef UPDATELOGICALSOURCEEVENT_HPP
 #define UPDATELOGICALSOURCEEVENT_HPP
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/SourceCatalogEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateSourceCatalogEvent.hpp>
 
 namespace NES::RequestProcessor {
 class UpdateLogicalSourceEvent;
 using UpdateLogicalSourceEventPtr = std::shared_ptr<UpdateLogicalSourceEvent>;
-class UpdateLogicalSourceEvent : public SourceCatalogEvent {
+class UpdateLogicalSourceEvent : public UpdateSourceCatalogEvent {
 public:
     /**
      * @brief Create a new event

@@ -12,4 +12,4 @@
     limitations under the License.
 */
 
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/SourceCatalogEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateSourceCatalogEvent.hpp>

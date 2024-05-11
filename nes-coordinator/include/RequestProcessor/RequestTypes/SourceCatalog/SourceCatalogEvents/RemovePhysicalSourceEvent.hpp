@@ -13,13 +13,13 @@
 */
 #ifndef REMOVEPHYSICALSOURCEEVENT_HPP
 #define REMOVEPHYSICALSOURCEEVENT_HPP
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/SourceCatalogEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateSourceCatalogEvent.hpp>
 
 namespace NES::RequestProcessor {
 class RemovePhysicalSourceEvent;
 using RemovePhysicalSourceEventPtr = std::shared_ptr<RemovePhysicalSourceEvent>;
 
-class RemovePhysicalSourceEvent : public SourceCatalogEvent {
+class RemovePhysicalSourceEvent : public UpdateSourceCatalogEvent {
   public:
     /**
      * @brief Create a new event

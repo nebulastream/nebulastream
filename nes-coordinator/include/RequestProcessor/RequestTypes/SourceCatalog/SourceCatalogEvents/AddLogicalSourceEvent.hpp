@@ -15,7 +15,7 @@
 #ifndef ADDLOGICALSOURCEEVENT_HPP
 #define ADDLOGICALSOURCEEVENT_HPP
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/SourceCatalogEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateSourceCatalogEvent.hpp>
 
 namespace NES::RequestProcessor {
 class AddLogicalSourceEvent;
@@ -24,7 +24,7 @@ using AddLogicalSourceEventPtr = std::shared_ptr<AddLogicalSourceEvent>;
 /**
  * @brief An event to add a logical source to the source catalog
  */
-class AddLogicalSourceEvent : public SourceCatalogEvent {
+class AddLogicalSourceEvent : public UpdateSourceCatalogEvent {
   public:
     /**
      * @brief Create a new event

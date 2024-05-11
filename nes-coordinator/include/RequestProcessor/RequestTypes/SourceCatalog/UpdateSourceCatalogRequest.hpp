@@ -28,8 +28,8 @@ class UpdateSourceCatalogRequest;
 
 using UpdateSourceCatalogRequestPtr = std::shared_ptr<UpdateSourceCatalogRequest>;
 
-class SourceCatalogEvent;
-using SourceCatalogEventPtr = std::shared_ptr<SourceCatalogEvent>;
+class UpdateSourceCatalogEvent;
+using SourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
 
 /**
  * @brief This request allows modifying the source catalog by adding, updating or removing logical and physical sources

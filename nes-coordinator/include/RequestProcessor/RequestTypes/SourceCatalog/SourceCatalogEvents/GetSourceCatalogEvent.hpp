@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef SOURCECATALOGEVENT_HPP
-#define SOURCECATALOGEVENT_HPP
+#ifndef GETSOURCECATALOGEVENT_HPP
+#define GETSOURCECATALOGEVENT_HPP
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <nlohmann/json.hpp>
 namespace NES::RequestProcessor {
@@ -58,4 +58,4 @@ class GetSourceCatalogEvent : public std::enable_shared_from_this<GetSourceCatal
 
 }// namespace NES::RequestProcessor
 
-#endif//SOURCECATALOGEVENT_HPP
+#endif//GETSOURCECATALOGEVENT_HPP

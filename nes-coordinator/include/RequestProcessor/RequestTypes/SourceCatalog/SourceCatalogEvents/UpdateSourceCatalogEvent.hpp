@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef SOURCECATALOGEVENT_HPP
-#define SOURCECATALOGEVENT_HPP
+#ifndef UPDATESOURCECATALOGEVENT_HPP
+#define UPDATESOURCECATALOGEVENT_HPP
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 
 namespace NES::RequestProcessor {
@@ -23,10 +23,10 @@ struct SourceCatalogResponse : AbstractRequestResponse {
     bool success;
 };
 
-class SourceCatalogEvent;
-using SourceCatalogEventPtr = std::shared_ptr<SourceCatalogEvent>;
+class UpdateSourceCatalogEvent;
+using SourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
 
-class SourceCatalogEvent : public std::enable_shared_from_this<SourceCatalogEvent> {
+class UpdateSourceCatalogEvent : public std::enable_shared_from_this<UpdateSourceCatalogEvent> {
 public:
     /**
      * @brief checks if the event is an instance of a specific subclass
@@ -48,11 +48,11 @@ public:
         throw std::logic_error("Invalid cast to " + className + " from " + typeid(*this).name());
     }
 
-    virtual ~SourceCatalogEvent() = default;
+    virtual ~UpdateSourceCatalogEvent() = default;
 };
 
 }
 
 
 
-#endif //SOURCECATALOGEVENT_HPP
+#endif //UPDATESOURCECATALOGEVENT_HPP

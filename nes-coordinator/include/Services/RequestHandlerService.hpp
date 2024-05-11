@@ -74,8 +74,8 @@ using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
 
-class SourceCatalogEvent;
-using SourceCatalogEventPtr = std::shared_ptr<SourceCatalogEvent>;
+class UpdateSourceCatalogEvent;
+using SourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
 
 class AddPhysicalSourcesEvent;
 using AddPhysicalSourcesEventPtr = std::shared_ptr<AddPhysicalSourcesEvent>;

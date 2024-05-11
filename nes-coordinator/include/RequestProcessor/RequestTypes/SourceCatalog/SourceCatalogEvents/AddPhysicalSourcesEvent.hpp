@@ -14,7 +14,7 @@
 
 #ifndef ADDPHYSICALSOURCESEVENT_HPP
 #define ADDPHYSICALSOURCESEVENT_HPP
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/SourceCatalogEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateSourceCatalogEvent.hpp>
 #include <optional>
 namespace NES::RequestProcessor {
 
@@ -55,7 +55,7 @@ struct AddPhysicalSourcesResponse : public SourceCatalogResponse {
 /**
  * @brief Event to add physical sources to a logical source
  */
-class AddPhysicalSourcesEvent : public SourceCatalogEvent {
+class AddPhysicalSourcesEvent : public UpdateSourceCatalogEvent {
   public:
     /**
      * @brief Create a new event
