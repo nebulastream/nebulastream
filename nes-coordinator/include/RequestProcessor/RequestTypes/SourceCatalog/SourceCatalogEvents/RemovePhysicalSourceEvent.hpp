@@ -28,7 +28,7 @@ class RemovePhysicalSourceEvent : public UpdateSourceCatalogEvent {
      * @param workerId The id of the worker hosting the physical source
      * @return a pointer to the new event
      */
-   static RemovePhysicalSourceEventPtr create(std::string logicalSourceName, std::string physicalSourceName, WorkerId workerId);
+    static RemovePhysicalSourceEventPtr create(std::string logicalSourceName, std::string physicalSourceName, WorkerId workerId);
 
     /**
      * @brief Constructor

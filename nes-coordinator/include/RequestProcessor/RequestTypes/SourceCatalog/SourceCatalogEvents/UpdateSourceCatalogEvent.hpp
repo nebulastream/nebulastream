@@ -17,7 +17,6 @@
 
 namespace NES::RequestProcessor {
 
-
 struct SourceCatalogResponse : AbstractRequestResponse {
     explicit SourceCatalogResponse(bool success) : success(success){};
     bool success;
@@ -27,7 +26,7 @@ class UpdateSourceCatalogEvent;
 using SourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
 
 class UpdateSourceCatalogEvent : public std::enable_shared_from_this<UpdateSourceCatalogEvent> {
-public:
+  public:
     /**
      * @brief checks if the event is an instance of a specific subclass
      */
@@ -51,8 +50,6 @@ public:
     virtual ~UpdateSourceCatalogEvent() = default;
 };
 
-}
+}// namespace NES::RequestProcessor
 
-
-
-#endif //UPDATESOURCECATALOGEVENT_HPP
+#endif//UPDATESOURCECATALOGEVENT_HPP

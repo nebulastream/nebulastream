@@ -21,7 +21,7 @@ namespace NES::RequestProcessor {
 class UpdateLogicalSourceEvent;
 using UpdateLogicalSourceEventPtr = std::shared_ptr<UpdateLogicalSourceEvent>;
 class UpdateLogicalSourceEvent : public UpdateSourceCatalogEvent {
-public:
+  public:
     /**
      * @brief Create a new event
      * @param logicalSourceName the name of the logical soruce to be updated

@@ -21,7 +21,7 @@ namespace NES::RequestProcessor {
 struct PhysicalSourceDefinition {
     std::string logicalSourceName;
     std::string physicalSourceName;
-    bool operator==(const PhysicalSourceDefinition & other) const;
+    bool operator==(const PhysicalSourceDefinition& other) const;
 };
 class AddPhysicalSourcesEvent;
 using AddPhysicalSourcesEventPtr = std::shared_ptr<AddPhysicalSourcesEvent>;
