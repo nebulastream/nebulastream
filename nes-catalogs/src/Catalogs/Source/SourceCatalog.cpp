@@ -63,7 +63,7 @@ bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("SourceCatalog: search for logical source in removeLogicalSource() {}", logicalSourceName);
 
-    //if log source does not exist
+    //if logical source does not exist
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
         NES_ERROR("SourceCatalog: logical source {} already exists", logicalSourceName);
         return false;
@@ -287,8 +287,7 @@ nlohmann::json SourceCatalog::getAllLogicalSourcesAsJson() {
 }
 
 nlohmann::json SourceCatalog::getPhysicalSourcesAsJson(std::string logicalSourceName) {
-    const std::vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSource =
-        getPhysicalSources(logicalSourceName);
+    const std::vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSource = getPhysicalSources(logicalSourceName);
 
     nlohmann::json result;
     nlohmann::json::array_t allSource = {};

@@ -162,29 +162,29 @@ bool RequestHandlerService::queueRegisterPhysicalSourceRequest(const std::string
 bool RequestHandlerService::queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions,
                                                                WorkerId workerId) const {
     auto event = RequestProcessor::AddPhysicalSourcesEvent::create(additions, workerId);
-    return modifySources(event);
+    return handleCatalogUpdateRequest(event);
 }
 
 bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
     auto event = RequestProcessor::AddLogicalSourceEvent::create(logicalSourceName, schema);
-    return modifySources(event);
+    return handleCatalogUpdateRequest(event);
 }
 
 bool RequestHandlerService::queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                                                  const std::string& logicalSourceName,
                                                                  WorkerId workerId) const {
     auto event = RequestProcessor::RemovePhysicalSourceEvent::create(logicalSourceName, physicalSourceName, workerId);
-    return modifySources(event);
+    return handleCatalogUpdateRequest(event);
 }
 
 bool RequestHandlerService::queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const {
     auto event = RequestProcessor::RemoveLogicalSourceEvent::create(logicalSourceName);
-    return modifySources(event);
+    return handleCatalogUpdateRequest(event);
 }
 
 bool RequestHandlerService::queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
     auto event = RequestProcessor::UpdateLogicalSourceEvent::create(logicalSourceName, schema);
-    return modifySources(event);
+    return handleCatalogUpdateRequest(event);
 }
 
 nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
@@ -214,7 +214,7 @@ SchemaPtr RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string 
     return std::static_pointer_cast<RequestProcessor::GetSchemaResponse>(response)->getSchema();
 }
 
-bool RequestHandlerService::modifySources(RequestProcessor::SourceCatalogEventPtr event) const {
+bool RequestHandlerService::handleCatalogUpdateRequest(RequestProcessor::SourceCatalogEventPtr event) const {
     auto updateRequest = RequestProcessor::UpdateSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(updateRequest);
     auto future = updateRequest->getFuture();

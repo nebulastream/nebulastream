@@ -182,7 +182,8 @@ class RequestHandlerService {
       * @param workerId the id of the worker hosting the physical source
       * @return true on success
       */
-    bool queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions, WorkerId workerId) const;
+    bool queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions,
+                                            WorkerId workerId) const;
 
     /**
       * @brief register a new logical source
@@ -242,7 +243,7 @@ class RequestHandlerService {
      * @param sourceActions a vector containing the modifications to make to the catalog
      * @return true on successfull execution of the request
      */
-    bool modifySources(RequestProcessor::SourceCatalogEventPtr event) const;
+    bool handleCatalogUpdateRequest(RequestProcessor::SourceCatalogEventPtr event) const;
 
     /**
      * Assign unique operator ids to the incoming query plan from a client.
