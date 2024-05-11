@@ -14,7 +14,7 @@
 
 #include <BaseUnitTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp>
@@ -25,7 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::RequestProcessor {
-class GetSourceInformationRequestTest : public Testing::BaseUnitTest {
+class GetSourceCatalogRequestTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     StorageHandlerPtr storageHandler;
@@ -42,7 +42,7 @@ class GetSourceInformationRequestTest : public Testing::BaseUnitTest {
     SchemaPtr schema1 = Schema::create()->addField(field1, BasicType::UINT64);
     SchemaPtr schema2 = Schema::create()->addField(field2, BasicType::UINT64);
 
-    static void SetUpTestCase() { NES::Logger::setupLogging("GetSourceInformationRequestTest.log", NES::LogLevel::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("GetSourceCatalogRequestTest.log", NES::LogLevel::LOG_DEBUG); }
 
     void SetUp() {
         Testing::BaseUnitTest::SetUp();
@@ -70,10 +70,10 @@ class GetSourceInformationRequestTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(GetSourceInformationRequestTest, GetAllLogicalSources) {
+TEST_F(GetSourceCatalogRequestTest, GetAllLogicalSources) {
     //create request
     auto event = GetAllLogicalSourcesEvent::create();
-    auto request = GetSourceInformationRequest::create(event, retries);
+    auto request = GetSourceCatalogRequest::create(event, retries);
     auto requestId = 1;
     request->setId(requestId);
     auto future = request->getFuture();
@@ -84,7 +84,10 @@ TEST_F(GetSourceInformationRequestTest, GetAllLogicalSources) {
     ASSERT_EQ(json[0]["default_logical"], "id:INTEGER(32 bits) value:INTEGER(64 bits)");
     ASSERT_EQ(json[1][logicalSourceName1], schema1->toString());
     ASSERT_EQ(json[2][logicalSourceName2], schema2->toString());
-    std::vector<std::pair<std::string, std::string>> expected = {{logicalSourceName1, schema1->toString()}, {logicalSourceName2, schema2->toString()}, {"default_logical", "id:INTEGER(32 bits) value:INTEGER(64 bits)"}};
+    std::vector<std::pair<std::string, std::string>> expected = {
+        {logicalSourceName1, schema1->toString()},
+        {logicalSourceName2, schema2->toString()},
+        {"default_logical", "id:INTEGER(32 bits) value:INTEGER(64 bits)"}};
     for (auto& el : json.items()) {
         bool found = false;
         for (auto& source : expected) {
@@ -99,10 +102,10 @@ TEST_F(GetSourceInformationRequestTest, GetAllLogicalSources) {
     }
 }
 
-TEST_F(GetSourceInformationRequestTest, GetLogicalSource) {
+TEST_F(GetSourceCatalogRequestTest, GetLogicalSource) {
     //create request
     auto event = GetSchemaEvent::create(logicalSourceName1);
-    auto request = GetSourceInformationRequest::create(event, retries);
+    auto request = GetSourceCatalogRequest::create(event, retries);
     auto requestId = 1;
     request->setId(requestId);
     auto future = request->getFuture();
@@ -112,10 +115,10 @@ TEST_F(GetSourceInformationRequestTest, GetLogicalSource) {
     ASSERT_EQ(schema->toString(), schema1->toString());
 }
 
-TEST_F(GetSourceInformationRequestTest, GetPhysicalSources) {
+TEST_F(GetSourceCatalogRequestTest, GetPhysicalSources) {
     //create request for logical source 1
     auto event = GetPhysicalSourcesEvent::create(logicalSourceName1);
-    auto request = GetSourceInformationRequest::create(event, retries);
+    auto request = GetSourceCatalogRequest::create(event, retries);
     auto requestId = 1;
     request->setId(requestId);
     auto future = request->getFuture();
@@ -127,7 +130,7 @@ TEST_F(GetSourceInformationRequestTest, GetPhysicalSources) {
 
     //create request for logical source 2
     event = GetPhysicalSourcesEvent::create(logicalSourceName2);
-    request = GetSourceInformationRequest::create(event, retries);
+    request = GetSourceCatalogRequest::create(event, retries);
     requestId = 1;
     request->setId(requestId);
     future = request->getFuture();

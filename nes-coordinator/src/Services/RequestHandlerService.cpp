@@ -29,7 +29,7 @@
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
@@ -159,8 +159,8 @@ bool RequestHandlerService::queueRegisterPhysicalSourceRequest(const std::string
     return queueRegisterPhysicalSourceRequest(physicalSourceDefinitions, workerId);
 }
 
-bool RequestHandlerService::queueRegisterPhysicalSourceRequest(
-std::vector<RequestProcessor::PhysicalSourceDefinition> additions, WorkerId workerId) const {
+bool RequestHandlerService::queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions,
+                                                               WorkerId workerId) const {
     auto event = RequestProcessor::AddPhysicalSourcesEvent::create(additions, workerId);
     return modifySources(event);
 }
@@ -189,7 +189,7 @@ bool RequestHandlerService::queueUpdateLogicalSourceRequest(const std::string& l
 
 nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
     auto event = RequestProcessor::GetAllLogicalSourcesEvent::create();
-    auto request = RequestProcessor::GetSourceInformationRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
+    auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
@@ -198,7 +198,7 @@ nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
 
 nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string logicelSourceName) const {
     auto event = RequestProcessor::GetPhysicalSourcesEvent::create(logicelSourceName);
-    auto request = RequestProcessor::GetSourceInformationRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
+    auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
@@ -207,8 +207,7 @@ nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string
 
 SchemaPtr RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
     auto event = RequestProcessor::GetSchemaEvent::create(logicelSourceName);
-    auto request = RequestProcessor::GetSourceInformationRequest::create(event,
-                                                                         RequestProcessor::DEFAULT_RETRIES);
+    auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
@@ -216,8 +215,7 @@ SchemaPtr RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string 
 }
 
 bool RequestHandlerService::modifySources(RequestProcessor::SourceCatalogEventPtr event) const {
-    auto updateRequest =
-        RequestProcessor::UpdateSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
+    auto updateRequest = RequestProcessor::UpdateSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(updateRequest);
     auto future = updateRequest->getFuture();
     auto response = future.get();

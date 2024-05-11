@@ -13,9 +13,7 @@
 */
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
 namespace NES::RequestProcessor {
-GetAllLogicalSourcesEvent::GetAllLogicalSourcesEvent() : GetSourceInformationEvent() {}
+GetAllLogicalSourcesEvent::GetAllLogicalSourcesEvent() : GetSourceCatalogEvent() {}
 
-GetAllLogicalSourcesEventPtr GetAllLogicalSourcesEvent::create() {
-    return std::make_shared<GetAllLogicalSourcesEvent>();
-}
-}
+GetAllLogicalSourcesEventPtr GetAllLogicalSourcesEvent::create() { return std::make_shared<GetAllLogicalSourcesEvent>(); }
+}// namespace NES::RequestProcessor

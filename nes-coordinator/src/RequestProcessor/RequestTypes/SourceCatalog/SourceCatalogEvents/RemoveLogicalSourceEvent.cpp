@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemoveLogicalSourceEvent.hpp>
+
 NES::RequestProcessor::RemoveLogicalSourceEventPtr
 NES::RequestProcessor::RemoveLogicalSourceEvent::create(std::string logicalSourceName) {
     return std::make_shared<RemoveLogicalSourceEvent>(logicalSourceName);

@@ -17,7 +17,7 @@ add_source_files(nes-coordinator
         UpdateLogicalSourceEvent.cpp
         RemoveLogicalSourceEvent.cpp
         RemovePhysicalSourceEvent.cpp
-        GetSourceInformationEvent.cpp
+        GetSourceCatalogEvent.cpp
         GetAllLogicalSourcesEvent.cpp
         GetPhysicalSourcesEvent.cpp
         GetSchemaEvent.cpp

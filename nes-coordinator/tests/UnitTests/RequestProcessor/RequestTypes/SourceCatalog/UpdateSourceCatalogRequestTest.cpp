@@ -15,7 +15,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemoveLogicalSourceEvent.hpp>
@@ -29,12 +29,12 @@
 
 namespace NES::RequestProcessor {
 class UpdateSourceCatalogRequestTest : public Testing::BaseUnitTest {
-public:
+  public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     StorageHandlerPtr storageHandler;
     uint8_t retries = 3;
 
-    static void SetUpTestCase() { NES::Logger::setupLogging("UpdateSourceCatalogRequestTest.log", NES::LogLevel::LOG_DEBUG);}
+    static void SetUpTestCase() { NES::Logger::setupLogging("UpdateSourceCatalogRequestTest.log", NES::LogLevel::LOG_DEBUG); }
 
     void SetUp() {
         Testing::BaseUnitTest::SetUp();

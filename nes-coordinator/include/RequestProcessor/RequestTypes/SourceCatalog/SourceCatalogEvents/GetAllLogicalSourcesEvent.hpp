@@ -13,9 +13,8 @@
 */
 #ifndef GETALLLOGICALSOURCESEVENT_HPP
 #define GETALLLOGICALSOURCESEVENT_HPP
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceInformationEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp>
 #include <memory>
-
 
 namespace NES::RequestProcessor {
 class GetAllLogicalSourcesEvent;
@@ -24,20 +23,18 @@ using GetAllLogicalSourcesEventPtr = std::shared_ptr<GetAllLogicalSourcesEvent>;
 /**
  * @brief Event to get all logical sources from the source catalog.
  */
-class GetAllLogicalSourcesEvent : public GetSourceInformationEvent {
-public:
-  /**
+class GetAllLogicalSourcesEvent : public GetSourceCatalogEvent {
+  public:
+    /**
    * @brief Constructor
    */
-  GetAllLogicalSourcesEvent();
+    GetAllLogicalSourcesEvent();
 
-  /**
+    /**
   * @brief Create a new event
   */
     static GetAllLogicalSourcesEventPtr create();
 };
-}
+}// namespace NES::RequestProcessor
 
-
-
-#endif //GETALLLOGICALSOURCESEVENT_HPP
+#endif//GETALLLOGICALSOURCESEVENT_HPP

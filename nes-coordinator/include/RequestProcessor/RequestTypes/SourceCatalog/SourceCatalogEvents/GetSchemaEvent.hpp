@@ -15,7 +15,7 @@
 #ifndef GETSCHEMAEVENT_HPP
 #define GETSCHEMAEVENT_HPP
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceInformationEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp>
 
 namespace NES::RequestProcessor {
 class GetSchemaEvent;
@@ -24,7 +24,7 @@ using GetSchemaEventPtr = std::shared_ptr<GetSchemaEvent>;
 /**
  * @brief a response containg the schema for a logical source
  */
-struct GetSchemaResponse : public GetSourceInformationResponse {
+struct GetSchemaResponse : public GetSourceCatalogResponse {
     /**
      * @brief Constructor
      * @param schema the schema for the logical source
@@ -44,15 +44,15 @@ struct GetSchemaResponse : public GetSourceInformationResponse {
 /**
  * @brief get the schema for a logical source in the source catalog
  */
-class GetSchemaEvent : public GetSourceInformationEvent {
+class GetSchemaEvent : public GetSourceCatalogEvent {
   public:
-   /**
+    /**
     * @brief Constructor
     * @param logicalSourceName the name of the logical source
     */
     GetSchemaEvent(std::string logicalSourceName);
 
-   /**
+    /**
     * @brief create new event
     * @param logicalSourceName the name of the logical source
     */
@@ -67,6 +67,6 @@ class GetSchemaEvent : public GetSourceInformationEvent {
   private:
     std::string logicalSourceName;
 };
-}
+}// namespace NES::RequestProcessor
 
 #endif//GETSCHEMAEVENT_HPP

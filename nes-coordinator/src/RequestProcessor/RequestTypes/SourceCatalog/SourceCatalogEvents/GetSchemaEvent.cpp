@@ -14,7 +14,7 @@
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
 namespace NES::RequestProcessor {
 
-GetSchemaResponse::GetSchemaResponse(bool success, SchemaPtr schema) : GetSourceInformationResponse(success), schema(schema) {}
+GetSchemaResponse::GetSchemaResponse(bool success, SchemaPtr schema) : GetSourceCatalogResponse(success), schema(schema) {}
 
 SchemaPtr GetSchemaResponse::getSchema() { return schema; }
 

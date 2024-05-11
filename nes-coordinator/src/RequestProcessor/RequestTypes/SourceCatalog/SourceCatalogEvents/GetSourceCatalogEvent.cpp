@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceInformationEvent.hpp>
-
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp>
 
 namespace NES::RequestProcessor {
 nlohmann::json GetSourceJsonResponse::getJson() { return json; }
-}
+}// namespace NES::RequestProcessor

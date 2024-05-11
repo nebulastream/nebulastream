@@ -11,27 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef SOURCEINFORMATIONEVENT_HPP
-#define SOURCEINFORMATIONEVENT_HPP
+#ifndef SOURCECATALOGEVENT_HPP
+#define SOURCECATALOGEVENT_HPP
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <nlohmann/json.hpp>
 namespace NES::RequestProcessor {
 
-struct GetSourceInformationResponse : AbstractRequestResponse {
-    explicit GetSourceInformationResponse(bool success) : success(success){};
+struct GetSourceCatalogResponse : AbstractRequestResponse {
+    explicit GetSourceCatalogResponse(bool success) : success(success){};
     bool success;
 };
 
 // a response containing source inforamtion as json
-struct GetSourceJsonResponse : public GetSourceInformationResponse {
-    explicit GetSourceJsonResponse(bool success, nlohmann::json json) : GetSourceInformationResponse(success), json(json){};
+struct GetSourceJsonResponse : public GetSourceCatalogResponse {
+    explicit GetSourceJsonResponse(bool success, nlohmann::json json) : GetSourceCatalogResponse(success), json(json){};
     nlohmann::json getJson();
-private:
+
+  private:
     nlohmann::json json;
 };
 
-class GetSourceInformationEvent : public std::enable_shared_from_this<GetSourceInformationEvent> {
-public:
+class GetSourceCatalogEvent : public std::enable_shared_from_this<GetSourceCatalogEvent> {
+  public:
     /**
      * @brief checks if the event is an instance of a specific subclass
      */
@@ -52,11 +53,9 @@ public:
         throw std::logic_error("Invalid cast to " + className + " from " + typeid(*this).name());
     }
 
-    virtual ~GetSourceInformationEvent() = default;
+    virtual ~GetSourceCatalogEvent() = default;
 };
 
-}
+}// namespace NES::RequestProcessor
 
-
-
-#endif //SOURCEINFORMATIONEVENT_HPP
+#endif//SOURCECATALOGEVENT_HPP

@@ -13,28 +13,29 @@
 */
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceInformationEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::RequestProcessor {
 
-GetSourceInformationRequestPtr GetSourceInformationRequest::create(GetSourceInformationEventPtr event, uint8_t maxRetries) {
-    return std::make_shared<GetSourceInformationRequest>(event, maxRetries);
+GetSourceCatalogRequestPtr GetSourceCatalogRequest::create(GetSourceCatalogEventPtr event, uint8_t maxRetries) {
+    return std::make_shared<GetSourceCatalogRequest>(event, maxRetries);
 }
-GetSourceInformationRequest::GetSourceInformationRequest(GetSourceInformationEventPtr event, uint8_t maxRetries)
+GetSourceCatalogRequest::GetSourceCatalogRequest(GetSourceCatalogEventPtr event, uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), event(event) {}
 
-std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
+std::vector<AbstractRequestPtr> GetSourceCatalogRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     auto catalogHandle = storageHandle->getSourceCatalogHandle(requestId);
     try {
         if (event->insteanceOf<GetSchemaEvent>()) {
             auto getSchemaEvent = event->as<GetSchemaEvent>();
-            auto schema = catalogHandle->getLogicalSourceOrThrowException(getSchemaEvent->getLogicalSourceName())->getSchema()->copy();
+            auto schema =
+                catalogHandle->getLogicalSourceOrThrowException(getSchemaEvent->getLogicalSourceName())->getSchema()->copy();
             responsePromise.set_value(std::make_shared<GetSchemaResponse>(true, schema));
             return {};
         } else if (event->insteanceOf<GetAllLogicalSourcesEvent>()) {
@@ -43,12 +44,13 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
             NES_DEBUG("Got logical sources: {}", logicalSources.dump());
             responsePromise.set_value(std::make_shared<GetSourceJsonResponse>(true, logicalSources));
             return {};
-        }
-        else if (event->insteanceOf<GetPhysicalSourcesEvent>()) {
+        } else if (event->insteanceOf<GetPhysicalSourcesEvent>()) {
             auto getPhysicalSourcesEvent = event->as<GetPhysicalSourcesEvent>();
             //get physical sources for logical source
             auto physicalSources = catalogHandle->getPhysicalSourcesAsJson(getPhysicalSourcesEvent->getLogicalSourceName());
-            NES_DEBUG("Got physical sources for logical source {}: {}", getPhysicalSourcesEvent->getLogicalSourceName(), physicalSources.dump());
+            NES_DEBUG("Got physical sources for logical source {}: {}",
+                      getPhysicalSourcesEvent->getLogicalSourceName(),
+                      physicalSources.dump());
             responsePromise.set_value(std::make_shared<GetSourceJsonResponse>(true, physicalSources));
         }
     } catch (std::exception& e) {
@@ -58,7 +60,7 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
 
     return {};
 }
-std::vector<AbstractRequestPtr> GetSourceInformationRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) { return {}; }
-void GetSourceInformationRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
-void GetSourceInformationRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+std::vector<AbstractRequestPtr> GetSourceCatalogRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) { return {}; }
+void GetSourceCatalogRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+void GetSourceCatalogRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 }// namespace NES::RequestProcessor

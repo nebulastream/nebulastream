@@ -13,11 +13,11 @@
 */
 #ifndef GETPHYSICALSOURCESEVENT_HPP
 #define GETPHYSICALSOURCESEVENT_HPP
-#include "GetSourceInformationEvent.hpp"
+#include "GetSourceCatalogEvent.hpp"
 
 #include <memory>
 
-#endif //GETPHYSICALSOURCESEVENT_HPP
+#endif//GETPHYSICALSOURCESEVENT_HPP
 namespace NES::RequestProcessor {
 
 class GetPhysicalSourcesEvent;
@@ -26,7 +26,7 @@ using GetPhysicalSourcesEventPtr = std::shared_ptr<GetPhysicalSourcesEvent>;
 /**
  * @brief Event to get the physical sources of a logical source
  */
-class GetPhysicalSourcesEvent : public GetSourceInformationEvent {
+class GetPhysicalSourcesEvent : public GetSourceCatalogEvent {
   public:
     /**
      * @brief Create a new event
@@ -50,4 +50,4 @@ class GetPhysicalSourcesEvent : public GetSourceInformationEvent {
   private:
     std::string logicalSourceName;
 };
-} // namespace NES::RequestProcessor
+}// namespace NES::RequestProcessor

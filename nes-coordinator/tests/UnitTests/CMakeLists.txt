@@ -88,7 +88,7 @@ add_nes_unit_test(unlock-deleter-tests "RequestProcessor/StorageHandles/UnlockDe
 add_nes_unit_test(update-source-catalog-request-test "RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequestTest.cpp")
 
 ### Get Source Information Request Test ###
-add_nes_unit_test(get-source-information-request-test "RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequestTest.cpp")
+add_nes_unit_test(get-source-information-request-test "RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequestTest.cpp")
 
 ### Add Query Request Test ###
 add_nes_unit_test(add-query-request-test "RequestProcessor/RequestTypes/AddQueryRequestTest.cpp")

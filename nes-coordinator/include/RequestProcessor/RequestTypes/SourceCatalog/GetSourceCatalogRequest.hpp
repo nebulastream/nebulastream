@@ -11,34 +11,34 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef GETSOURCEINFORMATIONREQUEST_HPP
-#define GETSOURCEINFORMATIONREQUEST_HPP
+#ifndef GETSOURCECATALOGREQUEST_HPP
+#define GETSOURCECATALOGREQUEST_HPP
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceInformationEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp>
 #include <optional>
 namespace NES::RequestProcessor {
-class GetSourceInformationRequest;
-using GetSourceInformationRequestPtr = std::shared_ptr<GetSourceInformationRequest>;
+class GetSourceCatalogRequest;
+using GetSourceCatalogRequestPtr = std::shared_ptr<GetSourceCatalogRequest>;
 
-using GetSourceInformationEventPtr = std::shared_ptr<GetSourceInformationEvent>;
+using GetSourceCatalogEventPtr = std::shared_ptr<GetSourceCatalogEvent>;
 
 /**
  * @brief A request to get information about logical or physical sources in json format
  */
-class GetSourceInformationRequest : public AbstractUniRequest {
-public:
+class GetSourceCatalogRequest : public AbstractUniRequest {
+  public:
     /**
      * @brief creates a request to get a specific logical source or all physical sources for a logical source
      * @param event specifies the type of information to obtain
      * @param maxRetries: the maximum number of retries to attempt
      */
-  static GetSourceInformationRequestPtr create(GetSourceInformationEventPtr event, uint8_t maxRetries);
+    static GetSourceCatalogRequestPtr create(GetSourceCatalogEventPtr event, uint8_t maxRetries);
     /**
      * @brief constructor that creates a request to get all logical sources
      * @param event specifies the type of information to obtain
      */
-    GetSourceInformationRequest(GetSourceInformationEventPtr event, uint8_t maxRetries);
+    GetSourceCatalogRequest(GetSourceCatalogEventPtr event, uint8_t maxRetries);
 
     /**
      * @brief Executes the request logic.
@@ -76,9 +76,10 @@ public:
      * @param storageHandle: The storage access handle used by the request
      */
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
-private:
-  GetSourceInformationEventPtr event;
+
+  private:
+    GetSourceCatalogEventPtr event;
 };
 
-}
-#endif //GETSOURCEINFORMATIONREQUEST_HPP
+}// namespace NES::RequestProcessor
+#endif//GETSOURCECATALOGREQUEST_HPP
