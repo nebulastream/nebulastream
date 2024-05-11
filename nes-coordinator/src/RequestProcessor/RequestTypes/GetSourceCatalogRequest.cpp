@@ -30,24 +30,24 @@ GetSourceCatalogRequest::GetSourceCatalogRequest(GetSourceCatalogEventPtr event,
     : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), event(event) {}
 
 std::vector<AbstractRequestPtr> GetSourceCatalogRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
-    auto catalogHandle = storageHandle->getSourceCatalogHandle(requestId);
+    auto sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
     try {
         if (event->insteanceOf<GetSchemaEvent>()) {
             auto getSchemaEvent = event->as<GetSchemaEvent>();
             auto schema =
-                catalogHandle->getLogicalSourceOrThrowException(getSchemaEvent->getLogicalSourceName())->getSchema()->copy();
+                sourceCatalog->getLogicalSourceOrThrowException(getSchemaEvent->getLogicalSourceName())->getSchema()->copy();
             responsePromise.set_value(std::make_shared<GetSchemaResponse>(true, schema));
             return {};
         } else if (event->insteanceOf<GetAllLogicalSourcesEvent>()) {
             //return all logical sources as json via promise
-            auto logicalSources = catalogHandle->getAllLogicalSourcesAsJson();
+            auto logicalSources = sourceCatalog->getAllLogicalSourcesAsJson();
             NES_DEBUG("Got logical sources: {}", logicalSources.dump());
             responsePromise.set_value(std::make_shared<GetSourceJsonResponse>(true, logicalSources));
             return {};
         } else if (event->insteanceOf<GetPhysicalSourcesEvent>()) {
             auto getPhysicalSourcesEvent = event->as<GetPhysicalSourcesEvent>();
             //get physical sources for logical source
-            auto physicalSources = catalogHandle->getPhysicalSourcesAsJson(getPhysicalSourcesEvent->getLogicalSourceName());
+            auto physicalSources = sourceCatalog->getPhysicalSourcesAsJson(getPhysicalSourcesEvent->getLogicalSourceName());
             NES_DEBUG("Got physical sources for logical source {}: {}",
                       getPhysicalSourcesEvent->getLogicalSourceName(),
                       physicalSources.dump());
