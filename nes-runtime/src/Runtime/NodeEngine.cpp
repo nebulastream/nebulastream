@@ -851,24 +851,33 @@ const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { r
 WorkerId NodeEngine::getParentId() const { return parentId; }
 
 void NodeEngine::setParentId(int64_t newParent) {
-    NES_ERROR("set parent id to {}", newParent);
-    parentId.store(newParent);
+    std::unique_lock lock(parentMutex);
+    if (newParent == -1) {
+        connected = false;
+    } else {
+        NES_ERROR("set parent id to {}", newParent);
+        connected = true;
+        parentId = newParent;
+    }
 }
 
 void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
-    NES_ERROR("trying to overwrite invalid parent id with {}", newParent);
-    int64_t expected = -1;
-    auto success = parentId.compare_exchange_strong(expected, newParent);
-    if (success) {
-        NES_ERROR("overwrote id {}", expected);
+    //lock
+    std::unique_lock lock(parentMutex);
+    NES_ERROR("trying to reactive  parent id {} with id {}", parentId, newParent);
+    if (!connected && newParent == parentId) {
+        connected = true;
+        NES_ERROR("reactivated {}", parentId);
     } else {
-        NES_ERROR("did not overwrite id {}", expected);
+        NES_ERROR("did not reactivate {}", parentId);
     }
 }
 
 void NodeEngine::initializeParentId(WorkerId newParent) {
-    int64_t expected = 0;
-    parentId.compare_exchange_strong(expected, newParent);
+    std::unique_lock lock(parentMutex);
+    if (parentId == 0) {
+        parentId = newParent;
+    }
 }
 
 }// namespace NES::Runtime

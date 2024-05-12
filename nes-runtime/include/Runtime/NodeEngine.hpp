@@ -405,7 +405,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool timestampOutPutSources;
     std::map<std::string, int> tcpDescriptor;
     std::mutex tcpDescriptorMutex;
-    std::atomic<int64_t> parentId;
+    std::mutex parentMutex;
+    uint64_t parentId;
+    bool connected = true;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
