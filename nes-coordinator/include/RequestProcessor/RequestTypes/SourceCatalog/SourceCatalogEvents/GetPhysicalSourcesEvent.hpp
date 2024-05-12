@@ -13,7 +13,7 @@
 */
 #ifndef GETPHYSICALSOURCESEVENT_HPP
 #define GETPHYSICALSOURCESEVENT_HPP
-#include "GetSourceCatalogEvent.hpp"
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp>
 
 #include <memory>
 
