@@ -124,6 +124,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         //if a connection was established, retrieve the channel
         channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     }
+    unbuffer(workerContext);
 
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber, version);
