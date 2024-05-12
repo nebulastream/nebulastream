@@ -79,7 +79,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
         return false;
     }
 
-    if (receiverLocation.getNodeId() != nodeEngine->getParentId()) {
+    if (static_cast<int64_t>(receiverLocation.getNodeId()) != nodeEngine->getParentId()) {
         return false;
     }
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
@@ -116,7 +116,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
             return true;
         }
 
-        if (receiverLocation.getNodeId() != nodeEngine->getParentId()) {
+        if (static_cast<int64_t>(receiverLocation.getNodeId()) != nodeEngine->getParentId()) {
             workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
             return true;
         }
