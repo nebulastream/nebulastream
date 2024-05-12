@@ -848,7 +848,12 @@ void NodeEngine::setTcpDescriptor(std::string sourceName, int tcpDescriptor) {
 
 const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
 
-WorkerId NodeEngine::getParentId() const { return parentId; }
+int64_t NodeEngine::getParentId() const {
+    if (connected) {
+        return parentId;
+    }
+    return -1;
+}
 
 void NodeEngine::setParentId(int64_t newParent) {
     std::unique_lock lock(parentMutex);
