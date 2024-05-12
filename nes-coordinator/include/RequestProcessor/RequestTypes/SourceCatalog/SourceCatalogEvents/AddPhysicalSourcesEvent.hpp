@@ -43,7 +43,7 @@ struct AddPhysicalSourcesResponse : public SourceCatalogResponse {
     std::vector<std::string> getSuccesfulAdditions() const;
 
     /**
-     * @brief get
+     * @brief get the list of physical sources that were not succesfully added
      */
     std::optional<std::string> getFailedAddition() const;
 
