@@ -39,7 +39,9 @@ class QueryStatisticSource : public DataSource {
 
     // Maybe we just ensure that the field in the schema of the memory layout are in a specific order. Then, we would not
     // have to store all fieldNames here
+    // TODO go with Tim through the fields and check if some are missing
     const std::string processedTasksFieldName;
+    const std::string timestampLastProcessedTaskFieldName;
     const std::string processedTuplesFieldName;
     const std::string processedBuffersFieldName;
     const std::string processedWatermarksFieldName;
@@ -48,7 +50,8 @@ class QueryStatisticSource : public DataSource {
     const std::string availableGlobalBufferSumFieldName;
     const std::string availableFixedBufferSumFieldName;
     const std::string timestampFirstProcessedTaskFieldName;
-    const std::string timestampLastProcessedTaskFieldName;
+
+
 };
 
 }// namespace NES
