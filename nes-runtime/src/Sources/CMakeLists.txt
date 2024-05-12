@@ -26,6 +26,7 @@ add_source_files(nes-runtime
         BenchmarkSource.cpp
         TCPSource.cpp
         KafkaSource.cpp
+        QueryStatisticSource.cpp
 )
 add_subdirectory(Parsers)
 

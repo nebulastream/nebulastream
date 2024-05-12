@@ -28,4 +28,5 @@ add_source_files(nes-operators
         LambdaSourceDescriptor.cpp
         BenchmarkSourceDescriptor.cpp
         TCPSourceDescriptor.cpp
+        QueryStatisticSourceDescriptor.cpp
 )

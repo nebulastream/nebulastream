@@ -34,6 +34,12 @@ class QueryStatistics {
     QueryStatistics(const QueryStatistics& other);
 
     /**
+     * @brief Creates a new object with the same values as this object and clears/resets the values of the original object.
+     * @return QueryStatistics
+     */
+    QueryStatistics copyAndReset();
+
+    /**
      * @brief getter for processedTasks
      * @return processedTasks
      */

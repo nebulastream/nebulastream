@@ -116,6 +116,7 @@ void QueryStatistics::clear() {
 }
 
 SharedQueryId QueryStatistics::getQueryId() const { return queryId.load(); }
+
 DecomposedQueryPlanId QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
 
 QueryStatistics::QueryStatistics(const QueryStatistics& other) {
@@ -130,6 +131,17 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other) {
     queryId = other.queryId.load();
     subQueryId = other.subQueryId.load();
     tsToLatencyMap = other.tsToLatencyMap;
+}
+
+QueryStatistics QueryStatistics::copyAndReset() {
+    // 1. We are performing a deep copy by invoking the copy constructor
+    QueryStatistics queryStatistics(*this);
+
+    // 2. Clearing/Resetting the content of the statistics
+    clear();
+
+    // 3. Return the copied statistics
+    return queryStatistics;
 }
 
 }// namespace NES::Runtime

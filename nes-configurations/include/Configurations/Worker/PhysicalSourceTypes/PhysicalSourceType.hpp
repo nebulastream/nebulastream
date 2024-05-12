@@ -41,7 +41,8 @@ enum class SourceType : uint8_t {
     BENCHMARK_SOURCE,
     STATIC_DATA_SOURCE,
     TCP_SOURCE,
-    ARROW_SOURCE
+    ARROW_SOURCE,
+    QUERY_STATISTIC_SOURCE
 };
 
 class PhysicalSourceType;
