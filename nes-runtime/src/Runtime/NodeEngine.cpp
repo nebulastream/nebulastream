@@ -861,7 +861,7 @@ void NodeEngine::setParentId(int64_t newParent) {
     if (newParent == -1) {
         connected = false;
     } else {
-        NES_ERROR("set parent id to {}", newParent);
+        // NES_ERROR("set parent id to {}", newParent);
         connected = true;
         parentId = newParent;
     }
