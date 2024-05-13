@@ -45,8 +45,7 @@ jobs:
       - name: Run tests
         if: github.event_name != 'workflow_dispatch'
         run: |
-          docker run --name ${{ github.run_id }}_cc_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="4"
-esBuildParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-cc.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_cc_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="4" -enesBuildParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-cc.sh nes_build_${{ matrix.osversion }}
       - name: Run Code Coverage Analysis
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
