@@ -59,9 +59,9 @@ class WorkerContext {
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
-    std::unordered_map<OperatorId, Network::NetworkChannelPtr> dataChannels;
+    std::unordered_map<OperatorId, std::pair<Network::NetworkChannelPtr, WorkerId>> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<OperatorId, std::optional<std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>>
+    std::unordered_map<OperatorId, std::optional<std::pair<std::pair<std::future<Network::NetworkChannelPtr>, WorkerId>, std::promise<bool>>>>
         dataChannelFutures;
     /// event only channels that send events upstream
     std::unordered_map<OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
@@ -143,8 +143,9 @@ class WorkerContext {
      * @brief This stores a network channel for an operator
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
+     * @param receiver
      */
-    void storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel);
+    void storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel, WorkerId receiver);
 
     /**
      * @brief This stores a future for network channel creation and a promise which can be used to abort the creation
@@ -152,8 +153,9 @@ class WorkerContext {
      * @param channelFuture a pair of a future waiting for the output channel to be connected and a promise to be used if the connection
      * process is to be aborted
      */
-    void storeNetworkChannelFuture(OperatorId id,
-                                   std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+    void storeNetworkChannelFuture(
+        OperatorId id,
+        std::pair<std::pair<std::future<Network::NetworkChannelPtr>, WorkerId>, std::promise<bool>>&& channelFuture);
 
     /**
       * @brief This method creates a network storage for a thread
@@ -220,7 +222,7 @@ class WorkerContext {
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::NetworkChannel* getNetworkChannel(OperatorId ownerId);
+    std::pair<Network::NetworkChannel*, WorkerId> getNetworkChannel(OperatorId ownerId);
 
     /**
      * @brief retrieves an asynchronously established output channel.
@@ -230,14 +232,14 @@ class WorkerContext {
      * - optional containing nullptr if the conneciton timed out
      * - optional containing valid ptr if connection succeeded
      */
-    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(OperatorId operatorId);
+    std::optional<std::pair<Network::NetworkChannelPtr, WorkerId>> getAsyncConnectionResult(OperatorId operatorId);
 
     /**
      * @brief blocks until async connection of a network channel has succeeded or timed out
      * @param operatorId id of the operator which will use the network channel
      * @return a pointer to the network channel or nullptr if the connection timed out
      */
-    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId operatorId, uint64_t retries);
+    std::pair<Network::NetworkChannelPtr, WorkerId> waitForAsyncConnection(NES::OperatorId operatorId, uint64_t retries);
 
     /**
      * @brief check if an async connection that was started by the operator with the specified id is currently in progress
