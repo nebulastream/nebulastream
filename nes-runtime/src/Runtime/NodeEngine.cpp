@@ -65,7 +65,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
       openCLManager(std::move(openCLManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing), timestampOutPutSources(timeStampOutputSources) {
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing), timestampOutPutSources(timeStampOutputSources), parentId(0) {
 
     NES_TRACE("Runtime() id={}", nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared
