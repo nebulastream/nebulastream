@@ -848,7 +848,7 @@ void NodeEngine::setTcpDescriptor(std::string sourceName, int tcpDescriptor) {
 
 const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
 
-int64_t NodeEngine::getParentId() const {
+int64_t NodeEngine::getParentId() {
     std::unique_lock lock(parentMutex);
     if (connected) {
         return parentId;
@@ -870,12 +870,15 @@ void NodeEngine::setParentId(int64_t newParent) {
 void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
     //lock
     std::unique_lock lock(parentMutex);
-    NES_ERROR("trying to reactive  parent id {} with id {}", parentId, newParent);
+    // NES_ERROR("trying to reactive  parent id {} with id {}", parentId, newParent);
+    if (parentId != newParent) {
+        NES_ERROR("parents to not match new: {}, expected: {}", newParent, parentId)
+    }
     if (!connected) {
         connected = true;
-        NES_ERROR("reactivated {}", parentId);
+        // NES_ERROR("reactivated {}", parentId);
     } else {
-        NES_ERROR("did not reactivate {}", parentId);
+        // NES_ERROR("did not reactivate {}", parentId);
     }
 }
 
