@@ -443,4 +443,8 @@ WorkerId TestHarness::getNextTopologyId() {
 }
 Runtime::BufferManagerPtr TestHarness::getBufferManager() const { return bufferManager; }
 
+NesCoordinatorPtr TestHarness::getCoordinator() const {
+    return nesCoordinator;
+}
+
 }// namespace NES

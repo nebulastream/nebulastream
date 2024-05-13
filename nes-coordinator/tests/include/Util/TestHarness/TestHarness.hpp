@@ -283,6 +283,8 @@ class TestHarness {
 
     Runtime::BufferManagerPtr getBufferManager() const;
 
+    NesCoordinatorPtr getCoordinator() const;
+
   private:
     std::string getNextPhysicalSourceName();
     WorkerId getNextTopologyId();
