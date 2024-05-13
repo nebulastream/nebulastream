@@ -870,7 +870,7 @@ void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
     //lock
     std::unique_lock lock(parentMutex);
     NES_ERROR("trying to reactive  parent id {} with id {}", parentId, newParent);
-    if (!connected && newParent == parentId) {
+    if (!connected) {
         connected = true;
         NES_ERROR("reactivated {}", parentId);
     } else {
