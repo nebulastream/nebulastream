@@ -362,7 +362,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     constexpr auto isLastChunk = true;
                     exchangeProtocol.onBuffer(*nesPartition,
                                               buffer,
-                                              {bufferHeader->messageSequenceNumber, defaultChunkNumber, isLastChunk}, bufferHeader->sinkVersion);
+                                              {bufferHeader->messageSequenceNumber, defaultChunkNumber, isLastChunk});
                     break;
                 }
                 case MessageType::EventBuffer: {
