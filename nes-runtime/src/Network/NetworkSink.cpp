@@ -116,15 +116,14 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
             return true;
         }
 
-        if (static_cast<int64_t>(receiverLocation.getNodeId()) != nodeEngine->getParentId()) {
-            workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
-            return true;
-        }
-
         //if a connection was established, retrieve the channel
         channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     }
     unbuffer(workerContext);
+    if (static_cast<int64_t>(receiverLocation.getNodeId()) != nodeEngine->getParentId()) {
+        workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+        return true;
+    }
 
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber, version);
@@ -413,7 +412,9 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
-    auto topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+    // auto topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+     auto topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+
     NES_INFO("sending buffered data");
     auto numBuffers = 0;
     while (topBuffer) {
@@ -422,12 +423,13 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
             break;
         }
         if (!writeBufferedData(topBuffer.value(), workerContext)) {
-            workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), topBuffer.value());
+            // workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), topBuffer.value());
             NES_WARNING("could not send all data from buffer");
             break;
         }
+        workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
         NES_TRACE("buffer sent");
-        topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+        topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
         numBuffers++;
     }
     NES_DEBUG("Sent {} buffers to node {}", numBuffers, nodeEngine->getParentId());

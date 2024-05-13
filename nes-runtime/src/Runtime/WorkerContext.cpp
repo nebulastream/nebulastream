@@ -140,6 +140,14 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(N
     }
     return {};
 }
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::peekBufferFromReconnectBufferStorage(OperatorId operatorId) {
+    auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
+    if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
+        auto buffer = iteratorAtOperatorId->second.front();
+        return buffer;
+    }
+    return {};
+}
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::removeBufferFromReconnectBufferStorage(OperatorId operatorId) {
     auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
