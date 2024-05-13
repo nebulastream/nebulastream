@@ -79,7 +79,10 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
         return false;
     }
 
-    if (static_cast<int64_t>(receiverLocation.getNodeId()) != nodeEngine->getParentId()) {
+    auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
+    auto parent = nodeEngine->getParentId();
+    if (receiver != parent) {
+        NES_ERROR("write bufferedc data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         return false;
     }
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
@@ -120,7 +123,10 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     }
     unbuffer(workerContext);
-    if (static_cast<int64_t>(receiverLocation.getNodeId()) != nodeEngine->getParentId()) {
+    auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
+    auto parent = nodeEngine->getParentId();
+    if (receiver != parent) {
+        NES_ERROR("write data: parent mismatch, store buffer in reconnect storage. Receiver: {}, parent: {}", receiver, parent)
         workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
         return true;
     }
