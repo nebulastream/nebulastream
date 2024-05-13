@@ -64,7 +64,7 @@ ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
     try {
-        NES_ERROR("ISQP Lock resources --------------------------------------------------------------------------------------------")
+        //NES_ERROR("ISQP Lock resources --------------------------------------------------------------------------------------------")
         auto processingStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         topology = storageHandle->getTopologyHandle(requestId);
@@ -77,7 +77,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
         auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
 
-        NES_ERROR("Resources locked ISQP Start updating topology --------------------------------------------------------------------------------------------")
+        // NES_ERROR("Resources locked ISQP Start updating topology --------------------------------------------------------------------------------------------")
         // Apply all topology events
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -122,7 +122,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPAddNodeResponse>(workerId, true));
             }
         }
-        NES_ERROR("Changed topology, identify affected placements --------------------------------------------------------------------------------------------")
+        // NES_ERROR("Changed topology, identify affected placements --------------------------------------------------------------------------------------------")
 
         // Identify affected operator placements
         for (const auto& event : events) {
@@ -133,7 +133,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 handleRemoveLinkRequest(event->as<ISQPRemoveLinkEvent>());
                 event->response.set_value(std::make_shared<ISQPRemoveLinkResponse>(true));
             } else if (event->instanceOf<ISQPAddQueryEvent>()) {
-                NES_ERROR("handleAddQueryRequest");
+                // NES_ERROR("handleAddQueryRequest");
                 auto queryId = handleAddQueryRequest(event->as<ISQPAddQueryEvent>());
                 event->response.set_value(std::make_shared<ISQPAddQueryResponse>(queryId));
             } else if (event->instanceOf<ISQPRemoveQueryEvent>()) {
@@ -141,7 +141,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPRemoveQueryResponse>(true));
             }
         }
-        NES_ERROR("Identified placements, start amendment instances --------------------------------------------------------------------------------------------")
+        // NES_ERROR("Identified placements, start amendment instances --------------------------------------------------------------------------------------------")
 
         // Fetch affected SQPs and call in parallel operator placement amendment phase
         auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -149,9 +149,9 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
-        NES_ERROR("start instances for sqp {} events --------------------------------------------------------------------------------------------", sharedQueryPlans.size())
+        // NES_ERROR("start instances for sqp {} events --------------------------------------------------------------------------------------------", sharedQueryPlans.size())
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
-            NES_ERROR("Creating amendment instance for shared query plan {}", sharedQueryPlan->getId());
+            // NES_ERROR("Creating amendment instance for shared query plan {}", sharedQueryPlan->getId());
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,
                                                                                           topology,
@@ -169,7 +169,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 numOfFailedPlacements++;
             }
         }
-        NES_ERROR("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
+        // NES_ERROR("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
         auto processingEndTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         auto numOfSQPAffected = sharedQueryPlans.size();
@@ -180,7 +180,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                         numOfFailedPlacements,
                                                                         true));
     } catch (RequestExecutionException& exception) {
-        NES_ERROR("Exception occurred while processing ISQPRequest with error {}", exception.what());
+        // NES_ERROR("Exception occurred while processing ISQPRequest with error {}", exception.what());
         responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, true));
         handleError(std::current_exception(), storageHandle);
     }
@@ -420,7 +420,7 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     }
     //Link both catalogs
     queryCatalog->linkSharedQuery(queryId, sharedQueryId);
-    NES_ERROR("Added query {} with shared query id {} to query catalog", queryId, sharedQueryId);
+    // NES_ERROR("Added query {} with shared query id {} to query catalog", queryId, sharedQueryId);
     return queryId;
 }
 
