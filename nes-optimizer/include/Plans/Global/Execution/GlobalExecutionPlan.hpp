@@ -91,9 +91,8 @@ class GlobalExecutionPlan {
      * @param decomposedQueryPlanId : the decomposed query id
      * @return copy of the decomposed query plan
      */
-    DecomposedQueryPlanPtr getCopyOfDecomposedQueryPlan(WorkerId WorkerId,
-                                                        SharedQueryId sharedQueryId,
-                                                        DecomposedQueryPlanId decomposedQueryPlanId);
+    DecomposedQueryPlanPtr
+    getCopyOfDecomposedQueryPlan(WorkerId WorkerId, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief Get the copy of all decomposed query plans originating from the given shared query id and hosted on the
@@ -102,8 +101,7 @@ class GlobalExecutionPlan {
      * @param sharedQueryId : the id of the shared query
      * @return the vector containing copies of decomposed query plans
      */
-    std::vector<DecomposedQueryPlanPtr> getCopyOfAllDecomposedQueryPlans(WorkerId WorkerId,
-                                                                         SharedQueryId sharedQueryId);
+    std::vector<DecomposedQueryPlanPtr> getCopyOfAllDecomposedQueryPlans(WorkerId WorkerId, SharedQueryId sharedQueryId);
 
     /**
      * Add execution node as root of the execution graph
@@ -192,4 +190,4 @@ class GlobalExecutionPlan {
 }// namespace Optimizer
 }// namespace NES
 
-#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBALEXECUTIONPLAN_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBALEXECUTIONPLAN_HPP_

@@ -38,15 +38,17 @@ class BinarySourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    static BinarySourceTypePtr create(const std::string& logicalSourceName,
+                                      const std::string& physicalSourceName,
+                                      std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a BinarySourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static BinarySourceTypePtr
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a BinarySourceTypePtr object with default values
@@ -93,4 +95,4 @@ class BinarySourceType : public PhysicalSourceType {
     Configurations::StringConfigOption filePath;
 };
 }// namespace NES
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_

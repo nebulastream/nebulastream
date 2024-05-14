@@ -12,17 +12,15 @@
     limitations under the License.
 */
 
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/WindowType.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
 
-StatisticRegistryPtr StatisticRegistry::create() {
-    return std::make_shared<StatisticRegistry>();
-}
+StatisticRegistryPtr StatisticRegistry::create() { return std::make_shared<StatisticRegistry>(); }
 
 StatisticInfoWLock StatisticRegistry::getStatisticInfo(const StatisticHash statisticHash) {
     auto lockedMap = keyToStatisticInfo.wlock();

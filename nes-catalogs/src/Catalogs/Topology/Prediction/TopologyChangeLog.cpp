@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 
 namespace NES::Experimental::TopologyPrediction {
 

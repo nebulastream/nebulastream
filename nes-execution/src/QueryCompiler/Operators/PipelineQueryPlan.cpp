@@ -59,7 +59,8 @@ DecomposedQueryPlanId PipelineQueryPlan::getQuerySubPlanId() const { return deco
 std::string PipelineQueryPlan::toString() const {
     std::ostringstream oss;
     oss << "PipelineQueryPlan: " << std::endl
-        << "- queryId: " << sharedQueryId << ", subPlanId: " << decomposedQueryPlanId << ", no. pipelines: " << pipelines.size() << std::endl;
+        << "- queryId: " << sharedQueryId << ", subPlanId: " << decomposedQueryPlanId << ", no. pipelines: " << pipelines.size()
+        << std::endl;
 
     for (auto& pipeline : pipelines) {
         oss << "- pipeline: " << pipeline->toString() << std::endl;

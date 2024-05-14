@@ -24,7 +24,11 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator {
   protected:
-    PhysicalBinaryOperator(OperatorId id, StatisticId statisticId, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema);
+    PhysicalBinaryOperator(OperatorId id,
+                           StatisticId statisticId,
+                           SchemaPtr leftSchema,
+                           SchemaPtr rightSchema,
+                           SchemaPtr outputSchema);
 
   public:
     /**
@@ -36,4 +40,4 @@ class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator {
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_

@@ -83,4 +83,4 @@ class PredicateReorderingRule : public BaseRewriteRule {
     static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_

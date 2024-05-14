@@ -33,7 +33,11 @@ PhysicalWatermarkAssignmentOperator::create(OperatorId id,
                                             const SchemaPtr& inputSchema,
                                             const SchemaPtr& outputSchema,
                                             const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
-    return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, statisticId, inputSchema, outputSchema, watermarkStrategyDescriptor);
+    return std::make_shared<PhysicalWatermarkAssignmentOperator>(id,
+                                                                 statisticId,
+                                                                 inputSchema,
+                                                                 outputSchema,
+                                                                 watermarkStrategyDescriptor);
 }
 
 Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::getWatermarkStrategyDescriptor() const {
@@ -45,7 +49,11 @@ PhysicalWatermarkAssignmentOperator::create(StatisticId statisticId,
                                             SchemaPtr inputSchema,
                                             SchemaPtr outputSchema,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
+    return create(getNextOperatorId(),
+                  statisticId,
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(watermarkStrategyDescriptor));
 }
 
 std::string PhysicalWatermarkAssignmentOperator::toString() const {

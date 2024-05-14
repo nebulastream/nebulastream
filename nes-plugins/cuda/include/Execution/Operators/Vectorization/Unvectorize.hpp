@@ -14,8 +14,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_UNVECTORIZE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_UNVECTORIZE_HPP_
 
-#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
  * The child operator is executed on each tuple that is retrieved from an incoming tuple buffer.
  */
 class Unvectorize : public VectorizableOperator {
-public:
+  public:
     /**
      * @brief Constructor.
      * @param memoryProvider the memory layout that describes the tuple buffer.
@@ -35,11 +35,11 @@ public:
 
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-private:
+  private:
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
     std::vector<Record::RecordFieldIdentifier> projections;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_UNVECTORIZE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_UNVECTORIZE_HPP_

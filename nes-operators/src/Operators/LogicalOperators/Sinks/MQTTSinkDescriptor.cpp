@@ -26,9 +26,9 @@ MQTTSinkDescriptor::MQTTSinkDescriptor(std::string&& address,
                                        const ServiceQualities qualityOfService,
                                        bool asynchronousClient,
                                        uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins), address(std::move(address)), clientId(std::move(clientId)),
-      topic(std::move(topic)), user(std::move(user)), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
-      messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient) {}
+    : SinkDescriptor(numberOfOrigins), address(std::move(address)), clientId(std::move(clientId)), topic(std::move(topic)),
+      user(std::move(user)), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay),
+      qualityOfService(qualityOfService), asynchronousClient(asynchronousClient) {}
 
 std::string MQTTSinkDescriptor::getAddress() const { return address; }
 

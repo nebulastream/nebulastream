@@ -17,8 +17,7 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor(uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins) {}
+PrintSinkDescriptor::PrintSinkDescriptor(uint64_t numberOfOrigins) : SinkDescriptor(numberOfOrigins) {}
 
 SinkDescriptorPtr PrintSinkDescriptor::create(uint64_t numberOfOrigins) {
     return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(numberOfOrigins));

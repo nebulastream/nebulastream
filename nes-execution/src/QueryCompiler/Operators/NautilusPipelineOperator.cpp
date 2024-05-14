@@ -17,7 +17,7 @@
 namespace NES::QueryCompilation {
 
 OperatorPtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-                                                 std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
+                                             std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
     return std::make_shared<NautilusPipelineOperator>(
         NautilusPipelineOperator(getNextOperatorId(), std::move(nautilusPipeline), std::move(operatorHandlers)));
 }

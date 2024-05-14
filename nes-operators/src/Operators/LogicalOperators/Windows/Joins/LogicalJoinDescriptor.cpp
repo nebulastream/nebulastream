@@ -14,9 +14,9 @@
 
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Join {

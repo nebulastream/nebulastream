@@ -15,9 +15,9 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TIMEBASEDWINDOWTYPE_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TIMEBASEDWINDOWTYPE_HPP_
 
-#include <Types/WindowType.hpp>
-#include <Measures/TimeMeasure.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Types/WindowType.hpp>
 #include <vector>
 namespace NES::Windowing {
 
@@ -61,4 +61,4 @@ class TimeBasedWindowType : public WindowType {
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TIMEBASEDWINDOWTYPE_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TIMEBASEDWINDOWTYPE_HPP_

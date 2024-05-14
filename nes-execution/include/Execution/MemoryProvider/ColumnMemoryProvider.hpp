@@ -48,4 +48,4 @@ class ColumnMemoryProvider final : public MemoryProvider {
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_

@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <API/TestSchemas.hpp>
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -26,25 +26,25 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
@@ -1048,8 +1048,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
             1,
             1);
 
-        batchJoinOp =
-            LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::LogicalBatchJoinOperator>();
+        batchJoinOp = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::LogicalBatchJoinOperator>();
     }
     joinOp->replace(batchJoinOp);
     ASSERT_TRUE(batchJoinOp->inferSchema());
@@ -1624,7 +1623,6 @@ TEST_F(TypeInferencePhaseTest, windowDataTypeForTimestamp) {
                           .window(TumblingWindow::of(EventTime(Attribute("wrongDataTypeTimeStamp")), Milliseconds(1000)))
                           .apply(Sum(Attribute("id")))
                           .sink(NullOutputSinkDescriptor::create());
-
 
     // Running the type inference phase
     ASSERT_NO_THROW(phase->execute(queryCorrect.getQueryPlan()));

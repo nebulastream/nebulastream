@@ -22,13 +22,12 @@ namespace NES {
 SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName,
                                            const std::string& physicalSourceName,
                                            std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<SenseSourceType>(
-        SenseSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
+    return std::make_shared<SenseSourceType>(SenseSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
-SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
-    return std::make_shared<SenseSourceType>(
-        SenseSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+SenseSourceTypePtr
+SenseSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<SenseSourceType>(SenseSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
 
 SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
@@ -47,7 +46,9 @@ SenseSourceType::SenseSourceType(const std::string& logicalSourceName,
     }
 }
 
-SenseSourceType::SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+SenseSourceType::SenseSourceType(const std::string& logicalSourceName,
+                                 const std::string& physicalSourceName,
+                                 Yaml::Node yamlConfig)
     : SenseSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     if (!yamlConfig[Configurations::UDFS_CONFIG].As<std::string>().empty()

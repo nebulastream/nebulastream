@@ -190,8 +190,10 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted) {
 
     // Checking, if we have seen all sequence numbers
     std::vector<SequenceNumber> seenSeqNumbers;
-    std::transform(pipelineContext.seenSeqChunkLastChunk.begin(), pipelineContext.seenSeqChunkLastChunk.end(),
-                   std::back_inserter(seenSeqNumbers), [](const SequenceData& sequenceData) {
+    std::transform(pipelineContext.seenSeqChunkLastChunk.begin(),
+                   pipelineContext.seenSeqChunkLastChunk.end(),
+                   std::back_inserter(seenSeqNumbers),
+                   [](const SequenceData& sequenceData) {
                        return sequenceData.sequenceNumber;
                    });
     ASSERT_THAT(seenSeqNumbers, ::testing::UnorderedElementsAreArray({1, 2, 3, 4}));

@@ -25,10 +25,10 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

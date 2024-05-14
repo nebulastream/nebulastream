@@ -41,9 +41,9 @@ std::string AndExpressionNode::toString() const {
     return ss.str();
 }
 
-void AndExpressionNode::inferStamp( SchemaPtr schema) {
+void AndExpressionNode::inferStamp(SchemaPtr schema) {
     // delegate stamp inference of children
-    ExpressionNode::inferStamp( schema);
+    ExpressionNode::inferStamp(schema);
     // check if children stamp is correct
     if (!getLeft()->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: "

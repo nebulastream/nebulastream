@@ -29,7 +29,8 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              uint64_t numbersOfBufferToProduce,
                                              uint64_t batchSize)
     : SourceDescriptor(std::move(schema)), brokers(std::move(brokers)), topic(std::move(topic)), groupId(std::move(groupId)),
-      kafkaSourceType(kafkaSourceType), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout), offsetMode(offsetMode), numbersOfBufferToProduce(numbersOfBufferToProduce), batchSize(batchSize) {}
+      kafkaSourceType(kafkaSourceType), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout), offsetMode(offsetMode),
+      numbersOfBufferToProduce(numbersOfBufferToProduce), batchSize(batchSize) {}
 
 KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema, KafkaSourceTypePtr kafkaSourceType)
     : SourceDescriptor(std::move(schema)), kafkaSourceType(std::move(kafkaSourceType)) {}

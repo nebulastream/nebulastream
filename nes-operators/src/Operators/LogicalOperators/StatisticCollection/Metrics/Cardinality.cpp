@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 
 namespace NES::Statistic {
 

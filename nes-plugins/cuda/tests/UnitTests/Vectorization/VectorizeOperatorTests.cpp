@@ -13,19 +13,19 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseUnitTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Vectorization/StagingHandler.hpp>
-#include <Execution/Operators/Vectorization/Vectorize.hpp>
 #include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
+#include <Execution/Operators/Vectorization/Vectorize.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <BaseUnitTest.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Operators {
@@ -43,15 +43,10 @@ class VectorizeOperatorTest : public Testing::BaseUnitTest {
 };
 
 class VectorizedCollectOperator : public VectorizableOperator {
-public:
-    VectorizedCollectOperator(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
-        : memoryProvider(std::move(memoryProvider))
-        , projections(projections)
-        , records()
-        , invocations(0)
-    {
-
-    }
+  public:
+    VectorizedCollectOperator(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+                              std::vector<Record::RecordFieldIdentifier> projections)
+        : memoryProvider(std::move(memoryProvider)), projections(projections), records(), invocations(0) {}
 
     void execute(ExecutionContext&, RecordBuffer& recordBuffer) const override {
         auto numberOfRecords = recordBuffer.getNumRecords();
@@ -131,4 +126,4 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer__GPU) {
     stagingHandler->stop(QueryTerminationType::Graceful, pipelineContext);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

@@ -31,7 +31,7 @@ ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr& left, const
     return addNode;
 }
 
-void ModExpressionNode::inferStamp( SchemaPtr schema) {
+void ModExpressionNode::inferStamp(SchemaPtr schema) {
     ArithmeticalBinaryExpressionNode::inferStamp(schema);
 
     if (stamp->isInteger()) {

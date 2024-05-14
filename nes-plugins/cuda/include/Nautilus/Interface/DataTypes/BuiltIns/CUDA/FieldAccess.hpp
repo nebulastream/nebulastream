@@ -25,7 +25,7 @@ class BlockDim;
  * @brief This class represents the access of named fields of structured data such as vectors.
  */
 class FieldAccess : public BuiltInVariable {
-public:
+  public:
     static const inline auto type = TypeIdentifier::create<FieldAccess>();
 
     FieldAccess(std::shared_ptr<BuiltInVariable> builtInVariable, std::string fieldName);
@@ -38,11 +38,11 @@ public:
 
     const Value<> getAsValue() const override;
 
-private:
+  private:
     std::shared_ptr<BuiltInVariable> builtInVariable;
     std::string fieldName;
 };
 
-} // namespace NES::Nautilus
+}// namespace NES::Nautilus
 
-#endif // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_FIELDACCESS_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_FIELDACCESS_HPP_

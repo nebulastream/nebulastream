@@ -42,7 +42,7 @@ class SlidingWindow : public TimeBasedWindowType {
 
     uint64_t hash() const override;
 
-private:
+  private:
     SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
@@ -50,4 +50,4 @@ private:
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_SLIDINGWINDOW_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_SLIDINGWINDOW_HPP_

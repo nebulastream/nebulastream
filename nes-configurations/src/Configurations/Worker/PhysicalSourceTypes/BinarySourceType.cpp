@@ -22,11 +22,12 @@ namespace NES {
 
 BinarySourceTypePtr
 BinarySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
-    return std::make_shared<BinarySourceType>(
-        BinarySourceType(logicalSourceName, physicalSourceName, yamlConfig));
+    return std::make_shared<BinarySourceType>(BinarySourceType(logicalSourceName, physicalSourceName, yamlConfig));
 }
 
-BinarySourceType::BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+BinarySourceType::BinarySourceType(const std::string& logicalSourceName,
+                                   const std::string& physicalSourceName,
+                                   Yaml::Node yamlConfig)
     : BinarySourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()

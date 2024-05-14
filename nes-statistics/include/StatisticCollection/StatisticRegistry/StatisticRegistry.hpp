@@ -16,8 +16,8 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
-#include <Statistics/StatisticKey.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
+#include <Statistics/StatisticKey.hpp>
 #include <folly/Synchronized.h>
 #include <functional>
 #include <map>
@@ -34,7 +34,6 @@ using StatisticRegistryPtr = std::shared_ptr<StatisticRegistry>;
  */
 class StatisticRegistry {
   public:
-
     static StatisticRegistryPtr create();
 
     /**
@@ -93,8 +92,7 @@ class StatisticRegistry {
     bool isRunning(const StatisticHash statisticHash) const;
 
   private:
-    folly::Synchronized<std::unordered_map<StatisticHash, folly::Synchronized<StatisticInfo>>>
-        keyToStatisticInfo;
+    folly::Synchronized<std::unordered_map<StatisticHash, folly::Synchronized<StatisticInfo>>> keyToStatisticInfo;
 };
 
 }// namespace NES::Statistic

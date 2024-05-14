@@ -112,8 +112,7 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     FunctionCall("freeNonKeyedSliceMergeTask", freeNonKeyedSliceMergeTask, sliceMergeTask);
 
     // 3. emit the combined slice via an action
-    sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk,
-                                  combinedSlice);
+    sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, combinedSlice);
 }
 
 Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,

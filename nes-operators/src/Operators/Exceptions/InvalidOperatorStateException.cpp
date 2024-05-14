@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp>
-#include <sstream>
 #include <fmt/core.h>
+#include <sstream>
 
 namespace NES::Exceptions {
 

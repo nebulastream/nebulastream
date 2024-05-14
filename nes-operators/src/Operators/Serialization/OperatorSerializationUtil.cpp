@@ -11,12 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/TumblingWindow.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
@@ -61,20 +60,17 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/TumblingWindow.hpp>
-#include <Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
-#include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/WindowType.hpp>
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -588,9 +584,8 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window =
-                Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                              Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
@@ -607,10 +602,9 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
                 Windowing::TimeMeasure(serializedSlidingWindow.size()),
                 Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window =
-                Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                             Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                                             Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
@@ -716,9 +710,8 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window =
-                Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                              Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
@@ -735,10 +728,9 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
                 Windowing::TimeMeasure(serializedSlidingWindow.size()),
                 Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
-            window =
-                Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                             Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                                             Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());
@@ -1412,9 +1404,8 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         sinkDescriptorMessage.set_sinkformattype(
             (SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticSinkFormatType)
                 statisticSinkDescriptor->getSinkFormatType());
-        sinkDescriptorMessage.set_sinkdatacodec(
-            (SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticDataCodec)
-                statisticSinkDescriptor->getSinkDataCodec());
+        sinkDescriptorMessage.set_sinkdatacodec((SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticDataCodec)
+                                                    statisticSinkDescriptor->getSinkDataCodec());
         sinkDetails.mutable_sinkdescriptor()->PackFrom(sinkDescriptorMessage);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else {
@@ -1594,7 +1585,8 @@ void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
                                                          serializedWatermarkStrategyDescriptor.mutable_onfield());
         serializedWatermarkStrategyDescriptor.set_allowedlateness(
             eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());
-        serializedWatermarkStrategyDescriptor.set_multiplier(eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMillisecondsConversionMultiplier());
+        serializedWatermarkStrategyDescriptor.set_multiplier(
+            eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMillisecondsConversionMultiplier());
         watermarkStrategyDetails.mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     } else if (watermarkStrategyDescriptor.instanceOf<const Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
         auto serializedWatermarkStrategyDescriptor =
@@ -1808,7 +1800,6 @@ void OperatorSerializationUtil::serializeStatisticWindowOperator(
     StatisticSerializationUtil::serializeTriggerCondition(*statisticWindowOperator.getTriggerCondition(),
                                                           *statisticWindowDetails.mutable_triggercondition());
 
-
     // 4. Serializing the metric hash and then packing everything into serializedOperator
     statisticWindowDetails.set_metrichash(statisticWindowOperator.getMetricHash());
     serializedOperator.mutable_details()->PackFrom(statisticWindowDetails);
@@ -1864,8 +1855,11 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOpe
     auto statisticDescriptor =
         StatisticSerializationUtil::deserializeDescriptor(statisticWindowDetails.statisticwindowdescriptor());
     auto metricHash = statisticWindowDetails.metrichash();
-    auto statisticWindowOperator = LogicalOperatorFactory::createStatisticBuildOperator(window, statisticDescriptor, metricHash,
-                                                                                        sendingPolicy, triggerCondition);
+    auto statisticWindowOperator = LogicalOperatorFactory::createStatisticBuildOperator(window,
+                                                                                        statisticDescriptor,
+                                                                                        metricHash,
+                                                                                        sendingPolicy,
+                                                                                        triggerCondition);
 
     return statisticWindowOperator;
 }

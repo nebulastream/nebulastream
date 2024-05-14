@@ -16,6 +16,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
@@ -25,7 +26,6 @@
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpp-base64/base64.h>

@@ -38,10 +38,10 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
@@ -100,7 +100,10 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
             Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         Topology::create());
     }
 };
 

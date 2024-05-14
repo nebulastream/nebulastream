@@ -30,8 +30,8 @@ namespace NES::QueryCompilation::Util {
  * @return Tuple<WindowSize, WindowSlide, TimeFunction>
  */
 std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
-    getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
+getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
 
-} // namespace NES::QueryCompilation::Util
+}// namespace NES::QueryCompilation::Util
 
 #endif//NES_NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_

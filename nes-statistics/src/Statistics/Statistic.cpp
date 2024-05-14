@@ -27,4 +27,4 @@ bool Statistic::operator==(const Statistic& other) const { return this->equal(ot
 
 Statistic::Statistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples)
     : startTs(startTs), endTs(endTs), observedTuples(observedTuples) {}
-} // namespace NES::Statistic
+}// namespace NES::Statistic

@@ -17,9 +17,7 @@
 
 namespace NES::Statistic {
 
-void WindowStatisticDescriptor::inferStamps(const SchemaPtr& inputSchema) {
-    field->inferStamp(inputSchema);
-}
+void WindowStatisticDescriptor::inferStamps(const SchemaPtr& inputSchema) { field->inferStamp(inputSchema); }
 
 WindowStatisticDescriptor::WindowStatisticDescriptor(const FieldAccessExpressionNodePtr& field, const uint64_t width)
     : field(field), width(width) {}

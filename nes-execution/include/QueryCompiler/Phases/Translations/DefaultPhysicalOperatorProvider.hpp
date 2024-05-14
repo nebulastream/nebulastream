@@ -15,10 +15,10 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Types/TimeBasedWindowType.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <vector>
 namespace NES::QueryCompilation {
 

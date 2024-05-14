@@ -19,7 +19,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
     : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
 
-PhysicalOperatorPtr PhysicalEmitOperator::create(StatisticId statisticId,SchemaPtr inputSchema) {
+PhysicalOperatorPtr PhysicalEmitOperator::create(StatisticId statisticId, SchemaPtr inputSchema) {
     return create(getNextOperatorId(), statisticId, std::move(inputSchema));
 }
 PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema) {

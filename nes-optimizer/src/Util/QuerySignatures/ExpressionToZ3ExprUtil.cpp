@@ -27,10 +27,10 @@
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Util/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 #include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {

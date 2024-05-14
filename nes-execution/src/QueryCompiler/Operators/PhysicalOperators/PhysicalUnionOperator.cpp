@@ -27,7 +27,9 @@ PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id,
     return std::make_shared<PhysicalUnionOperator>(id, statisticId, leftSchema, rightSchema, outputSchema);
 }
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(StatisticId statisticId, const SchemaPtr& schema) { return create(getNextOperatorId(), statisticId, schema); }
+PhysicalOperatorPtr PhysicalUnionOperator::create(StatisticId statisticId, const SchemaPtr& schema) {
+    return create(getNextOperatorId(), statisticId, schema);
+}
 
 PhysicalUnionOperator::PhysicalUnionOperator(OperatorId id,
                                              StatisticId statisticId,

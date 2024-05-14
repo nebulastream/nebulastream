@@ -15,12 +15,10 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
 
-#include <Statistics/StatisticValue.hpp>
-#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <Measures/TimeMeasure.hpp>
+#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
+#include <Statistics/StatisticValue.hpp>
 namespace NES::Statistic {
-
-
 
 class Statistic;
 using StatisticPtr = std::shared_ptr<Statistic>;

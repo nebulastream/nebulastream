@@ -30,7 +30,7 @@ ExpressionNodePtr ExpExpressionNode::create(ExpressionNodePtr const& child) {
     return expNode;
 }
 
-void ExpExpressionNode::inferStamp( SchemaPtr schema) {
+void ExpExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 

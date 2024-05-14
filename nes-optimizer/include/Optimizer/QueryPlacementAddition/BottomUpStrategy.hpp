@@ -41,9 +41,9 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
                                            PlacementAmendmentMode placementAmendmentMode);
 
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                                DecomposedQueryPlanVersion querySubPlanVersion) override;
+                                                      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,
@@ -72,4 +72,4 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BOTTOMUPSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BOTTOMUPSTRATEGY_HPP_

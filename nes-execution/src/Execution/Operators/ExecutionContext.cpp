@@ -154,7 +154,8 @@ void removeSequenceStateProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t 
 }
 
 Value<Boolean> ExecutionContext::isLastChunk() const {
-    return Nautilus::FunctionCall("isLastChunkProxy", isLastChunkProxy,
+    return Nautilus::FunctionCall("isLastChunkProxy",
+                                  isLastChunkProxy,
                                   this->getPipelineContext(),
                                   this->getOriginId(),
                                   this->getSequenceNumber(),
@@ -163,14 +164,16 @@ Value<Boolean> ExecutionContext::isLastChunk() const {
 }
 
 Value<UInt64> ExecutionContext::getNextChunkNr() const {
-    return Nautilus::FunctionCall("getNextChunkNumberProxy", getNextChunkNumberProxy,
+    return Nautilus::FunctionCall("getNextChunkNumberProxy",
+                                  getNextChunkNumberProxy,
                                   this->getPipelineContext(),
                                   this->getOriginId(),
                                   this->getSequenceNumber());
 }
 
 void ExecutionContext::removeSequenceState() const {
-    Nautilus::FunctionCall("removeSequenceStateProxy", removeSequenceStateProxy,
+    Nautilus::FunctionCall("removeSequenceStateProxy",
+                           removeSequenceStateProxy,
                            this->getPipelineContext(),
                            this->getOriginId(),
                            this->getSequenceNumber());

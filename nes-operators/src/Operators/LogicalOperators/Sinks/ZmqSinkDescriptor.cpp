@@ -18,18 +18,11 @@
 
 namespace NES {
 
-SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host,
-                                            uint16_t port,
-                                            bool internal,
-                                            uint64_t numberOfOrigins) {
-    return std::make_shared<ZmqSinkDescriptor>(
-        ZmqSinkDescriptor(std::move(host), port, internal, numberOfOrigins));
+SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host, uint16_t port, bool internal, uint64_t numberOfOrigins) {
+    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(std::move(host), port, internal, numberOfOrigins));
 }
 
-ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host,
-                                     uint16_t port,
-                                     bool internal,
-                                     uint64_t numberOfOrigins)
+ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, bool internal, uint64_t numberOfOrigins)
     : SinkDescriptor(numberOfOrigins), host(std::move(host)), port(port), internal(internal) {}
 
 const std::string& ZmqSinkDescriptor::getHost() const { return host; }

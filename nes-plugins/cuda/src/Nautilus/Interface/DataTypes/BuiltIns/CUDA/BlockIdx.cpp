@@ -19,7 +19,8 @@
 
 namespace NES::Nautilus {
 
-BlockIdx::BlockIdx() : BuiltInVariable(&type) {
+BlockIdx::BlockIdx()
+    : BuiltInVariable(&type){
 
     };
 
@@ -30,13 +31,9 @@ IR::Types::StampPtr BlockIdx::getType() const {
     NES_NOT_IMPLEMENTED();
 }
 
-std::shared_ptr<Any> BlockIdx::copy() {
-    return create<BlockIdx>();
-}
+std::shared_ptr<Any> BlockIdx::copy() { return create<BlockIdx>(); }
 
-const Value<> BlockIdx::getAsValue() const {
-    NES_NOT_IMPLEMENTED();
-}
+const Value<> BlockIdx::getAsValue() const { NES_NOT_IMPLEMENTED(); }
 
 std::shared_ptr<FieldAccess> BlockIdx::x() { return std::make_shared<FieldAccess>(create<BlockIdx>(), "x"); }
 

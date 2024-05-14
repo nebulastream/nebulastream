@@ -15,9 +15,9 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_
 
-#include <Statistics/StatisticValue.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Statistics/StatisticKey.hpp>
+#include <Statistics/StatisticValue.hpp>
 #include <memory>
 
 namespace NES::Statistic {

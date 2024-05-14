@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <algorithm>
 #include <atomic>
-#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <numeric>
 #include <sstream>
-#include <algorithm>
 #include <utility>
 
 namespace NES::QueryCompilation {

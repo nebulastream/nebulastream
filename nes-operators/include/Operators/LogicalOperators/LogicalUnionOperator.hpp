@@ -38,4 +38,4 @@ class LogicalUnionOperator : public LogicalBinaryOperator {
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNIONOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNIONOPERATOR_HPP_

@@ -39,7 +39,6 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>

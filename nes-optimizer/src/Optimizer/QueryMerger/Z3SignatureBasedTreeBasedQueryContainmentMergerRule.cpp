@@ -18,12 +18,12 @@
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedTreeBasedQueryContainmentMergerRule.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 

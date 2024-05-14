@@ -165,16 +165,16 @@ TEST_F(KeyedSliceMergingTest, aggregate) {
     ASSERT_TRUE(sliceMergeTaskBuffer.has_value());
     ASSERT_EQ(reinterpret_cast<uintptr_t>(sliceMergeTaskBuffer->getBuffer()) % alignof(SliceMergeTask<KeyedSlice>), 0);
     new (sliceMergeTaskBuffer->getBuffer()) SliceMergeTask<KeyedSlice>(1,
-                                                            1,
-                                                            true,
-                                                            0,
-                                                            400,
-                                                            {
-                                                                createSlice(0, 100, {{1, 3}, {2, 3}}),
-                                                                createSlice(100, 200, {{1, 3}, {2, 6}}),
-                                                                createSlice(200, 300, {{1, 3}, {2, 3}}),
-                                                                createSlice(300, 400, {{1, 3}, {2, 6}}),
-                                                            });
+                                                                       1,
+                                                                       true,
+                                                                       0,
+                                                                       400,
+                                                                       {
+                                                                           createSlice(0, 100, {{1, 3}, {2, 3}}),
+                                                                           createSlice(100, 200, {{1, 3}, {2, 6}}),
+                                                                           createSlice(200, 300, {{1, 3}, {2, 3}}),
+                                                                           createSlice(300, 400, {{1, 3}, {2, 6}}),
+                                                                       });
 
     auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(sliceMergeTaskBuffer))));
 

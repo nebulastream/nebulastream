@@ -68,7 +68,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         }
     }
 
-
     // After we duplicate all non-blocking logical operators, we have the same statistic id for multiple operators.
     // Furthermore, we require to know all statistic ids that belong to one non-duplicated logical operator.
     // Therefore, we do the following two steps:
@@ -208,8 +207,7 @@ void LogicalSourceExpansionRule::distributeSiblingStatisticId(
                 listOfStatisticIds = std::vector<StatisticId>();
             }
             listOfStatisticIds.insert(listOfStatisticIds.end(), allNewStatisticIds.begin(), allNewStatisticIds.end());
-            operatorNode->as<Operator>()->addProperty(LIST_OF_SIBLING_STATISTIC_IDS,
-                                                         listOfStatisticIds);
+            operatorNode->as<Operator>()->addProperty(LIST_OF_SIBLING_STATISTIC_IDS, listOfStatisticIds);
             operatorNode->setStatisticId(newStatisticId);
         }
     }
@@ -246,13 +244,11 @@ void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const NodePtr& op
     if (value.has_value()) {//update the existing list
         auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
         listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
-        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS,
-                                                         listOfConnectedBlockingParents);
+        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
     } else {//create a new entry if value doesn't exist
         std::vector<OperatorId> listOfConnectedBlockingParents;
         listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
-        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS,
-                                                         listOfConnectedBlockingParents);
+        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
     }
 }
 

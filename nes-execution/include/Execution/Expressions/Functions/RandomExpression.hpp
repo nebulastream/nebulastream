@@ -29,4 +29,4 @@ class RandomExpression : public Expression {
     const ExpressionPtr subExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RANDOMEXPRESSION_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RANDOMEXPRESSION_HPP_

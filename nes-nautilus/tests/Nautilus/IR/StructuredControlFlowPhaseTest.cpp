@@ -847,7 +847,7 @@ Value<> InterruptedMergeBlockForwarding_18() {
 }
 TEST_P(StructuredControlFlowPhaseTest, 18_InterruptedMergeBlockForwarding) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto dpsSortedBlocks = createTraceAndApplyPhases(&InterruptedMergeBlockForwarding_18); 
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&InterruptedMergeBlockForwarding_18);
     createCorrectBlock(correctBlocks, "0", 0, "4");
     createCorrectBlock(correctBlocks, "5", 0, "4");
     createCorrectBlock(correctBlocks, "7", 0, "4");

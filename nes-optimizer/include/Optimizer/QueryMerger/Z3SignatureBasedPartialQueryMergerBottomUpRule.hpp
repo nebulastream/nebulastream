@@ -83,7 +83,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMer
      * @return Map containing matching pair of target and host operators
      */
     std::map<LogicalOperatorPtr, LogicalOperatorPtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                                                                                const QueryPlanPtr& hostQueryPlan);
+                                                                        const QueryPlanPtr& hostQueryPlan);
 
     /**
      * @brief This method compares two operator signatures using Z3
@@ -92,9 +92,9 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMer
      * @return bool true if equal else false
      */
     std::map<LogicalOperatorPtr, LogicalOperatorPtr> areOperatorEqual(const LogicalOperatorPtr& targetOperator,
-                                                                              const LogicalOperatorPtr& hostOperator);
+                                                                      const LogicalOperatorPtr& hostOperator);
     SignatureEqualityUtilPtr signatureEqualityUtil;
 };
 }// namespace Optimizer
 }// namespace NES
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERBOTTOMUPRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERBOTTOMUPRULE_HPP_

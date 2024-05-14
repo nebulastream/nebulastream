@@ -23,11 +23,11 @@
 #define _GET_CLZ(x, b) (uint8_t)(std::min(b, (uint64_t)::__builtin_clz(x)) + 1)
 #else
 inline uint8_t _get_leading_zero_count(uint32_t x, uint8_t b) {
-#if defined (_MSC_VER)
+#if defined(_MSC_VER)
     uint32_t leading_zero_len = 32;
     ::_BitScanReverse(&leading_zero_len, x);
     --leading_zero_len;
-    return std::min(b, (uint8_t)leading_zero_len);
+    return std::min(b, (uint8_t) leading_zero_len);
 #else
     uint8_t v = 1;
     while (v <= b && !(x & 0x80000000)) {
@@ -39,7 +39,6 @@ inline uint8_t _get_leading_zero_count(uint32_t x, uint8_t b) {
 }
 #define _GET_CLZ(x, b) _get_leading_zero_count(x, b)
 #endif /* defined(__GNUC__) */
-
 
 namespace NES::Statistic {
 
@@ -62,9 +61,7 @@ class HyperLogLogStatistic : public SynopsesStatistic {
                                const std::string_view hyperLogLogDataString,
                                double estimate);
 
-    static StatisticPtr createInit(const Windowing::TimeMeasure& startTs,
-                                   const Windowing::TimeMeasure& endTs,
-                                   uint64_t bitWidth);
+    static StatisticPtr createInit(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t bitWidth);
 
     StatisticValue<> getStatisticValue(const ProbeExpression& probeExpression) const override;
     bool equal(const Statistic& other) const override;

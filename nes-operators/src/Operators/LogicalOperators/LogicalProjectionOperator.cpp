@@ -14,9 +14,9 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>

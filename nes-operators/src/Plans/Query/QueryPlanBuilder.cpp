@@ -15,6 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -24,9 +25,8 @@
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
@@ -111,8 +111,11 @@ QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePt
                                                          Statistic::TriggerConditionPtr triggerCondition,
                                                          QueryPlanPtr queryPlan) {
     queryPlan = checkAndAddWatermarkAssignment(queryPlan, window);
-    auto op = LogicalOperatorFactory::createStatisticBuildOperator(window, std::move(statisticDescriptor), metricHash,
-                                                                   sendingPolicy, triggerCondition);
+    auto op = LogicalOperatorFactory::createStatisticBuildOperator(window,
+                                                                   std::move(statisticDescriptor),
+                                                                   metricHash,
+                                                                   sendingPolicy,
+                                                                   triggerCondition);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

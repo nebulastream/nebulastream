@@ -15,7 +15,9 @@
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <fmt/format.h>
 const NES::QueryCompilation::TimestampField::TimeFunctionType&
-NES::QueryCompilation::TimestampField::getTimeFunctionType() const { return timeFunctionType; }
+NES::QueryCompilation::TimestampField::getTimeFunctionType() const {
+    return timeFunctionType;
+}
 NES::Windowing::TimeUnit NES::QueryCompilation::TimestampField::getUnit() const { return unit; }
 const std::string& NES::QueryCompilation::TimestampField::getName() const { return fieldName; }
 NES::Runtime::Execution::Operators::TimeFunctionPtr NES::QueryCompilation::TimestampField::toTimeFunction() const {

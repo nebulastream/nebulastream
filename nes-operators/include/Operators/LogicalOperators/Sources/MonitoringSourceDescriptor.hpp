@@ -16,8 +16,8 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <chrono>
 
 namespace NES {
@@ -55,4 +55,4 @@ using MonitoringSourceDescriptorPtr = std::shared_ptr<MonitoringSourceDescriptor
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_

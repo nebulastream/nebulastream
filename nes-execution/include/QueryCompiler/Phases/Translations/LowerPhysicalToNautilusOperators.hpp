@@ -248,12 +248,11 @@ class LowerPhysicalToNautilusOperators {
      */
     Runtime::Execution::Operators::ExecutableOperatorPtr
     lowerHyperLogLogBuildOperator(const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
-                                                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-                                                                    uint64_t bufferSize);
-
+                                  std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                                  uint64_t bufferSize);
 
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
 }// namespace NES::QueryCompilation
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_

@@ -15,10 +15,10 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
-#include <Identifiers/Identifiers.hpp>
 
 namespace NES {
 
@@ -94,4 +94,4 @@ class SourceCatalogEntry {
 }// namespace Catalogs::Source
 }// namespace NES
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_

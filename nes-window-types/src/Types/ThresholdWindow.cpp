@@ -68,9 +68,9 @@ std::string ThresholdWindow::toString() const {
 }
 
 uint64_t ThresholdWindow::hash() const {
-    uint64_t hashValue=0;
-    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(minimumCount);
-    hashValue=hashValue * 0x9e3779b1 + std::hash<std::string>{}(predicate->toString());
+    uint64_t hashValue = 0;
+    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(minimumCount);
+    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(predicate->toString());
     return hashValue;
 }
 }// namespace NES::Windowing

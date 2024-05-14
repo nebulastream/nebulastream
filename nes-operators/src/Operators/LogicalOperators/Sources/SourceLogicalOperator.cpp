@@ -22,11 +22,8 @@ namespace NES {
 SourceLogicalOperator::SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(sourceDescriptor) {}
 
-SourceLogicalOperator::SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor,
-                                                     OperatorId id,
-                                                     OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId),
-      sourceDescriptor(sourceDescriptor) {}
+SourceLogicalOperator::SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(sourceDescriptor) {}
 
 bool SourceLogicalOperator::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<SourceLogicalOperator>()->getId() == id;
@@ -42,8 +39,8 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const {
 
 std::string SourceLogicalOperator::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ", statisticId: " << statisticId << ","
-       << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString() << ")";
+    ss << "SOURCE(opId: " << id << ", statisticId: " << statisticId << "," << sourceDescriptor->getLogicalSourceName() << ","
+       << sourceDescriptor->toString() << ")";
     return ss.str();
 }
 

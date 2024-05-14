@@ -106,8 +106,7 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     FunctionCall("freeKeyedSliceMergeTask", freeKeyedSliceMergeTask, sliceMergeTask);
 
     // 4. emit global slice when we have a tumbling window.
-    sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk,
-                                  globalSlice);
+    sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, globalSlice);
 }
 
 void KeyedSliceMerging::combineThreadLocalSlices(Interface::ChainedHashMapRef& globalHashTable,

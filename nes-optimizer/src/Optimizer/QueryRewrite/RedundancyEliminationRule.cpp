@@ -31,11 +31,11 @@
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/QueryRewrite/RedundancyEliminationRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>

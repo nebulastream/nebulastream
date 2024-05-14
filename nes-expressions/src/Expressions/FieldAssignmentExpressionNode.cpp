@@ -55,10 +55,9 @@ FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const {
 
 ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const { return getRight(); }
 
-void FieldAssignmentExpressionNode::inferStamp(
-                                               SchemaPtr schema) {
+void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of assignment expression
-    getAssignment()->inferStamp( schema);
+    getAssignment()->inferStamp(schema);
 
     // field access
     auto field = getField();

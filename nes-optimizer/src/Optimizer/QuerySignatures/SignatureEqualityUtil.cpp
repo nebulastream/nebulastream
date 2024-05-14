@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {

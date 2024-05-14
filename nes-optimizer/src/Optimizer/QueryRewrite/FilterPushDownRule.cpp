@@ -19,21 +19,21 @@
 #include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Types/ContentBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <queue>
 
 namespace NES::Optimizer {

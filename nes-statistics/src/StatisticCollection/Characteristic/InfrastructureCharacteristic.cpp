@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <Identifiers/NESStrongTypeFormat.hpp>
-#include <fmt/format.h>
 #include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
+#include <fmt/format.h>
 
 namespace NES::Statistic {
 

@@ -23,9 +23,9 @@ WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpression
 
 WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field, double error) {
     // Calculating 1.04/(error * error), then rounding up to the next highest power of 2, and then taking the log2 of that
-    const auto numberOfBits = 1.04/(error * error);
-    const auto nextHigherPowerOf2 = std::pow(2, std::ceil(log(numberOfBits)/log(2)));
-    const auto bitWidth = (uint64_t)std::ceil(log2(nextHigherPowerOf2));
+    const auto numberOfBits = 1.04 / (error * error);
+    const auto nextHigherPowerOf2 = std::pow(2, std::ceil(log(numberOfBits) / log(2)));
+    const auto bitWidth = (uint64_t) std::ceil(log2(nextHigherPowerOf2));
     return create(std::move(field), bitWidth);
 }
 
@@ -49,8 +49,7 @@ std::string HyperLogLogDescriptor::toString() { return "HyperLogLogDescriptor"; 
 bool HyperLogLogDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     if (rhs->instanceOf<HyperLogLogDescriptor>()) {
         auto rhsHyperLogLogDescriptor = rhs->as<HyperLogLogDescriptor>();
-        return field->equal(rhsHyperLogLogDescriptor->field)
-            && width == rhsHyperLogLogDescriptor->width;
+        return field->equal(rhsHyperLogLogDescriptor->field) && width == rhsHyperLogLogDescriptor->width;
     }
     return false;
 }

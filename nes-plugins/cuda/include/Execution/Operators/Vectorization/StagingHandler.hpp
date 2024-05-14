@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
  * The tuple is staged in a CPU-residence tuple buffer.
  */
 class StagingHandler : public OperatorHandler {
-public:
+  public:
     /**
      * @brief Constructor.
      * @param stageBufferSize the size of the stage buffer in bytes
@@ -32,8 +32,7 @@ public:
      */
     StagingHandler(uint64_t stageBufferSize, uint64_t schemaSize);
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               uint32_t localStateVariableId) override;
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
 
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
@@ -60,13 +59,13 @@ public:
      */
     uint64_t getCurrentWritePositionAndIncrement();
 
-private:
+  private:
     uint64_t stageBufferSize;
     uint64_t stageBufferCapacity;
     std::unique_ptr<TupleBuffer> tupleBuffer;
     uint64_t currentWritePosition;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_STAGINGHANDLER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_STAGINGHANDLER_HPP_

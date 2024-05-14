@@ -66,8 +66,9 @@ class OriginIdInferencePhase {
   private:
     explicit OriginIdInferencePhase();
 
-    void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<OperatorPtr> rootOperators);
+    void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
+                          std::vector<OperatorPtr> rootOperators);
 };
 }// namespace Optimizer
 }// namespace NES
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_

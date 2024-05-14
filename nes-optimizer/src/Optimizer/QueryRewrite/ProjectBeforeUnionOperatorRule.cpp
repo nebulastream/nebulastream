@@ -54,7 +54,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
 }
 
 LogicalOperatorPtr ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& sourceSchema,
-                                                                                const SchemaPtr& destinationSchema) {
+                                                                            const SchemaPtr& destinationSchema) {
     NES_TRACE("Computing Projection operator for Source Schema{} and Destination schema {}",
               sourceSchema->toString(),
               destinationSchema->toString());

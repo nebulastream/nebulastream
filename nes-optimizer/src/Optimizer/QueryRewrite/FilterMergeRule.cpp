@@ -78,8 +78,7 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-std::vector<LogicalFilterOperatorPtr>
-FilterMergeRule::getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& filter) {
+std::vector<LogicalFilterOperatorPtr> FilterMergeRule::getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& filter) {
     std::vector<LogicalFilterOperatorPtr> consecutiveFilters = {};
     DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();

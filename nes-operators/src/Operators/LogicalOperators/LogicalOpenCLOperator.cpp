@@ -14,8 +14,8 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 
 namespace NES {
 

@@ -22,9 +22,7 @@ SendingPolicyPtr SendingPolicyASAP::create(StatisticDataCodec sinkDataCodec) {
     return std::make_shared<SendingPolicyASAP>(SendingPolicyASAP(sinkDataCodec));
 }
 
-bool SendingPolicyASAP::operator==(const SendingPolicy& rhs) const {
-    return rhs.instanceOf<const SendingPolicyASAP>();
-}
+bool SendingPolicyASAP::operator==(const SendingPolicy& rhs) const { return rhs.instanceOf<const SendingPolicyASAP>(); }
 
 SendingPolicyASAP::SendingPolicyASAP(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec) {}
 

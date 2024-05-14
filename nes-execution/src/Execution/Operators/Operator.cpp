@@ -51,9 +51,7 @@ void Operator::setChild(Operators::ExecuteOperatorPtr child) {
     this->child = std::move(child);
 }
 
-void Operator::setStatisticId(StatisticId statisticId) {
-    this->statisticId = statisticId;
-}
+void Operator::setStatisticId(StatisticId statisticId) { this->statisticId = statisticId; }
 
 void Operator::terminate(ExecutionContext& executionCtx) const {
     if (hasChild()) {

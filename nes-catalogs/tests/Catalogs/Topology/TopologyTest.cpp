@@ -48,8 +48,8 @@ TEST_F(TopologyTest, createNode) {
     auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     EXPECT_NE(physicalNode.get(), nullptr);
     EXPECT_EQ(physicalNode->toString(),
-              "PhysicalNode[id=" + node1Id.toString() + ", ip=" + node1Address
-                  + ", resourceCapacity=" + std::to_string(resources) + ", usedResource=0]");
+              "PhysicalNode[id=" + node1Id.toString() + ", ip=" + node1Address + ", resourceCapacity=" + std::to_string(resources)
+                  + ", usedResource=0]");
     EXPECT_NE(physicalNode->getId(), INVALID_WORKER_NODE_ID);
     EXPECT_EQ(physicalNode->getId(), node1Id);
     EXPECT_EQ(physicalNode->getIpAddress(), node1Address);

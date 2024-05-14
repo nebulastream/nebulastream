@@ -22,9 +22,7 @@ SendingPolicyPtr SendingPolicyLazy::create(StatisticDataCodec sinkDataCodec) {
     return std::make_shared<SendingPolicyLazy>(SendingPolicyLazy(sinkDataCodec));
 }
 
-bool SendingPolicyLazy::operator==(const SendingPolicy& rhs) const {
-    return rhs.instanceOf<const SendingPolicyLazy>();
-}
+bool SendingPolicyLazy::operator==(const SendingPolicy& rhs) const { return rhs.instanceOf<const SendingPolicyLazy>(); }
 
 SendingPolicyLazy::SendingPolicyLazy(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec) {}
 

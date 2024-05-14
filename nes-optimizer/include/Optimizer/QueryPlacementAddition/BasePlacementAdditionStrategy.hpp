@@ -208,8 +208,9 @@ class BasePlacementAdditionStrategy {
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
-    static LogicalOperatorPtr
-    createNetworkSinkOperator(SharedQueryId sharedQueryId, OperatorId sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
+    static LogicalOperatorPtr createNetworkSinkOperator(SharedQueryId sharedQueryId,
+                                                        OperatorId sourceOperatorId,
+                                                        const TopologyNodePtr& sourceTopologyNode);
 
     /**
      * @brief create a new network source operator

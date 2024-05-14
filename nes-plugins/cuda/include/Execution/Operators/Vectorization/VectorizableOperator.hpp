@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief Base class of executable operators which work on fixed-size blocks (vectors) of tuples.
  */
 class VectorizableOperator : public ExecutableOperator {
-public:
+  public:
     /**
      * @brief This method is called by the upstream operator (parent) and passes a tuple buffer for execution.
      * @param ctx the execution context that allows accesses to local and global state.
@@ -33,12 +33,12 @@ public:
 
     virtual ~VectorizableOperator() = default;
 
-private:
+  private:
     virtual void execute(ExecutionContext& ctx, Record& record) const override;
 };
 
 using VectorizableOperatorPtr = std::shared_ptr<const VectorizableOperator>;
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_

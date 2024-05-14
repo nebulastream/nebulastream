@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+#include <API/AttributeField.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <API/AttributeField.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
 namespace NES::Nautilus::Interface {
 PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
@@ -102,11 +102,13 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
         auto const fieldValue = record.read(fieldName);
 
         if (fieldType->type->isText()) {
-            auto textEntryMapKey =
-                Nautilus::FunctionCall("storeTextProxy", storeTextProxy, pagedVectorVarSizedRef, fieldValue.as<Text>()->getReference());
+            auto textEntryMapKey = Nautilus::FunctionCall("storeTextProxy",
+                                                          storeTextProxy,
+                                                          pagedVectorVarSizedRef,
+                                                          fieldValue.as<Text>()->getReference());
             pageEntry.as<MemRef>().store(textEntryMapKey.as<UInt64>());
             // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
-            pageEntry = pageEntry + Value<UInt64>((uint64_t)sizeof(uint64_t)); 
+            pageEntry = pageEntry + Value<UInt64>((uint64_t) sizeof(uint64_t));
         } else {
             pageEntry.as<MemRef>().store(fieldValue);
             pageEntry = pageEntry + fieldType->size();
@@ -126,7 +128,7 @@ Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
         if (fieldType->type->isText()) {
             auto textEntryMapKey = pageEntry.as<MemRef>().load<UInt64>();
             // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
-            pageEntry = pageEntry + Value<UInt64>((uint64_t)sizeof(uint64_t));
+            pageEntry = pageEntry + Value<UInt64>((uint64_t) sizeof(uint64_t));
             auto text = Nautilus::FunctionCall("loadTextProxy", loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey);
             record.write(fieldName, text);
         } else {
@@ -180,4 +182,4 @@ bool PagedVectorVarSizedRefIter::operator!=(const PagedVectorVarSizedRefIter& ot
 
 void PagedVectorVarSizedRefIter::setPos(Value<UInt64> newValue) { pos = newValue; }
 
-} //NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface

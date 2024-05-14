@@ -48,10 +48,11 @@ MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExe
                                          PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
-PlacementAdditionResult MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
+PlacementAdditionResult
+MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                               DecomposedQueryPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Create copy of the query plan
@@ -297,10 +298,7 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
 
     NES_TRACE("Place further upstream operators.");
     for (const auto& parent : logicalOperator->getParents()) {
-        identifyPinningLocation(sharedQueryId,
-                                parent->as<LogicalOperator>(),
-                                candidateTopologyNode,
-                                pinnedDownStreamOperators);
+        identifyPinningLocation(sharedQueryId, parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
     }
 }
 

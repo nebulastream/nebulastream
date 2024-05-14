@@ -79,7 +79,7 @@ class LocalKeyedBucketStoreState : public Operators::OperatorState {
                                         uint64_t valueSize,
                                         const Value<MemRef>& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
-    
+
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;

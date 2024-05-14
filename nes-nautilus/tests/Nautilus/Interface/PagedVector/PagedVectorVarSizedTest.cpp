@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <API/AttributeField.hpp>
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
@@ -109,9 +109,7 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
         ASSERT_EQ(pagedVector.getNumberOfEntriesOnCurrentPage(), numTuplesLastPage);
     }
 
-    void runRetrieveTest(const PagedVectorVarSized& pagedVector,
-                         const SchemaPtr& schema,
-                         const std::vector<Record>& allRecords) {
+    void runRetrieveTest(const PagedVectorVarSized& pagedVector, const SchemaPtr& schema, const std::vector<Record>& allRecords) {
         auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>((int8_t*) &pagedVector), schema);
         ASSERT_EQ(pagedVector.getNumberOfEntries(), allRecords.size());
 
@@ -191,8 +189,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
 }
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues) {
-    auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::TEXT));
+    auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(createField("value1", BasicType::TEXT));
     const auto entrySize = 1 * sizeof(uint64_t);
     const auto pageSize = 8_u64;
     const auto numItems = 507_u64;
@@ -283,4 +280,4 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors) {
     insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll);
 }
 
-} // namespace NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface

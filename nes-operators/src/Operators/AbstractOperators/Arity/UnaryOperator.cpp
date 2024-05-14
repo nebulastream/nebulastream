@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Util/OperatorsUtil.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <fmt/format.h>
 
 namespace NES {

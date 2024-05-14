@@ -49,5 +49,4 @@ void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, R
     child->execute(executionCtx, record);
 }
 
-
 }// namespace NES::Runtime::Execution::Operators

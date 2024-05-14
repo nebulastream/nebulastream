@@ -16,8 +16,8 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <array>
 #include <vector>
 

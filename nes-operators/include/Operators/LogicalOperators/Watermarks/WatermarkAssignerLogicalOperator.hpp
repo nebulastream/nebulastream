@@ -26,8 +26,7 @@ namespace NES {
  */
 class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator {
   public:
-    WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor,
-                                         OperatorId id);
+    WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id);
     /**
     * @brief Returns the watermark strategy.
     * @return  Windowing::WatermarkStrategyDescriptorPtr
@@ -52,4 +51,4 @@ using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLog
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_

@@ -36,4 +36,4 @@ class ConstIntOperation : public Operation {
 };
 
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_

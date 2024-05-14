@@ -76,8 +76,7 @@ class QuerySignatureUtil {
      * @param mapOperator: the map operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForMap(const z3::ContextPtr& context,
-                                                        const LogicalMapOperatorPtr& mapOperator);
+    static QuerySignaturePtr createQuerySignatureForMap(const z3::ContextPtr& context, const LogicalMapOperatorPtr& mapOperator);
 
     /**
      * @brief Compute a query signature for Filter operator
@@ -130,4 +129,4 @@ class QuerySignatureUtil {
 };
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_QUERYSIGNATUREUTIL_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_QUERYSIGNATUREUTIL_HPP_

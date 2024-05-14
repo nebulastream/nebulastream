@@ -17,13 +17,15 @@
 #include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRule.hpp>
@@ -33,8 +35,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <z3++.h>
 
@@ -1261,14 +1261,15 @@ TEST_F(HashSignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiff
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                                NES::API::Milliseconds(10),
-                                                                                                NES::API::Milliseconds()))
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
-                       .sink(printSinkDescriptor);
+    Query query2 =
+        Query::from("car")
+            .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
+                                                                                     NES::API::Milliseconds(10),
+                                                                                     NES::API::Milliseconds()))
+            .map(Attribute("value") = 40)
+            .filter(Attribute("type") < 40)
+            .project(Attribute("value"), Attribute("type"))
+            .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1391,10 +1392,10 @@ TEST_F(HashSignatureBasedCompleteQueryMergerRuleTest,
        testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 =
-        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                                     NES::API::Milliseconds(10),
-                                                                                                     NES::API::Milliseconds()));
+    Query subQuery1 = Query::from("truck").assignWatermark(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .unionWith(subQuery1)
@@ -1406,10 +1407,10 @@ TEST_F(HashSignatureBasedCompleteQueryMergerRuleTest,
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 =
-        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                                     NES::API::Milliseconds(10),
-                                                                                                     NES::API::Milliseconds()));
+    Query subQuery2 = Query::from("truck").assignWatermark(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .unionWith(subQuery2)
@@ -1467,10 +1468,10 @@ TEST_F(HashSignatureBasedCompleteQueryMergerRuleTest,
        testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 =
-        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                                     NES::API::Milliseconds(10),
-                                                                                                     NES::API::Milliseconds()));
+    Query subQuery1 = Query::from("truck").assignWatermark(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .unionWith(subQuery1)
@@ -1481,12 +1482,13 @@ TEST_F(HashSignatureBasedCompleteQueryMergerRuleTest,
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                                NES::API::Milliseconds(10),
-                                                                                                NES::API::Milliseconds()))
-                       .unionWith(subQuery2)
-                       .sink(printSinkDescriptor);
+    Query query2 =
+        Query::from("car")
+            .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
+                                                                                     NES::API::Milliseconds(10),
+                                                                                     NES::API::Milliseconds()))
+            .unionWith(subQuery2)
+            .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();

@@ -15,33 +15,33 @@
 #include <Configurations/Validation/IpValidation.hpp>
 
 namespace NES::Configurations {
-     bool IpValidation::isValid(const std::string& ip) const {
+bool IpValidation::isValid(const std::string& ip) const {
 
-         // Accept localhost configuration
-         if (ip == "localhost") {
-             return true;
-         }
+    // Accept localhost configuration
+    if (ip == "localhost") {
+        return true;
+    }
 
-        // IPv4 address
-        std::regex ipRegex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$");
-        if (!std::regex_match(ip, ipRegex)) {
+    // IPv4 address
+    std::regex ipRegex("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$");
+    if (!std::regex_match(ip, ipRegex)) {
+        return false;
+    }
+
+    // Checking each octet to be between 0 and 255
+    size_t start = 0;
+    size_t end = ip.find('.');
+    while (end != std::string::npos) {
+        int octet = std::stoi(ip.substr(start, end - start));
+        if (octet < 0 || octet > 255) {
             return false;
         }
-
-        // Checking each octet to be between 0 and 255
-        size_t start = 0;
-        size_t end = ip.find('.');
-        while (end != std::string::npos) {
-            int octet = std::stoi(ip.substr(start, end - start));
-            if (octet < 0 || octet > 255) {
-                return false;
-            }
-            start = end + 1;
-            end = ip.find('.', start);
-        }
-
-        // Checking the last octet
-        int lastOctet = std::stoi(ip.substr(start, end));
-        return lastOctet >= 0 && lastOctet <= 255;
+        start = end + 1;
+        end = ip.find('.', start);
     }
+
+    // Checking the last octet
+    int lastOctet = std::stoi(ip.substr(start, end));
+    return lastOctet >= 0 && lastOctet <= 255;
 }
+}// namespace NES::Configurations

@@ -15,9 +15,9 @@
 #ifndef NES_NUMBERVALIDATION_HPP
 #define NES_NUMBERVALIDATION_HPP
 
-#include <string>
-#include <regex>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <regex>
+#include <string>
 
 namespace NES::Configurations {
 
@@ -33,6 +33,6 @@ class NumberValidation : public ConfigurationValidation {
      */
     bool isValid(const std::string& number) const override;
 };
-}
+}// namespace NES::Configurations
 
 #endif//NES_NUMBERVALIDATION_HPP

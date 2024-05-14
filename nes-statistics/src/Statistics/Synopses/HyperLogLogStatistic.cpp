@@ -30,15 +30,20 @@ StatisticPtr HyperLogLogStatistic::create(const Windowing::TimeMeasure& startTs,
     std::vector<uint8_t> hyperLogLogData((1 << bitWidth), 0);
     std::memcpy(hyperLogLogData.data(), hyperLogLogDataString.data(), sizeof(uint8_t) * hyperLogLogData.size());
 
-    return std::make_shared<HyperLogLogStatistic>(HyperLogLogStatistic(startTs, endTs, observedTuples, bitWidth, hyperLogLogData, estimate));
+    return std::make_shared<HyperLogLogStatistic>(
+        HyperLogLogStatistic(startTs, endTs, observedTuples, bitWidth, hyperLogLogData, estimate));
 }
 
-StatisticPtr HyperLogLogStatistic::createInit(const Windowing::TimeMeasure& startTs,
-                                              const Windowing::TimeMeasure& endTs,
-                                              uint64_t bitWidth) {
+StatisticPtr
+HyperLogLogStatistic::createInit(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t bitWidth) {
     std::vector<uint8_t> hyperLogLogData((1 << bitWidth), 0);
     constexpr auto observedTuples = 0;
-    return std::make_shared<HyperLogLogStatistic>(HyperLogLogStatistic(startTs, endTs, observedTuples, bitWidth, hyperLogLogData, std::numeric_limits<double>::quiet_NaN()));
+    return std::make_shared<HyperLogLogStatistic>(HyperLogLogStatistic(startTs,
+                                                                       endTs,
+                                                                       observedTuples,
+                                                                       bitWidth,
+                                                                       hyperLogLogData,
+                                                                       std::numeric_limits<double>::quiet_NaN()));
 }
 
 HyperLogLogStatistic::HyperLogLogStatistic(const Windowing::TimeMeasure& startTs,
@@ -47,8 +52,8 @@ HyperLogLogStatistic::HyperLogLogStatistic(const Windowing::TimeMeasure& startTs
                                            uint64_t bitWidth,
                                            const std::vector<uint8_t>& registers,
                                            double estimate)
-: SynopsesStatistic(startTs, endTs, observedTuples), bitWidth(bitWidth), estimate(estimate),
-      registerSize(1 << bitWidth), registers(registers) {
+    : SynopsesStatistic(startTs, endTs, observedTuples), bitWidth(bitWidth), estimate(estimate), registerSize(1 << bitWidth),
+      registers(registers) {
     if (bitWidth < 4 || 30 < bitWidth) {
         NES_THROW_RUNTIME_ERROR("bitWidth must be in the range of [4,30]");
     }
@@ -80,11 +85,10 @@ StatisticValue<> HyperLogLogStatistic::getStatisticValue(const ProbeExpression&)
 bool HyperLogLogStatistic::equal(const Statistic& other) const {
     if (other.instanceOf<HyperLogLogStatistic>()) {
         auto otherHyperLogLogStatistic = other.as<const HyperLogLogStatistic>();
-        return startTs.equals(otherHyperLogLogStatistic->startTs) && endTs.equals(otherHyperLogLogStatistic->endTs) &&
-            observedTuples == otherHyperLogLogStatistic->observedTuples && bitWidth == otherHyperLogLogStatistic->bitWidth &&
-            alphaMM == otherHyperLogLogStatistic->alphaMM && registerSize == otherHyperLogLogStatistic->registerSize &&
-            estimate == otherHyperLogLogStatistic->estimate &&
-            registers == otherHyperLogLogStatistic->registers;
+        return startTs.equals(otherHyperLogLogStatistic->startTs) && endTs.equals(otherHyperLogLogStatistic->endTs)
+            && observedTuples == otherHyperLogLogStatistic->observedTuples && bitWidth == otherHyperLogLogStatistic->bitWidth
+            && alphaMM == otherHyperLogLogStatistic->alphaMM && registerSize == otherHyperLogLogStatistic->registerSize
+            && estimate == otherHyperLogLogStatistic->estimate && registers == otherHyperLogLogStatistic->registers;
     }
     return false;
 }

@@ -95,11 +95,9 @@ class SyntaxBasedPartialQueryMergerRule : public BaseQueryMergerRule {
      * @param hostQueryPlan : host query plan
      * @return Map containing matching pair of target and host operators
      */
-    std::map<OperatorPtr, OperatorPtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                                                                  const QueryPlanPtr& hostQueryPlan);
+    std::map<OperatorPtr, OperatorPtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan);
 
-    std::map<OperatorPtr, OperatorPtr> areOperatorEqual(const OperatorPtr& targetOperator,
-                                                                const OperatorPtr& hostOperator);
+    std::map<OperatorPtr, OperatorPtr> areOperatorEqual(const OperatorPtr& targetOperator, const OperatorPtr& hostOperator);
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_

@@ -15,8 +15,8 @@
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>

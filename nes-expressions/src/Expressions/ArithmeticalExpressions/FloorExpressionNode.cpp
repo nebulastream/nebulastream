@@ -30,7 +30,7 @@ ExpressionNodePtr FloorExpressionNode::create(ExpressionNodePtr const& child) {
     return floorNode;
 }
 
-void FloorExpressionNode::inferStamp( SchemaPtr schema) {
+void FloorExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 

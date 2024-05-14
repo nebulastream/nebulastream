@@ -25,13 +25,9 @@
 namespace NES::Runtime::Execution::Operators {
 
 VectorizedMap::VectorizedMap(const std::shared_ptr<Map>& mapOperator,
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-    std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
-    : mapOperator(mapOperator)
-    , memoryProvider(std::move(memoryProvider))
-    , projections(std::move(projections)) {
-
-}
+                             std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+                             std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
+    : mapOperator(mapOperator), memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
 
 // TODO #4829: Move this method out of this source file to a more sensible place.
 static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
@@ -76,4 +72,4 @@ void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

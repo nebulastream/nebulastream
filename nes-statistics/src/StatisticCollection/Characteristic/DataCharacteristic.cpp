@@ -16,9 +16,8 @@
 #include <utility>
 namespace NES::Statistic {
 
-CharacteristicPtr DataCharacteristic::create(MetricPtr type,
-                                             const std::string& logicalSourceName,
-                                             const std::string& physicalSourceName) {
+CharacteristicPtr
+DataCharacteristic::create(MetricPtr type, const std::string& logicalSourceName, const std::string& physicalSourceName) {
     return std::make_shared<DataCharacteristic>(DataCharacteristic(std::move(type), logicalSourceName, physicalSourceName));
 }
 
@@ -37,7 +36,7 @@ bool DataCharacteristic::operator==(const Characteristic& rhs) const {
 
 std::string DataCharacteristic::toString() const {
     std::ostringstream oss;
-    oss << "{ LogicalSourceName: " << logicalSourceName  << " "
+    oss << "{ LogicalSourceName: " << logicalSourceName << " "
         << "PhysicalSourceName: " << physicalSourceName << "}";
     return oss.str();
 }
@@ -49,10 +48,7 @@ size_t DataCharacteristic::hash() const {
     return hash;
 }
 
-DataCharacteristic::DataCharacteristic(MetricPtr type,
-                                       std::string logicalSourceName,
-                                       const std::string& physicalSourceName)
-    : Characteristic(std::move(type)), logicalSourceName(std::move(logicalSourceName)),
-      physicalSourceName(physicalSourceName) {}
+DataCharacteristic::DataCharacteristic(MetricPtr type, std::string logicalSourceName, const std::string& physicalSourceName)
+    : Characteristic(std::move(type)), logicalSourceName(std::move(logicalSourceName)), physicalSourceName(physicalSourceName) {}
 
 }// namespace NES::Statistic

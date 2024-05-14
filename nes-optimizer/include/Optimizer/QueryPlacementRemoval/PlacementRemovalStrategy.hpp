@@ -90,10 +90,11 @@ class PlacementRemovalStrategy {
      * @param querySubPlanVersion: the new version of the updated query sub plans
      * @return map of deployment context containing updated decomposed query plans
      */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                                DecomposedQueryPlanVersion querySubPlanVersion);
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr>
+    updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                              const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                              DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
      * @brief Destructor releases all locks (if any acquired) for pessimistic mode
@@ -135,7 +136,8 @@ class PlacementRemovalStrategy {
      * @param querySubPlanVersion: the new version of the query sub plan
      * @return vector of deployment contexts
      */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId,
+                                                                               DecomposedQueryPlanVersion querySubPlanVersion);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
@@ -164,4 +166,4 @@ class PlacementRemovalStrategy {
 
 }// namespace Optimizer
 }// namespace NES
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_

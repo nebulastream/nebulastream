@@ -16,8 +16,8 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_
 
 #include <StatisticIdentifiers.hpp>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace NES::Statistic {
 
@@ -43,7 +43,7 @@ class SendingPolicy {
      * @param rhs
      * @return True, if NOT equal otherwise false
      */
-    virtual bool operator!=(const SendingPolicy& rhs) const {return !(*this == rhs); };
+    virtual bool operator!=(const SendingPolicy& rhs) const { return !(*this == rhs); };
 
     /**
      * @brief Returns the data type of the statistic sink.
@@ -63,7 +63,6 @@ class SendingPolicy {
         }
         return false;
     };
-
 
     /**
      * @brief Creates a string representation

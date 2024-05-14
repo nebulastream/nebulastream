@@ -15,9 +15,9 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
 
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
-#include <Measures/TimeMeasure.hpp>
 #include <API/TimeUnit.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 namespace NES::Windowing {
 
 class EventTimeWatermarkStrategyDescriptor;
@@ -41,7 +41,7 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
     std::string toString() override;
 
-    bool inferStamp( SchemaPtr schema) override;
+    bool inferStamp(SchemaPtr schema) override;
 
   private:
     // Field where the watermark should be retrieved
@@ -54,4 +54,4 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_

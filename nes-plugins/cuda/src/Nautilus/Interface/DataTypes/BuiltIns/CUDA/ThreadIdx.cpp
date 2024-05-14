@@ -19,7 +19,8 @@
 
 namespace NES::Nautilus {
 
-ThreadIdx::ThreadIdx() : BuiltInVariable(&type) {
+ThreadIdx::ThreadIdx()
+    : BuiltInVariable(&type){
 
     };
 
@@ -32,9 +33,7 @@ IR::Types::StampPtr ThreadIdx::getType() const {
 
 std::shared_ptr<Any> ThreadIdx::copy() { return create<ThreadIdx>(); }
 
-const Value<> ThreadIdx::getAsValue() const {
-    NES_NOT_IMPLEMENTED();
-}
+const Value<> ThreadIdx::getAsValue() const { NES_NOT_IMPLEMENTED(); }
 
 std::shared_ptr<FieldAccess> ThreadIdx::x() { return std::make_shared<FieldAccess>(create<ThreadIdx>(), "x"); }
 

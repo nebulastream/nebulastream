@@ -28,8 +28,7 @@ DefaultSourceTypePtr DefaultSourceType::create(const std::string& logicalSourceN
 
 DefaultSourceTypePtr
 DefaultSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
-    return std::make_shared<DefaultSourceType>(
-        DefaultSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+    return std::make_shared<DefaultSourceType>(DefaultSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
 
 DefaultSourceTypePtr DefaultSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {

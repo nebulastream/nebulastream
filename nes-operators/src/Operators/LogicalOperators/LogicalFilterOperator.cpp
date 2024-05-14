@@ -41,7 +41,7 @@ bool LogicalFilterOperator::equal(NodePtr const& rhs) const {
 
 std::string LogicalFilterOperator::toString() const {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ", statisticId: " << statisticId << ", predicate: "<< predicate->toString() <<")";
+    ss << "FILTER(opId: " << id << ", statisticId: " << statisticId << ", predicate: " << predicate->toString() << ")";
     return ss.str();
 }
 
@@ -49,7 +49,7 @@ bool LogicalFilterOperator::inferSchema() {
     if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
-    predicate->inferStamp( inputSchema);
+    predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
     }

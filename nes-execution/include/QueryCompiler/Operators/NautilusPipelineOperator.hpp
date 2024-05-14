@@ -30,7 +30,7 @@ class NautilusPipelineOperator : public UnaryOperator {
      * @return PhysicalOperatorPipeline for nautilus.
      */
     static OperatorPtr create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+                              std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
     std::string toString() const override;
     OperatorPtr copy() override;
@@ -52,4 +52,4 @@ class NautilusPipelineOperator : public UnaryOperator {
 
 }// namespace NES::QueryCompilation
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_NAUTILUSPIPELINEOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_NAUTILUSPIPELINEOPERATOR_HPP_

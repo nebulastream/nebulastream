@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Types/WindowType.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
+#include <Types/WindowType.hpp>
 #include <sstream>
 
 namespace NES::Statistic {

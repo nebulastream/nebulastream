@@ -31,9 +31,9 @@ SinkDescriptorPtr StatisticSinkDescriptor::create(StatisticSynopsisType sinkForm
 bool StatisticSinkDescriptor::equal(const SinkDescriptorPtr& other) {
     if (other->instanceOf<StatisticSinkDescriptor>()) {
         const auto otherStatisticSinkDescriptor = other->as<StatisticSinkDescriptor>();
-        return numberOfOrigins == otherStatisticSinkDescriptor->numberOfOrigins &&
-            sinkFormatType == otherStatisticSinkDescriptor->sinkFormatType &&
-            sinkDataCodec == otherStatisticSinkDescriptor->sinkDataCodec;
+        return numberOfOrigins == otherStatisticSinkDescriptor->numberOfOrigins
+            && sinkFormatType == otherStatisticSinkDescriptor->sinkFormatType
+            && sinkDataCodec == otherStatisticSinkDescriptor->sinkDataCodec;
     }
     return false;
 }
@@ -45,6 +45,5 @@ StatisticSinkDescriptor::StatisticSinkDescriptor(StatisticSynopsisType sinkForma
                                                  StatisticDataCodec sinkDataCodec,
                                                  uint64_t numberOfOrigins)
     : SinkDescriptor(numberOfOrigins), sinkFormatType(sinkFormatType), sinkDataCodec(sinkDataCodec) {}
-
 
 }// namespace NES::Statistic

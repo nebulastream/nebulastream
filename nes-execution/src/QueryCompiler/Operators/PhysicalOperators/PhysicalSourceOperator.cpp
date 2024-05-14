@@ -36,9 +36,16 @@ std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(OperatorI
     return std::make_shared<PhysicalSourceOperator>(id, statisticId, originId, inputSchema, outputSchema, sourceDescriptor);
 }
 
-std::shared_ptr<PhysicalSourceOperator>
-PhysicalSourceOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor) {
-    return create(getNextOperatorId(), statisticId, INVALID_ORIGIN_ID, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
+std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(StatisticId statisticId,
+                                                                       SchemaPtr inputSchema,
+                                                                       SchemaPtr outputSchema,
+                                                                       SourceDescriptorPtr sourceDescriptor) {
+    return create(getNextOperatorId(),
+                  statisticId,
+                  INVALID_ORIGIN_ID,
+                  std::move(inputSchema),
+                  std::move(outputSchema),
+                  std::move(sourceDescriptor));
 }
 
 OriginId PhysicalSourceOperator::getOriginId() { return originId; }

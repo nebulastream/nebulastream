@@ -28,9 +28,9 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
 
   public:
     LogicalInferModelOperator(std::string model,
-                                  std::vector<ExpressionNodePtr> inputFields,
-                                  std::vector<ExpressionNodePtr> outputFields,
-                                  OperatorId id);
+                              std::vector<ExpressionNodePtr> inputFields,
+                              std::vector<ExpressionNodePtr> outputFields,
+                              OperatorId id);
 
     /**
      * @brief creates a string representation of this node
@@ -108,4 +108,4 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
 
 }// namespace NES::InferModel
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_

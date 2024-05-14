@@ -15,23 +15,19 @@
 #include <Execution/Operators/Vectorization/VectorizedSelection.hpp>
 
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/BlockDim.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/BlockIdx.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/FieldAccess.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/ThreadIdx.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 VectorizedSelection::VectorizedSelection(const Expressions::ExpressionPtr& expression,
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-    std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
-    : expression(expression)
-    , memoryProvider(std::move(memoryProvider))
-    , projections(std::move(projections)) {
-
-}
+                                         std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+                                         std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
+    : expression(expression), memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
 
 // TODO #4829: Move this method out of this source file to a more sensible place.
 static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
@@ -76,4 +72,4 @@ void VectorizedSelection::execute(ExecutionContext& ctx, RecordBuffer& recordBuf
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

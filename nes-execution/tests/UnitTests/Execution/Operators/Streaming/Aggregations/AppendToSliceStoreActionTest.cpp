@@ -89,7 +89,7 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice) {
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto context = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+                                    Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto action = AppendToSliceStoreAction<NonKeyedSlice>(0);
     auto emitSlice = [&action, &context](auto slice) {

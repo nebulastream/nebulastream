@@ -77,8 +77,8 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
         throw std::bad_cast();
     }
 
-    virtual bool inferStamp( SchemaPtr schema) = 0;
+    virtual bool inferStamp(SchemaPtr schema) = 0;
 };
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKSTRATEGYDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKSTRATEGYDESCRIPTOR_HPP_

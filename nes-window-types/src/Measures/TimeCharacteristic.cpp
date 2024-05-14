@@ -15,8 +15,8 @@
 #include <API/AttributeField.hpp>
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Windowing {
@@ -77,12 +77,12 @@ bool TimeCharacteristic::equals(const TimeCharacteristic& other) const {
 
 uint64_t TimeCharacteristic::hash() const {
 
-    uint64_t hashValue=0;
-    hashValue=hashValue * 0x9e3779b1 + std::hash<uint8_t>{}((unsigned char) type);
+    uint64_t hashValue = 0;
+    hashValue = hashValue * 0x9e3779b1 + std::hash<uint8_t>{}((unsigned char) type);
     if (field) {
-        hashValue=hashValue * 0x9e3779b1 + field->hash();
+        hashValue = hashValue * 0x9e3779b1 + field->hash();
     }
-    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(unit.getMillisecondsConversionMultiplier());
+    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(unit.getMillisecondsConversionMultiplier());
     return hashValue;
 }
 

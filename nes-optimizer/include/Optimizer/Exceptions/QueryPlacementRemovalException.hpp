@@ -15,8 +15,8 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -33,4 +33,4 @@ class QueryPlacementRemovalException : public Exceptions::RequestExecutionExcept
     const char* what() const noexcept override;
 };
 }// namespace NES::Exceptions
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_

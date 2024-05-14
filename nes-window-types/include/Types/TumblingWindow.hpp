@@ -49,11 +49,11 @@ class TumblingWindow : public TimeBasedWindowType {
 
     uint64_t hash() const override;
 
-private:
+  private:
     TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
 };
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TUMBLINGWINDOW_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TUMBLINGWINDOW_HPP_

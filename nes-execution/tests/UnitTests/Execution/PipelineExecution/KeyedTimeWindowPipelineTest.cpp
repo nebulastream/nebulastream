@@ -91,13 +91,13 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
     std::vector<PhysicalTypePtr> types = {integerType};
-    auto slicePreAggregation =
-        std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
-                                                              std::make_unique<Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
-                                                              keyFields,
-                                                              types,
-                                                              aggregationFunctions,
-                                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+    auto slicePreAggregation = std::make_shared<Operators::KeyedSlicePreAggregation>(
+        0 /*handler index*/,
+        std::make_unique<Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
+        keyFields,
+        types,
+        aggregationFunctions,
+        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
@@ -199,13 +199,13 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
     PhysicalTypePtr physicalType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<PhysicalTypePtr> keyTypes = {integerType, integerType};
-    auto slicePreAggregation =
-        std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
-                                                              std::make_unique<Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
-                                                              keyFields,
-                                                              keyTypes,
-                                                              aggregationFunctions,
-                                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+    auto slicePreAggregation = std::make_shared<Operators::KeyedSlicePreAggregation>(
+        0 /*handler index*/,
+        std::make_unique<Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
+        keyFields,
+        keyTypes,
+        aggregationFunctions,
+        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);

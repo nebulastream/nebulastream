@@ -14,10 +14,10 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZEDSELECTION_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZEDSELECTION_HPP_
 
-#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief The vectorized selection operator that applies the kernel programming model to a single-record selection operator.
  */
 class VectorizedSelection : public VectorizableOperator {
-public:
+  public:
     /**
      * @brief Constructor.
      * @param expression the predicate expression
@@ -33,17 +33,17 @@ public:
      * @param projections the projection vector
      */
     explicit VectorizedSelection(const Expressions::ExpressionPtr& expression,
-        std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-        std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
+                                 std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+                                 std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
 
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-private:
+  private:
     Expressions::ExpressionPtr expression;
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
     std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZEDSELECTION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZEDSELECTION_HPP_

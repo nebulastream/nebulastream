@@ -65,7 +65,6 @@ class FieldRenameExpressionNode : public ExpressionNode {
     std::string newFieldName;
 };
 
-
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_

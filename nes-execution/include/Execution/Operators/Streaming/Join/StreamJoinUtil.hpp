@@ -143,4 +143,4 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
 
 }// namespace Util
 }// namespace NES::Runtime::Execution
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_

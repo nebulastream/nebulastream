@@ -17,7 +17,6 @@
 
 #include <Statistics/Synopses/SynopsesStatistic.hpp>
 
-
 namespace NES::Statistic {
 
 /**
@@ -82,7 +81,6 @@ class CountMinStatistic : public SynopsesStatistic {
                       uint64_t depth,
                       uint64_t numberOfBitsInKey,
                       const std::vector<uint64_t>& countMinData);
-
 
     uint64_t width;
     uint64_t depth;

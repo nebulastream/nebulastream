@@ -26,24 +26,24 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 
 using namespace NES;
@@ -71,9 +71,14 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
         auto optimizerConfiguration = OptimizerConfiguration();
         auto statisticRegistry = Statistic::StatisticRegistry::create();
-        auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry, Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
-        topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(), sourceCatalog, optimizerConfiguration, statisticProbeHandler);
+        auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry,
+                                                                              Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                              Statistic::DefaultStatisticCache::create(),
+                                                                              Topology::create());
+        topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
+                                                                                                 sourceCatalog,
+                                                                                                 optimizerConfiguration,
+                                                                                                 statisticProbeHandler);
     }
 
     void setupTopologyNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
@@ -110,8 +115,7 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
  */
 TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("B"))->as<SourceLogicalOperator>();
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("B"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -141,8 +145,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
  */
 TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);

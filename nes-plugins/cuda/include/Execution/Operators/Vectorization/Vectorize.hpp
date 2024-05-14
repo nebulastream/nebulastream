@@ -14,8 +14,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_VECTORIZE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_VECTORIZE_HPP_
 
-#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
  * Once the buffer is full, the child operator is invoked.
  */
 class Vectorize : public ExecutableOperator {
-public:
+  public:
     /**
      * @brief Constructor.
      * @param operatorHandlerIndex the index of the handler of this operator in the pipeline execution context.
@@ -33,11 +33,11 @@ public:
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-private:
+  private:
     uint64_t operatorHandlerIndex;
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_VECTORIZE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_VECTORIZE_HPP_

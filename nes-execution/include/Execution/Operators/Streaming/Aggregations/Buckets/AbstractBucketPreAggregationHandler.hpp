@@ -54,8 +54,11 @@ class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorH
     AbstractBucketPreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
 
     SliceStore* getThreadLocalBucketStore(uint64_t workerId);
-    void
-    trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs);
+    void trigger(WorkerContext& wctx,
+                 PipelineExecutionContext& ctx,
+                 OriginId originId,
+                 SequenceData sequenceData,
+                 uint64_t watermarkTs);
     void
     dispatchSliceMergingTasks(PipelineExecutionContext& ctx,
                               std::shared_ptr<AbstractBufferProvider> bufferProvider,
@@ -76,4 +79,4 @@ class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorH
     std::unique_ptr<State> defaultState;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_ABSTRACTBUCKETPREAGGREGATIONHANDLER_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_ABSTRACTBUCKETPREAGGREGATIONHANDLER_HPP_

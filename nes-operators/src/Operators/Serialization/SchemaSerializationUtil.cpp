@@ -15,9 +15,9 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

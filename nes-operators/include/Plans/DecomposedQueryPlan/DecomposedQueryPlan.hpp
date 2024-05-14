@@ -20,8 +20,8 @@
 #include <Operators/Operator.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
-#include <unordered_set>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace NES {
@@ -258,4 +258,4 @@ class DecomposedQueryPlan {
 };
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_

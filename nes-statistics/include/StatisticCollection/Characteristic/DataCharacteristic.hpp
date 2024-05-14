@@ -32,9 +32,7 @@ class DataCharacteristic : public Characteristic {
      * @param physicalSourceName: Physical source name to collect the statistics over
      * @return CharacteristicPtr
      */
-    static CharacteristicPtr create(MetricPtr type,
-                                    const std::string& logicalSourceName,
-                                    const std::string& physicalSourceName);
+    static CharacteristicPtr create(MetricPtr type, const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     /**
      * @brief Gets the logical source name
@@ -74,9 +72,7 @@ class DataCharacteristic : public Characteristic {
      * @param logicalSourceName: Logical source name to collect the statistics from
      * @param physicalSourceNames: Physical source name to collect the statistics from
      */
-    DataCharacteristic(MetricPtr type,
-                       std::string logicalSourceName,
-                       const std::string& physicalSourceName);
+    DataCharacteristic(MetricPtr type, std::string logicalSourceName, const std::string& physicalSourceName);
 
     std::string logicalSourceName;
     std::string physicalSourceName;

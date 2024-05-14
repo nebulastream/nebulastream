@@ -15,8 +15,8 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWNRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWNRULE_HPP_
 
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES {
 class FieldAccessExpressionNode;
@@ -67,8 +67,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param childOperator insert the filter operator above this operator in the query plan
      * @param parOperator  insert the filter operator below this operator in the query plan
      */
-    static void
-    insertFilterIntoNewPosition(LogicalFilterOperatorPtr filterOperator, NodePtr childOperator, NodePtr parOperator);
+    static void insertFilterIntoNewPosition(LogicalFilterOperatorPtr filterOperator, NodePtr childOperator, NodePtr parOperator);
 
     /**
      * @brief pushes a filter that is above a join, below that join if that is possible. We differentiate four cases:
@@ -104,9 +103,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * joinOperator and parOperator.
      */
-    void pushFilterBelowJoin(LogicalFilterOperatorPtr filterOperator,
-                             LogicalJoinOperatorPtr joinOperator,
-                             NodePtr parentOperator);
+    void
+    pushFilterBelowJoin(LogicalFilterOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator, NodePtr parentOperator);
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
@@ -164,8 +162,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parOperator the parent operator of the windowOperator. In case the filter cant be pushed down, it is inserted between
      * windowOperator and parOperator
      */
-    void
-    pushFilterBelowWindowAggregation(LogicalFilterOperatorPtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
+    void pushFilterBelowWindowAggregation(LogicalFilterOperatorPtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
@@ -222,4 +219,4 @@ class FilterPushDownRule : public BaseRewriteRule {
 
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWNRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWNRULE_HPP_
