@@ -14,11 +14,11 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Common/DataTypes/Integer.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include <Common/DataTypes/Integer.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing {
 

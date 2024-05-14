@@ -15,16 +15,15 @@
 #ifndef NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
 #define NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
 
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
-#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Types/WindowType.hpp>
+#include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <Statistics/StatisticKey.hpp>
-#include <sstream>
+#include <Types/WindowType.hpp>
 #include <functional>
+#include <sstream>
 
 namespace NES::Statistic {
 
@@ -69,7 +68,12 @@ struct StatisticProbeRequest : public StatisticRequest {
 
     explicit StatisticProbeRequest(const StatisticHash& statisticHash,
                                    const Windowing::TimeMeasure& granularity,
-                                   const ProbeExpression& probeExpression) : StatisticProbeRequest(statisticHash, Windowing::TimeMeasure(0), Windowing::TimeMeasure(UINT64_MAX), granularity, probeExpression) {}
+                                   const ProbeExpression& probeExpression)
+        : StatisticProbeRequest(statisticHash,
+                                Windowing::TimeMeasure(0),
+                                Windowing::TimeMeasure(UINT64_MAX),
+                                granularity,
+                                probeExpression) {}
     const Windowing::TimeMeasure startTs;
     const Windowing::TimeMeasure endTs;
     const ProbeExpression probeExpression;
@@ -86,7 +90,8 @@ struct StatisticProbeRequestGRPC : public StatisticProbeRequest {
                                        const ProbeExpression& probeExpression,
                                        const Windowing::TimeMeasure& granularity,
                                        const WorkerId& workerId)
-        : StatisticProbeRequestGRPC(StatisticProbeRequest(statisticHash, startTs, endTs, granularity, probeExpression), workerId) {}
+        : StatisticProbeRequestGRPC(StatisticProbeRequest(statisticHash, startTs, endTs, granularity, probeExpression),
+                                    workerId) {}
     explicit StatisticProbeRequestGRPC(const StatisticProbeRequest& probeRequest, const WorkerId& workerId)
         : StatisticProbeRequest(probeRequest), workerId(workerId) {}
 

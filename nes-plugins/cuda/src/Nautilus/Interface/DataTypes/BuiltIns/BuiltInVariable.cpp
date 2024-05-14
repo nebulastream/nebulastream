@@ -17,8 +17,8 @@
 namespace NES::Nautilus {
 
 BuiltInVariable::BuiltInVariable(const TypeIdentifier* identifier)
-    : Any(identifier) {
+    : Any(identifier){
 
-};
+    };
 
-} // namespace NES::Nautilus
+}// namespace NES::Nautilus

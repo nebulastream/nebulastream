@@ -13,16 +13,16 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseUnitTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Vectorization/Unvectorize.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <BaseUnitTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Operators {

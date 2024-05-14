@@ -28,7 +28,7 @@ PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(StatisticId statisticId,
                                                        const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
                                                        const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
-    return create(getNextOperatorId(), statisticId,  inputSchema, outputSchema, udfDescriptor);
+    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, udfDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(OperatorId id,

@@ -26,7 +26,6 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
@@ -35,6 +34,7 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -42,22 +42,23 @@ class CountMinPipelineExecutionContext : public Runtime::Execution::PipelineExec
   public:
     CountMinPipelineExecutionContext(BufferManagerPtr bufferManager, OperatorHandlerPtr operatorHandler)
         : PipelineExecutionContext(
-              PipelineId(1),         // mock pipeline id
-              DecomposedQueryPlanId(1),         // mock query id
-              bufferManager,
-              1, // numberOfWorkerThreads
-              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                  this->emittedBuffers.emplace_back(std::move(buffer));
-              },
-              [this](TupleBuffer& buffer) {
-                  this->emittedBuffers.emplace_back(std::move(buffer));
-              },
-              {operatorHandler}){};
+            PipelineId(1),           // mock pipeline id
+            DecomposedQueryPlanId(1),// mock query id
+            bufferManager,
+            1,// numberOfWorkerThreads
+            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                this->emittedBuffers.emplace_back(std::move(buffer));
+            },
+            [this](TupleBuffer& buffer) {
+                this->emittedBuffers.emplace_back(std::move(buffer));
+            },
+            {operatorHandler}){};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<std::tuple<std::string, Statistic::StatisticDataCodec>> {
+class CountMinPipelineTest : public Testing::BaseUnitTest,
+                             public ::testing::WithParamInterface<std::tuple<std::string, Statistic::StatisticDataCodec>> {
   public:
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
@@ -78,7 +79,7 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
         NES::Logger::setupLogging("CountMinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup CountMinPipelineTest test class.");
     }
-    
+
     /* Will be called before a test is executed. */
     void SetUp() override {
         BaseUnitTest::SetUp();
@@ -91,8 +92,11 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
         sinkDataCodec = std::get<1>(GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
-        inputSchema = Schema::create()->addField(fieldToBuildCountMinOver, BasicType::INT64)->addField(timestampFieldName, BasicType::UINT64);
-        outputSchema = Schema::create()->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+        inputSchema = Schema::create()
+                          ->addField(fieldToBuildCountMinOver, BasicType::INT64)
+                          ->addField(timestampFieldName, BasicType::UINT64);
+        outputSchema = Schema::create()
+                           ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
@@ -102,8 +106,11 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
         testStatisticStore = Statistic::DefaultStatisticStore::create();
         sendingPolicy = Statistic::SendingPolicyASAP::create(sinkDataCodec);
-        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, bufferManager->getBufferSize(), Statistic::StatisticSynopsisType::COUNT_MIN, sinkDataCodec);
-        metricHash = 42; // Just some arbitrary number
+        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema,
+                                                                              bufferManager->getBufferSize(),
+                                                                              Statistic::StatisticSynopsisType::COUNT_MIN,
+                                                                              sinkDataCodec);
+        metricHash = 42;// Just some arbitrary number
     }
 
     /* Will be called after a test is executed. */
@@ -122,8 +129,10 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
      * @param numberOfBitsInKey
      * @return ExecutablePipelineStage
      */
-    std::unique_ptr<ExecutablePipelineStage> createExecutablePipeline(uint64_t windowSize, uint64_t windowSlide,
-                                                                      uint64_t width, uint64_t depth,
+    std::unique_ptr<ExecutablePipelineStage> createExecutablePipeline(uint64_t windowSize,
+                                                                      uint64_t windowSlide,
+                                                                      uint64_t width,
+                                                                      uint64_t depth,
                                                                       const std::vector<OriginId>& inputOrigins,
                                                                       const uint64_t numberOfBitsInKey) {
         // 1. Creating the scan operator
@@ -146,7 +155,8 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
 
         // 3. Building the count min operator
         const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldName);
-        auto timeFunction = std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds());
+        auto timeFunction =
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds());
         auto countMinOperator = std::make_shared<Operators::CountMinBuild>(operatorHandlerIndex,
                                                                            fieldToBuildCountMinOver,
                                                                            numberOfBitsInKey,
@@ -172,20 +182,31 @@ TEST_P(CountMinPipelineTest, singleInputTuple) {
     const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
-    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+    auto inputBuffers =
+        Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);
 
         // Now doing the same thing for the test count min
         auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
-        Util::updateTestCountMinStatistic(dynamicBuffer, testStatisticStore, metricHash, numberOfBitsInKey, windowSize, windowSlide, width, depth, fieldToBuildCountMinOver, timestampFieldName);
+        Util::updateTestCountMinStatistic(dynamicBuffer,
+                                          testStatisticStore,
+                                          metricHash,
+                                          numberOfBitsInKey,
+                                          windowSize,
+                                          windowSlide,
+                                          width,
+                                          depth,
+                                          fieldToBuildCountMinOver,
+                                          timestampFieldName);
     }
 
     for (auto& emitBuf : pipelineExecutionContext->emittedBuffers) {
         auto createdCountMinStatistics = statisticFormat->readStatisticsFromBuffer(emitBuf);
         for (auto& [statisticHash, countMinStatistic] : createdCountMinStatistics) {
-            auto expectedStatistics = testStatisticStore->getStatistics(statisticHash, countMinStatistic->getStartTs(), countMinStatistic->getEndTs());
+            auto expectedStatistics =
+                testStatisticStore->getStatistics(statisticHash, countMinStatistic->getStartTs(), countMinStatistic->getEndTs());
             EXPECT_EQ(expectedStatistics.size(), 1);
             EXPECT_TRUE(expectedStatistics[0]->equal(*countMinStatistic));
         }
@@ -201,37 +222,45 @@ TEST_P(CountMinPipelineTest, multipleInputBuffers) {
     const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
-    auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+    auto inputBuffers =
+        Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
     executablePipeline->setup(*pipelineExecutionContext);
     for (auto& buf : inputBuffers) {
         executablePipeline->execute(buf, *pipelineExecutionContext, *workerContext);
 
         // Now doing the same thing for the test count min
         auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
-        Util::updateTestCountMinStatistic(dynamicBuffer, testStatisticStore, metricHash, numberOfBitsInKey, windowSize, windowSlide, width, depth, fieldToBuildCountMinOver, timestampFieldName);
+        Util::updateTestCountMinStatistic(dynamicBuffer,
+                                          testStatisticStore,
+                                          metricHash,
+                                          numberOfBitsInKey,
+                                          windowSize,
+                                          windowSlide,
+                                          width,
+                                          depth,
+                                          fieldToBuildCountMinOver,
+                                          timestampFieldName);
     }
 
     for (auto& emitBuf : pipelineExecutionContext->emittedBuffers) {
         auto createdCountMinStatistics = statisticFormat->readStatisticsFromBuffer(emitBuf);
         for (auto& [statisticHash, countMinStatistic] : createdCountMinStatistics) {
-            auto expectedStatistics = testStatisticStore->getStatistics(statisticHash, countMinStatistic->getStartTs(), countMinStatistic->getEndTs());
+            auto expectedStatistics =
+                testStatisticStore->getStatistics(statisticHash, countMinStatistic->getStartTs(), countMinStatistic->getEndTs());
             EXPECT_EQ(expectedStatistics.size(), 1);
             EXPECT_TRUE(expectedStatistics[0]->equal(*countMinStatistic));
         }
     }
 }
 
-
 INSTANTIATE_TEST_CASE_P(testCountMinPipeline,
                         CountMinPipelineTest,
-                        ::testing::Combine(
-                            ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                            ::testing::ValuesIn(magic_enum::enum_values<Statistic::StatisticDataCodec>())
-                                ),
+                        ::testing::Combine(::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                                           ::testing::ValuesIn(magic_enum::enum_values<Statistic::StatisticDataCodec>())),
                         [](const testing::TestParamInfo<CountMinPipelineTest::ParamType>& info) {
                             const auto param = info.param;
-                            return std::get<0>(param) + "_sinkDataCodec_" + std::string(magic_enum::enum_name(std::get<1>(param)));
+                            return std::get<0>(param) + "_sinkDataCodec_"
+                                + std::string(magic_enum::enum_name(std::get<1>(param)));
                         });
 
-
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution

@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
@@ -24,14 +25,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <set>
-#include <Identifiers/Identifiers.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
 
-ExecutionNodePtr ExecutionNode::create(WorkerId workerId) {
-    return std::make_shared<ExecutionNode>(workerId);
-}
+ExecutionNodePtr ExecutionNode::create(WorkerId workerId) { return std::make_shared<ExecutionNode>(workerId); }
 
 ExecutionNode::ExecutionNode(WorkerId workerId) : workerId(workerId) {}
 

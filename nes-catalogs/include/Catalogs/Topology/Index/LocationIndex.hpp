@@ -55,8 +55,7 @@ class LocationIndex {
      * @param geoLocation  the new location of the Field node
      * @return true on success, false if the node was not a field node
      */
-    bool updateFieldNodeCoordinates(WorkerId topologyNodeId,
-                                    NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool updateFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
      * Experimental
@@ -74,7 +73,7 @@ class LocationIndex {
      * @return TopologyNodePtr to the closest field node
      */
     std::optional<WorkerId> getClosestNodeTo(const NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
-                                                   int radius = DEFAULT_SEARCH_RADIUS) const;
+                                             int radius = DEFAULT_SEARCH_RADIUS) const;
 
     /**
      * Experimental
@@ -142,4 +141,4 @@ class LocationIndex {
 #endif
 };
 }// namespace NES::Spatial::Index::Experimental
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_

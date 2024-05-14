@@ -34,4 +34,4 @@ class MinAggregationFunction : public AggregationFunction {
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_MINAGGREGATION_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_MINAGGREGATION_HPP_

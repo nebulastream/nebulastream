@@ -47,17 +47,17 @@ class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
                                            OperatorHandlerPtr hashJoinOpHandler,
                                            PipelineId pipelineId)
         : PipelineExecutionContext(
-              pipelineId,              // mock pipeline id
-              DecomposedQueryPlanId(1),// mock query id
-              bufferManager,
-              noWorkerThreads,
-              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                  this->emittedBuffers.emplace_back(std::move(buffer));
-              },
-              [this](TupleBuffer& buffer) {
-                  this->emittedBuffers.emplace_back(std::move(buffer));
-              },
-              {hashJoinOpHandler}){};
+            pipelineId,              // mock pipeline id
+            DecomposedQueryPlanId(1),// mock query id
+            bufferManager,
+            noWorkerThreads,
+            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                this->emittedBuffers.emplace_back(std::move(buffer));
+            },
+            [this](TupleBuffer& buffer) {
+                this->emittedBuffers.emplace_back(std::move(buffer));
+            },
+            {hashJoinOpHandler}){};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
@@ -151,7 +151,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
         auto joinBuildRight = std::make_shared<Operators::HJBuildSlicing>(
@@ -160,7 +161,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
 

@@ -110,8 +110,7 @@ TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
 }
@@ -131,8 +130,7 @@ TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
     EXPECT_TRUE(sourceCatalog->removePhysicalSource(physicalSource->getLogicalSourceName(),
@@ -153,8 +151,7 @@ TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
 }
@@ -188,8 +185,7 @@ TEST_F(SourceCatalogTest, testGetPhysicalSourceForLogicalSource) {
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
     const vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSources =

@@ -42,7 +42,9 @@ class LambdaSourceType : public PhysicalSourceType {
      * @return a constructed LambdaSourceType
      */
     static LambdaSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName,std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    create(const std::string& logicalSourceName,
+           const std::string& physicalSourceName,
+           std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProduce,
            uint64_t gatheringValue,
            GatheringMode gatheringMode,
@@ -72,7 +74,9 @@ class LambdaSourceType : public PhysicalSourceType {
     void reset() override;
 
   private:
-    explicit LambdaSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,
+    explicit LambdaSourceType(
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName,
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         uint64_t numBuffersToProduce,
         uint64_t gatheringValue,
@@ -90,4 +94,4 @@ class LambdaSourceType : public PhysicalSourceType {
 
 }// namespace NES
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_LAMBDASOURCETYPE_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_LAMBDASOURCETYPE_HPP_

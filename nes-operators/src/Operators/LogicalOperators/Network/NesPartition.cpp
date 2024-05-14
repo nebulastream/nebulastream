@@ -19,7 +19,10 @@
 
 namespace NES::Network {
 
-NesPartition::NesPartition(SharedQueryId sharedQueryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId)
+NesPartition::NesPartition(SharedQueryId sharedQueryId,
+                           OperatorId operatorId,
+                           PartitionId partitionId,
+                           SubpartitionId subpartitionId)
     : sharedQueryId(sharedQueryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId) {}
 
 PartitionId NesPartition::getPartitionId() const { return partitionId; }

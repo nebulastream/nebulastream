@@ -19,8 +19,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace NES {
 
@@ -110,7 +110,6 @@ class SourceCatalogService {
      */
     std::vector<Catalogs::Source::SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
 
-
     /**
      * Adds the key distribution for a given source catalog entry.
      * @param catalogEntry
@@ -130,4 +129,4 @@ class SourceCatalogService {
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_

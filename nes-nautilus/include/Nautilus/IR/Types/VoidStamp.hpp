@@ -34,4 +34,4 @@ class VoidStamp : public Stamp {
 
 }// namespace NES::Nautilus::IR::Types
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_

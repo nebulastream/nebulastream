@@ -14,8 +14,8 @@
 
 #ifndef NES_NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALSYNOPSISBUILDOPERATOR_HPP_
 #define NES_NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALSYNOPSISBUILDOPERATOR_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Types/WindowType.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -42,5 +42,5 @@ class PhysicalSynopsisBuildOperator {
     const Windowing::WindowTypePtr windowType;
     const Statistic::SendingPolicyPtr sendingPolicy;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators
 #endif//NES_NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALSYNOPSISBUILDOPERATOR_HPP_

@@ -17,8 +17,7 @@
 
 namespace NES {
 
-NullOutputSinkDescriptor::NullOutputSinkDescriptor(uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins) {}
+NullOutputSinkDescriptor::NullOutputSinkDescriptor(uint64_t numberOfOrigins) : SinkDescriptor(numberOfOrigins) {}
 
 SinkDescriptorPtr NullOutputSinkDescriptor::create(uint64_t numberOfOrigins) {
     return std::make_shared<NullOutputSinkDescriptor>(NullOutputSinkDescriptor(numberOfOrigins));

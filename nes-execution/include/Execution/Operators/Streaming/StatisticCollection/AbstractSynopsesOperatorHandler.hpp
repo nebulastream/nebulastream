@@ -20,11 +20,10 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
-#include <Statistics/StatisticKey.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
+#include <Statistics/StatisticKey.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
-
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -68,7 +67,8 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      * @param statisticsPlusHashes
      * @return Vector of merged statistics.
      */
-    std::vector<Statistic::HashStatisticPair> mergeStatistics(const std::vector<Statistic::HashStatisticPair>& statisticsPlusHashes);
+    std::vector<Statistic::HashStatisticPair>
+    mergeStatistics(const std::vector<Statistic::HashStatisticPair>& statisticsPlusHashes);
 
     /**
      * @brief Abstract method that each synopsis has to implement. It creates a new statistic for the given time period.

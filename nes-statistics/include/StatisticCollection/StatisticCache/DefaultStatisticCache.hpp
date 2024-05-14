@@ -15,9 +15,9 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_
 
-#include <Statistics/StatisticValue.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <Statistics/StatisticKey.hpp>
+#include <Statistics/StatisticValue.hpp>
 #include <folly/Synchronized.h>
 #include <unordered_map>
 

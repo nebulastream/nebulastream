@@ -53,7 +53,7 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceType> {
 
   public:
-    PhysicalSourceType(std::string  logicalSourceName, std::string  physicalSourceName, SourceType sourceType);
+    PhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, SourceType sourceType);
 
     virtual ~PhysicalSourceType() noexcept = default;
 
@@ -133,4 +133,4 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
 };
 
 }// namespace NES
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_

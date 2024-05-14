@@ -23,7 +23,8 @@ CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, con
     return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, physicalSourceName));
 }
 
-CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
+CSVSourceTypePtr
+CSVSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
     return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, physicalSourceName, yamlConfig));
 }
 

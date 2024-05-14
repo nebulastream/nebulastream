@@ -22,7 +22,7 @@ namespace NES::Nautilus {
 class FieldAccess;
 
 class BlockDim : public BuiltInVariable {
-public:
+  public:
     static const inline auto type = TypeIdentifier::create<BlockDim>();
 
     BlockDim();
@@ -41,6 +41,6 @@ public:
     std::shared_ptr<FieldAccess> x();
 };
 
-} // namespace NES::Nautilus
+}// namespace NES::Nautilus
 
-#endif // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKDIM_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKDIM_HPP_

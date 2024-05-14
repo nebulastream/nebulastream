@@ -23,7 +23,9 @@ QueryId StatisticProbeHandler::getStatisticQueryId(const StatisticKey& statistic
 }
 
 ProbeResult<> StatisticProbeHandler::probeStatistic(const StatisticProbeRequest& probeRequest) {
-    return probeStatistic(probeRequest, false, [](const ProbeResult<>& probeResult) { return probeResult; });
+    return probeStatistic(probeRequest, false, [](const ProbeResult<>& probeResult) {
+        return probeResult;
+    });
 }
 
 ProbeResult<> StatisticProbeHandler::probeStatistic(const StatisticProbeRequest& statisticProbeRequest,
@@ -44,7 +46,6 @@ ProbeResult<> StatisticProbeHandler::probeStatistic(const StatisticProbeRequest&
                  statisticProbeRequest.granularity.toString());
         return {};
     }
-
 
     // 3. Getting all probe requests of nodes that we have to query for the statistic
     const auto workerIds = topology->getAllRegisteredNodeIds();
@@ -70,19 +71,18 @@ ProbeResult<> StatisticProbeHandler::probeStatistic(const StatisticProbeRequest&
 }
 
 StatisticProbeHandlerPtr StatisticProbeHandler::create(const StatisticRegistryPtr& statisticRegistry,
-                                                         const StatisticProbeGeneratorPtr& statisticProbeGenerator,
-                                                         const StatisticCachePtr& statisticCache,
-                                                         const TopologyPtr& topology) {
-    return std::make_shared<StatisticProbeHandler>(StatisticProbeHandler(statisticRegistry, statisticProbeGenerator, statisticCache, topology));
+                                                       const StatisticProbeGeneratorPtr& statisticProbeGenerator,
+                                                       const StatisticCachePtr& statisticCache,
+                                                       const TopologyPtr& topology) {
+    return std::make_shared<StatisticProbeHandler>(
+        StatisticProbeHandler(statisticRegistry, statisticProbeGenerator, statisticCache, topology));
 }
 
 StatisticProbeHandler::StatisticProbeHandler(const StatisticRegistryPtr statisticRegistry,
                                              const StatisticProbeGeneratorPtr statisticProbeGenerator,
                                              const StatisticCachePtr statisticCache,
                                              const TopologyPtr topology)
-    : statisticRegistry(std::move(statisticRegistry)),
-      statisticProbeGenerator(std::move(statisticProbeGenerator)),
-      statisticCache(std::move(statisticCache)),
-      topology(std::move(topology)) {}
+    : statisticRegistry(std::move(statisticRegistry)), statisticProbeGenerator(std::move(statisticProbeGenerator)),
+      statisticCache(std::move(statisticCache)), topology(std::move(topology)) {}
 
 }// namespace NES::Statistic

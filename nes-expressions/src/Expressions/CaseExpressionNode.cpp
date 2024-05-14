@@ -34,18 +34,18 @@ ExpressionNodePtr CaseExpressionNode::create(std::vector<ExpressionNodePtr> cons
     return caseNode;
 }
 
-void CaseExpressionNode::inferStamp( SchemaPtr schema) {
+void CaseExpressionNode::inferStamp(SchemaPtr schema) {
 
     auto whenChildren = getWhenChildren();
     auto defaultExp = getDefaultExp();
-    defaultExp->inferStamp( schema);
+    defaultExp->inferStamp(schema);
     if (defaultExp->getStamp()->isUndefined()) {
         NES_THROW_RUNTIME_ERROR("Error during stamp inference. Right type must be defined, but was: {}",
                                 defaultExp->getStamp()->toString());
     }
 
     for (auto elem : whenChildren) {
-        elem->inferStamp( schema);
+        elem->inferStamp(schema);
         //all elements in whenChildren must be WhenExpressionNodes
         if (!elem->instanceOf<WhenExpressionNode>()) {
             NES_THROW_RUNTIME_ERROR(

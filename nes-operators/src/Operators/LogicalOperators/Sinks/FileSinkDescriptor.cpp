@@ -34,9 +34,7 @@ SinkDescriptorPtr FileSinkDescriptor::create(std::string_view fileName,
                                              bool addTimestamp,
                                              uint64_t numberOfOrigins) {
     return std::make_shared<FileSinkDescriptor>(
-        FileSinkDescriptor(fileName, sinkFormat, append == "APPEND",
-                                                                   addTimestamp,
-                                                                   numberOfOrigins));
+        FileSinkDescriptor(fileName, sinkFormat, append == "APPEND", addTimestamp, numberOfOrigins));
 }
 
 SinkDescriptorPtr

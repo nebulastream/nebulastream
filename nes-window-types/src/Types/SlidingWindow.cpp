@@ -13,9 +13,9 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/SlidingWindow.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Windowing {
@@ -49,10 +49,10 @@ bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
 }
 
 uint64_t SlidingWindow::hash() const {
-    uint64_t hashValue=0;
-    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
-    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(slide.getTime());
-    hashValue=hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
+    uint64_t hashValue = 0;
+    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
+    hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(slide.getTime());
+    hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
     return hashValue;
 }
 

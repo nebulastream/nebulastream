@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <StatisticIdentifiers.hpp>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <StatisticIdentifiers.hpp>
 #include <cmath>
 #include <utility>
 namespace NES::Statistic {
@@ -51,8 +51,7 @@ std::string CountMinDescriptor::toString() { return "CountMinDescriptor"; }
 bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     if (rhs->instanceOf<CountMinDescriptor>()) {
         auto rhsCountMinDescriptor = rhs->as<CountMinDescriptor>();
-        return field->equal(rhsCountMinDescriptor->field)
-            && depth == rhsCountMinDescriptor->depth
+        return field->equal(rhsCountMinDescriptor->field) && depth == rhsCountMinDescriptor->depth
             && width == rhsCountMinDescriptor->width;
     }
     return false;

@@ -21,10 +21,8 @@
 
 namespace NES::Statistic {
 
-
 class StatisticProbeInterface {
   public:
-
     /**
      * @brief Creates a request to probe a specific statistic and returns the statistic in a ProbeResult
      * @param probeRequest
@@ -43,6 +41,5 @@ class StatisticProbeInterface {
 };
 
 }// namespace NES::Statistic
-
 
 #endif//NES_NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEINTERFACE_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
 
 namespace NES::Statistic {
 

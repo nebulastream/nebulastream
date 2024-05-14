@@ -12,19 +12,16 @@
     limitations under the License.
 */
 #include <Expressions/ExpressionSerializationUtil.hpp>
+#include <StatisticCollection/StatisticProbeHandling/gRPC/WorkerStatisticRPCClient.hpp>
 #include <Statistics/StatisticRequests.hpp>
 #include <Statistics/StatisticValue.hpp>
-#include <StatisticCollection/StatisticProbeHandling/gRPC/WorkerStatisticRPCClient.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
 
-
-std::vector<StatisticValue<>>
-WorkerStatisticRPCClient::probeStatistics(const StatisticProbeRequestGRPC& probeRequest,
-                                 const std::string& gRPCAddress) {
+std::vector<StatisticValue<>> WorkerStatisticRPCClient::probeStatistics(const StatisticProbeRequestGRPC& probeRequest,
+                                                                        const std::string& gRPCAddress) {
     NES_DEBUG("Requesting statistics from workerId {} at address {}", probeRequest.workerId, gRPCAddress);
-
 
     // 1. Building the request
     ClientContext context;
@@ -44,20 +41,18 @@ WorkerStatisticRPCClient::probeStatistics(const StatisticProbeRequestGRPC& probe
     if (status.ok()) {
         // Extracting the statistic values from the reply, if the reply is valid
         std::vector<StatisticValue<>> statisticValues;
-        std::transform(reply.statistics().begin(),
-                       reply.statistics().end(),
-                       std::back_inserter(statisticValues),
-                       [](const StatisticReply& statisticValue) {
-                           return StatisticValue<>(statisticValue.statisticvalue(),
-                                                              statisticValue.startts(),
-                                                              statisticValue.endts());
-                       });
+        std::transform(
+            reply.statistics().begin(),
+            reply.statistics().end(),
+            std::back_inserter(statisticValues),
+            [](const StatisticReply& statisticValue) {
+                return StatisticValue<>(statisticValue.statisticvalue(), statisticValue.startts(), statisticValue.endts());
+            });
         return statisticValues;
     } else {
         NES_ERROR("WorkerStatisticRPCClient::probeStatistics error={}: {}", status.error_code(), status.error_message());
         return {};
     }
 }
-
 
 }// namespace NES::Statistic

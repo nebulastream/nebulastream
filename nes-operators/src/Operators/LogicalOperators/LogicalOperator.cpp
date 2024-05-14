@@ -75,8 +75,7 @@ void LogicalOperator::setOperatorState(NES::OperatorState newOperatorState) {
                 break;
             }
             // an operator can be marked as TO_BE_REMOVED only if it is not in the state REMOVED.
-            throw Exceptions::InvalidOperatorStateException(
-                id,
+            throw Exceptions::InvalidOperatorStateException(id,
                                                             {TO_BE_REMOVED, TO_BE_PLACED, PLACED, TO_BE_REPLACED},
                                                             this->operatorState);
         case TO_BE_REPLACED:

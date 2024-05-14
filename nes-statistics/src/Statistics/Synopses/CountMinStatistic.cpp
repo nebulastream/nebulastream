@@ -13,12 +13,12 @@
 */
 
 #include <Common/ValueTypes/ValueType.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
-#include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/StatisticUtil.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <cstring>
@@ -41,8 +41,8 @@ StatisticPtr CountMinStatistic::create(const Windowing::TimeMeasure& startTs,
     std::vector<uint64_t> countMinData(width * depth, 0);
     std::memcpy(countMinData.data(), countMinDataString.data(), sizeof(uint64_t) * width * depth);
 
-    return std::make_shared<CountMinStatistic>(CountMinStatistic(startTs, endTs, observedTuples,
-                                                                 width, depth, numberOfBitsInKey, countMinData));
+    return std::make_shared<CountMinStatistic>(
+        CountMinStatistic(startTs, endTs, observedTuples, width, depth, numberOfBitsInKey, countMinData));
 }
 
 StatisticPtr CountMinStatistic::createInit(const Windowing::TimeMeasure& startTs,
@@ -53,9 +53,8 @@ StatisticPtr CountMinStatistic::createInit(const Windowing::TimeMeasure& startTs
     // Initializing the underlying count min data to all 0 and setting the observed tuples to 0
     std::vector<uint64_t> countMinData(width * depth, 0);
     constexpr auto observedTuples = 0;
-    return std::make_shared<CountMinStatistic>(CountMinStatistic(startTs, endTs, observedTuples,
-                                                                 width, depth, numberOfBitsInKey,
-                                                                 countMinData));
+    return std::make_shared<CountMinStatistic>(
+        CountMinStatistic(startTs, endTs, observedTuples, width, depth, numberOfBitsInKey, countMinData));
 }
 
 void CountMinStatistic::update(uint64_t row, uint64_t col) {
@@ -77,8 +76,7 @@ CountMinStatistic::CountMinStatistic(const Windowing::TimeMeasure& startTs,
                                      uint64_t numberOfBitsInKey,
                                      const std::vector<uint64_t>& countMinData)
     : SynopsesStatistic(startTs, endTs, observedTuples), width(width), depth(depth), numberOfBitsInKey(numberOfBitsInKey),
-      countMinData(countMinData) {
-}
+      countMinData(countMinData) {}
 
 StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& probeExpression) const {
     const auto expression = probeExpression.getProbeExpression();
@@ -89,9 +87,10 @@ StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& pro
     const auto leftExpr = equalExpression->getLeft();
     const auto rightExpr = equalExpression->getRight();
     // We expect that one expression is a constant value and the other a field access expression
-    if (!((leftExpr->instanceOf<ConstantValueExpressionNode>() && rightExpr->instanceOf<FieldAccessExpressionNode>()) ||
-            (leftExpr->instanceOf<FieldAccessExpressionNode>() && rightExpr->instanceOf<ConstantValueExpressionNode>()))) {
-        NES_THROW_RUNTIME_ERROR("For now, we expect that one expression is a constant value and the other a field access expression!");
+    if (!((leftExpr->instanceOf<ConstantValueExpressionNode>() && rightExpr->instanceOf<FieldAccessExpressionNode>())
+          || (leftExpr->instanceOf<FieldAccessExpressionNode>() && rightExpr->instanceOf<ConstantValueExpressionNode>()))) {
+        NES_THROW_RUNTIME_ERROR(
+            "For now, we expect that one expression is a constant value and the other a field access expression!");
     }
 
     // Getting the constant value and the field access
@@ -107,17 +106,16 @@ StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& pro
         minCount = std::min(minCount, countMinData[row * width + column]);
     }
 
-
     return StatisticValue<>(minCount, startTs, endTs);
 }
 
 bool CountMinStatistic::equal(const Statistic& other) const {
     if (other.instanceOf<CountMinStatistic>()) {
         auto otherCountMinStatistic = other.as<const CountMinStatistic>();
-        return startTs.equals(otherCountMinStatistic->startTs) && endTs.equals(otherCountMinStatistic->endTs) &&
-            observedTuples == otherCountMinStatistic->observedTuples && width == otherCountMinStatistic->width &&
-            depth == otherCountMinStatistic->depth && numberOfBitsInKey == otherCountMinStatistic->numberOfBitsInKey &&
-            countMinData == otherCountMinStatistic->countMinData;
+        return startTs.equals(otherCountMinStatistic->startTs) && endTs.equals(otherCountMinStatistic->endTs)
+            && observedTuples == otherCountMinStatistic->observedTuples && width == otherCountMinStatistic->width
+            && depth == otherCountMinStatistic->depth && numberOfBitsInKey == otherCountMinStatistic->numberOfBitsInKey
+            && countMinData == otherCountMinStatistic->countMinData;
     }
     return false;
 }
@@ -159,7 +157,11 @@ void CountMinStatistic::merge(const SynopsesStatistic& other) {
     // 2. We can only merge a count min sketch with the same dimensions
     auto otherCountMinStatistic = other.as<const CountMinStatistic>();
     if (depth != otherCountMinStatistic->depth || width != otherCountMinStatistic->width) {
-        NES_ERROR("Can not combine sketches <{},{}> and <{},{}>, as they do not share the same dimensions", width, depth, otherCountMinStatistic->width, otherCountMinStatistic->depth);
+        NES_ERROR("Can not combine sketches <{},{}> and <{},{}>, as they do not share the same dimensions",
+                  width,
+                  depth,
+                  otherCountMinStatistic->width,
+                  otherCountMinStatistic->depth);
         return;
     }
 

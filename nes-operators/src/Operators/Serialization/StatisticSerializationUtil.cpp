@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Operators/Serialization/StatisticSerializationUtil.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/ThresholdTrigger.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
-#include <Expressions/ExpressionSerializationUtil.hpp>
+#include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -65,7 +65,7 @@ void StatisticSerializationUtil::serializeDescriptorDetails(const Statistic::Win
 
 Statistic::SendingPolicyPtr
 StatisticSerializationUtil::deserializeSendingPolicy(const SendingPolicyMessage& sendingPolicyMessage) {
-    const auto codec = (Statistic::StatisticDataCodec)sendingPolicyMessage.codec();
+    const auto codec = (Statistic::StatisticDataCodec) sendingPolicyMessage.codec();
     if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyAdaptive>()) {
         return Statistic::SendingPolicyAdaptive::create(codec);
     } else if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyLazy>()) {
@@ -97,17 +97,19 @@ StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescripto
         NES_THROW_RUNTIME_ERROR("Expects a FieldAccessExpressionNode for deserializing a WindowStatisticDescriptor!");
     }
 
-
     // 2. Deserializing the descriptor details
     if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_CountMinDetails>()) {
         StatisticWindowDescriptorMessage_CountMinDetails countMinDetails;
         descriptorMessage.details().UnpackTo(&countMinDetails);
-        statisticDescriptor = Statistic::CountMinDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width(), countMinDetails.depth());
+        statisticDescriptor = Statistic::CountMinDescriptor::create(expression->as<FieldAccessExpressionNode>(),
+                                                                    descriptorMessage.width(),
+                                                                    countMinDetails.depth());
 
     } else if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_HyperLogLogDetails>()) {
         StatisticWindowDescriptorMessage_HyperLogLogDetails hyperLogLogDetails;
         descriptorMessage.details().UnpackTo(&hyperLogLogDetails);
-        statisticDescriptor = Statistic::HyperLogLogDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width());
+        statisticDescriptor =
+            Statistic::HyperLogLogDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width());
     } else {
         NES_NOT_IMPLEMENTED();
     }

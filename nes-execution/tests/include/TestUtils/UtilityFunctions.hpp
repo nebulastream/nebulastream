@@ -20,7 +20,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -30,6 +29,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <utility>
 
@@ -46,7 +46,8 @@ namespace NES::Runtime::Execution::Util {
  * @param isIngestionTime
  * @return Vector of TupleBuffers
  */
-std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, BufferManager& bufferManager,
+std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
+                                                           BufferManager& bufferManager,
                                                            SchemaPtr schema,
                                                            const std::string& fieldToBuildCountMinOver,
                                                            const std::string& timestampFieldName,
@@ -65,9 +66,14 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, B
 * @param fieldToBuildCountMinOver
 * @param timestampFieldName
 */
-void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
-                                 Statistic::StatisticMetricHash metricHash, uint64_t numberOfBitsInKey,
-                                 uint64_t windowSize, uint64_t windowSlide, uint64_t width, uint64_t depth,
+void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                 Statistic::StatisticStorePtr statisticStore,
+                                 Statistic::StatisticMetricHash metricHash,
+                                 uint64_t numberOfBitsInKey,
+                                 uint64_t windowSize,
+                                 uint64_t windowSlide,
+                                 uint64_t width,
+                                 uint64_t depth,
                                  const std::string& fieldToBuildCountMinOver,
                                  const std::string& timestampFieldName);
 
@@ -82,9 +88,13 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
 * @param fieldToBuildCountMinOver
 * @param timestampFieldName
 */
-void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
-                                    Statistic::StatisticMetricHash metricHash, uint64_t windowSize, uint64_t windowSlide,
-                                    uint64_t width, const std::string& fieldToBuildCountMinOver,
+void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                    Statistic::StatisticStorePtr statisticStore,
+                                    Statistic::StatisticMetricHash metricHash,
+                                    uint64_t windowSize,
+                                    uint64_t windowSlide,
+                                    uint64_t width,
+                                    const std::string& fieldToBuildCountMinOver,
                                     const std::string& timestampFieldName);
 
 /**

@@ -15,17 +15,14 @@
 #include <Execution/Operators/Vectorization/StagingHandler.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 StagingHandler::StagingHandler(uint64_t stageBufferSize, uint64_t schemaSize)
-    : stageBufferSize(stageBufferSize)
-    , stageBufferCapacity(stageBufferSize / schemaSize)
-    , tupleBuffer(nullptr)
-    , currentWritePosition(0)
-{
+    : stageBufferSize(stageBufferSize), stageBufferCapacity(stageBufferSize / schemaSize), tupleBuffer(nullptr),
+      currentWritePosition(0) {
     NES_ASSERT(schemaSize < stageBufferSize, "Stage buffer is too small for schema");
 }
 
@@ -44,17 +41,15 @@ void StagingHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::Pip
     }
 }
 
-void StagingHandler::reset() {
-    currentWritePosition = (uint64_t) 0;
-}
+void StagingHandler::reset() { currentWritePosition = (uint64_t) 0; }
 
-bool StagingHandler::full() const {
-    return currentWritePosition >= stageBufferCapacity;
-}
+bool StagingHandler::full() const { return currentWritePosition >= stageBufferCapacity; }
 
 TupleBuffer* StagingHandler::getTupleBuffer() const {
     if (currentWritePosition == 0) {
-        auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        auto ts =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count();
         tupleBuffer->setCreationTimestampInMS(ts);
     }
     return tupleBuffer.get();
@@ -69,4 +64,4 @@ uint64_t StagingHandler::getCurrentWritePositionAndIncrement() {
     return oldWritePosition;
 }
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

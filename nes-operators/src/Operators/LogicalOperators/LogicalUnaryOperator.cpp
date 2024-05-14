@@ -12,13 +12,12 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id)
-    : Operator(id), LogicalOperator(id), UnaryOperator(id) {}
+LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), UnaryOperator(id) {}
 
 bool LogicalUnaryOperator::inferSchema() {
 

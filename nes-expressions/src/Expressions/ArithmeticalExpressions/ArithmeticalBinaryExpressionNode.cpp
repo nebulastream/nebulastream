@@ -34,8 +34,8 @@ void ArithmeticalBinaryExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto left = getLeft();
     auto right = getRight();
-    left->inferStamp( schema);
-    right->inferStamp( schema);
+    left->inferStamp(schema);
+    right->inferStamp(schema);
 
     // both sub expressions have to be numerical
     if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric()) {

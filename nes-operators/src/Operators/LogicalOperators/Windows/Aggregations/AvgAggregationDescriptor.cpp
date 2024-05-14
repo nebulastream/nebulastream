@@ -31,7 +31,7 @@ AvgAggregationDescriptor::AvgAggregationDescriptor(ExpressionNodePtr field, Expr
 }
 
 WindowAggregationDescriptorPtr AvgAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                      FieldAccessExpressionNodePtr asField) {
+                                                                FieldAccessExpressionNodePtr asField) {
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -43,10 +43,9 @@ WindowAggregationDescriptorPtr AvgAggregationDescriptor::on(const ExpressionNode
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(fieldAccess));
 }
 
-void AvgAggregationDescriptor::inferStamp(
-                                          SchemaPtr schema) {
+void AvgAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp( schema);
+    onField->inferStamp(schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("AvgAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

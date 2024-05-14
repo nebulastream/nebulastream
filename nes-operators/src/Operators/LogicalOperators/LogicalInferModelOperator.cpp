@@ -24,9 +24,9 @@
 namespace NES::InferModel {
 
 LogicalInferModelOperator::LogicalInferModelOperator(std::string model,
-                                                             std::vector<ExpressionNodePtr> inputFields,
-                                                             std::vector<ExpressionNodePtr> outputFields,
-                                                             OperatorId id)
+                                                     std::vector<ExpressionNodePtr> inputFields,
+                                                     std::vector<ExpressionNodePtr> outputFields,
+                                                     OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), model(std::move(model)), inputFields(std::move(inputFields)),
       outputFields(std::move(outputFields)) {
     NES_DEBUG("LogicalInferModelOperator: reading from model {}", this->model);
@@ -90,7 +90,7 @@ bool LogicalInferModelOperator::inferSchema() {
     for (auto inputField : inputFields) {
         auto inputExpression = inputField->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(inputExpression);
-        inputExpression->inferStamp( inputSchema);
+        inputExpression->inferStamp(inputSchema);
         auto fieldName = inputExpression->getFieldName();
         inputSchema->replaceField(fieldName, inputExpression->getStamp());
     }

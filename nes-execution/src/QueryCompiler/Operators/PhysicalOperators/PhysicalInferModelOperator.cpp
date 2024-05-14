@@ -23,8 +23,8 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(OperatorId id,
                                                        std::string model,
                                                        std::vector<ExpressionNodePtr> inputFields,
                                                        std::vector<ExpressionNodePtr> outputFields)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), model(model), inputFields(inputFields),
-      outputFields(outputFields) {}
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), model(model),
+      inputFields(inputFields), outputFields(outputFields) {}
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
                                                        StatisticId statisticId,
@@ -33,7 +33,13 @@ PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
                                                        std::string model,
                                                        std::vector<ExpressionNodePtr> inputFields,
                                                        std::vector<ExpressionNodePtr> outputFields) {
-    return std::make_shared<PhysicalInferModelOperator>(id, statisticId, inputSchema, outputSchema, model, inputFields, outputFields);
+    return std::make_shared<PhysicalInferModelOperator>(id,
+                                                        statisticId,
+                                                        inputSchema,
+                                                        outputSchema,
+                                                        model,
+                                                        inputFields,
+                                                        outputFields);
 }
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(StatisticId statisticId,

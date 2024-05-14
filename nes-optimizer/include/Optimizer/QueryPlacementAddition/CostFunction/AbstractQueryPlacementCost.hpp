@@ -44,7 +44,7 @@ class AbstractQueryPlacementCost {
      */
     virtual float getCost(PlacementMatrix candidate) = 0;
 };
-} // namespace Optimizer
-} // namespace NES
+}// namespace Optimizer
+}// namespace NES
 
 #endif//NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ABSTRACTQUERYPLACEMENTCOST_HPP

@@ -17,9 +17,9 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeMeasure.hpp>
-#include <Types/WindowType.hpp>
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
+#include <StatisticCollection/Characteristic/Characteristic.hpp>
+#include <Types/WindowType.hpp>
 #include <folly/Synchronized.h>
 #include <functional>
 

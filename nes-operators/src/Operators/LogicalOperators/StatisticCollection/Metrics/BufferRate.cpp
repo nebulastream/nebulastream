@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
 
 namespace NES::Statistic {
 
@@ -28,7 +28,8 @@ bool BufferRate::operator==(const StatisticMetric& rhs) const {
     return false;
 }
 
-BufferRate::BufferRate() : StatisticMetric(FieldAccessExpressionNode::create(BUFFER_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
+BufferRate::BufferRate()
+    : StatisticMetric(FieldAccessExpressionNode::create(BUFFER_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
 
 std::string BufferRate::toString() const { return "BufferRate"; }
 }// namespace NES::Statistic

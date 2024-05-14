@@ -62,7 +62,9 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, ctx.isLastChunk());
 }
 
-void Emit::emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& recordBuffer, const Value<UInt64>& numRecords,
+void Emit::emitRecordBuffer(ExecutionContext& ctx,
+                            RecordBuffer& recordBuffer,
+                            const Value<UInt64>& numRecords,
                             const Value<Boolean>& lastChunk) const {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.getWatermarkTs());

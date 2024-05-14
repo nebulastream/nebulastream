@@ -62,8 +62,11 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
      * @param sequenceData
      * @param watermarkTs
      */
-    void
-    trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs);
+    void trigger(WorkerContext& wctx,
+                 PipelineExecutionContext& ctx,
+                 OriginId originId,
+                 SequenceData sequenceData,
+                 uint64_t watermarkTs);
 
     void start(PipelineExecutionContextPtr, uint32_t);
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
@@ -86,4 +89,4 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_

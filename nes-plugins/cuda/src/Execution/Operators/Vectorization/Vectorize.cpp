@@ -14,10 +14,10 @@
 
 #include <Execution/Operators/Vectorization/Vectorize.hpp>
 
-#include <Execution/RecordBuffer.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
 #include <Execution/Operators/Vectorization/StagingHandler.hpp>
+#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -51,16 +51,14 @@ void resetStageBuffer(void* state) {
 }
 
 Vectorize::Vectorize(uint64_t operatorHandlerIndex, std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
-    : operatorHandlerIndex(operatorHandlerIndex)
-    , memoryProvider(std::move(memoryProvider)) {
-
-}
+    : operatorHandlerIndex(operatorHandlerIndex), memoryProvider(std::move(memoryProvider)) {}
 
 void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
     if (hasChild()) {
         auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         auto stageBufferAddress = Nautilus::FunctionCall("getStageBuffer", getStageBuffer, globalOperatorHandler);
-        auto writeIndex = Nautilus::FunctionCall("getCurrentWriteIndexAndIncrement", getCurrentWriteIndexAndIncrement, globalOperatorHandler);
+        auto writeIndex =
+            Nautilus::FunctionCall("getCurrentWriteIndexAndIncrement", getCurrentWriteIndexAndIncrement, globalOperatorHandler);
         memoryProvider->write(writeIndex, stageBufferAddress, record);
         auto stageBufferFull = Nautilus::FunctionCall("isStageBufferFull", isStageBufferFull, globalOperatorHandler);
         if (stageBufferFull) {
@@ -73,4 +71,4 @@ void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

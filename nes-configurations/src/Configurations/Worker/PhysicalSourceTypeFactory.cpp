@@ -13,8 +13,8 @@
 */
 
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactoryPlugin.hpp>
+#include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -23,15 +23,15 @@
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/OPCSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::Configurations {
 
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string,
-                                                              std::map<std::string, std::string>& commandLineParams) {
+                                                                  std::map<std::string, std::string>& commandLineParams) {
 
     std::string sourceType, logicalSourceName, physicalSourceName;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
@@ -98,9 +98,9 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yaml
 
 PhysicalSourceTypePtr
 PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceName,
-                                                std::string physicalSourceName,
-                                                std::string sourceType,
-                                                const std::map<std::string, std::string>& commandLineParams) {
+                                                    std::string physicalSourceName,
+                                                    std::string sourceType,
+                                                    const std::map<std::string, std::string>& commandLineParams) {
 
     // check if a plugin is registered to handle this source type
     for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {
@@ -125,9 +125,9 @@ PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceNam
 }
 
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceName,
-                                                                      std::string physicalSourceName,
-                                                                      std::string sourceType,
-                                                                      Yaml::Node& yamlConfig) {
+                                                                          std::string physicalSourceName,
+                                                                          std::string sourceType,
+                                                                          Yaml::Node& yamlConfig) {
 
     // check a plugin is registered to handle this source type
     for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {

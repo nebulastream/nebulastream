@@ -41,9 +41,7 @@ QueryPlanPtr QueryPlan::create() { return std::make_shared<QueryPlan>(QueryPlan(
 
 QueryPlan::QueryPlan() {}
 
-QueryPlan::QueryPlan(OperatorPtr rootOperator) : queryId(INVALID_QUERY_ID) {
-    rootOperators.push_back(std::move(rootOperator));
-}
+QueryPlan::QueryPlan(OperatorPtr rootOperator) : queryId(INVALID_QUERY_ID) { rootOperators.push_back(std::move(rootOperator)); }
 
 QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators)
     : rootOperators(std::move(rootOperators)), queryId(queryId) {}
@@ -88,9 +86,7 @@ void QueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode) {
     rootOperators.push_back(operatorNode);
 }
 
-void QueryPlan::clearRootOperators() {
-    rootOperators.clear();
-}
+void QueryPlan::clearRootOperators() { rootOperators.clear(); }
 
 std::string QueryPlan::toString() const {
     std::stringstream ss;
@@ -291,7 +287,7 @@ void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrat
 }
 
 std::set<OperatorPtr> QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperators,
-                                                             const std::set<OperatorPtr>& upstreamOperators) {
+                                                         const std::set<OperatorPtr>& upstreamOperators) {
 
     std::set<OperatorPtr> operatorsBetween;
 
@@ -321,9 +317,8 @@ std::set<OperatorPtr> QueryPlan::findAllOperatorsBetween(const std::set<Operator
     return operatorsBetween;
 }
 
-std::set<OperatorPtr>
-QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator,
-                                                        const std::set<OperatorPtr>& targetOperators) {
+std::set<OperatorPtr> QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator,
+                                                                              const std::set<OperatorPtr>& targetOperators) {
 
     //Find if downstream operator is also in the vector of target operators
     auto found = std::find_if(targetOperators.begin(), targetOperators.end(), [&](const auto& upstreamOperator) {

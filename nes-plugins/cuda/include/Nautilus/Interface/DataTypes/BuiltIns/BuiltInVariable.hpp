@@ -24,7 +24,7 @@ namespace NES::Nautilus {
 * @brief Base class for any class that represents a symbolic compiler built-in variable for computations in operator code.
 */
 class BuiltInVariable : public Any {
-public:
+  public:
     BuiltInVariable(const TypeIdentifier* identifier);
 
     /**
@@ -38,6 +38,6 @@ public:
     virtual const Value<> getAsValue() const = 0;
 };
 
-} // namespace NES::Nautilus
+}// namespace NES::Nautilus
 
-#endif // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_BUILTINVARIABLE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_BUILTINVARIABLE_HPP_

@@ -53,14 +53,16 @@ class TypedBaseOption : public BaseOption {
      * @param description of the option.
      * @param validator class to validate the configuration value
      */
-    TypedBaseOption(const std::string& name, T defaultValue, const std::string& description, std::shared_ptr<ConfigurationValidation> validator);
+    TypedBaseOption(const std::string& name,
+                    T defaultValue,
+                    const std::string& description,
+                    std::shared_ptr<ConfigurationValidation> validator);
 
     /**
      * @brief Operator to directly access the value of this option.
      * @return Returns an object of the option type T.
      */
     operator T() const { return this->value; }
-
 
     /**
      * @brief Clears the option and sets the value to the default value.
@@ -102,9 +104,11 @@ TypedBaseOption<T>::TypedBaseOption(const std::string& name, T defaultValue, con
     : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue) {}
 
 template<class T>
-TypedBaseOption<T>::TypedBaseOption(const std::string& name, T defaultValue, const std::string& description, std::shared_ptr<ConfigurationValidation> validator)
+TypedBaseOption<T>::TypedBaseOption(const std::string& name,
+                                    T defaultValue,
+                                    const std::string& description,
+                                    std::shared_ptr<ConfigurationValidation> validator)
     : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue), validator(validator) {}
-
 
 template<class T>
 T TypedBaseOption<T>::getValue() const {
@@ -127,4 +131,4 @@ void TypedBaseOption<T>::clear() {
 
 }// namespace NES::Configurations
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_

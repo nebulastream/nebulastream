@@ -42,10 +42,10 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
@@ -116,7 +116,10 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest 
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry5);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         Topology::create());
     }
 };
 
@@ -528,10 +531,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
     //assert that the at least one sink operator is in the state TO_BE_REMOVED
-    EXPECT_TRUE(
-        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
-            return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
-        }));
+    EXPECT_TRUE(std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
+        return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+    }));
 }
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
@@ -635,8 +637,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
     //assert that the at least one sink operator is in the state TO_BE_REMOVED
-    EXPECT_TRUE(
-        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
-            return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
-        }));
+    EXPECT_TRUE(std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
+        return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+    }));
 }

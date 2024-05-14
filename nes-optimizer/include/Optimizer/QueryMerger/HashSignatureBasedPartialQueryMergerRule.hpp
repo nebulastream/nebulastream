@@ -91,11 +91,11 @@ class HashSignatureBasedPartialQueryMergerRule final : public BaseQueryMergerRul
      * @return Map containing matching pair of target and host operators
      */
     std::map<LogicalOperatorPtr, LogicalOperatorPtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                                                                                const QueryPlanPtr& hostQueryPlan);
+                                                                        const QueryPlanPtr& hostQueryPlan);
 
     std::map<LogicalOperatorPtr, LogicalOperatorPtr> areOperatorEqual(const LogicalOperatorPtr& targetOperator,
-                                                                              const LogicalOperatorPtr& hostOperator);
+                                                                      const LogicalOperatorPtr& hostOperator);
 };
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HASHSIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HASHSIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_

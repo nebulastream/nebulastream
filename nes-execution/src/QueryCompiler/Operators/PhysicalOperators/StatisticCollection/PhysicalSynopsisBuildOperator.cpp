@@ -16,9 +16,7 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-const std::string& PhysicalSynopsisBuildOperator::getNameOfFieldToTrack() const {
-    return nameOfFieldToTrack;
-}
+const std::string& PhysicalSynopsisBuildOperator::getNameOfFieldToTrack() const { return nameOfFieldToTrack; }
 
 Statistic::StatisticMetricHash PhysicalSynopsisBuildOperator::getMetricHash() const { return metricHash; }
 
@@ -31,4 +29,4 @@ PhysicalSynopsisBuildOperator::PhysicalSynopsisBuildOperator(const std::string_v
                                                              const Windowing::WindowTypePtr windowType,
                                                              const Statistic::SendingPolicyPtr sendingPolicy)
     : nameOfFieldToTrack(nameOfFieldToTrack), metricHash(metricHash), windowType(windowType), sendingPolicy(sendingPolicy) {}
-} // namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators

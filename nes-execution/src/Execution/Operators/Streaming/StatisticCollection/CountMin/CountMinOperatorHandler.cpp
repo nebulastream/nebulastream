@@ -25,10 +25,14 @@ CountMinOperatorHandlerPtr CountMinOperatorHandler::create(const uint64_t window
                                                            Statistic::StatisticFormatPtr statisticFormat,
                                                            const std::vector<OriginId>& inputOrigins,
                                                            const uint64_t numberOfBitsInKey) {
-    return std::make_shared<CountMinOperatorHandler>(CountMinOperatorHandler(windowSize, windowSlide,
+    return std::make_shared<CountMinOperatorHandler>(CountMinOperatorHandler(windowSize,
+                                                                             windowSlide,
                                                                              sendingPolicy,
-                                                                             width, depth, statisticFormat,
-                                                                             inputOrigins, numberOfBitsInKey));
+                                                                             width,
+                                                                             depth,
+                                                                             statisticFormat,
+                                                                             inputOrigins,
+                                                                             numberOfBitsInKey));
 }
 
 const std::vector<uint64_t>& CountMinOperatorHandler::getH3Seeds() const { return h3Seeds; }
@@ -41,8 +45,8 @@ CountMinOperatorHandler::CountMinOperatorHandler(const uint64_t windowSize,
                                                  Statistic::StatisticFormatPtr statisticFormat,
                                                  const std::vector<OriginId>& inputOrigins,
                                                  const uint64_t numberOfBitsInKey)
-    : AbstractSynopsesOperatorHandler(windowSize, windowSlide, sendingPolicy, statisticFormat, inputOrigins),
-      width(width), depth(depth), numberOfBitsInKey(numberOfBitsInKey) {
+    : AbstractSynopsesOperatorHandler(windowSize, windowSlide, sendingPolicy, statisticFormat, inputOrigins), width(width),
+      depth(depth), numberOfBitsInKey(numberOfBitsInKey) {
 
     // Creating here the H3-Seeds with a custom seed, allowing us to not have to send the seed with the statistics
     std::random_device rd;

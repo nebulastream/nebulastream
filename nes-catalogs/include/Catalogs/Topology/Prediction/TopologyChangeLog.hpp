@@ -86,7 +86,8 @@ class TopologyChangeLog {
      * @param map the mop from which values are to be removed
      * @param linksToRemove the list of links to remove from the map
      */
-    static void removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map, const std::vector<TopologyLinkInformation>& linksToRemove);
+    static void removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
+                                   const std::vector<TopologyLinkInformation>& linksToRemove);
 
     /**
      * @brief Helper function that adds the elements in the vectors contained in newMap to the vectors found under the same key in additionTarget, but
@@ -107,4 +108,4 @@ class TopologyChangeLog {
 };
 }// namespace Experimental::TopologyPrediction
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_

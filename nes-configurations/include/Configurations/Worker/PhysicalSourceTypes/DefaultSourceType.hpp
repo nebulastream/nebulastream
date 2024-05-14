@@ -15,8 +15,8 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
 
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <memory>
@@ -39,14 +39,17 @@ class DefaultSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return DefaultSourceConfigPtr
      */
-    static DefaultSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    static DefaultSourceTypePtr create(const std::string& logicalSourceName,
+                                       const std::string& physicalSourceName,
+                                       std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a DefaultSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return DefaultSourceConfigPtr
      */
-    static DefaultSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName,Yaml::Node yamlConfig);
+    static DefaultSourceTypePtr
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create defaultSourceConfig with default values
@@ -89,13 +92,17 @@ class DefaultSourceType : public PhysicalSourceType {
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      * @param sourceConfigMap: the source configuration map
      */
-    explicit DefaultSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    explicit DefaultSourceType(const std::string& logicalSourceName,
+                               const std::string& physicalSourceName,
+                               std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      * @param sourceTypeConfig: the configuration for yaml
      */
-    explicit DefaultSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,Yaml::Node sourceTypeConfig);
+    explicit DefaultSourceType(const std::string& logicalSourceName,
+                               const std::string& physicalSourceName,
+                               Yaml::Node sourceTypeConfig);
 
     /**
      * @brief constructor to create a new Default source config object initialized with default values
@@ -111,4 +118,4 @@ class DefaultSourceType : public PhysicalSourceType {
     Configurations::GatheringModeConfigOption gatheringMode;
 };
 }// namespace NES
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_

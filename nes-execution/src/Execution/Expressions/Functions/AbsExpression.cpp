@@ -45,7 +45,8 @@ Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
     } else if (subValue->isType<Double>()) {
         return FunctionCall<>("calculateAbsDouble", calculateAbsDouble, subValue.as<Double>());
 
-    } else if (subValue->isType<UInt64>() || subValue->isType<UInt32>() || subValue->isType<UInt16>() || subValue->isType<UInt8>()) {
+    } else if (subValue->isType<UInt64>() || subValue->isType<UInt32>() || subValue->isType<UInt16>()
+               || subValue->isType<UInt8>()) {
         return subValue;
 
     } else if (subValue->isType<Int64>()) {

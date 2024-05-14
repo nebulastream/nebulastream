@@ -33,10 +33,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for ZMQ sink
      */
-    static SinkDescriptorPtr create(std::string host,
-                                    uint16_t port,
-                                    bool internal = false,
-                                    uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(std::string host, uint16_t port, bool internal = false, uint64_t numberOfOrigins = 1);
 
     /**
      * @brief Get the zmq address where the data is to be written
@@ -54,7 +51,6 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      */
     void setPort(uint16_t port);
 
-
     bool isInternal() const;
     void setInternal(bool internal);
 
@@ -62,10 +58,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     std::string toString() const override;
 
   private:
-    explicit ZmqSinkDescriptor(std::string host,
-                               uint16_t port,
-                               bool internal,
-                               uint64_t numberOfOrigins);
+    explicit ZmqSinkDescriptor(std::string host, uint16_t port, bool internal, uint64_t numberOfOrigins);
 
     std::string host;
     uint16_t port;
@@ -76,4 +69,4 @@ using ZmqSinkDescriptorPtr = std::shared_ptr<ZmqSinkDescriptor>;
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_ZMQSINKDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_ZMQSINKDESCRIPTOR_HPP_

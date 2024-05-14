@@ -37,15 +37,17 @@ class SenseSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    static SenseSourceTypePtr create(const std::string& logicalSourceName,
+                                     const std::string& physicalSourceName,
+                                     std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @param yamlConfig inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static SenseSourceTypePtr
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a SenseSourceConfigPtr object
@@ -92,4 +94,4 @@ class SenseSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption udfs;
 };
 }// namespace NES
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_

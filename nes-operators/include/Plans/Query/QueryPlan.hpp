@@ -21,8 +21,8 @@
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
-#include <unordered_set>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace NES {
@@ -223,7 +223,7 @@ class QueryPlan {
      * @return all operators between (excluding) downstream and upstream operators
      */
     std::set<OperatorPtr> findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperators,
-                                                      const std::set<OperatorPtr>& upstreamOperators);
+                                                  const std::set<OperatorPtr>& upstreamOperators);
 
     /**
      * @brief Get state of the query plan
@@ -274,7 +274,7 @@ class QueryPlan {
      * @return empty or operators between source and target operators
      */
     std::set<OperatorPtr> findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator,
-                                                                           const std::set<OperatorPtr>& targetOperators);
+                                                                       const std::set<OperatorPtr>& targetOperators);
 
     std::vector<OperatorPtr> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;
@@ -284,4 +284,4 @@ class QueryPlan {
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

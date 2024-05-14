@@ -20,7 +20,6 @@
 
 namespace NES::Statistic {
 
-
 /**
  * @brief Descriptor for the StatisticSink. Merely stores the StatisticSinkFormatType
  */
@@ -33,8 +32,8 @@ class StatisticSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr create(StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec,
-                                    uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr
+    create(StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec, uint64_t numberOfOrigins = 1);
 
     std::string toString() const override;
     bool equal(const SinkDescriptorPtr& other) override;

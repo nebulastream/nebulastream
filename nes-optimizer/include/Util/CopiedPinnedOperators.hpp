@@ -54,4 +54,4 @@ class CopiedPinnedOperators {
 }// namespace Optimizer
 }// namespace NES
 
-#endif // NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_

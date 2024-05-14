@@ -53,7 +53,9 @@ class PhysicalSourceTypeFactory {
      * @param commandLineParams : the command line arguments
      * @return PhysicalSourceType shared pointer
      */
-    static PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, std::string sourceType,
+    static PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName,
+                                                          std::string physicalSourceName,
+                                                          std::string sourceType,
                                                           const std::map<std::string, std::string>& commandLineParams);
 
     /**
@@ -64,9 +66,12 @@ class PhysicalSourceTypeFactory {
      * @param yamlConfig : the yaml configuration
      * @return PhysicalSourceType shared pointer
      */
-    static PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig);
+    static PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName,
+                                                          std::string physicalSourceName,
+                                                          std::string sourceType,
+                                                          Yaml::Node& yamlConfig);
 };
 }// namespace Configurations
 }// namespace NES
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPEFACTORY_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPEFACTORY_HPP_

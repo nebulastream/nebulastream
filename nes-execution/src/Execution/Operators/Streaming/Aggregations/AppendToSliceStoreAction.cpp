@@ -32,8 +32,13 @@ void appendToGlobalSliceStore(void* ss, void* slicePtr) {
     handler->appendToGlobalSliceStore(std::move(slice));
 }
 template<class Slice>
-void triggerSlidingWindows(void* sh, void* wctx, void* pctx, uint64_t sequenceNumber, uint64_t chunkNumber,
-                           bool lastChunk, uint64_t sliceEnd) {
+void triggerSlidingWindows(void* sh,
+                           void* wctx,
+                           void* pctx,
+                           uint64_t sequenceNumber,
+                           uint64_t chunkNumber,
+                           bool lastChunk,
+                           uint64_t sliceEnd) {
     auto handler = static_cast<AppendToSliceStoreHandler<Slice>*>(sh);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);

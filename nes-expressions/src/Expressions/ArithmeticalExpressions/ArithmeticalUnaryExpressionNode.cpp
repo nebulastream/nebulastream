@@ -32,7 +32,7 @@ ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(ArithmeticalUna
 void ArithmeticalUnaryExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child
     auto child = this->child();
-    child->inferStamp( schema);
+    child->inferStamp(schema);
 
     // get stamp from child
     auto child_stamp = child->getStamp();

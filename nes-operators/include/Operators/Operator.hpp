@@ -237,4 +237,4 @@ class Operator : public Node {
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_

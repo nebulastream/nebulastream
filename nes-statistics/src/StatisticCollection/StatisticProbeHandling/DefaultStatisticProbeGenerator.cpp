@@ -17,9 +17,7 @@
 
 namespace NES::Statistic {
 
-StatisticProbeGeneratorPtr DefaultStatisticProbeGenerator::create() {
-    return std::make_shared<DefaultStatisticProbeGenerator>();
-}
+StatisticProbeGeneratorPtr DefaultStatisticProbeGenerator::create() { return std::make_shared<DefaultStatisticProbeGenerator>(); }
 
 std::vector<StatisticProbeRequestGRPC>
 DefaultStatisticProbeGenerator::generateProbeRequests(const StatisticRegistry&,

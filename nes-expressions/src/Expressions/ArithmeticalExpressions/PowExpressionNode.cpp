@@ -29,7 +29,7 @@ ExpressionNodePtr PowExpressionNode::create(ExpressionNodePtr const& left, Expre
     return powNode;
 }
 
-void PowExpressionNode::inferStamp( SchemaPtr schema) {
+void PowExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalBinaryExpressionNode::inferStamp(schema);
 

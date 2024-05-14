@@ -29,4 +29,4 @@ class BooleanStamp : public Stamp {
 
 }// namespace NES::Nautilus::IR::Types
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_

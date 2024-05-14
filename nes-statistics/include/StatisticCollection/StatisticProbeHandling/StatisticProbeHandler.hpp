@@ -14,12 +14,12 @@
 
 #ifndef NES_NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEHANDLER_HPP_
 #define NES_NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEHANDLER_HPP_
-#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeInterface.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <StatisticCollection/StatisticProbeHandling/gRPC/WorkerStatisticRPCClient.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 
 namespace NES::Statistic {
 
@@ -28,11 +28,10 @@ using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
 
 class StatisticProbeHandler : public StatisticProbeInterface {
   public:
-
     static StatisticProbeHandlerPtr create(const StatisticRegistryPtr& statisticRegistry,
-                                             const StatisticProbeGeneratorPtr& statisticProbeGenerator,
-                                             const StatisticCachePtr& statisticCache,
-                                             const TopologyPtr& topology);
+                                           const StatisticProbeGeneratorPtr& statisticProbeGenerator,
+                                           const StatisticCachePtr& statisticCache,
+                                           const TopologyPtr& topology);
 
     ProbeResult<> probeStatistic(const StatisticProbeRequest& probeRequest,
                                  const bool& estimationAllowed,

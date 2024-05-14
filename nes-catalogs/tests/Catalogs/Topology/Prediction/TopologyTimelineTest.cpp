@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Catalogs/Topology/Prediction/TopologyTimeline.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -21,6 +20,7 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

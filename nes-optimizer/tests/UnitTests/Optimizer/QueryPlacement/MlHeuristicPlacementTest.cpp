@@ -38,10 +38,10 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/RequestHandlerService.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <z3++.h>
@@ -147,7 +147,10 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
 
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(), Statistic::DefaultStatisticProbeGenerator::create(), Statistic::DefaultStatisticCache::create(), Topology::create());
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         Topology::create());
     }
 };
 
@@ -176,7 +179,10 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                             sourceCatalog,
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -210,18 +216,18 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     uint64_t totalQuerySubPlansOnNode12 = 2;
     uint64_t totalQuerySubPlansOnNode13 = 1;
     std::vector querySubPlanSizeCompare = {totalQuerySubPlansOnNode1,
-                                                     totalQuerySubPlansOnNode2,
-                                                     totalQuerySubPlansOnNode3,
-                                                     totalQuerySubPlansOnNode4,
-                                                     totalQuerySubPlansOnNode5,
-                                                     totalQuerySubPlansOnNode6,
-                                                     totalQuerySubPlansOnNode7,
-                                                     totalQuerySubPlansOnNode8,
-                                                     totalQuerySubPlansOnNode9,
-                                                     totalQuerySubPlansOnNode10,
-                                                     totalQuerySubPlansOnNode11,
-                                                     totalQuerySubPlansOnNode12,
-                                                     totalQuerySubPlansOnNode13};
+                                           totalQuerySubPlansOnNode2,
+                                           totalQuerySubPlansOnNode3,
+                                           totalQuerySubPlansOnNode4,
+                                           totalQuerySubPlansOnNode5,
+                                           totalQuerySubPlansOnNode6,
+                                           totalQuerySubPlansOnNode7,
+                                           totalQuerySubPlansOnNode8,
+                                           totalQuerySubPlansOnNode9,
+                                           totalQuerySubPlansOnNode10,
+                                           totalQuerySubPlansOnNode11,
+                                           totalQuerySubPlansOnNode12,
+                                           totalQuerySubPlansOnNode13};
     for (const auto& executionNode : executionNodes) {
         auto querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
         NES_INFO("Worker Id {} ", executionNode->operator*()->getId());

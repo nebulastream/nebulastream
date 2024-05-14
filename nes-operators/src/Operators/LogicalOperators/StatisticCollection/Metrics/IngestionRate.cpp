@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 
 namespace NES::Statistic {
 
 MetricPtr IngestionRate::create() { return std::make_shared<IngestionRate>(IngestionRate()); }
 
-IngestionRate::IngestionRate() : StatisticMetric(FieldAccessExpressionNode::create(INGESTION_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
+IngestionRate::IngestionRate()
+    : StatisticMetric(FieldAccessExpressionNode::create(INGESTION_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
 
 bool IngestionRate::operator==(const StatisticMetric& rhs) const {
     if (rhs.instanceOf<IngestionRate>()) {

@@ -17,12 +17,12 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 
 namespace NES::Optimizer {
 
@@ -157,8 +157,7 @@ HashSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperator
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {
             for (const auto& hostParent : hostOperator->getParents()) {
-                auto matchedOperators =
-                    areOperatorEqual(targetParent->as<LogicalOperator>(), hostParent->as<LogicalOperator>());
+                auto matchedOperators = areOperatorEqual(targetParent->as<LogicalOperator>(), hostParent->as<LogicalOperator>());
                 if (!matchedOperators.empty()) {
                     targetHostOperatorMap.merge(matchedOperators);
                     matchCount++;

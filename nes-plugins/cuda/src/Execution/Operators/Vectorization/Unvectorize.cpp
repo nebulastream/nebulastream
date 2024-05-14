@@ -14,16 +14,14 @@
 
 #include <Execution/Operators/Vectorization/Unvectorize.hpp>
 
-#include <Execution/RecordBuffer.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/RecordBuffer.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-Unvectorize::Unvectorize(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryProvider(std::move(memoryProvider))
-    , projections(std::move(projections)) {
-
-}
+Unvectorize::Unvectorize(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+                         std::vector<Record::RecordFieldIdentifier> projections)
+    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
 
 void Unvectorize::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     if (hasChild()) {
@@ -36,4 +34,4 @@ void Unvectorize::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

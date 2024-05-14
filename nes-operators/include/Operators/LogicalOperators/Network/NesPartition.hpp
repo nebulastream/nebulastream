@@ -16,10 +16,10 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
 
 #include <Identifiers/Identifiers.hpp>
-#include <cstdint>
-#include <string>
 #include <Identifiers/NESStrongTypeFormat.hpp>
+#include <cstdint>
 #include <fmt/core.h>
+#include <string>
 
 namespace NES::Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
@@ -28,7 +28,10 @@ static constexpr SubpartitionId DEFAULT_SUBPARTITION_ID = SubpartitionId(0);
 
 class NesPartition {
   public:
-    explicit NesPartition(SharedQueryId sharedQueryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId);
+    explicit NesPartition(SharedQueryId sharedQueryId,
+                          OperatorId operatorId,
+                          PartitionId partitionId,
+                          SubpartitionId subpartitionId);
 
     /**
      * @brief getter for the queryId
@@ -89,4 +92,4 @@ struct formatter<NES::Network::NesPartition> : formatter<std::string> {
     auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
 };
 }//namespace fmt
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_

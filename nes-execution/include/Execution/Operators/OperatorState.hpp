@@ -25,4 +25,4 @@ class OperatorState {
     virtual ~OperatorState() = default;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_

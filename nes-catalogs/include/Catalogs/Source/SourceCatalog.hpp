@@ -19,8 +19,8 @@
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <deque>
 #include <map>
-#include <set>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 

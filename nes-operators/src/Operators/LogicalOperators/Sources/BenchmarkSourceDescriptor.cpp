@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

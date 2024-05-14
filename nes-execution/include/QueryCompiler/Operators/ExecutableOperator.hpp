@@ -32,7 +32,7 @@ class ExecutableOperator : public UnaryOperator {
      * @return OperatorPtr
      */
     static OperatorPtr create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+                              std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
     /**
      * @brief Gets the executable pipeline stage.
@@ -58,4 +58,4 @@ class ExecutableOperator : public UnaryOperator {
 
 }// namespace NES::QueryCompilation
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_

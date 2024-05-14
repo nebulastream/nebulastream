@@ -32,7 +32,7 @@ ExpressionNodePtr RoundExpressionNode::create(ExpressionNodePtr const& child) {
     return roundNode;
 }
 
-void RoundExpressionNode::inferStamp( SchemaPtr schema) {
+void RoundExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 

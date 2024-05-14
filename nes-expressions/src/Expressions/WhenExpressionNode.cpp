@@ -28,12 +28,12 @@ ExpressionNodePtr WhenExpressionNode::create(const ExpressionNodePtr& left, cons
     return whenNode;
 }
 
-void WhenExpressionNode::inferStamp( SchemaPtr schema) {
+void WhenExpressionNode::inferStamp(SchemaPtr schema) {
 
     auto left = getLeft();
     auto right = getRight();
-    left->inferStamp( schema);
-    right->inferStamp( schema);
+    left->inferStamp(schema);
+    right->inferStamp(schema);
 
     //left expression has to be boolean
     if (!left->getStamp()->isBoolean()) {

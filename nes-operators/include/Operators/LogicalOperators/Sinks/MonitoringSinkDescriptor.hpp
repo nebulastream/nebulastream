@@ -30,8 +30,7 @@ class MonitoringSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for Monitoring sink
      */
-    static SinkDescriptorPtr create(Monitoring::MetricCollectorType collectorType,
-                                    uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins = 1);
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
@@ -39,8 +38,7 @@ class MonitoringSinkDescriptor : public SinkDescriptor {
     void setCollectorType(Monitoring::MetricCollectorType collectorType);
 
   private:
-    explicit MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType,
-                                      uint64_t numberOfOrigins);
+    explicit MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins);
 
   private:
     Monitoring::MetricCollectorType collectorType;
@@ -50,4 +48,4 @@ using MonitoringSinkDescriptorPtr = std::shared_ptr<MonitoringSinkDescriptor>;
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MONITORINGSINKDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MONITORINGSINKDESCRIPTOR_HPP_

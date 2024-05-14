@@ -117,8 +117,8 @@ using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 namespace Statistic {
 class LogicalStatisticWindowOperator;
 using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
-} // namespace Statistic
+}// namespace Statistic
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_

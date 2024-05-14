@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <memory>
 
 namespace NES::Experimental {
@@ -47,4 +47,4 @@ class LogicalBatchJoinOperator : public LogicalBinaryOperator {
     Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
 }// namespace NES::Experimental
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_

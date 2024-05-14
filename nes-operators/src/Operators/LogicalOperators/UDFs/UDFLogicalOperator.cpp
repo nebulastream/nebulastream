@@ -99,8 +99,8 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
             NES_WARNING("Mapping UINT64 field in child operator output schema to signed Java long in UDF input schema: {}",
                         fieldName)
         } else if ((type->equals(DataTypeFactory::createInt8()) && childType->equals(DataTypeFactory::createUInt8()))
-            || (type->equals(DataTypeFactory::createInt16()) && childType->equals(DataTypeFactory::createUInt16()))
-            || (type->equals(DataTypeFactory::createInt32()) && childType->equals(DataTypeFactory::createUInt32()))) {
+                   || (type->equals(DataTypeFactory::createInt16()) && childType->equals(DataTypeFactory::createUInt16()))
+                   || (type->equals(DataTypeFactory::createInt32()) && childType->equals(DataTypeFactory::createUInt32()))) {
             errors.push_back(fmt::format(
                 "Field data type is unsigned integer in child operator output schema; UDFs only support signed integers: {}",
                 fieldName));

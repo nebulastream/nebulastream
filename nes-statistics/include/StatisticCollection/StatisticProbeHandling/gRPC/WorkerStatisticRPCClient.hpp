@@ -57,7 +57,6 @@ class WorkerStatisticRPCClient {
      */
     std::vector<StatisticValue<>> probeStatistics(const StatisticProbeRequestGRPC& probeRequest, const std::string& gRPCAddress);
 
-
   private:
     WorkerStatisticRPCClient() = default;
 };

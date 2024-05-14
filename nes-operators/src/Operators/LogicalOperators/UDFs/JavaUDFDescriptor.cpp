@@ -59,7 +59,7 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
     }
 }
 
- const std::optional<jni::JavaByteCode> JavaUDFDescriptor::getClassByteCode(const std::string& className) const {
+const std::optional<jni::JavaByteCode> JavaUDFDescriptor::getClassByteCode(const std::string& className) const {
     const auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
         return c.first == className;
     });

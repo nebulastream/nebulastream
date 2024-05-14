@@ -36,8 +36,10 @@ PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id,
     return std::make_shared<PhysicalMapOperator>(id, statisticId, inputSchema, outputSchema, mapExpression);
 }
 
-PhysicalOperatorPtr
-PhysicalMapOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
+PhysicalOperatorPtr PhysicalMapOperator::create(StatisticId statisticId,
+                                                SchemaPtr inputSchema,
+                                                SchemaPtr outputSchema,
+                                                FieldAssignmentExpressionNodePtr mapExpression) {
     return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
 }
 

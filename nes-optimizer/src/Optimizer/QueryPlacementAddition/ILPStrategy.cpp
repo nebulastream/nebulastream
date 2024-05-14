@@ -492,7 +492,6 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
         std::any prop = operatorNode->getProperty("cost");
         int slots = std::any_cast<int>(prop);
 
-
         auto iterator = nodeUtilizationMap.find(topologyID);
         if (iterator != nodeUtilizationMap.end()) {
             iterator->second = iterator->second + slots * P_IJ;

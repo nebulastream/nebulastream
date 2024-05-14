@@ -14,16 +14,19 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
-#include <Statistics/Synopses/CountMinStatistic.hpp>
-#include <Statistics/StatisticKey.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
+#include <Statistics/StatisticKey.hpp>
+#include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getCountMinRefProxy(void* ptrOpHandler, Statistic::StatisticMetricHash metricHash, StatisticId statisticId,
-                          uint64_t workerId, uint64_t timestamp)  {
+void* getCountMinRefProxy(void* ptrOpHandler,
+                          Statistic::StatisticMetricHash metricHash,
+                          StatisticId statisticId,
+                          uint64_t workerId,
+                          uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
 
@@ -65,15 +68,18 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
     opHandler->checkStatisticsSending(bufferMetaData, statisticHash, pipelineCtx);
 }
 
-
 void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 1. Get the memRef to the CountMin sketch
     auto timestampVal = timeFunction->getTs(ctx, record);
-    auto countMinMemRef = Nautilus::FunctionCall("getCountMinRefProxy", getCountMinRefProxy,
-                                                 operatorHandlerMemRef, Value<UInt64>(metricHash), ctx.getCurrentStatisticId(),
-                                                 ctx.getWorkerId(), timestampVal);
+    auto countMinMemRef = Nautilus::FunctionCall("getCountMinRefProxy",
+                                                 getCountMinRefProxy,
+                                                 operatorHandlerMemRef,
+                                                 Value<UInt64>(metricHash),
+                                                 ctx.getCurrentStatisticId(),
+                                                 ctx.getWorkerId(),
+                                                 timestampVal);
 
     // 2. Updating the count min sketch for this record
     auto h3SeedsMemRef = Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, operatorHandlerMemRef);
@@ -98,7 +104,6 @@ void CountMinBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
         child->open(executionCtx, recordBuffer);
     }
 }
-
 
 void CountMinBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // Update the watermark for the count min build operator and send the created statistics upward

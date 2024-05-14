@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Statistics/StatisticUtil.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Statistics/StatisticUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
 #include <random>

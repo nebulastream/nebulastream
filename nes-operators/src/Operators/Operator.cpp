@@ -160,7 +160,7 @@ NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) const {
     for (const auto& child : children) {
 
         // If the child has a matching operator id then return it
-        if(child->as<Operator>()->getId() == operatorId){
+        if (child->as<Operator>()->getId() == operatorId) {
             return child;
         }
 
@@ -176,7 +176,7 @@ NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) const {
 NodePtr Operator::getChildWithStatisticId(StatisticId statisticId) const {
     for (const auto& child : children) {
         // If the child has a matching statistic id then return it
-        if(child->as<Operator>()->getStatisticId() == statisticId){
+        if (child->as<Operator>()->getStatisticId() == statisticId) {
             return child;
         }
 

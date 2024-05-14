@@ -15,8 +15,8 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICTYPE_STATISTICTYPE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICTYPE_STATISTICTYPE_HPP_
 
-#include <StatisticIdentifiers.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <StatisticIdentifiers.hpp>
 #include <utility>
 
 namespace NES::Statistic {

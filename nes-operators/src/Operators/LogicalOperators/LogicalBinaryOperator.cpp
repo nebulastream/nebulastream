@@ -20,8 +20,7 @@
 
 namespace NES {
 
-LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id)
-    : Operator(id), LogicalOperator(id), BinaryOperator(id) {}
+LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), BinaryOperator(id) {}
 
 bool LogicalBinaryOperator::inferSchema() {
 
@@ -74,8 +73,7 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const Schem
 
 std::vector<OperatorPtr> LogicalBinaryOperator::getLeftOperators() const { return getOperatorsBySchema(getLeftInputSchema()); }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() const { return getOperatorsBySchema(getRightInputSchema());
-}
+std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() const { return getOperatorsBySchema(getRightInputSchema()); }
 
 void LogicalBinaryOperator::inferInputOrigins() {
     // in the default case we collect all input origins from the children/upstream operators

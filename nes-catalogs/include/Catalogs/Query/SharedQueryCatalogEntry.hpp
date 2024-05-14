@@ -19,8 +19,8 @@
 #include <Util/QueryState.hpp>
 #include <Util/QueryStateHistory.hpp>
 #include <map>
-#include <set>
 #include <memory>
+#include <set>
 
 namespace NES {
 
@@ -118,4 +118,4 @@ class SharedQueryCatalogEntry {
 }// namespace Catalogs::Query
 }// namespace NES
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_

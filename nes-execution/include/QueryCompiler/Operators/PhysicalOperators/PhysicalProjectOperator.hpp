@@ -33,7 +33,8 @@ class PhysicalProjectOperator : public PhysicalUnaryOperator {
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const std::vector<ExpressionNodePtr>& expressions);
-    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
+    static PhysicalOperatorPtr
+    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
     /**
      * @brief returns the list of fields that remain in the output schema.
      * @return  std::vector<ExpressionNodePtr>
@@ -48,4 +49,4 @@ class PhysicalProjectOperator : public PhysicalUnaryOperator {
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_

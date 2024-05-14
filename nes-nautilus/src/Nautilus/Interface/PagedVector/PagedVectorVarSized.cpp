@@ -20,9 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager,
-                                         NES::SchemaPtr schema,
-                                         uint64_t pageSize)
+PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, NES::SchemaPtr schema, uint64_t pageSize)
     : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize) {
     appendPage();
     appendVarSizedDataPage();
@@ -58,7 +56,7 @@ void PagedVectorVarSized::appendPage() {
     }
 }
 
-void PagedVectorVarSized::appendVarSizedDataPage(){
+void PagedVectorVarSized::appendVarSizedDataPage() {
     auto page = bufferManager->getUnpooledBuffer(pageSize);
     if (page.has_value()) {
         varSizedDataPages.emplace_back(page.value());
@@ -184,4 +182,4 @@ uint64_t PagedVectorVarSized::getVarSizedDataEntryMapCounter() const { return va
 
 uint64_t PagedVectorVarSized::getEntrySize() const { return entrySize; }
 
-} //NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface

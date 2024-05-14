@@ -15,10 +15,10 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTICVALUE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTICVALUE_HPP_
 #include <Measures/TimeMeasure.hpp>
-#include <vector>
-#include <string>
 #include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 namespace NES::Statistic {
 
 /**
@@ -27,7 +27,6 @@ namespace NES::Statistic {
 template<typename StatType = double>
 class StatisticValue {
   public:
-
     /**
      * @brief Constructor
      * @param value
@@ -65,17 +64,13 @@ using StatisticValuePtr = std::shared_ptr<StatisticValue<>>;
 template<typename StatType = double>
 class ProbeResult {
   public:
-    void addStatisticValue(StatisticValue<StatType> statisticValue) {
-        probeItems.emplace_back(statisticValue);
-    }
+    void addStatisticValue(StatisticValue<StatType> statisticValue) { probeItems.emplace_back(statisticValue); }
 
     /**
      * @brief Returns a const reference to the probeItems
      * @return const std::vector<StatisticValue<StatType>>&
      */
-    const std::vector<StatisticValue<StatType>>& getProbeItems() const {
-        return probeItems;
-    }
+    const std::vector<StatisticValue<StatType>>& getProbeItems() const { return probeItems; }
 
     std::string toString() const {
         std::stringstream result;

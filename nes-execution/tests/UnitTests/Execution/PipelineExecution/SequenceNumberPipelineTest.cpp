@@ -154,8 +154,12 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted) {
 
     // Checking, if we have seen all sequence numbers
     std::vector<SequenceNumber> seenSeqNumbers;
-    std::transform(pipelineContext.seenSeqChunkLastChunk.begin(), pipelineContext.seenSeqChunkLastChunk.end(),
-                   std::back_inserter(seenSeqNumbers), [] (const SequenceData& item) { return item.sequenceNumber; });
+    std::transform(pipelineContext.seenSeqChunkLastChunk.begin(),
+                   pipelineContext.seenSeqChunkLastChunk.end(),
+                   std::back_inserter(seenSeqNumbers),
+                   [](const SequenceData& item) {
+                       return item.sequenceNumber;
+                   });
     ASSERT_THAT(seenSeqNumbers, ::testing::UnorderedElementsAreArray({1, 2, 3, 4}));
 }
 
@@ -188,9 +192,8 @@ std::vector<TupleBuffer> createDataFullWithConstantFieldValues(BufferManagerPtr 
  * our implementation of the chunks and see, if they have been assigned correctly.
  */
 TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
-    auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                           ->addField("f1", BasicType::INT64)
-                           ->addField("f2", BasicType::INT64);
+    auto inputSchema =
+        Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
     auto outputSchema = inputSchema->copy()->addField("f3", BasicType::INT64);
     auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
     auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
@@ -223,8 +226,14 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
     // Checking the output and the seq number, chunk number and last chunk
     ASSERT_EQ(pipelineContext.buffers.size(), 8);
     std::vector<SequenceData> expectedSeqChunkLastChunk = {
-        {1, 1, false}, {1, 2, true}, {2, 1, false}, {2, 2, true},
-        {3, 1, false}, {3, 2, true}, {4, 1, false}, {4, 2, true},
+        {1, 1, false},
+        {1, 2, true},
+        {2, 1, false},
+        {2, 2, true},
+        {3, 1, false},
+        {3, 2, true},
+        {4, 1, false},
+        {4, 2, true},
     };
     auto expectedSeqChunkLastChunkIt = expectedSeqChunkLastChunk.begin();
     for (const auto& buf : pipelineContext.buffers) {
@@ -242,7 +251,6 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
     // Checking, if we have seen all sequence numbers
     ASSERT_THAT(pipelineContext.seenSeqChunkLastChunk, ::testing::UnorderedElementsAreArray(expectedSeqChunkLastChunk));
 }
-
 
 std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput,
                                                               const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput) {
@@ -272,10 +280,10 @@ std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(const MemoryLayou
 
     const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
     std::vector<Aggregation::AggregationFunctionPtr> aggregationFunctions = {std::move(aggregationFunction)};
-    auto slicePreAggregation =
-        std::make_shared<Operators::NonKeyedSlicePreAggregation>(0 /*handler index*/,
-                                                                 std::make_unique<Operators:: EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
-                                                                 aggregationFunctions);
+    auto slicePreAggregation = std::make_shared<Operators::NonKeyedSlicePreAggregation>(
+        0 /*handler index*/,
+        std::make_unique<Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
+        aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -286,10 +294,8 @@ std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(const MemoryLayou
 std::shared_ptr<PhysicalOperatorPipeline> createThirdPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput,
                                                               Aggregation::AggregationFunctionPtr aggregationFunction) {
     std::vector<Aggregation::AggregationFunctionPtr> aggregationFunctions = {std::move(aggregationFunction)};
-    auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
-                                                                                    "start",
-                                                                                    "end",
-                                                                                    INVALID_ORIGIN_ID);
+    auto sliceMergingAction =
+        std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions, "start", "end", INVALID_ORIGIN_ID);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                           aggregationFunctions,
                                                                           std::move(sliceMergingAction));
@@ -343,9 +349,8 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
     constexpr auto windowSize = 10;
     constexpr auto windowSlide = 10;
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
-    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(windowSize,
-                                                                                                 windowSlide,
-                                                                                                 origins);
+    auto preAggregationHandler =
+        std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(windowSize, windowSlide, origins);
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
     // Creating pipeline execution contexts
@@ -393,8 +398,10 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
 
     // We use ts as we increase the timestamp for each tuple.
     auto expectedNumberOfTuples = (ts) / windowSize;
-    auto numberOfTuples = std::accumulate(pipeline3Context.buffers.begin(), pipeline3Context.buffers.end(),
-                                          0_u64, [] (const auto sum, const TupleBuffer& buf) {
+    auto numberOfTuples = std::accumulate(pipeline3Context.buffers.begin(),
+                                          pipeline3Context.buffers.end(),
+                                          0_u64,
+                                          [](const auto sum, const TupleBuffer& buf) {
                                               return sum + buf.getNumberOfTuples();
                                           });
     EXPECT_EQ(numberOfTuples, expectedNumberOfTuples);

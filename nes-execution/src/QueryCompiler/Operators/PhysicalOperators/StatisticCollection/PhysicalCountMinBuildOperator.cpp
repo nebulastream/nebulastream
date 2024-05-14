@@ -16,60 +16,79 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr
-PhysicalCountMinBuildOperator::create(const OperatorId operatorId,
-                                      const StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const std::string& nameOfFieldToTrack,
-                                      const uint64_t width,
-                                      const uint64_t depth,
-                                      const Statistic::StatisticMetricHash metricHash,
-                                      const Windowing::WindowTypePtr windowType,
-                                      const Statistic::SendingPolicyPtr sendingPolicy) {
-    return std::make_shared<PhysicalCountMinBuildOperator>(PhysicalCountMinBuildOperator(operatorId, statisticId, inputSchema, outputSchema, nameOfFieldToTrack, width, depth, metricHash, windowType, sendingPolicy));
+PhysicalOperatorPtr PhysicalCountMinBuildOperator::create(const OperatorId operatorId,
+                                                          const StatisticId statisticId,
+                                                          const SchemaPtr& inputSchema,
+                                                          const SchemaPtr& outputSchema,
+                                                          const std::string& nameOfFieldToTrack,
+                                                          const uint64_t width,
+                                                          const uint64_t depth,
+                                                          const Statistic::StatisticMetricHash metricHash,
+                                                          const Windowing::WindowTypePtr windowType,
+                                                          const Statistic::SendingPolicyPtr sendingPolicy) {
+    return std::make_shared<PhysicalCountMinBuildOperator>(PhysicalCountMinBuildOperator(operatorId,
+                                                                                         statisticId,
+                                                                                         inputSchema,
+                                                                                         outputSchema,
+                                                                                         nameOfFieldToTrack,
+                                                                                         width,
+                                                                                         depth,
+                                                                                         metricHash,
+                                                                                         windowType,
+                                                                                         sendingPolicy));
 }
 
-PhysicalOperatorPtr
-PhysicalCountMinBuildOperator::create(const StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const std::string& nameOfFieldToTrack,
-                                      const uint64_t width,
-                                      const uint64_t depth,
-                                      const Statistic::StatisticMetricHash metricHash,
-                                      const Windowing::WindowTypePtr windowType,
-                                      const Statistic::SendingPolicyPtr sendingPolicy) {
-    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, nameOfFieldToTrack,
-                  width, depth, metricHash, windowType, sendingPolicy);
+PhysicalOperatorPtr PhysicalCountMinBuildOperator::create(const StatisticId statisticId,
+                                                          const SchemaPtr& inputSchema,
+                                                          const SchemaPtr& outputSchema,
+                                                          const std::string& nameOfFieldToTrack,
+                                                          const uint64_t width,
+                                                          const uint64_t depth,
+                                                          const Statistic::StatisticMetricHash metricHash,
+                                                          const Windowing::WindowTypePtr windowType,
+                                                          const Statistic::SendingPolicyPtr sendingPolicy) {
+    return create(getNextOperatorId(),
+                  statisticId,
+                  inputSchema,
+                  outputSchema,
+                  nameOfFieldToTrack,
+                  width,
+                  depth,
+                  metricHash,
+                  windowType,
+                  sendingPolicy);
 }
 
-PhysicalCountMinBuildOperator::PhysicalCountMinBuildOperator(
-    const OperatorId id,
-    const StatisticId statisticId,
-    const SchemaPtr& inputSchema,
-    const SchemaPtr& outputSchema,
-    const std::string& nameOfFieldToTrack,
-    const uint64_t width,
-    const uint64_t depth,
-    const Statistic::StatisticMetricHash metricHash,
-    const Windowing::WindowTypePtr windowType,
-    const Statistic::SendingPolicyPtr sendingPolicy)
-    : Operator(id, statisticId),
-      PhysicalSynopsisBuildOperator(nameOfFieldToTrack, metricHash, windowType, sendingPolicy),
-      PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema),
-      width(width), depth(depth) {}
+PhysicalCountMinBuildOperator::PhysicalCountMinBuildOperator(const OperatorId id,
+                                                             const StatisticId statisticId,
+                                                             const SchemaPtr& inputSchema,
+                                                             const SchemaPtr& outputSchema,
+                                                             const std::string& nameOfFieldToTrack,
+                                                             const uint64_t width,
+                                                             const uint64_t depth,
+                                                             const Statistic::StatisticMetricHash metricHash,
+                                                             const Windowing::WindowTypePtr windowType,
+                                                             const Statistic::SendingPolicyPtr sendingPolicy)
+    : Operator(id, statisticId), PhysicalSynopsisBuildOperator(nameOfFieldToTrack, metricHash, windowType, sendingPolicy),
+      PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), width(width), depth(depth) {}
 
 OperatorPtr PhysicalCountMinBuildOperator::copy() {
-    auto copy = create(id, statisticId, inputSchema, outputSchema, nameOfFieldToTrack, width, depth, metricHash, windowType, sendingPolicy);
+    auto copy = create(id,
+                       statisticId,
+                       inputSchema,
+                       outputSchema,
+                       nameOfFieldToTrack,
+                       width,
+                       depth,
+                       metricHash,
+                       windowType,
+                       sendingPolicy);
     copy->as<PhysicalCountMinBuildOperator>()->setInputOriginIds(inputOriginIds);
     return copy;
 }
 
-
 uint64_t PhysicalCountMinBuildOperator::getWidth() const { return width; }
 
 uint64_t PhysicalCountMinBuildOperator::getDepth() const { return depth; }
-
 
 }// namespace NES::QueryCompilation::PhysicalOperators

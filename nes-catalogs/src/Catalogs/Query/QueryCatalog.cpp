@@ -19,10 +19,10 @@
 #include <Catalogs/Query/SharedQueryCatalogEntry.hpp>
 #include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Identifiers/NESStrongTypeJson.hpp>
 #include <string>
 
 namespace NES::Catalogs::Query {

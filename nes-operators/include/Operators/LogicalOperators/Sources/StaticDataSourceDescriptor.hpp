@@ -51,7 +51,6 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      */
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
-
     /**
      * @brief return the path to the table file to be loaded.
      * @return
@@ -71,4 +70,4 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
     bool lateStart;
 };
 }// namespace NES::Experimental
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_

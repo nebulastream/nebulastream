@@ -23,10 +23,18 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalFilterOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalFilterOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
+    PhysicalFilterOperator(OperatorId id,
+                           StatisticId statisticId,
+                           SchemaPtr inputSchema,
+                           SchemaPtr outputSchema,
+                           ExpressionNodePtr predicate);
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const ExpressionNodePtr& expression);
     static PhysicalOperatorPtr
-    create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const ExpressionNodePtr& expression);
-    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression);
+    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression);
     std::string toString() const override;
     OperatorPtr copy() override;
 
@@ -41,4 +49,4 @@ class PhysicalFilterOperator : public PhysicalUnaryOperator {
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFILTEROPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFILTEROPERATOR_HPP_

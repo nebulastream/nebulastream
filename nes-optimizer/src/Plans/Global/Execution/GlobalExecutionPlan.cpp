@@ -13,12 +13,12 @@
 */
 
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
-#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <nlohmann/json.hpp>
@@ -235,9 +235,7 @@ bool GlobalExecutionPlan::removeAllDecomposedQueryPlans(SharedQueryId sharedQuer
     for (const auto& WorkerId : WorkerIds) {
         auto lockedExecutionNode = (*lockedExecutionNodeMap)[WorkerId].wlock();
         if (!(*lockedExecutionNode)->removeDecomposedQueryPlans(sharedQueryId)) {
-            NES_ERROR("Unable to remove query sub plan with id {} from execution node with id {}",
-                      sharedQueryId,
-                      WorkerId);
+            NES_ERROR("Unable to remove query sub plan with id {} from execution node with id {}", sharedQueryId, WorkerId);
             return false;
         }
 

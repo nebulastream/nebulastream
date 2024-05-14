@@ -48,8 +48,7 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
         }
         try {
             optionMap[identifier]->parseFromYAMLNode(node);
-        }
-        catch (const ConfigurationException& e) {
+        } catch (const ConfigurationException& e) {
             NES_ERROR("Configuration error: ", e.what());
             throw;
         }
@@ -68,8 +67,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
     } else {
         try {
             optionMap[identifier]->parseFromString(identifier, inputParams);
-        }
-        catch (const ConfigurationException& e) {
+        } catch (const ConfigurationException& e) {
             NES_ERROR("Configuration error: ", e.what());
             throw;
         }
@@ -113,8 +111,7 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
     for (auto [identifier, values] : groupedIdentifiers) {
         try {
             parseFromString(identifier, values);
-        }
-        catch (const ConfigurationException& e) {
+        } catch (const ConfigurationException& e) {
             throw;
         }
     }
@@ -164,8 +161,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             } catch (const std::exception& e) {
                 throw ConfigurationException("Exception while persisting in yaml file", e.what());
             }
-        }
-        else {
+        } else {
             NES_ERROR("BaseConfiguration: yamlFilePath is empty.");
             return false;
         }

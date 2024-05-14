@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
@@ -29,6 +27,7 @@
 #include <Expressions/CaseExpressionNode.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/ExpressionNode.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
@@ -43,6 +42,7 @@
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Expressions/WhenExpressionNode.hpp>
 #include <SerializableExpression.pb.h>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

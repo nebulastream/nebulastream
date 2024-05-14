@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Join::Experimental {

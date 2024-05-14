@@ -21,7 +21,6 @@ namespace NES::Configurations {
  */
 class ConfigurationValidation {
   public:
-
     virtual ~ConfigurationValidation() = default;
     /**
      * @brief Method to check the validity of a configuration option
@@ -30,5 +29,5 @@ class ConfigurationValidation {
      */
     virtual bool isValid(const std::string&) const = 0;
 };
-}
+}// namespace NES::Configurations
 #endif//NES_CONFIGURATIONVALIDATION_H

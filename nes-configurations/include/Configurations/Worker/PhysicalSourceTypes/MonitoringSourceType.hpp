@@ -44,8 +44,9 @@ class MonitoringSourceType : public PhysicalSourceType {
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Monitoring::MetricCollectorType metricCollectorType);
+    static MonitoringSourceTypePtr create(const std::string& logicalSourceName,
+                                          const std::string& physicalSourceName,
+                                          Monitoring::MetricCollectorType metricCollectorType);
 
     /**
      * @brief creates a string representation of the source
@@ -97,4 +98,4 @@ class MonitoringSourceType : public PhysicalSourceType {
 
 }// namespace NES
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_

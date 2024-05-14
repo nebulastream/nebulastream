@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
-
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Types/WindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Windowing {
@@ -43,10 +42,7 @@ LogicalWindowDescriptorPtr LogicalWindowDescriptor::create(std::vector<FieldAcce
                                                            std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            uint64_t allowedLateness) {
-    return std::make_shared<LogicalWindowDescriptor>(keys,
-                                                     windowAggregation,
-                                                     windowType,
-                                                     allowedLateness);
+    return std::make_shared<LogicalWindowDescriptor>(keys, windowAggregation, windowType, allowedLateness);
 }
 
 uint64_t LogicalWindowDescriptor::getNumberOfInputEdges() const { return numberOfInputEdges; }

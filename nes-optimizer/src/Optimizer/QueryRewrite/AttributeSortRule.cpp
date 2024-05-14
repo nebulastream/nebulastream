@@ -61,8 +61,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
         auto updatedMapExpression = sortAttributesInExpression(mapExpression)->as<FieldAssignmentExpressionNode>();
         auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapExpression);
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        updatedMap->as_if<LogicalOperator>()->setOutputSchema(
-            mapOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        updatedMap->as_if<LogicalOperator>()->setOutputSchema(mapOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;

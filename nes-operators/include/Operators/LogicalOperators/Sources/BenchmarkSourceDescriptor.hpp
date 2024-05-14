@@ -16,8 +16,8 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Util/SourceMode.hpp>
 #include <Util/GatheringMode.hpp>
+#include <Util/SourceMode.hpp>
 
 namespace NES {
 /**
@@ -136,4 +136,4 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     uint64_t taskQueueId;
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_

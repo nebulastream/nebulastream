@@ -14,12 +14,12 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {
@@ -71,7 +71,7 @@ bool LogicalJoinOperator::inferSchema() {
 
             if (fieldExistsInSchema) {
                 inputSchema->copyFields(*itr);
-                joinKey.inferStamp( inputSchema);
+                joinKey.inferStamp(inputSchema);
                 distinctSchemas.erase(itr);
                 return true;
             }
@@ -102,8 +102,7 @@ bool LogicalJoinOperator::inferSchema() {
     //Check if left and right input schema were correctly identified
     NES_ASSERT_THROW_EXCEPTION(!!leftInputSchema,
                                TypeInferenceException,
-                               "LogicalJoinOperator: Left input schema is not initialized for left join key "
-                                   + leftJoinKeyName);
+                               "LogicalJoinOperator: Left input schema is not initialized for left join key " + leftJoinKeyName);
     NES_ASSERT_THROW_EXCEPTION(!!rightInputSchema,
                                TypeInferenceException,
                                "LogicalJoinOperator: Right input schema is not initialized for right join key "
@@ -210,8 +209,7 @@ void LogicalJoinOperator::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds();
-}
+std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
 
 void LogicalJoinOperator::setOriginId(OriginId originId) {
     OriginIdAssignmentOperator::setOriginId(originId);

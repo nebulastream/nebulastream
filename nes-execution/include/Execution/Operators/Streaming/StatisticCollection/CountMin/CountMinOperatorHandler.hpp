@@ -56,6 +56,6 @@ class CountMinOperatorHandler : public AbstractSynopsesOperatorHandler {
     const uint64_t numberOfBitsInKey;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_

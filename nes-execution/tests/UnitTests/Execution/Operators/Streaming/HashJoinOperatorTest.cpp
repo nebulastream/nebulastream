@@ -114,8 +114,8 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        INVALID_PIPELINE_ID,// mock pipeline id
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
+        INVALID_PIPELINE_ID,             // mock pipeline id
+        INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
         nullptr,
         buildHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -242,7 +242,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        INVALID_PIPELINE_ID,// mock pipeline id
+        INVALID_PIPELINE_ID,     // mock pipeline id
         DecomposedQueryPlanId(1),// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
@@ -276,7 +276,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         hashJoinProbeHelper.joinFieldNameRight,
         QueryCompilation::JoinBuildSideType::Right,
         hashJoinProbeHelper.rightSchema->getSchemaSizeInBytes(),
-        std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
 
@@ -669,8 +669,14 @@ TEST_F(HashJoinOperatorTest, joinProbeTest) {
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    HashJoinProbeHelper
-        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+    HashJoinProbeHelper hashJoinProbeHelper("left$f2_left",
+                                            "right$f2_right",
+                                            bm,
+                                            leftSchema,
+                                            rightSchema,
+                                            "left$timestamp",
+                                            "right$timestamp",
+                                            this);
     hashJoinProbeHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
     hashJoinProbeHelper.numPartitions = 2;
     hashJoinProbeHelper.windowSize = 20;
@@ -717,8 +723,14 @@ TEST_F(HashJoinOperatorTest, joinProbeTestMultipleWindows) {
                                  ->addField("right$timestamp", BasicType::UINT64);
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    HashJoinProbeHelper
-        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+    HashJoinProbeHelper hashJoinProbeHelper("left$f2_left",
+                                            "right$f2_right",
+                                            bm,
+                                            leftSchema,
+                                            rightSchema,
+                                            "left$timestamp",
+                                            "right$timestamp",
+                                            this);
     hashJoinProbeHelper.numPartitions = 1;
     hashJoinProbeHelper.windowSize = 10;
 

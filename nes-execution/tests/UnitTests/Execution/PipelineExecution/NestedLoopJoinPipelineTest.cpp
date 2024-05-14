@@ -46,8 +46,8 @@ class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::
                                                  OperatorHandlerPtr nljOpHandler,
                                                  PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId,// mock pipeline id
-            DecomposedQueryPlanId(1),         // mock query id
+            pipelineId,              // mock pipeline id
+            DecomposedQueryPlanId(1),// mock query id
             bufferManager,
             noWorkerThreads,
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -144,7 +144,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftEntrySize,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -154,7 +155,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightEntrySize,
-            std::make_unique<Runtime::Execution::Operators:: EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -200,12 +202,18 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
 
         auto curPipelineId = 0;
         auto noWorkerThreads = 1;
-        auto pipelineExecCtxLeft =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, PipelineId(curPipelineId++));
-        auto pipelineExecCtxRight =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, PipelineId(curPipelineId++));
-        auto pipelineExecCtxSink =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, PipelineId(curPipelineId++));
+        auto pipelineExecCtxLeft = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
+                                                                                noWorkerThreads,
+                                                                                nljOperatorHandler,
+                                                                                PipelineId(curPipelineId++));
+        auto pipelineExecCtxRight = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
+                                                                                 noWorkerThreads,
+                                                                                 nljOperatorHandler,
+                                                                                 PipelineId(curPipelineId++));
+        auto pipelineExecCtxSink = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
+                                                                                noWorkerThreads,
+                                                                                nljOperatorHandler,
+                                                                                PipelineId(curPipelineId++));
 
         auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
         auto executablePipelineRight = provider->create(pipelineBuildRight, options);

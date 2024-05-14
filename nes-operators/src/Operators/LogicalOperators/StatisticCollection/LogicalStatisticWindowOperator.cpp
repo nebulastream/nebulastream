@@ -59,8 +59,7 @@ bool LogicalStatisticWindowOperator::equal(const NodePtr& rhs) const {
         auto rhsStatisticOperatorNode = rhs->as<LogicalStatisticWindowOperator>();
         return windowType->equal(rhsStatisticOperatorNode->windowType) && statisticId == rhsStatisticOperatorNode->statisticId
             && windowStatisticDescriptor->equal(rhsStatisticOperatorNode->windowStatisticDescriptor)
-            && metricHash == rhsStatisticOperatorNode->metricHash
-            && *sendingPolicy == *rhsStatisticOperatorNode->sendingPolicy
+            && metricHash == rhsStatisticOperatorNode->metricHash && *sendingPolicy == *rhsStatisticOperatorNode->sendingPolicy
             && *triggerCondition == *rhsStatisticOperatorNode->triggerCondition;
     }
     return false;
@@ -71,21 +70,25 @@ bool LogicalStatisticWindowOperator::isIdentical(const NodePtr& rhs) const {
 }
 
 std::string LogicalStatisticWindowOperator::toString() const {
-    return fmt::format(
-        "LogicalStatisticWindowOperator({}, {}): Windowtype: {} Descriptor: {} InputOriginIds: {} MetricHash: {} SendingPolicy: {} TriggerCondition: {}",
-        id,
-        statisticId,
-        windowType->toString(),
-        windowStatisticDescriptor->toString(),
-        fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "),
-        metricHash,
-        sendingPolicy->toString(),
-        triggerCondition->toString());
+    return fmt::format("LogicalStatisticWindowOperator({}, {}): Windowtype: {} Descriptor: {} InputOriginIds: {} MetricHash: {} "
+                       "SendingPolicy: {} TriggerCondition: {}",
+                       id,
+                       statisticId,
+                       windowType->toString(),
+                       windowStatisticDescriptor->toString(),
+                       fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "),
+                       metricHash,
+                       sendingPolicy->toString(),
+                       triggerCondition->toString());
 }
 
 OperatorPtr LogicalStatisticWindowOperator::copy() {
-    auto copy = LogicalOperatorFactory::createStatisticBuildOperator(windowType, windowStatisticDescriptor, metricHash,
-                                                                     sendingPolicy, triggerCondition, id);
+    auto copy = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
+                                                                     windowStatisticDescriptor,
+                                                                     metricHash,
+                                                                     sendingPolicy,
+                                                                     triggerCondition,
+                                                                     id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

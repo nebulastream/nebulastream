@@ -15,8 +15,8 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing {
 
@@ -30,7 +30,7 @@ MedianAggregationDescriptor::MedianAggregationDescriptor(ExpressionNodePtr field
 }
 
 WindowAggregationDescriptorPtr MedianAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                         FieldAccessExpressionNodePtr asField) {
+                                                                   FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -42,10 +42,9 @@ WindowAggregationDescriptorPtr MedianAggregationDescriptor::on(const ExpressionN
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(fieldAccess));
 }
 
-void MedianAggregationDescriptor::inferStamp(
-                                             SchemaPtr schema) {
+void MedianAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp( schema);
+    onField->inferStamp(schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

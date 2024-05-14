@@ -58,4 +58,4 @@ class TagRecorder final {
 };
 }// namespace NES::Nautilus::Tracing
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAGRECORDER_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAGRECORDER_HPP_

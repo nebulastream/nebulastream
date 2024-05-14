@@ -35,7 +35,7 @@ class DecomposedQueryPlanSerializationUtil {
      * @return the pointer to serialized SerializableQueryPlan
      */
     static void serializeDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                   SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
+                                             SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
 
     /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
@@ -50,4 +50,4 @@ class DecomposedQueryPlanSerializationUtil {
     static SerializableQueryState serializeQueryState(QueryState queryState);
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_DECOMPOSEDQUERYPLANSERIALIZATIONUTIL_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_DECOMPOSEDQUERYPLANSERIALIZATIONUTIL_HPP_

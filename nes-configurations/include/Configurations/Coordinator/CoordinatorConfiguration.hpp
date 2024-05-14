@@ -49,7 +49,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief IP of the Coordinator.
      */
-    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator.", std::make_shared<IpValidation>()};
+    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG,
+                                  "127.0.0.1",
+                                  "RPC IP address of NES Coordinator.",
+                                  std::make_shared<IpValidation>()};
 
     /**
      * @brief Port for the RPC server of the Coordinator.
@@ -72,7 +75,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Indicates the number of request executor threads
      */
-    UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG, "1", "Number of request executor thread", std::make_shared<NumberValidation>()};
+    UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG,
+                                         "1",
+                                         "Number of request executor thread",
+                                         std::make_shared<NumberValidation>()};
 
     /**
      * @brief Storage handler for request executor
@@ -92,7 +98,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @deprecated This is currently only used for testing and will be removed.
      */
     SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSourceTypes = {LOGICAL_SOURCES,
-                                                                                                 "Logical Sources"};
+                                                                                                     "Logical Sources"};
 
     /**
      * @brief Configuration yaml path.
@@ -114,7 +120,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the coordinator health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, "1", "Number of seconds to wait between health checks", std::make_shared<NumberValidation>()};
+    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME,
+                                                 "1",
+                                                 "Number of seconds to wait between health checks",
+                                                 std::make_shared<NumberValidation>()};
 
     /**
      * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server.
@@ -164,4 +173,4 @@ class CoordinatorConfiguration : public BaseConfiguration {
 
 }// namespace NES::Configurations
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_

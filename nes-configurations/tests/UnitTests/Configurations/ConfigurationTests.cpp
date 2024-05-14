@@ -402,7 +402,6 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
     EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), magic_enum::enum_cast<GatheringMode>("ADAPTIVE_MODE").value());
 }
 
-
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
         {"--numaAwareness", {"not_a_bool", "2", "-1"}},
@@ -411,8 +410,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions) {
         {"--enableStatisticOuput", {"not_a_bool", "2", "-1"}},
         {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
         {"--connectSinksAsync", {"not_a_bool", "2", "-1"}},
-        {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
-    };
+        {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -436,8 +434,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions) {
         {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
         {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
         {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
-    };
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -452,8 +449,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions) {
 
 TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
-        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
-    };
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -491,8 +487,7 @@ TEST_F(ConfigTest, invalidBooleanYamlInputs) {
         {"enableStatisticOutput", {"not_a_bool", "2", "-1"}},
         {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
         {"connectSinksAsync", {"not_a_bool", "2", "-1"}},
-        {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
-    };
+        {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidBooleanConfigs) {
         for (const auto& value : invalidValues) {
@@ -525,8 +520,7 @@ TEST_F(ConfigTest, invalidIntYamlInputs) {
         {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
         {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
         {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
-    };
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidIntConfigs) {
         for (const auto& value : invalidValues) {
@@ -550,8 +544,7 @@ TEST_F(ConfigTest, invalidIntYamlInputs) {
 
 TEST_F(ConfigTest, invalidFloatYamlInputs) {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidFloatConfigs = {
-        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
-    };
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
 
     for (const auto& [optionName, invalidValues] : invalidFloatConfigs) {
         for (const auto& value : invalidValues) {

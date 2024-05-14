@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <StatisticIdentifiers.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
+#include <StatisticIdentifiers.hpp>
 
 namespace NES::Statistic {
 
@@ -23,9 +23,7 @@ SendingPolicyPtr SendingPolicyAdaptive::create(StatisticDataCodec sinkDataCodec)
     return std::make_shared<SendingPolicyAdaptive>(SendingPolicyAdaptive(sinkDataCodec));
 }
 
-bool SendingPolicyAdaptive::operator==(const SendingPolicy& rhs) const {
-    return rhs.instanceOf<const SendingPolicyAdaptive>();
-}
+bool SendingPolicyAdaptive::operator==(const SendingPolicy& rhs) const { return rhs.instanceOf<const SendingPolicyAdaptive>(); }
 
 SendingPolicyAdaptive::SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec) {}
 

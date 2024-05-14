@@ -16,15 +16,17 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
-#include <vector>
 #include <set>
+#include <vector>
 #ifndef NES_NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINECONTEXT_HPP_
 #define NES_NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINECONTEXT_HPP_
 
 namespace NES::Runtime::Execution {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler, bool logSeenSeqChunk, BufferManagerPtr bufferManager = nullptr);
+    explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler,
+                                            bool logSeenSeqChunk,
+                                            BufferManagerPtr bufferManager = nullptr);
     explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler);
     explicit MockedPipelineExecutionContext(bool logSeenSeqChunk);
     explicit MockedPipelineExecutionContext();

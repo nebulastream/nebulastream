@@ -41,6 +41,8 @@ std::string PhysicalSlicePreAggregationOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalSlicePreAggregationOperator::copy() { return create(id, statisticId, inputSchema, outputSchema, windowDefinition); }
+OperatorPtr PhysicalSlicePreAggregationOperator::copy() {
+    return create(id, statisticId, inputSchema, outputSchema, windowDefinition);
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

@@ -19,7 +19,8 @@
 
 namespace NES::Nautilus {
 
-BlockDim::BlockDim() : BuiltInVariable(&type) {
+BlockDim::BlockDim()
+    : BuiltInVariable(&type){
 
     };
 
@@ -30,13 +31,9 @@ IR::Types::StampPtr BlockDim::getType() const {
     NES_NOT_IMPLEMENTED();
 }
 
-std::shared_ptr<Any> BlockDim::copy() {
-    return create<BlockDim>();
-}
+std::shared_ptr<Any> BlockDim::copy() { return create<BlockDim>(); }
 
-const Value<> BlockDim::getAsValue() const {
-    NES_NOT_IMPLEMENTED();
-}
+const Value<> BlockDim::getAsValue() const { NES_NOT_IMPLEMENTED(); }
 
 std::shared_ptr<FieldAccess> BlockDim::x() { return std::make_shared<FieldAccess>(create<BlockDim>(), "x"); }
 

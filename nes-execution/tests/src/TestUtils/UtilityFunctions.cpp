@@ -32,19 +32,21 @@
 
 namespace NES::Runtime::Execution::Util {
 
-std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, BufferManager& bufferManager,
+std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
+                                                           BufferManager& bufferManager,
                                                            SchemaPtr schema,
                                                            const std::string& fieldToBuildCountMinOver,
                                                            const std::string& timestampFieldName,
                                                            const bool ingestionTime) {
-    auto currentIngestionTs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto currentIngestionTs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto buffer = bufferManager.getBufferBlocking();
     std::vector<TupleBuffer> inputBuffers;
 
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     StatisticId statisticId = 1;
-    ChunkNumber chunkNumber = 1; // As we do not split a sequence number over multiple buffers here
-    auto originId = OriginId(1); // As we only have one origin in all tests
+    ChunkNumber chunkNumber = 1;// As we do not split a sequence number over multiple buffers here
+    auto originId = OriginId(1);// As we only have one origin in all tests
 
     for (auto i = 0; i < numberOfTuples; ++i) {
         auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
@@ -59,7 +61,6 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, B
             dynamicBuffer[curTuplePos][timestampFieldName].write<uint64_t>(i);
         }
 
-
         if (dynamicBuffer.getNumberOfTuples() >= dynamicBuffer.getCapacity()) {
             buffer.setStatisticId(statisticId);
             buffer.setSequenceData({++sequenceNumber, chunkNumber, true});
@@ -67,7 +68,9 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, B
             buffer.setCreationTimestampInMS(currentIngestionTs);
             inputBuffers.emplace_back(buffer);
             buffer = bufferManager.getBufferBlocking();
-            currentIngestionTs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            currentIngestionTs =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                    .count();
         }
     }
 
@@ -82,9 +85,14 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, B
     return inputBuffers;
 }
 
-void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::StatisticStorePtr statisticStore,
-                                 Statistic::StatisticMetricHash metricHash, uint64_t numberOfBitsInKey,
-                                 uint64_t windowSize, uint64_t windowSlide, uint64_t width, uint64_t depth,
+void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                 Statistic::StatisticStorePtr statisticStore,
+                                 Statistic::StatisticMetricHash metricHash,
+                                 uint64_t numberOfBitsInKey,
+                                 uint64_t windowSize,
+                                 uint64_t windowSlide,
+                                 uint64_t width,
+                                 uint64_t depth,
                                  const std::string& fieldToBuildCountMinOver,
                                  const std::string& timestampFieldName) {
 
@@ -115,7 +123,9 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
         if (allCountMinStatistics.empty()) {
             countMinStatistic = Statistic::CountMinStatistic::createInit(startTs, endTs, width, depth, numberOfBitsInKey);
             statisticStore->insertStatistic(statisticHash, countMinStatistic);
-            NES_DEBUG("Created and inserted new countMinStatistic = {} for statisticHash = {}", countMinStatistic->toString(), statisticHash);
+            NES_DEBUG("Created and inserted new countMinStatistic = {} for statisticHash = {}",
+                      countMinStatistic->toString(),
+                      statisticHash);
         } else {
             countMinStatistic = allCountMinStatistics[0];
         }
@@ -141,12 +151,11 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
                                     const std::string& fieldToBuildCountMinOver,
                                     const std::string& timestampFieldName) {
 
-
     // For each tuple in the buffer, we get the corresponding hyperloglog statistic and then update it accordingly
     std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
     auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
     Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
-    for (auto tuple : testTupleBuffer){
+    for (auto tuple : testTupleBuffer) {
         auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
         auto ts = tuple[timestampFieldName].read<uint64_t>();
         auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
@@ -158,7 +167,8 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
             hllStatistic = Statistic::HyperLogLogStatistic::createInit(startTs, endTs, width);
             statisticStore->insertStatistic(statisticHash, hllStatistic);
             NES_DEBUG("Created and inserted new hllStatistic = {} for statisticHash = {}",
-                      hllStatistic->toString(), statisticHash);
+                      hllStatistic->toString(),
+                      statisticHash);
         } else {
             hllStatistic = allHyperLogLogStatistics[0];
         }

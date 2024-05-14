@@ -32,6 +32,7 @@ class TimestampField {
         EVENT_TIME,
         INGESTION_TIME,
     };
+
   public:
     friend std::ostream& operator<<(std::ostream& os, const TimestampField& obj);
     /**
@@ -48,7 +49,6 @@ class TimestampField {
     [[nodiscard]] const std::string& getName() const;
 
     [[nodiscard]] const TimeFunctionType& getTimeFunctionType() const;
-
 
     /**
      * Builds the TimeFunction

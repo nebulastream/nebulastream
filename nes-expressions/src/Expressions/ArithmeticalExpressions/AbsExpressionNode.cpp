@@ -31,7 +31,7 @@ ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr& child) {
     return absNode;
 }
 
-void AbsExpressionNode::inferStamp( SchemaPtr schema) {
+void AbsExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 

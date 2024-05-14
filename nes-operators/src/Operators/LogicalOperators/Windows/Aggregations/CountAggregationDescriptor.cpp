@@ -29,7 +29,7 @@ CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, 
 }
 
 WindowAggregationDescriptorPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                        FieldAccessExpressionNodePtr asField) {
+                                                                  FieldAccessExpressionNodePtr asField) {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 

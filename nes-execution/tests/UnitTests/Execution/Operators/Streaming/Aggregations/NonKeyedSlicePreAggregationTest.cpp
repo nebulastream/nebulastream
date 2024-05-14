@@ -95,7 +95,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto context = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+                                    Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
     auto buffer = bufferManager->getBufferBlocking();
 
     auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));

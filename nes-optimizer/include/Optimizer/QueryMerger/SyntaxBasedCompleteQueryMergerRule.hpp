@@ -105,4 +105,4 @@ class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
                           std::map<OperatorId, OperatorId>& targetHostOperatorMap);
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP_

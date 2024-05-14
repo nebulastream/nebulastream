@@ -32,7 +32,7 @@ ExpressionNodePtr SqrtExpressionNode::create(ExpressionNodePtr const& child) {
     return sqrtNode;
 }
 
-void SqrtExpressionNode::inferStamp( SchemaPtr schema) {
+void SqrtExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 

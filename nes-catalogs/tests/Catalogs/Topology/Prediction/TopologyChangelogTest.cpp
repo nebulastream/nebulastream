@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

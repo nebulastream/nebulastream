@@ -56,13 +56,11 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
      */
     void inferStringSignature() override;
 
-
     /**
      * @brief Getter for the SendingPolicy
      * @return SendingPolicyPtr
      */
     SendingPolicyPtr getSendingPolicy() const;
-
 
     /**
      * @brief Getter for the TriggerCondition

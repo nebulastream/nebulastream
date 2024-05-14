@@ -59,7 +59,7 @@ class ThresholdWindow : public ContentBasedWindowType {
 
     uint64_t hash() const override;
 
-private:
+  private:
     explicit ThresholdWindow(ExpressionNodePtr predicate);
     ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount);
 
@@ -69,4 +69,4 @@ private:
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_THRESHOLDWINDOW_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_THRESHOLDWINDOW_HPP_
