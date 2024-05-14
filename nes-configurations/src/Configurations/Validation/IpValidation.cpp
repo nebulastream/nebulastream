@@ -13,6 +13,7 @@
 */
 
 #include <Configurations/Validation/IpValidation.hpp>
+#include <regex>
 
 namespace NES::Configurations {
 bool IpValidation::isValid(const std::string& ip) const {

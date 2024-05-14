@@ -16,6 +16,7 @@
 #define NES_NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_GRPC_WORKERSTATISTICRPCCLIENT_HPP_
 
 #include <Statistics/StatisticRequests.hpp>
+#include <Statistics/StatisticValue.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>

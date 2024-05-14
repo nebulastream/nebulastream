@@ -14,6 +14,8 @@
 #ifndef NES_CONFIGURATIONVALIDATION_H
 #define NES_CONFIGURATIONVALIDATION_H
 
+#include <string>
+
 namespace NES::Configurations {
 
 /**
