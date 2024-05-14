@@ -19,10 +19,6 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
 add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
-# if musl we cant use can't use backtrace for tracing
-if (HOST_IS_MUSL)
-    target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
-endif ()
 
 target_link_libraries(nes-runtime PUBLIC nes-statistics)
 target_include_directories(nes-runtime PUBLIC

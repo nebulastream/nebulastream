@@ -63,42 +63,27 @@ macro(get_header_nes_client HEADER_FILES)
     file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
 endmacro()
 
-find_program(CLANG_FORMAT_EXE clang-format)
-
 macro(project_enable_clang_format)
     string(CONCAT FORMAT_DIRS
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/onnx/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/onnx/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/onnx/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/tensorflow/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/tensorflow/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/tensorflow/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/arrow/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/arrow/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/arrow/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/include")
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-catalogs,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-configurations,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-execution,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-expressions,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-nautilus,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-operators,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-optimizer,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-statistics,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-window-types,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker"
+    )
     if (NOT NES_SELF_HOSTING)
         message(WARNING "Not using self-hosting compiler, thus 'format' is disabled")
         add_custom_target(format
@@ -296,30 +281,4 @@ function(get_linux_lsb_release_information)
         set(LSB_RELEASE_VERSION_SHORT "${LSB_RELEASE_VERSION_SHORT}" PARENT_SCOPE)
         set(LSB_RELEASE_CODENAME_SHORT "${LSB_RELEASE_CODENAME_SHORT}" PARENT_SCOPE)
     endif ()
-endfunction()
-
-function(set_linux_musl_release_information)
-    file(STRINGS "/etc/os-release" data_list REGEX "^(ID|VERSION_ID)=")
-    # Look for lines like "ID="..." and VERSION_ID="..."
-    foreach (_var ${data_list})
-        if ("${_var}" MATCHES "^(ID)=(.*)$")
-            set(ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
-        elseif ("${_var}" MATCHES "^(VERSION_ID)=(.*)$")
-            set(VERSION_ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
-        endif ()
-    endforeach ()
-endfunction()
-
-function(is_host_musl)
-    file(STRINGS "/etc/os-release" data_list REGEX "^(ID|VERSION_ID)=")
-    # Look for lines like "ID="..." and VERSION_ID="..."
-    foreach (_var ${data_list})
-        if ("${_var}" MATCHES "^(ID)=(.*)$")
-            if ("${CMAKE_MATCH_2}" MATCHES "alpine")
-                set(HOST_IS_MUSL TRUE PARENT_SCOPE)
-            else ()
-                set(HOST_IS_MUSL FALSE PARENT_SCOPE)
-            endif ()
-        endif ()
-    endforeach ()
 endfunction()
