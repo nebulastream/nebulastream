@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.127](https://github.com/nebulastream/nebulastream/tree/v0.6.127) (2024-05-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.126...v0.6.127)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove alpine build files and refactor CMake dependency import [\#4837](https://github.com/nebulastream/nebulastream/issues/4837)
+- \[TASK\] fix tests in MultipleWindowsTest [\#4746](https://github.com/nebulastream/nebulastream/issues/4746)
+- \[TASK\] fix tests in StreamJoinExecutionTest [\#4738](https://github.com/nebulastream/nebulastream/issues/4738)
+
 ## [v0.6.126](https://github.com/nebulastream/nebulastream/tree/v0.6.126) (2024-05-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.125...v0.6.126)
