@@ -1,4 +1,0 @@
-FROM nebulastream/nes-build-image:alpine
-
-RUN apk add --no-cache \
-   gdb

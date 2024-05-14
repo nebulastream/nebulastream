@@ -83,16 +83,9 @@ if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     message(FATAL_ERROR "Disabling CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE is not supported for now, please enable it")
 endif ()
 
-# for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
-# The system architecture is normally set in CMAKE_HOST_PROCESSOR,
-# which is set by the PROJECT command. However, we cannot call PROJECT
-# at this point because we want to use a custom toolchain file.
-execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
-
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 set(CMAKE_DEPS_CACHE_DIR "${CMAKE_SOURCE_DIR}/.cache/cmake-deps")
 include(cmake/ImportDependencies.cmake)
-include(cmake/ImportLLVM.cmake)
 project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")

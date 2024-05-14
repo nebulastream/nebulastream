@@ -30,32 +30,39 @@ include(cmake/macros.cmake)
 #   provide the path to the "scripts/buildsystems/vcpkg.cmake" file as -DCMAKE_TOOLCHAIN_FILE=
 
 # Identify the VCPKG_TARGET_TRIPLET depending on the architecture and operating system
-# Currently, we support: x64-osx-nes, arm64-osx-nes, x64-linux-nes, arm64-linux-nes
-if (APPLE)
-    if (NES_HOST_PROCESSOR MATCHES "x86_64")
-        set(VCPKG_TARGET_TRIPLET x64-osx-nes)
-        set(VCPKG_HOST x64)
-    elseif (NES_HOST_PROCESSOR MATCHES "arm64")
-        set(VCPKG_TARGET_TRIPLET arm64-osx-nes)
-        set(VCPKG_HOST arm64)
-    endif ()
-elseif (UNIX AND NOT APPLE)
-    if (NES_HOST_PROCESSOR MATCHES "x86_64")
-        set(VCPKG_HOST x64)
-        is_host_musl()
-        if (HOST_IS_MUSL)
-            set(VCPKG_TARGET_TRIPLET x64-linux-musl-nes)
-        else ()
-            set(VCPKG_TARGET_TRIPLET x64-linux-nes)
-        endif ()
-    elseif (NES_HOST_PROCESSOR MATCHES "arm64" OR NES_HOST_PROCESSOR MATCHES "aarch64")
-        set(VCPKG_TARGET_TRIPLET arm64-linux-nes)
-        set(VCPKG_HOST arm64)
-    endif ()
+#
+# The system architecture is normally set in CMAKE_HOST_SYSTEM_PROCESSOR,
+# which is set by the PROJECT command. However, we cannot call PROJECT
+# at this point because we want to use a custom toolchain file.
+execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
+if (NES_HOST_PROCESSOR MATCHES "x86_64")
+    set(NES_HOST_PROCESSOR "x64")
+elseif (NES_HOST_PROCESSOR MATCHES "arm64" OR NES_HOST_PROCESSOR MATCHES "aarch64")
+    set(NES_HOST_PROCESSOR "arm64")
 else ()
-    message(FATAL_ERROR "System not supported, currently we only support Linux and OSx")
+    message(FATAL_ERROR "Only x86_64 and arm64 supported")
 endif ()
+
+execute_process(COMMAND uname -s OUTPUT_VARIABLE NES_HOST_NAME)
+if (NES_HOST_NAME MATCHES "Linux")
+    set(NES_HOST_NAME "linux")
+elseif (NES_HOST_NAME MATCHES "Darwin")
+    set(NES_HOST_NAME "osx")
+else ()
+    message(FATAL_ERROR "Only Linux and OS X supported")
+endif ()
+
+set(VCPKG_TARGET_TRIPLET ${NES_HOST_PROCESSOR}-${NES_HOST_NAME}-nes)
 message(STATUS "Use VCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}")
+
+if (NES_HOST_NAME STREQUAL "linux")
+    get_linux_lsb_release_information()
+    message(STATUS "Linux ${LSB_RELEASE_ID_SHORT} ${LSB_RELEASE_VERSION_SHORT} ${LSB_RELEASE_CODENAME_SHORT}")
+    set(NES_SUPPORTED_UBUNTU_VERSIONS 20.04 22.04)
+    if ((NOT${LSB_RELEASE_ID_SHORT} STREQUAL "Ubuntu") OR (NOT ${LSB_RELEASE_VERSION_SHORT} IN_LIST NES_SUPPORTED_UBUNTU_VERSIONS))
+        message(FATAL_ERROR "Currently we only provide pre-build dependencies for Ubuntu: ${NES_SUPPORTED_UBUNTU_VERSIONS}. If you use a different linux please provide an own clang installation.")
+    endif ()
+endif ()
 
 # In the following we configure vcpkg depending on the selected configuration.
 if (CMAKE_TOOLCHAIN_FILE)
@@ -87,26 +94,12 @@ else (NES_USE_PREBUILD_DEPENDENCIES)
     message(STATUS "Use prebuild dependencies")
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
 
-    # for x68 linux we currently offer prebuild dependencies for ubuntu 18.04, 20.04, 22.04
-    if (${VCPKG_TARGET_TRIPLET} STREQUAL "${VCPKG_HOST}-linux-nes")
-        get_linux_lsb_release_information()
-        message(STATUS "Linux ${LSB_RELEASE_ID_SHORT} ${LSB_RELEASE_VERSION_SHORT} ${LSB_RELEASE_CODENAME_SHORT}")
-        set(NES_SUPPORTED_UBUNTU_VERSIONS 18.04 20.04 22.04)
-        if ((NOT${LSB_RELEASE_ID_SHORT} STREQUAL "Ubuntu") OR (NOT ${LSB_RELEASE_VERSION_SHORT} IN_LIST NES_SUPPORTED_UBUNTU_VERSIONS))
-            message(FATAL_ERROR "Currently we only provide pre-build dependencies for Ubuntu: ${NES_SUPPORTED_UBUNTU_VERSIONS}. If you use a different linux please build dependencies locally with -DNES_BUILD_DEPENDENCIES_LOCAL=1")
-        endif ()
-        set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
-        set(COMPRESSED_BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_HOST}-linux-ubuntu-${LSB_RELEASE_VERSION_SHORT}-nes)
-    elseif (${VCPKG_TARGET_TRIPLET} STREQUAL "${VCPKG_HOST}-linux-musl-nes")
-        set_linux_musl_release_information()
-        string(REGEX REPLACE "\.[0-9]+$" "" SHORT_VERSION_ID "${VERSION_ID}")
-        message(STATUS "Linux ${ID} ${SHORT_VERSION_ID}")
-
-        set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
-        set(COMPRESSED_BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_HOST}-linux-musl-${ID}-${SHORT_VERSION_ID}-nes)
-    else ()
-        set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
+    if (NES_HOST_NAME STREQUAL "linux")
+        set(COMPRESSED_BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${NES_HOST_PROCESSOR}-linux-ubuntu-${LSB_RELEASE_VERSION_SHORT}-nes)
+    elseif (NES_HOST_NAME STREQUAL "osx")
         set(COMPRESSED_BINARY_NAME ${BINARY_NAME})
+    else ()
+        message(FATAL_ERROR "pre-built dependencies exist only for Ubuntu/OS X and x86/arm64")
     endif ()
 
     cached_fetch_and_extract(
@@ -120,3 +113,37 @@ else (NES_USE_PREBUILD_DEPENDENCIES)
     set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET})
 endif ()
 message(STATUS "NES_DEPENDENCIES_BINARY_ROOT: ${NES_DEPENDENCIES_BINARY_ROOT}.")
+
+if (NES_SELF_HOSTING)
+    set(LLVM_FOLDER_NAME nes-llvm-${LLVM_VERSION}-${LLVM_BINARY_VERSION})
+    if (NES_HOST_NAME STREQUAL "linux")
+        set(CLANG_COMPRESSED_BINARY_NAME nes-clang-${LLVM_VERSION}-ubuntu-${LSB_RELEASE_VERSION_SHORT}-${NES_HOST_PROCESSOR})
+    elseif (NES_HOST_NAME STREQUAL "osx")
+        set(CLANG_COMPRESSED_BINARY_NAME nes-clang-${LLVM_VERSION}-osx-${NES_HOST_PROCESSOR})
+    else ()
+        message(FATAL_ERROR "Pre-built LLVM exists only for Ubuntu/OS X and x64/arm64")
+    endif ()
+
+    cached_fetch_and_extract(
+        https://github.com/nebulastream/clang-binaries/releases/download/${LLVM_BINARY_VERSION}/${CLANG_COMPRESSED_BINARY_NAME}.7z
+        ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}
+   )
+
+    message(STATUS "Self-host compilation of NES from ${LLVM_FOLDER_NAME}")
+    # CMAKE_<LANG>_COMPILER are only set the first time a build tree is configured.
+    # Setting it afterwards has no effect. It will be reset to a previously set value
+    # when executing the PROJECT directive.
+    # See: https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html
+    set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}/clang/bin/clang")
+    set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}/clang/bin/clang++")
+
+    # Setup cmake configuration to include libs
+    set(LLVM_DIR "${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}/clang/lib/cmake/llvm")
+    set(MLIR_DIR "${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}/clang/lib/cmake/mlir")
+    set(Clang_DIR "${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}/clang/lib/cmake/clang")
+else ()
+    message(STATUS "Use system compiler and local LLVM")
+endif ()
+
+unset(NES_HOST_NAME)
+unset(NES_HOST_PROCESSOR)
