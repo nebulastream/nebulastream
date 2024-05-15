@@ -67,8 +67,13 @@ KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName,
     if (sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
     }
-    if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE) != sourceConfigMap.end()) {
-        numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE)->second));
+    if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
+        int64_t value = std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second);
+        if (value > 0) {
+            numberOfBuffersToProduce->setValue(value);
+        } else {
+            NES_THROW_RUNTIME_ERROR("NumberOfBuffersToProduce must be greater than 0.");
+        }
     }
     if (sourceConfigMap.find(Configurations::BATCH_SIZE) != sourceConfigMap.end()) {
         batchSize->setValue(std::stoi(sourceConfigMap.find(Configurations::BATCH_SIZE)->second));
@@ -116,9 +121,9 @@ KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName,
         && yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>() != "\n") {
         connectionTimeout->setValue(yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<uint32_t>());
     }
-    if (!yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<std::string>().empty()
-        && yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<std::string>() != "\n") {
-        numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<uint32_t>());
+    if (!yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>() != "\n") {
+        numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<uint32_t>());
     }
     if (!yamlConfig[Configurations::BATCH_SIZE].As<std::string>().empty()
         && yamlConfig[Configurations::BATCH_SIZE].As<std::string>() != "\n") {
@@ -155,7 +160,7 @@ KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName, const std
                                                                 10,
                                                                 "connection time out for source, needed for: KafkaSource")),
       numberOfBuffersToProduce(
-          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE,
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                                                 0,
                                                                 "Numbers of events pulled from the queue overall")),
 
@@ -178,7 +183,7 @@ std::string KafkaSourceType::toString() {
     ss << Configurations::TOPIC_CONFIG + ":" + topic->toStringNameCurrentValue();
     ss << Configurations::OFFSET_MODE_CONFIG + ":" + offsetMode->toStringNameCurrentValue();
     ss << Configurations::CONNECTION_TIMEOUT_CONFIG + ":" + connectionTimeout->toStringNameCurrentValue();
-    ss << Configurations::NUMBER_OF_BUFFER_TO_PRODUCE + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
+    ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << Configurations::BATCH_SIZE + ":" + batchSize->toStringNameCurrentValue();
     ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValueEnum();
     ss << "\n}";

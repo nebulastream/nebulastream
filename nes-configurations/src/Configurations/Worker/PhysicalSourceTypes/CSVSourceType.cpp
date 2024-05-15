@@ -82,8 +82,12 @@ CSVSourceType::CSVSourceType(const std::string& logicalSourceName,
         skipHeader->setValue((sourceConfigMap.find(Configurations::SKIP_HEADER_CONFIG)->second == "true"));
     }
     if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
-        numberOfBuffersToProduce->setValue(
-            std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
+        int64_t value = std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second);
+        if (value > 0) {
+            numberOfBuffersToProduce->setValue(value);
+        } else {
+            NES_THROW_RUNTIME_ERROR("NumberOfBuffersToProduce must be greater than 0.");
+        }
     }
     if (sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
         numberOfTuplesToProducePerBuffer->setValue(
@@ -124,8 +128,12 @@ CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::st
     }
     if (!yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>() != "\n") {
-        numberOfTuplesToProducePerBuffer->setValue(
-            yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<uint32_t>());
+        int64_t value = yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<int64_t>();
+        if (value > 0) {
+            numberOfBuffersToProduce->setValue(value);
+        } else {
+            NES_THROW_RUNTIME_ERROR("NumberOfBuffersToProduce must be greater than 0.");
+        }
     }
     if (!yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<std::string>() != "\n") {

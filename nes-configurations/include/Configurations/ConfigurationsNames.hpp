@@ -182,7 +182,6 @@ const std::string BROKERS_CONFIG = "brokers";
 const std::string AUTO_COMMIT_CONFIG = "autoCommit";
 const std::string GROUP_ID_CONFIG = "groupId";
 const std::string CONNECTION_TIMEOUT_CONFIG = "connectionTimeout";
-const std::string NUMBER_OF_BUFFER_TO_PRODUCE = "numberOfBuffersToProduce";
 const std::string BATCH_SIZE = "batchSize";
 const std::string NAME_SPACE_INDEX_CONFIG = "namespaceIndex";
 
