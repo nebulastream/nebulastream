@@ -120,16 +120,17 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     EXPECT_TRUE(successRegisterLogicalSource);
 
     // common case
-    bool successRegisterPhysicalSource = sourceCatalogService->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                                                      physicalSource->getLogicalSourceName(),
-                                                                                      nodeId).first;
+    bool successRegisterPhysicalSource =
+        sourceCatalogService
+            ->registerPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
+            .first;
     EXPECT_TRUE(successRegisterPhysicalSource);
 
     //test register existing source
     bool successRegisterExistingPhysicalSource =
-        sourceCatalogService->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                     physicalSource->getLogicalSourceName(),
-                                                     nodeId).first;
+        sourceCatalogService
+            ->registerPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
+            .first;
     EXPECT_TRUE(!successRegisterExistingPhysicalSource);
 
     //test unregister not existing physical source
