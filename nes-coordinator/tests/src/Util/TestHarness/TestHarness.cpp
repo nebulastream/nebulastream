@@ -43,7 +43,8 @@ TestHarness::TestHarness(Query queryWithoutSink,
       memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(WorkerId(1)),
       joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
       windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
-      filePath(testHarnessResourcePath / "testHarness.csv"), bufferManager(std::make_shared<Runtime::BufferManager>()) {}
+      filePath(testHarnessResourcePath / "testHarness.csv"),
+      bufferManager(std::make_shared<Runtime::BufferManager>()) { }
 
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
@@ -267,14 +268,11 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     auto requestHandlerService = nesCoordinator->getRequestHandlerService();
     auto queryCatalog = nesCoordinator->getQueryCatalog();
 
-    // local fs
-    remove(filePath.c_str());
-
     //register query
     auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
     queryId = INVALID_QUERY_ID;
 
-    auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
+    auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", appendMode));
     queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), placementStrategy);
 
     // Now run the query
@@ -307,6 +305,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
 }
 
 std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
+    // TODO Remove and make const
     std::vector<Runtime::MemoryLayouts::TestTupleBuffer> receivedBuffers;
     const auto queryCatalog = nesCoordinator->getQueryCatalog();
     const auto schema = queryPlan->getSinkOperators()[0]->getOutputSchema();
@@ -449,6 +448,16 @@ NesCoordinatorPtr TestHarness::getCoordinator() const {
 
 const std::vector<TestHarnessWorkerConfigurationPtr> TestHarness::getTestHarnessWorkerConfigurations() const {
     return testHarnessWorkerConfigurations;
+}
+
+TestHarness& TestHarness::setOutputFilePath(const std::string& newOutputFilePath) {
+    this->filePath = newOutputFilePath;
+    return *this;
+}
+
+TestHarness& TestHarness::setAppendMode(bool newAppendMode) {
+    this->appendMode = newAppendMode;
+    return *this;
 }
 
 }// namespace NES

@@ -287,6 +287,9 @@ class TestHarness {
 
     const std::vector<TestHarnessWorkerConfigurationPtr> getTestHarnessWorkerConfigurations() const;
 
+    TestHarness& setOutputFilePath(const std::string& newOutputFilePath);
+    TestHarness& setAppendMode(bool newAppendMode);
+
   private:
     std::string getNextPhysicalSourceName();
     WorkerId getNextTopologyId();
@@ -310,6 +313,7 @@ class TestHarness {
     bool validationDone;
     bool topologySetupDone;
     std::filesystem::path filePath;
+    std::string appendMode = "OVERWRITE";
     QueryPlanPtr queryPlan;
     QueryId queryId = INVALID_QUERY_ID;
     Runtime::BufferManagerPtr bufferManager;
