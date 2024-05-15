@@ -64,6 +64,7 @@ class PhysicalType {
      */
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
+    // Todo: get rid of 'isXType()'
     /**
      * @brief Indicates if this is a basic data type.
      * @return true if type is basic type
@@ -75,6 +76,12 @@ class PhysicalType {
      * @return true if type is array
      */
     [[nodiscard]] virtual bool isArrayType() const noexcept { return false; };
+
+    /**
+     * @brief Indicates if this is a array data type.
+     * @return true if type is array
+     */
+    [[nodiscard]] virtual bool isTextType() const noexcept { return false; };
 
     /// @brief true only for arrays which contain chars as their immediate child type.
     [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };

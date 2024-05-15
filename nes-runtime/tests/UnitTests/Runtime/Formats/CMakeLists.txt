@@ -10,10 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-data-types
-        ArrayPhysicalType.cpp
-        BasicPhysicalType.cpp
-        DefaultPhysicalTypeFactory.cpp
-        PhysicalTypeUtil.cpp
-        TextPhysicalType.cpp
-)
+add_nes_runtime_test(json-format-tests "JsonFormatTest.cpp")

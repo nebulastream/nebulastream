@@ -27,7 +27,7 @@ namespace NES::Nautilus {
  * @brief Nautilus value type for variable length text values.
  * The value type is physically represented by a TextValue.
  */
-class Text final : public Nautilus::Any {
+class TextType final : public Nautilus::Any {
   public:
     static const inline auto type = TypeIdentifier::create<Text>();
 
@@ -35,7 +35,7 @@ class Text final : public Nautilus::Any {
      * @brief Constructor to create a text value object from a raw reference
      * @param rawReference
      */
-    Text(TypedRef<TextValue> rawReference);
+    TextType(TypedRef<TextValue> rawReference);
 
     /**
      * @brief Compares two text object and returns true if both text objects are equal.

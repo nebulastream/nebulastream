@@ -16,6 +16,8 @@
 #include <StatisticIdentifiers.hpp>
 #include <cmath>
 #include <utility>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+
 namespace NES::Statistic {
 
 CountMinDescriptor::CountMinDescriptor(const FieldAccessExpressionNodePtr& field, const uint64_t width, uint64_t depth)
@@ -42,7 +44,7 @@ void CountMinDescriptor::addDescriptorFields(Schema& outputSchema, const std::st
     outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, UINT64);
     outputSchema.addField(qualifierNameWithSeparator + DEPTH_FIELD_NAME, UINT64);
     outputSchema.addField(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY, UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, TEXT);
+    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText());
 }
 CountMinDescriptor::~CountMinDescriptor() = default;
 

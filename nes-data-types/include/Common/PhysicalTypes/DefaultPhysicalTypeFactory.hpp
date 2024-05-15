@@ -83,7 +83,7 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     * @param arrayType
     * @return PhysicalTypePtr
     */
-    PhysicalTypePtr getPhysicalType(const TextPtr& textType) const;
+    PhysicalTypePtr getPhysicalType(const TextTypePtr& textType) const;
 };
 
 }// namespace NES

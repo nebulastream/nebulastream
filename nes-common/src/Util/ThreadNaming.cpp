@@ -13,6 +13,7 @@
 */
 
 #include <Util/ThreadNaming.hpp>
+#include <cstdint>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>

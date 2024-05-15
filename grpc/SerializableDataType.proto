@@ -93,5 +93,13 @@ message SerializableDataValue {
     SerializableDataType type = 1;
     repeated string values = 2;
   }
+
+  /**
+   A text value
+   */
+  message TextValue {
+    SerializableDataType type = 1;
+    repeated string values = 2;
+  }
   google.protobuf.Any value = 1;
 }

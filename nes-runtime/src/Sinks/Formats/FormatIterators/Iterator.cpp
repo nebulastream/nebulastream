@@ -18,6 +18,7 @@
 namespace NES {
 
 std::string Iterator::dataJson() {
+    NES_DEBUG("Executing dataJson");
     uint8_t* tuplePointer = &this->buffer.getBuffer<uint8_t>()[currentSeek];
 
     // Iterate over all fields in a tuple. Get field offsets from fieldOffsets array. Use fieldNames as keys and TupleBuffer
@@ -29,8 +30,30 @@ std::string Iterator::dataJson() {
             auto currentFieldOffset = fieldOffsets[currentField];
             auto currentFieldType = fieldTypes[currentField];
             auto fieldName = fieldNames[currentField];
-            auto fieldValue = currentFieldType->convertRawToStringWithoutFill(tuplePointer + currentFieldOffset);
-            jsonObject[fieldName] = fieldValue;
+            // Todo:
+            // - find out if field is of TEXT type
+            // - get child buffer
+            // - get size of child buffer
+            // - pass pointer and size of child buffer to convertRawToStringWithoutFill function
+            //     -> probably, we want a new type alongside ArrayPhysicalType and BasicPhysicalType
+            // - strcpy size of text to std::string from pointer
+
+            // Todo:
+            //  [x] 1. determine text type
+            //      -> convertRawToStringWithoutFill is called on Text data type
+            //  [x] 2. correctly implement convertRawToStringWithoutFill in TextPhysicalType
+            //  [ ] 3.
+            // Todo: use ternary operation
+            if(currentFieldType->isTextType()) {
+                auto index = *reinterpret_cast<uint32_t*>(tuplePointer + currentFieldOffset);
+//                uint32_t index = &this->buffer.getBuffer<uint32_t>()[static_cast<uint64_t>(*(tuplePointer + currentFieldOffset))];
+                std::cout << "Index: " << index << std::endl;
+                auto fieldValue = currentFieldType->convertRawToStringWithoutFill(this->buffer.loadChildBuffer(index).getBuffer());
+                jsonObject[fieldName] = fieldValue;
+            } else {
+                auto fieldValue = currentFieldType->convertRawToStringWithoutFill(tuplePointer + currentFieldOffset);
+                jsonObject[fieldName] = fieldValue;
+            }
         }
     } catch (nlohmann::json::exception& jsonException) {
         NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values {}", jsonException.what());

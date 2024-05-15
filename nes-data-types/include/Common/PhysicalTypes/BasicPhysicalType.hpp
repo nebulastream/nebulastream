@@ -36,7 +36,6 @@ class BasicPhysicalType final : public PhysicalType {
         DOUBLE,
         CHAR,
         BOOLEAN,
-        TEXT,
         UNDEFINED
     };
 

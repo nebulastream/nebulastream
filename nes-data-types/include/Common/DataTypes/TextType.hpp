@@ -16,39 +16,25 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXT_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES {
 
 /**
  * @brief The Text type represents a variable-sized text field.
  */
-class Text final : public DataType {
+class TextType : public DataType {
   public:
-    ~Text() override = default;
+    inline TextType() noexcept {}
 
-    /**
-    * @brief Checks if this data type is Boolean.
-    */
+    ~TextType() override = default;
+
+    // Todo: we should use dynamic_cast instead.
     [[nodiscard]] bool isText() const override { return true; }
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return
-     */
     bool equals(DataTypePtr otherDataType) override;
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return DataTypePtr joined data type
-     */
     DataTypePtr join(DataTypePtr otherDataType) override;
 
-    /**
-     * @brief Returns a string representation of the data type.
-     * @return string
-     */
     std::string toString() override;
 };
 

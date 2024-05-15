@@ -111,13 +111,6 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                     tupleBuffer[tupleCount][schemaFieldIndex].write<char>(value);
                     break;
                 }
-                case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
-                              "to tuple buffer",
-                              inputString);
-                    tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
-                    break;
-                }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                     //verify that a valid bool was transmitted (valid{true,false,0,1})
                     bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
@@ -135,6 +128,11 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
+        } else if(physicalType->isTextType()) {
+                NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
+                          "to tuple buffer",
+                          inputString);
+                tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
         } else {// char array(string) case
             // obtain pointer from buffer to fill with content via strcpy
             char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();

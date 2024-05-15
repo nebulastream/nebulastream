@@ -15,6 +15,8 @@
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <StatisticIdentifiers.hpp>
 #include <cmath>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+
 namespace NES::Statistic {
 
 WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field) {
@@ -39,7 +41,7 @@ HyperLogLogDescriptor::HyperLogLogDescriptor(const FieldAccessExpressionNodePtr&
 void HyperLogLogDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
     outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, BasicType::UINT64);
     outputSchema.addField(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME, BasicType::FLOAT64);
-    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
+    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText());
 }
 
 HyperLogLogDescriptor::~HyperLogLogDescriptor() = default;

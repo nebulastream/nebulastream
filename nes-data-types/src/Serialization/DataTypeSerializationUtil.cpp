@@ -13,6 +13,7 @@
 */
 
 #include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/TextType.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
@@ -59,6 +60,9 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         serializedDataType->mutable_details()->PackFrom(serializedArray);
     } else if (dataType->isText()) {
         serializedDataType->set_type(SerializableDataType_Type_TEXT);
+//        auto serializedText = SerializableDataType_TextDetails();
+//        auto const textType = DataType::as<TextType>(dataType);
+//        serializedDataType->mutable_details()->PackFrom(serializedText);
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
@@ -73,8 +77,6 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
     }
     if (serializedDataType.type() == SerializableDataType_Type_CHAR) {
         return DataTypeFactory::createChar();
-    } else if (serializedDataType.type() == SerializableDataType_Type_TEXT) {
-        return DataTypeFactory::createText();
     } else if (serializedDataType.type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType.details().UnpackTo(&integerDetails);
@@ -100,6 +102,8 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
         return DataTypeFactory::createChar();
     } else if (serializedDataType.type() == SerializableDataType_Type_ARRAY) {
         return deserializeArrayType(serializedDataType);
+    } else if (serializedDataType.type() == SerializableDataType_Type_TEXT) {
+        return std::make_shared<TextType>();;
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: data type which is to be serialized not registered. "
                             "Deserialization is not possible");
@@ -114,6 +118,17 @@ std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(const
     auto componentType = deserializeDataType(arrayDetails.componenttype());
     return std::make_shared<ArrayType>(arrayDetails.dimensions(), componentType);
 }
+
+//std::shared_ptr<TextType> DataTypeSerializationUtil::deserializeTextType() {
+    // for arrays get additional information from the SerializableDataType_ArrayDetails
+//    auto textDetails = SerializableDataType_TextDetails();
+//    serializedDataType.details().UnpackTo(&textDetails);
+
+    // get component data type
+    // Todo: do we actually need a component type?
+//    auto componentType = deserializeDataType(textDetails.componenttype());
+//    return std::make_shared<TextType>();
+//}
 
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType,
                                                                      SerializableDataValue* serializedDataValue) {

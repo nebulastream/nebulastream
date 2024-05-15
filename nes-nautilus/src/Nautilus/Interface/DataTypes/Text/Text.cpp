@@ -28,7 +28,7 @@ Value<Text> transformReturnValues(TextValue* value) {
     return Value<Text>(std::make_unique<Text>(textRef));
 }
 
-Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
+Text::TextType(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
 
 bool textEquals(const TextValue* leftText, const TextValue* rightText) {
     NES_DEBUG("Check if {} and {} are equal", leftText->c_str(), rightText->c_str())

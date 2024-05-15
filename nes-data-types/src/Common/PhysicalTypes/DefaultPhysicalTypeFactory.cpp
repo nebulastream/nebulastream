@@ -18,8 +18,9 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/Text.hpp>
+#include <Common/DataTypes/TextType.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/PhysicalTypes/TextPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -39,7 +40,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     } else if (dataType->isChar()) {
         return getPhysicalType(DataType::as<Char>(dataType));
     } else if (dataType->isText()) {
-        return getPhysicalType(DataType::as<Text>(dataType));
+        return getPhysicalType(DataType::as<TextType>(dataType));
     } else {
         NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + dataType->toString());
     }
@@ -84,7 +85,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
     }
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayPtr& arrayType) const {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayTypePtr& arrayType) const {
     auto const componentType = getPhysicalType(arrayType->component);
     return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
 }
@@ -93,8 +94,8 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const CharPtr& charT
     return BasicPhysicalType::create(charType, BasicPhysicalType::NativeType::CHAR);
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TextPtr& textType) const {
-    return BasicPhysicalType::create(textType, BasicPhysicalType::NativeType::TEXT);
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TextTypePtr& textType) const {
+    return TextPhysicalType::create(textType);
 }
 
 }// namespace NES

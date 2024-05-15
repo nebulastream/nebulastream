@@ -24,7 +24,6 @@ namespace NES {
  * Arrays always have a fixed sized and can not be extended.
  */
 class ArrayType : public DataType {
-
   public:
     /**
      * @brief Constructs a new ArrayType.
@@ -66,6 +65,8 @@ class ArrayType : public DataType {
     */
     std::string toString() final;
 
+
+    // Todo Why are the member variables publicly exposed?
     uint64_t const length;
     DataTypePtr const component;
 };
