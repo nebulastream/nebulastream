@@ -227,7 +227,11 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(OperatorId oper
 }
 
 Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventChannel(OperatorId operatorId) {
-    auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
+    auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);
+    if (iteratorOperatorId == reverseEventChannelFutures.end()) {
+        NES_WARNING("Did not find a reverse event channel future; operatorId = {}", operatorId);
+        return nullptr;
+    }
     //blocking wait on get
     auto channel = iteratorOperatorId->second.first.get();
     iteratorOperatorId->second.second.set_value(true);

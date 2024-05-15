@@ -22,7 +22,7 @@ namespace NES {
 class FileSinkIntegrationTest : public Testing::BaseIntegrationTest {
 public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("FileSinkIntegrationTest.log", NES::LogLevel::LOG_ERROR);
+        NES::Logger::setupLogging("FileSinkIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
     }
 };
 

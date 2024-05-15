@@ -21,6 +21,8 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <Exceptions/TaskExecutionException.hpp>
+#include <Runtime/QueryManager.hpp>
 
 namespace NES {
 
@@ -39,29 +41,10 @@ FileSink::FileSink(SinkFormatPtr format,
                  numOfProducers,
                  sharedQueryId,
                  decomposedQueryPlanId,
-                 numberOfOrigins) {
-    this->filePath = filePath;
-    this->append = append;
-    if (!append) {
-        if (std::filesystem::exists(filePath.c_str())) {
-            bool success = std::filesystem::remove(filePath.c_str());
-            NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
-        }
-    }
-    NES_DEBUG("FileSink: open file= {}", filePath);
+                 numberOfOrigins),
+      filePath(filePath), append(append) { }
 
-    // open the file stream
-    if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-    }
-    NES_ASSERT(outputFile.is_open(), "file is not open");
-    NES_ASSERT(outputFile.good(), "file not good");
-}
-
-FileSink::~FileSink() {
-    NES_DEBUG("~FileSink: close file={}", filePath);
-    outputFile.close();
-}
+FileSink::~FileSink() { }
 
 std::string FileSink::toString() const {
     std::stringstream ss;
@@ -71,15 +54,41 @@ std::string FileSink::toString() const {
     return ss.str();
 }
 
-void FileSink::setup() {}
+void FileSink::setup() {
+    if (!append) {
+        if (std::filesystem::exists(filePath.c_str())) {
+            bool success = std::filesystem::remove(filePath.c_str());
+            // TODO Write test case for this logic here and 
+            NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
+        }
+    }
+    NES_DEBUG("FileSink: open file= {}", filePath);
 
-void FileSink::shutdown() {}
+    // open the file stream
+    if (!outputFile.is_open()) {
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+    }
+    isOpen = outputFile.is_open() && outputFile.good();
+    if (!isOpen) {
+        NES_ERROR("Could not open output file; filePath={}, is_open() = {}, good = {}", filePath, outputFile.is_open(), outputFile.good());
+    }
+}
+
+void FileSink::shutdown() {
+    NES_DEBUG("~FileSink: close file={}", filePath);
+    outputFile.close();
+}
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) { return writeDataToFile(inputBuffer); }
 
 std::string FileSink::getFilePath() const { return filePath; }
 
 bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
+    // Stop execution if the file could not be opened during setup.
+    // This results in ExecutionResult::Error for the task.
+    if (!isOpen) {
+        return false;
+    }
     std::unique_lock lock(writeMutex);
     NES_DEBUG("FileSink: getSchema medium {} format {} mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
 

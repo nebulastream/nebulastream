@@ -247,6 +247,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
             if (channel) {
                 channel->close(terminationType);
+            } else {
+                NES_WARNING("Did not find a reverse event channel future; operatorId = {}", operatorId);
             }
             return;
         }

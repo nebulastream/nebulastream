@@ -110,6 +110,9 @@ class FileSink : public SinkMedium {
     std::string filePath;
     std::ofstream outputFile;
     bool append{false};
+
+    // Indicate if the file could be opened during setup.
+    bool isOpen{false};
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

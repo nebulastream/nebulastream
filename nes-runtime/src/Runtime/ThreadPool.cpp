@@ -61,7 +61,8 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
         try {
             switch (queryManager->processNextTask(running, workerContext)) {
                 case ExecutionResult::Finished:
-                case ExecutionResult::Ok: {
+                case ExecutionResult::Ok:
+                case ExecutionResult::Error: {
                     break;
                 }
                 case ExecutionResult::AllFinished: {
@@ -69,18 +70,12 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                     running = false;
                     break;
                 }
-                case ExecutionResult::Error: {
-                    // TODO add here error handling (see issues 524 and 463)
-                    NES_ERROR("Threadpool: finished task with error");
-                    running = false;
-                    break;
-                }
                 default: {
-                    NES_ASSERT(false, "unsupported");
+                    NES_ASSERT(false, "Unsupported execution result");
                 }
             }
         } catch (TaskExecutionException const& taskException) {
-            NES_ERROR("Got fatal error on thread {}: {}", workerContext.getId(), taskException.what());
+            NES_ERROR("Exception thrown during task execution on thread {}: {}", workerContext.getId(), taskException.what());
             queryManager->notifyTaskFailure(taskException.getExecutable(), std::string(taskException.what()));
         }
     }
