@@ -209,6 +209,8 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
 
 TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->enableMonitoring = true;
     coordinatorConfig->optimizer.enableNemoPlacement = true;

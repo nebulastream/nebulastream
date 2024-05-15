@@ -131,6 +131,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::createDefault();
+    crdConf->rpcPort = *rpcCoordinatorPort;
+    crdConf->restPort = *restPort;
     crdConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
