@@ -285,6 +285,8 @@ class TestHarness {
 
     NesCoordinatorPtr getCoordinator() const;
 
+    const std::vector<TestHarnessWorkerConfigurationPtr> getTestHarnessWorkerConfigurations() const;
+
   private:
     std::string getNextPhysicalSourceName();
     WorkerId getNextTopologyId();

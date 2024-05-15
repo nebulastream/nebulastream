@@ -37,6 +37,10 @@ public:
         auto coordinator = testHarness.getCoordinator();
         QueryId queryId = coordinator->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(), NES::Optimizer::PlacementStrategy::BottomUp);
         EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, coordinator->getQueryCatalog()));
+        for (const auto& workerConfiguration : testHarness.getTestHarnessWorkerConfigurations()) {
+            workerConfiguration->getNesWorker()->stop(false);
+        }
+        coordinator->stopCoordinator(false);
     }
     const std::string logicalSourceName = "logicalSource";
 };

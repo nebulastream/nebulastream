@@ -447,4 +447,8 @@ NesCoordinatorPtr TestHarness::getCoordinator() const {
     return nesCoordinator;
 }
 
+const std::vector<TestHarnessWorkerConfigurationPtr> TestHarness::getTestHarnessWorkerConfigurations() const {
+    return testHarnessWorkerConfigurations;
+}
+
 }// namespace NES
