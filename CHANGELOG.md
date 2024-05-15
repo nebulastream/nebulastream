@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.6.130](https://github.com/nebulastream/nebulastream/tree/v0.6.130) (2024-05-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.129...v0.6.130)
+
+**Implemented enhancements:**
+
+- \[TASK\] Ensure that libdw is installed at during cmake configure [\#4876](https://github.com/nebulastream/nebulastream/issues/4876)
+- \[TASK\] Add missing KAFKA ifdef [\#4871](https://github.com/nebulastream/nebulastream/issues/4871)
+- \[TASK\] Fix test failures due to unavailable nes-coordinator default port [\#4859](https://github.com/nebulastream/nebulastream/issues/4859)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Improve the error message and fail the worker when the physicalSources.logicalSourceName is wrong [\#4731](https://github.com/nebulastream/nebulastream/issues/4731)
+- Enable MilliSecondTests [\#1676](https://github.com/nebulastream/nebulastream/issues/1676)
+
+### Miscellaneous Issues ✌️
+
+- -Wunused-function [\#1198](https://github.com/nebulastream/nebulastream/issues/1198)
+- -Wreorder [\#1197](https://github.com/nebulastream/nebulastream/issues/1197)
+
 ## [v0.6.129](https://github.com/nebulastream/nebulastream/tree/v0.6.129) (2024-05-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.128...v0.6.129)
