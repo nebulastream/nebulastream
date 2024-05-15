@@ -214,6 +214,10 @@ if (NOT APPLE)
         add_link_options("-v")
     endif ()
     # as per backward.h
+    find_library(LIBDW_LIBRARY dw)
+    if (NOT LIBDW_LIBRARY)
+        message(FATAL_ERROR "libdw is required on Linux. On Ubuntu, please install 'libdw-dev'")
+    endif ()
     add_link_options("-ldw")
 endif ()
 
