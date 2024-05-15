@@ -39,7 +39,7 @@ const std::string REST_PORT_CONFIG = "restPort";
 const std::string RPC_PORT_CONFIG = "rpcPort";//used to be coordinator port, renamed to uniform naming
 const std::string DATA_PORT_CONFIG = "dataPort";
 const std::string REST_IP_CONFIG = "restIp";
-const std::string COORDINATOR_IP_CONFIG = "coordinatorIp";
+const std::string COORDINATOR_HOST_CONFIG = "coordinatorHost";
 const std::string NUMBER_OF_SLOTS_CONFIG = "numberOfSlots";
 const std::string BANDWIDTH_IN_MBPS = "bandwidthInMbps";
 const std::string LATENCY_IN_MS = "latencyInMs";
@@ -98,7 +98,7 @@ const auto TRANSFER_RATE = "transferRate"s;                     // Fake transfer
 //Worker Configuration Names
 const std::string WORKER_ID = "workerId";
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
-const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
+const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";
 const std::string PARENT_ID_CONFIG = "parentId";
 const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
 const std::string QUERY_COMPILER_DUMP_MODE = "queryCompilerDumpMode";

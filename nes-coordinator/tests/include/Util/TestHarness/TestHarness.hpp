@@ -289,7 +289,7 @@ class TestHarness {
 
     const std::chrono::seconds SETUP_TIMEOUT_IN_SEC = std::chrono::seconds(2);
     const QueryPtr queryWithoutSink;
-    std::string coordinatorIPAddress;
+    std::string coordinatorHostAddress;
     uint16_t restPort;
     uint16_t rpcPort;
     bool useNewRequestExecutor;

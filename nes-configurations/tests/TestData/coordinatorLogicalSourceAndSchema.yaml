@@ -5,7 +5,7 @@
 restIp: 0.0.0.0
 
 # Set RPC IP address of NES Coordinator
-coordinatorIp: 0.0.0.0
+coordinatorHost: 0.0.0.0
 
 # Set a single logical source with a single field in the schema
 logicalSources:

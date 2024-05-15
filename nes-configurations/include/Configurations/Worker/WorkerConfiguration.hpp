@@ -65,7 +65,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief IP of the Worker.
      */
-    StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP.", std::make_shared<IpValidation>()};
+    StringOption localWorkerHost = {LOCAL_WORKER_HOST_CONFIG, "127.0.0.1", "Worker IP or hostname."};
 
     /**
      * @brief Port for the RPC server of the Worker.
@@ -82,10 +82,9 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Server IP of the NES Coordinator to which the NES Worker should connect.
      */
-    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG,
+    StringOption coordinatorHost = {COORDINATOR_HOST_CONFIG,
                                   "127.0.0.1",
-                                  "Server IP of the NES Coordinator to which the NES Worker should connect.",
-                                  std::make_shared<IpValidation>()};
+                                  "Server IP or hostname of the NES Coordinator to which the NES Worker should connect."};
     /**
      * @brief RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs
      * to be the same as rpcPort in Coordinator.
@@ -346,8 +345,8 @@ class WorkerConfiguration : public BaseConfiguration {
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&workerId,
-                &localWorkerIp,
-                &coordinatorIp,
+                &localWorkerHost,
+                &coordinatorHost,
                 &rpcPort,
                 &dataPort,
                 &coordinatorPort,

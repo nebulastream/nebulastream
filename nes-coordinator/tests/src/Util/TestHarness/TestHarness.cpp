@@ -38,7 +38,7 @@ TestHarness::TestHarness(Query queryWithoutSink,
                          std::filesystem::path testHarnessResourcePath,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
-    : queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))), coordinatorIPAddress("127.0.0.1"),
+    : queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))), coordinatorHostAddress("127.0.0.1"),
       restPort(restPort), rpcPort(rpcPort), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
       memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(WorkerId(1)),
       joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
@@ -322,7 +322,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
     //Start Coordinator
     auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
+    coordinatorConfiguration->coordinatorHost = coordinatorHostAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;
 
@@ -350,7 +350,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         //Set ports at runtime
         workerConfiguration->coordinatorPort = coordinatorRPCPort;
-        workerConfiguration->coordinatorIp = coordinatorIPAddress;
+        workerConfiguration->coordinatorHost = coordinatorHostAddress;
 
         switch (workerConf->getSourceType()) {
             case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource: {

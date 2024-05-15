@@ -2,7 +2,7 @@
 
 # ~~ IPs and Ports ~~
 # Set worker IP
-localWorkerIp: localhost
+localWorkerHost: localhost
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
 # Needs to be the same as rpcPort in Coordinator
