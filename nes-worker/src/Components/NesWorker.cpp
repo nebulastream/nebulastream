@@ -322,7 +322,8 @@ void serializeOpenCLDeviceInfo(const NES::Runtime::OpenCLDeviceInfo& deviceInfo,
 
 bool NesWorker::connect() {
 
-    std::string coordinatorAddress = workerConfig->coordinatorHost.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
+    std::string coordinatorAddress =
+        workerConfig->coordinatorHost.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
     NES_DEBUG("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
 

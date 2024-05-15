@@ -49,9 +49,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief IP or hostname of the Coordinator.
      */
-    StringOption coordinatorHost = {COORDINATOR_HOST_CONFIG,
-                                  "127.0.0.1",
-                                  "RPC IP address or hostname of NES Coordinator."};
+    StringOption coordinatorHost = {COORDINATOR_HOST_CONFIG, "127.0.0.1", "RPC IP address or hostname of NES Coordinator."};
 
     /**
      * @brief Port for the RPC server of the Coordinator.

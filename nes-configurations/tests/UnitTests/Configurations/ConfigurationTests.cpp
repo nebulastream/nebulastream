@@ -464,8 +464,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions) {
 
 TEST_F(ConfigTest, invalidCommandLineInputForIpOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
-        {"--restIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}}
-    };
+        {"--restIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -567,8 +566,7 @@ TEST_F(ConfigTest, invalidFloatYamlInputs) {
 
 TEST_F(ConfigTest, invalidIpYamlInputs) {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidIpConfigs = {
-        {"--restIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}}
-    };
+        {"--restIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidIpConfigs) {
         for (const auto& value : invalidValues) {
