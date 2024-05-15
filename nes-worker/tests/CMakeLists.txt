@@ -12,3 +12,5 @@
 
 include(ExternalProject)
 include(GoogleTest)
+
+add_nes_unit_test(coordinator-rpc-client-test "GRPC/CoordinatorRPCClientTest.cpp")

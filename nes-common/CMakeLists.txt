@@ -34,7 +34,7 @@ endforeach ()
 add_custom_command(
         OUTPUT ${OUTPUT_SOURCES}
         COMMAND ${_PROTOBUF_PROTOC}
-        ARGS --grpc_out "${CMAKE_BINARY_DIR}/nes-grpc/"
+        ARGS --grpc_out "generate_mock_code=true:${CMAKE_BINARY_DIR}/nes-grpc/"
         --cpp_out "${CMAKE_BINARY_DIR}/nes-grpc/"
         -I "${PROTO_PATH}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"

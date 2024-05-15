@@ -169,6 +169,20 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
     return false;
 }
 
+size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId) {
+    std::unique_lock lock(catalogMutex);
+    size_t removedElements = 0;
+
+    for (auto& [logicalSource, physicalSources] : logicalToPhysicalSourceMapping) {
+        std::erase_if(physicalSources, [topologyNodeId, &removedElements](const auto& mappingEntry) {
+            removedElements += mappingEntry->getTopologyNodeId() == topologyNodeId;
+            return mappingEntry->getTopologyNodeId() == topologyNodeId;
+        });
+    }
+
+    return removedElements;
+}
+
 SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
