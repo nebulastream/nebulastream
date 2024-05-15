@@ -51,9 +51,9 @@ class SourceCatalogService {
      * @param logicalSourceName: logical source name
      * @param physicalSourceName: physical source name
      * @param topologyNodeId : the topology node id
-     * @return bool indicating success
+     * @return first element indicates success, second element is a error message in case of a failure
      */
-    bool
+    std::pair<bool, std::string>
     registerPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
 
     /**
@@ -121,6 +121,14 @@ class SourceCatalogService {
      * @brief Reset source catalog by clearing it from all physical and logical sources
      * @return true if successful
      */
+
+    /**
+     * @brief Removes all physical sources for a single Worker
+     * @param WorkerId identfies the worker
+     * @return true if successful
+     */
+    bool unregisterAllPhysicalSourcesByWorker(WorkerId);
+
     bool reset();
 
   private:

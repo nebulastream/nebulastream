@@ -402,8 +402,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         std::vector<TopologyLinkInformation> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
         std::string coordinatorAddress =
             coordinatorConfig->coordinatorHost.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
-        auto coordinatorRPCClient = CoordinatorRPCClient(coordinatorAddress);
-        coordinatorRPCClient.relocateTopologyNode(removedLinks, addedLinks);
+        auto coordinatorRPCClient = CoordinatorRPCClient::create(coordinatorAddress);
+        coordinatorRPCClient->relocateTopologyNode(removedLinks, addedLinks);
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;

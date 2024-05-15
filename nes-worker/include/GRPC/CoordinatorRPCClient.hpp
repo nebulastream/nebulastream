@@ -54,15 +54,26 @@ class CoordinatorRPCClient {
 
   public:
     /**
-     * @brief
+     * @brief Factory method, to create the coordinator RPCClient. Internally a GRPC stub is created.
      * @param address
      * @param retryAttempts: number of attempts for connecting
      * @param backOffTimeMs: backoff time to wait after a failed connection attempt
      */
-    explicit CoordinatorRPCClient(const std::string& address,
+    static std::shared_ptr<CoordinatorRPCClient> create(const std::string& address,
+                                                 uint32_t rpcRetryAttempts = 10,
+                                                 std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
+
+    /**
+     * @brief Constructor accepting a GRPC Stub.
+     * @param coordinatorStub RPCStub handles grpc requests
+     * @param address
+     * @param retryAttempts: number of attempts for connecting
+     * @param backOffTimeMs: backoff time to wait after a failed connection attempt
+     */
+    explicit CoordinatorRPCClient(std::unique_ptr<CoordinatorRPCService::StubInterface>&& coordinatorStub,
+                                  const std::string& address,
                                   uint32_t rpcRetryAttempts = 10,
                                   std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
-
     /**
      * @brief this methods registers physical sources provided by the node at the coordinator
      * @param physicalSourceTypes list of physical sources to register
@@ -249,7 +260,7 @@ class CoordinatorRPCClient {
     WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::string address;
     std::shared_ptr<::grpc::Channel> rpcChannel;
-    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;
+    std::unique_ptr<CoordinatorRPCService::StubInterface> coordinatorStub;
     uint32_t rpcRetryAttempts;
     std::chrono::milliseconds rpcBackoff;
 };

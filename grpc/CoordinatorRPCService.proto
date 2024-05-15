@@ -127,8 +127,16 @@ message PhysicalSourceDefinition {
   string logicalSourceName = 3;
 }
 
+
+message PhysicalSourceRegistrationResult {
+  string physicalSourceName = 1;
+  bool success = 3;
+  string reason = 2;
+}
+
 message RegisterPhysicalSourcesReply {
-  bool success = 1;
+    bool success = 1;
+    repeated PhysicalSourceRegistrationResult results = 2;
 }
 
 message UnregisterPhysicalSourceRequest {

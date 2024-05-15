@@ -325,7 +325,7 @@ bool NesWorker::connect() {
     std::string coordinatorAddress =
         workerConfig->coordinatorHost.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
     NES_DEBUG("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
-    coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
+    coordinatorRpcClient = CoordinatorRPCClient::create(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;
     registrationRequest.set_workerid(workerConfig->workerId.getValue().getRawValue());
@@ -457,12 +457,10 @@ const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration(
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
     NES_ASSERT(!physicalSourceTypes.empty(), "invalid physical sources");
     bool con = waitForConnect();
-
     NES_ASSERT(con, "cannot connect");
-    bool success = coordinatorRpcClient->registerPhysicalSources(physicalSourceTypes);
-    NES_ASSERT(success, "failed to register source");
-    NES_DEBUG("NesWorker::registerPhysicalSources success={}", success);
-    return success;
+    NES_ASSERT(coordinatorRpcClient->registerPhysicalSources(physicalSourceTypes), "Worker failed to register physical sources");
+    NES_DEBUG("NesWorker::registerPhysicalSources was succesfull");
+    return true;
 }
 
 bool NesWorker::addParent(WorkerId pParentId) {

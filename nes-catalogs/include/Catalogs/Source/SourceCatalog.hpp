@@ -72,6 +72,13 @@ class SourceCatalog {
     removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId);
 
     /**
+     * @brief method to remove all physical sources of a single worker
+     * @param topologyNodeId worker node identifier
+     * @return number of sucessfully removed physical sources
+     */
+    size_t removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId);
+
+    /**
      * @brief method to get the schema from the given logical source
      * @param logicalSourceName name of the logical source name
      * @return the pointer to the schema

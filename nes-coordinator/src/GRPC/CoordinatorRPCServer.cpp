@@ -173,18 +173,31 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
+    bool overallSuccess = true;
     for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
-        bool success = sourceCatalogService->registerPhysicalSource(physicalSourceDefinition.physicalsourcename(),
-                                                                    physicalSourceDefinition.logicalsourcename(),
-                                                                    WorkerId(request->workerid()));
+
+        auto [success, errorMessage] = sourceCatalogService->registerPhysicalSource(physicalSourceDefinition.physicalsourcename(),
+                                                                                    physicalSourceDefinition.logicalsourcename(),
+                                                                                    WorkerId(request->workerid()));
+        auto result = reply->add_results();
+        result->set_physicalsourcename(physicalSourceDefinition.physicalsourcename());
+        result->set_success(success);
+        overallSuccess &= success;
         if (!success) {
             NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource failed");
-            reply->set_success(false);
-            return Status::CANCELLED;
+            result->set_reason(errorMessage);
         }
     }
-    NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource Succeed");
-    reply->set_success(true);
+
+    // Rollback any source registrations if any source failed. Currently we assume that the worker is going to fail,
+    // and reattempts to register all sources
+    if(!overallSuccess) {
+        NES_WARNING("CoordinatorRPCServer::RegisterPhysicalSource Could not register all phyisical sources");
+        sourceCatalogService->unregisterAllPhysicalSourcesByWorker(WorkerId(request->workerid()));
+    }
+
+    reply->set_success(overallSuccess);
+    NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request done overallSuccess={}", overallSuccess);
     return Status::OK;
 }
 

@@ -116,6 +116,7 @@ add_nes_unit_test(isqp-request-test "RequestProcessor/RequestTypes/ISQP/ISQPRequ
 
 ### gRPC Tests
 add_nes_unit_test(grpc-test "gRPC/grpcTests.cpp")
+add_nes_unit_test(coordinator-rpc-server-test "gRPC/CoordinatorRpcServerTest.cpp")
 
 ### Sensor Bus Tests ###
 #add_nes_unit_test(sensor-bus-tests "SensorBusTest.cpp")
