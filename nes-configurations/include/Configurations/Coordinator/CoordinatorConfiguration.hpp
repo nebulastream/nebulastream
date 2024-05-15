@@ -47,12 +47,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption restPort = {REST_PORT_CONFIG, "8081", "Port exposed for rest endpoints", std::make_shared<NumberValidation>()};
 
     /**
-     * @brief IP of the Coordinator.
+     * @brief IP or hostname of the Coordinator.
      */
-    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG,
+    StringOption coordinatorHost = {COORDINATOR_HOST_CONFIG,
                                   "127.0.0.1",
-                                  "RPC IP address of NES Coordinator.",
-                                  std::make_shared<IpValidation>()};
+                                  "RPC IP address or hostname of NES Coordinator."};
 
     /**
      * @brief Port for the RPC server of the Coordinator.
@@ -155,7 +154,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&restIp,
-                &coordinatorIp,
+                &coordinatorHost,
                 &rpcPort,
                 &restPort,
                 &logLevel,

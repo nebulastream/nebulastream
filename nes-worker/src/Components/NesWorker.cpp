@@ -64,7 +64,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr workerConfig, Monito
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
-    rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
+    rpcAddress = workerConfig->localWorkerHost.getValue() + ":" + std::to_string(localWorkerRpcPort);
 }
 
 NesWorker::~NesWorker() {
@@ -131,14 +131,14 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
 WorkerId NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
-    NES_DEBUG("NesWorker: start with blocking {} workerId={} coordinatorIp={} coordinatorPort={} localWorkerIp={} "
+    NES_DEBUG("NesWorker: start with blocking {} workerId={} coordinatorHost={} coordinatorPort={} localWorkerHost={} "
               "localWorkerRpcPort={} "
               "localWorkerZmqPort={} windowStrategy={}",
               blocking,
               workerConfig->workerId.getValue(),
-              workerConfig->coordinatorIp.getValue(),
+              workerConfig->coordinatorHost.getValue(),
               workerConfig->coordinatorPort.getValue(),
-              workerConfig->localWorkerIp.getValue(),
+              workerConfig->localWorkerHost.getValue(),
               localWorkerRpcPort,
               workerConfig->dataPort.getValue(),
               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy.getValue()));
@@ -187,7 +187,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: buildAndStartGRPCServer: end listening");
     }));
     localWorkerRpcPort.store(promRPC->get_future().get());
-    rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
+    rpcAddress = workerConfig->localWorkerHost.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
     NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
               rpcAddress,
               localWorkerRpcPort.load());
@@ -322,13 +322,13 @@ void serializeOpenCLDeviceInfo(const NES::Runtime::OpenCLDeviceInfo& deviceInfo,
 
 bool NesWorker::connect() {
 
-    std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
+    std::string coordinatorAddress = workerConfig->coordinatorHost.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
     NES_DEBUG("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;
     registrationRequest.set_workerid(workerConfig->workerId.getValue().getRawValue());
-    registrationRequest.set_address(workerConfig->localWorkerIp.getValue());
+    registrationRequest.set_address(workerConfig->localWorkerHost.getValue());
     registrationRequest.set_grpcport(localWorkerRpcPort.load());
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
     registrationRequest.set_numberofslots(workerConfig->numberOfSlots.getValue());

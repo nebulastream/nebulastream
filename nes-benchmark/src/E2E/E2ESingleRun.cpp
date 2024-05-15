@@ -51,8 +51,8 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool =
         configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue();
 
-    coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
+    coordinatorConf->worker.coordinatorHost = coordinatorConf->coordinatorHost.getValue();
+    coordinatorConf->worker.localWorkerHost = coordinatorConf->coordinatorHost.getValue();
     coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;

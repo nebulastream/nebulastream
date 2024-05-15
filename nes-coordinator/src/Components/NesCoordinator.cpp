@@ -72,7 +72,7 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
-      restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
+      restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorHost),
       rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
@@ -175,7 +175,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     //start the coordinator worker that is the sink for all queryIdAndCatalogEntryMapping
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     // Unconditionally set IP of internal worker and set IP and port of coordinator.
-    coordinatorConfiguration->worker.coordinatorIp = rpcIp;
+    coordinatorConfiguration->worker.coordinatorHost = rpcIp;
     coordinatorConfiguration->worker.coordinatorPort = rpcPort;
     // Ensure that coordinator and internal worker enable/disable monitoring together.
     coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
