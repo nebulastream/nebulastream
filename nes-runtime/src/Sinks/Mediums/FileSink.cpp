@@ -57,9 +57,12 @@ std::string FileSink::toString() const {
 void FileSink::setup() {
     if (!append) {
         if (std::filesystem::exists(filePath.c_str())) {
-            bool success = std::filesystem::remove(filePath.c_str());
-            // TODO Write test case for this logic here and 
-            NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
+            std::error_code ec;
+            if (!std::filesystem::remove(filePath.c_str(), ec)) {
+                NES_ERROR("Could not remove existing output file: filePath = {} ", filePath);
+                isOpen = false;
+                return;
+            }
         }
     }
     NES_DEBUG("FileSink: open file= {}", filePath);
@@ -70,7 +73,7 @@ void FileSink::setup() {
     }
     isOpen = outputFile.is_open() && outputFile.good();
     if (!isOpen) {
-        NES_ERROR("Could not open output file; filePath={}, is_open() = {}, good = {}", filePath, outputFile.is_open(), outputFile.good());
+        NES_ERROR("Could not open output file; filePath = {}, is_open() = {}, good = {}", filePath, outputFile.is_open(), outputFile.good());
     }
 }
 

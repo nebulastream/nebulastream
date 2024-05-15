@@ -67,6 +67,33 @@ TEST_F(FileSinkIntegrationTest, cannotWriteOutputFile) {
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, coordinator->getQueryCatalog()));
 }
 
+TEST_F(FileSinkIntegrationTest, cannotRemoveOutputFile) {
+    // Create an output file which cannot be removed.
+    // We simulate this by creating a non-empty folder, which std::filesystem::remove will fail to remove.
+    auto folder = getTestResourceFolder() / "folder";
+    std::filesystem::create_directory(folder);
+    std::ofstream dummyFile(folder / "dummy-file");
+    dummyFile.close();
+
+    // The test query outputs results to the folder, which cannot be removed.
+    const std::string logicalSourceName = "logicalSource";
+    const Query query = Query::from(logicalSourceName)
+        .sink(FileSinkDescriptor::create(folder, "CSV_FORMAT", "OVERWRITE"));
+
+    // Setup a test harness with a memory source that contains a single input tuple.
+    struct Input { uint64_t id; };
+    const auto schema = TestSchemas::getSchemaTemplate("id_u64")->updateSourceName(logicalSourceName);
+    TestHarness testHarness {query, *restPort, *rpcCoordinatorPort, getTestResourceFolder()};
+    testHarness.addLogicalSource(logicalSourceName, schema).attachWorkerWithMemorySourceToCoordinator(logicalSourceName);
+    testHarness.pushElement<Input>({1}, 2);
+    testHarness.validate().setupTopology();
+
+    // Run the query and verify that its status is FAILED in the query catalog
+    auto coordinator = testHarness.getCoordinator();
+    QueryId queryId = coordinator->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(), NES::Optimizer::PlacementStrategy::BottomUp);
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, coordinator->getQueryCatalog()));
+}
+
 
 
 }
