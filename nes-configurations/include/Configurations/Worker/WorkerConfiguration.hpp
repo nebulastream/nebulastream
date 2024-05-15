@@ -83,8 +83,8 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Server IP of the NES Coordinator to which the NES Worker should connect.
      */
     StringOption coordinatorHost = {COORDINATOR_HOST_CONFIG,
-                                  "127.0.0.1",
-                                  "Server IP or hostname of the NES Coordinator to which the NES Worker should connect."};
+                                    "127.0.0.1",
+                                    "Server IP or hostname of the NES Coordinator to which the NES Worker should connect."};
     /**
      * @brief RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs
      * to be the same as rpcPort in Coordinator.

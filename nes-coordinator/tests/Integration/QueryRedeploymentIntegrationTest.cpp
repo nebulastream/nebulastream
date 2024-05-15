@@ -400,7 +400,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
         std::vector<TopologyLinkInformation> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
         std::vector<TopologyLinkInformation> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
-        std::string coordinatorAddress = coordinatorConfig->coordinatorHost.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
+        std::string coordinatorAddress =
+            coordinatorConfig->coordinatorHost.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
         auto coordinatorRPCClient = CoordinatorRPCClient(coordinatorAddress);
         coordinatorRPCClient.relocateTopologyNode(removedLinks, addedLinks);
 
