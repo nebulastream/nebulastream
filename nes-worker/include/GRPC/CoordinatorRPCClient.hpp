@@ -60,8 +60,8 @@ class CoordinatorRPCClient {
      * @param backOffTimeMs: backoff time to wait after a failed connection attempt
      */
     static std::shared_ptr<CoordinatorRPCClient> create(const std::string& address,
-                                                 uint32_t rpcRetryAttempts = 10,
-                                                 std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
+                                                        uint32_t rpcRetryAttempts = 10,
+                                                        std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
 
     /**
      * @brief Constructor accepting a GRPC Stub.

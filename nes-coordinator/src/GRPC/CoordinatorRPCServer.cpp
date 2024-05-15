@@ -191,7 +191,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
 
     // Rollback any source registrations if any source failed. Currently we assume that the worker is going to fail,
     // and reattempts to register all sources
-    if(!overallSuccess) {
+    if (!overallSuccess) {
         NES_WARNING("CoordinatorRPCServer::RegisterPhysicalSource Could not register all phyisical sources");
         sourceCatalogService->unregisterAllPhysicalSourcesByWorker(WorkerId(request->workerid()));
     }

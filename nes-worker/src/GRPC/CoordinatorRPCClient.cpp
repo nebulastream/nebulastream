@@ -212,13 +212,15 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
         }
 
         bool onPartialFailure(const Status& status) override {
-            NES_WARNING(" CoordinatorRPCClient::registerPhysicalSources error={}: {}", status.error_code(), status.error_message());
+            NES_WARNING(" CoordinatorRPCClient::registerPhysicalSources error={}: {}",
+                        status.error_code(),
+                        status.error_message());
             // Currently the Server always returns Ok. Thus any other error might be solved by a retry.
             return true;
         }
 
         bool onFailure() override {
-                    NES_ERROR("CoordinatorRPCClient::registerPhysicalSources Failed");
+            NES_ERROR("CoordinatorRPCClient::registerPhysicalSources Failed");
             return false;
         }
         CoordinatorRPCService::StubInterface& coordinatorStub;
