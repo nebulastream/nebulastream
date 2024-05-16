@@ -244,6 +244,20 @@ class TestHarness {
     PhysicalSourceTypePtr createPhysicalSourceOfMemoryType(TestHarnessWorkerConfigurationPtr workerConf);
 
     /**
+     * Set the output file of the CSV file sink that is created to execute the query.
+     * @param newOutputFilePath The output file path.
+     * @return This test harness.
+     */
+    TestHarness& setOutputFilePath(const std::string& newOutputFilePath);
+
+    /**
+     * Set the append mode of the CSV file sink that is created to execute the query.
+     * @param newAppendMode The file sink APPEND mode (i.e., APPEND to append, OVERWRITE to overwrite).
+     * @return This test harness.
+     */
+    TestHarness& setAppendMode(bool newAppendMode);
+
+    /**
      * @brief Method to setup the topology
      * @param crdConfigFunctor A function pointer to specify the config changes of the CoordinatorConfiguration
      * @param distributionList A distribution of keys of each source for joins in JSON format
@@ -256,6 +270,19 @@ class TestHarness {
         const std::vector<nlohmann::json>& distributionList = {});
 
     /**
+     * Add a CSV file sink to the query so that it can be executed.
+     * @return This test harness.
+     */
+    TestHarness& addFileSink();
+
+    /**
+     * Submit the query to the coordinator.
+     * @param placementStrategy The placement strategy for the query.
+     * @return This test harness.
+     */
+    TestHarness& validateAndQueueAddQueryRequest(const Optimizer::PlacementStrategy& placementStrategy = Optimizer::PlacementStrategy::BottomUp);
+
+    /**
      * @brief Runs the query based on the given operator, pushed elements, and number of workers.
      * @param numberOfBytesToExpect
      * @param placementStrategyName: placement strategy name
@@ -266,10 +293,17 @@ class TestHarness {
                           const std::string& placementStrategyName = "BottomUp",
                           uint64_t testTimeoutInSeconds = 60);
 
-    // TODO Documentation
-    TestHarness& addFileSink();
-    TestHarness& enqueueQuery(const Optimizer::PlacementStrategy& placementStrategy = Optimizer::PlacementStrategy::BottomUp);
+    /**
+     * Check if the query has failed.
+     * @return True if the query has failed; false, otherwise or if a timeout was reached.
+     */
     bool checkFailedOrTimeout() const;
+
+    /**
+     * Stop the coordinator and all workers.
+     * @return This test harness.
+     */
+    TestHarness& stopCoordinatorAndWorkers();
 
     /**
      * @brief Returns the output for the previously run query. Support also data types with variable data size
@@ -287,11 +321,6 @@ class TestHarness {
     const QueryPlanPtr& getQueryPlan() const;
 
     Runtime::BufferManagerPtr getBufferManager() const;
-
-    // TODO Documentation
-    TestHarness& setOutputFilePath(const std::string& newOutputFilePath);
-    TestHarness& setAppendMode(bool newAppendMode);
-    TestHarness& stopCoordinatorAndWorkers();
 
 private:
     std::string getNextPhysicalSourceName();

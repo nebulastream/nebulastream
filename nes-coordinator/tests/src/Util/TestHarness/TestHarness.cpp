@@ -269,7 +269,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
 
     // Add a file sink to the query and enqueue it.
     addFileSink();
-    enqueueQuery(magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value());
+    validateAndQueueAddQueryRequest(magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value());
 
     // Wait for query completion
     if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
@@ -305,7 +305,7 @@ TestHarness& TestHarness::addFileSink() {
     return *this;
 }
 
-TestHarness& TestHarness::enqueueQuery(const Optimizer::PlacementStrategy& placementStrategy) {
+TestHarness& TestHarness::validateAndQueueAddQueryRequest(const Optimizer::PlacementStrategy& placementStrategy) {
     auto requestHandlerService = nesCoordinator->getRequestHandlerService();
     queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryWithoutSink->getQueryPlan(), placementStrategy);
     return *this;
