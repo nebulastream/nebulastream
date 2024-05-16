@@ -242,7 +242,6 @@ class QueryPlan {
      */
     void clearRootOperators();
 
-
     /**
      * @brief Comparison to another plan and its children nodes by tree traversal.
      * @param otherPlan: the other plan to be compared to this plan
