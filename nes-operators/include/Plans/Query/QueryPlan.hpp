@@ -242,6 +242,14 @@ class QueryPlan {
      */
     void clearRootOperators();
 
+
+    /**
+     * @brief Comparison to another plan and its children nodes by tree traversal.
+     * @param otherPlan: the other plan to be compared to this plan
+     * @return true, if this and other plan are equal in their structure and operators, false else
+     */
+    bool compare(QueryPlanPtr& otherPlan);
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.

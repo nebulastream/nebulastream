@@ -535,6 +535,40 @@ TEST_P(MultipleJoinsTest, testMapsAsKeysWithDifferentSourceTumblingWindow) {
 }
 
 /*
+* Three-way join on three keys with same name for tumbling windows.
+ */
+TEST_P(MultipleJoinsTest, testMapsThreeSameKeynamesTumblingWindow) {
+    const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
+    const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
+    const auto window3Schema = Schema::create()
+                                   ->addField(createField("id3", BasicType::UINT64))
+                                   ->addField(createField("value3", BasicType::UINT64))
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window3");
+    TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema}, {"id", "id2", "id3"});
+    TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv"}, "");
+
+    // Expected output
+    const auto expectedOutput = "1000, 2000, 1, 1000, 2000, 1, 12, 1, 1001, 1, 12, 5, 1011, 1, 12, 1, 1300, 1\n";
+    // format of output: 123start; 123end; 123key; 12start; 12end; 12key; win1; id1; 1timestamp; key1; win2; id2; 2timestamp; key2; win3; id3; 3timestamp; key3
+
+    const auto query = Query::from("window1")
+                           .filter(Attribute("id") == 12)
+                           .map(Attribute("key1") = 1)
+                           .joinWith(Query::from("window2").map(Attribute("key1") = 1))
+                           .where(Attribute("key1"))
+                           .equalsTo(Attribute("key1"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .filter(Attribute("id2") == 12)
+                           .joinWith(Query::from("window3").map(Attribute("key1") = 1).filter(Attribute("id3") == 12))
+                           .where(Attribute("key1"))
+                           .equalsTo(Attribute("key1"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runJoinQuery(query, csvFileParams, joinParams, expectedOutput);
+}
+
+/*
  * Three-way join with data IDs as keys for sliding windows.
  */
 TEST_P(MultipleJoinsTest, testMapNotKeyWithDifferentSourceSlidingWindow) {

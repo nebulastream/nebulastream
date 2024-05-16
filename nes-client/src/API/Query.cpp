@@ -99,8 +99,8 @@ And::And(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignment("cep_leftKey");
-    std::string cepRightKey = keyAssignment("cep_rightKey");
+    auto cepLeftKey = "cep_leftKey";
+    auto cepRightKey = "cep_rightKey";
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -119,8 +119,8 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignment("cep_leftKey");
-    std::string cepRightKey = keyAssignment("cep_rightKey");
+    auto cepLeftKey = "cep_leftKey";
+    auto cepRightKey = "cep_rightKey";
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -161,15 +161,6 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     NES_DEBUG("ExpressionItem for Right Source {}", sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, onLeftKey, onRightKey, windowType)
         .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight));//call original seqWith() function
-}
-
-//TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-std::string keyAssignment(std::string keyName) {
-    //first, get unique ids for the key attributes
-    auto cepId = getNextOperatorId();
-    //second, create a unique name for both key attributes
-    std::string cepKey = fmt::format("{}{}", keyName, cepId);
-    return cepKey;
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
