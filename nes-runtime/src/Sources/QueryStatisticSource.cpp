@@ -114,5 +114,6 @@ QueryStatisticSource::QueryStatisticSource(
                  taskQueueId) {
 
     // TODO Tim hier die qualifierName vom Schema holen (gibt eine Funktion) und dann vor den Feldern hängen
+    processedTasksFieldName = schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + PROCESSED_TASKS_FIELD_NAME;
 }
 }// namespace NES
