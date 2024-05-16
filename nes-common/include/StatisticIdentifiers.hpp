@@ -46,18 +46,17 @@ static const std::string DEPTH_FIELD_NAME = "DEPTH_FIELD_NAME";
 static const std::string NUMBER_OF_BITS_IN_KEY = "NUMBER_OF_BITS_IN_KEY";
 
 
-// TODO Tim alle Feldnamen zu upper case und underscore konvertieren
 /** Names for the fields of the Query Statistic Source / Logical Stream **/
 static const std::string PROCESSED_TASKS_FIELD_NAME = "PROCESSED_TASKS_FIELD_NAME";
-static const std::string timestampLastProcessedTaskFieldName = "timestampLastProcessedTaskFieldName";
-static const std::string processedTuplesFieldName = "processedTuplesFieldName";
-static const std::string processedBuffersFieldName = "processedBuffersFieldName";
-static const std::string processedWatermarksFieldName = "processedWatermarksFieldName";
-static const std::string latencySumFieldName = "latencySumFieldName";
-static const std::string queueSizeSumFieldName = "queueSizeSumFieldName";
-static const std::string availableGlobalBufferSumFieldName = "availableGlobalBufferSumFieldName";
-static const std::string availableFixedBufferSumFieldName = "availableFixedBufferSumFieldName";
-static const std::string timestampFirstProcessedTaskFieldName = "timestampFirstProcessedTaskFieldName";
+static const std::string TIMESTAMP_LAST_PROCESSED_TASK_FIELD_NAME = "TIMESTAMP_LAST_PROCESSED_TASK_FIELD_NAME";
+static const std::string PROCESSED_TUPLES_FIELD_NAME = "PROCESSED_TUPLES_FIELD_NAME";
+static const std::string PROCESSED_BUFFERS_FIELD_NAME = "PROCESSED_BUFFERS_FIELD_NAME";
+static const std::string PROCESSED_WATERMARKS_FIELD_NAME = "PROCESSED_WATERMARKS_FIELD_NAME";
+static const std::string LATENCY_SUM_FIELD_NAME = "LATENCY_SUM_FIELD_NAME";
+static const std::string QUEUE_SIZE_SUM_FIELD_NAME = "QUEUE_SIZE_SUM_FIELD_NAME";
+static const std::string AVAILABLE_GLOBAL_BUFFER_SUM_FIELD_NAME = "AVAILABLE_GLOBAL_BUFFER_SUM_FIELD_NAME";
+static const std::string AVAILABLE_FIXED_BUFFER_SUM_FIELD_NAME = "AVAILABLE_FIXED_BUFFER_SUM_FIELD_NAME";
+static const std::string TIMESTAMP_FIRST_PROCESSED_TASK_FIELD_NAME = "TIMESTAMP_FIRST_PROCESSED_TASK_FIELD_NAME";
 
 }// namespace NES::Statistic
 
