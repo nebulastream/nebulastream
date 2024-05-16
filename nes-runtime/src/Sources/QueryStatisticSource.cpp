@@ -86,4 +86,33 @@ std::string QueryStatisticSource::toString() const {
 }
 
 SourceType QueryStatisticSource::getType() const { return SourceType::QUERY_STATISTIC_SOURCE; }
+
+QueryStatisticSource::QueryStatisticSource(
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager,
+    const Runtime::QueryManagerPtr& queryManager,
+    const OperatorId& operatorId,
+    const OriginId& originId,
+    StatisticId statisticId,
+    size_t numSourceLocalBuffers,
+    GatheringMode gatheringMode,
+    const std::string& physicalSourceName,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors,
+    uint64_t sourceAffinity,
+    uint64_t taskQueueId)
+    : DataSource(schema,
+                 bufferManager,
+                 queryManager,
+                 operatorId,
+                 originId,
+                 statisticId,
+                 numSourceLocalBuffers,
+                 gatheringMode,
+                 physicalSourceName,
+                 executableSuccessors,
+                 sourceAffinity,
+                 taskQueueId) {
+
+    // TODO Tim hier die qualifierName vom Schema holen (gibt eine Funktion) und dann vor den Feldern hängen
+}
 }// namespace NES

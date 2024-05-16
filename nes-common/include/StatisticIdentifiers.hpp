@@ -44,6 +44,21 @@ static const std::string WIDTH_FIELD_NAME = "WIDTH_FIELD_NAME";
 static const std::string ESTIMATE_FIELD_NAME = "ESTIMATE_FIELD_NAME";
 static const std::string DEPTH_FIELD_NAME = "DEPTH_FIELD_NAME";
 static const std::string NUMBER_OF_BITS_IN_KEY = "NUMBER_OF_BITS_IN_KEY";
+
+
+// TODO Tim alle Feldnamen zu upper case und underscore konvertieren
+/** Names for the fields of the Query Statistic Source / Logical Stream **/
+static const std::string PROCESSED_TASKS_FIELD_NAME = "PROCESSED_TASKS_FIELD_NAME";
+static const std::string timestampLastProcessedTaskFieldName = "timestampLastProcessedTaskFieldName";
+static const std::string processedTuplesFieldName = "processedTuplesFieldName";
+static const std::string processedBuffersFieldName = "processedBuffersFieldName";
+static const std::string processedWatermarksFieldName = "processedWatermarksFieldName";
+static const std::string latencySumFieldName = "latencySumFieldName";
+static const std::string queueSizeSumFieldName = "queueSizeSumFieldName";
+static const std::string availableGlobalBufferSumFieldName = "availableGlobalBufferSumFieldName";
+static const std::string availableFixedBufferSumFieldName = "availableFixedBufferSumFieldName";
+static const std::string timestampFirstProcessedTaskFieldName = "timestampFirstProcessedTaskFieldName";
+
 }// namespace NES::Statistic
 
 #endif//NES_NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_

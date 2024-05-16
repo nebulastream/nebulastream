@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/QueryStatisticSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
@@ -82,8 +83,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                numSourceLocalBuffers,
                                sourceDescriptor->getPhysicalSourceName(),
                                successors);
-    }
-    if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
+    } else if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Default source");
         const DefaultSourceDescriptorPtr defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         return createDefaultDataSourceWithSchemaForVarBuffers(defaultSourceDescriptor->getSchema(),
@@ -307,6 +307,18 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                numSourceLocalBuffers,
                                sourceDescriptor->getPhysicalSourceName(),
                                successors);
+    } else if (sourceDescriptor->instanceOf<QueryStatisticSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating QueryStatistic source");
+        auto queryStatisticSourceDescriptor = sourceDescriptor->as<QueryStatisticSourceDescriptor>();
+        return createQueryStatisticSource(queryStatisticSourceDescriptor->getSchema(),
+                                          bufferManager,
+                                          queryManager,
+                                          operatorId,
+                                          originId,
+                                          statisticId,
+                                          numSourceLocalBuffers,
+                                          sourceDescriptor->getPhysicalSourceName(),
+                                          successors);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

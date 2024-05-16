@@ -38,3 +38,5 @@ if (NES_USE_MQTT)
     add_nes_unit_test(mqtt-source-tests MQTTSourceTest.cpp)
 endif (NES_USE_MQTT)
 
+### QueryStatistic Source Tests ###
+add_nes_unit_test(query-statistic-source-tests "QueryStatisticSourceTest.cpp")

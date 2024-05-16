@@ -27,6 +27,19 @@ class TupleBuffer;
 
 class QueryStatisticSource : public DataSource {
   public:
+    QueryStatisticSource(const SchemaPtr& schema,
+                         const Runtime::BufferManagerPtr& bufferManager,
+                         const Runtime::QueryManagerPtr& queryManager,
+                         const OperatorId& operatorId,
+                         const OriginId& originId,
+                         StatisticId statisticId,
+                         size_t numSourceLocalBuffers,
+                         GatheringMode gatheringMode,
+                         const std::string& physicalSourceName,
+                         const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors,
+                         uint64_t sourceAffinity,
+                         uint64_t taskQueueId);
+
     /**
      * @brief Writes the statistics of the query plans into a buffer. If there is not enough space in the tuple buffer,
      * we write them to a vector (leftOverQueryPlanIds) and try to write them in the next call.
@@ -42,7 +55,6 @@ class QueryStatisticSource : public DataSource {
 
     // Maybe we just ensure that the field in the schema of the memory layout are in a specific order. Then, we would not
     // have to store all fieldNames here
-    // TODO go with Tim through the fields and check if some are missing
     const std::string processedTasksFieldName;
     const std::string timestampLastProcessedTaskFieldName;
     const std::string processedTuplesFieldName;

@@ -532,5 +532,8 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
+// TODO Tim create here a function that creates a query statistic source by calling the constructor of the QueryStatisticSource
+DataSourcePtr createQueryStatisticSource(...);
+
 }// namespace NES
 #endif// NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_
