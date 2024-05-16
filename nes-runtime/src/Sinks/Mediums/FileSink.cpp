@@ -44,8 +44,6 @@ FileSink::FileSink(SinkFormatPtr format,
                  numberOfOrigins),
       filePath(filePath), append(append) { }
 
-FileSink::~FileSink() { }
-
 std::string FileSink::toString() const {
     std::stringstream ss;
     ss << "FileSink(";
@@ -55,75 +53,66 @@ std::string FileSink::toString() const {
 }
 
 void FileSink::setup() {
+    NES_DEBUG("Setting up file sink; filePath={}, schema={}, sinkFormat={}, append={}",
+        filePath, sinkFormat->getSchemaPtr()->toString(), sinkFormat->toString(), append);
+    // Remove an existing file unless the append mode is APPEND.
     if (!append) {
         if (std::filesystem::exists(filePath.c_str())) {
             std::error_code ec;
             if (!std::filesystem::remove(filePath.c_str(), ec)) {
-                NES_ERROR("Could not remove existing output file: filePath = {} ", filePath);
+                NES_ERROR("Could not remove existing output file: filePath={} ", filePath);
                 isOpen = false;
                 return;
             }
         }
     }
-    NES_DEBUG("FileSink: open file= {}", filePath);
 
-    // open the file stream
+    // Open the file stream
     if (!outputFile.is_open()) {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
     isOpen = outputFile.is_open() && outputFile.good();
     if (!isOpen) {
-        NES_ERROR("Could not open output file; filePath = {}, is_open() = {}, good = {}", filePath, outputFile.is_open(), outputFile.good());
+        NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}", filePath, outputFile.is_open(), outputFile.good());
     }
 }
 
 void FileSink::shutdown() {
-    NES_DEBUG("~FileSink: close file={}", filePath);
+    NES_DEBUG("Closing file sink, filePath={}", filePath);
     outputFile.close();
 }
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) { return writeDataToFile(inputBuffer); }
-
-std::string FileSink::getFilePath() const { return filePath; }
-
-bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
+bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
     if (!isOpen) {
+        NES_DEBUG("The output file could not be opened during setup of the file sink.");
         return false;
     }
     std::unique_lock lock(writeMutex);
-    NES_DEBUG("FileSink: getSchema medium {} format {} mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
 
     if (!inputBuffer) {
-        NES_ERROR("FileSink::writeDataToFile input buffer invalid");
+        NES_ERROR("Invalid input buffer");
         return false;
     }
 
     if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
+        NES_DEBUG("Writing schema to file sink; filePath = {}, schema = {}, sinkFormat = {}",
+            filePath, sinkFormat->getSchemaPtr()->toString(), sinkFormat->toString());
         auto schemaStr = sinkFormat->getFormattedSchema();
         outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
         schemaWritten = true;
     } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-        NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
+        NES_DEBUG("Writing the schema is not supported for NES_FORMAT");
     } else {
-        NES_DEBUG("FileSink::getData: schema already written");
+        NES_DEBUG("Schema already written");
     }
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
-    NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, fBuffer);
+    NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
     outputFile.flush();
     return true;
-}
-
-bool FileSink::getAppend() const { return append; }
-
-std::string FileSink::getAppendAsString() const {
-    if (append) {
-        return "APPEND";
-    }
-    return "OVERWRITE";
 }
 
 }// namespace NES

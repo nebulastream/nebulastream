@@ -24,17 +24,19 @@
 namespace NES {
 
 /**
- * @brief this class implements the File sing
+ * @brief The file sink writes the stream result to a text file, in CSV or JSON format.
  */
 class FileSink : public SinkMedium {
   public:
     /**
-     * @brief constructor that creates an empty file sink using a schema
-     * @param schema of the print sink
-     * @param format in which the data is written
-     * @param filePath location of file on sink server
-     * @param modus of writting (overwrite or append)
-     * @param numberOfOrigins: number of origins of a given query
+     * @brief Create a file sink.
+     * @param nodeEngine The node engine of the worker.
+     * @param numOfProducers ?
+     * @param filePath Name of the file to which the stream is written.
+     * @param append True, if the stream should be appended to an existing file. If false, an existing file is first removed.
+     * @param sharedQueryId ?
+     * @param decomposedQueryPlanId ?
+     * @param numberOfOrigins number of origins of a given query
      */
     explicit FileSink(SinkFormatPtr format,
                       Runtime::NodeEnginePtr nodeEngine,
@@ -46,73 +48,51 @@ class FileSink : public SinkMedium {
                       uint64_t numberOfOrigins = 1);
 
     /**
-     * @brief dtor
-     */
-    ~FileSink() override;
-
-    /**
-     * @brief method to override virtual setup function
-     * @Note currently the method does nothing
+     * @brief Setup the file sink.
+     *
+     * This method attempts to open the file. If the file exists, it is first removed, unless append is true.
+     * If the file cannot be opened, subsequent calls to writeData will fail.
      */
     void setup() override;
 
     /**
-     * @brief method to override virtual shutdown function
-     * @Note currently the method does nothing
+     * @brief Clean up the file sink.
+     *
+     * This method closes the file.
      */
     void shutdown() override;
 
     /**
-     * @brief method to write a TupleBuffer
-     * @param a tuple buffers pointer
-     * @return bool indicating if the write was complete
+     * @brief Write the contents of a tuple buffer to the file sink.
+     * @param inputBuffer The tuple buffer that should be written to the file sink.
+     * @return True, if the contents of the tuple buffer could be written completely to the file sink.
      */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
-     * @brief override the toString method for the file output sink
-     * @return returns string describing the file output sink
+     * @brief Return a string representation of the file sink.
+     * @return A string describing the file sink.
      */
     std::string toString() const override;
 
     /**
-     * @brief get file path
-     */
-    std::string getFilePath() const;
-
-    /**
-    * @brief method to return the type of medium
-    * @return type of medium
+    * @brief Return the type of the sink medium.
+    * @return SinkMediumTypes::FILE_SINK indicating that this is a file sink.
     */
     SinkMediumTypes getSinkMediumType() override;
 
-    /**
-     * @brief method to return if the sink is appended
-     * @return bool indicating append
-     */
-    bool getAppend() const;
-
-    /**
-     * @brief method to return if the sink is append or overwrite
-     * @return string of mode
-     */
-    std::string getAppendAsString() const;
-
-  private:
-    /**
-     * @brief method to write a TupleBuffer to a local file system file
-     * @param a tuple buffers pointer
-     * @return bool indicating if the write was complete
-     */
-    bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
-
   protected:
+    /// The output file path of the file sink.
     std::string filePath;
-    std::ofstream outputFile;
-    bool append{false};
 
-    // Indicate if the file could be opened during setup.
-    bool isOpen{false};
+    /// The output file stream.
+    std::ofstream outputFile;
+
+    /// Indicate if the output should be appended to an existing file.
+    bool append {false};
+
+    /// Indicate if the file could be opened during setup.
+    bool isOpen {false};
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
