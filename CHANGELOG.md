@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.131](https://github.com/nebulastream/nebulastream/tree/v0.6.131) (2024-05-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.130...v0.6.131)
+
+**Implemented enhancements:**
+
+- \[TASK\] Testing for SEQ operator mapping  [\#4777](https://github.com/nebulastream/nebulastream/issues/4777)
+
 ## [v0.6.130](https://github.com/nebulastream/nebulastream/tree/v0.6.130) (2024-05-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.129...v0.6.130)
