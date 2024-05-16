@@ -50,6 +50,7 @@ void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool 
         this->timestampQueryStart = timestampQueryStart;
     }
 }
+
 void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite = false) {
     if (!noOverwrite || this->timestampFirstProcessedTask == 0) {
         NES_DEBUG("QueryStatistics::setTimestampFirstProcessedTask called with  {}", timestampFirstProcessedTask);
@@ -113,6 +114,8 @@ void QueryStatistics::clear() {
     queueSizeSum = 0;
     availableGlobalBufferSum = 0;
     availableFixedBufferSum = 0;
+    timestampFirstProcessedTask = 0;
+    timestampLastProcessedTask = 0;
 }
 
 SharedQueryId QueryStatistics::getQueryId() const { return queryId.load(); }

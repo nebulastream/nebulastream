@@ -243,6 +243,12 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     uint64_t getNumberOfBuffersPerEpoch() const;
 
     /**
+     * @brief Gets all running decomposed query plan ids
+     * @return Vector of decomposed query plan ids
+     */
+    std::vector<DecomposedQueryPlanId> getAllRunningQueryPlanIds() const;
+
+    /**
      * @brief This method informs the QueryManager that a source has failed
      * @param source the failed source
      * @param errorMessage the reason of the feature

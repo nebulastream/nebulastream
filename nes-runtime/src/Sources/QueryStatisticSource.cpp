@@ -17,6 +17,7 @@
 #include <Sources/QueryStatisticSource.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <algorithm>
 #include <cstdint>
 
 namespace NES {
@@ -24,18 +25,24 @@ namespace NES {
 std::optional<Runtime::TupleBuffer> QueryStatisticSource::receiveData() {
     auto buffer = allocateBuffer();
     auto tupleBuffer = buffer.getBuffer();
+    const auto bufferCapacity = buffer.getCapacity();
 
-    // Getting all query statistics for all query plans
-    std::vector<Runtime::QueryStatistics> currentQueryStatistics;
-    for (auto& queryPlanId : queryPlanIds) {
-        auto queryStatistics = queryManager->getQueryStatistics(queryPlanId);
-        currentQueryStatistics.emplace_back(queryStatistics->copyAndReset());
+    // Writing all query statistics into leftOverQueryPlanIds
+    for (auto& queryPlanId : queryManager->getAllRunningQueryPlanIds()) {
+        nextQueryPlanIds.push_back(queryPlanId);
     }
 
-    for (const auto& statistic : currentQueryStatistics) {
-        writeStatisticIntoBuffer(tupleBuffer, statistic);
+    // As long as we can write the statistics into the buffer, we do so
+    while (nextQueryPlanIds.size() > 0) {
+        auto queryStatistic = queryManager->getQueryStatistics(nextQueryPlanIds.front());
+        writeStatisticIntoBuffer(tupleBuffer, queryStatistic->copyAndReset());
+        nextQueryPlanIds.pop_front();
+        if (tupleBuffer.getNumberOfTuples() >= bufferCapacity) {
+            return buffer.getBuffer();
+        }
     }
 
+    return {};
 }
 
 void QueryStatisticSource::writeStatisticIntoBuffer(Runtime::TupleBuffer buffer, const Runtime::QueryStatistics& statistic) {
@@ -69,6 +76,9 @@ void QueryStatisticSource::writeStatisticIntoBuffer(Runtime::TupleBuffer buffer,
     *reinterpret_cast<uint64_t*>(buffer.getBuffer() + availableFixedBufferSumFieldOffset.value()) = statistic.getAvailableFixedBufferSum();
     *reinterpret_cast<uint64_t*>(buffer.getBuffer() + timestampFirstProcessedTaskFieldNameOffset.value()) = statistic.getTimestampFirstProcessedTask();
     *reinterpret_cast<uint64_t*>(buffer.getBuffer() + timestampLastProcessedTaskFieldNameOffset.value()) = statistic.getTimestampLastProcessedTask();
+
+    // Incrementing the numberOfTuples in the buffer
+    buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
 }
 
 std::string QueryStatisticSource::toString() const {

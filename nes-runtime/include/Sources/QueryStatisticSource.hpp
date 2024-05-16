@@ -16,6 +16,7 @@
 #define NES_NES_RUNTIME_INCLUDE_SOURCES_QUERYSTATISTICSOURCE_HPP_
 
 #include <Sources/DataSource.hpp>
+#include <list>
 
 namespace NES {
 
@@ -26,6 +27,11 @@ class TupleBuffer;
 
 class QueryStatisticSource : public DataSource {
   public:
+    /**
+     * @brief Writes the statistics of the query plans into a buffer. If there is not enough space in the tuple buffer,
+     * we write them to a vector (leftOverQueryPlanIds) and try to write them in the next call.
+     * @return Buffer or a nullopt
+     */
     std::optional<Runtime::TupleBuffer> receiveData() override;
     std::string toString() const override;
     SourceType getType() const override;
@@ -33,9 +39,6 @@ class QueryStatisticSource : public DataSource {
   private:
     void writeStatisticIntoBuffer(Runtime::TupleBuffer buffer, const Runtime::QueryStatistics& statistic);
 
-
-    // TODO think about, if we can get these ids or if we have to somehow retrieve them during the lowering or runtime
-    std::vector<DecomposedQueryPlanId> queryPlanIds;
 
     // Maybe we just ensure that the field in the schema of the memory layout are in a specific order. Then, we would not
     // have to store all fieldNames here
@@ -51,6 +54,7 @@ class QueryStatisticSource : public DataSource {
     const std::string availableFixedBufferSumFieldName;
     const std::string timestampFirstProcessedTaskFieldName;
 
+    std::list<DecomposedQueryPlanId> nextQueryPlanIds;
 
 };
 

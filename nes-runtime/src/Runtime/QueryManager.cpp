@@ -319,4 +319,13 @@ uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
+std::vector<DecomposedQueryPlanId> AbstractQueryManager::getAllRunningQueryPlanIds() const {
+    std::vector<DecomposedQueryPlanId> result;
+    std::unique_lock lock(queryMutex);
+    for (const auto& [id, queryPlan] : runningQEPs) {
+        result.push_back(id);
+    }
+    return result;
+}
+
 }// namespace NES::Runtime
