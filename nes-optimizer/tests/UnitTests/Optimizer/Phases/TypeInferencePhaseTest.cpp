@@ -1336,7 +1336,8 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
+
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$end"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$key"));
@@ -1390,7 +1391,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$end"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$key"));
