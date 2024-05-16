@@ -44,8 +44,7 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
                                                            const std::string& fieldToBuildCountMinOver,
                                                            const std::string& timestampFieldName,
                                                            const bool ingestionTime) {
-    auto currentIngestionTs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto currentIngestionTs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto buffer = bufferManager.getBufferBlocking();
     std::vector<TupleBuffer> inputBuffers;
 
@@ -113,7 +112,7 @@ void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupl
         if (allReservoirSampleStatistics.empty()) {
             sampleStatistic = Statistic::ReservoirSampleStatistic::createInit(startTs, endTs, sampleSize, sampleMemoryLayout->getSchema());
             statisticStore->insertStatistic(statisticHash, sampleStatistic);
-            NES_DEBUG("Created and inserted new countMinStatistic = {} for statisticHash = {}",
+            NES_DEBUG("Created and inserted new sampleStatistic = {} for statisticHash = {}",
                       sampleStatistic->toString(), statisticHash);
         } else {
             sampleStatistic = allReservoirSampleStatistics[0];
@@ -242,6 +241,8 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
             auto col = calcHash % width;
             countMinStatistic->as<Statistic::CountMinStatistic>()->update(row, col);
         }
+        // Incrementing the observed tuples as we have seen one more
+        countMinStatistic->incrementObservedTuples(1);
     }
 }
 

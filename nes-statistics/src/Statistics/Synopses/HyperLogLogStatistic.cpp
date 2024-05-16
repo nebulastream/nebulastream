@@ -42,8 +42,7 @@ HyperLogLogStatistic::createInit(const Windowing::TimeMeasure& startTs, const Wi
                                                                        endTs,
                                                                        observedTuples,
                                                                        bitWidth,
-                                                                       hyperLogLogData,
-                                                                       std::numeric_limits<double>::quiet_NaN()));
+                                                                       hyperLogLogData));
 }
 
 HyperLogLogStatistic::HyperLogLogStatistic(const Windowing::TimeMeasure& startTs,
@@ -120,9 +119,6 @@ void HyperLogLogStatistic::merge(const SynopsesStatistic& other) {
 
     // 5. We add the observed tuples together
     observedTuples += otherHyperLogLog->observedTuples;
-
-    // 6. Calculating the new estimate, as we have changed the registers
-    performEstimation();
 }
 
 void HyperLogLogStatistic::update(uint64_t hash) {
@@ -133,9 +129,6 @@ void HyperLogLogStatistic::update(uint64_t hash) {
     const auto index = hash >> (64 - bitWidth);
     const auto rank = _GET_CLZ((hash << bitWidth), 64_u64 - bitWidth);
     registers[index] = std::max(registers[index], rank);
-
-    // For now, we calculate for every tuple the new estimate
-    performEstimation();
 }
 
 void HyperLogLogStatistic::performEstimation() {

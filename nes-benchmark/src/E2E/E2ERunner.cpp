@@ -43,7 +43,7 @@ void executeSingleRun(E2EBenchmarkConfigPerRun& configPerRun,
 void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
     std::ofstream ofs;
     ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out | std::ofstream::app);
-    ofs << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
+    ofs << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,memoryUsageInBytes,processedTasks,processedBuffers,processedTuples,latencySum,"
            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
            "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,"

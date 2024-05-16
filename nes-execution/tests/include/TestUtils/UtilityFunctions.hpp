@@ -36,7 +36,7 @@
 namespace NES::Runtime::Execution::Util {
 
 /**
- * @brief Creates data for the schema <UINT64,UINT64>. The fieldToBuildCountMinOver is rnd() while timestampField gets monotonic
+ * @brief Creates data for the schema <INT64,UINT64>. The fieldToBuildCountMinOver is rnd() while timestampField gets monotonic
  * increasing timestamps
  * @param numberOfTuples
  * @param bufferManager

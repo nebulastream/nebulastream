@@ -13,6 +13,7 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalHyperLogLogBuildOperator.hpp>
+#include <fmt/format.h>
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalHyperLogLogBuildOperator::create(const OperatorId operatorId,
@@ -71,6 +72,16 @@ OperatorPtr PhysicalHyperLogLogBuildOperator::copy() {
         create(id, statisticId, inputSchema, outputSchema, nameOfFieldToTrack, width, metricHash, windowType, sendingPolicy);
     copy->as<PhysicalHyperLogLogBuildOperator>()->setInputOriginIds(inputOriginIds);
     return copy;
+}
+
+std::string PhysicalHyperLogLogBuildOperator::toString() const {
+    return fmt::format("PhysicalHyperLogLogBuildOperator:\n"
+                       "{}"
+                       "width: {}, "
+                       "sendingPolicy: {}, "
+                       "metricHash: {}\n",
+                       PhysicalUnaryOperator::toString(),
+                       width, sendingPolicy->toString(), metricHash);
 }
 
 uint64_t PhysicalHyperLogLogBuildOperator::getWidth() const { return width; }

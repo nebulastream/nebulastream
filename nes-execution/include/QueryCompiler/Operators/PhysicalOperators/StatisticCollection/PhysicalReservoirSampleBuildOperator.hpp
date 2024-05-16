@@ -49,6 +49,7 @@ class PhysicalReservoirSampleBuildOperator : public PhysicalSynopsisBuildOperato
 
     OperatorPtr copy() override;
     uint64_t getSampleSize() const;
+    std::string toString() const override;
 
   private:
     PhysicalReservoirSampleBuildOperator(const OperatorId id,

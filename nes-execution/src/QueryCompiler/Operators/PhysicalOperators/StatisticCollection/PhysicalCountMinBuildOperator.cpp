@@ -13,6 +13,8 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalCountMinBuildOperator.hpp>
+#include <fmt/format.h>
+#include <sstream>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -85,6 +87,17 @@ OperatorPtr PhysicalCountMinBuildOperator::copy() {
                        sendingPolicy);
     copy->as<PhysicalCountMinBuildOperator>()->setInputOriginIds(inputOriginIds);
     return copy;
+}
+
+std::string PhysicalCountMinBuildOperator::toString() const {
+    return fmt::format("PhysicalCountMinBuildOperator:\n"
+                       "{}"
+                       "width: {}, "
+                       "depth: {}, "
+                       "sendingPolicy: {}, "
+                       "metricHash: {}\n",
+                       PhysicalUnaryOperator::toString(),
+                       width, depth, sendingPolicy->toString(), metricHash);
 }
 
 uint64_t PhysicalCountMinBuildOperator::getWidth() const { return width; }

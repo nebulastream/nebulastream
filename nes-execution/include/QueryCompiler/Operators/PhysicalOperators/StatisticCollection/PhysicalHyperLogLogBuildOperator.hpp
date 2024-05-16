@@ -71,6 +71,7 @@ class PhysicalHyperLogLogBuildOperator : public PhysicalSynopsisBuildOperator,
 
     OperatorPtr copy() override;
     uint64_t getWidth() const;
+    std::string toString() const override;
 
   private:
     PhysicalHyperLogLogBuildOperator(const OperatorId id,

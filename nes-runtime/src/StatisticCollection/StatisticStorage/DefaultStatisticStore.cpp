@@ -36,6 +36,29 @@ std::vector<StatisticPtr> DefaultStatisticStore::getStatistics(const StatisticHa
     return returnStatisticsVector;
 }
 
+std::optional<StatisticPtr> DefaultStatisticStore::getSingleStatistic(const StatisticHash& statisticHash,
+                                                                      const Windowing::TimeMeasure& startTs,
+                                                                      const Windowing::TimeMeasure& endTs) {
+    auto lockedKeyToStatisticMap = keyToStatistics.wlock();
+    auto& statisticVec = (*lockedKeyToStatisticMap)[statisticHash];
+    std::vector<StatisticPtr> returnStatisticsVector;
+
+    /* We describe a bool lambda that checks if the statistics lies between [startTs, endTs].
+     * Afterward, we use the lambda function in the find_if() that iterates over the statisticVec and finds the first item,
+     * that satisfies the lambda condition.
+     */
+    auto getCondition = [startTs, endTs](const StatisticPtr& statistic) {
+        return startTs <= statistic->getStartTs() && statistic->getEndTs() <= endTs;
+    };
+
+    auto it = std::find_if(statisticVec.begin(), statisticVec.end(), getCondition);
+    if (it != statisticVec.end()) {
+        return *it;
+    } else {
+        return {};
+    }
+}
+
 bool DefaultStatisticStore::insertStatistic(const StatisticHash& statisticHash, StatisticPtr statistic) {
     auto lockedKeyToStatisticMap = keyToStatistics.wlock();
     auto& statisticVec = (*lockedKeyToStatisticMap)[statisticHash];

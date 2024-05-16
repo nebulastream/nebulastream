@@ -58,7 +58,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         auto query = fmt::format("{}-{}", queryId, subPlanId);
         // create new context for handling debug output
         auto dumpContext = DumpContext::create("QueryCompilation-" + query);
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
+//        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         timer.start();
         NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);

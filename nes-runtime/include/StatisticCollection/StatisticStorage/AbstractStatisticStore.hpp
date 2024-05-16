@@ -17,6 +17,7 @@
 
 #include <Statistics/Statistic.hpp>
 #include <Statistics/StatisticKey.hpp>
+#include <optional>
 
 namespace NES::Statistic {
 
@@ -42,6 +43,17 @@ class AbstractStatisticStore {
     virtual std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
                                                     const Windowing::TimeMeasure& startTs,
                                                     const Windowing::TimeMeasure& endTs) = 0;
+
+    /**
+     * @brief Gets a single statistic belonging to the statisticHash that has exactly the startTs and endTs
+     * @param statisticHash
+     * @param startTs
+     * @param endTs
+     * @return optional<StatisticPtr>
+     */
+    virtual std::optional<StatisticPtr> getSingleStatistic(const StatisticHash& statisticHash,
+                                                           const Windowing::TimeMeasure& startTs,
+                                                           const Windowing::TimeMeasure& endTs) = 0;
 
     /**
      * @brief Returns all statistics currently in this store

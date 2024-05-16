@@ -80,6 +80,7 @@ class PhysicalCountMinBuildOperator : public PhysicalSynopsisBuildOperator,
     OperatorPtr copy() override;
     uint64_t getWidth() const;
     uint64_t getDepth() const;
+    std::string toString() const override;
 
   private:
     PhysicalCountMinBuildOperator(const OperatorId id,

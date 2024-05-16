@@ -1,0 +1,30 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1, 4, 8
+bufferSizeInBytes: 4096
+numberOfPreAllocatedBuffer: 10000
+numberOfBuffersToProduce: 5000000
+
+numberOfBuffersInGlobalBufferManager: 102400
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+
+
+# ~~~ Benchmark parameter for the entire run ~~~
+logLevel: LOG_INFO
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 2
+numberOfMeasurementsToCollect: 5
+
+logicalSources:
+  - name: input1
+    type: Uniform
+    minValue: 0
+    maxValue: 10000
+    numberOfPhysicalSources: 8
+
+dataProvider: Internal
+dataProviderMode: ZeroCopy
+outputFile: ReservoirSample.csv
+benchmarkName: ReservoirSample
+query: 'Query::from("input1").buildStatistic(TumblingWindow::of(IngestionTime(), Milliseconds(1000)), Statistic::ReservoirSampleDescriptor::create(Statistic::Over("value"), (uint64_t)sample_size, keep_fields), 42, Statistic::SendingPolicyASAP::create(Statistic::StatisticDataCodec::DEFAULT), Statistic::NeverTrigger::create())
+                               .sink(Statistic::StatisticSinkDescriptor::create(Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE, Statistic::StatisticDataCodec::DEFAULT));'

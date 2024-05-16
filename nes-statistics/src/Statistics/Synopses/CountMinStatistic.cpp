@@ -58,13 +58,10 @@ StatisticPtr CountMinStatistic::createInit(const Windowing::TimeMeasure& startTs
 }
 
 void CountMinStatistic::update(uint64_t row, uint64_t col) {
-    // 1. Incrementing the observed tuples as we have seen one more
-    incrementObservedTuples(1);
-
-    // 2. Calculating the position, as we store a 2-d array in a 1-d vector.
+    // 1. Calculating the position, as we store a 2-d array in a 1-d vector.
     const auto pos = row * width + col;
 
-    // 3. Incrementing the counter at the previously computed position
+    // 2. Incrementing the counter at the previously computed position
     countMinData[pos] += 1;
 }
 

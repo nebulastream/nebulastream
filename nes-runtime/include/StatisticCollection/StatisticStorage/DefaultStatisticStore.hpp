@@ -35,6 +35,9 @@ class DefaultStatisticStore : public AbstractStatisticStore {
     std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
                                             const Windowing::TimeMeasure& startTs,
                                             const Windowing::TimeMeasure& endTs) override;
+    std::optional<StatisticPtr> getSingleStatistic(const StatisticHash& statisticHash,
+                                                   const Windowing::TimeMeasure& startTs,
+                                                   const Windowing::TimeMeasure& endTs) override;
 
     std::vector<HashStatisticPair> getAllStatistics() override;
 

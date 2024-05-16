@@ -11,5 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-    DefaultStatisticStore.cpp
+        DefaultStatisticStore.cpp
+        BuildStatisticStore.cpp
 )

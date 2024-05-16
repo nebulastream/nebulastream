@@ -58,7 +58,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
     coordinatorConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::FILE_AND_CONSOLE;
+    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::NONE;
     coordinatorConf->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
 
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
@@ -111,6 +111,9 @@ void E2ESingleRun::createSources() {
         NES_INFO("Creating {} physical sources for logical source {}",
                  numberOfPhysicalSrc,
                  logicalSource->getLogicalSourceName());
+        std::cout << fmt::format("Creating {} physical sources for logical source {}",
+                                 numberOfPhysicalSrc,
+                                 logicalSource->getLogicalSourceName()) << std::endl;
 
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
             auto generatorName = dataGenerator->getName();
@@ -124,9 +127,11 @@ void E2ESingleRun::createSources() {
 
             sourceCnt++;
             NES_INFO("Created {} for {}", physicalStreamName, logicalSource->getLogicalSourceName());
+            std::cout << fmt::format("Created {} for {}", physicalStreamName, logicalSource->getLogicalSourceName()) << std::endl;
         }
     }
     NES_INFO("Created sources and the accommodating data generation and data providing!");
+    std::cout << "Created sources and the accommodating data generation and data providing!" << std::endl;
 }
 
 void E2ESingleRun::submitQueries(RequestHandlerServicePtr requestHandlerService, Catalogs::Query::QueryCatalogPtr queryCatalog) {
@@ -137,6 +142,7 @@ void E2ESingleRun::submitQueries(RequestHandlerServicePtr requestHandlerService,
             std::this_thread::sleep_for(std::chrono::seconds(query.getCustomDelayInSeconds()));
 
             NES_INFO("E2EBase: Submitting query = {}", query.getQueryString());
+            std::cout << fmt::format("E2EBase: Submitting query = {}", query.getQueryString()) << std::endl;
             auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryString(),
                                                                                   Optimizer::PlacementStrategy::BottomUp);
             submittedIds.push_back(queryId);
@@ -160,9 +166,14 @@ void E2ESingleRun::runQueries() {
 
     submitQueries(requestHandlerService, queryCatalog);
 
+
+    // Adding the initial main memory usage to the measurements, after the coordinator has started and the query is submitted
+    measurements.setInitialMemoryUsage(Util::getCurrentUsedPhysicalMemoryInBytes());
+
     NES_DEBUG("Starting the data providers...");
     for (auto& dataProvider : allDataProviders) {
         dataProvider->start();
+        std::cout << "Started data provider!" << std::endl;
     }
 
     // Wait for the system to come to a steady state
@@ -172,6 +183,7 @@ void E2ESingleRun::runQueries() {
 
     // For now, we only support one way of collecting the measurements
     NES_INFO("Starting to collect measurements...");
+    std::cout << "Starting to collect measurements..." << std::endl;
     uint64_t found = 0;
     while (found != submittedIds.size()) {
         for (auto id : submittedIds) {
@@ -182,9 +194,13 @@ void E2ESingleRun::runQueries() {
                     NES_DEBUG("Query with id = {} not ready with no. tuples = {}. Sleeping for a second now...",
                               id,
                               iter->getProcessedTuple());
+                    std::cout << fmt::format("Query with id = {} not ready with no. tuples = {}. Sleeping for a second now...",
+                              id,
+                              iter->getProcessedTuple()) << std::endl;
                     sleep(1);
                 }
                 NES_INFO("Query with id = {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
+                std::cout << fmt::format("Query with id = {} Ready with no. tuples = {}", id, iter->getProcessedTuple()) << std::endl;
                 ++found;
             }
         }
@@ -194,6 +210,7 @@ void E2ESingleRun::runQueries() {
     NES_INFO("Done measuring!");
 
     NES_INFO("Done with single run!");
+    std::cout << fmt::format("Done with single run!") << std::endl;
 }
 
 void E2ESingleRun::stopQueries() {
@@ -290,7 +307,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     ofs.close();
 
     NES_INFO("Done writing the measurements to {}", configOverAllRuns.outputFile->getValue());
-    NES_INFO("Statistics are: {}", outputCsvStream.str())
+    NES_INFO("Statistics are: {}", outputCsvStream.str());
     std::cout << "Throughput=" << measurements.getThroughputAsString() << std::endl;
 }
 
@@ -444,6 +461,7 @@ void E2ESingleRun::collectMeasurements() {
         uint64_t timeStamp =
             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         measurements.addNewTimestamp(timeStamp);
+        measurements.addMainMemoryUsage(timeStamp, Util::getCurrentUsedPhysicalMemoryInBytes());
 
         for (auto id : submittedIds) {
             auto sharedQueryId = coordinator->getGlobalQueryPlan()->getSharedQueryId(id);
@@ -469,7 +487,7 @@ void E2ESingleRun::collectMeasurements() {
                         (subPlanStatistics->getAvailableFixedBufferSum() / subPlanStatistics->getProcessedBuffers());
                 }
 
-                printQuerySubplanStatistics(timeStamp, subPlanStatistics, processedTasks);
+//                printQuerySubplanStatistics(timeStamp, subPlanStatistics, processedTasks);
                 measurements.addNewMeasurement(processedTasks,
                                                processedBuffers,
                                                processedTuples,
@@ -480,6 +498,8 @@ void E2ESingleRun::collectMeasurements() {
                                                timeStamp);
             }
         }
+        std::cout << "Measurement " << cnt << " done!" << std::endl;
+        std::flush(std::cout);
 
         // Calculate the time to sleep until the next period starts
         auto curTime =
