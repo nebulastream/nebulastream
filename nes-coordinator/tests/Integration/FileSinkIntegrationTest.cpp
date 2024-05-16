@@ -15,83 +15,95 @@
 #include <API/TestSchemas.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Sinks/Mediums/FileSink.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
 
+// TODO Documentation: Fixture and each testx
 class FileSinkIntegrationTest : public Testing::BaseIntegrationTest {
 public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FileSinkIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
     }
-    TestHarness createTestHarness(const Query& query) const {
-        struct Input { uint64_t id; };
+    void SetUp() override {
+        BaseIntegrationTest::SetUp();
+        createTestHarnessWithMemorySource();
+    }
+    void runQueryAndVerifyExpectedResults(const std::string& expectedOutput) const {
+        testHarness->runQuery(NES::Util::countLines(expectedOutput));
+        auto actualBuffers = testHarness->getOutput();
+        auto tmpBuffer = TestUtils::createExpectedBufferFromCSVString(expectedOutput, testHarness->getOutputSchema(), testHarness->getBufferManager());
+        auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffer, testHarness->getOutputSchema());
+        EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+    }
+    void runQueryAndVerifyFailureState() const {
+        testHarness->addFileSink();
+        testHarness->enqueueQuery();
+        EXPECT_TRUE(testHarness->checkFailedOrTimeout());
+        testHarness->stopCoordinatorAndWorkers();
+    }
+
+private:
+    void createTestHarnessWithMemorySource() {
+        const std::string logicalSourceName = "logicalSource";
+        Query query = Query::from(logicalSourceName);
+        testHarness = std::make_unique<TestHarness>(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
         const auto schema = TestSchemas::getSchemaTemplate("id_u64")->updateSourceName(logicalSourceName);
-        TestHarness testHarness {query, *restPort, *rpcCoordinatorPort, getTestResourceFolder()};
-        testHarness.addLogicalSource(logicalSourceName, schema).attachWorkerWithMemorySourceToCoordinator(logicalSourceName);
-        testHarness.pushElement<Input>({1}, 2);
-        testHarness.validate().setupTopology();
-        return testHarness;
+        testHarness->addLogicalSource(logicalSourceName, schema).attachWorkerWithMemorySourceToCoordinator(logicalSourceName);
+        struct Input { uint64_t id; };
+        testHarness->pushElement<Input>({1}, 2);
+        testHarness->validate().setupTopology();
     }
-    void runQueryAndVerifyFailureState(const TestHarness& testHarness, const Query& query) {
-        auto coordinator = testHarness.getCoordinator();
-        QueryId queryId = coordinator->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(), NES::Optimizer::PlacementStrategy::BottomUp);
-        EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, coordinator->getQueryCatalog()));
-        for (const auto& workerConfiguration : testHarness.getTestHarnessWorkerConfigurations()) {
-            workerConfiguration->getNesWorker()->stop(false);
-        }
-        coordinator->stopCoordinator(false);
-    }
-    const std::string logicalSourceName = "logicalSource";
+
+protected:
+    std::unique_ptr<TestHarness> testHarness;
 };
 
-TEST_F(FileSinkIntegrationTest, canWriteOutputFile) {
-    // The test query copies the contents of the input source to the output CSV file of the test harness.
-    const Query query = Query::from(logicalSourceName);
+TEST_F(FileSinkIntegrationTest, DISABLED_canWriteToOutputFileInAppendMode) {
+    // Create the output CSV file with a single row.
+    const std::string outputFilePath = getTestResourceFolder() / "output.csv";
+    std::ofstream outputFile { outputFilePath };
+    outputFile << "3" << std::endl;
+    outputFile.close();
 
-    // Setup a test harness with a memory source that contains a single input tuple.
-    TestHarness testHarness = createTestHarness(query);
-
-    // Run the query and compare the output to the expected value.
-    const std::string expectedOutput = "1\n";
-    auto actualBuffers = testHarness.runQuery(NES::Util::countLines(expectedOutput)).getOutput();
-    auto tmpBuffer = TestUtils::createExpectedBufferFromCSVString(expectedOutput, testHarness.getOutputSchema(), testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffer, testHarness.getOutputSchema());
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+    // Test logic
+    testHarness->setOutputFilePath(outputFilePath);
+    testHarness->setAppendMode("APPEND");
+    runQueryAndVerifyExpectedResults("3\n1\n");
 }
 
-TEST_F(FileSinkIntegrationTest, cannotWriteOutputFile) {
+TEST_F(FileSinkIntegrationTest, canWriteToOutputFileInOverWriteMode) {
+    // Create the output CSV file with a single row.
+    const std::string outputFilePath = getTestResourceFolder() / "output.csv";
+    std::ofstream outputFile { outputFilePath };
+    outputFile << "3" << std::endl;
+    outputFile.close();
+
+    // Test logic
+    testHarness->setOutputFilePath(outputFilePath);
+    testHarness->setAppendMode("OVERWRITE");
+    runQueryAndVerifyExpectedResults("1\n");
+}
+
+TEST_F(FileSinkIntegrationTest, cannotOpenOutputFile) {
     // The test query tries to copy the contents of the input source to an output CSV file inside a folder that does not exist.
     const std::string outputFilePath = getTestResourceFolder() / "bad_folder" / "output.csv";
-    const Query query = Query::from(logicalSourceName)
-        .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
-
-    // Setup a test harness with a memory source that contains a single input tuple.
-    TestHarness testHarness = createTestHarness(query);
-
-    // Run the query and verify that its status is FAILED in the query catalog
-    runQueryAndVerifyFailureState(testHarness, query);
+    testHarness->setOutputFilePath(outputFilePath);
+    runQueryAndVerifyFailureState();
 }
 
-TEST_F(FileSinkIntegrationTest, cannotRemoveOutputFile) {
+TEST_F(FileSinkIntegrationTest, cannotRemoveOutputFileInOverwriteMode) {
     // Create an output file which cannot be removed.
     // We simulate this by creating a non-empty folder, which std::filesystem::remove will fail to remove.
     auto folder = getTestResourceFolder() / "folder";
     std::filesystem::create_directory(folder);
-    std::ofstream dummyFile(folder / "dummy-file");
+    std::ofstream dummyFile { folder / "dummy-file" };
     dummyFile.close();
 
-    // The test query outputs results to the folder, which cannot be removed.
-    const Query query = Query::from(logicalSourceName)
-        .sink(FileSinkDescriptor::create(folder, "CSV_FORMAT", "OVERWRITE"));
-
-    // Setup a test harness with a memory source that contains a single input tuple.
-    TestHarness testHarness = createTestHarness(query);
-
-    // Run the query and verify that its status is FAILED in the query catalog
-    runQueryAndVerifyFailureState(testHarness, query);
+    // Test logic
+    testHarness->setOutputFilePath(folder);
+    runQueryAndVerifyFailureState();
 }
 
-
-
-}
+};

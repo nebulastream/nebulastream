@@ -265,17 +265,13 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
     }
 
-    auto requestHandlerService = nesCoordinator->getRequestHandlerService();
     auto queryCatalog = nesCoordinator->getQueryCatalog();
 
-    //register query
-    auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
-    queryId = INVALID_QUERY_ID;
+    // Add a file sink to the query and enqueue it.
+    addFileSink();
+    enqueueQuery(magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value());
 
-    auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", appendMode));
-    queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), placementStrategy);
-
-    // Now run the query
+    // Wait for query completion
     if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
         NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
     }
@@ -302,6 +298,21 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     nesCoordinator->stopCoordinator(false);
 
     return *this;
+}
+
+TestHarness& TestHarness::addFileSink() {
+    queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", appendMode));
+    return *this;
+}
+
+TestHarness& TestHarness::enqueueQuery(const Optimizer::PlacementStrategy& placementStrategy) {
+    auto requestHandlerService = nesCoordinator->getRequestHandlerService();
+    queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryWithoutSink->getQueryPlan(), placementStrategy);
+    return *this;
+}
+
+bool TestHarness::checkFailedOrTimeout() const {
+    return TestUtils::checkFailedOrTimeout(queryId, nesCoordinator->getQueryCatalog());
 }
 
 std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
@@ -442,14 +453,6 @@ WorkerId TestHarness::getNextTopologyId() {
 }
 Runtime::BufferManagerPtr TestHarness::getBufferManager() const { return bufferManager; }
 
-NesCoordinatorPtr TestHarness::getCoordinator() const {
-    return nesCoordinator;
-}
-
-const std::vector<TestHarnessWorkerConfigurationPtr> TestHarness::getTestHarnessWorkerConfigurations() const {
-    return testHarnessWorkerConfigurations;
-}
-
 TestHarness& TestHarness::setOutputFilePath(const std::string& newOutputFilePath) {
     this->filePath = newOutputFilePath;
     return *this;
@@ -457,6 +460,14 @@ TestHarness& TestHarness::setOutputFilePath(const std::string& newOutputFilePath
 
 TestHarness& TestHarness::setAppendMode(bool newAppendMode) {
     this->appendMode = newAppendMode;
+    return *this;
+}
+
+TestHarness& TestHarness::stopCoordinatorAndWorkers() {
+    for (const auto& worker : testHarnessWorkerConfigurations) {
+        worker->getNesWorker()->stop(false);
+    }
+    nesCoordinator->stopCoordinator(false);
     return *this;
 }
 

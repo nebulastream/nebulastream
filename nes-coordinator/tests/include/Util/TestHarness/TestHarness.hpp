@@ -266,6 +266,11 @@ class TestHarness {
                           const std::string& placementStrategyName = "BottomUp",
                           uint64_t testTimeoutInSeconds = 60);
 
+    // TODO Documentation
+    TestHarness& addFileSink();
+    TestHarness& enqueueQuery(const Optimizer::PlacementStrategy& placementStrategy = Optimizer::PlacementStrategy::BottomUp);
+    bool checkFailedOrTimeout() const;
+
     /**
      * @brief Returns the output for the previously run query. Support also data types with variable data size
      * @return Vector of TestTupleBuffers
@@ -283,14 +288,12 @@ class TestHarness {
 
     Runtime::BufferManagerPtr getBufferManager() const;
 
-    NesCoordinatorPtr getCoordinator() const;
-
-    const std::vector<TestHarnessWorkerConfigurationPtr> getTestHarnessWorkerConfigurations() const;
-
+    // TODO Documentation
     TestHarness& setOutputFilePath(const std::string& newOutputFilePath);
     TestHarness& setAppendMode(bool newAppendMode);
+    TestHarness& stopCoordinatorAndWorkers();
 
-  private:
+private:
     std::string getNextPhysicalSourceName();
     WorkerId getNextTopologyId();
 
