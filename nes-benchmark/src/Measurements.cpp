@@ -13,6 +13,7 @@
 */
 
 #include <Measurements.hpp>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -28,12 +29,14 @@ std::string Measurements::getThroughputAsString() {
         double timeDeltaSeconds = (timestamps[measurementIdx + 1] - timestamps[measurementIdx]);
         size_t actualThroughput =
             (allProcessedTuples[timestamps[measurementIdx + 1]] - allProcessedTuples[currentTs]) / (timeDeltaSeconds);
-        ss << actualThroughput << ",";
+        ss << std::fixed << std::setprecision(2) << (actualThroughput / 1'000'000.0) << "M,";
         avgValue += actualThroughput;
         avgCnt++;
         maxValue = std::max(maxValue, actualThroughput);
     }
-    ss << std::endl << " avgThroughput=" << avgValue / avgCnt << " maxValue=" << maxValue << std::endl;
+    const auto avgThroughputInM = avgValue / avgCnt / 1'000'000.0;
+    const auto maxValueInM = maxValue / 1'000'000.0;
+    ss << std::endl << " avgThroughput=" << avgThroughputInM << "M maxValue=" << maxValueInM << std::endl;
     return ss.str();
 }
 
@@ -45,6 +48,7 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         std::stringstream measurementsCsv;
         auto currentTs = timestamps[measurementIdx];
         measurementsCsv << currentTs;
+        measurementsCsv << "," << (allMainMemoryUsage[currentTs] - initialMemoryUsage);
         measurementsCsv << "," << allProcessedTasks[currentTs];
         measurementsCsv << "," << allProcessedBuffers[currentTs];
         measurementsCsv << "," << allProcessedTuples[currentTs];

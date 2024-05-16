@@ -13,6 +13,7 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalDDSketchBuildOperator.hpp>
+#include <fmt/format.h>
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalDDSketchBuildOperator::create(const OperatorId id,
@@ -58,6 +59,17 @@ double PhysicalDDSketchBuildOperator::getGamma() const { return gamma; }
 ExpressionNodePtr PhysicalDDSketchBuildOperator::getCalcLogFloorIndexExpressions() const { return calcLogFloorIndexExpressions; }
 ExpressionNodePtr PhysicalDDSketchBuildOperator::getGreaterThanZeroExpression() const { return greaterThanZeroExpression; }
 ExpressionNodePtr PhysicalDDSketchBuildOperator::getLessThanZeroExpression() const { return lessThanZeroExpression; }
+
+std::string PhysicalDDSketchBuildOperator::toString() const {
+    return fmt::format("PhysicalDDSketchBuildOperator:\n"
+                       "{}"
+                       "gamma: {}, "
+                       "numberOfPreAllocatedBuckets: {}, "
+                       "sendingPolicy: {}, "
+                       "metricHash: {}\n",
+                       PhysicalUnaryOperator::toString(),
+                       gamma, numberOfPreAllocatedBuckets, sendingPolicy->toString(), metricHash);
+}
 
 PhysicalDDSketchBuildOperator::PhysicalDDSketchBuildOperator(const OperatorId id,
                                                              const StatisticId statisticId,

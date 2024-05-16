@@ -188,13 +188,14 @@ TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
 
     std::stringstream assertedCsvFile;
     assertedCsvFile
-        << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
+        << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,memoryUsageInBytes,processedTasks,processedBuffers,processedTuples,latencySum,"
            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
            "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,"
            "queryString"
         << std::endl;
 
+    measurements.setInitialMemoryUsage(0);
     for (auto i = 0; i < MAX_TIMESTAMP; ++i) {
         auto timeStamp = i;
         measurements.addNewTimestamp(timeStamp);
@@ -206,10 +207,12 @@ TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
                                        availGlobalBufferSumStart + i,
                                        availFixedBufferSumStart + i,
                                        timeStamp);
+        measurements.addMainMemoryUsage(timeStamp, i);
 
         if (i < MAX_TIMESTAMP - 1) {
             assertedCsvFile << "\"" << bmName << "\""
-                            << "," << NES_VERSION << "," << schemaSizeInB << "," << timeStamp << "," << (processedTasksStart + i)
+                            << "," << NES_VERSION << "," << schemaSizeInB << "," << timeStamp << "," << i
+                            << "," << (processedTasksStart + i)
                             << "," << (processedBuffersStart + i) << "," << (processedTuplesStart + i) << ","
                             << (latencySumStart + i) << "," << (queueSizeSumStart + i) / numberOfQueriesToDeploy << ","
                             << (availGlobalBufferSumStart + i) / numberOfQueriesToDeploy << ","

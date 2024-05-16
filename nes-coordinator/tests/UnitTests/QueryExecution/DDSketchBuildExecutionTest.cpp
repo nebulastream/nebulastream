@@ -115,11 +115,12 @@ class DDSketchBuildExecutionTest : public Testing::BaseUnitTest,
                                      Statistic::WindowStatisticDescriptorPtr ddSketchDescriptor,
                                      uint64_t windowSize,
                                      uint64_t windowSlide,
+                                     TimeCharacteristicPtr timeCharacteristic,
                                      std::vector<TupleBuffer> allInputBuffers) {
 
         // Creating the query
         auto window =
-            SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
+            SlidingWindow::of(timeCharacteristic, Milliseconds(windowSize), Milliseconds(windowSlide));
         auto query = TestQuery::from(testSourceDescriptor)
                          .buildStatistic(window, ddSketchDescriptor, metricHash, sendingPolicy, triggerCondition)
                          .sink(testSinkDescriptor);
@@ -135,7 +136,9 @@ class DDSketchBuildExecutionTest : public Testing::BaseUnitTest,
         // Emitting the input buffers and creating the expected DDSketch sketches in testStatisticStore
         auto source = executionEngine->getDataSource(plan, 0);
         for (auto buf : allInputBuffers) {
-            source->emitBuffer(buf);
+            // We call here emit work, as we do not want the metadata of the buffer to change, due to as setting it
+            // in Util::createDataForOneFieldAndTimeStamp()
+            source->emitWork(buf);
 
             // Now creating the expected DDSketch sketches in testStatisticStore
             auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
@@ -188,11 +191,14 @@ TEST_P(DDSketchBuildExecutionTest, singleInputTuple) {
     using namespace Statistic;
     constexpr auto windowSize = 10;
     constexpr auto numberOfTuples = 1;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = false;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
                                                                    fieldToBuildDDSketchOver,
-                                                                   timestampFieldName);
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
@@ -205,6 +211,7 @@ TEST_P(DDSketchBuildExecutionTest, singleInputTuple) {
                                 ddSketchDescriptor,
                                 windowSize,
                                 windowSize,
+                                timeCharacteristic,
                                 allInputBuffers);
 }
 
@@ -215,11 +222,14 @@ TEST_P(DDSketchBuildExecutionTest, multipleInputBuffers) {
     using namespace Statistic;
     constexpr auto windowSize = 1000;
     constexpr auto numberOfTuples = 1'000;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = false;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
                                                                    fieldToBuildDDSketchOver,
-                                                                   timestampFieldName);
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
@@ -232,6 +242,7 @@ TEST_P(DDSketchBuildExecutionTest, multipleInputBuffers) {
                                 ddSketchDescriptor,
                                 windowSize,
                                 windowSize,
+                                timeCharacteristic,
                                 allInputBuffers);
 }
 
@@ -246,11 +257,14 @@ TEST_P(DDSketchBuildExecutionTest, multipleInputBuffersSlidingWindow) {
     constexpr auto windowSize = 1000;
     constexpr auto windowSlide = 500;
     constexpr auto numberOfTuples = 10'000;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = false;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
                                                                    fieldToBuildDDSketchOver,
-                                                                   timestampFieldName);
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
@@ -263,6 +277,39 @@ TEST_P(DDSketchBuildExecutionTest, multipleInputBuffersSlidingWindow) {
                                 ddSketchDescriptor,
                                 windowSize,
                                 windowSlide,
+                                timeCharacteristic,
+                                allInputBuffers);
+}
+
+/**
+* @brief Here we test, if we create multiple DDSketch sketches for multiple input buffers, but also for larger sketches
+ * The difference is that we use the ingestion time instead of an event time
+ */
+TEST_P(DDSketchBuildExecutionTest, multipleInputBuffersIngestionTime) {
+    using namespace Statistic;
+    constexpr auto windowSize = 1000;
+    constexpr auto numberOfTuples = 1'000;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = true;
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildDDSketchOver,
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
+
+    // Creating the sink and the sources
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::DD_SKETCH, statisticDataCodec);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+
+    // Creating the DDSketch descriptor and running the query
+    auto ddSketchDescriptor = DDSketchDescriptor::create(Over(fieldToBuildDDSketchOver), relativeError, numberOfPreAllocatedBuckets);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                ddSketchDescriptor,
+                                windowSize,
+                                windowSize,
+                                timeCharacteristic,
                                 allInputBuffers);
 }
 

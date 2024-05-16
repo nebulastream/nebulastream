@@ -185,7 +185,7 @@ TEST_P(DDSketchPipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, numberOfPreAllocatedBuckets = 1024;
     constexpr auto gamma = 0.05;
     constexpr auto numberOfTuples = 1;
-    const std::vector inputOrigins = {OriginId(0)};
+    const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, numberOfPreAllocatedBuckets, gamma, inputOrigins);
 
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildDDSketchOver, timestampFieldName);
@@ -215,7 +215,7 @@ TEST_P(DDSketchPipelineTest, multipleInputBuffers) {
     constexpr auto windowSize = 1000, windowSlide = 1000, numberOfPreAllocatedBuckets = 1024;
     constexpr auto gamma = 0.05;
     constexpr auto numberOfTuples = 100'000;
-    const std::vector inputOrigins = {OriginId(0)};
+    const std::vector inputOrigins = {OriginId(1)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, numberOfPreAllocatedBuckets, gamma, inputOrigins);
 
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *bufferManager, inputSchema, fieldToBuildDDSketchOver, timestampFieldName);

@@ -122,11 +122,12 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
                                      Statistic::WindowStatisticDescriptorPtr reservoirSampleDescriptor,
                                      uint64_t windowSize,
                                      uint64_t windowSlide,
+                                     TimeCharacteristicPtr timeCharacteristic,
                                      std::vector<TupleBuffer> allInputBuffers) {
 
         // Creating the query
         auto window =
-            SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
+            SlidingWindow::of(timeCharacteristic, Milliseconds(windowSize), Milliseconds(windowSlide));
         auto query =
             TestQuery::from(testSourceDescriptor)
                 .buildStatistic(window, reservoirSampleDescriptor, metricHash, sendingPolicy, triggerCondition)
@@ -143,7 +144,9 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
         // Emitting the input buffers and creating the expected reservoir sample  in testStatisticStore
         auto source = executionEngine->getDataSource(plan, 0);
         for (auto buf : allInputBuffers) {
-            source->emitBuffer(buf);
+            // We call here emit work, as we do not want the metadata of the buffer to change, due to as setting it
+            // in Util::createDataForOneFieldAndTimeStamp()
+            source->emitWork(buf);
 
             // Now creating the expected reservoir sample  in testStatisticStore
             auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
@@ -186,11 +189,14 @@ TEST_P(ReservoirSampleBuildExecutionTest, singleInputTuple) {
     using namespace Statistic;
     constexpr auto windowSize = 10;
     constexpr auto numberOfTuples = 1;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = false;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
                                                                    fieldToBuildReservoirSampleOver,
-                                                                   timestampFieldName);
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
@@ -203,6 +209,7 @@ TEST_P(ReservoirSampleBuildExecutionTest, singleInputTuple) {
                                 reservoirSampleDescriptor,
                                 windowSize,
                                 windowSize,
+                                timeCharacteristic,
                                 allInputBuffers);
 }
 
@@ -213,11 +220,14 @@ TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffers) {
     using namespace Statistic;
     constexpr auto windowSize = 1000;
     constexpr auto numberOfTuples = 10'000;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = false;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
                                                                    fieldToBuildReservoirSampleOver,
-                                                                   timestampFieldName);
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
@@ -230,6 +240,7 @@ TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffers) {
                                 reservoirSampleDescriptor,
                                 windowSize,
                                 windowSize,
+                                timeCharacteristic,
                                 allInputBuffers);
 }
 
@@ -244,11 +255,14 @@ TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffersSlidingWindow) {
     constexpr auto windowSize = 1000;
     constexpr auto windowSlide = 500;
     constexpr auto numberOfTuples = 10'000;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = false;
     auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
                                                                    fieldToBuildReservoirSampleOver,
-                                                                   timestampFieldName);
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
@@ -261,6 +275,39 @@ TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffersSlidingWindow) {
                                 reservoirSampleDescriptor,
                                 windowSize,
                                 windowSlide,
+                                timeCharacteristic,
+                                allInputBuffers);
+}
+
+/**
+ * @brief Here we test, if we create multiple reservoir sample  for multiple input buffers, but also for larger samples
+ * The difference is that we use the ingestion time instead of an event time
+ */
+TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffersIngestionTime) {
+    using namespace Statistic;
+    constexpr auto windowSize = 1000;
+    constexpr auto numberOfTuples = 1'000;
+    const auto timeCharacteristic = EventTime(Attribute(timestampFieldName));
+    const auto isIngestionTime = true;
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildReservoirSampleOver,
+                                                                   timestampFieldName,
+                                                                   isIngestionTime);
+
+    // Creating the sink and the sources
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::RESERVOIR_SAMPLE, statisticDataCodec);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+
+    // Creating the count min descriptor and running the query
+    auto reservoirSampleDescriptor = ReservoirSampleDescriptor::create(Over(fieldToBuildReservoirSampleOver), sampleSize, keepOnlyRequiredField);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                reservoirSampleDescriptor,
+                                windowSize,
+                                windowSize,
+                                timeCharacteristic,
                                 allInputBuffers);
 }
 

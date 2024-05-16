@@ -14,6 +14,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Client/ClientException.hpp>
@@ -334,6 +335,18 @@ TEST_F(RemoteClientTest, DeployInvalidQuery) {
         // wrong exception
         FAIL();
     }
+}
+
+TEST_F(RemoteClientTest, DeployStatisticQuery) {
+    using namespace Windowing;
+
+    auto query = Query::from("default_logical")
+                     .buildStatistic(TumblingWindow::of(IngestionTime(), Milliseconds(1000)), Statistic::DDSketchDescriptor::create(Statistic::Over("value"), (double)0.01, (uint64_t)1024), 42, Statistic::SendingPolicyASAP::create(Statistic::StatisticDataCodec::DEFAULT), Statistic::NeverTrigger::create())
+                     .sink(Statistic::StatisticSinkDescriptor::create(Statistic::StatisticSynopsisType::DD_SKETCH, Statistic::StatisticDataCodec::DEFAULT));
+    auto queryPlan = query.getQueryPlan();
+    auto queryId = client->submitQuery(queryPlan);
+    checkForQueryStart(queryId);
+    ASSERT_TRUE(stopQuery(queryId));
 }
 
 }// namespace NES

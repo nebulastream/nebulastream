@@ -20,10 +20,16 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Common.hpp>
-
+#include <cstdint>
 #include <chrono>
 
 namespace NES::Benchmark::Util {
+
+/**
+ * @brief returns the current used physical memory in bytes
+ * @return the current used physical memory in bytes
+ */
+uint64_t getCurrentUsedPhysicalMemoryInBytes();
 
 /**
 * @brief creates a vector with a range of [start, stop) and step size

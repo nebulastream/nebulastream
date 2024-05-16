@@ -88,7 +88,7 @@ class HyperLogLogStatistic : public SynopsesStatistic {
                          uint64_t observedTuples,
                          uint64_t bitWidth,
                          const std::vector<uint8_t>& registers,
-                         double estimate = std::numeric_limits<double>::quiet_NaN());
+                         double estimate = 0.0);
 
     uint64_t bitWidth;
     double_t estimate;

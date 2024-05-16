@@ -16,18 +16,18 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#include <StatisticCollection/StatisticStorage/BuildStatisticStore.hpp>
 #include <Statistics/Synopses/SynopsesStatistic.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 void AbstractSynopsesOperatorHandler::start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t) {
-    /* For now, we just create the DefaultStatisticStore. Later on, we can change this to be a configuration via the
+    /* For now, we just create the BuildStatisticStore. Later on, we can change this to be a configuration via the
      * lowering pipeline by using an enum to specify what store to use
      */
     for (auto i = 0_u64; i < pipelineExecutionContext->getNumberOfWorkerThreads(); ++i) {
-        operatorStatisticStores.emplace_back(Statistic::DefaultStatisticStore::create());
+        operatorStatisticStores.emplace_back(Statistic::BuildStatisticStore::create());
     }
 }
 
@@ -62,15 +62,15 @@ Statistic::StatisticPtr AbstractSynopsesOperatorHandler::getStatistic(WorkerThre
     // We have to do this modulo, as the workerThreadIds might not always start at 0
     auto workerSpecificStatisticStore = operatorStatisticStores[workerThreadId % operatorStatisticStores.size()];
 
-    auto statistics = workerSpecificStatisticStore->getStatistics(statisticHash, sliceStart, sliceEnd);
-    if (statistics.empty()) {
+    auto statistics = workerSpecificStatisticStore->getSingleStatistic(statisticHash, sliceStart, sliceEnd);
+    if (!statistics.has_value()) {
         // Creating a  statistic and inserting it into the local operator store
         auto newStatistic = createInitStatistic(sliceStart, sliceEnd);
         workerSpecificStatisticStore->insertStatistic(statisticHash, newStatistic);
         return newStatistic;
     } else {
         // For now, we expect only a single statistic per slice, therefore, we return the 0th position
-        return statistics[0];
+        return statistics.value();
     }
 }
 
@@ -112,6 +112,11 @@ void AbstractSynopsesOperatorHandler::checkStatisticsSending(const BufferMetaDat
         statisticFormat->writeStatisticsIntoBuffers(combinedStatisticsToSend, *pipelineCtx->getBufferManager());
     for (auto& buf : statisticTupleBuffers) {
         pipelineCtx->dispatchBuffer(buf);
+    }
+
+    // Deleting the statistics from the store that we sent upwards
+    for (auto& statisticStore : operatorStatisticStores) {
+        statisticStore->deleteStatistics(statisticHash, Windowing::TimeMeasure(0), Windowing::TimeMeasure(newGlobalWatermark));
     }
 }
 

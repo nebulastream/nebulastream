@@ -27,7 +27,7 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
     ((void) sourceId);
     while (!started) {
         //wait with data production until the source is really started and also block if the source gets stopped
-        usleep(std::chrono::microseconds(150).count());
+        usleep(std::chrono::microseconds(10).count());
     }
 
     if (!preAllocatedBuffers.empty()) {

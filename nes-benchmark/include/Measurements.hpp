@@ -54,11 +54,19 @@ class Measurements {
     }
 
     /**
-     * @brief adds availFixedBufferSum
+     * @brief adds timestamp
      * @param timestamp
-     * @param availFixedBufferSum
      */
     void addNewTimestamp(size_t timestamp) { timestamps.push_back(timestamp); }
+
+    /**
+     * @brief adds the current main memory usage for a timestamp
+     * @param timestamp
+     * @param mainMemoryUsage
+     */
+    void addMainMemoryUsage(size_t timestamp, size_t mainMemoryUsage) { allMainMemoryUsage[timestamp] = mainMemoryUsage; }
+
+    void setInitialMemoryUsage(size_t initialMemoryUsage) { Measurements::initialMemoryUsage = initialMemoryUsage; }
 
     /**
      * @brief returns the measurements and calculates the deltas of the measurements and then
@@ -137,6 +145,8 @@ class Measurements {
     std::map<size_t, size_t> allQueueSizeSums;
     std::map<size_t, size_t> allAvailGlobalBufferSum;
     std::map<size_t, size_t> allAvailFixedBufferSum;
+    std::map<size_t, uint64_t> allMainMemoryUsage;
+    uint64_t initialMemoryUsage = 0;
 };
 }// namespace NES::Benchmark::Measurements
 #endif// NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_

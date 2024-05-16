@@ -31,7 +31,11 @@ void* getCountMinRefProxy(void* ptrOpHandler,
     auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
 
     const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
-    return opHandler->getStatistic(workerThreadId, statisticHash, timestamp).get();
+    auto statistic = opHandler->getStatistic(workerThreadId, statisticHash, timestamp);
+
+    //Incrementing the observed tuples as we have seen one more, before returning the statistic
+    statistic->incrementObservedTuples(1);
+    return statistic->getStatisticData();
 }
 
 void* getH3SeedsProxy(void* ptrOpHandler) {
@@ -40,12 +44,6 @@ void* getH3SeedsProxy(void* ptrOpHandler) {
 
     // This const_cast is fine, as we do not change the values
     return reinterpret_cast<int8_t*>(const_cast<uint64_t*>(opHandler->getH3Seeds().data()));
-}
-
-void updateCountMinProxy(void* ptrCountMin, uint64_t row, uint64_t col) {
-    NES_ASSERT2_FMT(ptrCountMin != nullptr, "countMin should not be null!");
-    auto* countMin = static_cast<Statistic::CountMinStatistic*>(ptrCountMin);
-    countMin->update(row, col);
 }
 
 void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
@@ -93,8 +91,14 @@ void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
         Value<UInt64> calcHash = h3HashFunction->calculateWithState(valToTrack, h3SeedsThisRow);
         Value<UInt64> col = (calcHash % Value<UInt64>(width)).as<UInt64>();
 
-        // 2.3. Having this function call for each record for each row is not efficient. But we take care of the efficiency later
-        Nautilus::FunctionCall("updateCountMinProxy", updateCountMinProxy, countMinMemRef, row, col);
+
+        // 2.3. Calculating the memory address of the counter we want to increment
+        using namespace Statistic;
+        Value<UInt64> counterOffset = (((col) + (row * width)) * (uint64_t)sizeof(CountMinStatistic::COUNTER_DATA_TYPE)).as<UInt64>();
+        Value<MemRef> counterMemRef = (countMinMemRef + counterOffset).as<MemRef>();
+
+        // 2.4. Incrementing the counter by one
+        counterMemRef.store(counterMemRef.load<UInt64>() + 1_u64);
     }
 }
 

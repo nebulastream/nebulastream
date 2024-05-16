@@ -13,6 +13,7 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalReservoirSampleBuildOperator.hpp>
+#include <fmt/format.h>
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalReservoirSampleBuildOperator::create(const OperatorId id,
@@ -43,6 +44,16 @@ OperatorPtr PhysicalReservoirSampleBuildOperator::copy() {
 }
 
 uint64_t PhysicalReservoirSampleBuildOperator::getSampleSize() const { return sampleSize; }
+
+std::string PhysicalReservoirSampleBuildOperator::toString() const {
+    return fmt::format("PhysicalReservoirSampleBuildOperator:\n"
+                       "{}"
+                       "sampleSize: {}, "
+                       "sendingPolicy: {}, "
+                       "metricHash: {}\n",
+                       PhysicalUnaryOperator::toString(),
+                       sampleSize, sendingPolicy->toString(), metricHash);
+}
 
 PhysicalReservoirSampleBuildOperator::PhysicalReservoirSampleBuildOperator(const OperatorId id,
                                                                            const StatisticId statisticId,

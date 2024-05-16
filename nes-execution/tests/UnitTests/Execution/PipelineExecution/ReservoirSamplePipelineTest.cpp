@@ -171,7 +171,7 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
  */
 TEST_P(ReservoirSamplePipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, sampleSize = 10;
-    const std::vector<OriginId> inputOrigins = {OriginId(0)};
+    const std::vector<OriginId> inputOrigins = {OriginId(1)};
     constexpr auto numberOfTuples = 1;
     auto sampleMemoryLayout = NES::Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins, sampleMemoryLayout);
@@ -201,7 +201,7 @@ TEST_P(ReservoirSamplePipelineTest, singleInputTuple) {
  */
 TEST_P(ReservoirSamplePipelineTest, multipleInputBuffers) {
     constexpr auto windowSize = 1000, windowSlide = 1000, sampleSize = 1000;
-    const std::vector<OriginId> inputOrigins = {OriginId(0)};
+    const std::vector<OriginId> inputOrigins = {OriginId(1)};
     constexpr auto numberOfTuples = 100'000;
     auto sampleMemoryLayout = NES::Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, sampleSize, inputOrigins, sampleMemoryLayout);

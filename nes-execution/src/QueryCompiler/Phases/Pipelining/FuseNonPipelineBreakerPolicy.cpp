@@ -17,6 +17,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperatorsForwardDeclaration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalDDSketchBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalReservoirSampleBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalHyperLogLogBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalCountMinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
@@ -32,6 +36,10 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalDDSketchBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalReservoirSampleBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalHyperLogLogBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalCountMinBuildOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>());
 }
 }// namespace NES::QueryCompilation

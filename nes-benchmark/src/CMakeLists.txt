@@ -24,6 +24,7 @@ add_source_files(nes-benchmark
         IngestionRateGeneration/TrigonometricIngestionRateGenerator.cpp
         IngestionRateGeneration/UniformIngestionRateGenerator.cpp
         Measurements.cpp
+        Util/BenchmarkUtils.cpp
         E2E/E2ERunner.cpp
         E2E/E2ESingleRun.cpp)
 

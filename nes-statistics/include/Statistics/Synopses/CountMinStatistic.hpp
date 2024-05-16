@@ -24,6 +24,7 @@ namespace NES::Statistic {
  */
 class CountMinStatistic : public SynopsesStatistic {
   public:
+    using COUNTER_DATA_TYPE = uint64_t;
     /**
      * @brief Factory method for creating a CountMinStatistic
      * @param startTs: Timestamp of the first tuple for that this CountMin was created
@@ -86,7 +87,7 @@ class CountMinStatistic : public SynopsesStatistic {
     uint64_t width;
     uint64_t depth;
     uint64_t numberOfBitsInKey;
-    std::vector<uint64_t> countMinData;
+    std::vector<COUNTER_DATA_TYPE> countMinData;
 };
 
 }// namespace NES::Statistic

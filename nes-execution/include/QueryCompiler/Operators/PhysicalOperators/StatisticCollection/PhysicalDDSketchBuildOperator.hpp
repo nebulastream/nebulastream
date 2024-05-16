@@ -54,6 +54,7 @@ class PhysicalDDSketchBuildOperator : public PhysicalSynopsisBuildOperator, publ
     ExpressionNodePtr getCalcLogFloorIndexExpressions() const;
     ExpressionNodePtr getGreaterThanZeroExpression() const;
     ExpressionNodePtr getLessThanZeroExpression() const;
+    std::string toString() const override;
 
   private:
     PhysicalDDSketchBuildOperator(const OperatorId id,
