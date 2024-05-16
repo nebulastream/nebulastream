@@ -321,7 +321,8 @@ bool QueryPlan::compare(QueryPlanPtr& otherPlan) {
     auto leftRootOperators = this->getRootOperators();
     auto rightRootOperators = otherPlan->getRootOperators();
 
-    if (leftRootOperators.size() != rightRootOperators.size()) return false;
+    if (leftRootOperators.size() != rightRootOperators.size())
+        return false;
 
     // add all root-operators to stack
     std::stack<std::pair<OperatorPtr, OperatorPtr>> stack;
@@ -338,25 +339,27 @@ bool QueryPlan::compare(QueryPlanPtr& otherPlan) {
         auto leftChildren = leftOperator->getChildren();
         auto rightChildren = rightOperator->getChildren();
 
-        if (leftChildren.size() != rightChildren.size()) return false;
+        if (leftChildren.size() != rightChildren.size())
+            return false;
 
         // discover children and add them to stack
         for (size_t j = 0; j < leftChildren.size(); ++j) {
             auto leftChild = leftChildren[j]->as<Operator>();
             auto rightChild = rightChildren[j]->as<Operator>();
-            if (!leftChild || !rightChild) return false;
+            if (!leftChild || !rightChild)
+                return false;
             stack.push(std::make_pair(leftChild, rightChild));
         }
 
         // comparison of both operators
-        if (!leftOperator->equal(rightOperator)) return false;
+        if (!leftOperator->equal(rightOperator))
+            return false;
     }
     return true;
 }
 
-std::set<OperatorPtr>
-QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator,
-                                                        const std::set<OperatorPtr>& targetOperators) {
+std::set<OperatorPtr> QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator,
+                                                                              const std::set<OperatorPtr>& targetOperators) {
 
     //Find if downstream operator is also in the vector of target operators
     auto found = std::find_if(targetOperators.begin(), targetOperators.end(), [&](const auto& upstreamOperator) {
