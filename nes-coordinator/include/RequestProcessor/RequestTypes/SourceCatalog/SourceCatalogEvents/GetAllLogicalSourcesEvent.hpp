@@ -21,7 +21,7 @@ class GetAllLogicalSourcesEvent;
 using GetAllLogicalSourcesEventPtr = std::shared_ptr<GetAllLogicalSourcesEvent>;
 
 /**
- * @brief Event to get all logical sources from the source catalog.
+ * @brief An event to get all logical sources from the source catalog.
  */
 class GetAllLogicalSourcesEvent : public GetSourceCatalogEvent {
   public:

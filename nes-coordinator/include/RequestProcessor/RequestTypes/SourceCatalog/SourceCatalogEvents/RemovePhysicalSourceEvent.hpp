@@ -19,6 +19,9 @@ namespace NES::RequestProcessor {
 class RemovePhysicalSourceEvent;
 using RemovePhysicalSourceEventPtr = std::shared_ptr<RemovePhysicalSourceEvent>;
 
+/**
+ * @brief An event to remove a physical source from the source catalog
+ */
 class RemovePhysicalSourceEvent : public UpdateSourceCatalogEvent {
   public:
     /**

@@ -24,7 +24,7 @@ using GetSourceCatalogRequestPtr = std::shared_ptr<GetSourceCatalogRequest>;
 using GetSourceCatalogEventPtr = std::shared_ptr<GetSourceCatalogEvent>;
 
 /**
- * @brief A request to get information about logical or physical sources in json format
+ * @brief A request to get information about logical or physical sources in json format or a Schema according to the event type.
  */
 class GetSourceCatalogRequest : public AbstractUniRequest {
   public:

@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-coordinator
-        UpdateSourceCatalogEvent.cpp
         AddLogicalSourceEvent.cpp
         AddPhysicalSourcesEvent.cpp
         UpdateLogicalSourceEvent.cpp
@@ -21,4 +20,4 @@ add_source_files(nes-coordinator
         GetAllLogicalSourcesEvent.cpp
         GetPhysicalSourcesEvent.cpp
         GetSchemaEvent.cpp
-)
+        )

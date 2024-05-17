@@ -214,7 +214,7 @@ SchemaPtr RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string 
     return std::static_pointer_cast<RequestProcessor::GetSchemaResponse>(response)->getSchema();
 }
 
-bool RequestHandlerService::handleCatalogUpdateRequest(RequestProcessor::SourceCatalogEventPtr event) const {
+bool RequestHandlerService::handleCatalogUpdateRequest(RequestProcessor::UpdateSourceCatalogEventPtr event) const {
     auto updateRequest = RequestProcessor::UpdateSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(updateRequest);
     auto future = updateRequest->getFuture();

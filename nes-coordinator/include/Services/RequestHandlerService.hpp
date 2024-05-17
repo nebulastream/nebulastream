@@ -75,7 +75,7 @@ class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
 
 class UpdateSourceCatalogEvent;
-using SourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
+using UpdateSourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
 
 class AddPhysicalSourcesEvent;
 using AddPhysicalSourcesEventPtr = std::shared_ptr<AddPhysicalSourcesEvent>;
@@ -243,7 +243,7 @@ class RequestHandlerService {
      * @param sourceActions a vector containing the modifications to make to the catalog
      * @return true on successfull execution of the request
      */
-    bool handleCatalogUpdateRequest(RequestProcessor::SourceCatalogEventPtr event) const;
+    bool handleCatalogUpdateRequest(RequestProcessor::UpdateSourceCatalogEventPtr event) const;
 
     /**
      * Assign unique operator ids to the incoming query plan from a client.

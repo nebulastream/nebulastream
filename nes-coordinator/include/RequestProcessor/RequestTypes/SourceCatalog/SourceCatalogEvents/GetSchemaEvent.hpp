@@ -22,7 +22,7 @@ class GetSchemaEvent;
 using GetSchemaEventPtr = std::shared_ptr<GetSchemaEvent>;
 
 /**
- * @brief a response containg the schema for a logical source
+ * @brief a response containing the schema for a logical source
  */
 struct GetSchemaResponse : public GetSourceCatalogResponse {
     /**

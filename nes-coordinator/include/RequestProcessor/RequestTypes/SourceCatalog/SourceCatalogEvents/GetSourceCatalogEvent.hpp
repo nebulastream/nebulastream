@@ -22,7 +22,9 @@ struct GetSourceCatalogResponse : AbstractRequestResponse {
     bool success;
 };
 
-// a response containing source inforamtion as json
+/**
+ * @brief a response containing source information as json
+ */
 struct GetSourceJsonResponse : public GetSourceCatalogResponse {
     explicit GetSourceJsonResponse(bool success, nlohmann::json json) : GetSourceCatalogResponse(success), json(json){};
     nlohmann::json getJson();
@@ -31,25 +33,28 @@ struct GetSourceJsonResponse : public GetSourceCatalogResponse {
     nlohmann::json json;
 };
 
+/**
+* @brief This class represents a event that can be passed to a request to get information about logical or physical sources
+*/
 class GetSourceCatalogEvent : public std::enable_shared_from_this<GetSourceCatalogEvent> {
   public:
     /**
      * @brief checks if the event is an instance of a specific subclass
      */
-    template<class GetSourceInfromationEventType>
+    template<class GetSourceCatalogEventType>
     bool insteanceOf() {
-        return dynamic_cast<const GetSourceInfromationEventType*>(this) != nullptr;
+        return dynamic_cast<const GetSourceCatalogEventType*>(this) != nullptr;
     }
 
     /**
      * @brief casts the event to a specific subclass
      */
-    template<class GetSourceInfromationEventType>
-    std::shared_ptr<GetSourceInfromationEventType> as() {
-        if (insteanceOf<GetSourceInfromationEventType>()) {
-            return std::static_pointer_cast<GetSourceInfromationEventType>(shared_from_this());
+    template<class GetSourceCatalogEventType>
+    std::shared_ptr<GetSourceCatalogEventType> as() {
+        if (insteanceOf<GetSourceCatalogEventType>()) {
+            return std::static_pointer_cast<GetSourceCatalogEventType>(shared_from_this());
         }
-        std::string className = typeid(GetSourceInfromationEventType).name();
+        std::string className = typeid(GetSourceCatalogEventType).name();
         throw std::logic_error("Invalid cast to " + className + " from " + typeid(*this).name());
     }
 

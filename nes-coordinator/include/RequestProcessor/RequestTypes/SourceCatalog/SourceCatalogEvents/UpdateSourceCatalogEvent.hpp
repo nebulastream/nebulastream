@@ -23,8 +23,11 @@ struct SourceCatalogResponse : AbstractRequestResponse {
 };
 
 class UpdateSourceCatalogEvent;
-using SourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
+using UpdateSourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
 
+/**
+* @brief This class represent a event that can be passed to a request to modify the source catalog
+*/
 class UpdateSourceCatalogEvent : public std::enable_shared_from_this<UpdateSourceCatalogEvent> {
   public:
     /**

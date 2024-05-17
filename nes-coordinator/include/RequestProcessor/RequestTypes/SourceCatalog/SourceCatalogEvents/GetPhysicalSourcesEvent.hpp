@@ -24,7 +24,7 @@ class GetPhysicalSourcesEvent;
 using GetPhysicalSourcesEventPtr = std::shared_ptr<GetPhysicalSourcesEvent>;
 
 /**
- * @brief Event to get the physical sources of a logical source
+ * @brief An event to get the physical sources of a logical source
  */
 class GetPhysicalSourcesEvent : public GetSourceCatalogEvent {
   public:

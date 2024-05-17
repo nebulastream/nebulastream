@@ -20,6 +20,9 @@ namespace NES::RequestProcessor {
 class RemoveLogicalSourceEvent;
 using RemoveLogicalSourceEventPtr = std::shared_ptr<RemoveLogicalSourceEvent>;
 
+/**
+ * @brief An event to remove a logical source from the source catalog
+ */
 class RemoveLogicalSourceEvent : public UpdateSourceCatalogEvent {
   public:
     /**

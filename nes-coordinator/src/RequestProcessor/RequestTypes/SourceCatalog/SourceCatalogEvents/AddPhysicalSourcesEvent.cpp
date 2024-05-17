@@ -20,32 +20,23 @@ bool PhysicalSourceDefinition::operator==(const PhysicalSourceDefinition& other)
 AddPhysicalSourcesResponse::AddPhysicalSourcesResponse(bool success, std::vector<std::string> succesfulAdditions)
     : AddPhysicalSourcesResponse(success, succesfulAdditions, std::nullopt) {}
 
-std::vector<std::string> AddPhysicalSourcesResponse::getSuccesfulAdditions() const {
-    return succesfulAdditions;
-}
+std::vector<std::string> AddPhysicalSourcesResponse::getSuccesfulAdditions() const { return succesfulAdditions; }
 
-std::optional<std::string> AddPhysicalSourcesResponse::getFailedAddition() const {
-    return failed;
-}
+std::optional<std::string> AddPhysicalSourcesResponse::getFailedAddition() const { return failed; }
 
-AddPhysicalSourcesResponse::AddPhysicalSourcesResponse(bool success, std::vector<std::string> successfulAdditions, std::optional<std::string> failed)
+AddPhysicalSourcesResponse::AddPhysicalSourcesResponse(bool success,
+                                                       std::vector<std::string> successfulAdditions,
+                                                       std::optional<std::string> failed)
     : SourceCatalogResponse(success), succesfulAdditions(successfulAdditions), failed(failed) {}
 
 AddPhysicalSourcesEventPtr AddPhysicalSourcesEvent::create(std::vector<PhysicalSourceDefinition> physicalSources,
                                                            WorkerId workerId) {
     return std::make_shared<AddPhysicalSourcesEvent>(physicalSources, workerId);
 }
-AddPhysicalSourcesEvent::AddPhysicalSourcesEvent(
-    std::vector<PhysicalSourceDefinition> physicalSources,
-    WorkerId workerId)
+AddPhysicalSourcesEvent::AddPhysicalSourcesEvent(std::vector<PhysicalSourceDefinition> physicalSources, WorkerId workerId)
     : physicalSources(physicalSources), workerId(workerId) {}
 
-std::vector<PhysicalSourceDefinition>
-AddPhysicalSourcesEvent::getPhysicalSources() const {
-    return physicalSources;
-}
+std::vector<PhysicalSourceDefinition> AddPhysicalSourcesEvent::getPhysicalSources() const { return physicalSources; }
 
-WorkerId AddPhysicalSourcesEvent::getWorkerId() const {
-    return workerId;
-}
+WorkerId AddPhysicalSourcesEvent::getWorkerId() const { return workerId; }
 }// namespace NES::RequestProcessor

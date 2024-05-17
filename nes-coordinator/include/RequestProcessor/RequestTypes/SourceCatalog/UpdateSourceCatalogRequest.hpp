@@ -29,7 +29,7 @@ class UpdateSourceCatalogRequest;
 using UpdateSourceCatalogRequestPtr = std::shared_ptr<UpdateSourceCatalogRequest>;
 
 class UpdateSourceCatalogEvent;
-using SourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
+using UpdateSourceCatalogEventPtr = std::shared_ptr<UpdateSourceCatalogEvent>;
 
 /**
  * @brief This request allows modifying the source catalog by adding, updating or removing logical and physical sources
@@ -38,19 +38,19 @@ class UpdateSourceCatalogRequest : public AbstractUniRequest {
   public:
     /**
      * @brief creates a new request
-     * @param sourceActions A vector containing information about the sources to modify and the action to be performed
+     * @param event A vector containing information about the sources to modify and the action to be performed
      * @param maxRetries the maximum number of retries to attempt
      * @return a pointer to the created request
      */
-    static UpdateSourceCatalogRequestPtr create(SourceCatalogEventPtr event, uint8_t maxRetries);
+    static UpdateSourceCatalogRequestPtr create(UpdateSourceCatalogEventPtr event, uint8_t maxRetries);
 
     /**
      * @brief constructor
-     * @param sourceActions A vector containing information about the sources to modify and the action to be performed
+     * @param event A vector containing information about the sources to modify and the action to be performed
      * @param maxRetries the maximum number of retries to attempt
      * @return a pointer to the created request
      */
-    UpdateSourceCatalogRequest(SourceCatalogEventPtr event, uint8_t maxRetries);
+    UpdateSourceCatalogRequest(UpdateSourceCatalogEventPtr event, uint8_t maxRetries);
 
     /**
      * @brief Executes the request logic.
@@ -90,7 +90,7 @@ class UpdateSourceCatalogRequest : public AbstractUniRequest {
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
   private:
-    SourceCatalogEventPtr event;
+    UpdateSourceCatalogEventPtr event;
 };
 }// namespace RequestProcessor
 }// namespace NES

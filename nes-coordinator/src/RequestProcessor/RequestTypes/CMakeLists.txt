@@ -23,8 +23,8 @@ add_source_files(nes-coordinator
         StorageResourceLocker.cpp
         StopQueryRequest.cpp
         SubRequestFuture.cpp
-        GetSourceCatalogRequest.cpp
-)
+        SourceCatalog/GetSourceCatalogRequest.cpp
+        )
 
 add_subdirectory(ISQP)
 

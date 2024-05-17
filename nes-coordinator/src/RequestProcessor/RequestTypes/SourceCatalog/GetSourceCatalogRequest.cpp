@@ -11,16 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/Source/LogicalSource.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp>
-#include <RequestProcessor/StorageHandles/ResourceType.hpp>
-#include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp"
+#include "Catalogs/Source/LogicalSource.hpp"
+#include "Catalogs/Source/SourceCatalog.hpp"
+#include "RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp"
+#include "RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp"
+#include "RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp"
+#include "RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceCatalogEvent.hpp"
+#include "RequestProcessor/StorageHandles/ResourceType.hpp"
+#include "RequestProcessor/StorageHandles/StorageHandler.hpp"
+#include "Util/Logger/Logger.hpp"
 namespace NES::RequestProcessor {
 
 GetSourceCatalogRequestPtr GetSourceCatalogRequest::create(GetSourceCatalogEventPtr event, uint8_t maxRetries) {

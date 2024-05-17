@@ -23,6 +23,10 @@ struct PhysicalSourceDefinition {
     std::string physicalSourceName;
     bool operator==(const PhysicalSourceDefinition& other) const;
 };
+
+/**
+ * @brief An event to add a physical source to the source catalog
+ */
 class AddPhysicalSourcesEvent;
 using AddPhysicalSourcesEventPtr = std::shared_ptr<AddPhysicalSourcesEvent>;
 

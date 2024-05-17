@@ -26,7 +26,7 @@
 
 namespace NES::RequestProcessor {
 
-UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(SourceCatalogEventPtr event, uint8_t maxRetries)
+UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(UpdateSourceCatalogEventPtr event, uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), event(event) {}
 
 std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
@@ -108,7 +108,7 @@ void UpdateSourceCatalogRequest::preRollbackHandle(std::exception_ptr, const Sto
 
 void UpdateSourceCatalogRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 
-UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(SourceCatalogEventPtr event, uint8_t maxRetries) {
+UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(UpdateSourceCatalogEventPtr event, uint8_t maxRetries) {
     return std::make_shared<UpdateSourceCatalogRequest>(event, maxRetries);
 }
 }// namespace NES::RequestProcessor
