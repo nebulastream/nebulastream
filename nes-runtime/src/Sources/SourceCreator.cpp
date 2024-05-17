@@ -383,6 +383,36 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                               successors);
 }
 
+
+DataSourcePtr createQueryStatisticSourceDataSourcePtr(const SchemaPtr& schema,
+                                                      const Runtime::BufferManagerPtr& bufferManager,
+                                                      const Runtime::QueryManagerPtr& queryManager,
+                                                      OperatorId operatorId,
+                                                      OriginId originId,
+                                                      StatisticId statisticId,
+                                                      size_t numSourceLocalBuffers,
+                                                      GatheringMode gatheringMode,
+                                                      const std::string& physicalSourceName,
+                                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors,
+                                                      uint64_t sourceAffinity,
+                                                      uint64_t taskQueueId) {
+    return std::make_shared<QueryStatisticSource>(
+        schema,
+        bufferManager,
+        queryManager,
+        operatorId,
+        originId,
+        statisticId,
+        numSourceLocalBuffers,
+        gatheringMode,
+        physicalSourceName,
+        executableSuccessors,
+        sourceAffinity,
+        taskQueueId
+    );
+}
+
+
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       Runtime::BufferManagerPtr bufferManager,
