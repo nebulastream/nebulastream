@@ -69,6 +69,11 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
 void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
+    have here something similar to the NLJ and HJ, but slightly different. All synopses operators need this,
+        so we should have a parent class that overrides the open() and then stores the memref to the synopses
+        the parent class should also provide a method for checking, if the current timestamp lies still in synopses
+        additionally, the parent class should provide a method for updating the synopses/window
+
     // 1. Get the memRef to the CountMin sketch
     auto timestampVal = timeFunction->getTs(ctx, record);
     auto countMinMemRef = Nautilus::FunctionCall("getCountMinRefProxy",
