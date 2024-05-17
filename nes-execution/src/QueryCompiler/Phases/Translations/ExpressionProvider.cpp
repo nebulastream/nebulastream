@@ -161,7 +161,6 @@ ExpressionProvider::lowerConstantExpression(const std::shared_ptr<ConstantValueE
                 auto boolValue = (bool) std::stoi(stringValue) == 1;
                 return std::make_shared<ConstantBooleanValueExpression>(boolValue);
             };
-            case BasicPhysicalType::NativeType::TEXT: break;
             default: {
                 NES_NOT_IMPLEMENTED();
             }

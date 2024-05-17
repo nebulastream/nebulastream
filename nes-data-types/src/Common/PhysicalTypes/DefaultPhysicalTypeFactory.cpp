@@ -38,9 +38,9 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     } else if (dataType->isArray()) {
         return getPhysicalType(DataType::as<ArrayType>(dataType));
     } else if (dataType->isChar()) {
-        return getPhysicalType(DataType::as<Char>(dataType));
+        return BasicPhysicalType::create(DataType::as<Char>(dataType), BasicPhysicalType::NativeType::CHAR);
     } else if (dataType->isText()) {
-        return getPhysicalType(DataType::as<TextType>(dataType));
+        return TextPhysicalType::create(DataType::as<TextType>(dataType));
     } else {
         NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + dataType->toString());
     }
@@ -88,14 +88,6 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayTypePtr& arrayType) const {
     auto const componentType = getPhysicalType(arrayType->component);
     return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
-}
-
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const CharPtr& charType) {
-    return BasicPhysicalType::create(charType, BasicPhysicalType::NativeType::CHAR);
-}
-
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TextTypePtr& textType) const {
-    return TextPhysicalType::create(textType);
 }
 
 }// namespace NES

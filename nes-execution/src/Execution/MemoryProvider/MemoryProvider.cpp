@@ -71,12 +71,6 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
             case BasicPhysicalType::NativeType::DOUBLE: {
                 return fieldReference.load<Nautilus::Double>();
             };
-            case BasicPhysicalType::NativeType::TEXT: {
-                auto childIndex = fieldReference.load<Nautilus::UInt32>();
-                auto variableSizeBuffer =
-                    Nautilus::FunctionCall("loadAssociatedTextValue", loadAssociatedTextValue, bufferReference, childIndex);
-                return variableSizeBuffer;
-            };
             default: {
                 NES_ERROR("Physical Type: {} is currently not supported", type->toString());
                 NES_NOT_IMPLEMENTED();
@@ -85,6 +79,11 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
     } else if (type->isArrayType()) {
         NES_ERROR("Physical Type: array type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
+    } else if (type->isTextType()) {
+        auto childIndex = fieldReference.load<Nautilus::UInt32>();
+        auto variableSizeBuffer =
+                Nautilus::FunctionCall("loadAssociatedTextValue", loadAssociatedTextValue, bufferReference, childIndex);
+        return variableSizeBuffer;
     } else {
         NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
@@ -102,22 +101,16 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
                                         Nautilus::Value<Nautilus::MemRef>& fieldReference,
                                         Nautilus::Value<>& value) const {
     if (type->isBasicType()) {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
-        switch (basicType->nativeType) {
-            case BasicPhysicalType::NativeType::TEXT: {
-                auto textValue = value.as<Nautilus::Text>();
-                auto childIndex = Nautilus::FunctionCall("storeAssociatedTextValue",
-                                                         storeAssociatedTextValue,
-                                                         bufferReference,
-                                                         textValue->getReference());
-                fieldReference.store(childIndex);
-                return value;
-            };
-            default: {
-                fieldReference.store(value);
-                return value;
-            };
-        }
+        fieldReference.store(value);
+        return value;
+    } else if (type->isTextType()) {
+        auto textValue = value.as<Nautilus::Text>();
+        auto childIndex = Nautilus::FunctionCall("storeAssociatedTextValue",
+                                                 storeAssociatedTextValue,
+                                                 bufferReference,
+                                                 textValue->getReference());
+        fieldReference.store(childIndex);
+        return value;
     }
     NES_NOT_IMPLEMENTED();
 }

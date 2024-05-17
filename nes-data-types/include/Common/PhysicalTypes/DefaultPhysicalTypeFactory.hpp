@@ -31,8 +31,8 @@ using FloatPtr = std::shared_ptr<Float>;
 class Char;
 using CharPtr = std::shared_ptr<Char>;
 
-class Text;
-using TextPtr = std::shared_ptr<Text>;
+class TextType;
+using TextPtr = std::shared_ptr<TextType>;
 
 /**
  * @brief This is a default physical type factory, which maps nes types to common x86 types.
@@ -58,13 +58,6 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     static PhysicalTypePtr getPhysicalType(const IntegerPtr& integerType);
 
     /**
-    * @brief Translates a char data type into a corresponding physical type.
-    * @param dataType
-    * @return PhysicalTypePtr
-    */
-    static PhysicalTypePtr getPhysicalType(const CharPtr& charType);
-
-    /**
     * @brief Translates a float data type into a corresponding physical type.
     * @param floatType
     * @return PhysicalTypePtr
@@ -77,13 +70,6 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     * @return PhysicalTypePtr
     */
     PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType) const;
-
-    /**
-    * @brief Translates a text data type into a corresponding physical type.
-    * @param arrayType
-    * @return PhysicalTypePtr
-    */
-    PhysicalTypePtr getPhysicalType(const TextTypePtr& textType) const;
 };
 
 }// namespace NES
