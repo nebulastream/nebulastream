@@ -12,34 +12,35 @@
     limitations under the License.
 */
 
+// nes-runtime tests has no include directory
+#include "FormatIteratorTestUtil.hpp"
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <nlohmann/json.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
 
-#include <vector>
+namespace NES::Runtime {
 
-namespace NES::Runtime::MemoryLayouts {
+/**
+ * @brief In this tset, the expected output is consists of JSON key value (KV) pairs.
+ */
+struct JsonKVPair {
+    std::string key;
+    std::string value;
+};
 
 /**
  * @brief Testing the functionality of the iterating over the json format.
  *        Since the created json objects may store the key-value-pairs in a different order,
  *        compared to our schema, we just check if the results contain the expected strings.
  */
-class JsonFormatTest : public Testing::BaseUnitTest {
+class JsonFormatTest : public Testing::BaseUnitTest, public FormatIteratorTestUtil<JsonKVPair> {
   public:
-    struct JsonKVPair {
-        std::string key;
-        std::string value;
-    };
-    BufferManagerPtr bufferManager;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JsonFormatTest.log", NES::LogLevel::LOG_DEBUG);
@@ -55,111 +56,32 @@ class JsonFormatTest : public Testing::BaseUnitTest {
      * @brief Create a json key value pair.
      */
     template <typename T>
-    static auto createJsonKVPair(const std::pair<std::string, T> kvPair) {
+    static auto createJsonKVPair(const std::pair<std::string, T>& kvPair) {
         return JsonKVPair{.key = kvPair.first, .value = std::to_string(kvPair.second)};
     }
 
     /**
      * @brief Create a json key value pair from a string value.
      */
-    static auto createJsonKVPair(const std::pair<std::string, std::string> kvPair) {
+    static auto createJsonKVPair(const std::pair<std::string, std::string>& kvPair) {
         return JsonKVPair{.key = kvPair.first, .value = kvPair.second};
     }
 
     /**
      * @brief Create a json key value pair from a char (std::to_string returns the ASCII number).
      */
-    static auto createJsonKVPair(const std::pair<std::string, char> kvPair) {
+    static auto createJsonKVPair(const std::pair<std::string, char>& kvPair) {
         return JsonKVPair{.key = kvPair.first, .value = std::string() + kvPair.second};
     }
 
     /**
-     * Takes a schema and creates a TestTupleBuffer with row layout (column layout currently breaks the iterator).
-     * @param schema
-     * @return
+     * @brief Wraps createJsonKVPair, making it possible to pass it through functions until it is used.
+     * @return auto: a lambda function that calls createJsonKVPair (avoids the need to specify a return type)
      */
-    auto createTestTupleBuffer(SchemaPtr schema) const {
-        auto tupleBuffer = bufferManager->getBufferBlocking();
-        RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
-        return std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
-    }
-
-    /**
-     * @brief Emplaces the field name and the value for the current field in the current expected KV pairs vector.
-     * @param schema the schema of the tuple containing the field name
-     * @param value the value for the current field
-     * @return the value for the current field, which is inserted into a tuple
-     */
-    template <typename T>
-    T setExpectedValue(T value, const SchemaPtr& schema, std::vector<JsonKVPair>& expectedKVPairs) {
-        assert(expectedKVPairs.size() < schema->getFieldNames().size());
-        expectedKVPairs.emplace_back(createJsonKVPair(std::make_pair(schema->getFieldNames().at(expectedKVPairs.size()), value)));
-        return value;
-    }
-
-    /**
-     * @brief Process a single tuple containing Values, inserting it into the testTupleBuffer.
-     * @param schema the schema used in the current test
-     * @param testTupleBuffer the buffer in which the tuple is written
-     * @param expectedKVPairs the vector in which we store vectors for the expected output
-     * @param values the values of the current tuple
-     */
-    template <typename... Values>
-    void processTuple(SchemaPtr schema, NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
-                      std::vector<std::vector<JsonKVPair>>& expectedKVPairs, const Values&... values)
-    {
-        // Iterate over all values in the current tuple and add them to the expected KV pairs.
-        expectedKVPairs.push_back(std::vector<JsonKVPair>());
-        auto testTuple = std::make_tuple(setExpectedValue(values, schema, expectedKVPairs.back())...);
-        testTupleBuffer->pushRecordToBuffer(testTuple);
-    }
-
-    /**
-     * @brief Calls processTuple for every tuple supplied by the current test.
-     * @param schema the schema used in the current test
-     * @param expectedKVPairs the vector in which we store vectors for the expected output
-     * @param tuples the tuples created in the current test that are written to the testTupleBuffer
-     */
-    template <typename... Tuples>
-    auto processTuples(SchemaPtr schema, std::vector<std::vector<JsonKVPair>>& expectedKVPairs, const Tuples&... tuples) {
-        auto testTupleBuffer = createTestTupleBuffer(schema);
-        (std::apply([&](const auto&... values) {
-            processTuple(schema, testTupleBuffer.get(), expectedKVPairs, values...);
-        }, tuples), ...);
-        return testTupleBuffer;
-    }
-
-    /**
-     * @brief Process a single tuple containing Values with Text, inserting it into the testTupleBuffer.
-     * @param schema the schema used in the current test
-     * @param testTupleBuffer the buffer in which the tuple is written
-     * @param expectedKVPairs the vector in which we store vectors for the expected output
-     * @param values the values of the current tuple
-     */
-    template <typename... Values>
-    void processTupleWithString(SchemaPtr schema, NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
-                                std::vector<std::vector<JsonKVPair>>& expectedKVPairs, const Values&... values)
-    {
-        expectedKVPairs.push_back(std::vector<JsonKVPair>());
-        auto testTuple = std::make_tuple(setExpectedValue(values, schema, expectedKVPairs.back())...);
-        testTupleBuffer->pushRecordToBuffer(testTuple, bufferManager.get());
-    }
-
-    /**
-     * @brief Calls processTupleWithString for every tuple supplied by the current test.
-     * @param schema the schema used in the current test
-     * @param expectedKVPairs the vector in which we store the expected output
-     * @param tuples the tuples created in the current test that are written to the testTupleBuffer
-     */
-    template <typename... Tuples>
-    auto processTuplesWithString(SchemaPtr schema, std::vector<std::vector<JsonKVPair>>& expectedKVPairs,
-                                 const Tuples&... tuples)
-    {
-        auto testTupleBuffer = createTestTupleBuffer(schema);
-        (std::apply([&](const auto&... values) {
-            processTupleWithString(schema, testTupleBuffer.get(), expectedKVPairs, values...);
-        }, tuples), ...);
-        return testTupleBuffer;
+    auto createJsonKVPairLambda() {
+        return [this](const auto& kvPair) {
+            return this->createJsonKVPair(kvPair);
+        };
     }
 
     /**
@@ -173,7 +95,8 @@ class JsonFormatTest : public Testing::BaseUnitTest {
         for(const auto& expectedKVPair : expectedKVPairs) {
             if(not (jsonObject.contains(expectedKVPair.key) && jsonObject.at(expectedKVPair.key) == expectedKVPair.value)) {
                 allExpectedStringsContained = false;
-                NES_ERROR("Expected \"{}\":\"{}\" to be contained in resultString {}, but it was not.", expectedKVPair.key, expectedKVPair.value, resultString);
+                NES_ERROR("Expected \"{}\":\"{}\" to be contained in resultString {}, but it was not.",
+                          expectedKVPair.key, expectedKVPair.value, resultString);
             }
         }
         return allExpectedStringsContained;
@@ -218,7 +141,7 @@ TEST_F(JsonFormatTest, useJsonIteratorWithASingleInteger) {
     SchemaPtr schema = Schema::create()->addField("U8", BasicType::UINT8);
 
     // Fill test tuple buffer with values, which also sets up the expected KV pairs that must be contained in the JSON.
-    auto testTupleBuffer = processTuples(schema, expectedKVPairs,
+    auto testTupleBuffer = processTuples(schema, expectedKVPairs, createJsonKVPairLambda(),
         TestTuple(1)
     );
 
@@ -234,7 +157,7 @@ TEST_F(JsonFormatTest, useJsonIteratorWithUnsignedIntegers) {
     using TestTuple = std::tuple<uint8_t, uint16_t, uint32_t, uint64_t>;
     SchemaPtr schema = Schema::create()->addField("U8", BasicType::UINT8)->addField("U16", BasicType::UINT16)
                                        ->addField("U32", BasicType::UINT32)->addField("U64", BasicType::UINT64);
-    auto testTupleBuffer = processTuples(schema, expectedKVPairs,
+    auto testTupleBuffer = processTuples(schema, expectedKVPairs, createJsonKVPairLambda(),
         TestTuple(1, 256, 65536, 4294967296)
      );
     // Assert that all expected KV pairs are contained in the generated JSON string.
@@ -249,7 +172,7 @@ TEST_F(JsonFormatTest, useJsonIteratorWithSignedIntegers) {
     SchemaPtr schema = Schema::create()->addField("I8", BasicType::INT8)->addField("I16", BasicType::INT16)
                                        ->addField("I32", BasicType::INT32)->addField("I64", BasicType::INT64);
     using TestTuple = std::tuple<int8_t, int16_t, int32_t, int64_t>;
-    auto testTupleBuffer = processTuples(schema, expectedKVPairs,
+    auto testTupleBuffer = processTuples(schema, expectedKVPairs, createJsonKVPairLambda(),
         TestTuple(1, 128, 32768, 2147483648)
     );
     // Assert that all expected KV pairs are contained in the generated JSON string.
@@ -264,7 +187,7 @@ TEST_F(JsonFormatTest, useJsonIteratorWithSignedBoolAndChar) {
         SchemaPtr schema = Schema::create()->addField("C1", BasicType::CHAR)->addField("C2", BasicType::CHAR)
                                            ->addField("B1", BasicType::BOOLEAN)->addField("B2", BasicType::BOOLEAN);
     using TestTuple = std::tuple<char, char, bool, bool>;
-    auto testTupleBuffer = processTuples(schema, expectedKVPairs,
+    auto testTupleBuffer = processTuples(schema, expectedKVPairs, createJsonKVPairLambda(),
         TestTuple('A', 'a', true, false)
     );
     // Assert that all expected KV pairs are contained in the generated JSON string.
@@ -278,7 +201,7 @@ TEST_F(JsonFormatTest, useJsonIteratorWithFloatingPoints) {
     std::vector<std::vector<JsonKVPair>> expectedKVPairs;
     SchemaPtr schema = Schema::create()->addField("F", BasicType::FLOAT32)->addField("D", BasicType::FLOAT64);
     using TestTuple = std::tuple<float, double>;
-    auto testTupleBuffer = processTuples(schema, expectedKVPairs,
+    auto testTupleBuffer = processTuples(schema, expectedKVPairs, createJsonKVPairLambda(),
         TestTuple(4.2, 13.37)
     );
     // Assert that all expected KV pairs are contained in the generated JSON string.
@@ -292,7 +215,7 @@ TEST_F(JsonFormatTest, useJsonIteratorWithText) {
     std::vector<std::vector<JsonKVPair>> expectedKVPairs;
     SchemaPtr schema = Schema::create()->addField("T", DataTypeFactory::createText());
     using TestTuple = std::tuple<std::string>;
-    auto testTupleBuffer = processTuplesWithString(schema, expectedKVPairs,
+    auto testTupleBuffer = processTuplesWithString(schema, expectedKVPairs, createJsonKVPairLambda(),
         TestTuple("42 is the answer")
     );
     // Assert that all expected KV pairs are contained in the generated JSON string.
@@ -306,15 +229,15 @@ TEST_F(JsonFormatTest, useJsonIteratorWithNumberAndText) {
     std::vector<std::vector<JsonKVPair>> expectedKVPairs;
     SchemaPtr schema = Schema::create()->addField("U8", BasicType::UINT8)->addField("T", DataTypeFactory::createText());
     using TestTuple = std::tuple<uint8_t, std::string>;
-    auto testTupleBuffer = processTuplesWithString(schema, expectedKVPairs,
-        TestTuple(42, "is correct")
+    auto testTupleBuffer = processTuplesWithString(schema, expectedKVPairs, createJsonKVPairLambda(),
+        TestTuple(42, "is the answer")
     );
     // Assert that all expected KV pairs are contained in the generated JSON string.
     ASSERT_TRUE(validateJsonIterator(schema, testTupleBuffer.get(), expectedKVPairs));
 }
 
 /**
- * @brief Tests that we can convert a tuple buffer with many different, and multiple Text types to json.
+ * @brief Tests that we can convert a tuple buffer with many different basic types, and multiple Text types to json.
  */
 TEST_F(JsonFormatTest, useJsonIteratorWithMixedDataTypes) {
     std::vector<std::vector<JsonKVPair>> expectedKVPairs;
@@ -324,7 +247,7 @@ TEST_F(JsonFormatTest, useJsonIteratorWithMixedDataTypes) {
             ->addField("B", BasicType::BOOLEAN)->addField("C", BasicType::CHAR)
             ->addField("T3", DataTypeFactory::createText());
     using TestTuple = std::tuple<std::string, uint8_t, std::string, double, int16_t, float, bool, char, std::string>;
-    auto testTupleBuffer = processTuplesWithString(schema, expectedKVPairs,
+    auto testTupleBuffer = processTuplesWithString(schema, expectedKVPairs, createJsonKVPairLambda(),
         TestTuple("First Text", 42, "Second Text", 13.37, 666, 7.77, true, 'C', "Third Text"),
         TestTuple("Fourth Text", 43, "Fifth Text", 3.14, 676, 7.67, true, 'c', "Combo Breaker")
     );
@@ -332,5 +255,4 @@ TEST_F(JsonFormatTest, useJsonIteratorWithMixedDataTypes) {
     ASSERT_TRUE(validateJsonIterator(schema, testTupleBuffer.get(), expectedKVPairs));
 }
 
-
-}// namespace NES::Runtime::MemoryLayouts
+}// namespace NES::Runtime::JsonFormatTest
