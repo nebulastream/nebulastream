@@ -16,14 +16,44 @@
 
 namespace NES::Compiler {
 
-std::unordered_set<std::string> CompilerFlags::getFlags() const { return compilerFlags; }
+std::list<std::string> CompilerFlags::getFlags() const { return flags; }
 
-void CompilerFlags::addFlag(const std::string& flag) { compilerFlags.insert(flag); }
+void CompilerFlags::addFlag(std::string flag) {
+    flags.emplace_back(std::move(flag));
+    auto [_, unique] = uniqueness.insert(flags.back());
+    if (!unique) {
+        flags.pop_back();
+    }
+}
 
 void CompilerFlags::mergeFlags(const CompilerFlags& flags) {
-    for (auto flag : flags.getFlags()) {
+    for (const auto& flag : flags.getFlags()) {
         addFlag(flag);
     }
 }
+
+// Copying the CompilerFlags is non trivial because the copied string_views would not point in the current vector
+// We only copy the owning vector and redo the set.
+CompilerFlags::CompilerFlags(const CompilerFlags& other) : flags(other.flags) {
+    for (const auto& order : flags) {
+        uniqueness.insert(order);
+    }
+}
+
+CompilerFlags& CompilerFlags::operator=(const CompilerFlags& other) {
+    if (this == &other)
+        return *this;
+    flags = other.flags;
+
+    for (const auto& insertionOrder : flags) {
+        uniqueness.insert(insertionOrder);
+    }
+
+    return *this;
+}
+
+// Moving is trivial because the string_view still references to the moved strings data
+CompilerFlags::CompilerFlags(CompilerFlags&& other) noexcept = default;
+CompilerFlags& CompilerFlags::operator=(CompilerFlags&& other) noexcept = default;
 
 }// namespace NES::Compiler

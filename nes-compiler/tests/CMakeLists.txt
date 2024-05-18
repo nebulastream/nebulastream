@@ -12,5 +12,6 @@
 
 add_compiler_unit_test(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp"
         "UnitTests/Compiler/SharedLibraryTest.cpp"
-        "UnitTests/Compiler/CompilationCacheTest.cpp")
+        "UnitTests/Compiler/CompilationCacheTest.cpp"
+        "UnitTests/Compiler/CompilerFlagsTest.cpp")
 

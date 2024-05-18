@@ -15,6 +15,7 @@
 #ifndef NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_
 
+#include <list>
 #include <string>
 #include <unordered_set>
 
@@ -30,15 +31,15 @@ class CompilerFlags {
 
     /**
      * @brief Get all of the compiler flags.
-     * @return A std::unordered_set<std::string> of all the compiler flags.
+     * @return A std::vector<std::string> of unique compiler flags.
      */
-    [[nodiscard]] std::unordered_set<std::string> getFlags() const;
+    [[nodiscard]] std::list<std::string> getFlags() const;
 
     /**
      * @brief Add a new compiler flag to the collection.
      * @param flag the new compiler flag.
      */
-    void addFlag(const std::string& flag);
+    void addFlag(std::string flag);
 
     /**
      * @brief Merge the compiler flags of another CompilerFlags with the flags of this instance.
@@ -46,8 +47,14 @@ class CompilerFlags {
      */
     void mergeFlags(const CompilerFlags& flags);
 
+    CompilerFlags(const CompilerFlags& other);
+    CompilerFlags(CompilerFlags&& other) noexcept;
+    CompilerFlags& operator=(const CompilerFlags& other);
+    CompilerFlags& operator=(CompilerFlags&& other) noexcept;
+
   private:
-    std::unordered_set<std::string> compilerFlags;
+    std::list<std::string> flags;
+    std::unordered_set<std::string_view> uniqueness;
 };
 
 }// namespace NES::Compiler

@@ -114,11 +114,10 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     std::stringstream compilerCall;
     compilerCall << runtimePathConfig.clangBinaryPath << " ";
+    compilerCall << file->getPath() << " ";
     for (const auto& arg : compilationFlags.getFlags()) {
         compilerCall << arg << " ";
     }
-
-    compilerCall << file->getPath();
 
     NES_DEBUG("Compiler: compile with: '{}'", compilerCall.str());
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
