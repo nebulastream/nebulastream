@@ -99,7 +99,7 @@ message SerializableDataValue {
    */
   message TextValue {
     SerializableDataType type = 1;
-    repeated string values = 2;
+    string values = 2;
   }
   google.protobuf.Any value = 1;
 }

@@ -23,6 +23,7 @@ namespace NES {
  * @brief Arrays con be constructed of any built-in type.
  * Arrays always have a fixed sized and can not be extended.
  */
+// Todo #4906: remove or reenable
 class ArrayType : public DataType {
   public:
     /**
@@ -66,7 +67,7 @@ class ArrayType : public DataType {
     std::string toString() final;
 
 
-    // Todo Why are the member variables publicly exposed?
+    // Todo 4906 (if we reenable): Why are the member variables publicly exposed?
     uint64_t const length;
     DataTypePtr const component;
 };

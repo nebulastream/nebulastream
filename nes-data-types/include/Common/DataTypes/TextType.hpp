@@ -28,7 +28,6 @@ class TextType : public DataType {
 
     ~TextType() override = default;
 
-    // Todo: we should use dynamic_cast instead.
     [[nodiscard]] bool isText() const override { return true; }
 
     bool equals(DataTypePtr otherDataType) override;

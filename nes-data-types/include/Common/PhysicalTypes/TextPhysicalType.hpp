@@ -26,61 +26,22 @@ namespace NES {
 class TextPhysicalType final : public PhysicalType {
 
   public:
-    /**
-     * @brief Factory function to create a new TextType Physical Type.
-     * @param type the logical data type.
-     * @param length the length of the text.
-     * @param component the physical component type of this text.
-     */
-     // Todo: what do we need the component for? -> don't all relevant function take a pointer to the component anyway?
     inline TextPhysicalType(DataTypePtr type) noexcept : PhysicalType(std::move(type)) {}
 
     ~TextPhysicalType() override = default;
 
-    /**
-     * @brief Factory function to create a new TextType Physical Type.
-     * @param type the logical data type.
-     * @param length the length of the text.
-     * @param component the physical component type of this text.
-     * @return PhysicalTypePtr
-     */
     static inline PhysicalTypePtr create(const DataTypePtr& type) noexcept {
         return std::make_shared<TextPhysicalType>(type);
     }
 
-    /**
-     * TODO: use dynamic_cast instead of 'isXType()'
-//    * @brief Indicates if this is a text data type.
-//    * @return true if type is text
-//    */
     [[nodiscard]] bool isTextType() const noexcept override { return true; }
 
-    /**
-     * @brief Returns the length of the string, which is the number of bytes occupied by the string.
-     * @return uint64_t
-     */
     [[nodiscard]] uint64_t size() const override;
 
-    /**
-     * @brief Converts the binary representation of this value to a string.
-     * @param rawData a pointer to the raw value
-     * @return string
-     */
     std::string convertRawToString(void const* rawData) const noexcept override;
 
-    /**
-     * @brief Converts the binary representation of this value to a string without filling
-     * up the difference between the length of the string and the end of the schema definition
-     * with unrelated characters
-     * @param rawData a pointer to the raw value
-     * @return string
-    */
     std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
 
-    /**
-     * @brief Returns the string representation of this physical data type.
-     * @return string
-     */
     [[nodiscard]] std::string toString() const noexcept override;
 };
 

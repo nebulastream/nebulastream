@@ -32,6 +32,7 @@ class DataType {
     /**
      * @brief Checks if this data type is Undefined.
      */
+     // Todo 4909: we should use dynamic_cast instead.
     [[nodiscard]] virtual bool isUndefined() const;
 
     /**

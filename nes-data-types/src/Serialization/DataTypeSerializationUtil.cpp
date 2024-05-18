@@ -60,9 +60,6 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         serializedDataType->mutable_details()->PackFrom(serializedArray);
     } else if (dataType->isText()) {
         serializedDataType->set_type(SerializableDataType_Type_TEXT);
-//        auto serializedText = SerializableDataType_TextDetails();
-//        auto const textType = DataType::as<TextType>(dataType);
-//        serializedDataType->mutable_details()->PackFrom(serializedText);
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
@@ -118,17 +115,6 @@ std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(const
     auto componentType = deserializeDataType(arrayDetails.componenttype());
     return std::make_shared<ArrayType>(arrayDetails.dimensions(), componentType);
 }
-
-//std::shared_ptr<TextType> DataTypeSerializationUtil::deserializeTextType() {
-    // for arrays get additional information from the SerializableDataType_ArrayDetails
-//    auto textDetails = SerializableDataType_TextDetails();
-//    serializedDataType.details().UnpackTo(&textDetails);
-
-    // get component data type
-    // Todo: do we actually need a component type?
-//    auto componentType = deserializeDataType(textDetails.componenttype());
-//    return std::make_shared<TextType>();
-//}
 
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType,
                                                                      SerializableDataValue* serializedDataValue) {

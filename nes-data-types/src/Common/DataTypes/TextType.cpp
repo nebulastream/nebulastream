@@ -18,8 +18,6 @@
 namespace NES {
 
 bool TextType::equals(DataTypePtr otherDataType) {
-    // Todo: replace with dynamic cast
-//    auto otherText = std::dynamic_pointer_cast<TextType>(otherDataType);
     return otherDataType->isText();
 }
 

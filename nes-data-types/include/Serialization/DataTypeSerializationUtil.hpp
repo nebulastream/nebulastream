@@ -55,7 +55,7 @@ class DataTypeSerializationUtil {
     /// @brief: Typed deserialization of what is known to be an array.
     static std::shared_ptr<ArrayType> deserializeArrayType(const SerializableDataType& serializedDataType);
 
-    /// @brief: Typed deserialization of what is known to be an array.
+    /// @brief: Typed deserialization of what is known to be variable sized text.
     static std::shared_ptr<TextType> deserializeTextType(const SerializableDataType& serializedDataType);
 
     /**

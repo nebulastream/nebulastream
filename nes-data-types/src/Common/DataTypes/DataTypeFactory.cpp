@@ -76,7 +76,7 @@ DataTypePtr DataTypeFactory::createInt64() { return createInteger(64, INT64_MIN,
 
 DataTypePtr DataTypeFactory::createUInt64() {
     return createInteger(64, 0, UINT64_MAX);
-};// TODO / BUG: upper bound is a INT64 and can not capture this upper bound. -> upperbound overflows and is set to -1.
+};// TODO 4911: BUG: upper bound is a INT64 and can not capture this upper bound. -> upperbound overflows and is set to -1.
 
 DataTypePtr DataTypeFactory::createInt32() { return createInteger(32, INT32_MIN, INT32_MAX); };
 
@@ -88,9 +88,7 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& com
 
 DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }
 
-DataTypePtr DataTypeFactory::createText() {
-    return std::make_shared<TextType>();
-}
+DataTypePtr DataTypeFactory::createText() { return std::make_shared<TextType>(); }
 
 DataTypePtr DataTypeFactory::createChar() { return std::make_shared<Char>(); }
 

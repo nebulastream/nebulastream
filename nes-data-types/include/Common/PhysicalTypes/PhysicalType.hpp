@@ -64,7 +64,6 @@ class PhysicalType {
      */
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
-    // Todo: get rid of 'isXType()'
     /**
      * @brief Indicates if this is a basic data type.
      * @return true if type is basic type
