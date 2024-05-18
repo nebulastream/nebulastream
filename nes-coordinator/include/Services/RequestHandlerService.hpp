@@ -166,18 +166,7 @@ class RequestHandlerService {
     bool queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
 
     /**
-      * @brief register a new physical source
-      * @param physicalSourceName the name of the physical source to register
-      * @param logicalSourceName the name of the logical source to which the physical source belongs
-      * @param workerId the id of the worker hosting the physical source
-      * @return true on success
-      */
-    bool queueRegisterPhysicalSourceRequest(const std::string& physicalSourceName,
-                                            const std::string& logicalSourceName,
-                                            WorkerId workerId) const;
-
-    /**
-      * @brief register multiple new physical sources
+      * @brief register one or multiple new physical sources
       * @param additions a vector of physical source additions
       * @param workerId the id of the worker hosting the physical source
       * @return true on success

@@ -151,21 +151,15 @@ bool RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor:
     return changeResponse->success;
 }
 
-bool RequestHandlerService::queueRegisterPhysicalSourceRequest(const std::string& physicalSourceName,
-                                                               const std::string& logicalSourceName,
-                                                               WorkerId workerId) const {
-    std::vector<RequestProcessor::PhysicalSourceDefinition> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName);
-    return queueRegisterPhysicalSourceRequest(physicalSourceDefinitions, workerId);
-}
-
 bool RequestHandlerService::queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions,
                                                                WorkerId workerId) const {
+    NES_DEBUG("request to register Physical source");
     auto event = RequestProcessor::AddPhysicalSourcesEvent::create(additions, workerId);
     return handleCatalogUpdateRequest(event);
 }
 
 bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
+    NES_DEBUG("request to register logical source");
     auto event = RequestProcessor::AddLogicalSourceEvent::create(logicalSourceName, schema);
     return handleCatalogUpdateRequest(event);
 }
@@ -173,21 +167,25 @@ bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string&
 bool RequestHandlerService::queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                                                  const std::string& logicalSourceName,
                                                                  WorkerId workerId) const {
+    NES_DEBUG("request to unregister Physical source");
     auto event = RequestProcessor::RemovePhysicalSourceEvent::create(logicalSourceName, physicalSourceName, workerId);
     return handleCatalogUpdateRequest(event);
 }
 
 bool RequestHandlerService::queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const {
+    NES_DEBUG("request to unregister logical source");
     auto event = RequestProcessor::RemoveLogicalSourceEvent::create(logicalSourceName);
     return handleCatalogUpdateRequest(event);
 }
 
 bool RequestHandlerService::queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
+    NES_DEBUG("request to update logical source");
     auto event = RequestProcessor::UpdateLogicalSourceEvent::create(logicalSourceName, schema);
     return handleCatalogUpdateRequest(event);
 }
 
 nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
+    NES_DEBUG("request to get all logical sources");
     auto event = RequestProcessor::GetAllLogicalSourcesEvent::create();
     auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
@@ -197,6 +195,7 @@ nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
 }
 
 nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string logicelSourceName) const {
+    NES_DEBUG("request to get physical source");
     auto event = RequestProcessor::GetPhysicalSourcesEvent::create(logicelSourceName);
     auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
@@ -206,6 +205,7 @@ nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string
 }
 
 SchemaPtr RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
+    NES_DEBUG("request to get logical source schema");
     auto event = RequestProcessor::GetSchemaEvent::create(logicelSourceName);
     auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);

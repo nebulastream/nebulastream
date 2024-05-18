@@ -288,7 +288,6 @@ nlohmann::json SourceCatalog::getAllLogicalSourcesAsJson() {
 
 nlohmann::json SourceCatalog::getPhysicalSourcesAsJson(std::string logicalSourceName) {
     const std::vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSource = getPhysicalSources(logicalSourceName);
-
     nlohmann::json result;
     nlohmann::json::array_t allSource = {};
     for (auto const& physicalSource : std::as_const(allPhysicalSource)) {
