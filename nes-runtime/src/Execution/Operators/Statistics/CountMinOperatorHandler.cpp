@@ -48,6 +48,8 @@ CountMinOperatorHandler::CountMinOperatorHandler(uint64_t windowSize,
     fieldsToFullyQualifiedFields[START_TIME] = logSrcNameWSep + START_TIME;
     fieldsToFullyQualifiedFields[END_TIME] = logSrcNameWSep + END_TIME;
     fieldsToFullyQualifiedFields[WIDTH] = logSrcNameWSep + WIDTH;
+    fieldsToFullyQualifiedFields[CREATION_TS] = logSrcNameWSep + CREATION_TS;
+    fieldsToFullyQualifiedFields[COMPLETION_TS] = logSrcNameWSep + COMPLETION_TS;
 }
 
 void CountMinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
@@ -58,6 +60,8 @@ void CountMinOperatorHandler::stop(Runtime::QueryTerminationType terminationType
                                    Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("shutdown CountMinOperatorHandler: {}", terminationType);
 }
+
+uint64_t CountMinOperatorHandler::proxyGetWatermark() { return watermarkProcessor->getCurrentWatermark(); }
 
 Runtime::TupleBuffer CountMinOperatorHandler::writeMetaData(NES::Runtime::TupleBuffer buffer,
                                                             const Interval& interval,
@@ -88,7 +92,7 @@ Runtime::TupleBuffer CountMinOperatorHandler::getTupleBuffer(const std::string& 
     auto endTime = sliceAssigner.getSliceEndTs(ts);
     auto interval = Interval(startTime, endTime);
 
-    NES_DEBUG("Tuple with timestamp: {}, which lies in the Interval: [{},{}]", ts, startTime, endTime)
+    //    NES_INFO("Tuple with timestamp: {}, which lies in the Interval: [{},{}]", ts, startTime, endTime)
     for (auto& countMinBuffer : allCountMin) {
         auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(countMinBuffer, schema);
         auto sketchStartTime = dynBuffer[0][fieldsToFullyQualifiedFields[START_TIME]].read<uint64_t>();
@@ -124,8 +128,6 @@ CountMinOperatorHandler::getFinishedCountMinSketches(uint64_t localWatermarkTs, 
 
     auto currentGlobalWatermarkTS = watermarkProcessor->updateWatermark(localWatermarkTs, sequenceNumber, originId);
 
-    NES_INFO("LocalWatermarkTS: {}   currentGlobalWatermarkTS: {}", localWatermarkTs, currentGlobalWatermarkTS);
-
     auto removeIt =
         std::remove_if(allCountMin.begin(), allCountMin.end(), [currentGlobalWatermarkTS](const Runtime::TupleBuffer& buf) {
             auto endTime = buf.getWatermark();
@@ -135,13 +137,41 @@ CountMinOperatorHandler::getFinishedCountMinSketches(uint64_t localWatermarkTs, 
     std::vector<Runtime::TupleBuffer> allFinishedCMSKetches(removeIt, allCountMin.end());
     allCountMin.erase(removeIt, allCountMin.end());
 
+    if (!allFinishedCMSKetches.empty()) {
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        uint64_t currentTimeInMilliseconds =
+            std::chrono::duration_cast<std::chrono::milliseconds>(currentTime.time_since_epoch()).count();
+
+        NES_ERROR("Emitting {} sketches with watermark {} Time: {}", allFinishedCMSKetches.size(), currentGlobalWatermarkTS, currentTimeInMilliseconds);
+    }
+
     return allFinishedCMSKetches;
+}
+
+void CountMinOperatorHandler::writeCompletionTimestamp(NES::Runtime::TupleBuffer buffer) {
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto currentTimeSinceEpochMilliseconds =
+        std::chrono::time_point_cast<std::chrono::milliseconds>(currentTime).time_since_epoch();
+    auto currentTimeInMilliseconds =
+        static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currentTimeSinceEpochMilliseconds).count());
+    auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(std::move(buffer), schema);
+    dynBuffer[0][fieldsToFullyQualifiedFields[COMPLETION_TS]].write(currentTimeInMilliseconds);
 }
 
 void CountMinOperatorHandler::discardUnfinishedRemainingStatistics() { allCountMin.clear(); }
 
 void CountMinOperatorHandler::setBufferManager(const Runtime::BufferManagerPtr& bufferManager) {
     CountMinOperatorHandler::bufferManager = bufferManager;
+}
+void CountMinOperatorHandler::updateIngestionTS(uint64_t ingestionTS) {
+    for (const auto& tupleBuffer : allCountMin) {
+        auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
+        auto curIngTS = dynBuffer[0][fieldsToFullyQualifiedFields[CREATION_TS]].read<uint64_t>();
+        if (curIngTS < ingestionTS) {
+            dynBuffer[0][fieldsToFullyQualifiedFields[CREATION_TS]].write(ingestionTS);
+        }
+    }
 }
 
 }// namespace NES::Experimental::Statistics

@@ -48,9 +48,8 @@ QueryId StatisticCoordinator::createStatistic(StatisticCreateRequest& createRequ
         fieldName = createRequest.getLogicalSourceName() + "$" + createRequest.getFieldName();
     }
 
-    auto statisticQueryIdentifier = StatisticQueryIdentifier(createRequest.getLogicalSourceName(),
-                                                             fieldName,
-                                                             createRequest.getStatisticCollectorType());
+    auto statisticQueryIdentifier =
+        StatisticQueryIdentifier(createRequest.getLogicalSourceName(), fieldName, createRequest.getStatisticCollectorType());
     auto statisticQueryIdIt = trackedStatistics.find(statisticQueryIdentifier);
 
     QueryId queryId;
@@ -70,10 +69,10 @@ QueryId StatisticCoordinator::createStatistic(StatisticCreateRequest& createRequ
                     WindowStatisticDescriptorFactory::createCountMinDescriptor(createRequest.getLogicalSourceName(),
                                                                                fieldName,
                                                                                createRequest.getTimestampField(),
-                                                                               STATISTIC_DEPTH,
-                                                                               5000,
-                                                                               5000,
-                                                                               STATISTIC_WIDTH);
+                                                                               createRequest.getDepth(),
+                                                                               createRequest.getWindowSize(),
+                                                                               createRequest.getWindowSlide(),
+                                                                               createRequest.getWidth());
                 break;
             case StatisticCollectorType::DDSKETCH: NES_ERROR("StatisticType not implemented!"); break;
             case StatisticCollectorType::HYPER_LOG_LOG: NES_ERROR("StatisticType not implemented!"); break;
@@ -82,15 +81,40 @@ QueryId StatisticCoordinator::createStatistic(StatisticCreateRequest& createRequ
                     WindowStatisticDescriptorFactory::createReservoirSampleDescriptor(createRequest.getLogicalSourceName(),
                                                                                       fieldName,
                                                                                       createRequest.getTimestampField(),
-                                                                                      STATISTIC_DEPTH,
-                                                                                      5000,
-                                                                                      5000);
+                                                                                      createRequest.getWindowSize(),
+                                                                                      createRequest.getWindowSlide(),
+                                                                                      createRequest.getDepth());
                 break;
             default: NES_ERROR("StatisticType is unknown!");
         }
 
         auto query = Query::from(sourceName).buildStatistic(windowStatisticDesc).sink(statisticSinkDesc);
-        queryId = queryService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+
+        NES::Optimizer::PlacementStrategy placementStrategy;
+        switch (statisticsMode) {
+            case NES::Experimental::Statistics::StatisticsMode::CENTRALIZED_MODE:
+                placementStrategy = Optimizer::PlacementStrategy::BottomUp;
+                break;
+            case NES::Experimental::Statistics::StatisticsMode::HYBRID_MODE:
+                placementStrategy = Optimizer::PlacementStrategy::BottomUp;
+                break;
+            case NES::Experimental::Statistics::StatisticsMode::DECENTRALIZED_MODE:
+                placementStrategy = Optimizer::PlacementStrategy::BottomUp;
+                break;
+        }
+
+        if (placementStrategy == Optimizer::PlacementStrategy::Manual) {
+            // create placement strategy
+            // NES::GlobalExecutionPlanPtr globalExecutionPlan,
+            // NES::TopologyPtr topology,
+            // NES::Optimizer::TypeInferencePhasePtr typeInferencePhase
+
+            // Optimizer::TypeInferencePhasePtr::create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+            //                                          Catalogs::UDF::UDFCatalogPtr udfCatalog)
+
+        }
+
+        queryId = queryService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), placementStrategy);
         NES_DEBUG("Adding statistic to the unordered_map of tracked statistics");
         trackedStatistics[statisticQueryIdentifier] = queryId;
 
@@ -137,9 +161,8 @@ std::vector<double> StatisticCoordinator::probeStatistic(StatisticProbeRequest& 
     }
 
     // all the desired physicalSource exist
-    auto statisticQueryIdentifier = StatisticQueryIdentifier(probeRequest.getLogicalSourceName(),
-                                                             fieldName,
-                                                             probeRequest.getStatisticCollectorType());
+    auto statisticQueryIdentifier =
+        StatisticQueryIdentifier(probeRequest.getLogicalSourceName(), fieldName, probeRequest.getStatisticCollectorType());
 
     auto statisticQueryPairIt = trackedStatistics.find(statisticQueryIdentifier);
 
@@ -195,9 +218,8 @@ bool StatisticCoordinator::deleteStatistic(StatisticDeleteRequest& deleteRequest
     }
 
     // check if statistic(s) even exists
-    auto statisticQueryIdentifier = StatisticQueryIdentifier(deleteRequest.getLogicalSourceName(),
-                                                             fieldName,
-                                                             deleteRequest.getStatisticCollectorType());
+    auto statisticQueryIdentifier =
+        StatisticQueryIdentifier(deleteRequest.getLogicalSourceName(), fieldName, deleteRequest.getStatisticCollectorType());
 
     auto statisticQueryIdIt = trackedStatistics.find(statisticQueryIdentifier);
     if (statisticQueryIdIt == trackedStatistics.end()) {

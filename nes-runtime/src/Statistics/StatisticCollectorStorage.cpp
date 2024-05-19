@@ -27,6 +27,17 @@ StatisticCollectorStorage::StatisticCollectorStorage() = default;
 
 void StatisticCollectorStorage::addStatistic(StatisticCollectorIdentifier& statisticCollectorIdentifier,
                                              const StatisticPtr statistic) {
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    uint64_t currentTimeInMilliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(currentTime.time_since_epoch()).count();
+    auto test = statistic->getCompletionTimestamp();
+    auto diff = currentTimeInMilliseconds - test;
+    NES_ERROR("Sketch emit time: {} Sketch write time: {} Difference/Latency: {} WindowStart: {} WindowEnd {}",
+              test,
+              currentTimeInMilliseconds,
+              diff,
+              statistic->getStatisticCollectorIdentifier()->getStartTime(),
+              statistic->getStatisticCollectorIdentifier()->getEndTime());
     trackedStatistics[statisticCollectorIdentifier] = statistic;
     return;
 }

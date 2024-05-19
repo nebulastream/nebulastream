@@ -31,10 +31,18 @@ class ReservoirSample : public Statistic {
      * @param observedTuples the number of observedTuples of the sketch
      * @param depth the depth of the sketch
      */
-    ReservoirSample(const std::vector<uint64_t>& data,
-                    StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
+    ReservoirSample(const StatisticCollectorIdentifierPtr& statisticCollectorIdentifier,
                     uint64_t observedTuples,
-                    uint64_t depth);
+                    uint64_t depth,
+                    uint64_t lastTupleTimestamp,
+                    uint64_t completionTimestamp,
+                    const std::vector<uint64_t>& data);
+//    ReservoirSample(const std::vector<uint64_t>& data,
+//                    StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
+//                    uint64_t observedTuples,
+//                    uint64_t depth,
+//                    uint64_t lastTupleTimestamp,
+//                    uint64_t completionTimestamp);
 
     double probe(StatisticProbeParameterPtr& probeParameters) override;
 

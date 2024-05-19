@@ -86,10 +86,6 @@ DataSource::DataSource(SchemaPtr pSchema,
 void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // set the origin id for this source
     buffer.setOriginId(originId);
-    // set the creation timestamp
-    buffer.setCreationTimestampInMS(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count());
 
     if (schema->partiallyContains(Experimental::Statistics::PHYSICAL_SOURCE_NAME)) {
 
@@ -112,10 +108,6 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
             memcpy(newBuffer.getBuffer() + newTupleOffset,
                    buffer.getBuffer() + oldTupleOffset,
                    oldSchema->getSchemaSizeInBytes());
-            NES_DEBUG("Reading from address with offset: {} for {} Bytes and writing to address with offset {}",
-                      oldTupleOffset,
-                      oldSchema->getSchemaSizeInBytes(),
-                      newTupleOffset);
             newDynBuffer[tupIndex].writeVarSized(logicalSourceName + "$" + Experimental::Statistics::PHYSICAL_SOURCE_NAME,
                                                  physicalSourceName,
                                                  localBufferManager.get());
@@ -123,9 +115,13 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
             newTupleOffset += schema->getSchemaSizeInBytes();
         }
 
+
         // copy meta data from OG buffer over to the new one
         newBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-        newBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+        // set the creation timestamp
+        newBuffer.setCreationTimestampInMS(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count());
         newBuffer.setOriginId(buffer.getOriginId());
         newBuffer.setWatermark(buffer.getWatermark());
 

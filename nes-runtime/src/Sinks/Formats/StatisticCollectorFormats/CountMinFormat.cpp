@@ -56,6 +56,10 @@ std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts:
             dynBuffer.getBuffer(),
             dynBuffer[rowIdx][logSrcNameWSep + DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
+        // read timestamps
+        auto lastTupleTS = dynBuffer[rowIdx][logSrcNameWSep + CREATION_TS].read<uint64_t>();
+        auto completionTimestamp = dynBuffer[rowIdx][logSrcNameWSep + COMPLETION_TS].read<uint64_t>();
+
         // read sketch specific fields
         auto width = dynBuffer[rowIdx][logSrcNameWSep + WIDTH].read<uint64_t>();
 
@@ -64,7 +68,13 @@ std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts:
         memcpy(data.data(), synopsesText.data(), synopsesText.size());
 
         // create sketch and add it to the vector of sketches
-        auto countMin = std::make_shared<CountMin>(width, data, statisticCollectorIdentifier, observedTuples, depth);
+        auto countMin = std::make_shared<CountMin>(statisticCollectorIdentifier,
+                                                   observedTuples,
+                                                   depth,
+                                                   lastTupleTS,
+                                                   completionTimestamp,
+                                                   width,
+                                                   data);
         statisticCollectors.push_back(countMin);
     }
 

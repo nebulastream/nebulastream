@@ -209,7 +209,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     // in the centralized approach we make the statisticManager of the coordinators worker a member in the StatisticCoordinator
-    if (coordinatorConfiguration->statisticsMode == Experimental::Statistics::StatisticsMode::CENTRALIZED_MODE) {
+    if (coordinatorConfiguration->statisticsMode == Experimental::Statistics::StatisticsMode::CENTRALIZED_MODE
+        || coordinatorConfiguration->statisticsMode == Experimental::Statistics::StatisticsMode::HYBRID_MODE) {
         statCoordinator->setStatisticManager(worker->getStatisticManager());
     }
 

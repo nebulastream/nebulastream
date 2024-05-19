@@ -98,7 +98,7 @@ const std::string LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS = "ListOfBlockingDown
  */
 class LogicalSourceExpansionRule : public BaseRewriteRule {
   public:
-    static LogicalSourceExpansionRulePtr create(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly);
+    static LogicalSourceExpansionRulePtr create(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly, bool statisticOperatorBlocking);
 
     /**
      * @brief Apply Logical source expansion rule on input query plan
@@ -110,7 +110,7 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     virtual ~LogicalSourceExpansionRule() = default;
 
   private:
-    explicit LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly);
+    explicit LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly, bool statisticOperatorBlocking);
 
     /**
      * @brief This method starts from an operator and traverse upstream if the corresponding upstream(parent) operator is not a
@@ -136,6 +136,7 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;
+    bool statisticOperatorBlocking;
 };
 }// namespace NES::Optimizer
 #endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_

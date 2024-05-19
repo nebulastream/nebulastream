@@ -19,8 +19,11 @@ namespace NES::Experimental::Statistics {
 
 Statistic::Statistic(StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
                      const uint64_t observedTuples,
-                     const uint64_t depth)
-    : statisticCollectorIdentifier(statisticCollectorIdentifier), observedTuples(observedTuples), depth(depth) {}
+                     const uint64_t depth,
+                     const uint64_t lastTupleTimestamp,
+                     const uint64_t completionTimestamp)
+    : statisticCollectorIdentifier(statisticCollectorIdentifier), observedTuples(observedTuples), depth(depth),
+      lastTupleTimestamp(lastTupleTimestamp), completionTimestamp(completionTimestamp) {}
 
 StatisticCollectorIdentifierPtr Statistic::getStatisticCollectorIdentifier() const { return statisticCollectorIdentifier; }
 
@@ -31,5 +34,9 @@ uint64_t Statistic::getDepth() const { return depth; }
 uint64_t Statistic::getStartTime() const { return statisticCollectorIdentifier->getStartTime(); }
 
 uint64_t Statistic::getEndTime() const { return statisticCollectorIdentifier->getEndTime(); }
+
+uint64_t Statistic::getCompletionTimestamp() const { return completionTimestamp; }
+
+uint64_t Statistic::getLastTupleTimestamp() const { return lastTupleTimestamp; }
 
 }// namespace NES::Experimental::Statistics

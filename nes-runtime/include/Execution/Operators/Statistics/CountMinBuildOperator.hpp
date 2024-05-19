@@ -17,8 +17,8 @@
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace NES {
@@ -72,6 +72,14 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
     void setup(Runtime::Execution::ExecutionContext& ctx) const override;
 
     /**
+     *
+     * @param executionCtx
+     * @param recordBuffer
+     */
+    void open(NES::Runtime::Execution::ExecutionContext& executionCtx,
+              NES::Runtime::Execution::RecordBuffer& recordBuffer) const override;
+
+    /**
      * @brief takes a incomingRecord and modifies a sketch accordingly
      * @param ctx the execution context
      * @param incomingRecord the incomingRecord that is used to modify the CountMin sketch
@@ -98,6 +106,7 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
     const uint64_t depth;
     const std::string onField;
     const uint64_t keySizeInBits;
+    uint64_t curWatermark;
     const Runtime::Execution::Operators::TimeFunctionPtr timeFunction;
     Runtime::Execution::MemoryProvider::MemoryProviderPtr memoryProvider;
     std::unordered_map<std::string, std::string> fieldsToFullyQualifiedFields;

@@ -35,6 +35,8 @@ void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBu
     Operator::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
+    Nautilus::Value<Nautilus::UInt64> ts = recordBuffer.getCreatingTs();
+    Nautilus::Value<Nautilus::UInt64> id = recordBuffer.getOriginId();
 }
 
 void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const {
@@ -42,6 +44,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
     Value<> tsField = timeFunction->getTs(ctx, record);
     if (tsField > state->currentWatermark) {
         state->currentWatermark = tsField;
+        ctx.setWatermarkTs(tsField.as<UInt64>());
     }
     // call next operator
     child->execute(ctx, record);

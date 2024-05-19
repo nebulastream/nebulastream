@@ -20,9 +20,9 @@
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
@@ -34,12 +34,15 @@
 namespace NES::Optimizer {
 
 LogicalSourceExpansionRule::LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                       bool expandSourceOnly)
-    : sourceCatalog(sourceCatalog), expandSourceOnly(expandSourceOnly) {}
+                                                       bool expandSourceOnly,
+                                                       bool statisticOperatorBlocking)
+    : sourceCatalog(sourceCatalog), expandSourceOnly(expandSourceOnly), statisticOperatorBlocking(statisticOperatorBlocking) {}
 
 LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                 bool expandSourceOnly) {
-    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(sourceCatalog, expandSourceOnly));
+                                                                 bool expandSourceOnly,
+                                                                 bool statisticOperatorBlocking) {
+    return std::make_shared<LogicalSourceExpansionRule>(
+        LogicalSourceExpansionRule(sourceCatalog, expandSourceOnly, statisticOperatorBlocking));
 }
 
 QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
@@ -194,8 +197,8 @@ bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode)
     return (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()
             || operatorNode->instanceOf<UnionLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
             || operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()
-            || operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>() ||
-                operatorNode->instanceOf<Experimental::Statistics::WindowStatisticLogicalOperatorNode>());
+            || operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>()
+            || (statisticOperatorBlocking && operatorNode->instanceOf<Experimental::Statistics::WindowStatisticLogicalOperatorNode>()));
 }
 
 }// namespace NES::Optimizer

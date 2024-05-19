@@ -19,8 +19,21 @@ namespace NES::Experimental::Statistics {
 StatisticCreateRequest::StatisticCreateRequest(const std::string& logicalSourceName,
                                                const std::string& fieldName,
                                                const std::string& timestampField,
-                                               StatisticCollectorType statisticCollectorType)
-    : StatisticRequest(logicalSourceName, fieldName, statisticCollectorType), timestampField(timestampField) {}
+                                               StatisticCollectorType statisticCollectorType,
+                                               const uint64_t windowSize,
+                                               const uint64_t windowSlide,
+                                               const uint64_t depth,
+                                               const uint64_t width)
+    : StatisticRequest(logicalSourceName, fieldName, statisticCollectorType), timestampField(timestampField),
+      windowSize(windowSize), windowSlide(windowSlide), depth(depth), width(width) {}
 
 const std::string& StatisticCreateRequest::getTimestampField() const { return timestampField; }
+
+uint64_t StatisticCreateRequest::getWindowSize() const { return windowSize; }
+
+uint64_t StatisticCreateRequest::getWindowSlide() const { return windowSlide; }
+
+uint64_t StatisticCreateRequest::getDepth() const { return depth; }
+
+uint64_t StatisticCreateRequest::getWidth() const { return width; }
 }// namespace NES::Experimental::Statistics

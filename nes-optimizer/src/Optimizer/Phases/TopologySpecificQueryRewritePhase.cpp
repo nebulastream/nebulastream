@@ -36,7 +36,7 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
     Configurations::OptimizerConfiguration optimizerConfiguration)
     : topology(topology) {
     logicalSourceExpansionRule =
-        LogicalSourceExpansionRule::create(sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion);
+        LogicalSourceExpansionRule::create(sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion, optimizerConfiguration.statisticOperatorBlocking);
     if (optimizerConfiguration.enableNemoPlacement) {
         distributedWindowRule = NemoWindowPinningRule::create(optimizerConfiguration, topology);
     } else {

@@ -80,6 +80,10 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     std::vector<std::string> physicalSourceNames(1, std::string("defaultPhysicalSourceName"));
     auto defaultFieldName = std::string("f1");
     auto timestampField = std::string("ts");
+    auto windowSize = 5000;
+    auto windowSlide = 5000;
+    auto depth = 3;
+    auto width = 8;
     auto startTime = 0;
     auto endTime = 5000;
 
@@ -90,7 +94,11 @@ TEST_F(StatisticsIntegrationTest, createTest) {
         Experimental::Statistics::StatisticCreateRequest(defaultLogicalSourceName,
                                                          defaultFieldName,
                                                          timestampField,
-                                                         Experimental::Statistics::StatisticCollectorType::COUNT_MIN);
+                                                         Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
+                                                         windowSize,
+                                                         windowSlide,
+                                                         depth,
+                                                         width);
 
     auto probeObj = Experimental::Statistics::StatisticProbeRequest(defaultLogicalSourceName,
                                                                     defaultFieldName,
@@ -108,6 +116,8 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     // create coordinator
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
+    coordinatorConfig->worker.numWorkerThreads = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("createProbeAndDeleteTest: Start coordinator");
@@ -124,13 +134,18 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
     auto csvSourceType = CSVSourceType::create(defaultLogicalSourceName, physicalSourceNames[0]);
     const std::string filepath = std::filesystem::path(TEST_DATA_DIRECTORY) / "countMinInput.csv";
+//        const std::string filepath =
+//            "/home/moritz/Desktop/dataGenerator/"
+//            "dist_Uniform_min_0_max_1999_numTups_600000_startTime_0_endTime_60008_outOfOrderness_0.1_worker1.csv";
     csvSourceType->setFilePath(filepath);
     csvSourceType->setGatheringInterval(0);
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(6);
     csvSourceType->setNumberOfBuffersToProduce(1);
     workerConfig1->physicalSourceTypes.add(csvSourceType);
+    workerConfig1->numWorkerThreads = 1;
     auto wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     auto retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);

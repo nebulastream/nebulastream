@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution {
 ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext,
                                    const Value<NES::Nautilus::MemRef>& pipelineContext)
     : workerContext(workerContext), pipelineContext(pipelineContext), origin(0_u64), watermarkTs(0_u64), currentTs(0_u64),
-      sequenceNumber(0_u64) {}
+      sequenceNumber(0_u64), creationTS(0_u64) {}
 
 void* allocateBufferProxy(void* workerContextPtr) {
     if (workerContextPtr == nullptr) {
@@ -117,5 +117,9 @@ void ExecutionContext::setOrigin(Value<UInt64> origin) { this->origin = origin; 
 const Value<UInt64>& ExecutionContext::getCurrentTs() const { return currentTs; }
 
 void ExecutionContext::setCurrentTs(Value<UInt64> currentTs) { this->currentTs = currentTs; }
+
+const Value<UInt64>& ExecutionContext::getCreationTs() const { return creationTS; }
+
+void ExecutionContext::setCreationTs(const Value<UInt64>& creationTs) { creationTS = creationTs; }
 
 }// namespace NES::Runtime::Execution

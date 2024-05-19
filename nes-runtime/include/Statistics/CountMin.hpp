@@ -32,12 +32,23 @@ class CountMin : public Statistic {
      * @param statisticCollectorIdentifier the key of the sketch
      * @param observedTuples the number of observedTuples of the sketch
      * @param depth the depth of the sketch
+     * @param creationTimestamp the timestamp when the tuple buffer for the sketch was created
+     * @param completionTimestamp the timestamp when the tuple buffer of the sketch was emitted and pipelined to the statistic sink
      */
-    CountMin(uint64_t width,
-             const std::vector<uint64_t>& data,
-             StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
+//    CountMin(uint64_t width,
+//             const std::vector<uint64_t>& data,
+//             StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
+//             uint64_t observedTuples,
+//             uint64_t depth,
+//             const uint64_t creationTimestamp,
+//             const uint64_t completionTimestamp);
+    CountMin(const StatisticCollectorIdentifierPtr& statisticCollectorIdentifier,
              uint64_t observedTuples,
-             uint64_t depth);
+             uint64_t depth,
+             uint64_t lastTupleTimestamp,
+             uint64_t completionTimestamp,
+             uint64_t width,
+             const std::vector<uint64_t>& data);
 
     /**
      * @brief calculates the error that the Count-Min will most often guarantee

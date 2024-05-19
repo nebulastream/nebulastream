@@ -20,7 +20,8 @@
 
 namespace NES::Experimental::Statistics {
 
-std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer, const std::string& logicalSourceName) {
+std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer,
+                                                                const std::string& logicalSourceName) {
     std::vector<StatisticPtr> allStatisticCollectors = {};
     auto logSrcNameWSep = logicalSourceName + "$";
 
@@ -50,17 +51,25 @@ std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryL
                                                                                            StatisticCollectorType::RESERVOIR);
 
         // read reservoir data
-        auto synopsesText =
-            Runtime::MemoryLayouts::readVarSizedData(dynBuffer.getBuffer(),
-                                                     dynBuffer[rowIdx][logSrcNameWSep + DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+        auto synopsesText = Runtime::MemoryLayouts::readVarSizedData(
+            dynBuffer.getBuffer(),
+            dynBuffer[rowIdx][logSrcNameWSep + DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
         // convert Text back to array
         std::vector<uint64_t> data(synopsesText.size() / sizeof(uint64_t));
         memcpy(data.data(), synopsesText.data(), synopsesText.size());
 
+        // read timestamps
+        auto lastTupleTS = dynBuffer[rowIdx][logSrcNameWSep + CREATION_TS].read<uint64_t>();
+        auto completionTimestamp = dynBuffer[rowIdx][logSrcNameWSep + COMPLETION_TS].read<uint64_t>();
+
         // create sketch and add it to the vector of sketches
-        auto reservoir =
-            std::make_shared<ReservoirSample>(data, statisticCollectorIdentifier, observedTuples, depth);
+        auto reservoir = std::make_shared<ReservoirSample>(statisticCollectorIdentifier,
+                                                           observedTuples,
+                                                           depth,
+                                                           lastTupleTS,
+                                                           completionTimestamp,
+                                                           data);
         allStatisticCollectors.push_back(reservoir);
     }
 

@@ -22,13 +22,15 @@
 
 namespace NES::Experimental::Statistics {
 
-CountMin::CountMin(uint64_t width,
-                   const std::vector<uint64_t>& data,
-                   StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
-                   const uint64_t observedTuples,
-                   const uint64_t depth)
-    : Statistic(std::move(statisticCollectorIdentifier), observedTuples, depth), width(width),
-      error(calcError(width)), probability(calcProbability(depth)), data(data), seeds(createSeeds(depth)) {}
+//CountMin::CountMin(uint64_t width,
+//                   const std::vector<uint64_t>& data,
+//                   StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
+//                   const uint64_t observedTuples,
+//                   const uint64_t depth,
+//                   const uint64_t lastTupleTimestamp,
+//                   const uint64_t completionTimestamp)
+//    : Statistic(std::move(statisticCollectorIdentifier), observedTuples, depth, lastTupleTimestamp, completionTimestamp),
+//      width(width), error(calcError(width)), probability(calcProbability(depth)), data(data), seeds(createSeeds(depth)) {}
 
 double CountMin::calcError(const uint64_t width) { return 1.0 / (double) width; }
 
@@ -110,10 +112,19 @@ CountMin CountMin::createFromString(void* cmString, uint64_t depth, uint64_t wid
     auto* rawData = static_cast<uint64_t*>(cmString);
     std::vector<uint64_t> cmData(rawData, rawData + depth * width);
 
-    return {width, cmData, nullptr, 0, depth};
+    return {nullptr, 0, depth, 0, 0, width, cmData};
 }
 
 void CountMin::incrementCounter(uint64_t* data, uint64_t rowId, uint64_t width, uint64_t columnId) {
     data[rowId * width + columnId] += 1;
 }
+CountMin::CountMin(const StatisticCollectorIdentifierPtr& statisticCollectorIdentifier,
+                   uint64_t observedTuples,
+                   uint64_t depth,
+                   uint64_t lastTupleTimestamp,
+                   uint64_t completionTimestamp,
+                   uint64_t width,
+                   const std::vector<uint64_t>& data)
+    : Statistic(statisticCollectorIdentifier, observedTuples, depth, lastTupleTimestamp, completionTimestamp), width(width),
+      error(calcError(width)), probability(calcProbability(depth)), data(data), seeds(createSeeds(depth)) {}
 }// namespace NES::Experimental::Statistics

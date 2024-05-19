@@ -86,6 +86,7 @@ const std::string PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION = "performDistributedW
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributedWindowChildThreshold";
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
+const std::string STATISTIC_OPERATOR_BLOCKING = "statisticOperatorBlocking";
 
 //Elegant Configurations
 const auto ELEGANT = "elegant"s;                                 // elegant configurations are initialize with this constant

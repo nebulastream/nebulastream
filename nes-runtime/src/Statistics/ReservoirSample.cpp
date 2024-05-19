@@ -18,16 +18,25 @@
 
 namespace NES::Experimental::Statistics {
 
-ReservoirSample::ReservoirSample(const std::vector<uint64_t>& data,
-                                 NES::Experimental::Statistics::StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
-                                 const uint64_t observedTuples,
-                                 const uint64_t depth)
-    : Statistic(std::move(statisticCollectorIdentifier), observedTuples, depth), data(data) {}
+ReservoirSample::ReservoirSample(const StatisticCollectorIdentifierPtr& statisticCollectorIdentifier,
+                                 uint64_t observedTuples,
+                                 uint64_t depth,
+                                 uint64_t lastTupleTimestamp,
+                                 uint64_t completionTimestamp,
+                                 const std::vector<uint64_t>& data)
+    : Statistic(statisticCollectorIdentifier, observedTuples, depth, lastTupleTimestamp, completionTimestamp), data(data) {}
+
+//ReservoirSample::ReservoirSample(const std::vector<uint64_t>& data,
+//                                 StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
+//                                 uint64_t observedTuples,
+//                                 uint64_t depth,
+//                                 uint64_t lastTupleTimestamp,
+//                                 uint64_t completionTimestamp)
+//    : Statistic(std::move(statisticCollectorIdentifier), observedTuples, depth, lastTupleTimestamp, completionTimestamp), data(data) {}
 
 double ReservoirSample::probe(StatisticProbeParameterPtr&) {
     NES_ERROR("Not yet implemented!")
     return -1;
 }
-
 std::vector<uint64_t>& ReservoirSample::getData() { return data; }
 }// namespace NES::Experimental::Statistics

@@ -80,6 +80,9 @@ bool WindowStatisticLogicalOperatorNode::inferSchema() {
 
     statisticDescriptor->addStatisticFields(outputSchema);
 
+    outputSchema->addField(logSourceNameWithSep + CREATION_TS, BasicType::UINT64);
+    outputSchema->addField(logSourceNameWithSep + COMPLETION_TS, BasicType::UINT64);
+
     return true;
 }
 

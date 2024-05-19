@@ -50,7 +50,6 @@ namespace Experimental::Statistics {
  */
 class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
-
     /**
      * @param windowSize the windowSize over which the CountMin sketches are generated
      * @param slideFactor the slideFactor with which the sketches are generated
@@ -84,6 +83,13 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
     void setBufferManager(const Runtime::BufferManagerPtr& bufferManager);
 
     /**
+     *
+     * @param ts
+     * @return
+     */
+    uint64_t proxyGetWatermark();
+
+    /**
      * @return returns a void pointer to the H3 seeds
      */
     void* getH3Seeds() const;
@@ -107,9 +113,19 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
      * @param originId the originId retrieved from the execution context
      * @return a vector of TupleBuffers that are finished processing and can be dispatched to the next operator in the pipeline
      */
-    std::vector<Runtime::TupleBuffer> getFinishedCountMinSketches(uint64_t localWatermarkTs,
-                                                                  uint64_t sequenceNumber,
-                                                                  OriginId originId0);
+    std::vector<Runtime::TupleBuffer>
+    getFinishedCountMinSketches(uint64_t localWatermarkTs, uint64_t sequenceNumber, OriginId originId0);
+
+    /**
+     * @brief checks if the creation/ingestion TS of the current buffer is larger than the current max and if so updates it
+     * @param ingestionTS
+     */
+    void updateIngestionTS(uint64_t ingestionTS);
+
+    /**
+     * @brief writes the timestamp at which a sketch is emitted to the buffer
+     */
+    void writeCompletionTimestamp(NES::Runtime::TupleBuffer buffer);
 
     /**
      * @brief
@@ -137,8 +153,8 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
      * @param physicalSourceName the physicalSourceName over which the sketch is constructed for which we write the meta data
      */
     Runtime::TupleBuffer writeMetaData(NES::Runtime::TupleBuffer buffer,
-                                              const Interval& interval,
-                                              const std::string& physicalSourceName);
+                                       const Interval& interval,
+                                       const std::string& physicalSourceName);
 };
 }// namespace Experimental::Statistics
 }// namespace NES

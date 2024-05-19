@@ -36,7 +36,9 @@ class Statistic {
      */
     Statistic(StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
               uint64_t observedTuples,
-              uint64_t depth);
+              uint64_t depth,
+              uint64_t lastTupleTimestamp,
+              uint64_t completionTimestamp);
 
     virtual ~Statistic() = default;
 
@@ -72,10 +74,16 @@ class Statistic {
      */
     uint64_t getEndTime() const;
 
+    uint64_t getCompletionTimestamp() const;
+
+    uint64_t getLastTupleTimestamp() const;
+
   private:
     StatisticCollectorIdentifierPtr statisticCollectorIdentifier;
     uint64_t observedTuples;
     uint64_t depth;
+    uint64_t lastTupleTimestamp;
+    uint64_t completionTimestamp;
 };
 }// namespace NES::Experimental::Statistics
 #endif//NES_NES_RUNTIME_INCLUDE_STATISTICS_STATISTICS_STATISTIC_HPP_

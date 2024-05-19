@@ -30,9 +30,8 @@ const std::string START_TIME = "startTime";
 const std::string END_TIME = "endTime";
 const std::string DATA = "data";
 const std::string WIDTH = "width";
-
-const uint64_t STATISTIC_DEPTH = 3;
-const uint64_t STATISTIC_WIDTH = 8;
+const std::string CREATION_TS = "ingestionTimestamp";
+const std::string COMPLETION_TS = "completionTimestamp";
 }
 
 #endif//NES_NES_COMMON_INCLUDE_STATISTICFIELDIDENTIFIERS_HPP_

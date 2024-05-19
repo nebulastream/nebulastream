@@ -134,6 +134,17 @@ class OptimizerConfiguration : public BaseConfiguration {
         false,
         "Enables NEMO distributed window rule to use central windows instead of the distributed windows. (Default: false)"};
 
+    /**
+     * @brief Enable for distributed windows the NEMO placement where aggregation happens based on the params
+     * distributedWindowChildThreshold and distributedWindowCombinerThreshold.
+     */
+    BoolOption statisticOperatorBlocking = {
+        STATISTIC_OPERATOR_BLOCKING,
+        false,
+        "Sets whether the statistic operator are blocking or not. (Default: false)"};
+
+
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryBatchSize,
@@ -146,7 +157,8 @@ class OptimizerConfiguration : public BaseConfiguration {
                 &performOnlySourceOperatorExpansion,
                 &performAdvanceSemanticValidation,
                 &enableNemoPlacement,
-                &allowExhaustiveContainmentCheck};
+                &allowExhaustiveContainmentCheck,
+                &statisticOperatorBlocking};
     }
 };
 

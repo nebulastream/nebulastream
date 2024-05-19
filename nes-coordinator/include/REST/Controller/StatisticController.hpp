@@ -82,7 +82,19 @@ class StatisticController : public oatpp::web::server::api::ApiController {
                 default: statisticCollectorType = StatisticCollectorType::UNDEFINED; break;
             }
 
-            auto createRequest = StatisticCreateRequest(logicalSourceName, fieldName, timestampField, statisticCollectorType);
+            auto windowSize = jsonRequest["windowSize"].get<uint64_t>();
+            auto windowSlide = jsonRequest["windowSlide"].get<uint64_t>();
+            auto statisticDepth = jsonRequest["statisticDepth"].get<uint64_t>();
+            auto statisticWidth = jsonRequest["statisticWidth"].get<uint64_t>();
+
+            auto createRequest = StatisticCreateRequest(logicalSourceName,
+                                                        fieldName,
+                                                        timestampField,
+                                                        statisticCollectorType,
+                                                        windowSize,
+                                                        windowSlide,
+                                                        statisticDepth,
+                                                        statisticWidth);
 
             uint64_t queryId = 0;
             if (auto shared_back_reference = coordinator.lock()) {
@@ -97,7 +109,7 @@ class StatisticController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("POST", "probeStatistic", probeStatistic, BODY_STRING(String, request)) {
+    ENDPOINT("POST", "/probeStatistic", probeStatistic, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
             nlohmann::json jsonRequest = nlohmann::json::parse(req);
@@ -181,7 +193,7 @@ class StatisticController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("DELETE", "deleteStatistic", deleteStatistic, BODY_STRING(String, request)) {
+    ENDPOINT("DELETE", "/deleteStatistic", deleteStatistic, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
             nlohmann::json jsonRequest = nlohmann::json::parse(req);
@@ -202,7 +214,7 @@ class StatisticController : public oatpp::web::server::api::ApiController {
             }
 
             auto endTime = jsonRequest["endTime"].get<time_t>();
-            auto stop = jsonRequest["fieldName"].get<bool>();
+            auto stop = jsonRequest["stop"].get<bool>();
 
             auto deleteRequest = StatisticDeleteRequest(logicalSourceName, fieldName, statisticCollectorType, endTime, stop);
 

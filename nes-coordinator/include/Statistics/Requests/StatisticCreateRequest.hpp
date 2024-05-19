@@ -31,12 +31,28 @@ class StatisticCreateRequest : public StatisticRequest {
     StatisticCreateRequest(const std::string& logicalSourceName,
                            const std::string& fieldName,
                            const std::string& timestampField,
-                           StatisticCollectorType statisticCollectorType);
+                           StatisticCollectorType statisticCollectorType,
+                           uint64_t windowSize,
+                           uint64_t windowSlide,
+                           uint64_t depth,
+                           uint64_t width);
 
     [[nodiscard]] const std::string& getTimestampField() const;
 
+    [[nodiscard]] uint64_t getWindowSize() const;
+
+    [[nodiscard]] uint64_t getWindowSlide() const;
+
+    [[nodiscard]] uint64_t getDepth() const;
+
+    [[nodiscard]] uint64_t getWidth() const;
+
   private:
     std::string timestampField;
+    const uint64_t windowSize;
+    const uint64_t windowSlide;
+    const uint64_t depth;
+    const uint64_t width;
 };
 }// namespace NES::Experimental::Statistics
 
