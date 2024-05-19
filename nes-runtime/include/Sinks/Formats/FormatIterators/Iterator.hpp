@@ -18,8 +18,8 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/NotImplementedException.hpp>
+#include <Runtime/FormatType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/Formats/FormatType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
