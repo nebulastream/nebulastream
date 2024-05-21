@@ -145,7 +145,7 @@ jobs:
 
   Java-Client-CI-Dispatch:
     needs: [build-docker]
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, X64, Build ]
     env:
       VERSION: ${{ github.ref_name }}
     steps:
