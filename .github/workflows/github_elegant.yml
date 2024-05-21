@@ -10,7 +10,7 @@ on:
 jobs:
   validateTrigger:
     if: ${{ !github.event.pull_request.draft }}
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, X64, Build ]
     steps:
       - name: verify-user
         uses: tspascoal/get-user-teams-membership@v3
