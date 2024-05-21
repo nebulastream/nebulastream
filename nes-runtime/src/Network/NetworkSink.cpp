@@ -525,7 +525,7 @@ bool NetworkSink::startBuffering() {
 WorkerId NetworkSink::getReceiverId() { return receiverLocation.getNodeId(); }
 
 bool NetworkSink::checkParentDiff(uint64_t receiver, uint64_t parent) {
-    return parent = receiver - 1 || (receiver == 2 && parent == 11);
+    return parent == receiver - 1 || (receiver == 2 && parent == 11);
 }
 }// namespace NES::Network
 
