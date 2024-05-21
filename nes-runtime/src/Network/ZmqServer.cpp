@@ -20,6 +20,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <arpa/inet.h>
+#include <netdb.h>
 #include <utility>
 
 namespace NES::Network {
@@ -145,13 +147,49 @@ void ZmqServer::getServerSocketInfo(std::string& hostname, uint16_t& port) {
     port = this->currentPort.load();
 }
 
+static std::optional<std::string> getIPFromHostname(const std::string& hostname) {
+    // check if hostname already is an ip
+    if (sockaddr_in sa; inet_pton(AF_INET, hostname.c_str(), &(sa.sin_addr)) != 0) {
+        return hostname;
+    }
+
+    // dns lookup
+    addrinfo hints = {}, *addrs;
+    char port_str[16] = {};
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (int err = getaddrinfo(hostname.c_str(), port_str, &hints, &addrs); err != 0) {
+        NES_ERROR("getaddrinfo failed when looking up hostname \"{}\". Error: {}", hostname, strerror(errno));
+        return std::nullopt;
+    }
+
+    // convert ip to string
+    char ip[INET_ADDRSTRLEN];
+    sockaddr_in* psai = reinterpret_cast<struct sockaddr_in*>(addrs->ai_addr);
+    if (inet_ntop(addrs->ai_family, &(psai->sin_addr), ip, INET_ADDRSTRLEN) == NULL) {
+        NES_ERROR("getaddrinfo failed when converting ip to text \"{}\". Error: {}", hostname, strerror(errno));
+        free(addrs);
+        return std::nullopt;
+    }
+
+    free(addrs);
+    return ip;
+}
+
 void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std::promise<bool>>& startPromise) {
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
     auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
 
     try {
-        auto address = "tcp://" + hostname + ":" + std::to_string(requestedPort);
+        auto bindingIPAddress = getIPFromHostname(hostname);
+        if (!bindingIPAddress) {
+            NES_THROW_RUNTIME_ERROR("Could not determine binding address");
+        }
+
+        auto address = "tcp://" + *bindingIPAddress + ":" + std::to_string(requestedPort);
         NES_DEBUG("ZmqServer({}:{}):  Trying to bind on {}", this->hostname, requestedPort, address);
         //< option of linger time until port is closed
         frontendSocket.set(zmq::sockopt::linger, -1);
