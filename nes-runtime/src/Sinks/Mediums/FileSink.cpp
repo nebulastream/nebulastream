@@ -100,7 +100,7 @@ FileSink::FileSink(SinkFormatPtr format,
             // Create a TCP socket
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
             if (sockfd == -1) {
-                perror("socket");
+                perror("could not open socket for tcp sink");
                 return;
             }
 
@@ -113,7 +113,7 @@ FileSink::FileSink(SinkFormatPtr format,
 
             // Connect to the server
             if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
-                perror("connect");
+                perror("could not connect to socket for tcp sink");
                 close(sockfd);
                 return;
             }

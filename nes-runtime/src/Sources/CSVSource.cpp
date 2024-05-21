@@ -176,6 +176,9 @@ struct Record {
 };
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
+    if (generatedBuffers == 0) {
+        NES_ERROR("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
+    }
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         uint64_t generatedTuplesThisPass = 0;
