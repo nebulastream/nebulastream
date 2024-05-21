@@ -73,6 +73,7 @@ CSVSource::CSVSource(SchemaPtr schema,
             // Create a TCP socket
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
             if (sockfd == -1) {
+                NES_ERROR("Could not open socket in source")
                 perror("socket");
                 return;
             }
@@ -89,6 +90,7 @@ CSVSource::CSVSource(SchemaPtr schema,
 
             // Connect to the server
             if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
+                NES_ERROR("Could not connect to socket in source")
                 perror("connect");
                 ::close(sockfd);
                 return;

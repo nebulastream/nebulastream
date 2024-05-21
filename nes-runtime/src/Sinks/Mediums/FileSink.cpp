@@ -100,6 +100,7 @@ FileSink::FileSink(SinkFormatPtr format,
             // Create a TCP socket
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
             if (sockfd == -1) {
+                NES_ERROR("could not open socket for tcp sink");
                 perror("could not open socket for tcp sink");
                 return;
             }
@@ -113,6 +114,7 @@ FileSink::FileSink(SinkFormatPtr format,
 
             // Connect to the server
             if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
+                NES_ERROR("could not connect to socket for tcp sink")
                 perror("could not connect to socket for tcp sink");
                 close(sockfd);
                 return;
@@ -181,6 +183,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
         ssize_t bytes_written = write(sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
         if (bytes_written == -1) {
+            NES_ERROR("Could not write to socket in sink")
             perror("write");
             close(sockfd);
             return 1;
