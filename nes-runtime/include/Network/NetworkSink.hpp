@@ -190,7 +190,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
 
-    bool checkParentDiff(uint64_t receiver, uint64_t parent);
+    bool checkParentDiff(int64_t receiver, int64_t parent);
 
 
     uint64_t uniqueNetworkSinkDescriptorId;
