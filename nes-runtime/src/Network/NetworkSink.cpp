@@ -85,6 +85,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     if (static_cast<int64_t>(receiver) != parent) {
+            NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         if (checkParentDiff(static_cast<int64_t>(receiver), parent)) {
             NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
             return false;
@@ -137,6 +138,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     if (static_cast<int64_t>(receiver) != parent) {
+        NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         if (checkParentDiff(static_cast<int64_t>(receiver), parent)) {
             NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
             return false;
@@ -525,7 +527,7 @@ bool NetworkSink::startBuffering() {
 WorkerId NetworkSink::getReceiverId() { return receiverLocation.getNodeId(); }
 
 bool NetworkSink::checkParentDiff(int64_t receiver, int64_t parent) {
-    return parent == receiver - 1 || (receiver == 2 && parent == 11);
+    return (parent == receiver - 1) || (receiver == 2 && parent == 11);
 }
 }// namespace NES::Network
 
