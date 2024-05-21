@@ -18,15 +18,15 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/Execution/StateMigratableInterface.hpp>
-#include <Runtime/Execution/StateMigratableInterface.hpp>
+#include <Runtime/Execution/MigratableStateInterface.hpp>
+#include <Runtime/Execution/MigratableStateInterface.hpp>
 
 namespace NES::Runtime::Execution {
 
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public Reconfigurable, public StateMigratableInterface {
+class OperatorHandler : public Reconfigurable, public MigratableStateInterface {
   public:
     /**
      * @brief Default constructor
@@ -53,7 +53,7 @@ class OperatorHandler : public Reconfigurable, public StateMigratableInterface {
      * @param stopTS
      * @return list of StreamSlices
      */
-    virtual std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
+    std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override {
         NES_DEBUG("get state to migrate from:", startTS, " to: ", stopTS);
         return {};
     };
@@ -62,7 +62,7 @@ class OperatorHandler : public Reconfigurable, public StateMigratableInterface {
      * @brief Merges migrated slices
      * @param slices
      */
-    virtual void restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) {
+    void restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) override {
         NES_DEBUG("restore state for:", slices.size());
     };
 

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_STATEMIGRATABLEINTERFACE_HPP
-#define NES_STATEMIGRATABLEINTERFACE_HPP
+#ifndef NES_MIGRATABLESTATEINTERFACE_HPP
+#define NES_MIGRATABLESTATEINTERFACE_HPP
 #include <list>
 #include <Runtime/Execution/StreamSliceInterface.hpp>
 
@@ -21,7 +21,21 @@ namespace NES::Runtime::Execution {
 /**
  * @brief Interface that defines migrate operations with operator state
  */
-class StateMigratableInterface {
+class MigratableStateInterface {
+
+        /**
+     * @brief Gets the state
+     * @param startTS
+     * @param stopTS
+     * @return list of StreamSlices
+     */
+    virtual std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t startTS, uint64_t stopTS) = 0;
+
+    /**
+     * @brief Merges migrated slices
+     * @param slices
+     */
+    virtual void restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) = 0;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif //NES_STATEMIGRATABLEINTERFACE_HPP
+#endif //NES_MIGRATABLESTATEINTERFACE_HPP

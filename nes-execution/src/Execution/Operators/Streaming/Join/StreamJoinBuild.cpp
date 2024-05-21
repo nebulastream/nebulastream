@@ -116,6 +116,7 @@ void StreamJoinBuild::terminate(ExecutionContext& ctx) const {
 }
 
 void StreamJoinBuild::setup(ExecutionContext& ctx) const {
+
     Nautilus::FunctionCall("setNumberOfWorkerThreadsProxy",
                            setNumberOfWorkerThreadsProxy,
                            ctx.getGlobalOperatorHandler(operatorHandlerIndex),
