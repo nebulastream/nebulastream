@@ -24,6 +24,7 @@
 #include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
+bool checkParentDiff(uint64_t receiver, uint64_t parent);
 namespace NES::Network {
 
 struct VersionUpdate {
@@ -84,7 +85,11 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     if (static_cast<int64_t>(receiver) != parent) {
-        NES_ERROR("write bufferedc data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
+        if (checkParentDiff(receiver, parent)) {
+            NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
+            return false;
+        }
+//        NES_ERROR("write bufferedc data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         return false;
     }
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
@@ -132,7 +137,11 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     if (static_cast<int64_t>(receiver) != parent) {
-        NES_ERROR("write data: parent mismatch, store buffer in reconnect storage. Receiver: {}, parent: {}", receiver, parent)
+        if (checkParentDiff(receiver, parent)) {
+            NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
+            return false;
+        }
+//        NES_ERROR("write data: parent mismatch, store buffer in reconnect storage. Receiver: {}, parent: {}", receiver, parent)
         workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
         return true;
     }
@@ -514,4 +523,9 @@ bool NetworkSink::startBuffering() {
 }
 
 WorkerId NetworkSink::getReceiverId() { return receiverLocation.getNodeId(); }
+
+bool NetworkSink::checkParentDiff(uint64_t receiver, uint64_t parent) {
+    return parent = receiver - 1 || (receiver == 2 && parent == 11);
+}
 }// namespace NES::Network
+
