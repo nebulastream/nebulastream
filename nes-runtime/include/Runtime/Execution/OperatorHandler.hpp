@@ -18,13 +18,15 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/Execution/StateMigratableInterface.hpp>
+#include <Runtime/Execution/StateMigratableInterface.hpp>
 
 namespace NES::Runtime::Execution {
 
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public Reconfigurable {
+class OperatorHandler : public Reconfigurable, public StateMigratableInterface {
   public:
     /**
      * @brief Default constructor
@@ -44,6 +46,25 @@ class OperatorHandler : public Reconfigurable {
      * @param pipelineExecutionContext
      */
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+
+    /**
+     * @brief Gets the state
+     * @param startTS
+     * @param stopTS
+     * @return list of StreamSlices
+     */
+    virtual std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
+        NES_DEBUG("get state to migrate from:", startTS, " to: ", stopTS);
+        return {};
+    };
+
+    /**
+     * @brief Merges migrated slices
+     * @param slices
+     */
+    virtual void restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) {
+        NES_DEBUG("restore state for:", slices.size());
+    };
 
     /**
      * @brief Default deconstructor

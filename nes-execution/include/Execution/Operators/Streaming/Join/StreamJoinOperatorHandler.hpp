@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include "Runtime/Execution/StateMigratableInterface.hpp"
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
@@ -58,6 +59,9 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
+
+    std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
+    void restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) override;
 
     /**
      * @brief Retrieves the slice/window by a slice/window identifier. If no slice/window exists for the windowIdentifier,

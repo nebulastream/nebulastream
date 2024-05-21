@@ -26,6 +26,8 @@ target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+# register_public_header_file(nes-execution ${CMAKE_CURRENT_SOURCE_DIR}/include/Execution/Operators/Streaming/Join/StreamSlice.hpp Execution/Operators/Streaming/Join/StreamSlice.hpp)
+
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
     # Define map java udf utils class file
