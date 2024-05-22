@@ -27,6 +27,20 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+uint64_t getSynopsisStartProxy(void* ptrOpHandler,
+                               Statistic::StatisticMetricHash metricHash,
+                               StatisticId statisticId,
+                               uint64_t workerId,
+                               uint64_t timestamp);
+
+uint64_t getSynopsisEndProxy(void* ptrOpHandler,
+                             Statistic::StatisticMetricHash metricHash,
+                             StatisticId statisticId,
+                             uint64_t workerId,
+                             uint64_t timestamp);
+
+void* getNullPtrMemRefProxy();
+
 /**
  * @brief Abstract class for handling operators that collect statistics.
  */

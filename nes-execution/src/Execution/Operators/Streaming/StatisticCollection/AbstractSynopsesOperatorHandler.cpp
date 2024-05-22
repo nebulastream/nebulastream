@@ -22,6 +22,37 @@
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
+
+
+uint64_t getSynopsisStartProxy(void* ptrOpHandler,
+                               Statistic::StatisticMetricHash metricHash,
+                               StatisticId statisticId,
+                               uint64_t workerId,
+                               uint64_t timestamp) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);
+
+    const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+    auto statistic = opHandler->getStatistic(workerId, statisticHash, timestamp);
+    return statistic->getStartTs().getTime();
+}
+
+uint64_t getSynopsisEndProxy(void* ptrOpHandler,
+                             Statistic::StatisticMetricHash metricHash,
+                             StatisticId statisticId,
+                             uint64_t workerId,
+                             uint64_t timestamp) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);
+
+    const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+    auto statistic = opHandler->getStatistic(workerId, statisticHash, timestamp);
+    return statistic->getEndTs().getTime();
+}
+
+void* getNullPtrMemRefProxy() { return nullptr; }
+
+
 void AbstractSynopsesOperatorHandler::start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t) {
     /* For now, we just create the BuildStatisticStore. Later on, we can change this to be a configuration via the
      * lowering pipeline by using an enum to specify what store to use

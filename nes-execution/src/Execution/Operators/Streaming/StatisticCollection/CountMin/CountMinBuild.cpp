@@ -39,34 +39,6 @@ void* getCountMinRefProxy(void* ptrOpHandler,
     return statistic->getStatisticData();
 }
 
-// TODO move this to the AbstractSynopsisOperatorHandler, as we need this for all synopsis operators
-uint64_t getSynopsisStartProxy(void* ptrOpHandler,
-                               Statistic::StatisticMetricHash metricHash,
-                               StatisticId statisticId,
-                               uint64_t workerId,
-                               uint64_t timestamp) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);
-
-    const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
-    auto statistic = opHandler->getStatistic(workerId, statisticHash, timestamp);
-    return statistic->getStartTs().getTime();
-}
-
-// TODO move this to the AbstractSynopsisOperatorHandler, as we need this for all synopsis operators
-uint64_t getSynopsisEndProxy(void* ptrOpHandler,
-                               Statistic::StatisticMetricHash metricHash,
-                               StatisticId statisticId,
-                               uint64_t workerId,
-                               uint64_t timestamp) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);
-
-    const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
-    auto statistic = opHandler->getStatistic(workerId, statisticHash, timestamp);
-    return statistic->getEndTs().getTime();
-}
-
 void* getH3SeedsProxy(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
@@ -94,9 +66,6 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
     const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
     opHandler->checkStatisticsSending(bufferMetaData, statisticHash, pipelineCtx);
 }
-
-void* getNullPtrMemRefProxy() { return nullptr; }
-
 
 void CountMinBuild::updateLocalState(ExecutionContext& ctx, CountMinLocalState& localState, const Value<UInt64>& timestamp) const {
     // We have to get the slice for the current timestamp
