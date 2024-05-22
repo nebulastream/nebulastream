@@ -15,6 +15,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/SynopsisLocalState.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
@@ -65,24 +66,63 @@ void HyperLogLogBuild::open(ExecutionContext& executionCtx, RecordBuffer& record
     if (hasChild()) {
         child->open(executionCtx, recordBuffer);
     }
+
+    // Creating a HLL local state
+    auto nullPtrRef = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
+    auto localState = std::make_unique<SynopsisLocalState>(0_u64, 0_u64, nullPtrRef);
+
+    // Setting the local state
+    executionCtx.setLocalOperatorState(this, std::move(localState));
+}
+
+void HyperLogLogBuild::updateLocalState(ExecutionContext& ctx,
+                                        SynopsisLocalState& localState,
+                                        const Value<UInt64>& timestamp) const {
+    // We have to get the slice for the current timestamp
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto workerId = ctx.getWorkerId();
+    auto sliceReference = Nautilus::FunctionCall("getHLLRefProxy",
+                                                 getHLLRefProxy,
+                                                 operatorHandlerMemRef,
+                                                 Value<UInt64>(metricHash),
+                                                 ctx.getCurrentStatisticId(),
+                                                 ctx.getWorkerId(),
+                                                 timestamp);
+
+    // We have to get the synopsis start and end timestamp
+    auto startTs = Nautilus::FunctionCall("getSynopsisStartProxy",
+                                          getSynopsisStartProxy,
+                                          operatorHandlerMemRef,
+                                          Value<UInt64>(metricHash),
+                                          ctx.getCurrentStatisticId(),
+                                          workerId,
+                                          timestamp);
+    auto endTs = Nautilus::FunctionCall("getSynopsisEndProxy",
+                                        getSynopsisEndProxy,
+                                        operatorHandlerMemRef,
+                                        Value<UInt64>(metricHash),
+                                        ctx.getCurrentStatisticId(),
+                                        workerId,
+                                        timestamp);
+
+    // Updating the local join state
+    localState.synopsisStartTs = startTs;
+    localState.synopsisEndTs = endTs;
+    localState.synopsisReference = sliceReference;
 }
 
 void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const {
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto localState = dynamic_cast<SynopsisLocalState*>(ctx.getLocalState(this));
 
     // 1. Get the memRef to the HyperLogLog sketch
-    auto timestampVal = timeFunction->getTs(ctx, record);
-    auto hllMemRef = Nautilus::FunctionCall("getHLLRefProxy",
-                                            getHLLRefProxy,
-                                            operatorHandlerMemRef,
-                                            Value<UInt64>(metricHash),
-                                            ctx.getCurrentStatisticId(),
-                                            ctx.getWorkerThreadId(),
-                                            timestampVal);
+    const auto timestampVal = timeFunction->getTs(ctx, record);
+    if (!localState->correctSynopsesForTimestamp(timestampVal)) {
+        updateLocalState(ctx, *localState, timestampVal);
+    }
 
     // 2. Updating the hyperloglog sketch for this record
     Value<UInt64> hash = murmurHash->calculate(record.read(fieldToTrackFieldName));
-    Nautilus::FunctionCall("updateHLLProxy", updateHLLProxy, hllMemRef, hash);
+    Nautilus::FunctionCall("updateHLLProxy", updateHLLProxy, localState->synopsisReference, hash);
 }
 
 void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {

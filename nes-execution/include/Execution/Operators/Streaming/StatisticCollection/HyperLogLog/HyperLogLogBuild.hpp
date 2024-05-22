@@ -16,6 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_HYPERLOGLOG_HYPERLOGLOGBUILD_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/SynopsisLocalState.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Util/Common.hpp>
@@ -35,6 +36,8 @@ class HyperLogLogBuild : public ExecutableOperator {
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void updateLocalState(ExecutionContext& ctx, SynopsisLocalState& localState, const Value<UInt64>& timestamp) const;
+
 
   private:
     const uint64_t operatorHandlerIndex;
