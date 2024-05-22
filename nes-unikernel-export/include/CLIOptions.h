@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <variant>
+#include <filesystem>
 #include <yaml-cpp/yaml.h>
 
 namespace NES {
@@ -287,7 +288,7 @@ class Options {
     getTopologyAndSources();
     [[nodiscard]] ExportKafkaConfiguration getKafkaConfiguration() const;
     [[nodiscard]] std::string getYAMLOutputPath() const;
-    [[nodiscard]] boost::filesystem::path getStageOutputPathForNode(NES::WorkerId) const;
+    [[nodiscard]] std::filesystem::path getStageOutputPathForNode(NES::WorkerId) const;
 
   private:
     ExportConfiguration configuration;

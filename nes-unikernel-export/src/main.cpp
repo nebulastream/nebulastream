@@ -59,10 +59,10 @@ bool isUnikernelWorkerNode(const NES::Optimizer::ExecutionNodeWLock lockedNode) 
 }
 
 struct OutputFileEmitter {
-    boost::filesystem::path outputDirectory;
+    std::filesystem::path outputDirectory;
 
     void emitFile(const std::string& filename, const std::string& content) {
-        boost::filesystem::ofstream os(outputDirectory / filename);
+        std::ofstream os(outputDirectory / filename);
         NES_ASSERT(os.good(), fmt::format("Could not open output file {}", (outputDirectory / filename).string()));
         os << content;
     }

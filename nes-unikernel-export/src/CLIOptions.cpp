@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <argumentum/argparse.h>
+#include <filesystem>
 #include <sys/stat.h>
 #include <variant>
 #include <yaml-cpp/yaml.h>
@@ -219,15 +220,20 @@ CLIResult Options::getCLIOptions(int argc, char** argv) {
 }
 size_t Options::getBufferSize() const { return bufferSize; }
 std::string Options::getYAMLOutputPath() const { return this->yamlOutput; }
-boost::filesystem::path Options::getStageOutputPathForNode(NES::WorkerId nodeId) const {
-    auto path = boost::filesystem::path(output.value_or(boost::filesystem::current_path().string()));
+
+std::filesystem::path Options::getStageOutputPathForNode(NES::WorkerId nodeId) const {
+    namespace fs = std::filesystem;
+
+    auto path = fs::path(output.value_or(fs::current_path().string()));
+
     NES_ASSERT2_FMT(is_directory(path), fmt::format("Path does not exist: {}", path.string()));
 
     auto nodePath = path / fmt::format("node{}", nodeId);
-    boost::filesystem::create_directories(nodePath);
+    fs::create_directories(nodePath);
 
     return nodePath;
 }
+
 size_t Options::getOtherNodeIdFromLink(const std::variant<std::string, size_t>& variant) {
     if (std::holds_alternative<std::string>(variant)) {
         assert(std::get<std::string>(variant) == "sink" && "'sink' is the only accepted string parameter for links");
