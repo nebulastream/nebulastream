@@ -87,7 +87,7 @@ int main() {
 
     errno = 0;
     TheBufferManager = std::make_shared<NES::Runtime::BufferManager>(8192, NUMBER_OF_BUFFERS + 300);
-    TheWorkerContext = new NES::Runtime::WorkerContext(NES::Unikernel::CTConfiguration::NodeId, TheBufferManager, 1, 1);
+    TheWorkerContext = new NES::Runtime::WorkerContext(NES::WorkerThreadId(1), TheBufferManager, 1, 1);
 
     std::vector<NES::Runtime::TupleBuffer> buffers;
 
