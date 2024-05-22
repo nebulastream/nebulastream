@@ -25,7 +25,7 @@ namespace NES {
 Operator::Operator(OperatorId id) : Operator(id, INVALID_STATISTIC_ID) {}
 
 Operator::Operator(OperatorId id, StatisticId statisticId) : id(id), statisticId(statisticId) {
-    NES_INFO("Creating Operator {}", id);
+    NES_TRACE("Creating Operator {}", id);
 }
 
 OperatorId Operator::getId() const { return id; }
