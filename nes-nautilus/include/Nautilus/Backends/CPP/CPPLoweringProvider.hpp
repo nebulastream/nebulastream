@@ -96,6 +96,9 @@ class CPPLoweringProvider {
             blocks[blockIndex] << var << " = " << constValue->getValue() << ";\n";
         }
 
+
+        void processConstIdentifier(const std::shared_ptr<IR::Operations::Operation>& opt, short blockIndex, RegisterFrame& frame);
+
         template<class Type>
         void processBinary(const std::shared_ptr<IR::Operations::Operation>& o,
                            const std::string& operation,

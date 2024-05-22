@@ -16,6 +16,7 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIdentifierOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/BitWiseAndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/BitWiseLeftShiftOperation.hpp>
@@ -26,6 +27,7 @@
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IdentifierStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
@@ -76,8 +78,22 @@ std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::Stamp
         return "void";
     } else if (stamp->isBoolean()) {
         return "bool";
+    } else if (stamp->isIdentifier()) {
+        return std::string(cast<IR::Types::IdentifierStamp>(stamp)->getTypeName());
     }
     NES_NOT_IMPLEMENTED();
+}
+void CPPLoweringProvider::LoweringContext::processConstIdentifier(const std::shared_ptr<IR::Operations::Operation>& opt,
+                                                                  short blockIndex,
+                                                                  RegisterFrame& frame) {
+
+    auto constValue = std::dynamic_pointer_cast<IR::Operations::ConstIdentifierOperation>(opt);
+    auto var = getVariable(constValue->getIdentifier());
+    blockArguments << getType(constValue->getStamp()) << " " << var << " = "
+                   << "NES::INVALID<" << cast<IR::Types::IdentifierStamp>(constValue->getStamp())->getTypeName() << ">;\n";
+    frame.setValue(constValue->getIdentifier(), var);
+    blocks[blockIndex] << var << " = " << cast<IR::Types::IdentifierStamp>(constValue->getStamp())->getTypeName() << "("
+                       << constValue->getValue() << ");\n";
 }
 
 std::stringstream CPPLoweringProvider::LoweringContext::processUnikernel(std::string_view functionName) {
@@ -163,7 +179,13 @@ std::string CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<
         for (auto arg : block->getArguments()) {
             if (!frame.contains(arg->getIdentifier())) {
                 auto var = getVariable(arg->getIdentifier());
-                blockArguments << getType(arg->getStamp()) << " " << var << ";\n";
+                blockArguments << getType(arg->getStamp()) << " " << var;
+                if (arg->getStamp()->isIdentifier()) {
+                    auto typeName = cast<IR::Types::IdentifierStamp>(arg->getStamp())->getTypeName();
+                    blockArguments << " = NES::INVALID<" << typeName << ">";
+                }
+                blockArguments << ";\n";
+
                 frame.setValue(arg->getIdentifier(), var);
             }
         }
@@ -248,7 +270,12 @@ void CPPLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInv
         if (!parentFrame.contains(blockTargetArgument)) {
             auto var = getVariable(blockTargetArgument);
             parentFrame.setValue(blockTargetArgument, var);
-            blockArguments << getType(blockTargetArguments[i]->getStamp()) << " " << var << ";\n";
+            blockArguments << getType(blockTargetArguments[i]->getStamp()) << " " << var;
+            if (blockTargetArguments[i]->getStamp()->isIdentifier()) {
+                auto typeName = cast<IR::Types::IdentifierStamp>(blockTargetArguments[i]->getStamp())->getTypeName();
+                blockArguments << " = NES::INVALID<" << typeName << ">";
+            }
+            blockArguments << ";\n";
         }
 
         blocks[blockIndex] << parentFrame.getValue(blockTargetArgument) << " = " << parentFrame.getValue(blockArgument) << ";\n";
@@ -291,6 +318,10 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         }
         case IR::Operations::Operation::OperationType::ConstFloatOp: {
             processConst<IR::Operations::ConstFloatOperation>(opt, blockIndex, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::ConstIdentifierOp: {
+            processConstIdentifier(opt, blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::AddOp: {
@@ -423,7 +454,12 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     }
     if (!opt->getStamp()->isVoid()) {
         auto resultVar = getVariable(opt->getIdentifier());
-        blockArguments << getType(opt->getStamp()) << " " << resultVar << ";\n";
+        blockArguments << getType(opt->getStamp()) << " " << resultVar;
+        if (opt->getStamp()->isIdentifier()) {
+            auto typeName = cast<IR::Types::IdentifierStamp>(opt->getStamp())->getTypeName();
+            blockArguments << " = NES::INVALID<" << typeName << ">";
+        }
+        blockArguments << ";\n";
         frame.setValue(opt->getIdentifier(), resultVar);
         blocks[blockIndex] << resultVar << " = ";
     }
