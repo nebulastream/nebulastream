@@ -29,6 +29,7 @@ class Stamp : public Typed {
     bool isBoolean();
     bool isVoid();
     bool isAddress();
+    bool isIdentifier();
 
     virtual const std::string toString() const = 0;
 };

@@ -14,6 +14,7 @@
 
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IdentifierStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -432,6 +433,14 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstFlo
                                                                floatType,
                                                                builder->getFloatAttr(floatType, constFloatOp->getValue())));
     }
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstIdentifierOperation> constIdentifierOperation,
+                                        ValueFrame& frame) {
+    frame.setValue(constIdentifierOperation->getIdentifier(),
+                   getConstInt("ConstantOp",
+                               cast<IR::Types::IdentifierStamp>(constIdentifierOperation->getStamp())->getPhysicalStamp(),
+                               constIdentifierOperation->getValue()));
 }
 
 //==---------------------------==//

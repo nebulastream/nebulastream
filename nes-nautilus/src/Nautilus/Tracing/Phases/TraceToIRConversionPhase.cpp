@@ -18,6 +18,7 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIdentifierOperation.hpp>
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/BitWiseAndOperation.hpp>
@@ -601,7 +602,7 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
             std::make_shared<NES::Nautilus::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
     } else if (Identifier::isIdentifier(*valueRef.value)) {
         auto identifier = std::dynamic_pointer_cast<Identifier>(valueRef.value);
-        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier,
+        constOperation = std::make_shared<IR::Operations::ConstIdentifierOperation>(resultIdentifier,
                                                                              identifier->getUnderlyingRawValue(),
                                                                              identifier->getType());
     } else {

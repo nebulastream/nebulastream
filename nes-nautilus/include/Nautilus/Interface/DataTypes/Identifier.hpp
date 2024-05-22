@@ -16,6 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_IDENTIFIER_HPP_
 
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/IR/Types/IdentifierStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
@@ -46,18 +47,6 @@ class Identifier : public TraceableType {
     static bool isIdentifier(const Any& val);
 };
 
-template<std::integral T>
-constexpr IR::Types::IntegerStamp::BitWidth getBitWidth() {
-    static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
-                  "Nautilus only handles BitWidth up to 64 Bits");
-    switch (sizeof(T)) {
-        case 1: return IR::Types::IntegerStamp::BitWidth::I8;
-        case 2: return IR::Types::IntegerStamp::BitWidth::I16;
-        case 4: return IR::Types::IntegerStamp::BitWidth::I32;
-        case 8: return IR::Types::IntegerStamp::BitWidth::I64;
-    }
-}
-
 /**
  * @brief Concrete Nautilus NESIdentifier Adapter
  */
@@ -81,22 +70,7 @@ class IdentifierImpl final : public Identifier {
         return create<Boolean>(value > other.staticCast<IdentifierImpl>().value);
     }
 
-    /**
-     * Identifier Type will return a IntegerStamp
-     * @return StampPtr of the underlying type
-     */
-    IR::Types::StampPtr getType() const override {
-        static_assert(std::integral<typename T::Underlying>,
-                      "Nautilus IdentifierType only supports integer based type identifier");
-
-        if constexpr (std::is_unsigned_v<typename T::Underlying>) {
-            return std::make_shared<IR::Types::IntegerStamp>(getBitWidth<typename T::Underlying>(),
-                                                             IR::Types::IntegerStamp::SignednessSemantics::Unsigned);
-        } else {
-            return std::make_shared<IR::Types::IntegerStamp>(getBitWidth<typename T::Underlying>(),
-                                                             IR::Types::IntegerStamp::SignednessSemantics::Signed);
-        }
-    }
+    IR::Types::StampPtr getType() const override { return std::make_shared<IR::Types::IdentifierStampImpl<T>>(); }
 
   private:
     // We only store the underlying value to not introduce additional types visible during debugging.

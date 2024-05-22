@@ -15,6 +15,7 @@
 #include <Nautilus/IR/Types/ArrayStamp.hpp>
 #include <Nautilus/IR/Types/BooleanStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IdentifierStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>
@@ -29,6 +30,7 @@ bool Stamp::isFloat() { return isa<FloatStamp>(*this); }
 
 bool Stamp::isArray() { return isa<ArrayStamp>(*this); }
 bool Stamp::isAddress() { return isa<AddressStamp>(*this); }
+bool Stamp::isIdentifier() {return isa<IdentifierStamp>(*this);}
 
 bool Stamp::isBoolean() { return isa<BooleanStamp>(*this); }
 

@@ -61,6 +61,7 @@ class Operation {
         ReturnOp,
         StoreOp,
         SubOp,
+        ConstIdentifierOp,
     };
 
     explicit Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp);

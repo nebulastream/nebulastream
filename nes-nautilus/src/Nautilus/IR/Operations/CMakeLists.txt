@@ -28,6 +28,7 @@ add_source_files(unikernel-export
         CastOperation.cpp
         BranchOperation.cpp
         ConstBooleanOperation.cpp
+        ConstIdentifierOperation.cpp
 )
 add_source_files(nes-nautilus
         Operation.cpp
@@ -43,4 +44,5 @@ add_source_files(nes-nautilus
         CastOperation.cpp
         BranchOperation.cpp
         ConstBooleanOperation.cpp
+        ConstIdentifierOperation.cpp
         )

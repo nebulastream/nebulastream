@@ -28,6 +28,7 @@
 #include <Nautilus/IR/Operations/CastOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIdentifierOperation.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -120,6 +121,7 @@ class MLIRLoweringProvider {
     void generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ConstIdentifierOperation> constBooleanOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addIntOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::SubOperation> subIntOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, ValueFrame& frame);
