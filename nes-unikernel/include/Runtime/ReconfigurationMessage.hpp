@@ -14,7 +14,7 @@
 
 #ifndef NES_RECONFIGURATIONMESSAGE_HPP
 #define NES_RECONFIGURATIONMESSAGE_HPP
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/ReconfigurationType.hpp>
 #include <any>
 

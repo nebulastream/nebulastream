@@ -56,7 +56,7 @@ class UnikernelSinkImpl {
 #endif
         } else {
             // Test Sink
-            UnikernelSinkImpl::sink.emplace(1);
+            UnikernelSinkImpl::sink.emplace(NES::OperatorId(1));
         }
     }
 

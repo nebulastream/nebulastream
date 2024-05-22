@@ -24,7 +24,7 @@ namespace NES::Unikernel {
 template<typename Config, typename Prev>
 class UnikernelSourceImpl {
   public:
-    constexpr static size_t Id = Config::OperatorId;
+    constexpr static OperatorId Id = Config::OperatorId;
     using DataSourceType = DataSource<Config, typename Config::SourceType>;
     constexpr static size_t NumberOfWorkerThreads = DataSourceType::NumberOfWorkerThreads;
     static DataSourceType source;

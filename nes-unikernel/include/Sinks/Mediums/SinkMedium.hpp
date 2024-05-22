@@ -124,12 +124,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
     /**
-     * @brief
-     * @return
-     */
-    OperatorId getOperatorId() const;
-
-    /**
      * @brief returns current smallest timestamp stored in multi origin watermark processor
      * @return epoch barrier
      */

@@ -16,7 +16,7 @@
 #include <Network/NetworkSink.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/NesThread.hpp>
-#include <Runtime/NodeEngine.hpp>
+// #include <Runtime/NodeEngine.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 #include <Runtime/ReconfigurationMessage.hpp>
@@ -30,7 +30,7 @@ extern NES::Runtime::BufferManagerPtr TheBufferManager;
 extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace NES::Network {
 
-NetworkSink::NetworkSink(uint64_t uniqueNetworkSinkDescriptorId,
+NetworkSink::NetworkSink(OperatorId uniqueNetworkSinkDescriptorId,
                          SharedQueryId queryId,
                          DecomposedQueryPlanId querySubPlanId,
                          const NodeLocation& destination,
@@ -43,13 +43,9 @@ NetworkSink::NetworkSink(uint64_t uniqueNetworkSinkDescriptorId,
     : SinkMedium(numOfProducers, queryId, querySubPlanId, numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), networkManager(TheNetworkManager),
       receiverLocation(destination), bufferManager(TheBufferManager), nesPartition(nesPartition),
-      schemaSizeInBytes(outputSchemaSizeInBytes), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes),
-      reconnectBuffering(false) {
+      schemaSizeInBytes(outputSchemaSizeInBytes), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
-
-    insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
-    };
 }
 
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
@@ -57,22 +53,10 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWO
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
     NES_TRACE("context {} writing data", workerContext.getId());
-    if (reconnectBuffering) {
-        NES_TRACE("context {} buffering data", workerContext.getId());
-        workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-        return true;
-    }
-
-    auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-    if (channel) {
-        auto success = channel->sendBuffer(inputBuffer, schemaSizeInBytes, messageSequenceNumber++);
-        if (success) {
-            insertIntoStorageCallback(inputBuffer, workerContext);
-        }
-        return success;
+    if (auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId())) {
+        return channel->sendBuffer(inputBuffer, schemaSizeInBytes, messageSequenceNumber++);
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
-    return false;
 }
 
 void NetworkSink::preSetup() {

@@ -170,7 +170,7 @@ class PipelineJoinImpl {
 
     static void execute(NES::Runtime::TupleBuffer& tb) {
         NES_ASSERT(tb.getBuffer() != nullptr, "Execute called with empty tuple buffer");
-        NES_ASSERT(tb.getOriginId() != 0, "Execute called with tuple buffer with a bad origin id");
+        NES_ASSERT(tb.getOriginId() != INVALID_ORIGIN_ID, "Execute called with tuple buffer with a bad origin id");
 
         TRACE_PIPELINE_EXECUTE("PipelineJoin");
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();

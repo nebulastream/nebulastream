@@ -24,6 +24,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <UnikernelStage.hpp>
 #include <Util/Common.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -95,7 +96,7 @@ PROXY_FN T min(T a, T b) {
     return std::min(a, b);
 }
 
-PROXY_FN uint64_t getWorkerIdProxy(void* workerContext) {
+PROXY_FN NES::WorkerThreadId getWorkerIdProxy(void* workerContext) {
     TRACE_PROXY_FUNCTION_NO_ARG;
     auto* wc = static_cast<NES::Runtime::WorkerContext*>(workerContext);
     return wc->getId();
@@ -417,9 +418,9 @@ PROXY_FN void* insetProxy(void* state, uint64_t hash) {
 PROXY_FN void triggerKeyedThreadLocalWindow(void* op,
                                             void* wctx,
                                             void* pctx,
-                                            uint64_t originId,
-                                            uint64_t sequenceNumber,
-                                            uint64_t chunkNumber,
+                                            NES::OriginId originId,
+                                            NES::SequenceNumber sequenceNumber,
+                                            NES::ChunkNumber chunkNumber,
                                             bool lastChunk,
                                             uint64_t watermarkTs) {
     auto handler = static_cast<NES::Runtime::Execution::Operators::KeyedSlicePreAggregationHandler*>(op);
@@ -509,18 +510,13 @@ PROXY_FN void triggerSlidingWindowsKeyed(void* sh,
     handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, {sequenceNumber, chunkNumber, lastChunk}, sliceEnd);
 }
 
-PROXY_FN uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, NES::OriginId originId, NES::SequenceNumber sequenceNumber) {
+PROXY_FN uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, NES::OriginId, NES::SequenceNumber) {
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
     return pipelineCtx->getNextChunkNumber();
 }
-PROXY_FN bool isLastChunkProxy(void* ptrPipelineCtx,
-                               NES::OriginId originId,
-                               NES::SequenceNumber sequenceNumber,
-                               NES::ChunkNumber chunkNumber,
-                               bool isLastChunk) {
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
-    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
+
+PROXY_FN bool isLastChunkProxy(void*, NES::OriginId, NES::SequenceNumber, NES::ChunkNumber, bool isLastChunk) {
     return isLastChunk;
 }
 
@@ -531,28 +527,28 @@ PROXY_FN void removeSequenceStateProxy(void* ptrPipelineCtx, NES::OriginId origi
 }
 
 PROXY_FN void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getBuffer();
 };
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getBufferSize();
 };
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getNumberOfTuples();
 };
 
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__getChunkNumber(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getChunkNumber();
 };
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__getStatisticId(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getStatisticId();
 };
 PROXY_FN bool NES__Runtime__TupleBuffer__isLastChunk(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->isLastChunk();
 };
 PROXY_FN __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr,
@@ -560,49 +556,49 @@ PROXY_FN __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumbe
     NES::Runtime::TupleBuffer* tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
-PROXY_FN uint64_t NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+PROXY_FN NES::OriginId NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getOriginId();
 };
-PROXY_FN void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t value) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+PROXY_FN void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, NES::OriginId value) {
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     thisPtr_->setOriginId(value);
 };
 
 PROXY_FN void NES__Runtime__TupleBuffer__setStatisticId(void* thisPtr, uint64_t value) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     thisPtr_->setStatisticId(value);
 };
 PROXY_FN void NES__Runtime__TupleBuffer__setChunkNumber(void* thisPtr, uint64_t value) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     thisPtr_->setChunkNumber(value);
 };
 PROXY_FN void NES__Runtime__TupleBuffer__setLastChunk(void* thisPtr, bool value) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     thisPtr_->setLastChunk(value);
 };
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__Watermark(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getWatermark();
 };
 PROXY_FN void NES__Runtime__TupleBuffer__setWatermark(void* thisPtr, uint64_t value) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     thisPtr_->setWatermark(value);
 };
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__getCreationTimestampInMS(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getCreationTimestampInMS();
 };
 PROXY_FN void NES__Runtime__TupleBuffer__setSequenceNr(void* thisPtr, uint64_t sequenceNumber) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->setSequenceNumber(sequenceNumber);
 };
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->getSequenceNumber();
 }
 PROXY_FN void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t value) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     return thisPtr_->setCreationTimestampInMS(value);
 }
 
@@ -623,9 +619,9 @@ PROXY_FN void triggerThreadLocalStateProxy(void* op,
                                            void* wctx,
                                            void* pctx,
                                            uint64_t,
-                                           uint64_t originId,
-                                           uint64_t sequenceNumber,
-                                           uint64_t chunkNumber,
+                                           NES::OriginId originId,
+                                           NES::SequenceNumber sequenceNumber,
+                                           NES::ChunkNumber chunkNumber,
                                            bool lastChunk,
                                            uint64_t watermarkTs) {
     auto handler = static_cast<NES::Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler*>(op);
@@ -710,8 +706,8 @@ PROXY_FN void appendToGlobalSliceStoreNonKeyed(void* ss, void* slicePtr) {
 PROXY_FN void triggerSlidingWindowsNonKeyed(void* sh,
                                             void* wctx,
                                             void* pctx,
-                                            uint64_t sequenceNumber,
-                                            uint64_t chunkNumber,
+                                            NES::SequenceNumber sequenceNumber,
+                                            NES::ChunkNumber chunkNumber,
                                             bool lastChunk,
                                             uint64_t sliceEnd) {
     auto handler = static_cast<

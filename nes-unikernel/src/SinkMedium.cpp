@@ -28,8 +28,6 @@ SinkMedium::SinkMedium(uint32_t numOfProducers,
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
 }
 
-OperatorId SinkMedium::getOperatorId() const { return 0; }
-
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() { return sentBuffer; }
 
 void SinkMedium::updateWatermark([[maybe_unused]] Runtime::TupleBuffer& inputBuffer) {
@@ -40,7 +38,7 @@ uint64_t SinkMedium::getNumberOfWrittenOutTuples() { return sentTuples; }
 
 DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
-QueryId SinkMedium::getQueryId() const { return queryId; }
+SharedQueryId SinkMedium::getQueryId() const { return queryId; }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
     NES_DEBUG("EPOCH: {}", epochBarrier)

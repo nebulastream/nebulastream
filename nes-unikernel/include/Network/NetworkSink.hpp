@@ -41,8 +41,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     * @param faultToleranceType: fault-tolerance guarantee chosen by a user
     */
-    explicit NetworkSink(uint64_t uniqueNetworkSinkDescriptorId,
-                         QueryId queryId,
+    explicit NetworkSink(OperatorId uniqueNetworkSinkDescriptorId,
+                         SharedQueryId queryId,
                          DecomposedQueryPlanId DecomposedQueryPlanId,
                          NodeLocation const& destination,
                          NesPartition nesPartition,
@@ -114,12 +114,12 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @brief method to return the network sinks descriptor id
      * @return id
      */
-    uint64_t getUniqueNetworkSinkDescriptorId();
+    OperatorId getUniqueNetworkSinkDescriptorId();
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
-    uint64_t uniqueNetworkSinkDescriptorId;
+    OperatorId uniqueNetworkSinkDescriptorId;
     NetworkManagerPtr networkManager;
     NodeLocation receiverLocation;
     Runtime::BufferManagerPtr bufferManager;
@@ -130,7 +130,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     std::atomic<uint64_t> messageSequenceNumber;
-    bool reconnectBuffering;
 };
 
 }// namespace Network

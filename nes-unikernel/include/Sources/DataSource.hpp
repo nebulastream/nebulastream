@@ -134,7 +134,7 @@ class DataSource {
      * @brief running routine while source is active
      */
     void runningRoutine(const std::stop_token& stoken) {
-        static_assert(Config::OperatorId != 0, "The id of the source is not set properly");
+        static_assert(Config::OperatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
         setThreadName(fmt::format("DataSrc-{}", Config::OperatorId).c_str());
 
         NES_DEBUG("DataSource {}: Running Data Source of type={} ", Config::OperatorId, magic_enum::enum_name(Impl::SourceType));
