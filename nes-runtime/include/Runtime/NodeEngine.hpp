@@ -22,6 +22,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #if !(defined(UNIKERNEL_EXPORT) || defined(UNIKERNEL_TEST_LIBRARY))
 #include <StatisticCollection/StatisticManager.hpp>
+#endif
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <map>
@@ -317,6 +318,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 #if !(defined(UNIKERNEL_EXPORT) || defined(UNIKERNEL_TEST_LIBRARY))
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
+#endif
     /**
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
      * connections from a new upstream sink. Reconfigured sinks will scheduled a pending change of the downstream source

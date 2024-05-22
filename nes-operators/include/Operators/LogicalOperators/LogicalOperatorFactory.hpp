@@ -17,8 +17,10 @@
 
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#ifndef UNIKERNEL_EXPORT
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
+#endif
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -98,6 +100,7 @@ class LogicalOperatorFactory {
                                                             std::vector<ExpressionNodePtr> outputFields,
                                                             OperatorId id = getNextOperatorId());
 
+#ifndef UNIKERNEL_EXPORT
     /**
      * @brief Creates a synopsis build operator
      * @param window: Window properties
@@ -115,6 +118,8 @@ class LogicalOperatorFactory {
                                  const Statistic::SendingPolicyPtr sendingPolicy,
                                  const Statistic::TriggerConditionPtr triggerCondition,
                                  OperatorId id = getNextOperatorId());
+
+#endif
 
     /**
      * @brief Create a new source operator with source descriptor.

@@ -338,6 +338,7 @@ class OperatorSerializationUtil {
     static void serializeOpenCLOperator(const NES::LogicalOpenCLOperator& openCLLogicalOperator,
                                         SerializableOperator& serializedOperator);
 
+#ifndef UNIKERNEL_EXPORT
     /**
      * @brief serialize open cl operator
      * @param openCLDetails
@@ -360,6 +361,7 @@ class OperatorSerializationUtil {
      */
     static LogicalUnaryOperatorPtr
     deserializeStatisticWindowOperator(const SerializableOperator_StatisticWindowDetails& statisticWindowDetails);
+#endif
 };
 }// namespace NES
 

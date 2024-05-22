@@ -76,6 +76,7 @@ class QueryPlanBuilder {
      */
     static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
 
+#ifndef UNIKERNEL_EXPORT
     /**
      * @brief Adds a synopsis build operator to this query
      * @param window
@@ -92,6 +93,7 @@ class QueryPlanBuilder {
                                                   Statistic::SendingPolicyPtr sendingPolicy,
                                                   Statistic::TriggerConditionPtr triggerCondition,
                                                   QueryPlanPtr queryPlan);
+#endif
 
     /**
      * @brief: Map java udf according to the java method given in the descriptor.

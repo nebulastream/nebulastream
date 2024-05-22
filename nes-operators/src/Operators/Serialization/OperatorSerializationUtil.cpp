@@ -1742,6 +1742,7 @@ OperatorSerializationUtil::deserializeOpenCLOperator(const SerializableOperator_
     return openCLOperator;
 }
 
+#ifndef UNIKERNEL_EXPORT
 void OperatorSerializationUtil::serializeStatisticWindowOperator(
     const Statistic::LogicalStatisticWindowOperator& statisticWindowOperator,
     SerializableOperator& serializedOperator) {
@@ -1796,7 +1797,9 @@ void OperatorSerializationUtil::serializeStatisticWindowOperator(
     statisticWindowDetails.set_metrichash(statisticWindowOperator.getMetricHash());
     serializedOperator.mutable_details()->PackFrom(statisticWindowDetails);
 }
+#endif
 
+#ifndef UNIKERNEL_EXPORT
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOperator(
     const SerializableOperator_StatisticWindowDetails& statisticWindowDetails) {
 
@@ -1855,5 +1858,6 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOpe
 
     return statisticWindowOperator;
 }
+#endif
 
 }// namespace NES

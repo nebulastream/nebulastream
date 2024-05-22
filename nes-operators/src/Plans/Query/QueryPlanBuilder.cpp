@@ -104,6 +104,7 @@ QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr
     return leftQueryPlan;
 }
 
+#ifndef UNIKERNEL_EXPORT
 QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePtr window,
                                                          Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
                                                          Statistic::StatisticMetricHash metricHash,
@@ -119,6 +120,7 @@ QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePt
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
+#endif
 
 QueryPlanPtr QueryPlanBuilder::addJoin(QueryPlanPtr leftQueryPlan,
                                        QueryPlanPtr rightQueryPlan,
