@@ -12,6 +12,7 @@
 
 add_source_files(nes-execution
         AbstractSynopsesOperatorHandler.cpp
+        SynopsisLocalState.cpp
 )
 
 add_subdirectory(CountMin)

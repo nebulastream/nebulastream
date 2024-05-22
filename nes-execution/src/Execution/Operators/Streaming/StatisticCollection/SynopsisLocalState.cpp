@@ -23,9 +23,9 @@ SynopsisLocalState::SynopsisLocalState(const Nautilus::Value<Nautilus::UInt64>& 
 
 Nautilus::Value<Nautilus::Boolean> SynopsisLocalState::correctSynopsesForTimestamp(const Nautilus::Value<Nautilus::UInt64>& ts) const {
     if (synopsisStartTs <= ts && ts < synopsisEndTs) {
-        return Nautilus::Boolean(true);
+        return Nautilus::Value<Nautilus::Boolean>(true);
     } else {
-        return Nautilus::Boolean(false);
+        return Nautilus::Value<Nautilus::Boolean>(false);
     }
 }
 } // namespace NES::Runtime::Execution::Operators

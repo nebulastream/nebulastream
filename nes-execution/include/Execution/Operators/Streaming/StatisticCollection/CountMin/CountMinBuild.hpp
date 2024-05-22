@@ -18,8 +18,10 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/SynopsisLocalState.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Util/Common.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,6 +31,18 @@ namespace NES::Runtime::Execution::Operators {
  */
 class CountMinBuild : public ExecutableOperator {
   public:
+
+    struct CountMinLocalState : public SynopsisLocalState {
+        CountMinLocalState(const Value<UInt64>& synopsisStartTs,
+                           const Value<UInt64>& synopsisEndTs,
+                           const Value<MemRef>& synopsisReference,
+                           const Value<MemRef>& h3SeedsMemRef)
+            : SynopsisLocalState(synopsisStartTs, synopsisEndTs, synopsisReference), h3SeedsMemRef(h3SeedsMemRef) {}
+        CountMinLocalState(const Value<MemRef>& synopsisMemRef,
+                           const Value<MemRef>& h3SeedsMemRef) : SynopsisLocalState(0_u64, 0_u64, synopsisMemRef), h3SeedsMemRef(h3SeedsMemRef) {}
+        Value<MemRef> h3SeedsMemRef;
+    };
+
     CountMinBuild(const uint64_t operatorHandlerIndex,
                   const std::string_view fieldToTrackFieldName,
                   const uint64_t numberOfBitsInKey,
@@ -41,6 +55,8 @@ class CountMinBuild : public ExecutableOperator {
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
+    void updateLocalState(ExecutionContext& ctx, CountMinLocalState& localState, const Value<UInt64>& timestamp) const;
 
   private:
     const uint64_t operatorHandlerIndex;

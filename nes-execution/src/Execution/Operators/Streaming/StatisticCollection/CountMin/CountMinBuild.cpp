@@ -14,6 +14,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Statistics/StatisticKey.hpp>
@@ -36,6 +37,34 @@ void* getCountMinRefProxy(void* ptrOpHandler,
     //Incrementing the observed tuples as we have seen one more, before returning the statistic
     statistic->incrementObservedTuples(1);
     return statistic->getStatisticData();
+}
+
+// TODO move this to the AbstractSynopsisOperatorHandler, as we need this for all synopsis operators
+uint64_t getSynopsisStartProxy(void* ptrOpHandler,
+                               Statistic::StatisticMetricHash metricHash,
+                               StatisticId statisticId,
+                               uint64_t workerId,
+                               uint64_t timestamp) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);
+
+    const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+    auto statistic = opHandler->getStatistic(workerId, statisticHash, timestamp);
+    return statistic->getStartTs().getTime();
+}
+
+// TODO move this to the AbstractSynopsisOperatorHandler, as we need this for all synopsis operators
+uint64_t getSynopsisEndProxy(void* ptrOpHandler,
+                               Statistic::StatisticMetricHash metricHash,
+                               StatisticId statisticId,
+                               uint64_t workerId,
+                               uint64_t timestamp) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);
+
+    const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+    auto statistic = opHandler->getStatistic(workerId, statisticHash, timestamp);
+    return statistic->getEndTs().getTime();
 }
 
 void* getH3SeedsProxy(void* ptrOpHandler) {
@@ -66,30 +95,58 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
     opHandler->checkStatisticsSending(bufferMetaData, statisticHash, pipelineCtx);
 }
 
-void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
+void* getNullPtrMemRefProxy() { return nullptr; }
+
+
+void CountMinBuild::updateLocalState(ExecutionContext& ctx, CountMinLocalState& localState, const Value<UInt64>& timestamp) const {
+    // We have to get the slice for the current timestamp
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-
-    have here something similar to the NLJ and HJ, but slightly different. All synopses operators need this,
-        so we should have a parent class that overrides the open() and then stores the memref to the synopses
-        the parent class should also provide a method for checking, if the current timestamp lies still in synopses
-        additionally, the parent class should provide a method for updating the synopses/window
-
-    // 1. Get the memRef to the CountMin sketch
-    auto timestampVal = timeFunction->getTs(ctx, record);
-    auto countMinMemRef = Nautilus::FunctionCall("getCountMinRefProxy",
+    auto workerId = ctx.getWorkerId();
+    auto sliceReference = Nautilus::FunctionCall("getCountMinRefProxy",
                                                  getCountMinRefProxy,
                                                  operatorHandlerMemRef,
                                                  Value<UInt64>(metricHash),
                                                  ctx.getCurrentStatisticId(),
-                                                 ctx.getWorkerThreadId(),
-                                                 timestampVal);
+                                                 workerId,
+                                                 timestamp);
+
+    // We have to get the synopsis start and end timestamp
+    auto startTs = Nautilus::FunctionCall("getSynopsisStartProxy",
+                                         getSynopsisStartProxy,
+                                         operatorHandlerMemRef,
+                                         Value<UInt64>(metricHash),
+                                         ctx.getCurrentStatisticId(),
+                                         workerId,
+                                         timestamp);
+    auto endTs = Nautilus::FunctionCall("getSynopsisEndProxy",
+                                        getSynopsisEndProxy,
+                                        operatorHandlerMemRef,
+                                        Value<UInt64>(metricHash),
+                                        ctx.getCurrentStatisticId(),
+                                        workerId,
+                                        timestamp);
+
+    // Updating the local join state
+    localState.synopsisStartTs = startTs;
+    localState.synopsisEndTs = endTs;
+    localState.synopsisReference = sliceReference;
+}
+
+void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
+    auto countMinLocalState = dynamic_cast<CountMinLocalState*>(ctx.getLocalState(this));
+
+
+    // 1. Get the memRef to the CountMin sketch, if not in the local state
+    const auto timestampVal = timeFunction->getTs(ctx, record);
+    if (!countMinLocalState->correctSynopsesForTimestamp(timestampVal)) {
+        updateLocalState(ctx, *countMinLocalState, timestampVal);
+    }
 
     // 2. Updating the count min sketch for this record
-    auto h3SeedsMemRef = Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, operatorHandlerMemRef);
     for (Value<UInt64> row(0_u64); row < depth; row = row + 1_u64) {
         // 2.1 We calculate a MemRef to the first h3Seeds of the current row
         Value<UInt64> h3SeedsOffSet((row * sizeOfOneRowInBytes).as<UInt64>());
-        Value<MemRef> h3SeedsThisRow = (h3SeedsMemRef + h3SeedsOffSet).as<MemRef>();
+        Value<MemRef> h3SeedsThisRow = (countMinLocalState->h3SeedsMemRef + h3SeedsOffSet).as<MemRef>();
 
         // 2.2. Hashing the current value
         auto valToTrack = record.read(fieldToTrackFieldName);
@@ -100,7 +157,7 @@ void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
         // 2.3. Calculating the memory address of the counter we want to increment
         using namespace Statistic;
         Value<UInt64> counterOffset = (((col) + (row * width)) * (uint64_t)sizeof(CountMinStatistic::COUNTER_DATA_TYPE)).as<UInt64>();
-        Value<MemRef> counterMemRef = (countMinMemRef + counterOffset).as<MemRef>();
+        Value<MemRef> counterMemRef = (countMinLocalState->synopsisReference + counterOffset).as<MemRef>();
 
         // 2.4. Incrementing the counter by one
         counterMemRef.store(counterMemRef.load<UInt64>() + 1_u64);
@@ -112,6 +169,19 @@ void CountMinBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
     if (hasChild()) {
         child->open(executionCtx, recordBuffer);
     }
+
+    // Creating a count min local state
+    auto nullPtrRef1 = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
+    auto nullPtrRef2 = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
+    auto localState = std::make_unique<CountMinLocalState>(nullPtrRef1, nullPtrRef2);
+
+    // Adding the h3SeedsMemRef to the local state
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto h3SeedsMemRef = Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, operatorHandlerMemRef);
+    localState->h3SeedsMemRef = h3SeedsMemRef;
+
+    // Setting the local state
+    executionCtx.setLocalOperatorState(this, std::move(localState));
 }
 
 void CountMinBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
