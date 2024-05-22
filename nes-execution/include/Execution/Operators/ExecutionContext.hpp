@@ -99,7 +99,7 @@ class ExecutionContext final {
      * @brief Returns the current origin id. This is set in the scan.
      * @return Value<UInt64> origin id
      */
-    const Value<UInt64>& getOriginId() const;
+    const ValueId<OriginId>& getOriginId() const;
 
     /**
      * @brief Returns the current statistic id. This is set in the Operator::open()
@@ -111,7 +111,7 @@ class ExecutionContext final {
      * @brief Sets the current origin id.
      * @param origin
      */
-    void setOrigin(Value<UInt64> origin);
+    void setOrigin(ValueId<OriginId> origin);
 
     /**
      * @brief Sets the current statistic id of the current tuple buffer in this execution context
@@ -200,7 +200,7 @@ class ExecutionContext final {
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
-    Value<UInt64> origin;
+    ValueId<OriginId> origin;
     Value<UInt64> statisticId;
     Value<UInt64> watermarkTs;
     Value<UInt64> currentTs;

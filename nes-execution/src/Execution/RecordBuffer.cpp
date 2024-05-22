@@ -40,13 +40,13 @@ Value<MemRef> RecordBuffer::getBuffer() const {
 }
 const Value<MemRef>& RecordBuffer::getReference() const { return tupleBufferRef; }
 
-Value<UInt64> RecordBuffer::getOriginId() {
+ValueId<OriginId> RecordBuffer::getOriginId() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getOriginId",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getOriginId,
                           tupleBufferRef);
 }
 
-void RecordBuffer::setOriginId(const Value<UInt64>& originId) {
+void RecordBuffer::setOriginId(const ValueId<OriginId>& originId) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setOriginId",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setOriginId,
                    tupleBufferRef,

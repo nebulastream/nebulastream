@@ -34,14 +34,14 @@ extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNum
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
 
-uint64_t NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
+OriginId NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    return thisPtr_->getOriginId().getRawValue();
+    return thisPtr_->getOriginId();
 };
 
-void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t value) {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    thisPtr_->setOriginId(OriginId(value));
+void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, OriginId value) {
+    auto* thisPtr_ = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
+    thisPtr_->setOriginId(value);
 };
 
 uint64_t NES__Runtime__TupleBuffer__getStatisticId(void* thisPtr) {

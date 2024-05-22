@@ -38,7 +38,7 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                          Value<Boolean>& lastChunk,
                                          Value<MemRef>& globalSlice) const {
     ctx.setWatermarkTs(windowStart);
-    ctx.setOrigin(resultOriginId.getRawValue());
+    ctx.setOrigin(resultOriginId);
     ctx.setSequenceNumber(sequenceNumber);
     ctx.setChunkNumber(chunkNumber);
     ctx.setLastChunk(lastChunk);

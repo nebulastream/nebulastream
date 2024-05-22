@@ -51,7 +51,7 @@ void* getKeyedBucket(void* ptr, uint64_t index) {
 void triggerKeyedBucketsProxy(void* op,
                               void* wctx,
                               void* pctx,
-                              uint64_t originId,
+                              OriginId originId,
                               uint64_t sequenceNumber,
                               uint64_t chunkNumber,
                               bool lastChunk,
@@ -61,7 +61,7 @@ void triggerKeyedBucketsProxy(void* op,
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
     handler->trigger(*workerContext,
                      *pipelineExecutionContext,
-                     OriginId(originId),
+                     originId,
                      {sequenceNumber, chunkNumber, lastChunk},
                      watermarkTs);
 }

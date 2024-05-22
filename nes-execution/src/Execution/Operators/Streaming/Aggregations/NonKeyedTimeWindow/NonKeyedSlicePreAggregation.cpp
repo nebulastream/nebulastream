@@ -46,7 +46,7 @@ void triggerThreadLocalStateProxy(void* op,
                                   void* wctx,
                                   void* pctx,
                                   WorkerThreadId,
-                                  uint64_t originId,
+                                  OriginId originId,
                                   uint64_t sequenceNumber,
                                   uint64_t chunkNumber,
                                   bool lastChunk,
@@ -56,7 +56,7 @@ void triggerThreadLocalStateProxy(void* op,
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
     handler->trigger(*workerContext,
                      *pipelineExecutionContext,
-                     OriginId(originId),
+                     originId,
                      {sequenceNumber, chunkNumber, lastChunk},
                      watermarkTs);
 }

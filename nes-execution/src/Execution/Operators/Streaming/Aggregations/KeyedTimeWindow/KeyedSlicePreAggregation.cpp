@@ -47,7 +47,7 @@ void* findKeyedSliceStateByTsProxy(void* ss, uint64_t ts) {
 void triggerKeyedThreadLocalWindow(void* op,
                                    void* wctx,
                                    void* pctx,
-                                   uint64_t originId,
+                                   OriginId originId,
                                    uint64_t sequenceNumber,
                                    uint64_t chunkNumber,
                                    bool lastChunk,
@@ -57,7 +57,7 @@ void triggerKeyedThreadLocalWindow(void* op,
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
     handler->trigger(*workerContext,
                      *pipelineExecutionContext,
-                     OriginId(originId),
+                     originId,
                      {sequenceNumber, chunkNumber, lastChunk},
                      watermarkTs);
 }

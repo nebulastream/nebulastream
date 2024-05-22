@@ -71,7 +71,7 @@ class RecordBuffer {
      * @brief Get the origin ID of the underlying tuple buffer.
      * @return Value<UInt64> containing the origin ID of the tuple buffer.
      */
-    Value<UInt64> getOriginId();
+    ValueId<OriginId> getOriginId();
 
     /**
      * @brief Get the statistic ID of the underlying tuple buffer.
@@ -84,7 +84,7 @@ class RecordBuffer {
      * @param originId Value<UInt64> containing the origin ID to set for the
      * tuple buffer.
      */
-    void setOriginId(const Value<UInt64>& originId);
+    void setOriginId(const ValueId<OriginId>& originId);
 
     /**
      * @brief Set the origin ID of the underlying tuple buffer.
