@@ -50,7 +50,7 @@ int main() {
     auto partition_manager = std::make_shared<NES::Network::PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
     TheBufferManager = std::make_shared<NES::Runtime::BufferManager>(8192, UNIKERNEL_NUM_BUFS);
-    TheWorkerContext = new NES::Runtime::WorkerContext(NES::Unikernel::CTConfiguration::NodeId, TheBufferManager, 1, 1);
+    TheWorkerContext = new NES::Runtime::WorkerContext(NES::INITIAL<NES::WorkerThreadId>, TheBufferManager, 1, 1);
     NES::Network::ExchangeProtocol exchange_protocol(partition_manager, exchange_listener);
     TheNetworkManager = NES::Network::NetworkManager::create(NES::Unikernel::CTConfiguration::NodeId,
                                                              NES::Unikernel::CTConfiguration::NodeIP,

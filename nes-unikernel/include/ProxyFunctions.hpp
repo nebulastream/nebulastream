@@ -217,7 +217,7 @@ PROXY_FN void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     return opHandler->getSliceByTimestampOrCreateIt(timestamp).get();
 }
 
-PROXY_FN void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {
+PROXY_FN void* getNLJPagedVectorProxy(void* ptrNljSlice, NES::WorkerThreadId workerId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto joinBuildSide = magic_enum::enum_cast<NES::QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     auto* nljSlice = static_cast<NES::Runtime::Execution::NLJSlice*>(ptrNljSlice);
@@ -229,13 +229,13 @@ PROXY_FN void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint
 }
 
 PROXY_FN void allocateNewPageProxy(void* pagedVectorPtr) {
-    auto* pagedVector = (NES::Nautilus::Interface::PagedVector*) pagedVectorPtr;
+    auto* pagedVector = static_cast<NES::Nautilus::Interface::PagedVector*>(pagedVectorPtr);
     TRACE_PROXY_FUNCTION(*pagedVector);
     pagedVector->appendPage();
 }
 
 PROXY_FN void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
-    auto* pagedVector = (NES::Nautilus::Interface::PagedVector*) pagedVectorPtr;
+    auto* pagedVector = static_cast<NES::Nautilus::Interface::PagedVector*>(pagedVectorPtr);
     TRACE_PROXY_FUNCTION(*pagedVector, pagePos);
     return pagedVector->getPages()[pagePos];
 }
@@ -355,7 +355,7 @@ PROXY_FN void deleteAllSlicesProxy(void* ptrOpHandler,
 }
 
 PROXY_FN bool memeq(void* ptr1, void* ptr2, uint64_t size) { return std::memcmp(ptr1, ptr2, size) == 0; }
-PROXY_FN void* getKeyedSliceStoreProxy(void* op, uint64_t workerId) {
+PROXY_FN void* getKeyedSliceStoreProxy(void* op, NES::WorkerThreadId workerId) {
     TRACE_PROXY_FUNCTION(workerId);
     auto handler = static_cast<NES::Runtime::Execution::Operators::KeyedSlicePreAggregationHandler*>(op);
     return handler->getThreadLocalSliceStore(workerId);
@@ -602,7 +602,7 @@ PROXY_FN void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr,
     return thisPtr_->setCreationTimestampInMS(value);
 }
 
-PROXY_FN void* getSliceStoreProxy(void* op, uint64_t workerId) {
+PROXY_FN void* getSliceStoreProxy(void* op, NES::WorkerThreadId workerId) {
     auto handler = static_cast<NES::Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler*>(op);
     NES_DEBUG("getSliceStoreProxy");
     return handler->getThreadLocalSliceStore(workerId);
@@ -618,7 +618,7 @@ PROXY_FN void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
 PROXY_FN void triggerThreadLocalStateProxy(void* op,
                                            void* wctx,
                                            void* pctx,
-                                           uint64_t,
+                                           NES::WorkerThreadId,
                                            NES::OriginId originId,
                                            NES::SequenceNumber sequenceNumber,
                                            NES::ChunkNumber chunkNumber,
