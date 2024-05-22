@@ -298,6 +298,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
         auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();
         return createTCPSource(tcpSourceDescriptor->getSchema(),
+                               nullptr,
                                bufferManager,
                                queryManager,
                                tcpSourceDescriptor->getSourceConfig(),

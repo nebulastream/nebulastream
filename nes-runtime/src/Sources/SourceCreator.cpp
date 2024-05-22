@@ -478,6 +478,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 #endif
 
 DataSourcePtr createTCPSource(const SchemaPtr& schema,
+                              std::unique_ptr<NES::DataParser::Parser> parser,
                               const Runtime::BufferManagerPtr& bufferManager,
                               const Runtime::QueryManagerPtr& queryManager,
                               const TCPSourceTypePtr& tcpSourceType,
@@ -488,6 +489,7 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<TCPSource>(schema,
+                                       std::move(parser),
                                        bufferManager,
                                        queryManager,
                                        tcpSourceType,

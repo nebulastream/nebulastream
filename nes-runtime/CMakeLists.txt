@@ -20,7 +20,7 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 # Add Library
 add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
 
-target_link_libraries(nes-runtime PUBLIC nes-statistics)
+target_link_libraries(nes-runtime PUBLIC nes-statistics nes-data-parser)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -38,7 +38,7 @@ if (NES_USE_KAFKA)
     # TODO #3351 The commands should be moved into a separate CMake config file.
     if (NOT APPLE)
         find_package(cppkafka REQUIRED)
-        target_link_libraries(nes-runtime PRIVATE cppkafka::cppkafka )
+        target_link_libraries(nes-runtime PRIVATE cppkafka::cppkafka)
     else ()
         message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
     endif ()

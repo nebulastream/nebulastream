@@ -37,6 +37,7 @@
 namespace NES {
 
 TCPSource::TCPSource(SchemaPtr schema,
+                     std::unique_ptr<NES::DataParser::Parser> parser,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
                      TCPSourceTypePtr tcpSourceType,
@@ -57,7 +58,8 @@ TCPSource::TCPSource(SchemaPtr schema,
                  gatheringMode,
                  physicalSourceName,
                  std::move(executableSuccessors)),
-      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)), circularBuffer(getpagesize() * 2) {
+      inputParser(std::move(parser)), tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)),
+      circularBuffer(getpagesize() * 2) {
 
     //init physical types
     std::vector<std::string> schemaKeys;
@@ -72,16 +74,6 @@ TCPSource::TCPSource(SchemaPtr schema,
         fieldName = field->getName();
         NES_TRACE("TCPSOURCE:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
-    }
-
-    switch (sourceConfig->getInputFormat()->getValue()) {
-        case Configurations::InputFormat::JSON:
-            inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
-            break;
-        case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
-            break;
-        case Configurations::InputFormat::NES_BINARY: inputParser = std::make_unique<NESBinaryParser>(); break;
     }
 
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
@@ -177,6 +169,10 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
+
+    // TODO: Remove TestTupleBuffer entirely
+    auto buffer = tupleBuffer.getBuffer();
+
     NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
     //init tuple count for buffer
     uint64_t tupleCount = 0;
@@ -267,12 +263,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             if (!tupleData.empty()) {
                 std::string_view buf(tupleData.data(), tupleData.size());
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::NES_BINARY) {
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
+                    NES_ASSERT2_FMT(inputParser->parseIntoBuffer(buf, buffer).empty(),
+                                    "All bytes of a tuple should have been consumed by the parser:" << buf);
                     tupleCount = tupleBuffer.getNumberOfTuples();
                 } else {
-                    NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
-                    tupleCount++;
+                    NES_ASSERT2_FMT(inputParser->parseIntoBuffer(buf, buffer).empty(),
+                                    "All bytes of a tuple should have been consumed by the parser: " << buf);
+                    tupleCount = tupleBuffer.getNumberOfTuples();
                 }
             }
         }

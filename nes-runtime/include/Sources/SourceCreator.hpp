@@ -522,6 +522,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
  * @return a data source pointer
  */
 DataSourcePtr createTCPSource(const SchemaPtr& schema,
+                              std::unique_ptr<NES::DataParser::Parser> parser,
                               const Runtime::BufferManagerPtr& bufferManager,
                               const Runtime::QueryManagerPtr& queryManager,
                               const TCPSourceTypePtr& tcpSourceType,

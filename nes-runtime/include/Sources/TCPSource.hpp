@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <DataParser/Parser.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/CircularBuffer.hpp>
 #include <Util/MMapCircularBuffer.hpp>
@@ -48,6 +49,7 @@ class TCPSource : public DataSource {
      * @param executableSuccessors executable operators coming after this source
      */
     explicit TCPSource(SchemaPtr schema,
+                       std::unique_ptr<NES::DataParser::Parser> parser,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
                        TCPSourceTypePtr tcpSourceType,
@@ -108,7 +110,7 @@ class TCPSource : public DataSource {
     [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;
 
     std::vector<PhysicalTypePtr> physicalTypes;
-    ParserPtr inputParser;
+    std::unique_ptr<NES::DataParser::Parser> inputParser;
     int connection = -1;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;

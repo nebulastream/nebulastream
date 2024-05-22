@@ -26,6 +26,8 @@
 #include <string>
 
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -155,6 +157,17 @@ class TCPSourceTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("TCPSOURCETEST::SetUp() TCPSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
+
+        auto cppCompiler = NES::Compiler::CPPCompiler::create();
+        auto jitCompiler = NES::Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        DataParser::ParserFactory parserFactory(jitCompiler);
+
+        auto [csv, json] = std::make_pair(parserFactory.createParser(*test_schema, FormatTypes::CSV_FORMAT),
+                                          parserFactory.createParser(*test_schema, FormatTypes::JSON_FORMAT));
+
+        csvParser = csv.get();
+        jsonParser = json.get();
+
         bufferManager = std::make_shared<Runtime::BufferManager>();
         queryManager = std::make_shared<Runtime::DynamicQueryManager>(nullptr,
                                                                       std::vector{bufferManager},
@@ -177,6 +190,9 @@ class TCPSourceTest : public Testing::BaseIntegrationTest {
 
     Runtime::BufferManagerPtr bufferManager;
     Runtime::QueryManagerPtr queryManager;
+    std::unique_ptr<DataParser::Parser> csvParser;
+    std::unique_ptr<DataParser::Parser> jsonParser;
+
     SchemaPtr test_schema;
     uint64_t buffer_size{};
     TCPSourceTypePtr tcpSourceType;
@@ -218,6 +234,7 @@ configuration:
     ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 10);
 
     auto tcpSource = createTCPSource(test_schema,
+                                     std::move(csvParser),
                                      bufferManager,
                                      queryManager,
                                      tcpSourceType,
@@ -312,6 +329,7 @@ configuration:
     ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 100);
 
     auto tcpSource = createTCPSource(test_schema,
+                                     std::move(jsonParser),
                                      bufferManager,
                                      queryManager,
                                      tcpSourceType,
@@ -401,6 +419,7 @@ configuration:
     ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 1000);
 
     auto tcpSource = createTCPSource(test_schema,
+                                     std::move(jsonParser),
                                      bufferManager,
                                      queryManager,
                                      tcpSourceType,
@@ -498,6 +517,7 @@ configuration:
                       ->addField("datetime", BasicType::UINT64)
                       ->addField("price", BasicType::FLOAT64);
     auto tcpSource = createTCPSource(schema,
+                                     std::move(jsonParser),
                                      bufferManager,
                                      queryManager,
                                      tcpSourceType,
