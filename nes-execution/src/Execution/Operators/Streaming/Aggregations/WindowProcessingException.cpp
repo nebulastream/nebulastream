@@ -18,5 +18,12 @@
 namespace NES::Runtime::Execution::Operators {
 
 WindowProcessingException::WindowProcessingException(const std::string& message, const std::source_location location)
-    : RuntimeException(message, NES::collectStacktrace(), location) {}
+    : RuntimeException(message,
+#ifdef UNIKERNEL_LIB
+                       "",
+#else
+                       collectStacktrace(),
+#endif
+                       location) {
+}
 }// namespace NES::Runtime::Execution::Operators

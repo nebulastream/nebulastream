@@ -38,7 +38,11 @@ class RuntimeException : virtual public std::exception {
      *  @param stacktrace Error stacktrace
      */
     explicit RuntimeException(std::string msg,
+#ifdef UNIKERNEL_LIB
+                              std::string&& stacktrace = "",
+#else
                               std::string&& stacktrace = collectStacktrace(),
+#endif
                               const std::source_location location = std::source_location::current());
 
     /** Constructor
