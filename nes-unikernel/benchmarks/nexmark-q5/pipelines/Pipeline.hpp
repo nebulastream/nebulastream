@@ -12,8 +12,8 @@
 #include "../../TestSource.hpp"
 namespace NES::Unikernel {
 struct CTConfiguration {
-    constexpr static size_t QueryId = 0;
-    constexpr static size_t NodeId = 2;
+    constexpr static SharedQueryId QueryId = NES::SharedQueryId(1);
+    constexpr static WorkerId NodeId = NES::WorkerId(2);
     constexpr static const char* NodeIP = "127.0.0.1";
     constexpr static size_t NodePort = 8080;
 };
@@ -21,10 +21,10 @@ struct CTConfiguration {
 struct SourceConfig35 {
     using SourceType = TestSourceImpl<SourceConfig35>;
     using Schema = Schema<Field<UINT64>, Field<UINT64>, Field<UINT64>, Field<UINT64>, Field<FLOAT64>>;
-    constexpr static size_t QueryId = 0;
-    constexpr static size_t UpstreamNodeId = 35;
-    constexpr static size_t OperatorId = 35;
-    constexpr static size_t OriginId = 6;
+    constexpr static SharedQueryId QueryId = SharedQueryId(1);
+    constexpr static WorkerId UpstreamNodeId = NES::WorkerId(35);
+    constexpr static OperatorId OperatorId = NES::OperatorId(35);
+    constexpr static OriginId OriginId = NES::OriginId(6);
     constexpr static size_t LocalBuffers = 100;
     constexpr static bool CopyBuffer = true;
 };
@@ -32,16 +32,16 @@ struct SourceConfig35 {
 struct SourceConfig27 {
     using SourceType = TestSourceImpl<SourceConfig27>;
     using Schema = Schema<Field<UINT64>, Field<UINT64>, Field<UINT64>, Field<UINT64>, Field<FLOAT64>>;
-    constexpr static size_t QueryId = 0;
-    constexpr static size_t UpstreamNodeId = 35;
-    constexpr static size_t OperatorId = 35;
-    constexpr static size_t OriginId = 4;
+    constexpr static SharedQueryId QueryId = SharedQueryId(1);
+    constexpr static WorkerId UpstreamNodeId = NES::WorkerId(35);
+    constexpr static OperatorId OperatorId = NES::OperatorId(35);
+    constexpr static OriginId OriginId = NES::OriginId(4);
     constexpr static size_t LocalBuffers = 100;
     constexpr static bool CopyBuffer = true;
 };
 
 struct SinkConfig3 {
-    constexpr static size_t QueryId = 0;
+    constexpr static SharedQueryId QueryId = SharedQueryId(1);
     using SinkType = TestSinkImpl;
     constexpr static size_t OutputSchemaSizeInBytes = 40;
 };

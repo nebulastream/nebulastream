@@ -12,7 +12,7 @@
      limitations under the License.
 */
 
-#include "TestSource.hpp"
+#include <Identifiers/Identifiers.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
@@ -20,6 +20,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <UnikernelExecutionPlan.hpp>
+
+#include "TestSource.hpp"
 
 NES::Runtime::BufferManagerPtr TheBufferManager = nullptr;
 NES::Runtime::WorkerContextPtr TheWorkerContext = nullptr;
@@ -81,7 +83,7 @@ void fillBuffer(NES::Unikernel::SchemaBuffer<Schema, BufferSize>& tb, int ts) {
 }
 #endif
 void ignore(auto) {}
-#define NUMBER_OF_BUFFERS 10000
+#define NUMBER_OF_BUFFERS 1000000
 int main() {
     NES::Logger::setupLogging(static_cast<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL));
 
@@ -93,7 +95,7 @@ int main() {
 
     for (int i = 0; i < NUMBER_OF_BUFFERS; i++) {
         auto buffer = TheBufferManager->getBufferBlocking();
-        auto schemaBuffer = NES::Unikernel::SchemaBuffer<typename NES::Unikernel::SourceConfig35::Schema, 8192>::of(buffer);
+        auto schemaBuffer = NES::Unikernel::SchemaBuffer<NES::Unikernel::SourceConfig35::Schema, 8192>::of(buffer);
         fillBuffer(schemaBuffer, i * schemaBuffer.getCapacity());
         buffers.push_back(std::move(buffer));
     }
