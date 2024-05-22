@@ -17,6 +17,7 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/SynopsisLocalState.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Execution/Expressions/Functions/Log10Expression.hpp>
 
@@ -34,6 +35,7 @@ class DDSketchBuild : public ExecutableOperator {
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void updateLocalState(ExecutionContext& ctx, SynopsisLocalState& localState, const Value<UInt64>& timestamp) const;
 
   private:
     const uint64_t operatorHandlerIndex;
