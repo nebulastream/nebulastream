@@ -15,15 +15,10 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_WATERMARKPROCESSOR_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_WATERMARKPROCESSOR_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <atomic>
 #include <mutex>
 #include <queue>
-
-namespace NES {
-using WatermarkTs = uint64_t;
-using OriginId = uint64_t;
-using SequenceNumber = uint64_t;
-}// namespace NES
 
 namespace NES::Windowing {
 
