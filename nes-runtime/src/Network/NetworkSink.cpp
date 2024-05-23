@@ -86,7 +86,7 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     auto parent = nodeEngine->getParentId();
     if (static_cast<int64_t>(receiver) != parent) {
             // NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
-        if (checkParentDiff(static_cast<int64_t>(receiver), parent)) {
+        if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
             NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         }
 //        NES_ERROR("write bufferedc data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
@@ -138,7 +138,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     auto parent = nodeEngine->getParentId();
     if (static_cast<int64_t>(receiver) != parent) {
         // NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
-        if (checkParentDiff(static_cast<int64_t>(receiver), parent)) {
+        if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
             NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         }
 //        NES_ERROR("write data: parent mismatch, store buffer in reconnect storage. Receiver: {}, parent: {}", receiver, parent)
