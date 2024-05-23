@@ -277,7 +277,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /* Network specific settings */
 
     UIntOption senderHighwatermark = {SENDER_HIGH_WATERMARK,
-                                     "200",
+                                     "8",
                                      "Number of tuple buffers allowed in one network channel before blocking transfer.", std::make_shared<NumberValidation>()};
 
     BoolOption isJavaUDFSupported = {TENSORFLOW_SUPPORTED_CONFIG, "false", "Java UDF execution supported by the worker", std::make_shared<BooleanValidation>()};
