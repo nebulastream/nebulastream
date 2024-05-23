@@ -21,7 +21,7 @@
 #include <fmt/core.h>
 
 namespace NES::Network {
-static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
+static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 20;
 
 class NesPartition {
   public:
