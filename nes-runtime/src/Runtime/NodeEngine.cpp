@@ -859,7 +859,7 @@ int64_t NodeEngine::getParentId() {
 }
 
 void NodeEngine::setParentId(int64_t newParent) {
-    // NES_ERROR("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
+    NES_ERROR("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
     if (newParent == -1) {
         connected = false;
