@@ -67,7 +67,12 @@ uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
 void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel, WorkerId receiver) {
-    NES_TRACE("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
+    NES_ERROR("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
+    if (dataChannels.contains(id)) {
+        NES_ERROR("WorkerContext: storing channel for operator {}  for context {} but channel already exists", id, workerId);
+        NES_FATAL_ERROR("Cannot drop channel without closing")
+
+    }
     dataChannels[id] = {std::move(channel), receiver};
 }
 
