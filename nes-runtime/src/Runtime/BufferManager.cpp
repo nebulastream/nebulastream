@@ -259,6 +259,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
     if (ptr == nullptr) {
+        NES_ERROR("Could not allocate unpooled buffer")
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
     NES_TRACE("Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
@@ -279,6 +280,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     if (leakedMemSegment->controlBlock->prepare()) {
         return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
     }
+    NES_ERROR("Could not allocate unpooled buffer")
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
 
