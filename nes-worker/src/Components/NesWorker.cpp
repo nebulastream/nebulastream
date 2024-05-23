@@ -609,14 +609,14 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack) {
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string callstack) {
     std::string errorMsg;
     if (callstack.empty()) {
-        NES_ERROR("onFatalException: exception=[{}] ", ptr->what());
+        NES_ERROR("Worker {}: onFatalException: exception=[{}] ", workerId, ptr->what());
         std::cerr << "NesWorker failed fatally" << std::endl;
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Exception: " << ptr->what() << std::endl;
         // save errors in errorMsg
         errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + callstack;
     } else {
-        NES_ERROR("onFatalException: exception=[{}] callstack={}", ptr->what(), callstack);
+        NES_ERROR("Worker {}: onFatalException: exception=[{}] callstack={}", workerId, ptr->what(), callstack);
         std::cerr << "NesWorker failed fatally" << std::endl;
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Exception: " << ptr->what() << std::endl;

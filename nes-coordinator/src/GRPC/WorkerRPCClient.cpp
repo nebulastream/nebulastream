@@ -59,8 +59,10 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const Decomposed
         NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success={}", reply.success());
         return reply.success();
     }
-    NES_DEBUG(" WorkerRPCClient::registerQuery "
+    NES_ERROR(" WorkerRPCClient::registerQuery: Error while deploying query plan {} to node with address {}"
               "error={}: {}",
+              decomposedQueryPlan->toString(),
+              address,
               status.error_code(),
               status.error_message());
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
