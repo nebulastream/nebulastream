@@ -1,0 +1,41 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef NES_MIGRATABLESTATEINTERFACE_HPP
+#define NES_MIGRATABLESTATEINTERFACE_HPP
+#include <list>
+#include <Runtime/Execution/StreamSliceInterface.hpp>
+
+namespace NES::Runtime::Execution {
+/**
+ * @brief Interface that defines operations to migrate an operator state
+ */
+class MigratableStateInterface {
+
+        /**
+     * @brief Gets the state
+     * @param startTS
+     * @param stopTS
+     * @return list of StreamSlices
+     */
+    virtual std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t startTS, uint64_t stopTS) = 0;
+
+    /**
+     * @brief Merges migrated slices
+     * @param slices
+     */
+    virtual void restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) = 0;
+};
+}// namespace NES::Runtime::Execution::Operators
+#endif //NES_MIGRATABLESTATEINTERFACE_HPP
