@@ -215,7 +215,9 @@ NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
                                Runtime::BufferManagerPtr bufferManager)
     : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {}
 
-NetworkChannel::~NetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId); }
+NetworkChannel::~NetworkChannel() {
+    NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId);
+}
 
 void NetworkChannel::close(Runtime::QueryTerminationType terminationType,
                            uint16_t numSendingThreads,

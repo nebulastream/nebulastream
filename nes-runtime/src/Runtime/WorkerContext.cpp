@@ -38,6 +38,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
 }
 
 WorkerContext::~WorkerContext() {
+    NES_ERROR("Destroying worker context")
     localBufferPool->destroy();
     localBufferPoolTLS.reset(nullptr);
 }
