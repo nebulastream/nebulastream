@@ -57,7 +57,7 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                   nextVersion);
     }
     zmqSocket.close();
-    NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
+    NES_ERROR("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
     isClosed = true;
 }
 

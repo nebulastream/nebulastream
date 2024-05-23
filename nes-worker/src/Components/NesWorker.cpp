@@ -582,14 +582,14 @@ bool NesWorker::notifyErrors(uint64_t pWorkerId, std::string errorMsg) {
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
     std::string errorMsg;
     if (callstack.empty()) {
-        NES_ERROR("onFatalError: signal [{}] error [{}] ", signalNumber, strerror(errno));
+        NES_ERROR("Worker {}: onFatalError: signal [{}] error [{}] ", workerId signalNumber, strerror(errno));
         std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Signal:" << std::to_string(signalNumber) << std::endl;
         // save errors in errorMsg
         errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] ";
     } else {
-        NES_ERROR("onFatalError: signal [{}] error [{}] callstack {} ", signalNumber, strerror(errno), callstack);
+        NES_ERROR("Worker {}: onFatalError: signal [{}] error [{}] callstack {} ", workerId signalNumber, strerror(errno), callstack);
         std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
         std::cerr << "Error: " << strerror(errno) << std::endl;
         std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
