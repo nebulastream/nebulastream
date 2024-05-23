@@ -178,7 +178,7 @@ void NetworkSink::shutdown() {
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
-    NES_ERROR("NetworkSink: reconfigure() called {} qep {} on node", nesPartition.toString(), decomposedQueryPlanId, nodeEngine->getNodeId());
+    NES_ERROR("NetworkSink: reconfigure() called {} qep {} on node {}", nesPartition.toString(), decomposedQueryPlanId, nodeEngine->getNodeId());
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
