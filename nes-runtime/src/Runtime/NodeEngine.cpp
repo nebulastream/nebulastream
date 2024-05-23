@@ -851,7 +851,7 @@ const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { r
 int64_t NodeEngine::getParentId() {
     std::unique_lock lock(parentMutex);
     if (connected) {
-        NES_ERROR("returning id {} on node {} because node is connected", parentId, nodeId);
+        // NES_ERROR("returning id {} on node {} because node is connected", parentId, nodeId);
         return parentId;
     }
     NES_ERROR("returning id -1 on node {} because node is dicconnected", nodeId);
