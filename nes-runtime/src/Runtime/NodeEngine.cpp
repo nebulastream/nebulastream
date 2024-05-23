@@ -854,12 +854,12 @@ int64_t NodeEngine::getParentId() {
         // NES_ERROR("returning id {} on node {} because node is connected", parentId, nodeId);
         return parentId;
     }
-    NES_ERROR("returning id -1 on node {} because node is dicconnected", nodeId);
+    // NES_ERROR("returning id -1 on node {} because node is dicconnected", nodeId);
     return -1;
 }
 
 void NodeEngine::setParentId(int64_t newParent) {
-    NES_ERROR("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
+    // NES_ERROR("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
     if (newParent == -1) {
         connected = false;
@@ -872,9 +872,9 @@ void NodeEngine::setParentId(int64_t newParent) {
 void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
     //lock
     std::unique_lock lock(parentMutex);
-    NES_ERROR("trying to reactive  parent id {} with id {} on node {}", parentId, newParent, nodeId);
+    // NES_ERROR("trying to reactive  parent id {} with id {} on node {}", parentId, newParent, nodeId);
     if (parentId != newParent) {
-        NES_ERROR("parents do not match new: {}, expected: {}", newParent, parentId)
+        // NES_ERROR("parents do not match new: {}, expected: {}", newParent, parentId)
     }
     if (!connected) {
         connected = true;
@@ -886,7 +886,7 @@ void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
 
 void NodeEngine::initializeParentId(WorkerId newParent) {
     std::unique_lock lock(parentMutex);
-    NES_ERROR("Initializing parent id to {} on node {}", newParent, nodeId);
+    // NES_ERROR("Initializing parent id to {} on node {}", newParent, nodeId);
     if (parentId == 0) {
         parentId = newParent;
     }

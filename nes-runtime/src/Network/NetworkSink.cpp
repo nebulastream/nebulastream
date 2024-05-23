@@ -525,10 +525,10 @@ bool NetworkSink::startBuffering() {
 WorkerId NetworkSink::getReceiverId() { return receiverLocation.getNodeId(); }
 
 bool NetworkSink::checkParentDiff(int64_t receiver, int64_t parent) {
-    NES_ERROR("checking parent diff")
-    NES_ERROR("receiver {}, parent{}", receiver, parent)
+    // NES_ERROR("checking parent diff")
+    // NES_ERROR("receiver {}, parent{}", receiver, parent)
     auto res =  (parent == receiver - 1) || (receiver == 2 && parent == 11);
-    NES_ERROR("receiver {}, parent{}, result {}", receiver, parent, res);
+    // NES_ERROR("receiver {}, parent{}, result {}", receiver, parent, res);
     return res;
 }
 }// namespace NES::Network
