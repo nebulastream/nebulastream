@@ -69,9 +69,12 @@ TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBu
 void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel, WorkerId receiver) {
     NES_ERROR("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
     auto it = dataChannels.find(id);// note we assume it's always available
-    if (auto& existingChannel = it->second.first; existingChannel) {
-        NES_ERROR("WorkerContext: storing channel for operator {}  for context {} but channel already exists", id, workerId);
-        NES_FATAL_ERROR("Cannot drop channel without closing")
+
+    if (it != dataChannels.end()) {
+        if (auto& existingChannel = it->second.first; existingChannel) {
+            NES_ERROR("WorkerContext: storing channel for operator {}  for context {} but channel already exists", id, workerId);
+            NES_FATAL_ERROR("Cannot drop channel without closing")
+        }
     }
     NES_ERROR("WorkerContext: no network channel exists, proceed to store {}  for context {}", id, workerId);
     dataChannels[id] = {std::move(channel), receiver};
