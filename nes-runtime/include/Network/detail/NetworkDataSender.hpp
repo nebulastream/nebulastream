@@ -46,7 +46,6 @@ class NetworkDataSender : public BaseChannelType {
      * @return true if send was successful, else false
      */
     bool sendBuffer(Runtime::TupleBuffer& buffer, uint64_t tupleSize, uint64_t messageSequenceNumber, uint64_t version) {
-        NES_ERROR("Send buffer");
         auto numOfTuples = buffer.getNumberOfTuples();
         auto originId = buffer.getOriginId();
         auto watermark = buffer.getWatermark();
