@@ -68,6 +68,7 @@ void PlacementAmendmentInstance::execute() {
         auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
         auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+        NES_ERROR("Plan {} on node {}: in state {}", decomposedQueryPlanId, executionNodeId, magic_enum::enum_name(decomposedQueryPlanState));
         switch (decomposedQueryPlanState) {
             case QueryState::MARKED_FOR_REDEPLOYMENT:
             case QueryState::MARKED_FOR_DEPLOYMENT: {
@@ -79,7 +80,6 @@ void PlacementAmendmentInstance::execute() {
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
-                NES_ERROR("Node {}: marked for migration", executionNodeId);
                 globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
