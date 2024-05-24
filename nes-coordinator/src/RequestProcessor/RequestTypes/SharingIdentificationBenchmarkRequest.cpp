@@ -2,7 +2,6 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -33,8 +32,8 @@
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
@@ -45,23 +44,22 @@
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -76,9 +74,9 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
-#include <Util/PlanJsonGenerator.hpp>
 #include <string>
 #include <utility>
 
@@ -108,8 +106,9 @@ SharingIdentificationBenchmarkRequest::SharingIdentificationBenchmarkRequest(
                           ResourceType::SourceCatalog,
                           ResourceType::CoordinatorConfiguration},
                          maxRetries),
-      queryStrings(queryStrings), queryMergerRule(queryMergerRule), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(queryParsingService), deploy(deploy) {}
+      queryStrings(queryStrings), queryMergerRule(queryMergerRule), queryId(INVALID_QUERY_ID),
+      queryPlacementStrategy(queryPlacementStrategy), z3Context(z3Context), queryParsingService(queryParsingService),
+      deploy(deploy) {}
 
 SharingIdentificationBenchmarkRequestPtr
 SharingIdentificationBenchmarkRequest::create(const std::vector<std::string>& queryStrings,
@@ -148,7 +147,7 @@ void setupPhysicalSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalS
             //Create physical source
             auto physicalSource =
                 PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
-            auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, i);
+            auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(i));
             sourceCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }
@@ -164,11 +163,12 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         auto topology = storageHandler->getTopologyHandle(requestId);
-        auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
         auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
         auto coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
+        auto statisticProbeHandler = storageHandler->getStatisticProbeHandler(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
@@ -177,19 +177,22 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         optimizerConfigurations.queryMergerRule = queryMergerRule;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
-        auto topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
+        auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
+        auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
+        auto topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                                                      sourceCatalog,
+                                                                                                      optimizerConfigurations,
+                                                                                                      statisticProbeHandler);
         auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
-
+        auto memoryLayoutSelectionPhase =
+            Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
         auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
         auto semanticQueryValidation =
             Optimizer::SemanticQueryValidation::create(sourceCatalog,
@@ -220,21 +223,31 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             // Perform semantic validation
             semanticQueryValidation->validate(queryPlan);
 
-            //1. Create a new entry in the query catalog
-            queryCatalogService->createNewEntry(queryString, queryPlan, queryPlacementStrategy);
+            // Create a new entry in the query catalog
+            queryCatalog->createQueryCatalogEntry(queryString, queryPlan, queryPlacementStrategy, QueryState::REGISTERED);
+
+            //1. Add the initial version of the query to the query catalog
+            queryCatalog->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
             //2. Set query status as Optimizing
-            queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
+            queryCatalog->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
             //3. Execute type inference phase
             NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
             queryPlan = typeInferencePhase->execute(queryPlan);
 
-            //4. Perform query re-write
-            NES_DEBUG("Performing Query rewrite phase for query:  {}", queryId);
-            queryPlan = queryRewritePhase->execute(queryPlan);// ?
+            //4. Set memory layout of each logical operator
+            NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
+            queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
-            //6. Execute type inference phase on rewritten query plan
+            //5. Perform query re-write
+            NES_DEBUG("Performing Query rewrite phase for query:  {}", queryId);
+            queryPlan = queryRewritePhase->execute(queryPlan);
+
+            //6. Add the updated query plan to the query catalog
+            queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
+
+            //7. Execute type inference phase on rewritten query plan
             NES_DEBUG("Performing Type inference phase for rewritten query:  {}", queryId);
             queryPlan = typeInferencePhase->execute(queryPlan);
 
@@ -242,13 +255,29 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             NES_DEBUG("Perform signature inference phase for sharing identification among query plans:  {}", queryId);
             signatureInferencePhase->execute(queryPlan);
 
+            //10. Assign a unique statisticId to all logical operators
+            queryPlan = statisticIdInferencePhase->execute(queryPlan);
+
             //8. Perform topology specific rewrites to the query plan
             NES_DEBUG("Perform topology specific rewrites to the query plan:  {}", queryId);
             queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
+            //12. Add the updated query plan to the query catalog
+            queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
+
             //10. Perform type inference over re-written query plan
             NES_DEBUG("Perform type inference over re-written query plan:  {}", queryId);
             queryPlan = typeInferencePhase->execute(queryPlan);
+
+            //14. Identify the number of origins and their ids for all logical operators
+            queryPlan = originIdInferencePhase->execute(queryPlan);
+
+            //15. Set memory layout of each logical operator in the rewritten query
+            NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
+            queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
+
+            //16. Add the updated query plan to the query catalog
+            queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
             //compute totalOperators before merge
             totalOperators = totalOperators + PlanIterator(queryPlan).snapshot().size();
@@ -304,29 +333,56 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
                                                                sharedQueryId);
         }
 
-        //20. If the shared query plan is not new but updated an existing shared query plan, we first need to undeploy that plan
-        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
-
-            NES_DEBUG("Shared Query Plan is non empty and an older version is already "
-                      "running.");
-            //20.1 First undeploy the running shared query plan with the shared query plan id
-            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::UPDATED);
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
+            queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
+        } else {
+            queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
         }
+        //Link both catalogs
+        queryCatalog->linkSharedQuery(queryId, sharedQueryId);
+
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {// TODO: check????
-            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                              "QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                                                                  + std::to_string(sharedQueryId));
-        }
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //22. Perform deployment of re-placed shared query plan
-        queryDeploymentPhase->execute(sharedQueryPlan);
+        deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
         //23. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
+        // Iterate over deployment context and update execution plan
+        for (const auto& deploymentContext : deploymentContexts) {
+            auto WorkerId = deploymentContext->getWorkerId();
+            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+            switch (decomposedQueryPlanState) {
+                case QueryState::MARKED_FOR_REDEPLOYMENT:
+                case QueryState::MARKED_FOR_DEPLOYMENT: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::RUNNING);
+                    break;
+                }
+                case QueryState::MARKED_FOR_MIGRATION: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
+                                                                   sharedQueryId,
+                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryPlanVersion);
+                    break;
+                }
+                default:
+                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            }
+        }
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);

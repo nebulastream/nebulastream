@@ -17,6 +17,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <nlohmann/json.hpp>
+#include <set>
 
 namespace NES {
 
@@ -62,15 +63,17 @@ class PlanJsonGenerator {
      */
     static void getChildren(OperatorPtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
 
-    static void getSharedChildren(const OperatorNodePtr& root, std::vector<nlohmann::json>& nodes,
-                                    std::vector<nlohmann::json>& edges, std::set<int32_t>& existingNodes);
+    static void getSharedChildren(const OperatorPtr& root,
+                                  std::vector<nlohmann::json>& nodes,
+                                  std::vector<nlohmann::json>& edges,
+                                  std::set<OperatorId>& existingNodes);
     /**
      * @param an operator node
      * @return the type of operator in String
      */
     static std::string getOperatorType(const OperatorPtr& operatorNode);
 
-    static std::string getNodeName(const OperatorNodePtr& operatorNode);
+    static std::string getNodeName(const OperatorPtr& operatorNode);
 };
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_

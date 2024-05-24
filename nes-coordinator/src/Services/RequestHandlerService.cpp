@@ -28,11 +28,10 @@
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
-#include <RequestProcessor/RequestTypes/ClearQueryBenchmarkRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
-#include <RequestProcessor/RequestTypes/SharingIdentificationBenchmarkRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
+#include <RequestProcessor/RequestTypes/SharingIdentificationBenchmarkRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -127,7 +126,7 @@ bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId share
     return returnedSharedQueryId != INVALID_SHARED_QUERY_ID;
 }
 
-nlohmann::json RequestHandlerService::validateAndQueueSharingIdentificatinoBenchmarkRequest(
+nlohmann::json RequestHandlerService::validateAndQueueSharingIdentificationBenchmarkRequest(
     const std::vector<std::string>& queryStrings,
     const Optimizer::QueryMergerRule queryMergerRule,
     const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -142,13 +141,6 @@ nlohmann::json RequestHandlerService::validateAndQueueSharingIdentificatinoBench
     asyncRequestExecutor->runAsync(benchmarkRequest);
     auto future = benchmarkRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::BenchmarkQueryResponse>(future.get())->jsonResponse;
-}
-
-bool RequestHandlerService::validateAndQueueClearQueryRequest() {
-    auto clearQueryRequest = RequestProcessor::ClearQueryBenchmarkRequest::create(RequestProcessor::DEFAULT_RETRIES);
-    asyncRequestExecutor->runAsync(clearQueryRequest);
-    auto future = clearQueryRequest->getFuture();
-    return std::static_pointer_cast<RequestProcessor::ClearQueryBenchmarkResponse>(future.get())->success;
 }
 
 void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {

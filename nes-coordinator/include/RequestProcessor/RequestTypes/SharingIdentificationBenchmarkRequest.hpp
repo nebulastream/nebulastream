@@ -2,7 +2,7 @@
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_SHARINGIDENTIFICATIONBENCHMARKREQUEST_HPP
 
 #include <Components/NesCoordinator.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>

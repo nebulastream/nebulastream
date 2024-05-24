@@ -15,7 +15,6 @@ add_source_files(nes-coordinator
         AbstractRequest.cpp
         AbstractSubRequest.cpp
         AddQueryRequest.cpp
-        ClearQueryBenchmarkRequest.cpp
         AbstractUniRequest.cpp
         ExplainRequest.cpp
         FailQueryRequest.cpp

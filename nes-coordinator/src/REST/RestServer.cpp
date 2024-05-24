@@ -120,7 +120,7 @@ void RestServer::run() {
 
     auto benchmarkController = REST::Controller::BenchmarkController::create(objectMapper,
                                                                              requestHandlerService,
-                                                                             queryCatalogService,
+                                                                             queryCatalog,
                                                                              globalQueryPlan,
                                                                              globalExecutionPlan,
                                                                              "/benchmark",

@@ -27,9 +27,6 @@ namespace NES {
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
