@@ -292,17 +292,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::atomic<uint64_t> refCounter = 0;
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
 
-    /**
-     * @brief Emits a tuple buffer to the successors. #4888 discusses, if we should rename the method
-     * @param buffer
-     */
-    void emitWork(Runtime::TupleBuffer& buffer) override;
+    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
 
-    /**
-     * @brief #4888 discusses, if we should rename the method
-     * @param buffer
-     */
-    void emitWorkFromSource(Runtime::TupleBuffer& buffer);
     NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 
   protected:

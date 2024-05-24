@@ -104,7 +104,7 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer&
     if (partitionManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
         (*maxSeqNumberPerNesPartition.wlock())[nesPartition].emplace(messageSequenceData, messageSequenceData.sequenceNumber);
         protocolListener->onDataBuffer(nesPartition, buffer);
-        partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
+        partitionManager->getDataEmitter(nesPartition)->emitWork(buffer, false);
     } else {
         NES_ERROR("DataBuffer for {} is not registered and was discarded!", nesPartition.toString());
     }
