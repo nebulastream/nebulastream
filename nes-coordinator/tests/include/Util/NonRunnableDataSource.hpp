@@ -41,15 +41,9 @@ class NonRunnableDataSource : public NES::DefaultSource {
 
     Runtime::MemoryLayouts::TestTupleBuffer getBuffer();
 
-    void emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer);
+    void emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer, bool addBufferMetaData = true);
 
-    void emitBuffer(Runtime::TupleBuffer& buffer);
-
-    /**
-     * @brief #4888 discusses, if we should rename the method
-     * @param buffer
-     */
-    void emitWork(Runtime::TupleBuffer& buffer) override;
+    void emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true);
 
   private:
     std::promise<bool> canTerminate;

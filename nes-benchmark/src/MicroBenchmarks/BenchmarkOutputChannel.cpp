@@ -79,7 +79,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
 
         class DummyDataEmitter : public DataEmitter {
           public:
-            void emitWork(Runtime::TupleBuffer&) override {}
+            void emitWork(Runtime::TupleBuffer&, bool) override {}
         };
 
         auto partMgr = std::make_shared<Network::PartitionManager>();

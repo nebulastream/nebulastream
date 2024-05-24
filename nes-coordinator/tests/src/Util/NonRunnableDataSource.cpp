@@ -57,14 +57,13 @@ bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination) {
 
 Runtime::MemoryLayouts::TestTupleBuffer NonRunnableDataSource::getBuffer() { return allocateBuffer(); }
 
-void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
+void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer, bool addBufferMetaData) {
     auto buf = buffer.getBuffer();
-    emitBuffer(buf);
+    emitBuffer(buf, addBufferMetaData);
 }
 
-void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer) { DataSource::emitWorkFromSource(buffer); }
+void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData) { DataSource::emitWork(buffer, addBufferMetaData); }
 
-void NonRunnableDataSource::emitWork(Runtime::TupleBuffer& buffer) { DataSource::emitWork(buffer); }
 
 DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager,
