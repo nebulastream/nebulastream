@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.133](https://github.com/nebulastream/nebulastream/tree/v0.6.133) (2024-05-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.132...v0.6.133)
+
+**Implemented enhancements:**
+
+- \[TASK\] Rename emitWork and emitWorkFromSource [\#4888](https://github.com/nebulastream/nebulastream/issues/4888)
+
 ## [v0.6.132](https://github.com/nebulastream/nebulastream/tree/v0.6.132) (2024-05-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.131...v0.6.132)
