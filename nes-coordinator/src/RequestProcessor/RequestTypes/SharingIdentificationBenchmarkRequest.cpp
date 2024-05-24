@@ -147,7 +147,7 @@ void setupPhysicalSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalS
             //Create physical source
             auto physicalSource =
                 PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
-            auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(i));
+            auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(i));//？workerID!!!!
             sourceCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }
@@ -251,21 +251,21 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             NES_DEBUG("Performing Type inference phase for rewritten query:  {}", queryId);
             queryPlan = typeInferencePhase->execute(queryPlan);
 
-            //7. Perform signature inference phase for sharing identification among query plans
+            //9. Perform signature inference phase for sharing identification among query plans
             NES_DEBUG("Perform signature inference phase for sharing identification among query plans:  {}", queryId);
             signatureInferencePhase->execute(queryPlan);
 
             //10. Assign a unique statisticId to all logical operators
             queryPlan = statisticIdInferencePhase->execute(queryPlan);
 
-            //8. Perform topology specific rewrites to the query plan
+            //11. Perform topology specific rewrites to the query plan
             NES_DEBUG("Perform topology specific rewrites to the query plan:  {}", queryId);
             queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
             //12. Add the updated query plan to the query catalog
             queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
-            //10. Perform type inference over re-written query plan
+            //13. Perform type inference over re-written query plan
             NES_DEBUG("Perform type inference over re-written query plan:  {}", queryId);
             queryPlan = typeInferencePhase->execute(queryPlan);
 
@@ -282,13 +282,13 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             //compute totalOperators before merge
             totalOperators = totalOperators + PlanIterator(queryPlan).snapshot().size();
 
-            //16. Add the updated query plan to the global query plan
+            //17. Add the updated query plan to the global query plan
             NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
             globalQueryPlan->addQueryPlan(queryPlan);
 
         }//end of for-loop
 
-        //17. Perform query merging for newly added query plan
+        //18. Perform query merging for newly added query plan
         NES_DEBUG("Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
 
@@ -318,7 +318,8 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         if (!deploy)
             return {};
 
-        //18. Get the shared query plan id for the added query
+        //add a for-loop!!
+        //19. Get the shared query plan id for the added query
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             throw Exceptions::SharedQueryPlanNotFoundException(
@@ -326,7 +327,7 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
                 sharedQueryId);
         }
 
-        //19. Get the shared query plan for the added query
+        //20. Get the shared query plan for the added query
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         if (!sharedQueryPlan) {
             throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
@@ -414,8 +415,9 @@ SharingIdentificationBenchmarkRequest::getResAsJson(std::vector<SharedQueryPlanP
 
     //convert allSharedQueryPlan format:  std::vector<SharedQueryPlanPtr>  to  std::vector<nlohmann::json>
     std::vector<nlohmann::json> sharedQueryPlans;
-    for (auto& item : allSQP) {
-        auto sharedQueryPlanJson = PlanJsonGenerator::getSharedQueryPlanAsJson(item);
+    for (auto& sharedQueryPlan : allSQP) {
+        const auto& queryPlan = sharedQueryPlan->getQueryPlan();
+        auto sharedQueryPlanJson = PlanJsonGenerator::getSharedQueryPlanAsJson(queryPlan);
         sharedQueryPlans.push_back(sharedQueryPlanJson);
     }
 

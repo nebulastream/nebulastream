@@ -28,7 +28,6 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -217,7 +216,7 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
     return result;
 }
 
-nlohmann::json PlanJsonGenerator::getSharedQueryPlanAsJson(const SharedQueryPlanPtr& sharedQueryPlan) {
+nlohmann::json PlanJsonGenerator::getSharedQueryPlanAsJson(const QueryPlanPtr& queryPlan) {
     NES_DEBUG("UtilityFunctions: Getting the json representation of a shared query plan");
 
     nlohmann::json result{};
@@ -225,7 +224,7 @@ nlohmann::json PlanJsonGenerator::getSharedQueryPlanAsJson(const SharedQueryPlan
     std::vector<nlohmann::json> edges{};
 
     std::set<OperatorId> existingNodes;
-    const auto& queryPlan = sharedQueryPlan->getQueryPlan();
+    //    const auto& queryPlan = sharedQueryPlan->getQueryPlan();
     const auto& roots = queryPlan->getRootOperators();
     if (roots.empty()) {
         nlohmann::json node;

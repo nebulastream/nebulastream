@@ -43,7 +43,7 @@ class PlanJsonGenerator {
   public:
     static nlohmann::json getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
-    static nlohmann::json getSharedQueryPlanAsJson(const SharedQueryPlanPtr& sharedQueryPlan);
+    static nlohmann::json getSharedQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief get the json representation of execution plan of a query
