@@ -77,7 +77,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
         auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
 
-        // NES_ERROR("Resources locked ISQP Start updating topology --------------------------------------------------------------------------------------------")
+        NES_ERROR("Resources locked ISQP processing {} events --------------------------------------------------------------------------------------------", events.size());
         // Apply all topology events
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -149,7 +149,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
-        // NES_ERROR("start instances for sqp {} events --------------------------------------------------------------------------------------------", sharedQueryPlans.size())
+        NES_ERROR("start instances for {} shared query plans --------------------------------------------------------------------------------------------", sharedQueryPlans.size())
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
             // NES_ERROR("Creating amendment instance for shared query plan {}", sharedQueryPlan->getId());
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
@@ -219,9 +219,11 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
 
     //If no common shared query plan was found to be placed on two nodes then skip rest of the operation
     if (impactedSharedQueryIds.empty()) {
-        NES_INFO("Found no shared query plan that was using the removed link");
+        NES_ERROR("Found {} shared query plans imapacted by the removed link {}->{}" , impactedSharedQueryIds.size(), removeLinkEvent->getChildNodeId(), removeLinkEvent->getParentNodeId());
+        NES_DEBUG("Found no shared query plan that was using the removed link");
         return;
     }
+    NES_ERROR("Found {} shared query plans imapacted by the removed link {}->{}" , impactedSharedQueryIds.size(), removeLinkEvent->getChildNodeId(), removeLinkEvent->getParentNodeId());
 
     //Iterate over each shared query plan id and identify the operators that need to be replaced
     for (auto impactedSharedQueryId : impactedSharedQueryIds) {
