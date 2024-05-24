@@ -28,6 +28,7 @@ GlobalExecutionPlanPtr Optimizer::GlobalExecutionPlan::create() { return std::ma
 
 bool GlobalExecutionPlan::registerExecutionNode(const TopologyNodeWLock& lockedTopologyNode) {
     ExecutionNodeId executionNodeId = lockedTopologyNode->operator*()->getId();
+    NES_ERROR("Try adding execution node with id {} ", executionNodeId);
 
     if (!idToExecutionNodeMap.contains(executionNodeId)) {
 
@@ -58,10 +59,10 @@ bool GlobalExecutionPlan::registerExecutionNode(const TopologyNodeWLock& lockedT
         }
 
         idToExecutionNodeMap[executionNodeId] = newExecutionNode;
-        NES_DEBUG("Added execution node with id {} ", executionNodeId);
+        NES_ERROR("Added execution node with id {} ", executionNodeId);
         return true;
     }
-    NES_WARNING("Execution node {} already exists", executionNodeId);
+    NES_ERROR("Execution node {} already exists", executionNodeId);
     return false;
 }
 
