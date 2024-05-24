@@ -188,7 +188,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
 }
 
 void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkEventPtr removeLinkEvent) {
-
+    NES_ERROR("Removing topology link {}->{}", removeLinkEvent->getChildNodeId(), removeLinkEvent->getParentNodeId());
     auto downstreamNodeId = removeLinkEvent->getParentNodeId();
     auto upstreamNodeId = removeLinkEvent->getChildNodeId();
 
