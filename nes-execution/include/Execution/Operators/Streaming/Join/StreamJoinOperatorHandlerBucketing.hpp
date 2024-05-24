@@ -20,8 +20,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class StreamJoinOperatorHandlerBucketing : public JoinOperatorHandlerInterfaceBucketing,
-                                           virtual public StreamJoinOperatorHandler {
+class StreamJoinOperatorHandlerBucketing : public virtual JoinOperatorHandlerInterfaceBucketing,
+                                           public virtual StreamJoinOperatorHandler {
   public:
     std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;

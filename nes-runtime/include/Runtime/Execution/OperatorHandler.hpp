@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution {
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public Reconfigurable, public MigratableStateInterface {
+class OperatorHandler : public virtual Reconfigurable, public virtual MigratableStateInterface {
   public:
     /**
      * @brief Default constructor
@@ -65,7 +65,7 @@ class OperatorHandler : public Reconfigurable, public MigratableStateInterface {
     /**
      * @brief Default deconstructor
      */
-    ~OperatorHandler() override = default;
+    virtual ~OperatorHandler() override = default;
 
     /**
      * @brief Checks if the current operator handler is of type OperatorHandlerType

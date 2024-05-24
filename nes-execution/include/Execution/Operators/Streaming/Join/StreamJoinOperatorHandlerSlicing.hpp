@@ -22,7 +22,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class implementes the slicing interface while also providing the methods from StreamJoinOperatorHandler
+ * @brief This class implements the slicing interface while also providing the methods from StreamJoinOperatorHandler
  */
 class StreamJoinOperatorHandlerSlicing : public virtual JoinOperatorHandlerInterfaceSlicing,
                                          public virtual StreamJoinOperatorHandler {

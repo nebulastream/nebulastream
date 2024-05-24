@@ -46,10 +46,10 @@ class LocalJoinState : public Operators::OperatorState {
     Value<UInt64> sliceEnd;
 };
 
-void* getHJSliceProxy(void* ptrOpHandler, uint64_t timeStamp) {
+void* getHJSliceProxy(void* ptrOpHandler, uint64_t timeStamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
     NES_DEBUG("getHJSliceProxy with ts={}", timeStamp);
-    auto* opHandler = static_cast<HJOperatorHandlerSlicing*>(ptrOpHandler);
-    auto currentSlice = opHandler->getSliceByTimestampOrCreateIt(timeStamp);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto currentSlice = dynamic_cast<HJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timeStamp);
     NES_ASSERT2_FMT(currentSlice != nullptr, "invalid window");
     return currentSlice.get();
 }
@@ -87,7 +87,8 @@ HJBuildSlicing::HJBuildSlicing(const uint64_t operatorHandlerIndex,
                                TimeFunctionPtr timeFunction,
                                QueryCompilation::StreamJoinStrategy joinStrategy,
                                QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinBuild(operatorHandlerIndex,
+    : StreamJoinOperator(joinStrategy, windowingStrategy),
+      StreamJoinBuild(operatorHandlerIndex,
                       schema,
                       joinFieldName,
                       joinBuildSide,
@@ -105,7 +106,9 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
         //we need a new slice
         joinState->sliceReference =
-            Nautilus::FunctionCall("getHJSliceProxy", getHJSliceProxy, operatorHandlerMemRef, Value<UInt64>(tsValue));
+            Nautilus::FunctionCall("getHJSliceProxy", getHJSliceProxy, operatorHandlerMemRef, Value<UInt64>(tsValue),
+                                   Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                                   Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 
         joinState->hashTableReference = Nautilus::FunctionCall("getLocalHashTableProxy",
                                                                getLocalHashTableProxy,
