@@ -14,5 +14,6 @@ add_source_files(nes-operators
         CountMinDescriptor.cpp
         HyperLogLogDescriptor.cpp
         ReservoirSampleDescriptor.cpp
+        EquiWidthHistogramDescriptor.cpp
         DDSketchDescriptor.cpp
 )

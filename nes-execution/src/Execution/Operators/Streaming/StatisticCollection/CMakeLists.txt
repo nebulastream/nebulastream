@@ -17,4 +17,5 @@ add_source_files(nes-execution
 add_subdirectory(CountMin)
 add_subdirectory(HyperLogLog)
 add_subdirectory(ReservoirSample)
+add_subdirectory(EquiWidthHistogram)
 add_subdirectory(DDSketch)

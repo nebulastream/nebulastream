@@ -68,12 +68,23 @@ class StatisticFormatFactory {
     static StatisticFormatPtr createReservoirSampleFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
                                                                   std::function<std::string (const std::string&)> postProcessingData,
                                                                   std::function<std::string (const std::string&)> preProcessingData);
-    
+
+    /**
+     * @brief Creates a EquiWidthHistogramStatisticFormat for this memoryLayout
+     * @param memoryLayout
+     * @param postProcessingData
+     * @param preProcessingData
+     * @return StatisticFormatPtr
+     */
+    static StatisticFormatPtr createEquiWidthSampleFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                                          std::function<std::string (const std::string&)> postProcessingData,
+                                                          std::function<std::string (const std::string&)> preProcessingData);
+
     /**
      * @brief Creates a DDSketchStatisticFormat for this memoryLayout
-     * @param memoryLayout 
-     * @param postProcessingData 
-     * @param preProcessingData 
+     * @param memoryLayout
+     * @param postProcessingData
+     * @param preProcessingData
      * @return StatisticFormatPtr
      */
     static StatisticFormatPtr createDDSketchFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,

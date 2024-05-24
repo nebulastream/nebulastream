@@ -17,12 +17,14 @@
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/DDSketchDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/EquiWidthHistogramDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/ThresholdTrigger.hpp>
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -71,6 +73,8 @@ void StatisticSerializationUtil::serializeDescriptorDetails(const Statistic::Win
         StatisticWindowDescriptorMessage_DDSketchDetails ddSketchDetails;
         ddSketchDetails.set_relativeerror(ddSketchDescriptor->getRelativeError());
         descriptorMessage.mutable_details()->PackFrom(ddSketchDetails);
+    } else if (descriptor.instanceOf<const Statistic::EquiWidthHistogramDescriptor>()) {
+        descriptorMessage.mutable_details()->PackFrom(StatisticWindowDescriptorMessage_EquiWidthHistogramDetails());
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -131,6 +135,10 @@ StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescripto
         StatisticWindowDescriptorMessage_DDSketchDetails ddSketchDetails;
         descriptorMessage.details().UnpackTo(&ddSketchDetails);
         statisticDescriptor = Statistic::DDSketchDescriptor::create(expression->as<FieldAccessExpressionNode>(), ddSketchDetails.relativeerror(), descriptorMessage.width());
+    } else if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_EquiWidthHistogramDetails>()) {
+        StatisticWindowDescriptorMessage_EquiWidthHistogramDetails equiWidthHistogramDetails;
+        descriptorMessage.details().UnpackTo(&equiWidthHistogramDetails);
+        statisticDescriptor = Statistic::EquiWidthHistogramDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width());
     } else {
         NES_NOT_IMPLEMENTED();
     }

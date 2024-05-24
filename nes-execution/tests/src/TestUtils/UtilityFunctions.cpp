@@ -26,6 +26,7 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
+#include <Statistics/Synopses/EquiWidthHistogramStatistic.hpp>
 #include <Statistics/Synopses/DDSketchStatistic.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
@@ -69,11 +70,9 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
         if (dynamicBuffer.getNumberOfTuples() >= dynamicBuffer.getCapacity()) {
             buffer.setStatisticId(statisticId);
             buffer.setSequenceData({++sequenceNumber, chunkNumber, true});
-            buffer.setOriginId(originId);
-            buffer.setCreationTimestampInMS(currentIngestionTs);
+            buffer.setOriginId(originId);buffer.setCreationTimestampInMS(currentIngestionTs);
             inputBuffers.emplace_back(buffer);
-            buffer = bufferManager.getBufferBlocking();
-            currentIngestionTs =
+            buffer = bufferManager.getBufferBlocking();currentIngestionTs =
                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();
         }
@@ -83,8 +82,7 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
         buffer.setStatisticId(statisticId);
         buffer.setSequenceData({++sequenceNumber, chunkNumber, true});
         buffer.setOriginId(originId);
-        buffer.setCreationTimestampInMS(currentIngestionTs);
-        inputBuffers.emplace_back(buffer);
+        buffer.setCreationTimestampInMS(currentIngestionTs);inputBuffers.emplace_back(buffer);
     }
 
     return inputBuffers;
@@ -255,11 +253,12 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
                                     const std::string& fieldToBuildCountMinOver,
                                     const std::string& timestampFieldName) {
 
+
     // For each tuple in the buffer, we get the corresponding hyperloglog statistic and then update it accordingly
     std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
     auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
     Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
-    for (auto tuple : testTupleBuffer) {
+    for (auto tuple : testTupleBuffer){
         auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
         auto ts = tuple[timestampFieldName].read<uint64_t>();
         auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
@@ -280,6 +279,42 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
         Nautilus::Value<Nautilus::Int64> valKey(tuple[fieldToBuildCountMinOver].read<int64_t>());
         auto hash = murmurHash->calculate(valKey);
         hllStatistic->as<Statistic::HyperLogLogStatistic>()->update(hash->getValue());
+    }
+}
+
+void updateTestEquiWidthHistogramStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                           Statistic::StatisticStorePtr statisticStore,
+                                           Statistic::StatisticMetricHash metricHash,
+                                           uint64_t windowSize,
+                                           uint64_t windowSlide,
+                                           uint64_t binWidth,
+                                           const std::string& fieldToBuildHistOver,
+                                           const std::string& timestampFieldName) {
+
+    // For each tuple in the buffer, we get the corresponding equi-width histogram statistic and then update it accordingly
+    auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
+    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
+    for (auto tuple : testTupleBuffer){
+        auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+        auto ts = tuple[timestampFieldName].read<uint64_t>();
+        auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
+        auto endTs = Windowing::TimeMeasure(sliceAssigner.getSliceEndTs(ts));
+
+        auto allEquiWidthHistograms = statisticStore->getStatistics(statisticHash, startTs, endTs);
+        Statistic::StatisticPtr equiWidthHist;
+        if (allEquiWidthHistograms.empty()) {
+            equiWidthHist = Statistic::EquiWidthHistogramStatistic::createInit(startTs, endTs, binWidth);
+            statisticStore->insertStatistic(statisticHash, equiWidthHist);
+            NES_DEBUG("Created and inserted new hllStatistic = {} for statisticHash = {}",
+                      equiWidthHist->toString(), statisticHash);
+        } else {
+            equiWidthHist = allEquiWidthHistograms[0];
+        }
+
+        auto data = tuple[fieldToBuildHistOver].read<int64_t>();
+        auto lowerBound= data - (data % binWidth);
+        equiWidthHist->as<Statistic::EquiWidthHistogramStatistic>()->update(lowerBound, lowerBound + binWidth, 1);
+
     }
 }
 

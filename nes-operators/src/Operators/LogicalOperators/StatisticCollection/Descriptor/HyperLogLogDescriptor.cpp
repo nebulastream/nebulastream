@@ -46,6 +46,9 @@ HyperLogLogDescriptor::~HyperLogLogDescriptor() = default;
 
 std::string HyperLogLogDescriptor::toString() { return "HyperLogLogDescriptor"; }
 
+StatisticSynopsisType NES::Statistic::HyperLogLogDescriptor::getType() const { return StatisticSynopsisType::HLL; }
+
+
 bool HyperLogLogDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     if (rhs->instanceOf<HyperLogLogDescriptor>()) {
         auto rhsHyperLogLogDescriptor = rhs->as<HyperLogLogDescriptor>();

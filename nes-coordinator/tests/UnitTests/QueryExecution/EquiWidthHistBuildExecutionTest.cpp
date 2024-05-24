@@ -1,0 +1,259 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <BaseUnitTest.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/EquiWidthHistogramDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
+#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
+#include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+
+namespace NES::Runtime::Execution {
+using namespace std::chrono_literals;
+constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
+
+class EquiWidthHistBuildExecutionTest : public Testing::BaseUnitTest,
+                                   public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, Statistic::StatisticDataCodec>> {
+  public:
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
+    std::string fieldToBuildEquiHistOver = "f1";
+    std::string timestampFieldName = "ts";
+    SchemaPtr inputSchema, outputSchema;
+    Statistic::TriggerConditionPtr triggerCondition;
+    Statistic::StatisticStorePtr testStatisticStore;
+    Statistic::StatisticDataCodec statisticDataCodec;
+    Statistic::SendingPolicyPtr sendingPolicy;
+    Statistic::StatisticMetricHash metricHash;
+    uint64_t binWidth;
+    Statistic::StatisticFormatPtr statisticFormat;
+
+    static void SetUpTestCase() {
+
+        NES::Logger::setupLogging("EquiWidthHistBuildExecutionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("QueryExecutionTest: Setup EquiWidthHistBuildExecutionTest test class.");
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() override {
+        NES_INFO("QueryExecutionTest: Setup EquiWidthHistBuildExecutionTest test class.");
+        Testing::BaseUnitTest::SetUp();
+        const auto curTestCaseParams = EquiWidthHistBuildExecutionTest::GetParam();
+        const auto numWorkerThreads = std::get<0>(EquiWidthHistBuildExecutionTest::GetParam());
+
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode, numWorkerThreads);
+        triggerCondition = Statistic::NeverTrigger::create();
+        testStatisticStore = Statistic::DefaultStatisticStore::create();
+        metricHash = 42;// Just some arbitrary number
+        binWidth = std::get<1>(EquiWidthHistBuildExecutionTest::GetParam());
+        statisticDataCodec = std::get<2>(EquiWidthHistBuildExecutionTest::GetParam());
+        sendingPolicy = Statistic::SendingPolicyASAP::create(statisticDataCodec);
+        inputSchema = Schema::create()
+                          ->addField(fieldToBuildEquiHistOver, BasicType::INT64)
+                          ->addField(timestampFieldName, BasicType::UINT64)
+                          ->updateSourceName("test");
+        fieldToBuildEquiHistOver =
+            inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldToBuildEquiHistOver;
+        timestampFieldName = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + timestampFieldName;
+        outputSchema = Schema::create()
+                           ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+                           ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
+                           ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
+                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
+        statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema, executionEngine->getBufferManager()->getBufferSize(), Statistic::StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM, statisticDataCodec);
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() override {
+        NES_INFO("QueryExecutionTest: Tear down EquiWidthHistBuildExecutionTest test case.");
+        EXPECT_TRUE(executionEngine->stop());
+        Testing::BaseUnitTest::TearDown();
+    }
+
+    /**
+     * @brief Runs the statistic query and checks if the created reservoir sample are correct by creating
+     * reservoir sample on our own and then comparing expected versus actual
+     * @param testSourceDescriptor
+     * @param testSinkDescriptor
+     * @param equiWidthHistogramDescriptor
+     * @param windowSize
+     * @param windowSlide
+     * @param allInputBuffers
+     */
+    void runQueryAndCheckCorrectness(SourceDescriptorPtr testSourceDescriptor,
+                                     SinkDescriptorPtr testSinkDescriptor,
+                                     Statistic::WindowStatisticDescriptorPtr equiWidthHistogramDescriptor,
+                                     uint64_t windowSize,
+                                     uint64_t windowSlide,
+                                     std::vector<TupleBuffer> allInputBuffers) {
+
+        // Creating the query
+        auto window =
+            SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
+        auto query =
+            TestQuery::from(testSourceDescriptor)
+                .buildStatistic(window, equiWidthHistogramDescriptor, metricHash, sendingPolicy, triggerCondition)
+                .sink(testSinkDescriptor);
+            // Creating query and submitting it to the execution engine
+        NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(0),
+                                                               SharedQueryId(0),
+                                                               INVALID_WORKER_NODE_ID,
+                                                               query.getQueryPlan()->getRootOperators());
+        auto plan = executionEngine->submitQuery(decomposedQueryPlan);
+
+        // Emitting the input buffers and creating the expected reservoir sample  in testStatisticStore
+        auto source = executionEngine->getDataSource(plan, 0);
+        for (auto buf : allInputBuffers) {
+            source->emitBuffer(buf);
+
+            // Now creating the expected reservoir sample  in testStatisticStore
+            auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
+            Util::updateTestEquiWidthHistogramStatistic(dynamicBuffer, testStatisticStore, metricHash, windowSize, windowSlide, binWidth, fieldToBuildEquiHistOver, timestampFieldName);
+        }
+
+            // Giving the execution engine time to process the tuples, so that we do not just test our terminate() implementation
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        // Stopping query and waiting until the test sink has received the expected number of tuples
+        NES_INFO("Stopping query now!!!");
+        EXPECT_TRUE(executionEngine->stopQuery(plan, Runtime::QueryTerminationType::Graceful));
+        const auto nodeEngine = executionEngine->getNodeEngine();
+        const auto nodeEngineStatisticStore = nodeEngine->getStatisticManager()->getStatisticStore();
+
+        while (nodeEngineStatisticStore->getAllStatistics().size() != testStatisticStore->getAllStatistics().size()) {
+            NES_DEBUG("Waiting till all statistics have been built. Currently {} and expecting {}...",
+                      nodeEngineStatisticStore->getAllStatistics().size(),
+                      testStatisticStore->getAllStatistics().size());
+            std::this_thread::sleep_for(100ms);
+        }
+
+        // Checking the correctness
+        NES_DEBUG("Built all statistics. Now checking for correctness...");
+        for (auto& [statisticHash, equiWidthHistStatistic] : nodeEngineStatisticStore->getAllStatistics()) {
+            NES_DEBUG("Searching for statisticHash = {} reservoirSampleStatistic = {}", statisticHash, equiWidthHistStatistic->toString());
+            auto expectedStatistics =
+                testStatisticStore->getStatistics(statisticHash, equiWidthHistStatistic->getStartTs(), equiWidthHistStatistic->getEndTs());
+            EXPECT_EQ(expectedStatistics.size(), 1);
+            NES_DEBUG("Found for statisticHash = {} expectedStatistics = {}", statisticHash, expectedStatistics[0]->toString());
+            EXPECT_TRUE(expectedStatistics[0]->equal(*equiWidthHistStatistic));
+        }
+    }
+};
+
+/**
+ * @brief Here we test, if we create a equi width histogram sample sketch for a single input tuple
+ */
+TEST_P(EquiWidthHistBuildExecutionTest, singleInputTuple) {
+    using namespace Statistic;
+    constexpr auto windowSize = 10;
+    constexpr auto numberOfTuples = 1;
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildEquiHistOver,
+                                                                   timestampFieldName);
+
+    // Creating the sink and the sources
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM, statisticDataCodec);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+
+    // Creating the reservoir sample descriptor and running the query
+    auto equiWidthHistogramDescriptor = EquiWidthHistogramDescriptor::create(Over(fieldToBuildEquiHistOver), binWidth);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                equiWidthHistogramDescriptor,
+                                windowSize,
+                                windowSize,
+                                allInputBuffers);
+}
+/**
+ * @brief Here we test, if we create multiple equi width histogram sample for multiple input buffers, but also for larger
+ */
+TEST_P(EquiWidthHistBuildExecutionTest, multipleInputTuples) {
+    using namespace Statistic;
+    constexpr auto windowSize = 10;
+    constexpr auto numberOfTuples = 100;
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildEquiHistOver,
+                                                                   timestampFieldName);
+
+    // Creating the sink and the sources
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM, statisticDataCodec);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+
+    // Creating the reservoir sample descriptor and running the query
+    auto equiWidthHistogramDescriptor = EquiWidthHistogramDescriptor::create(Over(fieldToBuildEquiHistOver), binWidth);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                equiWidthHistogramDescriptor,
+                                windowSize,
+                                windowSize,
+                                allInputBuffers);
+}
+/**
+ * @brief Here we test, if we create multiple equi width histogram sample  for multiple input buffers, but also for larger samples
+ * The difference is that we use the ingestion time instead of an event time
+ */
+TEST_P(EquiWidthHistBuildExecutionTest, multipleInputTuplesWithWindowSlide) {
+    using namespace Statistic;
+    constexpr auto windowSize = 10;
+    constexpr auto windowSlide = 5;
+    constexpr auto numberOfTuples = 100;
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildEquiHistOver,
+                                                                   timestampFieldName);
+
+    // Creating the sink and the sources
+    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM, statisticDataCodec);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+
+    // Creating the reservoir sample descriptor and running the query
+    auto equiWidthHistogramDescriptor = EquiWidthHistogramDescriptor::create(Over(fieldToBuildEquiHistOver), binWidth);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                equiWidthHistogramDescriptor,
+                                windowSize,
+                                windowSlide,
+                                allInputBuffers);
+}
+
+INSTANTIATE_TEST_CASE_P(testCountMin,
+                        EquiWidthHistBuildExecutionTest,
+                        ::testing::Combine(::testing::Values(1, 4, 8),     // numWorkerThread
+                                           ::testing::Values(1, 100, 4000),// binWidth
+                                           ::testing::ValuesIn(            // All possible statistic sink datatype
+                                               magic_enum::enum_values<Statistic::StatisticDataCodec>())),
+                        [](const testing::TestParamInfo<EquiWidthHistBuildExecutionTest::ParamType>& info) {
+                            const auto numWorkerThread = std::get<0>(info.param);
+                            const auto binWidth = std::get<1>(info.param);
+                            const auto dataCodec = std::get<2>(info.param);
+                            return std::to_string(numWorkerThread) + "Threads_" + std::to_string(binWidth) + "Width_" +
+                                std::string(magic_enum::enum_name(dataCodec));
+                        });
+}// namespace NES::Runtime::Execution

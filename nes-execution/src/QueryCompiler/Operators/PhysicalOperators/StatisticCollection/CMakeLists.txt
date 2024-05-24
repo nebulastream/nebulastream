@@ -17,5 +17,6 @@ add_source_files(nes-execution
         PhysicalHyperLogLogBuildOperator.cpp
         PhysicalSynopsisBuildOperator.cpp
         PhysicalReservoirSampleBuildOperator.cpp
+        PhysicalEquiWidthBuildOperator.cpp
         PhysicalDDSketchBuildOperator.cpp
 )

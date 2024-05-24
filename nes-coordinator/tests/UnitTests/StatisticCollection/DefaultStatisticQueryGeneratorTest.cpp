@@ -160,12 +160,14 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator
-                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
-                                    ->copyFields(inputSchema)
+                                    ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
                                     ->updateSourceName("car");
 
+    constexpr auto EXPECTED_WIDTH = 55;
+    constexpr auto EXPECTED_DEPTH = 3;
     const auto dataCharacteristic = DataCharacteristic::create(Selectivity::create(Over("f1")), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
     const auto sendingPolicy = SENDING_LAZY(StatisticDataCodec::DEFAULT);
@@ -188,9 +190,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
-    ASSERT_TRUE(descriptor->instanceOf<ReservoirSampleDescriptor>());
-    auto reservoirSampleDescriptor = descriptor->as<ReservoirSampleDescriptor>();
-    EXPECT_EQ(reservoirSampleDescriptor->getWidth(), ReservoirSampleDescriptor::DEFAULT_SAMPLE_SIZE);
+    ASSERT_TRUE(descriptor->instanceOf<CountMinDescriptor>());
+    auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
+    EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
+    EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
 }
 
 /**
@@ -301,14 +307,12 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
-                                    ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
-                                    ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
+                                    ->copyFields(inputSchema)
                                     ->updateSourceName("car");
 
-    constexpr auto EXPECTED_WIDTH = 55;
-    constexpr auto EXPECTED_DEPTH = 3;
     const auto dataCharacteristic = DataCharacteristic::create(MinVal::create(Over("f1")), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
     const auto sendingPolicy = SENDING_LAZY(StatisticDataCodec::DEFAULT);
@@ -331,13 +335,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     EXPECT_EQ(*operatorTriggerCondition, *triggerCondition);
 
     // Checking if the descriptor is correct
-    ASSERT_TRUE(descriptor->instanceOf<CountMinDescriptor>());
-    auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
-    const auto expectedField = Over("car$f1");
-    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
-    EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
-    EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
-    EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
+    ASSERT_TRUE(descriptor->instanceOf<ReservoirSampleDescriptor>());
+    auto reservoirSampleDescriptor = descriptor->as<ReservoirSampleDescriptor>();
+    EXPECT_EQ(reservoirSampleDescriptor->getWidth(), ReservoirSampleDescriptor::DEFAULT_SAMPLE_SIZE);
 }
 
 /**

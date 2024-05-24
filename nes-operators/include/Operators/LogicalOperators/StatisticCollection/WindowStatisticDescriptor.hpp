@@ -36,6 +36,8 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      */
     WindowStatisticDescriptor(const FieldAccessExpressionNodePtr& field, uint64_t width);
 
+    virtual StatisticSynopsisType getType() const = 0;
+
     virtual ~WindowStatisticDescriptor() = default;
 
     /**

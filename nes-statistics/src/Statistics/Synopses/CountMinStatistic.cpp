@@ -121,7 +121,7 @@ void CountMinStatistic::merge(const SynopsesStatistic& other) {
 
     // 2. We can only merge statistics with the same period
     if (!startTs.equals(other.getStartTs()) || !endTs.equals(other.getEndTs())) {
-        NES_ERROR("Can not merge HyperLogLog statistics with different periods");
+        NES_ERROR("Can not merge CountMinStatistic statistics with different periods");
         return;
     }
 

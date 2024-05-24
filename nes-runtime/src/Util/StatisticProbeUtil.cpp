@@ -112,8 +112,9 @@ StatisticValue<> StatisticProbeUtil::probeReservoirSample(const ReservoirSampleS
 
     return StatisticValue<>(count, startTs, endTs);
 }
-StatisticValue<> StatisticProbeUtil::probeHyperLogLog(const HyperLogLogStatistic& hyperLogLogStatistic,
+StatisticValue<> StatisticProbeUtil::probeHyperLogLog(HyperLogLogStatistic& hyperLogLogStatistic,
                                                       const ProbeExpression&) {
+    hyperLogLogStatistic.performEstimation();
     const auto estimate = hyperLogLogStatistic.getEstimate();
     const auto startTs = hyperLogLogStatistic.getStartTs();
     const auto endTs = hyperLogLogStatistic.getEndTs();
@@ -154,5 +155,32 @@ StatisticValue<> StatisticProbeUtil::probeDDSketch(const DDSketchStatistic& stat
     const auto value = statistic.getValueAtQuantile(quantile);
     return StatisticValue<>(value, statistic.getStartTs(), statistic.getEndTs());
 }
+
+StatisticValue<> StatisticProbeUtil::probeEquiWidthHistogram(const EquiWidthHistogramStatistic& equiWidthHistogramStatistic,
+                                                             const ProbeExpression& probeExpression) {
+    const auto expression = probeExpression.getProbeExpression();
+    if (!expression->instanceOf<EqualsExpressionNode>()) {
+        NES_THROW_RUNTIME_ERROR("For now, we can only get the statistic for a FieldAssignmentExpressionNode!");
+    }
+    const auto equalExpression = expression->as<EqualsExpressionNode>();
+    const auto leftExpr = equalExpression->getLeft();
+    const auto rightExpr = equalExpression->getRight();
+    // We expect that one expression is a constant value and the other a field access expression
+    if (!((leftExpr->instanceOf<ConstantValueExpressionNode>() && rightExpr->instanceOf<FieldAccessExpressionNode>()) ||
+          (leftExpr->instanceOf<FieldAccessExpressionNode>() && rightExpr->instanceOf<ConstantValueExpressionNode>()))) {
+        NES_THROW_RUNTIME_ERROR("For now, we expect that one expression is a constant value and the other a field access expression!");
+    }
+
+    // Getting the constant value and the field access
+    const auto constantExpression = leftExpr->instanceOf<ConstantValueExpressionNode>() ? leftExpr : rightExpr;
+    const auto constantValue = constantExpression->as<ConstantValueExpressionNode>()->getConstantValue();
+    const auto basicValue = constantValue->as<BasicValue>();
+    const double value = std::stod(basicValue->value);
+
+    // Getting the count for the value from the EquiWidthHistogram
+    const auto count = equiWidthHistogramStatistic.getCountForValue(value);
+    return StatisticValue<>(count, equiWidthHistogramStatistic.getStartTs(), equiWidthHistogramStatistic.getEndTs());
+}
+
 
 } // namespace NES::Statistic

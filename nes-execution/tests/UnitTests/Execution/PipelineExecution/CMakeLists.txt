@@ -28,6 +28,7 @@ add_nes_execution_test(execution-limit-pipeline-test "LimitPipelineTest.cpp")
 add_nes_execution_test(count-min-pipeline-test "CountMinPipelineTest.cpp")
 add_nes_execution_test(hyper-log-log-pipeline-test "HyperLogLogPipelineTest.cpp")
 add_nes_execution_test(reservoir-sample-pipeline-test "ReservoirSamplePipelineTest.cpp")
+add_nes_execution_test(equi-width-hist-pipeline-test "EquiWidthHistPipelineTest.cpp")
 add_nes_execution_test(dd-sketch-pipeline-test "DDSketchPipelineTest.cpp")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)

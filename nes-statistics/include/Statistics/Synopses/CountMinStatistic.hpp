@@ -58,7 +58,6 @@ class CountMinStatistic : public SynopsesStatistic {
                                    uint64_t numberOfBitsInKey);
 
     void* getStatisticData() const override;
-
     bool equal(const Statistic& other) const override;
     std::string toString() const override;
     void merge(const SynopsesStatistic& other) override;

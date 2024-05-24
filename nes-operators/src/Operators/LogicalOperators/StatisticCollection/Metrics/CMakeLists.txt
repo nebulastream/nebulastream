@@ -16,6 +16,7 @@ add_source_files(nes-operators
         IngestionRate.cpp
         StatisticMetric.cpp
         MinVal.cpp
+        MaxVal.cpp
         Selectivity.cpp
         Quantile.cpp
 )

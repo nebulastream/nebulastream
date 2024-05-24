@@ -29,6 +29,8 @@
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/MaxVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Quantile.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
@@ -221,6 +223,8 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(1, 10, 1000),// Window size
                        ::testing::Values(             // Different Metrics
                            Statistic::Cardinality::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
+                           Statistic::MinVal::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
+                           Statistic::MaxVal::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
                            Statistic::Selectivity::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
                            Statistic::Quantile::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)))),
     [](const testing::TestParamInfo<StatisticsIntegrationTest::ParamType>& info) {

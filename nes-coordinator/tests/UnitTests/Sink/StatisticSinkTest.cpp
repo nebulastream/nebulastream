@@ -15,6 +15,7 @@
 #include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -27,6 +28,7 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
+#include <Statistics/Synopses/EquiWidthHistogramStatistic.hpp>
 #include <Statistics/Synopses/DDSketchStatistic.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/Core.hpp>
@@ -137,7 +139,8 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
                                                                                    Statistic::StatisticSynopsisType::COUNT_MIN,
                                                                                    statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(),
+                       expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
@@ -186,7 +189,8 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
                                                                                    Statistic::StatisticSynopsisType::HLL,
                                                                                    statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(),
+                       expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
@@ -219,7 +223,9 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
             auto sampleMemoryLayout = Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
 
             // We simulate a filling of a sample by writing random values into the reservoir.
-            const auto sample = Statistic::ReservoirSampleStatistic::createInit(startTs, endTs, sampleSize, sampleMemoryLayout->getSchema())->as<Statistic::ReservoirSampleStatistic>();
+            const auto sample =
+                Statistic::ReservoirSampleStatistic::createInit(startTs, endTs, sampleSize, sampleMemoryLayout->getSchema())
+                    ->as<Statistic::ReservoirSampleStatistic>();
             auto* reservoirSpace = sample->getReservoirSpace();
             for (auto i = 0_u64; i < sampleSize; ++i) {
                 int8_t rndVal = rand();
@@ -231,12 +237,14 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
         }
 
         // Writing the expected statistics into buffers via the statistic format
-        auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(schema,
-                                                                                   bufferManager->getBufferSize(),
-                                                                                   Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE,
-                                                                                   statisticDataCodec);
+        auto statisticFormat =
+            Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                                bufferManager->getBufferSize(),
+                                                                Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE,
+                                                                statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(),
+                       expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
@@ -247,45 +255,47 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
     }
 
     /**
-     * @brief Creates #numberOfSketches random DD-Sketches
-     * @param numberOfSketches
+     * @brief Creates #numberOfSketches random EquiWidthHistograms
+     * @param numberOfHistograms
      * @param schema
      * @param bufferManager
      * @return Pair<Vector of TupleBuffers, Vector of Statistics>
      */
     std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
-    createRandomDDSketches(uint64_t numberOfSketches, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
+    createRandomEquiWidthHistograms(uint64_t numberOfHistograms,
+                                    const SchemaPtr& schema,
+                                    const Runtime::BufferManagerPtr& bufferManager) const {
         std::vector<Statistic::StatisticPtr> expectedStatistics;
         constexpr auto windowSize = 10;
 
-        for (auto curCnt = 0_u64; curCnt < numberOfSketches; ++curCnt) {
+        for (auto curCnt = 0_u64; curCnt < numberOfHistograms; ++curCnt) {
             // Creating "random" values that represent of a Reservoir Samples for a tumbling window with a size of 10
             const Windowing::TimeMeasure startTs(windowSize * curCnt);
             const Windowing::TimeMeasure endTs(windowSize * (curCnt + 1));
-            const uint64_t numberOfBuckets = rand() % 10 + 5;
-            const double error = rand() % 1 + 0.01;
-            const double gamma = (1 + error) / (1 - error);
-            const auto numberOfUpdates = rand() % 100 + 100;
-
-            // We simulate a filling of a sample by writing random values into the reservoir.
-            const auto ddSketch = Statistic::DDSketchStatistic::createInit(startTs, endTs, numberOfBuckets, gamma)->as<Statistic::DDSketchStatistic>();
-            for (auto i = 0; i < numberOfUpdates; ++i) {
-                auto logFloorIndex = rand() % 10000;
-                auto weight = rand() % 10000;
-                ddSketch->addValue(logFloorIndex, weight);
+            const uint64_t binWidth = rand() % 10 + 5;
+            const uint64_t numberOfUpdates = rand() % 1000 + 20;
+            // We simulate a filling of a sample by writing random values into histogram.
+            const auto equiWidthHistogram = Statistic::EquiWidthHistogramStatistic::createInit(startTs, endTs, binWidth)
+                                    ->as<Statistic::EquiWidthHistogramStatistic>();
+            for (auto i = 0_u64; i < numberOfUpdates; ++i) {
+                int8_t rndVal = rand();
+                // This is a simple way to create a histogram but is NOT correct
+                equiWidthHistogram->update(rndVal, rndVal + binWidth, 1);
             }
 
             // Creating now the expected ReservoirSamples
-            expectedStatistics.emplace_back(ddSketch);
+            expectedStatistics.emplace_back(equiWidthHistogram);
         }
 
         // Writing the expected statistics into buffers via the statistic format
-        auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(schema,
-                                                                                   bufferManager->getBufferSize(),
-                                                                                   Statistic::StatisticSynopsisType::DD_SKETCH,
-                                                                                   statisticDataCodec);
+        auto statisticFormat =
+            Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                                bufferManager->getBufferSize(),
+                                                                Statistic::StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM,
+                                                                statisticDataCodec);
         std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
-        std::transform(expectedStatistics.begin(), expectedStatistics.end(),
+        std::transform(expectedStatistics.begin(),
+                       expectedStatistics.end(),
                        std::back_inserter(statisticsWithHashes),
                        [](const auto& statistic) {
                            static auto hash = 0;
@@ -295,10 +305,61 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest,
         return {createdBuffers, expectedStatistics};
     }
 
-
-
     Runtime::NodeEnginePtr nodeEngine{nullptr};
+
+/**
+     * @brief Creates #numberOfSketches random DD-Sketches
+     * @param numberOfSketches
+     * @param schema
+     * @param bufferManager
+     * @return Pair<Vector of TupleBuffers, Vector of Statistics>
+     */
+std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
+createRandomDDSketches(uint64_t numberOfSketches, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
+    std::vector<Statistic::StatisticPtr> expectedStatistics;
+    constexpr auto windowSize = 10;
+
+    for (auto curCnt = 0_u64; curCnt < numberOfSketches; ++curCnt) {
+        // Creating "random" values that represent of a Reservoir Samples for a tumbling window with a size of 10
+        const Windowing::TimeMeasure startTs(windowSize * curCnt);
+        const Windowing::TimeMeasure endTs(windowSize * (curCnt + 1));
+        const uint64_t numberOfBuckets = rand() % 10 + 5;
+        const double error = rand() % 1 + 0.01;
+        const double gamma = (1 + error) / (1 - error);
+        const auto numberOfUpdates = rand() % 100 + 100;
+
+        // We simulate a filling of a sample by writing random values into the reservoir.
+        const auto ddSketch =
+            Statistic::DDSketchStatistic::createInit(startTs, endTs, numberOfBuckets, gamma)->as<Statistic::DDSketchStatistic>();
+        for (auto i = 0; i < numberOfUpdates; ++i) {
+            auto logFloorIndex = rand() % 10000;
+            auto weight = rand() % 10000;
+            ddSketch->addValue(logFloorIndex, weight);
+        }
+
+        // Creating now the expected ReservoirSamples
+        expectedStatistics.emplace_back(ddSketch);
+    }
+
+    // Writing the expected statistics into buffers via the statistic format
+    auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                                               bufferManager->getBufferSize(),
+                                                                               Statistic::StatisticSynopsisType::DD_SKETCH,
+                                                                               statisticDataCodec);
+    std::vector<Statistic::HashStatisticPair> statisticsWithHashes;
+    std::transform(expectedStatistics.begin(),
+                   expectedStatistics.end(),
+                   std::back_inserter(statisticsWithHashes),
+                   [](const auto& statistic) {
+                       static auto hash = 0;
+                       return std::make_pair(++hash, statistic);
+                   });
+    auto createdBuffers = statisticFormat->writeStatisticsIntoBuffers(statisticsWithHashes, *bufferManager);
+    return {createdBuffers, expectedStatistics};
+}
 };
+
+
 
 /**
  * @brief Tests if our statistic sink can put CountMin-Sketches into the StatisticStore
@@ -437,6 +498,42 @@ TEST_P(StatisticSinkTest, testReservoirSample) {
                                              DecomposedQueryPlanId(1),
                                              1,// numberOfOrigins
                                              Statistic::StatisticSynopsisType::RESERVOIR_SAMPLE,
+                                             statisticDataCodec);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
+
+    for (auto& buf : buffers) {
+        EXPECT_TRUE(statisticSink->writeData(buf, wctx));
+    }
+
+    auto storedStatistics = nodeEngine->getStatisticManager()->getStatisticStore()->getAllStatistics();
+    EXPECT_TRUE(sameStatisticsInVectors(storedStatistics, expectedStatistics));
+}
+
+/**
+ * @brief Tests if our statistic sink can put Equi Width Histograms into the StatisticStore
+ */
+TEST_P(StatisticSinkTest, testEquiWidthHistogram) {
+    auto equiWidthHistStatisticSchema = Schema::create()
+                                          ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
+                                          ->addField(Statistic::NUMBER_OF_BINS, BasicType::UINT64)
+                                          ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                          ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+                                          ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
+                                          ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
+                                          ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
+                                          ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
+                                          ->updateSourceName("test");
+
+    // Creating the number of buffers
+    auto [buffers, expectedStatistics] =
+        createRandomEquiWidthHistograms(numberOfStatistics, equiWidthHistStatisticSchema, nodeEngine->getBufferManager());
+    auto statisticSink = createStatisticSink(equiWidthHistStatisticSchema,
+                                             nodeEngine,
+                                             1,// numOfProducers
+                                             SharedQueryId(1),
+                                             DecomposedQueryPlanId(1),
+                                             1,// numberOfOrigins
+                                             Statistic::StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM,
                                              statisticDataCodec);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 

@@ -52,6 +52,7 @@ ExpressionNodePtr DDSketchDescriptor::getGreaterThanZeroExpression() const { ret
 ExpressionNodePtr DDSketchDescriptor::getLessThanZeroExpression() const { return lessThanZeroExpression; }
 
 uint64_t DDSketchDescriptor::getNumberOfPreAllocatedBuckets() const { return width; }
+StatisticSynopsisType DDSketchDescriptor::getType() const { return StatisticSynopsisType::DD_SKETCH; }
 
 WindowStatisticDescriptorPtr DDSketchDescriptor::create(FieldAccessExpressionNodePtr field) {
     return create(field, DEFAULT_RELATIVE_ERROR, NUMBER_OF_PRE_ALLOCATED_BUCKETS);

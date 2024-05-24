@@ -53,6 +53,8 @@ message StatisticWindowDescriptorMessage {
 
   message HyperLogLogDetails {}
 
+  message EquiWidthHistogramDetails {}
+
   message ReservoirSampleDetails {
     bool keepOnlyRequiredField = 1;
   }

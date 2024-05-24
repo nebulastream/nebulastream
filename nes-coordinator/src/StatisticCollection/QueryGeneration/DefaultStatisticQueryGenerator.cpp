@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/EquiWidthHistogramDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/DDSketchDescriptor.hpp>
@@ -24,6 +25,7 @@
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/MinVal.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/MaxVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Quantile.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -46,29 +48,23 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
     // Creating the synopsisDescriptor depending on the metric type
     const auto metricType = characteristic.getType();
     WindowStatisticDescriptorPtr statisticDescriptor;
-    StatisticSynopsisType synopsisType;
     if (metricType->instanceOf<Selectivity>()) {
-        statisticDescriptor = ReservoirSampleDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::RESERVOIR_SAMPLE;
+        statisticDescriptor = CountMinDescriptor::create(metricType->getField());
     } else if (metricType->instanceOf<IngestionRate>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::COUNT_MIN;
     } else if (metricType->instanceOf<BufferRate>()) {
         statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::COUNT_MIN;
     } else if (metricType->instanceOf<Cardinality>()) {
         statisticDescriptor = HyperLogLogDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::HLL;
     } else if (metricType->instanceOf<MinVal>()) {
-        statisticDescriptor = CountMinDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::COUNT_MIN;
+        statisticDescriptor = ReservoirSampleDescriptor::create(metricType->getField());
+    } else if (metricType->instanceOf<MaxVal>()) {
+        statisticDescriptor = EquiWidthHistogramDescriptor::create(metricType->getField());
     } else if (metricType->instanceOf<Quantile>()) {
         statisticDescriptor = DDSketchDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::DD_SKETCH;
     } else {
         // As a fallback, we use a sample. This might not be the best choice, but it is better than nothing
         statisticDescriptor = ReservoirSampleDescriptor::create(metricType->getField());
-        synopsisType = StatisticSynopsisType::RESERVOIR_SAMPLE;
     }
 
     /*
@@ -93,7 +89,7 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
                                                                                            sendingPolicy,
                                                                                            triggerCondition);
         auto statisticSinkOperator =
-            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec), INVALID_WORKER_NODE_ID);
+            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(statisticDescriptor->getType(), statisticDataCodec), INVALID_WORKER_NODE_ID);
         statisticBuildOperator->addParent(statisticSinkOperator);
 
         // As we are operating on a queryPlanCopy, we can replace the operatorUnderTest with a statistic build operator
@@ -123,7 +119,7 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
 
         const auto query = Query::from(logicalSourceName)
                                .buildStatistic(window, statisticDescriptor, metricType->hash(), sendingPolicy, triggerCondition)
-                               .sink(StatisticSinkDescriptor::create(synopsisType, statisticDataCodec));
+                               .sink(StatisticSinkDescriptor::create(statisticDescriptor->getType(), statisticDataCodec));
         NES_DEBUG("Created query: {}", query.getQueryPlan()->toString());
         return query;
     }

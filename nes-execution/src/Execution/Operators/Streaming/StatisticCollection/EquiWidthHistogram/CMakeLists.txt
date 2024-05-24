@@ -10,11 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-statistics
-        SynopsesStatistic.cpp
-        CountMinStatistic.cpp
-        HyperLogLogStatistic.cpp
-        ReservoirSampleStatistic.cpp
-        EquiWidthHistogramStatistic.cpp
-        DDSketchStatistic.cpp
+add_source_files(nes-execution
+        EquiWidthHistogramOperatorHandler.cpp
+        EquiWidthHistogramBuild.cpp
 )

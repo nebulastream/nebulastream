@@ -103,6 +103,12 @@ class DDSketchDescriptor : public WindowStatisticDescriptor {
     ExpressionNodePtr getLessThanZeroExpression() const;
     void inferStamps(const SchemaPtr& inputSchema) override;
 
+    /**
+     * @brief Getter for the type of the statistic
+     * @return StatisticSynopsisType
+     */
+    StatisticSynopsisType getType() const override;
+
   private:
      /**
       * @brief Private constructor for creating a DD-Sketch descriptor

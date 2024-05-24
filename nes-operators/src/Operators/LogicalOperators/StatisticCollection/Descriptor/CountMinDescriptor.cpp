@@ -58,4 +58,6 @@ bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     return false;
 }
 
+StatisticSynopsisType NES::Statistic::CountMinDescriptor::getType() const { return StatisticSynopsisType::COUNT_MIN; }
+
 }// namespace NES::Statistic

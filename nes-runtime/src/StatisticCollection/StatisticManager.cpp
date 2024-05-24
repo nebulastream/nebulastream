@@ -16,6 +16,7 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Statistics/Synopses/ReservoirSampleStatistic.hpp>
+#include <Statistics/Synopses/EquiWidthHistogramStatistic.hpp>
 #include <Statistics/Synopses/DDSketchStatistic.hpp>
 #include <Util/Core.hpp>
 #include <Util/StatisticProbeUtil.hpp>
@@ -47,6 +48,10 @@ std::vector<StatisticValue<>> StatisticManager::getStatistics(const StatisticPro
         } else if (statistic->instanceOf<CountMinStatistic>()) {
             const auto countMin = statistic->as<CountMinStatistic>();
             auto statisticValue = StatisticProbeUtil::probeCountMin(*countMin, probeRequest.probeExpression);
+            statisticValues.emplace_back(statisticValue);
+        } else if (statistic->instanceOf<EquiWidthHistogramStatistic>()) {
+            const auto equiWidthHistogram = statistic->as<EquiWidthHistogramStatistic>();
+            auto statisticValue = StatisticProbeUtil::probeEquiWidthHistogram(*equiWidthHistogram, probeRequest.probeExpression);
             statisticValues.emplace_back(statisticValue);
         } else if (statistic->instanceOf<DDSketchStatistic>()) {
             const auto ddSketch = statistic->as<DDSketchStatistic>();

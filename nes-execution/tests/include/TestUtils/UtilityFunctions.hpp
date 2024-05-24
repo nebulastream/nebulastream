@@ -72,6 +72,24 @@ void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupl
                                         MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout);
 
 /**
+ * @brief Creates a ReservoirSample (if none exists) in the statisticStore and adds the tuple to the sample (if it should).
+ * @param testTupleBuffer
+ * @param statisticStore
+ * @param metricHash
+ * @param windowSize
+ * @param windowSlide
+ * @param sampleSize
+ * @param timestampFieldName
+ * @param sampleMemoryLayout
+ */
+void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                        Statistic::StatisticStorePtr statisticStore,
+                                        Statistic::StatisticMetricHash metricHash,
+                                        uint64_t windowSize, uint64_t windowSlide, uint64_t sampleSize,
+                                        const std::string& timestampFieldName,
+                                        MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout);
+
+/**
 * @brief Creates a CountMinSketch (if none exists) in the statisticStore and updates the counter at <row,col>
 * @param testTupleBuffer
 * @param statisticStore
@@ -103,7 +121,7 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
 * @param windowSize
 * @param windowSlide
 * @param width
-* @param fieldToBuildCountMinOver
+* @param fieldToBuildHistOver
 * @param timestampFieldName
 */
 void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
@@ -112,8 +130,26 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
                                     uint64_t windowSize,
                                     uint64_t windowSlide,
                                     uint64_t width,
-                                    const std::string& fieldToBuildCountMinOver,
+                                    const std::string& fieldToBuildHistOver,
                                     const std::string& timestampFieldName);
+
+/**
+ * @brief Creates an EquiWidthHistogram (if none exists) in the statisticStore and updates the histogram
+ * @param testTupleBuffer
+ * @param statisticStore
+ * @param metricHash
+ * @param windowSize
+ * @param windowSlide
+ * @param binWidth
+ * @param fieldToBuildCountMinOver
+ * @param timestampFieldName
+ */
+void updateTestEquiWidthHistogramStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                           Statistic::StatisticStorePtr statisticStore,
+                                           Statistic::StatisticMetricHash metricHash,
+                                           uint64_t windowSize, uint64_t windowSlide, uint64_t binWidth,
+                                           const std::string& fieldToBuildCountMinOver,
+                                           const std::string& timestampFieldName);
 
 /**
  * @brief Creates a DDSketch (if none exists) in the statisticStore and updates the sketch

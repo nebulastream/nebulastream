@@ -75,6 +75,7 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
     Statistic::StatisticFormatPtr statisticFormat;
     Statistic::StatisticMetricHash metricHash;
     Statistic::StatisticDataCodec sinkDataCodec;
+    Runtime::MemoryLayouts::MemoryLayoutPtr sampleMemoryLayout;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

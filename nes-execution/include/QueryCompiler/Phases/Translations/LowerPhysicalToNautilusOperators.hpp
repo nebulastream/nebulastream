@@ -287,6 +287,18 @@ class LowerPhysicalToNautilusOperators {
                                       std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
                                       uint64_t bufferSize);
 
+    /**
+     * @brief Lowers a physicalEquiWidthBuildOperator to a EquiWidthBuildOperator
+     * @param physicalEquiWidthBuildOperator
+     * @param operatorHandlers
+     * @param bufferSize
+     * @return
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerEquiWidthBuildOperator(const PhysicalOperators::PhysicalEquiWidthBuildOperator& physicalEquiWidthBuildOperator,
+                                std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                                uint64_t bufferSize);
+
 
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;

@@ -26,6 +26,7 @@ add_nes_unit_test(stream-join-execution-test "StreamJoinExecutionTest.cpp")
 add_nes_unit_test(count-min-build-execution-test "CountMinBuildExecutionTest.cpp")
 add_nes_unit_test(hyper-log-log-build-execution-test "HyperLogLogBuildExecutionTest.cpp")
 add_nes_unit_test(reservoir-sample-build-execution-test "ReservoirSampleBuildExecutionTest.cpp")
+add_nes_unit_test(equi-width-hist-build-execution-test "EquiWidthHistBuildExecutionTest.cpp")
 add_nes_unit_test(dd-sketch-build-execution-test "DDSketchBuildExecutionTest.cpp")
 add_nes_unit_test(limit-query-execution-test "LimitQueryExecutionTest.cpp")
 

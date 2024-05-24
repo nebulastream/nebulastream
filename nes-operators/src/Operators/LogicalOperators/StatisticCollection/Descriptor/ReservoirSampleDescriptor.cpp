@@ -59,6 +59,8 @@ void ReservoirSampleDescriptor::addDescriptorFields(Schema& inputSchema, Schema&
 
 std::string ReservoirSampleDescriptor::toString() { return "ReservoirSampleDescriptor"; }
 
+StatisticSynopsisType NES::Statistic::ReservoirSampleDescriptor::getType() const { return StatisticSynopsisType::RESERVOIR_SAMPLE; }
+
 bool ReservoirSampleDescriptor::isKeepOnlyRequiredField() const { return keepOnlyRequiredField; }
 
 ReservoirSampleDescriptor::~ReservoirSampleDescriptor() = default;

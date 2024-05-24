@@ -70,6 +70,12 @@ class HyperLogLogDescriptor : public WindowStatisticDescriptor {
     std::string toString() override;
 
     /**
+     * @brief Getter for the type of the synopsis
+     * @return StatisticSynopsisType
+     */
+    StatisticSynopsisType getType() const override;
+
+    /**
      * @brief Virtual destructor
      */
     ~HyperLogLogDescriptor() override;

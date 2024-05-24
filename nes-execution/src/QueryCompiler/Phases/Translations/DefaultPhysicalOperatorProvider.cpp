@@ -33,6 +33,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/EquiWidthHistogramDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/DDSketchDescriptor.hpp>
@@ -64,6 +65,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalCountMinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalHyperLogLogBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalReservoirSampleBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalEquiWidthBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalDDSketchBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
@@ -241,6 +243,20 @@ void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(
         physicalReservoirSampleBuildOperator->as<UnaryOperator>()->setInputOriginIds(
             logicalStatisticWindowOperator.getInputOriginIds());
         logicalStatisticWindowOperator.replace(physicalReservoirSampleBuildOperator);
+    } else if (statisticDescriptor->instanceOf<Statistic::EquiWidthHistogramDescriptor>()) {
+        const auto equiWidthHistogramDescriptor = statisticDescriptor->as<Statistic::EquiWidthHistogramDescriptor>();
+        auto physicalEquiWidthHistogramBuildOperator =
+            PhysicalOperators::PhysicalEquiWidthBuildOperator::create(logicalStatisticWindowOperator.getStatisticId(),
+                                                                             logicalStatisticWindowOperator.getInputSchema(),
+                                                                             logicalStatisticWindowOperator.getOutputSchema(),
+                                                                             equiWidthHistogramDescriptor->getField()->getFieldName(),
+                                                                             equiWidthHistogramDescriptor->getWidth(),
+                                                                             logicalStatisticWindowOperator.getMetricHash(),
+                                                                             logicalStatisticWindowOperator.getWindowType(),
+                                                                             logicalStatisticWindowOperator.getSendingPolicy());
+        physicalEquiWidthHistogramBuildOperator->as<UnaryOperator>()->setInputOriginIds(
+            logicalStatisticWindowOperator.getInputOriginIds());
+        logicalStatisticWindowOperator.replace(physicalEquiWidthHistogramBuildOperator);
     } else if (statisticDescriptor->instanceOf<Statistic::DDSketchDescriptor>()) {
         const auto ddSketchDescriptor = statisticDescriptor->as<Statistic::DDSketchDescriptor>();
         auto physicalDDSketchBuildOperator =
@@ -259,7 +275,7 @@ void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(
         physicalDDSketchBuildOperator->as<UnaryOperator>()->setInputOriginIds(logicalStatisticWindowOperator.getInputOriginIds());
         logicalStatisticWindowOperator.replace(physicalDDSketchBuildOperator);
     } else {
-        NES_ERROR("We currently only support a CountMinStatisticDescriptor or HyperLogLogDescriptorStatisticDescriptor")
+        NES_ERROR("We currently do not support the descriptor!");
         NES_NOT_IMPLEMENTED();
     }
 }
