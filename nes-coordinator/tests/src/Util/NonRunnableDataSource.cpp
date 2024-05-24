@@ -62,8 +62,9 @@ void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& 
     emitBuffer(buf, addBufferMetaData);
 }
 
-void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData) { DataSource::emitWork(buffer, addBufferMetaData); }
-
+void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData) {
+    DataSource::emitWork(buffer, addBufferMetaData);
+}
 
 DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager,
