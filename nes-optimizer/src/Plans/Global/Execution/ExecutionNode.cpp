@@ -37,9 +37,10 @@ ExecutionNode::ExecutionNode(ExecutionNodeId executionNodeId) : executionNodeId(
 bool ExecutionNode::registerDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("Adding a new decomposed query plan with id {} to the collection for the shared query plan with id {}",
+    NES_ERROR("Adding a new decomposed query plan with id {} to the collection for the shared query plan with id {} on node {}",
               decomposedQueryId,
-              sharedQueryId);
+              sharedQueryId,
+              executionNodeId);
     mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId][decomposedQueryId] = decomposedQueryPlan;
     return true;
 }
@@ -88,7 +89,10 @@ DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId share
 
 bool ExecutionNode::removeDecomposedQueryPlans(SharedQueryId sharedQueryId) {
     if (mapOfSharedQueryToDecomposedQueryPlans.erase(sharedQueryId) == 1) {
-        NES_ERROR("ExecutionNode: Successfully removed decomposed query plan for shared query id {} and released the resources from node {}", sharedQueryId, executionNodeId);
+        NES_DEBUG("ExecutionNode: Successfully removed decomposed query plan for shared query id {} and released the resources "
+                  "from node {}",
+                  sharedQueryId,
+                  executionNodeId);
         return true;
     }
     NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : {}", sharedQueryId);
@@ -100,7 +104,11 @@ bool ExecutionNode::hasRegisteredDecomposedQueryPlans(NES::SharedQueryId sharedQ
 }
 
 bool ExecutionNode::removeDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
-    NES_ERROR("ExecutionNode: Successfully removed decomposed query plan {} for shared query id {} and released the resources from node {}", decomposedQueryPlanId, sharedQueryId, executionNodeId);
+    NES_DEBUG("ExecutionNode: Successfully removed decomposed query plan {} for shared query id {} and released the resources "
+              "from node {}",
+              decomposedQueryPlanId,
+              sharedQueryId,
+              executionNodeId);
     //Check if the map contains an entry for the shared query id
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
         auto decomposedQueryPlanMap = mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId];
