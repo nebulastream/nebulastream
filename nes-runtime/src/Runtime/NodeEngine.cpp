@@ -757,7 +757,8 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
 
 bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
+    NES_ERROR("Node {} Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
+              nodeId,
               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
               reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
     auto deployedPlanIterator = deployedExecutableQueryPlans.find(reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());

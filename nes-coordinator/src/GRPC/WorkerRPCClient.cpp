@@ -35,7 +35,7 @@ WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPC
 bool WorkerRPCClient::registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     DecomposedQueryPlanId querySubPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
+    NES_ERROR("WorkerRPCClient::registerQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
               address,
               sharedQueryId,
               querySubPlanId);
