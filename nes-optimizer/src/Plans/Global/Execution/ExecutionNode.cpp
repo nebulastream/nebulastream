@@ -104,7 +104,7 @@ bool ExecutionNode::hasRegisteredDecomposedQueryPlans(NES::SharedQueryId sharedQ
 }
 
 bool ExecutionNode::removeDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
-    NES_DEBUG("ExecutionNode: Successfully removed decomposed query plan {} for shared query id {} and released the resources "
+    NES_ERROR("ExecutionNode: Successfully removed decomposed query plan {} for shared query id {} and released the resources "
               "from node {}",
               decomposedQueryPlanId,
               sharedQueryId,

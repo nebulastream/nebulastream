@@ -79,6 +79,7 @@ void PlacementAmendmentInstance::execute() {
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
+                NES_ERROR("Node {}: marked for migration", executionNodeId);
                 globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
