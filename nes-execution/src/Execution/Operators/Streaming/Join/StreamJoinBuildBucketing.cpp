@@ -25,10 +25,8 @@ void* getAllWindowsToFillProxy(void* ptrOpHandler,
                                uint64_t joinStrategyInt,
                                uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler<StreamJoinOperatorHandlerBucketing>(ptrOpHandler,
-                                                                                                         joinStrategyInt,
-                                                                                                         windowingStrategyInt);
-    return opHandler->getAllWindowsToFillForTs(ts, workerId);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    return dynamic_cast<StreamJoinOperatorHandlerBucketing*>(opHandler)->getAllWindowsToFillForTs(ts, workerId);
 }
 
 // TODO ask Philipp why I can not write this directly in Nautilus. How can I cast a UINT64 to INT64?

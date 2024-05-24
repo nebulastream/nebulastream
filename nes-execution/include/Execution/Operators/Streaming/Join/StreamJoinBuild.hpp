@@ -33,7 +33,7 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
  * @brief This class is the first phase of the stream join. The actual implementation (e.g., storing tuples, building hash tables, ...)
  * is not part of this class. This class takes care of the close() and terminate() functionality as these are universal
  */
-class StreamJoinBuild : public StreamJoinOperator, public ExecutableOperator {
+class StreamJoinBuild : public virtual StreamJoinOperator, public virtual ExecutableOperator {
   public:
     /**
      * @brief Constructor for a StreamJoinBuild
