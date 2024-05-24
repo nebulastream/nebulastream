@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.132](https://github.com/nebulastream/nebulastream/tree/v0.6.132) (2024-05-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.131...v0.6.132)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move all CI jobs to self hosted servers [\#4913](https://github.com/nebulastream/nebulastream/issues/4913)
+
+### Bug Fixes 🐛
+
+- \[BUG\] CMake build is broken for external toolchain files and non self hosting [\#4908](https://github.com/nebulastream/nebulastream/issues/4908)
+
 ## [v0.6.131](https://github.com/nebulastream/nebulastream/tree/v0.6.131) (2024-05-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.130...v0.6.131)
