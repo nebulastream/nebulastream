@@ -712,7 +712,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
                                    buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
         std::thread t([&netManager, &nesPartition, &completedProm, this] {
             // register the incoming channel
