@@ -89,7 +89,10 @@ bool GlobalExecutionPlan::addDecomposedQueryPlan(const ExecutionNodeId& executio
             }
             return true;
         }
+        NES_ERROR("Could not add query plan to execution node with id {}", executionNodeId);
+        return false;
     }
+    NES_ERROR("No execution node with id {} exists.", executionNodeId);
     return false;
 }
 
