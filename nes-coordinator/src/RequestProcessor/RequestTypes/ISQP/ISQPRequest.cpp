@@ -197,7 +197,7 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
     auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
     if (!upstreamExecutionNode || !downstreamExecutionNode) {
-        NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
+        NES_ERROR("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return;
     }
 
@@ -205,7 +205,7 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
     auto upstreamSharedQueryIds = upstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
     if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty()) {
-        NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
+        NES_ERROR("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return;
     }
 
