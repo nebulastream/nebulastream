@@ -45,17 +45,17 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfigu
 // Test that IP and port of the internal worker are consistent with IP and port from coordinator
 TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     // given: Set up the coordinator IP and ports, and enable monitoring
-    auto coordinatorIp = "127.0.0.1";
+    auto coordinatorHost = "127.0.0.1";
     auto coordinatorWorkerIp = "127.0.0.3";
     auto configuration = CoordinatorConfiguration::createDefault();
     configuration->rpcPort = *rpcCoordinatorPort;
     configuration->restPort = *restPort;
-    configuration->coordinatorIp = coordinatorIp;
+    configuration->coordinatorHost = coordinatorHost;
     configuration->enableMonitoring = true;
     // given: Configure the worker with nonsensical IP and port, and disable monitoring
     configuration->worker.coordinatorPort = 111;// This port won't be assigned by the line above because it is below 1024.
-    configuration->worker.coordinatorIp = "127.0.0.2";
-    configuration->worker.localWorkerIp = coordinatorWorkerIp;
+    configuration->worker.coordinatorHost = "127.0.0.2";
+    configuration->worker.localWorkerHost = coordinatorWorkerIp;
     configuration->worker.enableMonitoring = false;
     // when
     auto coordinator = std::make_shared<NesCoordinator>(configuration);
@@ -64,8 +64,8 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     // then: the IP and port in the worker configuration are overwritten, and monitoring is enabled
     auto workerConfiguration = coordinator->getNesWorker()->getWorkerConfiguration();
     EXPECT_EQ(*rpcCoordinatorPort, workerConfiguration->coordinatorPort.getValue());
-    EXPECT_EQ(coordinatorIp, workerConfiguration->coordinatorIp.getValue());
-    EXPECT_EQ(coordinatorWorkerIp, workerConfiguration->localWorkerIp.getValue());
+    EXPECT_EQ(coordinatorHost, workerConfiguration->coordinatorHost.getValue());
+    EXPECT_EQ(coordinatorWorkerIp, workerConfiguration->localWorkerHost.getValue());
     EXPECT_EQ(true, workerConfiguration->enableMonitoring.getValue());
     // Stop coordinator.
     NES_DEBUG("Stopping coordinator.")

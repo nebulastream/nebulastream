@@ -131,7 +131,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
             //Create physical source
             auto physicalSource =
                 PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
-            auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, i);
+            auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(i));
             streamCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }
@@ -226,7 +226,7 @@ void compileQuery(const std::string& stringQuery,
                   const std::shared_ptr<QueryParsingService>& queryParsingService,
                   std::promise<QueryPlanPtr> promise) {
     auto queryplan = queryParsingService->createQueryFromCodeString(stringQuery);
-    queryplan->setQueryId(id);
+    queryplan->setQueryId(QueryId(id));
     promise.set_value(queryplan);
 }
 
@@ -326,7 +326,8 @@ int main(int argc, const char* argv[]) {
             for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
                 auto query = futures[futureNum].get();
                 auto queryID = query->getQueryId();
-                queryObjects.insert(queryObjects.begin() + queryID - 1, query);//Add the parsed query to the (queryID - 1)th index
+                queryObjects.insert(queryObjects.begin() + queryID.getRawValue() - 1,
+                                    query);//Add the parsed query to the (queryID - 1)th index
             }
         }
 
@@ -358,13 +359,13 @@ int main(int argc, const char* argv[]) {
                 //Send queries to nebula stream for processing
                 for (uint64_t i = 1; i <= numOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1];
-                    queryPlan->setQueryId(i);
+                    queryPlan->setQueryId(QueryId(i));
                     requestHandlerService->validateAndQueueAddQueryRequest(queryPlan, Optimizer::PlacementStrategy::TopDown);
                 }
 
                 //Wait till the status of the last query is set as running
                 QueryState lastQueryState;
-                while ((lastQueryState = queryCatalog->getQueryState(numOfQueries + queryIter)) != QueryState::RUNNING) {
+                while ((lastQueryState = queryCatalog->getQueryState(QueryId(numOfQueries + queryIter))) != QueryState::RUNNING) {
                     std::cout << "Query status " << magic_enum::enum_name(lastQueryState) << std::endl;
                     //Sleep for 100 milliseconds
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));

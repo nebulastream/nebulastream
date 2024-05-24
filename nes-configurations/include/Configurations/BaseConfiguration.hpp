@@ -24,6 +24,7 @@
 #include <Configurations/Validation/IpValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/WrapOption.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
@@ -72,7 +73,7 @@ class BaseConfiguration : public BaseOption {
      * @param withOverwrite false if workerId is not in yaml file, true if it is and has to be changed
      * @return true if persistence succeeded, false otherwise
      */
-    bool persistWorkerIdInYamlConfigFile(std::string yamlFilePath, uint64_t workerId, bool withOverwrite);
+    bool persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite);
 
     /**
      * @brief clears all options and set the default values
@@ -90,4 +91,4 @@ class BaseConfiguration : public BaseOption {
 
 }// namespace NES::Configurations
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_

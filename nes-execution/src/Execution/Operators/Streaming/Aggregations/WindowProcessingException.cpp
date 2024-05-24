@@ -18,5 +18,5 @@
 namespace NES::Runtime::Execution::Operators {
 
 WindowProcessingException::WindowProcessingException(const std::string& message, const std::source_location location)
-    : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
+    : RuntimeException(message, NES::collectStacktrace(), location) {}
 }// namespace NES::Runtime::Execution::Operators

@@ -1,5 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -21,12 +19,8 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
 add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
-# if musl we cant use can't use backtrace for tracing
-if (HOST_IS_MUSL)
-    target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
-endif ()
 
-target_link_libraries(nes-runtime PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations)
+target_link_libraries(nes-runtime PUBLIC nes-statistics)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -34,9 +28,8 @@ target_include_directories(nes-runtime PUBLIC
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     include(CMakeFindDependencyMacro)
-    find_dependency(gflags CONFIG REQUIRED) # required on macos
     find_package(folly CONFIG REQUIRED)
-    target_link_libraries(nes-runtime PRIVATE Folly::folly)
+    target_link_libraries(nes-runtime PRIVATE folly::folly)
     target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
 endif ()
 
@@ -80,21 +73,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
     target_link_libraries(nes-runtime PRIVATE nes-compiler)
 endif ()
-
-
-if (NES_USE_GPU)
-    find_package(CUDAToolkit REQUIRED)
-
-    enable_language(CUDA)
-    if (NOT ${CUDAToolkit_FOUND})
-        message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
-    endif ()
-    set(CMAKE_CUDA_STANDARD 17)
-    set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
-    message("CUDA dependencies OK")
-
-    target_link_libraries(nes-runtime PRIVATE CUDA::cudart CUDA::nvrtc)
-endif (NES_USE_GPU)
 
 if (NES_USE_OPENCL)
     find_package(OpenCL REQUIRED)

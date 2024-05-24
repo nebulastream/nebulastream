@@ -329,6 +329,12 @@ template<typename T>
 [[nodiscard]] std::string enableNemoPlacement();
 
 /**
+ * @brief Creates the command line argument for enabling nemo join
+ * @return Command line argument
+ */
+[[nodiscard]] std::string enableNemoJoin();
+
+/**
  * @brief Creates the command line argument for setting the threshold of the distributed window child
  * @param val
  * @return Command line argument
@@ -483,7 +489,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
         NES_TRACE("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
         //FIXME: handle vector of statistics properly in #977
-        auto statistics = nesCoordinator->getQueryStatistics(sharedQueryId);
+        auto statistics = nesCoordinator->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));
         if (statistics.empty()) {
             continue;
         }
@@ -538,12 +544,12 @@ template<typename Predicate = std::equal_to<uint64_t>>
 
 /**
      * @brief Check if the query is been stopped successfully within the timeout.
-     * @param queryId: Id of the query to be stopped
+     * @param sharedQueryId: Id of the query to be stopped
      * @param worker: the worker which the query runs on
      * @return true if successful
      */
 [[nodiscard]] bool
-checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout = defaultTimeout);
+checkStoppedOrTimeoutAtWorker(SharedQueryId sharedQueryId, NesWorkerPtr worker, std::chrono::seconds timeout = defaultTimeout);
 
 /**
  * @brief Check if the query has failed within the timeout.
@@ -679,6 +685,13 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
  * @return if stopped
  */
 [[nodiscard]] nlohmann::json startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
+
+/**
+ * @brief This method is used for adding source statistics
+ * @param query string
+ * @return if stopped
+ */
+[[nodiscard]] nlohmann::json addSourceStatistics(const string& queryString, const std::string& restPort = "8081");
 
 /**
  * @brief This method is used for making a monitoring rest call.
@@ -847,14 +860,14 @@ class DummyQueryListener : public AbstractQueryStatusListener {
   public:
     virtual ~DummyQueryListener() {}
 
-    bool canTriggerEndOfStream(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
         return true;
     }
-    bool notifySourceTermination(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
         return true;
     }
-    bool notifyQueryFailure(QueryId, DecomposedQueryPlanId, std::string) override { return true; }
-    bool notifyQueryStatusChange(QueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
+    bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string) override { return true; }
+    bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
         return true;
     }
     bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }

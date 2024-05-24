@@ -16,20 +16,19 @@
 #include <atomic>
 
 namespace NES {
-
 QueryId PlanIdGenerator::getNextQueryId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
+    static std::atomic_uint64_t id = INITIAL_QUERY_ID.getRawValue();
+    return QueryId(id++);
 }
 
 SharedQueryId PlanIdGenerator::getNextSharedQueryId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
+    static std::atomic_uint64_t id = INITIAL_SHARED_QUERY_ID.getRawValue();
+    return SharedQueryId(id++);
 }
 
-uint64_t PlanIdGenerator::getNextDecomposedQueryPlanId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
+DecomposedQueryPlanId PlanIdGenerator::getNextDecomposedQueryPlanId() {
+    static std::atomic_uint64_t id = INITIAL_DECOMPOSED_QUERY_PLAN_ID.getRawValue();
+    return DecomposedQueryPlanId(id++);
 }
 
 }// namespace NES

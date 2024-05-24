@@ -49,7 +49,7 @@ DecomposedQueryPlanId DecomposedQueryPlanMetaData::getDecomposedQueryPlanId() co
 
 QueryState DecomposedQueryPlanMetaData::getDecomposedQueryPlanStatus() const { return decomposedQueryPlanState; }
 
-uint64_t DecomposedQueryPlanMetaData::getWorkerId() const { return workerId; }
+WorkerId DecomposedQueryPlanMetaData::getWorkerId() const { return workerId; }
 
 const std::string& DecomposedQueryPlanMetaData::getTerminationReason() const { return terminationReason; }
 

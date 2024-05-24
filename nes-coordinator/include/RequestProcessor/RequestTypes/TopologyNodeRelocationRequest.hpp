@@ -78,7 +78,7 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @param upstreamNodeId the id of the upstream node of removed link
      * @param downstreamNodeId the id of the downstream node of the removed link
      */
-    std::set<WorkerId> identifyImpactedSharedQueries(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
+    std::set<SharedQueryId> identifyImpactedSharedQueries(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.

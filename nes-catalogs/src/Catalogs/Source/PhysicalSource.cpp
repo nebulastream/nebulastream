@@ -13,7 +13,7 @@
 */
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <sstream>
 #include <utility>
@@ -29,8 +29,7 @@ PhysicalSource::PhysicalSource(std::string logicalSourceName,
 PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType) {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
     auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
-    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, physicalSourceName,
-                                                           std::move(physicalSourceType)));
+    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, physicalSourceName, std::move(physicalSourceType)));
 }
 
 PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName) {

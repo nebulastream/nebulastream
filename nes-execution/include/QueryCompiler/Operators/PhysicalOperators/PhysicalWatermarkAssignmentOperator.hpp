@@ -33,8 +33,10 @@ class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator {
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
-    static PhysicalOperatorPtr
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
+                                      Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     std::string toString() const override;
     OperatorPtr copy() override;
 
@@ -49,4 +51,4 @@ class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator {
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALWATERMARKASSIGNMENTOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALWATERMARKASSIGNMENTOPERATOR_HPP_

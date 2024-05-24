@@ -14,28 +14,28 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/WindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 
 namespace NES::Optimizer {
 
@@ -101,8 +101,7 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorPtr& 
     return containmentOperators;
 }
 
-LogicalOperatorPtr
-ContainedOperatorsUtil::createContainedProjectionOperator(const LogicalOperatorPtr& containedOperator) {
+LogicalOperatorPtr ContainedOperatorsUtil::createContainedProjectionOperator(const LogicalOperatorPtr& containedOperator) {
     auto projectionOperators = containedOperator->getNodesByType<LogicalProjectionOperator>();
     //get the most downstream projection operator
     if (!projectionOperators.empty()) {
@@ -115,7 +114,7 @@ ContainedOperatorsUtil::createContainedProjectionOperator(const LogicalOperatorP
 }
 
 LogicalOperatorPtr ContainedOperatorsUtil::createContainedFilterOperators(const LogicalOperatorPtr& container,
-                                                                              const LogicalOperatorPtr& containee) {
+                                                                          const LogicalOperatorPtr& containee) {
     NES_DEBUG("Check if filter containment is possible for container {}, containee {}.",
               container->toString(),
               containee->toString());
@@ -219,9 +218,8 @@ bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(LogicalFilter
     return true;
 }
 
-bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
-    const LogicalOperatorPtr& containedOperator,
-    const LogicalOperatorPtr& extractedContainedOperator) {
+bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(const LogicalOperatorPtr& containedOperator,
+                                                                         const LogicalOperatorPtr& extractedContainedOperator) {
     NES_TRACE("Extracted contained operator: {}", extractedContainedOperator->toString());
     for (const auto& source : containedOperator->getAllLeafNodes()) {
         NodePtr parent = source;

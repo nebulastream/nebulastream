@@ -38,4 +38,4 @@ class AvgAggregationFunction : public AggregationFunction {
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_

@@ -16,9 +16,13 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_IFCOPSTRATEGY_HPP_
 
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
-#include <stack>
 
-namespace NES::Optimizer {
+namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Optimizer {
 
 using IdToIteratorIndexMapping = std::map<std::pair<OperatorId, uint64_t>, std::pair<uint64_t, uint64_t>>;
 
@@ -112,7 +116,8 @@ class IFCOPStrategy : public BasePlacementAdditionStrategy {
     void initiateWorkerIdToIndexMap();
 
     // a mapping between Ids of nodes in the topology to its index in a depth first search iterator
-    std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
+    std::map<WorkerId, uint64_t> topologyNodeIdToIndexMap;
 };
-}// namespace NES::Optimizer
+}// namespace Optimizer
+}// namespace NES
 #endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_IFCOPSTRATEGY_HPP_

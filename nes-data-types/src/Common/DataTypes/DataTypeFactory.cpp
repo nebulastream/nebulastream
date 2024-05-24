@@ -104,20 +104,19 @@ ValueTypePtr DataTypeFactory::createBasicValue(BasicType type, std::string value
     return createBasicValue(createType(type), std::move(value));
 }
 
-ValueTypePtr DataTypeFactory::createArrayValueFromContainerType(std::shared_ptr<ArrayType>&& type,
+ValueTypePtr DataTypeFactory::createArrayValueFromContainerType(const std::shared_ptr<ArrayType>& type,
                                                                 std::vector<std::string>&& values) noexcept {
 
     return std::make_shared<ArrayValue>(std::move(type), std::move(values));
 }
 
-ValueTypePtr DataTypeFactory::createArrayValueWithContainedType(DataTypePtr&& type, std::vector<std::string>&& values) noexcept {
+ValueTypePtr DataTypeFactory::createArrayValueWithContainedType(const DataTypePtr& type,
+                                                                std::vector<std::string>&& values) noexcept {
     auto const length = values.size();
-    return std::make_shared<ArrayValue>(createArray(length, std::move(type)), std::move(values));
+    return std::make_shared<ArrayValue>(createArray(length, type), std::move(values));
 }
 
-ValueTypePtr DataTypeFactory::createFixedCharValue(std::string&& values) noexcept { return createFixedCharValue(values.c_str()); }
-
-ValueTypePtr DataTypeFactory::createFixedCharValue(std::string const& values) noexcept {
+ValueTypePtr DataTypeFactory::createFixedCharValue(const std::string& values) noexcept {
     return createFixedCharValue(values.c_str());
 }
 
@@ -129,7 +128,7 @@ ValueTypePtr DataTypeFactory::createFixedCharValue(char const* values) noexcept 
     std::vector<std::string> vec{};
     auto const size = strlen(values) + 1;
     vec.reserve(size);
-    // Copy string including string termination character ( which is legal this way :) ).
+    // Copy string including string termination character (which is legal this way :)).
     for (std::size_t s = 0; s < size; ++s) {
         vec.push_back(std::string{values[s]});
     }
@@ -139,22 +138,22 @@ ValueTypePtr DataTypeFactory::createFixedCharValue(char const* values) noexcept 
 
 DataTypePtr DataTypeFactory::createType(BasicType type) {
     switch (type) {
-        case BasicType::BOOLEAN: return DataTypeFactory::createBoolean();
-        case BasicType::CHAR: return DataTypeFactory::createChar();
-        case BasicType::INT8: return DataTypeFactory::createInt8();
-        case BasicType::INT16: return DataTypeFactory::createInt16();
-        case BasicType::INT32: return DataTypeFactory::createInt32();
-        case BasicType::INT64: return DataTypeFactory::createInt64();
-        case BasicType::UINT8: return DataTypeFactory::createUInt8();
-        case BasicType::UINT16: return DataTypeFactory::createUInt16();
-        case BasicType::UINT32: return DataTypeFactory::createUInt32();
-        case BasicType::UINT64: return DataTypeFactory::createUInt64();
-        case BasicType::FLOAT32: return DataTypeFactory::createFloat();
-        case BasicType::FLOAT64: return DataTypeFactory::createDouble();
-        case BasicType::TEXT: return DataTypeFactory::createText();
+        using enum BasicType;
+        case BOOLEAN: return DataTypeFactory::createBoolean();
+        case CHAR: return DataTypeFactory::createChar();
+        case INT8: return DataTypeFactory::createInt8();
+        case INT16: return DataTypeFactory::createInt16();
+        case INT32: return DataTypeFactory::createInt32();
+        case INT64: return DataTypeFactory::createInt64();
+        case UINT8: return DataTypeFactory::createUInt8();
+        case UINT16: return DataTypeFactory::createUInt16();
+        case UINT32: return DataTypeFactory::createUInt32();
+        case UINT64: return DataTypeFactory::createUInt64();
+        case FLOAT32: return DataTypeFactory::createFloat();
+        case FLOAT64: return DataTypeFactory::createDouble();
+        case TEXT: return DataTypeFactory::createText();
         default: return nullptr;
     }
-    return DataTypePtr();
 }
 
 DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound) {

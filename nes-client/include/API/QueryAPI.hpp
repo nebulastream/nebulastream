@@ -30,9 +30,9 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TumblingWindow.hpp>
 
 /**
  * @brief This header includes all headers that are necessary to formulate queryIdAndCatalogEntryMapping in CPP.

@@ -35,7 +35,7 @@ class ArrayPhysicalType final : public PhysicalType {
     inline ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr component) noexcept
         : PhysicalType(std::move(type)), length(length), physicalComponentType(std::move(component)) {}
 
-    virtual ~ArrayPhysicalType() = default;
+    ~ArrayPhysicalType() override = default;
 
     /**
      * @brief Factory function to create a new ArrayType Physical Type.
@@ -52,23 +52,23 @@ class ArrayPhysicalType final : public PhysicalType {
     * @brief Indicates if this is a array data type.
     * @return true if type is array
     */
-    [[nodiscard]] bool isArrayType() const noexcept final { return true; }
+    [[nodiscard]] bool isArrayType() const noexcept override { return true; }
 
     /// @brief Return if this array directly contains chars.
-    [[nodiscard]] bool isCharArrayType() const noexcept final;
+    [[nodiscard]] bool isCharArrayType() const noexcept override;
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
      * @return uint64_t
      */
-    [[nodiscard]] uint64_t size() const final;
+    [[nodiscard]] uint64_t size() const override;
 
     /**
      * @brief Converts the binary representation of this value to a string.
      * @param rawData a pointer to the raw value
      * @return string
      */
-    std::string convertRawToString(void const* rawData) const noexcept final;
+    std::string convertRawToString(void const* rawData) const noexcept override;
 
     /**
      * @brief Converts the binary representation of this value to a string without filling
@@ -77,13 +77,13 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
     */
-    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept final;
+    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
 
     /**
      * @brief Returns the string representation of this physical data type.
      * @return string
      */
-    [[nodiscard]] std::string toString() const noexcept final;
+    [[nodiscard]] std::string toString() const noexcept override;
 
     /// Fixed number of elements of type `physicalComponentType` contained in the array.
     uint64_t const length;

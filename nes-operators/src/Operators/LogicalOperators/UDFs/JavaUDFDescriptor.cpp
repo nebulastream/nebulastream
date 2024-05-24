@@ -59,7 +59,7 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
     }
 }
 
- const std::optional<jni::JavaByteCode> JavaUDFDescriptor::getClassByteCode(const std::string& className) const {
+const std::optional<jni::JavaByteCode> JavaUDFDescriptor::getClassByteCode(const std::string& className) const {
     const auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
         return c.first == className;
     });
@@ -84,7 +84,6 @@ std::stringstream JavaUDFDescriptor::generateInferStringSignature() {
 
     // Compute hashed value of the UDF byte code list.
     auto stringHash = std::hash<std::string>{};
-    auto& byteCodeList = getByteCodeList();
     auto byteCodeListHash =
         std::accumulate(byteCodeList.begin(),
                         byteCodeList.end(),
@@ -94,7 +93,7 @@ std::stringstream JavaUDFDescriptor::generateInferStringSignature() {
                                      * investigated in issue #3584
                                      */
 
-                            auto& className = v.first;
+                            const auto& className = v.first;
                             h = h * 31 + stringHash(className);
                             auto& byteCode = v.second;
                             h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);

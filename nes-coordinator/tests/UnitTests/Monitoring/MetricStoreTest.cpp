@@ -55,7 +55,7 @@ class MetricStoreTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
-    uint64_t nodeId = 0;
+    auto nodeId = INVALID_WORKER_NODE_ID;
     auto metricStore = std::make_shared<Monitoring::LatestEntriesMetricStore>();
     auto networkCollector = Monitoring::NetworkCollector();
 
@@ -77,7 +77,7 @@ TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
 }
 
 TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
-    uint64_t nodeId = 0;
+    auto nodeId = INVALID_WORKER_NODE_ID;
     auto metricStore = std::make_shared<Monitoring::AllEntriesMetricStore>();
     auto networkCollector = Monitoring::NetworkCollector();
 

@@ -17,7 +17,7 @@
 
 #include <API/Query.hpp>
 #include <Client/QueryConfig.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/QueryState.hpp>
 #include <chrono>
 
@@ -31,7 +31,7 @@ namespace NES::Client {
 class RemoteClient {
   public:
     struct QueryStopResult {
-        QueryId queryId;
+        QueryId queryId = INVALID_QUERY_ID;
         bool withError;
         std::string errorMessage;
 
@@ -63,35 +63,35 @@ class RemoteClient {
      * @param QueryConfig query config
      * @return query id
      */
-    uint64_t submitQuery(const Query& query, QueryConfig config = QueryConfig());
+    QueryId submitQuery(const Query& query, QueryConfig config = QueryConfig());
 
     /**
      * @brief stop the query with the given query id
      * @param uint64_t query id
      * @return stop was successfully, if not why
      */
-    [[nodiscard]] QueryStopResult stopQuery(uint64_t queryId);
+    [[nodiscard]] QueryStopResult stopQuery(QueryId queryId);
 
     /**
      * @brief get a queryIdAndCatalogEntryMapping query plan
      * @param uint64_t query id
      * @return query plan
      */
-    std::string getQueryPlan(uint64_t queryId);
+    std::string getQueryPlan(QueryId queryId);
 
     /**
      * @brief get a queryIdAndCatalogEntryMapping execution plan
      * @param uint64_t query id
      * @return execution plan
      */
-    std::string getQueryExecutionPlan(uint64_t queryId);
+    std::string getQueryExecutionPlan(QueryId queryId);
 
     /**
      * @brief get query status of a query
      * @param uint64_t query id
      * @return query status
      */
-    std::string getQueryStatus(uint64_t queryId);
+    std::string getQueryStatus(QueryId queryId);
 
     /**
      * @brief get current topology

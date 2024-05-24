@@ -102,7 +102,8 @@ TEST_F(SinkTest, testCSVFileSink) {
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, 0, nodeEngine, 1, path_to_csv_file, true);
+    const DataSinkPtr csvSink =
+        createCSVFileSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, path_to_csv_file, true);
 
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
@@ -149,7 +150,7 @@ TEST_F(SinkTest, testCSVPrintSink) {
     std::ostream os(&fb);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto csvSink = createCSVPrintSink(test_schema, 0, 0, nodeEngine, 1, os);
+    auto csvSink = createCSVPrintSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, os);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -200,7 +201,7 @@ TEST_F(SinkTest, testNullOutSink) {
     std::ostream os(&fb);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto nullSink = createNullOutputSink(1, 0, nodeEngine, 1);
+    auto nullSink = createNullOutputSink(SharedQueryId(1), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -223,7 +224,8 @@ TEST_F(SinkTest, testCSVZMQSink) {
 
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createCSVZmqSink(test_schema, 0, 0, nodeEngine, 1, "localhost", zmqPort);
+    const DataSinkPtr zmq_sink =
+        createCSVZmqSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, "localhost", zmqPort);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -238,8 +240,8 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       nodeEngine->getQueryManager(),
                                       "localhost",
                                       zmqPort,
-                                      1,
-                                      0,
+                                      OperatorId(1),
+                                      INVALID_ORIGIN_ID,
                                       INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalSourceName",
@@ -282,7 +284,14 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, 0, nodeEngine, 1, "localhost", zmqPort, false);
+    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema,
+                                                     SharedQueryId(0),
+                                                     INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                     nodeEngine,
+                                                     1,
+                                                     "localhost",
+                                                     zmqPort,
+                                                     false);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -296,8 +305,8 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
                                       nodeEngine->getQueryManager(),
                                       "localhost",
                                       zmqPort,
-                                      1,
-                                      0,
+                                      OperatorId(1),
+                                      INVALID_ORIGIN_ID,
                                       INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalSourceName",
@@ -327,7 +336,8 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);
 
-    const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, 0, nodeEngine, 1, path_to_csv_file, true);
+    const DataSinkPtr csvSink =
+        createCSVFileSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, path_to_csv_file, true);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -374,17 +384,27 @@ TEST_F(SinkTest, testMonitoringSink) {
     ASSERT_TRUE(tupleBufferCpu.getNumberOfTuples() >= 1);
 
     // write disk metrics
-    const DataSinkPtr monitoringSink =
-        createMonitoringSink(metricStore, diskCollector.getType(), Monitoring::DiskMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+    const DataSinkPtr monitoringSink = createMonitoringSink(metricStore,
+                                                            diskCollector.getType(),
+                                                            Monitoring::DiskMetrics::getSchema(""),
+                                                            nodeEngine,
+                                                            1,
+                                                            SharedQueryId(0),
+                                                            INVALID_DECOMPOSED_QUERY_PLAN_ID);
     monitoringSink->writeData(tupleBuffer, wctx);
 
     // write cpu metrics
-    const DataSinkPtr monitoringSinkCpu =
-        createMonitoringSink(metricStore, cpuCollector.getType(), Monitoring::CpuMetrics::getSchema(""), nodeEngine, 1, 0, 0);
+    const DataSinkPtr monitoringSinkCpu = createMonitoringSink(metricStore,
+                                                               cpuCollector.getType(),
+                                                               Monitoring::CpuMetrics::getSchema(""),
+                                                               nodeEngine,
+                                                               1,
+                                                               SharedQueryId(0),
+                                                               INVALID_DECOMPOSED_QUERY_PLAN_ID);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics
-    Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId1));
+    Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId1);
     auto metricVec = storedMetrics->at(Monitoring::MetricType::DiskMetric);
     Monitoring::TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
     Monitoring::MetricPtr retMetric = pairedDiskMetric->second;
@@ -395,7 +415,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     EXPECT_EQ(parsedMetrics, typedMetric);
 
     // test cpu metrics
-    Monitoring::StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId2));
+    Monitoring::StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(nodeId2);
     auto metricVecCpu = storedMetricsCpu->at(Monitoring::MetricType::WrappedCpuMetrics);
     Monitoring::TimestampMetricPtr pairedCpuMetric = metricVecCpu->at(0);
     Monitoring::MetricPtr retMetricCpu = pairedCpuMetric->second;

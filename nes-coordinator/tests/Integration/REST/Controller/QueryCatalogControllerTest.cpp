@@ -15,6 +15,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -172,7 +173,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
 
     // when sending a request to the status endpoint with 'queryId' supplied and a query with specified id registered
     cpr::AsyncResponse f3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
-                                          cpr::Parameters{{"queryId", std::to_string(queryId)}});
+                                          cpr::Parameters{{"queryId", queryId.toString()}});
     f3.wait();
     auto r3 = f3.get();
     //return 200 OK
@@ -181,7 +182,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     nlohmann::json jsonResponse;
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r3.text));
     ASSERT_TRUE(jsonResponse["status"] == "REGISTERED");
-    ASSERT_TRUE(jsonResponse["queryId"] == queryId);
+    ASSERT_TRUE(jsonResponse["queryId"].get<QueryId>() == queryId);
     stopCoordinator();
 }
 }//namespace NES

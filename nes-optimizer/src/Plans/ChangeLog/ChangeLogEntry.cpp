@@ -25,8 +25,7 @@ ChangeLogEntryPtr ChangeLogEntry::create(std::set<LogicalOperatorPtr> upstreamOp
     return std::make_shared<ChangeLogEntry>(ChangeLogEntry(std::move(upstreamOperators), std::move(downstreamOperators)));
 }
 
-ChangeLogEntry::ChangeLogEntry(std::set<LogicalOperatorPtr> upstreamOperators,
-                               std::set<LogicalOperatorPtr> downstreamOperators)
+ChangeLogEntry::ChangeLogEntry(std::set<LogicalOperatorPtr> upstreamOperators, std::set<LogicalOperatorPtr> downstreamOperators)
     : upstreamOperators(std::move(upstreamOperators)), downstreamOperators(std::move(downstreamOperators)),
       poSetOfSubQueryPlan(computePoSet()) {}
 
@@ -69,8 +68,7 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
                 for (const auto& downStreamOperatorToVisit : downStreamOperatorsToVisit) {
                     bool visit = false;
                     // If the operator to visit is one of the input downstream operators then add the operator to visit list
-                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperator>())
-                        != downstreamOperators.end()) {
+                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperator>()) != downstreamOperators.end()) {
                         visit = true;
                     } else {// Check if the path is to be explored
                         // visit only those downstream operators that are connected

@@ -38,8 +38,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @param version The version number of the sink when it is started
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr create(NodeLocation nodeLocation,
-                                    NesPartition nesPartition,
+    static SinkDescriptorPtr create(const NodeLocation& nodeLocation,
+                                    const NesPartition& nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
                                     DecomposedQueryPlanVersion version,
@@ -96,8 +96,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     OperatorId getUniqueId() const;
 
   private:
-    explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
-                                   NesPartition nesPartition,
+    explicit NetworkSinkDescriptor(const NodeLocation& nodeLocation,
+                                   const NesPartition& nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
                                    DecomposedQueryPlanVersion version,
@@ -116,4 +116,4 @@ using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 
 }// namespace NES::Network
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NETWORKSINKDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NETWORKSINKDESCRIPTOR_HPP_

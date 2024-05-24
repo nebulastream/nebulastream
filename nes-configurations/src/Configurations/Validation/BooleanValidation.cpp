@@ -16,11 +16,12 @@
 
 namespace NES::Configurations {
 
-        bool BooleanValidation::isValid(const std::string& parameter) const {
-            std::string lowerParam = parameter;
-            std::transform(lowerParam.begin(), lowerParam.end(), lowerParam.begin(),
-                           [](unsigned char c){ return std::tolower(c); });
+bool BooleanValidation::isValid(const std::string& parameter) const {
+    std::string lowerParam = parameter;
+    std::transform(lowerParam.begin(), lowerParam.end(), lowerParam.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
 
-            return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
-        }
-    }
+    return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
+}
+}// namespace NES::Configurations

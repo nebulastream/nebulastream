@@ -71,7 +71,7 @@ class HyperLogLogDescriptor : public WindowStatisticDescriptor {
     /**
      * @brief Virtual destructor
      */
-    virtual ~HyperLogLogDescriptor();
+    ~HyperLogLogDescriptor() override;
 
   private:
     /**

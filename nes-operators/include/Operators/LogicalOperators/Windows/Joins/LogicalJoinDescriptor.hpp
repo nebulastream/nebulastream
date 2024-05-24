@@ -15,7 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
 
-#include <Identifiers.hpp>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <cstdint>
@@ -62,27 +63,27 @@ class LogicalJoinDescriptor {
     /**
     * @brief getter/setter for on left join key
     */
-    FieldAccessExpressionNodePtr getLeftJoinKey();
+    FieldAccessExpressionNodePtr getLeftJoinKey() const;
 
     /**
    * @brief getter/setter for on left join key
    */
-    FieldAccessExpressionNodePtr getRightJoinKey();
+    FieldAccessExpressionNodePtr getRightJoinKey() const;
 
     /**
    * @brief getter left source type
    */
-    SchemaPtr getLeftSourceType();
+    SchemaPtr getLeftSourceType() const;
 
     /**
    * @brief getter of right source type
    */
-    SchemaPtr getRightSourceType();
+    SchemaPtr getRightSourceType() const;
 
     /**
      * @brief getter/setter for window type
     */
-    Windowing::WindowTypePtr getWindowType();
+    Windowing::WindowTypePtr getWindowType() const;
 
     /**
      * @brief getter for on trigger action
@@ -129,7 +130,7 @@ class LogicalJoinDescriptor {
      * @brief Getter for the origin id of this window.
      * @return origin id
      */
-    [[nodiscard]] uint64_t getOriginId() const;
+    [[nodiscard]] OriginId getOriginId() const;
 
     /**
      * @brief Setter for the origin id
@@ -147,9 +148,9 @@ class LogicalJoinDescriptor {
   private:
     FieldAccessExpressionNodePtr leftJoinKeyType;
     FieldAccessExpressionNodePtr rightJoinKeyType;
-    SchemaPtr leftSourceType;
-    SchemaPtr rightSourceType;
-    SchemaPtr outputSchema;
+    SchemaPtr leftSourceType = Schema::create();
+    SchemaPtr rightSourceType = Schema::create();
+    SchemaPtr outputSchema = Schema::create();
     Windowing::WindowTypePtr windowType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
@@ -159,4 +160,4 @@ class LogicalJoinDescriptor {
 
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 }// namespace NES::Join
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_

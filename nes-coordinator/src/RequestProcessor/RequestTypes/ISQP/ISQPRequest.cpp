@@ -18,8 +18,10 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
+#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
+#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -50,7 +52,8 @@ ISQPRequest::ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventP
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       z3Context(z3Context), events(events) {}
 
@@ -60,7 +63,7 @@ ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
 
-    auto startTime =
+    auto processingStartTime =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     topology = storageHandle->getTopologyHandle(requestId);
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
@@ -69,6 +72,8 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
     udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
     sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
+    auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
+    statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
 
     // Apply all topology events
     for (const auto& event : events) {
@@ -129,46 +134,38 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    // Initiate placement requests
-    auto placementAmendmentThreadCount = coordinatorConfiguration->optimizer.placementAmendmentThreadCount;
-
-    for (const auto& sharedQueryPlan : sharedQueryPlans) {
-        amendmentInstanceQueue.enqueue(PlacementAmemderInstance::create(sharedQueryPlan,
-                                                                        globalExecutionPlan,
-                                                                        topology,
-                                                                        typeInferencePhase,
-                                                                        coordinatorConfiguration,
-                                                                        queryCatalog));
-    }
-
-    // Initiate amendment runners
-    for (size_t i = 0; i < placementAmendmentThreadCount; ++i) {
-        amendmentRunners.emplace_back(std::thread([this]() {
-            runPlacementAmenderInstance();
-        }));
-    }
-
-    // Wait for all amendment runners to finish processing
-    for (auto& amendmentRunner : amendmentRunners) {
-        if (amendmentRunner.joinable()) {
-            amendmentRunner.join();
-        }
-    }
-
-    auto endTime =
+    auto amendmentStartTime =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    responsePromise.set_value(std::make_shared<ISQPRequestResponse>(startTime, endTime, true));
-    return {};
-}
-
-void ISQPRequest::runPlacementAmenderInstance() {
-    while (true) {
-        PlacementAmemderInstancePtr placementAmemderInstance;
-        if (!amendmentInstanceQueue.try_dequeue(placementAmemderInstance)) {
-            return;
-        }
-        placementAmemderInstance->execute();
+    std::vector<std::future<bool>> completedAmendments;
+    for (const auto& sharedQueryPlan : sharedQueryPlans) {
+        const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
+                                                                                      globalExecutionPlan,
+                                                                                      topology,
+                                                                                      typeInferencePhase,
+                                                                                      coordinatorConfiguration,
+                                                                                      queryCatalog);
+        completedAmendments.emplace_back(amendmentInstance->getFuture());
+        placementAmendmentQueue->enqueue(amendmentInstance);
     }
+
+    uint64_t numOfFailedPlacements = 0;
+    // Wait for all amendment runners to finish processing
+    for (auto& completedAmendment : completedAmendments) {
+        if (!completedAmendment.get()) {
+            numOfFailedPlacements++;
+        }
+    }
+
+    auto processingEndTime =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto numOfSQPAffected = sharedQueryPlans.size();
+    responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
+                                                                    amendmentStartTime,
+                                                                    processingEndTime,
+                                                                    numOfSQPAffected,
+                                                                    numOfFailedPlacements,
+                                                                    true));
+    return {};
 }
 
 void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkEventPtr removeLinkEvent) {
@@ -316,7 +313,10 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificQueryRewritePhase =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, coordinatorConfiguration->optimizer);
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                             sourceCatalog,
+                                                             coordinatorConfiguration->optimizer,
+                                                             statisticProbeHandler);
     auto signatureInferencePhase =
         Optimizer::SignatureInferencePhase::create(z3Context, coordinatorConfiguration->optimizer.queryMergerRule);
     auto queryMergerPhase = Optimizer::QueryMergerPhase::create(z3Context, coordinatorConfiguration->optimizer);
@@ -386,9 +386,9 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
 void ISQPRequest::handleRemoveQueryRequest(NES::RequestProcessor::ISQPRemoveQueryEventPtr removeQueryEvent) {
 
     auto queryId = removeQueryEvent->getQueryId();
-    if (queryId == INVALID_SHARED_QUERY_ID) {
-        throw Exceptions::QueryNotFoundException("Cannot stop query with invalid query id " + std::to_string(queryId)
-                                                 + ". Please enter a valid query id.");
+    if (queryId == INVALID_QUERY_ID) {
+        throw Exceptions::QueryNotFoundException(
+            fmt::format("Cannot stop query with invalid query id {}. Please enter a valid query id.", queryId));
     }
 
     //mark query for hard stop
@@ -396,8 +396,9 @@ void ISQPRequest::handleRemoveQueryRequest(NES::RequestProcessor::ISQPRemoveQuer
 
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
-                                                 + std::to_string(queryId) + " in the global query plan");
+        throw Exceptions::QueryNotFoundException(
+            fmt::format("Could not find a a valid shared query plan for query with id {} in the global query plan",
+                        sharedQueryId));
     }
     // remove single query from global query plan
     globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
@@ -410,78 +411,4 @@ std::vector<AbstractRequestPtr> ISQPRequest::rollBack(std::exception_ptr, const 
 void ISQPRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 
 void ISQPRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
-
-PlacementAmemderInstancePtr PlacementAmemderInstance::create(NES::SharedQueryPlanPtr sharedQueryPlan,
-                                                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                             NES::TopologyPtr topology,
-                                                             Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                             Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                             Catalogs::Query::QueryCatalogPtr queryCatalog) {
-    return std::make_unique<PlacementAmemderInstance>(sharedQueryPlan,
-                                                      globalExecutionPlan,
-                                                      topology,
-                                                      typeInferencePhase,
-                                                      coordinatorConfiguration,
-                                                      queryCatalog);
-}
-
-PlacementAmemderInstance::PlacementAmemderInstance(SharedQueryPlanPtr sharedQueryPlan,
-                                                   Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                   TopologyPtr topology,
-                                                   Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                   Catalogs::Query::QueryCatalogPtr queryCatalog)
-    : sharedQueryPlan(sharedQueryPlan), globalExecutionPlan(globalExecutionPlan), topology(topology),
-      typeInferencePhase(typeInferencePhase), coordinatorConfiguration(coordinatorConfiguration), queryCatalog(queryCatalog){};
-
-bool PlacementAmemderInstance::execute() {
-    auto queryPlacementPhaseInstance = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                       topology,
-                                                                                       typeInferencePhase,
-                                                                                       coordinatorConfiguration);
-
-    auto sharedQueryId = sharedQueryPlan->getId();
-    auto deploymentContexts = queryPlacementPhaseInstance->execute(sharedQueryPlan);
-
-    // Iterate over deployment context and update execution plan
-    for (const auto& deploymentContext : deploymentContexts) {
-        auto executionNodeId = deploymentContext->getWorkerId();
-        auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
-        auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
-        auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-        switch (decomposedQueryPlanState) {
-            case QueryState::MARKED_FOR_REDEPLOYMENT:
-            case QueryState::MARKED_FOR_DEPLOYMENT: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
-                                                                    sharedQueryId,
-                                                                    decomposedQueryPlanId,
-                                                                    decomposedQueryPlanVersion,
-                                                                    QueryState::RUNNING);
-                break;
-            }
-            case QueryState::MARKED_FOR_MIGRATION: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
-                                                                    sharedQueryId,
-                                                                    decomposedQueryPlanId,
-                                                                    decomposedQueryPlanVersion,
-                                                                    QueryState::STOPPED);
-                globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
-                                                               sharedQueryId,
-                                                               decomposedQueryPlanId,
-                                                               decomposedQueryPlanVersion);
-                break;
-            }
-            default: NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
-        }
-    }
-    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PROCESSED) {
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
-        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::RUNNING, "");
-    } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PARTIALLY_PROCESSED) {
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
-    } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED) {
-        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "");
-    }
-    return true;
-}
 }// namespace NES::RequestProcessor

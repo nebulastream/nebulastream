@@ -17,17 +17,12 @@
 
 namespace NES {
 
-WindowOperator::WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition,
-                                       OperatorId id,
-                                       OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId),
-      windowDefinition(windowDefinition) {}
+WindowOperator::WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id, OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(windowDefinition) {}
 
 Windowing::LogicalWindowDescriptorPtr WindowOperator::getWindowDefinition() const { return windowDefinition; }
 
-const std::vector<OriginId> WindowOperator::getOutputOriginIds() const {
-    return OriginIdAssignmentOperator::getOutputOriginIds();
-}
+std::vector<OriginId> WindowOperator::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
 void WindowOperator::setOriginId(OriginId originId) {
     OriginIdAssignmentOperator::setOriginId(originId);
     windowDefinition->setOriginId(originId);

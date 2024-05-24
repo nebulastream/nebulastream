@@ -161,11 +161,10 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
         }
 
         // 10. If the operator is one of the downstream pinned operator then continue
-        auto found = std::find_if(downStreamPinnedOperators.begin(),
-                                  downStreamPinnedOperators.end(),
-                                  [&](LogicalOperatorPtr operatorPin) {
-                                      return operatorPin->getId() == operatorToProcess->getId();
-                                  });
+        auto found =
+            std::find_if(downStreamPinnedOperators.begin(), downStreamPinnedOperators.end(), [&](LogicalOperatorPtr operatorPin) {
+                return operatorPin->getId() == operatorToProcess->getId();
+            });
         if (found != downStreamPinnedOperators.end()) {
             continue;
         }
@@ -189,10 +188,10 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                     workerIdsInBFS.emplace(sysPlanMetaData.workerId);
                     if (workerIdToDecomposedQueryPlanIds.contains(sysPlanMetaData.workerId)) {
                         auto subQueryPlanIds = workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId];
-                        subQueryPlanIds.emplace(sysPlanMetaData.querySubPlanId);
+                        subQueryPlanIds.emplace(sysPlanMetaData.decomposedQueryPlanId);
                         workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = subQueryPlanIds;
                     } else {
-                        workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = {sysPlanMetaData.querySubPlanId};
+                        workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = {sysPlanMetaData.decomposedQueryPlanId};
                     }
                 }
             }

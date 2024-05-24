@@ -34,7 +34,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -46,8 +46,11 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 
 #include <gtest/gtest.h>
 #include <z3++.h>
@@ -78,8 +81,8 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
      */
     static TopologyPtr setupTopology(uint64_t layers, uint64_t nodesPerNode, uint64_t leafNodesPerNode) {
         uint64_t resources = 100;
-        uint64_t rootId = 1;
-        uint64_t nodeId = rootId;
+        auto rootId = WorkerId(1);
+        auto nodeId = rootId.getRawValue();
         uint64_t leafNodes = 0;
 
         std::vector<WorkerId> nodes;
@@ -107,9 +110,16 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
                         leafNodes++;
                     }
                     nodeId++;
-                    topology->registerWorker(nodeId, "localhost", 4000 + nodeId, 5000 + nodeId, resources, properties, 0, 0);
-                    topology->removeTopologyNodeAsChild(rootId, nodeId);
-                    topology->addTopologyNodeAsChild(parent, nodeId);
+                    topology->registerWorker(WorkerId(nodeId),
+                                             "localhost",
+                                             4000 + nodeId,
+                                             5000 + nodeId,
+                                             resources,
+                                             properties,
+                                             0,
+                                             0);
+                    topology->removeTopologyNodeAsChild(rootId, WorkerId(nodeId));
+                    topology->addTopologyNodeAsChild(parent, WorkerId(nodeId));
                     nodes.emplace_back(nodeId);
                     newParents.emplace_back(nodeId);
                 }
@@ -134,10 +144,13 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource(logSourceNameLeft, schema);
         sourceCatalog->addLogicalSource(logSourceNameRight, schema);
 
+        std::map<NES::Catalogs::Source::SourceCatalogEntryPtr, std::set<uint64_t>> distributionMap;
+        uint64_t keyVal = 10;
+        uint64_t cnt = 0;
         for (auto nodeId : sourceNodes) {
-            const auto isEven = nodeId % 2 == 0;
+            const auto isEven = nodeId.getRawValue() % 2 == 0;
             std::string logSourceName = isEven ? logSourceNameLeft : logSourceNameRight;
-            std::string phySourceName = isEven ? "left_" + std::to_string(nodeId) : "right_" + std::to_string(nodeId);
+            std::string phySourceName = isEven ? "left_" + nodeId.toString() : "right_" + nodeId.toString();
             CSVSourceTypePtr csvSourceType = CSVSourceType::create(logSourceName, phySourceName);
 
             auto physicalSource = PhysicalSource::create(csvSourceType);
@@ -145,17 +158,27 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
 
             auto entry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId);
             sourceCatalog->addPhysicalSource(logSourceName, entry);
+
+            std::set<uint64_t> values = {keyVal};
+            distributionMap.emplace(entry, std::move(values));
+            if (cnt % 2 == 1) {
+                keyVal += 10;
+            }
+            cnt++;
         }
+        sourceCatalog->setKeyDistributionMap(distributionMap);
         return sourceCatalog;
     }
 
     /**
      * Performs an operator placement based on the given query, topology, source catalog and optimizer config.
      */
-    static std::tuple<uint64_t, GlobalExecutionPlanPtr> runPlacement(const Query& query,
-                                                                     const TopologyPtr& topology,
-                                                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                     const OptimizerConfiguration& optimizerConfig) {
+    static std::tuple<SharedQueryId, GlobalExecutionPlanPtr>
+    runPlacement(const Query& query,
+                 const TopologyPtr& topology,
+                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                 const OptimizerConfiguration& optimizerConfig,
+                 const Statistic::StatisticProbeHandlerPtr& statisticProbeHandler) {
         std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
@@ -172,7 +195,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
         typeInferencePhase->execute(testQueryPlan);
 
         auto topologySpecificQueryRewrite =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig);
+            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig, statisticProbeHandler);
         topologySpecificQueryRewrite->execute(testQueryPlan);
         typeInferencePhase->execute(testQueryPlan);
 
@@ -222,12 +245,16 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
 
 TEST_F(NemoJoinPlacementTest, testNemoJoin) {
     // create flat topology with 1 coordinator, 3 workers and 6 sources
-    const std::vector<WorkerId>& sourceNodes = {5, 6, 7, 8, 9, 10};
+    const std::vector<WorkerId>& sourceNodes = {WorkerId(5), WorkerId(6), WorkerId(7), WorkerId(8), WorkerId(9), WorkerId(10)};
     auto topology = setupTopology(3, 3, 2);
     auto sourceCatalog = setupJoinSourceCatalog(sourceNodes);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          Topology::create());
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
-    optimizerConfig.joinOptimizationMode = DistributedJoinOptimizationMode::MATRIX;
+    optimizerConfig.joinOptimizationMode = DistributedJoinOptimizationMode::NEMO;
 
     //run the placement
     Query query = Query::from(logSourceNameLeft)
@@ -237,26 +264,29 @@ TEST_F(NemoJoinPlacementTest, testNemoJoin) {
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
 
-    auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig);
+    auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig, statisticProbeHandler);
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
     auto executionNodes = executionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
     EXPECT_EQ(executionNodes.size(), 10);// topology contains 1 coordinator, 3 workers, 6 sources
 
-    /**
     for (const auto& executionNode : executionNodes) {
         std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
-        if (executionNode->operator*()->getId() == 1u) {
-            // coordinator should have 1 sink, 8 network sources
+        auto isSourceIt = std::find(sourceNodes.begin(), sourceNodes.end(), executionNode->operator*()->getId());
+        if (executionNode->operator*()->getId() == WorkerId(1)) {
+            // coordinator should have 3 network sinks for the three joins at intermediate nodes
+            verifyChildrenOfType<SourceLogicalOperator>(querySubPlans, 1, 1);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 3);
+        } else if (isSourceIt == sourceNodes.end()) {
+            // node is an intermediate worker and not a source node which contains the joins
             verifyChildrenOfType<LogicalJoinOperator>(querySubPlans, 1, 1);
-            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2 * sourceNodes.size());
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2);
         } else {
-            // 2x replication factor, therefore each source should have 2 network sources
-            verifyChildrenOfType<WatermarkAssignerLogicalOperator>(querySubPlans, 1, 2);
+            // node is a source node and only contains the watermark and source operator
+            verifyChildrenOfType<WatermarkAssignerLogicalOperator>(querySubPlans, 1, 1);
             verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
         }
     }
-    */
 
     // std::this_thread::sleep_for(std::chrono::milliseconds(4000));
 }

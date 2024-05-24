@@ -1,5 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -23,8 +21,7 @@ get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 # Add Library
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
-target_link_libraries(nes-execution PRIVATE nes-common nes-compiler nes-grpc nes-data-types nes-operators nes-configurations nes-runtime nes-nautilus)
-# target_link_libraries(nes-execution PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations)
+target_link_libraries(nes-execution PUBLIC nes-nautilus)
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -60,8 +57,8 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-message(STATUS "Execution benchmarks status: ${NES_RUNTIME_BENCHMARKS}")
-if (NES_RUNTIME_BENCHMARKS)
+message(STATUS "Execution benchmarks status: ${NES_BUILD_BENCHMARKS}")
+if (NES_BUILD_BENCHMARKS)
     # Add tests with command
     add_subdirectory(benchmark)
     message(STATUS "Execution benchmarks are enabled")

@@ -17,6 +17,6 @@
 namespace NES::QueryCompilation {
 
 QueryCompilationException::QueryCompilationException(const std::string& message, std::source_location location)
-    : Exceptions::RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
+    : Exceptions::RuntimeException(message, NES::collectStacktrace(), location) {}
 
 }// namespace NES::QueryCompilation

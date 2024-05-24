@@ -14,8 +14,10 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
+#include <folly/concurrency/UnboundedQueue.h>
 #include <memory>
 #include <vector>
 
@@ -23,7 +25,6 @@ namespace NES {
 
 //todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
 
-using RequestId = uint64_t;
 class UnlockDeleter;
 template<typename T>
 //on deletion, of the resource handle, the unlock deleter will only unlock the resource instead of freeing it
@@ -53,6 +54,11 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class PlacementAmendmentInstance;
+using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
+
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;
@@ -64,9 +70,14 @@ class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
 
+namespace Statistic {
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
+}// namespace Statistic
+
 namespace RequestProcessor {
 
-static constexpr RequestId MAX_REQUEST_ID = std::numeric_limits<RequestId>::max();
+static constexpr RequestId MAX_REQUEST_ID = RequestId(std::numeric_limits<RequestId::Underlying>::max());
 
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
@@ -143,6 +154,19 @@ class StorageHandler {
      * @return  a handle to the coordinator configuration
      */
     virtual Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId);
+
+    /**
+     * @brief Get placement amendment queue to perform concurrent placement amendment
+     * @return shared pointer to folly multi producer multi consumer queue
+     */
+    virtual Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue();
+
+    /**
+     * @brief Get the statistic probe handler
+     * @param requestId the id of the request which calls this function
+     * @return  a handle to the statistic probe handler
+     */
+    virtual Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler(RequestId requestId);
 
     /**
      * @brief obtain a new request id

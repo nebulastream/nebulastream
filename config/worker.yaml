@@ -1,11 +1,11 @@
 # ~~~ Configurations for the NES Worker ~~~
 
 # ~~ IPs and Ports ~~
-# Set worker IP
-#localWorkerIp: 127.0.0.1
+# Set worker IP or host
+#localWorkerHost: 127.0.0.1
 
 # Set IP address of NES Coordinator to which the NES Worker should connect
-#coordinatorIp: 127.0.0.1
+#coordinatorHost: 127.0.0.1
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
 # Needs to be the same as rpcPort in Coordinator

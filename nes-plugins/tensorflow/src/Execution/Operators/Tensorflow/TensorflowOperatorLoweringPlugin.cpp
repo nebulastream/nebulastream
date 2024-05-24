@@ -15,7 +15,7 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Tensorflow/TensorflowInferenceOperator.hpp>
 #include <Execution/Operators/Tensorflow/TensorflowInferenceOperatorHandler.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -38,6 +38,10 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
@@ -51,6 +55,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -75,7 +80,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(WorkerId(2), "localhost", 123, 124, 4, properties);
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create(DefaultSourceType::create("car", "testCar"));
@@ -95,6 +100,10 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
             Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         Topology::create());
     }
 };
 
@@ -658,7 +667,8 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,
-                                                                                    Configurations::OptimizerConfiguration());
+                                                                                    Configurations::OptimizerConfiguration(),
+                                                                                    statisticProbeHandler);
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 
@@ -717,7 +727,8 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,
-                                                                                    Configurations::OptimizerConfiguration());
+                                                                                    Configurations::OptimizerConfiguration(),
+                                                                                    statisticProbeHandler);
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 

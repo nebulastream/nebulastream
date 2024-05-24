@@ -44,10 +44,10 @@ class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::
     NestedLoopJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager,
                                                  uint64_t noWorkerThreads,
                                                  OperatorHandlerPtr nljOpHandler,
-                                                 uint64_t pipelineId)
+                                                 PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId,// mock pipeline id
-            1,         // mock query id
+            pipelineId,              // mock pipeline id
+            DecomposedQueryPlanId(1),// mock query id
             bufferManager,
             noWorkerThreads,
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -144,7 +144,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftEntrySize,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -154,7 +155,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightEntrySize,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -174,8 +176,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
         // Creating the NLJ operator handler
-        std::vector<OriginId> originIds{0, 1};
-        OriginId outputOriginId = 1;
+        std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
+        OriginId outputOriginId = OriginId(1);
         auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(originIds,
                                                                                outputOriginId,
                                                                                windowSize,
@@ -200,12 +202,18 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
 
         auto curPipelineId = 0;
         auto noWorkerThreads = 1;
-        auto pipelineExecCtxLeft =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, curPipelineId++);
-        auto pipelineExecCtxRight =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, curPipelineId++);
-        auto pipelineExecCtxSink =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, curPipelineId++);
+        auto pipelineExecCtxLeft = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
+                                                                                noWorkerThreads,
+                                                                                nljOperatorHandler,
+                                                                                PipelineId(curPipelineId++));
+        auto pipelineExecCtxRight = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
+                                                                                 noWorkerThreads,
+                                                                                 nljOperatorHandler,
+                                                                                 PipelineId(curPipelineId++));
+        auto pipelineExecCtxSink = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
+                                                                                noWorkerThreads,
+                                                                                nljOperatorHandler,
+                                                                                PipelineId(curPipelineId++));
 
         auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
         auto executablePipelineRight = provider->create(pipelineBuildRight, options);

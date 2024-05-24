@@ -38,13 +38,6 @@ class NeverTrigger : public TriggerCondition {
     bool operator==(const TriggerCondition& rhs) const override;
 
     /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    bool operator!=(const TriggerCondition& rhs) const override;
-
-    /**
      * @brief Creates a string representation
      * @return std::string
      */
@@ -59,7 +52,7 @@ class NeverTrigger : public TriggerCondition {
      * @brief Never returns true
      * @return Always false
      */
-    bool shallTrigger(const Statistic&) override;
+    bool shallTrigger(const ExpressionNode&) override;
 };
 
 }// namespace NES::Statistic

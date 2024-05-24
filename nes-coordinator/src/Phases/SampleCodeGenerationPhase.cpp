@@ -55,13 +55,13 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
         try {
             Timer timer("DefaultQueryCompiler");
             auto sharedQueryId = request->getDecomposedQueryPlan()->getSharedQueryId();
-            auto getDecomposedQueryPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
-            auto query = std::to_string(sharedQueryId) + "-" + std::to_string(getDecomposedQueryPlanId);
+            auto decomposedQueryPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
+            auto query = fmt::format("{}-{}", sharedQueryId, decomposedQueryPlanId);
             // create new context for handling debug output
             auto dumpContext = DumpContext::create("QueryCompilation-" + query);
 
             timer.start();
-            NES_DEBUG("compile query with id: {} subPlanId: {}", sharedQueryId, getDecomposedQueryPlanId);
+            NES_DEBUG("compile query with id: {} subPlanId: {}", sharedQueryId, decomposedQueryPlanId);
             auto inputPlan = request->getDecomposedQueryPlan();
             auto logicalQueryPlan = inputPlan->copy();
             dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
@@ -137,10 +137,11 @@ SampleCodeGenerationPhasePtr SampleCodeGenerationPhase::create() {
 QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
     // use query compiler to generate operator code
     // we append a property to "code" some operators
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(queryPlan->getQueryId(),
-                                                           INVALID_SHARED_QUERY_ID,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(UNSURE_CONVERSION_TODO_4761(queryPlan->getQueryId(), DecomposedQueryPlanId),
+                                    INVALID_SHARED_QUERY_ID,
+                                    INVALID_WORKER_NODE_ID,
+                                    queryPlan->getRootOperators());
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nullptr);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);

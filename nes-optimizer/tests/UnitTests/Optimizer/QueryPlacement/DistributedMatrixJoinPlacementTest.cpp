@@ -34,7 +34,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -46,6 +46,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 
@@ -89,8 +93,8 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
 
         // Setup the topology
         TopologyPtr topology = Topology::create();
-        topology->registerWorker(rootId, "localhost", 4000, 5000, resources, properties, 0, 0);
-        topology->addAsRootWorkerId(rootId);
+        topology->registerWorker(WorkerId(rootId), "localhost", 4000, 5000, resources, properties, 0, 0);
+        topology->addAsRootWorkerId(WorkerId(rootId));
         nodes.emplace_back(rootId);
         parents.emplace_back(rootId);
 
@@ -106,9 +110,16 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
                         leafNodes++;
                     }
                     nodeId++;
-                    topology->registerWorker(nodeId, "localhost", 4000 + nodeId, 5000 + nodeId, resources, properties, 0, 0);
-                    topology->removeTopologyNodeAsChild(rootId, nodeId);
-                    topology->addTopologyNodeAsChild(parent, nodeId);
+                    topology->registerWorker(WorkerId(nodeId),
+                                             "localhost",
+                                             4000 + nodeId,
+                                             5000 + nodeId,
+                                             resources,
+                                             properties,
+                                             0,
+                                             0);
+                    topology->removeTopologyNodeAsChild(WorkerId(rootId), WorkerId(nodeId));
+                    topology->addTopologyNodeAsChild(parent, WorkerId(nodeId));
                     nodes.emplace_back(nodeId);
                     newParents.emplace_back(nodeId);
                 }
@@ -134,9 +145,9 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource(logSourceNameRight, schema);
 
         for (auto nodeId : sourceNodes) {
-            const auto isEven = nodeId % 2 == 0;
+            const auto isEven = nodeId.getRawValue() % 2 == 0;
             std::string logSourceName = isEven ? logSourceNameLeft : logSourceNameRight;
-            std::string phySourceName = isEven ? "left_" + std::to_string(nodeId) : "right_" + std::to_string(nodeId);
+            std::string phySourceName = isEven ? "left_" + nodeId.toString() : "right_" + nodeId.toString();
             CSVSourceTypePtr csvSourceType = CSVSourceType::create(logSourceName, phySourceName);
 
             auto physicalSource = PhysicalSource::create(csvSourceType);
@@ -151,10 +162,12 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
     /**
      * Performs an operator placement based on the given query, topology, source catalog and optimizer config.
      */
-    static std::tuple<uint64_t, GlobalExecutionPlanPtr> runPlacement(const Query& query,
-                                                                     const TopologyPtr& topology,
-                                                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                     const OptimizerConfiguration& optimizerConfig) {
+    static std::tuple<SharedQueryId, GlobalExecutionPlanPtr>
+    runPlacement(const Query& query,
+                 const TopologyPtr& topology,
+                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                 const OptimizerConfiguration& optimizerConfig,
+                 const Statistic::StatisticProbeHandlerPtr statisticProbeHandler) {
         std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
@@ -171,7 +184,7 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
         typeInferencePhase->execute(testQueryPlan);
 
         auto topologySpecificQueryRewrite =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig);
+            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfig, statisticProbeHandler);
         topologySpecificQueryRewrite->execute(testQueryPlan);
         typeInferencePhase->execute(testQueryPlan);
 
@@ -221,9 +234,13 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
 
 TEST_F(DistributedMatrixJoinPlacementTest, testMatrixJoin) {
     // create flat topology with 1 coordinator and 4 sources
-    const std::vector<WorkerId>& sourceNodes = {2, 3, 4, 5};
+    const std::vector<WorkerId>& sourceNodes = {WorkerId(2), WorkerId(3), WorkerId(4), WorkerId(5)};
     auto topology = setupTopology(2, 3, 4);
     auto sourceCatalog = setupJoinSourceCatalog(sourceNodes);
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                          Statistic::DefaultStatisticCache::create(),
+                                                                          Topology::create());
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.joinOptimizationMode = DistributedJoinOptimizationMode::MATRIX;
@@ -236,7 +253,7 @@ TEST_F(DistributedMatrixJoinPlacementTest, testMatrixJoin) {
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
 
-    auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig);
+    auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig, statisticProbeHandler);
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
     auto executionNodes = executionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
@@ -244,7 +261,7 @@ TEST_F(DistributedMatrixJoinPlacementTest, testMatrixJoin) {
 
     for (const auto& executionNode : executionNodes) {
         std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
-        if (executionNode->operator*()->getId() == 1u) {
+        if (executionNode->operator*()->getId() == WorkerId(1)) {
             // coordinator should have 1 sink, 8 network sources
             verifyChildrenOfType<LogicalJoinOperator>(querySubPlans, 1, 1);
             verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2 * sourceNodes.size());

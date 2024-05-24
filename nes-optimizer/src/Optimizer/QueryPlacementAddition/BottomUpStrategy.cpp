@@ -79,7 +79,7 @@ void BottomUpStrategy::pinOperators(const std::set<LogicalOperatorPtr>& pinnedUp
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         NES_DEBUG("Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
 
-        auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
+        auto workerId = std::any_cast<WorkerId>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
         // 1. If pinned up stream node was already placed then place all its downstream operators
@@ -137,7 +137,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
 
         if (logicalOperator->instanceOf<SinkLogicalOperator>()) {
             NES_TRACE("Received Sink operator for placement.");
-            auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_WORKER_ID));
+            auto workerId = std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID));
             auto pinnedSinkOperatorLocation = getTopologyNode(workerId);
             if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                 || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {

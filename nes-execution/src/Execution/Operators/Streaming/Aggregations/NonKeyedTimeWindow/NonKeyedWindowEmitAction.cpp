@@ -25,7 +25,7 @@ NonKeyedWindowEmitAction::NonKeyedWindowEmitAction(
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
     const std::string& startTsFieldName,
     const std::string& endTsFieldName,
-    uint64_t resultOriginId)
+    OriginId resultOriginId)
     : aggregationFunctions(aggregationFunctions), startTsFieldName(startTsFieldName), endTsFieldName(endTsFieldName),
       resultOriginId(resultOriginId) {}
 
@@ -38,7 +38,7 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                          Value<Boolean>& lastChunk,
                                          Value<MemRef>& globalSlice) const {
     ctx.setWatermarkTs(windowStart);
-    ctx.setOrigin(resultOriginId);
+    ctx.setOrigin(resultOriginId.getRawValue());
     ctx.setSequenceNumber(sequenceNumber);
     ctx.setChunkNumber(chunkNumber);
     ctx.setLastChunk(lastChunk);

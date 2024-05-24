@@ -32,12 +32,12 @@ void deleteAllSlicesProxy(void* ptrOpHandler,
                           uint64_t sequenceNumber,
                           uint64_t chunkNumber,
                           bool lastChunk,
-                          OriginId originId,
+                          uint64_t originId,
                           uint64_t joinStrategyInt,
                           uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, originId);
+    BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, OriginId(originId));
     opHandler->deleteSlices(bufferMetaData);
 }
 

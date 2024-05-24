@@ -16,7 +16,7 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Common.hpp>
 #include <cstdint>
@@ -32,8 +32,8 @@ namespace NES::Runtime::Execution {
  * @brief Stores a sequenceNumber and an OriginId
  */
 struct SeqNumberOriginId {
-    uint64_t sequenceNumber = 0;
-    uint64_t originId = 0;
+    SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
+    OriginId originId = INVALID_ORIGIN_ID;
 
     bool operator<(const SeqNumberOriginId& other) const {
         if (sequenceNumber == other.sequenceNumber) {
@@ -70,7 +70,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
-    explicit PipelineExecutionContext(uint64_t pipelineId,
+    explicit PipelineExecutionContext(PipelineId pipelineId,
                                       DecomposedQueryPlanId queryId,
                                       Runtime::BufferManagerPtr bufferProvider,
                                       size_t numberOfWorkerThreads,
@@ -121,7 +121,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
 
     std::string toString() const;
 
-    uint64_t getPipelineID() { return this->pipelineId; }
+    PipelineId getPipelineID() { return this->pipelineId; }
 
     /**
      * @brief Returns the number of worker threads
@@ -162,7 +162,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     /**
      * @brief Id of the pipeline
      */
-    uint64_t pipelineId;
+    PipelineId pipelineId;
     /**
      * @brief Id of the local qep that owns the pipeline
      */

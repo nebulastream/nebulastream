@@ -19,14 +19,14 @@ namespace NES {
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
                                          CSVSourceTypePtr sourceConfig,
-                                         std::string logicalSourceName,
-                                         std::string physicalSourceName)
+                                         const std::string& logicalSourceName,
+                                         const std::string& physicalSourceName)
     : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), csvSourceType(std::move(sourceConfig)) {}
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 CSVSourceTypePtr csvSourceType,
-                                                std::string logicalSourceName,
-                                                std::string physicalSourceName) {
+                                                const std::string& logicalSourceName,
+                                                const std::string& physicalSourceName) {
     return std::make_shared<CsvSourceDescriptor>(
         CsvSourceDescriptor(std::move(schema), std::move(csvSourceType), logicalSourceName, physicalSourceName));
 }

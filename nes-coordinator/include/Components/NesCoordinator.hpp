@@ -18,8 +18,9 @@
 #include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <folly/concurrency/UnboundedQueue.h>
 #include <future>
 #include <string>
 #include <thread>
@@ -29,6 +30,11 @@ namespace grpc {
 class Server;
 }
 namespace NES {
+
+namespace Statistic {
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
+}// namespace Statistic
 
 namespace Runtime {
 
@@ -98,6 +104,14 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class PlacementAmendmentInstance;
+using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
+
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
+
+class PlacementAmendmentHandler;
+using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace Optimizer
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
@@ -165,6 +179,12 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UDFCatalogPtr getUDFCatalog();
 
     /**
+     * @brief Get placement amendment queue
+     * @return pointer to the placement amendment queue
+     */
+    Optimizer::UMPMCAmendmentQueuePtr getPlacementAmendmentQueue();
+
+    /**
      * @brief Get instance of monitoring service
      * @return monitoring service pointer
      */
@@ -208,6 +228,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     NesWorkerPtr getNesWorker();
 
+    Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler() const;
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
@@ -239,6 +261,9 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     bool enableMonitoring;
     LocationServicePtr locationService;
+    Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
+    Optimizer::UMPMCAmendmentQueuePtr placementAmendmentQueue;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

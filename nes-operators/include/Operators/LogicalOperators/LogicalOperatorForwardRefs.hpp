@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
 
-#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <memory>
@@ -96,12 +96,6 @@ using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 class BroadcastLogicalOperator;
 using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
-
-class SinkLogicalOperator;
-using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
-
 class WatermarkAssignerLogicalOperator;
 using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
@@ -123,8 +117,8 @@ using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 namespace Statistic {
 class LogicalStatisticWindowOperator;
 using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
-} // namespace Statistic
+}// namespace Statistic
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_

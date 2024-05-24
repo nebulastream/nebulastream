@@ -38,6 +38,38 @@ void BatchJoinHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
     }
 }
 
+Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
+    // build a global hash-map on top of all thread local pagedVectors.
+    // 1. calculate the number of total keys to size the hash-map correctly. This assumes a foreign-key join where keys can only exist one time and avoids hash coalitions
+    size_t numberOfKeys = 0;
+    for (const auto& pagedVector : threadLocalStateStores) {
+        numberOfKeys += pagedVector->getNumberOfEntries();
+    }
+    // 2. allocate hash map
+    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+    constexpr auto pageSize = 4096;
+    globalMap =
+        std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), pageSize);
+
+    // 3. iterate over pagedVectors and insert the whole page to the hash table
+    // Note. This does not perform any memory and only results in a sequential scan over all entries  plus a random lookup in the hash table.
+    // TODO this look could be parallelized, but please check if needed.
+    for (const auto& pagedVector : threadLocalStateStores) {
+        const auto& pages = pagedVector->getPages();
+        NES_ASSERT(!pages.empty(), "pagedVector should not be empty");
+        // currently we assume that page 0 - (n-1) are full and contain capacity entries.
+        for (size_t i = 0; i < pages.size() - 1; i++) {
+            auto numberOfEntries = pagedVector->getCapacityPerPage();
+            globalMap->insertPage(pages[i], numberOfEntries);
+        }
+        // insert last page
+        auto numberOfEntries = pagedVector->getNumberOfEntriesOnCurrentPage();
+        globalMap->insertPage(pages[pages.size() - 1], numberOfEntries);
+        pagedVector->clear();
+    }
+    return globalMap.get();
+}
+
 Nautilus::Interface::ChainedHashMap* BatchJoinHandler::getGlobalHashMap() { return globalMap.get(); }
 
 void BatchJoinHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) { NES_DEBUG("start BatchJoinHandler"); }

@@ -35,10 +35,14 @@ Catalogs::UDF::UDFCatalogPtr StorageHandler::getUDFCatalogHandle(RequestId) { NE
 
 Configurations::CoordinatorConfigurationPtr StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
 
+Optimizer::UMPMCAmendmentQueuePtr StorageHandler::getAmendmentQueue() { NES_NOT_IMPLEMENTED(); }
+
+Statistic::StatisticProbeHandlerPtr StorageHandler::getStatisticProbeHandler(RequestId) { NES_NOT_IMPLEMENTED(); }
+
 RequestId StorageHandler::generateRequestId() {
     std::unique_lock lock(idMutex);
-    auto requestId = nextFreeRequestId;
-    nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
-    return requestId;
+    auto requestId = nextFreeRequestId.getRawValue();
+    nextFreeRequestId = RequestId((requestId % MAX_REQUEST_ID.getRawValue()) + 1);
+    return RequestId(requestId);
 }
 }// namespace NES::RequestProcessor

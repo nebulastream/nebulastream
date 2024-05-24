@@ -16,6 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 
 #include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
@@ -325,6 +326,53 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "SourceCatalogController:unknown exception.");
+        }
+    }
+
+    ENDPOINT("POST", "/addSourceStatistics", addSourceStatistics, BODY_STRING(String, request)) {
+        NES_DEBUG("SourceCatalogController: addSourceStatistics: REST received request to add source statistics.");
+        try {
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if (!nlohmann::json::accept(req)) {
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            }
+            auto protobufMessage = std::make_shared<SerializableNamedSchema>();
+
+            auto jsonFields = nlohmann::json::parse(req);
+            WorkerId workerId = jsonFields["topologyNodeId"];
+            std::string logSourceName = jsonFields["logicalSource"];
+            std::string phSourceName = jsonFields["physicalSource"];
+            std::string fieldName = jsonFields["fieldName"];
+            std::string value = jsonFields["value"];
+            bool success = false;
+
+            Catalogs::Source::SourceCatalogEntryPtr catalogEntry;
+            std::vector<Catalogs::Source::SourceCatalogEntryPtr> physicalSources =
+                sourceCatalogService->getPhysicalSources(logSourceName);
+            for (const auto& phSource : physicalSources) {
+                if (phSource->getLogicalSource()->getLogicalSourceName() == logSourceName
+                    && phSource->getPhysicalSource()->getPhysicalSourceName() == phSourceName
+                    && phSource->getTopologyNodeId() == workerId) {
+                    catalogEntry = phSource;
+                    std::set<uint64_t> vals = {std::stoull(value)};
+                    success = sourceCatalogService->addKeyDistributionEntry(catalogEntry, vals);
+                    break;
+                }
+            }
+            nlohmann::json successJson;
+            successJson["success"] = success;
+            if (success) {
+                return createResponse(Status::CODE_200, successJson.dump());
+            } else {
+                return createResponse(Status::CODE_500,
+                                      "SourceCatalogController: addSourceStatistics: failed with success=" + successJson.dump());
+            }
+        } catch (const std::exception& exc) {
+            NES_ERROR("SourceCatalogController: addSourceStatistics: Exception occurred {}", exc.what());
+            return errorHandler->handleError(Status::CODE_500, exc.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
         }
     }
 

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/MetricValidator.hpp>
 
 namespace NES {
@@ -396,10 +397,10 @@ bool MetricValidator::isValidRegistrationMetrics(Monitoring::AbstractSystemResou
     return check;
 }
 
-bool MetricValidator::checkNodeIds(nlohmann::json json, uint64_t nodeId) {
+bool MetricValidator::checkNodeIds(nlohmann::json json, WorkerId nodeId) {
     bool check = true;
     for (auto& [key, val] : json.items()) {
-        if (json[key].contains("NODE_ID") && json[key]["NODE_ID"] != nodeId) {
+        if (json[key].contains("NODE_ID") && json[key]["NODE_ID"].get<WorkerId>() != nodeId) {
             NES_ERROR("MetricValidator: Wrong node ID for {} where {} != {}", key, json[key]["NODE_ID"], nodeId);
             check = false;
         }
@@ -407,7 +408,7 @@ bool MetricValidator::checkNodeIds(nlohmann::json json, uint64_t nodeId) {
     return check;
 }
 
-bool MetricValidator::checkNodeIdsStorage(nlohmann::json json, uint64_t nodeId) {
+bool MetricValidator::checkNodeIdsStorage(nlohmann::json json, WorkerId nodeId) {
     bool check = true;
     for (auto& [key, val] : json.items()) {
         // This change lets you get the string straight up from "first"
@@ -439,7 +440,7 @@ bool MetricValidator::MetricValidator::checkEntriesOfStream(std::set<std::string
     return check;
 }
 
-bool MetricValidator::checkNodeIds(Monitoring::MetricPtr metric, uint64_t nodeId) {
+bool MetricValidator::checkNodeIds(Monitoring::MetricPtr metric, WorkerId nodeId) {
     if (metric->getMetricType() == Monitoring::MetricType::DiskMetric) {
         auto parsedMetrics = metric->getValue<Monitoring::DiskMetrics>();
         return parsedMetrics.nodeId == nodeId;

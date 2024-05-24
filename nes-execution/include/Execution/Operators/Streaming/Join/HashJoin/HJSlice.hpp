@@ -113,8 +113,7 @@ class HJSlice : public StreamSlice {
     std::atomic<bool> alreadyMergedLocalToGlobalHashTable;
     std::mutex mutexMergeLocalToGlobalHashTable;
     QueryCompilation::StreamJoinStrategy joinStrategy;
-
 };
 }// namespace NES::Runtime::Execution
 
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_

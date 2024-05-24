@@ -26,11 +26,11 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -67,8 +67,8 @@ class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-        TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode1 = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode2 = TopologyNode::create(WorkerId(2), "localhost", 4000, 4002, 4, properties);
 
         auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
         PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);

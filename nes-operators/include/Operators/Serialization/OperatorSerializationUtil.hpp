@@ -15,12 +15,12 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
 
@@ -92,8 +92,7 @@ class OperatorSerializationUtil {
      * @param filterOperator the LogicalFilterOperator
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeFilterOperator(const LogicalFilterOperator& filterOperator,
-                                        SerializableOperator& serializedOperator);
+    static void serializeFilterOperator(const LogicalFilterOperator& filterOperator, SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a SerializableOperator_FilterDetails and all its properties to a LogicalFilterOperator
@@ -115,8 +114,7 @@ class OperatorSerializationUtil {
      * @param projectionDetails the serialized projectionDetails
      * @return LogicalProjectionOperator of type LogicalUnaryOperator
      */
-    static LogicalUnaryOperatorPtr
-    deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails);
+    static LogicalUnaryOperatorPtr deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails);
 
     /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
@@ -161,7 +159,7 @@ class OperatorSerializationUtil {
      * @return WindowOperatorPtr of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorPtr deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails,
-                                                                 OperatorId operatorId);
+                                                             OperatorId operatorId);
 
     /**
      * @brief Serializes an all join operator and all its properties to a SerializableOperator_JoinDetails object.
@@ -177,7 +175,7 @@ class OperatorSerializationUtil {
      * @return LogicalJoinOperator of type LogicalUnaryOperator
      */
     static LogicalJoinOperatorPtr deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails,
-                                                              OperatorId operatorId);
+                                                          OperatorId operatorId);
 
     /**
      * @brief Serializes an batch join operator and all its properties to a SerializableOperator_JoinDetails object.
@@ -290,7 +288,7 @@ class OperatorSerializationUtil {
      * @param serializedOperator serialized operator
      * @param operatorNode LogicalOperator for which to serialize the input schema
      */
-    static void deserializeInputSchema(LogicalOperatorPtr operatorNode, SerializableOperator& serializedOperator);
+    static void deserializeInputSchema(LogicalOperatorPtr operatorNode, const SerializableOperator& serializedOperator);
 
     /**
      * @brief Serializes an inferModel logical operator
@@ -305,8 +303,7 @@ class OperatorSerializationUtil {
      * @param inferModelDetails
      * @return LogicalUnaryOperator of type InferModel::LogicalInferModelOperator
      */
-    static LogicalUnaryOperatorPtr
-    deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
+    static LogicalUnaryOperatorPtr deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
 
     /**
      * @brief Serializes a Map or FlatMap Java UDF operator
@@ -323,8 +320,7 @@ class OperatorSerializationUtil {
      * @param mapJavaUdfDetails
      * @return MapJavaUdfLogicalOperatorPtr
      */
-    static LogicalUnaryOperatorPtr
-    deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUDFDetails);
+    static LogicalUnaryOperatorPtr deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUDFDetails);
 
     /**
      * @brief deserializes a FlatMap Java UDF operator
@@ -349,7 +345,6 @@ class OperatorSerializationUtil {
      */
     static LogicalUnaryOperatorPtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
 
-
     /**
      * @brief Serializes a LogicalStatisticWindowOperator
      * @param statisticWindowOperator
@@ -363,8 +358,9 @@ class OperatorSerializationUtil {
      * @param statisticWindowDetails
      * @param StatisticWindowOperator as LogicalUnaryOperator
      */
-    static LogicalUnaryOperatorPtr deserializeStatisticWindowOperator(const SerializableOperator_StatisticWindowDetails& statisticWindowDetails);
+    static LogicalUnaryOperatorPtr
+    deserializeStatisticWindowOperator(const SerializableOperator_StatisticWindowDetails& statisticWindowDetails);
 };
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_

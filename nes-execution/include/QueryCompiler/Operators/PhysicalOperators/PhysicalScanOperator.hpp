@@ -49,6 +49,6 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
     std::string toString() const override;
     OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilationPhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <sstream>
 #include <utility>
 

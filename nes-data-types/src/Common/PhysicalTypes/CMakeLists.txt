@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,10 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-data-types
-        PhysicalType.cpp
         ArrayPhysicalType.cpp
         BasicPhysicalType.cpp
-        PhysicalTypeFactory.cpp
         DefaultPhysicalTypeFactory.cpp
         PhysicalTypeUtil.cpp
 )

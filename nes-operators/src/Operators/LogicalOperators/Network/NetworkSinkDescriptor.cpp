@@ -13,29 +13,30 @@
 */
 
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <fmt/format.h>
 #include <utility>
 
 namespace NES::Network {
 
-NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
-                                             NesPartition nesPartition,
+NetworkSinkDescriptor::NetworkSinkDescriptor(const NodeLocation& nodeLocation,
+                                             const NesPartition& nesPartition,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
                                              DecomposedQueryPlanVersion version,
                                              uint64_t numberOfOrigins,
                                              OperatorId uniqueId)
-    : SinkDescriptor(numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime),
+    : SinkDescriptor(numberOfOrigins), nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime),
       retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId) {}
 
-SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
-                                                NesPartition nesPartition,
+SinkDescriptorPtr NetworkSinkDescriptor::create(const NodeLocation& nodeLocation,
+                                                const NesPartition& nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
                                                 DecomposedQueryPlanVersion version,
                                                 uint64_t numberOfOrigins,
                                                 OperatorId uniqueId) {
     return std::make_shared<NetworkSinkDescriptor>(
-        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes, version, numberOfOrigins, uniqueId));
+        NetworkSinkDescriptor(nodeLocation, nesPartition, waitTime, retryTimes, version, numberOfOrigins, uniqueId));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -49,8 +50,10 @@ bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
 }
 
 std::string NetworkSinkDescriptor::toString() const {
-    return "NetworkSinkDescriptor(Version=" + std::to_string(version) + ";Partition=" + nesPartition.toString()
-        + ";NetworkSourceNodeLocation=" + nodeLocation.createZmqURI() + ")";
+    return fmt::format("NetworkSinkDescriptor{{Version={};Partition={};NetworkSourceNodeLocation={}}}",
+                       version,
+                       nesPartition.toString(),
+                       nodeLocation.createZmqURI());
 }
 
 NodeLocation NetworkSinkDescriptor::getNodeLocation() const { return nodeLocation; }

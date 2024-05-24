@@ -82,6 +82,22 @@ class DynamicField {
     };
 
     /**
+     * @brief Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
+     * @tparam Type of the field requires to be a NesType.
+     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+     * @return Value of the field.
+     */
+    template<class Type>
+        requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
+    inline Type read() const {
+        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType)) {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
+        return Type(*reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)));
+    };
+
+    /**
      * @brief Writes a value to a specific field address.
      * @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
      * @param value of the field.
@@ -95,6 +111,22 @@ class DynamicField {
                                         + " but accessed as " + typeid(Type).name());
         }
         *reinterpret_cast<Type*>(const_cast<uint8_t*>(address)) = value;
+    };
+
+    /**
+     * @brief Writes a value to a specific field address.
+     * @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
+     * @param value of the field.
+     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+     */
+    template<class Type>
+        requires(NESIdentifier<Type>)
+    inline void write(Type value) {
+        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType)) {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
+        *reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)) = value.getRawValue();
     };
 
     /**

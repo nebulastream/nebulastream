@@ -24,8 +24,10 @@
 #include <folly/ThreadLocal.h>
 #include <future>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <unordered_map>
+
 //namespace NES::Network {
 //class NesPartition;
 //}
@@ -66,7 +68,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
-    std::unordered_map<uint64_t, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+    std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -108,13 +110,6 @@ class WorkerContext {
      * @param refCnt the initial ref cnt
      */
     void setObjectRefCnt(void* object, uint32_t refCnt);
-
-    /**
-     * @brief Increase the ref cnt of a given object
-     * @param object the object that we want to ref count
-     * @return the prev ref cnt
-     */
-    uint32_t increaseObjectRefCnt(void* object);
 
     /**
      * @brief Reduces by one the ref cnt. It deletes the object as soon as ref cnt reaches 0.

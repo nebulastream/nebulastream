@@ -17,6 +17,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 
 namespace NES {
 
@@ -71,7 +72,7 @@ class DiskMetrics {
     bool operator==(const DiskMetrics& rhs) const;
     bool operator!=(const DiskMetrics& rhs) const;
 
-    uint64_t nodeId;
+    WorkerId nodeId;
     uint64_t timestamp;
     uint64_t fBsize;
     uint64_t fFrsize;

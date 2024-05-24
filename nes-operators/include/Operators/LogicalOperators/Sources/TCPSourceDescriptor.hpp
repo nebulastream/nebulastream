@@ -23,8 +23,10 @@ namespace NES {
 class TCPSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr
-    create(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, std::string logicalSourceName, std::string physicalSourceName);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      TCPSourceTypePtr tcpSourceType,
+                                      const std::string& logicalSourceName,
+                                      const std::string& physicalSourceName);
 
     static SourceDescriptorPtr create(SchemaPtr schema, TCPSourceTypePtr sourceConfig);
     /**
@@ -53,8 +55,8 @@ class TCPSourceDescriptor : public SourceDescriptor {
      */
     explicit TCPSourceDescriptor(SchemaPtr schema,
                                  TCPSourceTypePtr tcpSourceType,
-                                 std::string logicalSourceName,
-                                 std::string physicalSourceName);
+                                 const std::string& logicalSourceName,
+                                 const std::string& physicalSourceName);
 
     TCPSourceTypePtr tcpSourceType;
 };
@@ -62,4 +64,4 @@ class TCPSourceDescriptor : public SourceDescriptor {
 using TCPSourceDescriptorPtr = std::shared_ptr<TCPSourceDescriptor>;
 
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_

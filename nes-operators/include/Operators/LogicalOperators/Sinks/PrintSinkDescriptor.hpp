@@ -34,13 +34,6 @@ class PrintSinkDescriptor : public SinkDescriptor {
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
-
-    /**
-     * @brief getter for number of origins
-     * @return number of origins
-     */
-    uint64_t getNumberOfOrigins() const;
-
   private:
     explicit PrintSinkDescriptor(uint64_t numberOfOrigins);
 };
@@ -49,4 +42,4 @@ using PrintSinkDescriptorPtr = std::shared_ptr<PrintSinkDescriptor>;
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_

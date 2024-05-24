@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <future>
 #include <map>
@@ -100,4 +100,4 @@ class AbstractHealthCheckService {
 
 }// namespace NES
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_

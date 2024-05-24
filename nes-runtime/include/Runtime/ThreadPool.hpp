@@ -38,7 +38,7 @@ class ThreadPool {
      * @param number of threads to use
      * @param sourcePinningPositionList, a list of where to pin the
      */
-    explicit ThreadPool(uint64_t nodeId,
+    explicit ThreadPool(WorkerId nodeId,
                         QueryManagerPtr queryManager,
                         uint32_t numThreads,
                         std::vector<BufferManagerPtr> bufferManagers,
@@ -94,7 +94,7 @@ class ThreadPool {
 
   private:
     //indicating if the thread pool is running, used for multi-thread execution
-    const uint64_t nodeId;
+    const WorkerId nodeId;
     std::atomic<bool> running{false};
     const uint32_t numThreads;
     std::vector<std::thread> threads{};

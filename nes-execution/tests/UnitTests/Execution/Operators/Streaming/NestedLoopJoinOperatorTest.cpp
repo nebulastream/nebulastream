@@ -14,6 +14,8 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
+#include <API/TimeUnit.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -35,7 +37,6 @@
 #include <Util/Common.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <random>
-#include <API/TestSchemas.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -48,8 +49,8 @@ class NLJBuildPipelineExecutionContext : public PipelineExecutionContext {
   public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
+            INVALID_PIPELINE_ID,             // mock pipeline id
+            INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
@@ -64,8 +65,8 @@ class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
     std::vector<TupleBuffer> emittedBuffers;
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
+            INVALID_PIPELINE_ID,             // mock pipeline id
+            INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
@@ -104,16 +105,15 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
 
         leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
-        rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")
-                          ->updateSourceName("test2");
+        rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test2");
 
         joinFieldNameLeft = leftSchema->get(1)->getName();
         joinFieldNameRight = rightSchema->get(1)->getName();
         timestampFieldNameLeft = leftSchema->get(2)->getName();
         timestampFieldNameRight = rightSchema->get(2)->getName();
 
-        nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
-                                                                          1,
+        nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
+                                                                          OriginId(1),
                                                                           windowSize,
                                                                           windowSize,
                                                                           leftSchema,
@@ -270,7 +270,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
         auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
@@ -279,7 +280,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -513,8 +515,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
     auto numberOfRecordsLeft = 200;
     auto numberOfRecordsRight = 200;
     windowSize = 10;
-    nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
-                                                                      1,
+    nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
+                                                                      OriginId(1),
                                                                       windowSize,
                                                                       windowSize,
                                                                       leftSchema,

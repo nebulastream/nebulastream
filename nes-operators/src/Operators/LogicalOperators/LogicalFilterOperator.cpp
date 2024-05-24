@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -20,10 +20,8 @@
 
 namespace NES {
 
-LogicalFilterOperator::LogicalFilterOperator(ExpressionNodePtr const& predicate, uint64_t id)
-    : Operator(id), LogicalUnaryOperator(id), predicate(predicate) {
-    selectivity = 1.0;
-}
+LogicalFilterOperator::LogicalFilterOperator(ExpressionNodePtr const& predicate, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), predicate(predicate) {}
 
 ExpressionNodePtr LogicalFilterOperator::getPredicate() const { return predicate; }
 
@@ -43,7 +41,7 @@ bool LogicalFilterOperator::equal(NodePtr const& rhs) const {
 
 std::string LogicalFilterOperator::toString() const {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ", statisticId: " << statisticId << ", predicate: "<< predicate->toString() <<")";
+    ss << "FILTER(opId: " << id << ", statisticId: " << statisticId << ", predicate: " << predicate->toString() << ")";
     return ss.str();
 }
 
@@ -51,7 +49,7 @@ bool LogicalFilterOperator::inferSchema() {
     if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
-    predicate->inferStamp( inputSchema);
+    predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
     }
@@ -67,7 +65,7 @@ OperatorPtr LogicalFilterOperator::copy() {
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -79,7 +77,7 @@ void LogicalFilterOperator::inferStringSignature() {
     NES_ASSERT(!children.empty(), "LogicalFilterOperator: Filter should have children");
 
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -92,10 +90,10 @@ void LogicalFilterOperator::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-float LogicalFilterOperator::getSelectivity() { return selectivity; }
+float LogicalFilterOperator::getSelectivity() const { return selectivity; }
 void LogicalFilterOperator::setSelectivity(float newSelectivity) { selectivity = newSelectivity; }
 
-std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredicate() {
+std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredicate() const {
     NES_TRACE("LogicalFilterOperator: Find all field names used in filter operator");
 
     //vector to save the names of all the fields that are used in this predicate

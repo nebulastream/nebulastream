@@ -83,7 +83,7 @@ class CountMinDescriptor : public WindowStatisticDescriptor {
     /**
      * @brief Virtual destructor
      */
-    virtual ~CountMinDescriptor();
+    ~CountMinDescriptor() override;
 
   private:
     /**

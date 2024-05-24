@@ -19,9 +19,9 @@
 
 namespace NES {
 
-TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
-    return std::make_shared<TCPSourceType>(
-        TCPSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+TCPSourceTypePtr
+TCPSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
 
 TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName,
@@ -63,7 +63,7 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
           Configurations::INPUT_FORMAT_CONFIG,
           Configurations::InputFormat::CSV,
           "Input format defines how the data will arrive in NES. Current Option: CSV (comma separated list with separator "
-          "between lines/tuples), JSON.")),
+          "between lines/tuples), JSON, NES_BINARY (binary internal tuplebuffer format).")),
       decideMessageSize(Configurations::ConfigurationOption<Configurations::TCPDecideMessageSize>::create(
           Configurations::DECIDE_MESSAGE_SIZE_CONFIG,
           Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR,
@@ -124,7 +124,7 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName,
             if (sourceConfigMap.find(Configurations::TUPLE_SEPARATOR_CONFIG) != sourceConfigMap.end()) {
                 tupleSeparator->setValue(sourceConfigMap.find(Configurations::TUPLE_SEPARATOR_CONFIG)->second[0]);
             } else {
-               tupleSeparator->setValue(tupleSeparator->getDefaultValue());
+                tupleSeparator->setValue(tupleSeparator->getDefaultValue());
             }
             break;
         case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:

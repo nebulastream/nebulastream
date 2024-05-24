@@ -15,13 +15,13 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_
 
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Statistic.hpp>
-#include <StatisticCollection/StatisticKey.hpp>
+#include <Statistics/Statistic.hpp>
+#include <Statistics/StatisticKey.hpp>
 
 namespace NES::Statistic {
 
 class AbstractStatisticStore;
-using AbstractStatisticStorePtr = std::shared_ptr<AbstractStatisticStore>;
+using StatisticStorePtr = std::shared_ptr<AbstractStatisticStore>;
 
 class Statistic;
 using StatisticPtr = std::shared_ptr<Statistic>;

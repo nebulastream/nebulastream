@@ -14,8 +14,8 @@
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>

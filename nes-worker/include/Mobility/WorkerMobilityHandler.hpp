@@ -14,6 +14,7 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -80,7 +81,7 @@ class WorkerMobilityHandler {
      * run() function will run
      * @param currentParentWorkerIds a list of the workers current parents
      */
-    void start(const std::vector<uint64_t>& currentParentWorkerIds);
+    void start(const std::vector<WorkerId>& currentParentWorkerIds);
 
     /**
      * tell the thread which executes start() to exit the update loop and stop execution
@@ -121,7 +122,7 @@ class WorkerMobilityHandler {
      *  which contains each workers location.
      * @return true if the reconnect was successful
      */
-    bool triggerReconnectionRoutine(uint64_t& currentParentId, uint64_t newParentId);
+    bool triggerReconnectionRoutine(WorkerId& currentParentId, WorkerId newParentId);
 
     /**
      * @brief Method to get all field nodes within a certain range around a geographical point
@@ -139,7 +140,7 @@ class WorkerMobilityHandler {
      * @return the geolocation of the node or nullopt if no node with the replied id was found in the node index
      */
     static std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
-    getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap);
+    getNodeGeoLocation(WorkerId nodeId, std::unordered_map<WorkerId, S2Point> neighbourWorkerIdToLocationMap);
 
     /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the
@@ -150,8 +151,8 @@ class WorkerMobilityHandler {
      * @return true if the received list of node positions was not empty
      */
     bool updateNeighbourWorkerInformation(const DataTypes::Experimental::GeoLocation& currentLocation,
-                                          std::unordered_map<uint64_t, S2Point>& neighbourWorkerIdToLocationMap,
-                                          S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex);
+                                          std::unordered_map<WorkerId, S2Point>& neighbourWorkerIdToLocationMap,
+                                          S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
 
     /**
      * @brief checks if the supplied position is less then the defined threshold away from the fringe of the area covered by the
@@ -178,7 +179,7 @@ class WorkerMobilityHandler {
     getNextReconnectPoint(std::optional<ReconnectSchedule>& reconnectSchedule,
                           const DataTypes::Experimental::GeoLocation& currentOwnLocation,
                           const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
-                          const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex);
+                          const S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
 
     /**
      * @brief checks if the position supplied as an argument is further than the configured threshold from the last position
@@ -197,9 +198,9 @@ class WorkerMobilityHandler {
      * @param neighbourWorkerSpatialIndex a spatial index containing other workers in the vicinity
      * @return An optional containing the node id of the closest node or nullopt if no node could be found with the radius
      */
-    std::optional<uint64_t> getClosestNodeId(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
+    std::optional<WorkerId> getClosestNodeId(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
                                              S1Angle radius,
-                                             const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex);
+                                             const S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
 #endif
 
     /**
@@ -217,7 +218,7 @@ class WorkerMobilityHandler {
      *      will reconnect to the closest node in that radius.
      */
     //FIXME: current assumption is just one parent per mobile worker
-    void run(const std::vector<uint64_t>& currentParentWorkerIds);
+    void run(const std::vector<WorkerId>& currentParentWorkerIds);
 
     //configuration
     uint64_t updateInterval;

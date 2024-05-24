@@ -47,8 +47,8 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
 
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Minutes(1)))
-                     .byKey(Attribute("value"))
-                     .apply(Sum(Attribute("id")));
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -64,12 +64,15 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    // Expected output
-    auto expectedOutput = "0, 60000, 1, 9\n"
-                          "0, 60000, 12, 1\n"
-                          "0, 60000, 4, 1\n"
-                          "0, 60000, 11, 5\n"
-                          "0, 60000, 16, 2\n";
+    // Expected output, Output in ms
+    auto expectedOutput = "960000, 1020000, 1, 1\n"
+                          "960000, 1020000, 12, 1\n"
+                          "960000, 1020000, 4, 1\n"
+                          "1980000, 2040000, 1, 2\n"
+                          "1980000, 2040000, 11, 2\n"
+                          "1980000, 2040000, 16, 2\n"
+                          "3000000, 3060000, 1, 6\n"
+                          "3000000, 3060000, 11, 3\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -90,8 +93,8 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
-                     .byKey(Attribute("value"))
-                     .apply(Sum(Attribute("id")));
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -184,7 +187,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("id")));
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -223,7 +226,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
-                     .apply(Sum(Attribute("id")));
+                     .apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -350,9 +353,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1.2, 2, 2, 1000}, 2);
-    testHarness.pushElement<Car>({1.5, 4, 4, 1500}, 2);
-    testHarness.pushElement<Car>({1.7, 5, 5, 2000}, 2);
+    testHarness.pushElement<Car>({1.2, 2, 2, 1000}, WorkerId(2));
+    testHarness.pushElement<Car>({1.5, 4, 4, 1500}, WorkerId(2));
+    testHarness.pushElement<Car>({1.7, 5, 5, 2000}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -393,9 +396,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car2>({1.2, 2, 1000}, 2);
-    testHarness.pushElement<Car2>({1.5, 4, 1500}, 2);
-    testHarness.pushElement<Car2>({1.7, 5, 2000}, 2);
+    testHarness.pushElement<Car2>({1.2, 2, 1000}, WorkerId(2));
+    testHarness.pushElement<Car2>({1.5, 4, 1500}, WorkerId(2));
+    testHarness.pushElement<Car2>({1.7, 5, 2000}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -440,9 +443,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({true, 2, 1000}, 2);
-    testHarness.pushElement<Car>({false, 4, 1500}, 2);
-    testHarness.pushElement<Car>({true, 5, 2000}, 2);
+    testHarness.pushElement<Car>({true, 2, 1000}, WorkerId(2));
+    testHarness.pushElement<Car>({false, 4, 1500}, WorkerId(2));
+    testHarness.pushElement<Car>({true, 5, 2000}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -490,9 +493,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     std::array<char, 3> charArrayValue = {'A', 'B', 'C'};
-    testHarness.pushElement<Car>({'A', charArrayValue, 2, 1000}, 2);
-    testHarness.pushElement<Car>({'B', charArrayValue, 4, 1500}, 2);
-    testHarness.pushElement<Car>({'C', charArrayValue, 5, 2000}, 2);
+    testHarness.pushElement<Car>({'A', charArrayValue, 2, 1000}, WorkerId(2));
+    testHarness.pushElement<Car>({'B', charArrayValue, 4, 1500}, WorkerId(2));
+    testHarness.pushElement<Car>({'C', charArrayValue, 5, 2000}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -539,9 +542,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
     NES::ExecutableTypes::Array<char, 4> keyTwo = "bbb";
     NES::ExecutableTypes::Array<char, 4> keyThree = "ccc";
 
-    testHarness.pushElement<Car>({keyOne, 2, 1000}, 2);
-    testHarness.pushElement<Car>({keyTwo, 4, 1500}, 2);
-    testHarness.pushElement<Car>({keyThree, 5, 2000}, 2);
+    testHarness.pushElement<Car>({keyOne, 2, 1000}, WorkerId(2));
+    testHarness.pushElement<Car>({keyTwo, 4, 1500}, WorkerId(2));
+    testHarness.pushElement<Car>({keyThree, 5, 2000}, WorkerId(2));
 
     testHarness.validate().setupTopology();
 
@@ -584,9 +587,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1, 2, 1000, 2}, 2);
-    testHarness.pushElement<Car>({1, 4, 1500, 4}, 2);
-    testHarness.pushElement<Car>({1, 5, 2000, 5}, 2);
+    testHarness.pushElement<Car>({1, 2, 1000, 2}, WorkerId(2));
+    testHarness.pushElement<Car>({1, 4, 1500, 4}, WorkerId(2));
+    testHarness.pushElement<Car>({1, 5, 2000, 5}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -628,9 +631,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1, 15, 1000}, 2);
-    testHarness.pushElement<Car>({1, 99, 1500}, 2);
-    testHarness.pushElement<Car>({1, 20, 2000}, 2);
+    testHarness.pushElement<Car>({1, 15, 1000}, WorkerId(2));
+    testHarness.pushElement<Car>({1, 99, 1500}, WorkerId(2));
+    testHarness.pushElement<Car>({1, 20, 2000}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -671,9 +674,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1, -15, 1000}, 2);
-    testHarness.pushElement<Car>({1, -99, 1500}, 2);
-    testHarness.pushElement<Car>({1, -20, 2000}, 2);
+    testHarness.pushElement<Car>({1, -15, 1000}, WorkerId(2));
+    testHarness.pushElement<Car>({1, -99, 1500}, WorkerId(2));
+    testHarness.pushElement<Car>({1, -20, 2000}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -706,8 +709,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                                       .byKey(Attribute("value"))
-                                       .apply(Max(Attribute("id")));
+                                       .byKey(Attribute("id"))
+                                       .apply(Max(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("car", "car1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -768,9 +771,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1, 15.0, 1000}, 2);
-    testHarness.pushElement<Car>({1, 99.0, 1500}, 2);
-    testHarness.pushElement<Car>({1, 20.0, 2000}, 2);
+    testHarness.pushElement<Car>({1, 15.0, 1000}, WorkerId(2));
+    testHarness.pushElement<Car>({1, 99.0, 1500}, WorkerId(2));
+    testHarness.pushElement<Car>({1, 20.0, 2000}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -812,9 +815,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 2);
-    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, 2);
-    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, WorkerId(2));
+    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, WorkerId(2));
+    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -857,10 +860,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1ULL, 30ULL, 15ULL, 1000ULL}, 2);
-    testHarness.pushElement<Car>({1ULL, 90ULL, 88ULL, 1500ULL}, 2);
-    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 1800ULL}, 2);
-    testHarness.pushElement<Car>({1ULL, 60ULL, 20ULL, 2000ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 30ULL, 15ULL, 1000ULL}, WorkerId(2));
+    testHarness.pushElement<Car>({1ULL, 90ULL, 88ULL, 1500ULL}, WorkerId(2));
+    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 1800ULL}, WorkerId(2));
+    testHarness.pushElement<Car>({1ULL, 60ULL, 20ULL, 2000ULL}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -901,9 +904,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 2);
-    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, 2);
-    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, WorkerId(2));
+    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, WorkerId(2));
+    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, WorkerId(2));
     testHarness.validate().setupTopology();
 
     // Expected output

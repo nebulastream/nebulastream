@@ -15,8 +15,8 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_
 
-#include <Operators/Expressions/BinaryExpressionNode.hpp>
-#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES {
@@ -102,4 +102,4 @@ class RedundancyEliminationRule : public BaseRewriteRule {
 
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_

@@ -19,7 +19,7 @@ namespace NES {
 OriginIdAssignmentOperator::OriginIdAssignmentOperator(OperatorId operatorId, OriginId originId)
     : Operator(operatorId), originId(originId) {}
 
-const std::vector<OriginId> OriginIdAssignmentOperator::getOutputOriginIds() const {
+std::vector<OriginId> OriginIdAssignmentOperator::getOutputOriginIds() const {
     if (originId == INVALID_ORIGIN_ID) {
         throw Exceptions::RuntimeException(
             "The origin id should not be invalid. Maybe the OriginIdInference rule was not executed.");

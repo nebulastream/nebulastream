@@ -26,7 +26,6 @@ class LogicalUnaryOperator : public LogicalOperator, public UnaryOperator {
 
   public:
     explicit LogicalUnaryOperator(OperatorId id);
-    LogicalUnaryOperator();
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
@@ -43,4 +42,4 @@ class LogicalUnaryOperator : public LogicalOperator, public UnaryOperator {
 };
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_

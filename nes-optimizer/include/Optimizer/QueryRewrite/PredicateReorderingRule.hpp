@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
 
-#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
@@ -83,4 +83,4 @@ class PredicateReorderingRule : public BaseRewriteRule {
     static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_

@@ -38,4 +38,4 @@ class Project : public ExecutableOperator {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_

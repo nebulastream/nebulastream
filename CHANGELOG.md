@@ -1,5 +1,416 @@
 # Changelog
 
+## [v0.6.131](https://github.com/nebulastream/nebulastream/tree/v0.6.131) (2024-05-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.130...v0.6.131)
+
+**Implemented enhancements:**
+
+- \[TASK\] Testing for SEQ operator mapping  [\#4777](https://github.com/nebulastream/nebulastream/issues/4777)
+
+## [v0.6.130](https://github.com/nebulastream/nebulastream/tree/v0.6.130) (2024-05-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.129...v0.6.130)
+
+**Implemented enhancements:**
+
+- \[TASK\] Ensure that libdw is installed at during cmake configure [\#4876](https://github.com/nebulastream/nebulastream/issues/4876)
+- \[TASK\] Add missing KAFKA ifdef [\#4871](https://github.com/nebulastream/nebulastream/issues/4871)
+- \[TASK\] Fix test failures due to unavailable nes-coordinator default port [\#4859](https://github.com/nebulastream/nebulastream/issues/4859)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Improve the error message and fail the worker when the physicalSources.logicalSourceName is wrong [\#4731](https://github.com/nebulastream/nebulastream/issues/4731)
+- Enable MilliSecondTests [\#1676](https://github.com/nebulastream/nebulastream/issues/1676)
+
+### Miscellaneous Issues ✌️
+
+- -Wunused-function [\#1198](https://github.com/nebulastream/nebulastream/issues/1198)
+- -Wreorder [\#1197](https://github.com/nebulastream/nebulastream/issues/1197)
+
+## [v0.6.129](https://github.com/nebulastream/nebulastream/tree/v0.6.129) (2024-05-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.128...v0.6.129)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Make IpValidator accept strings [\#4816](https://github.com/nebulastream/nebulastream/issues/4816)
+
+## [v0.6.128](https://github.com/nebulastream/nebulastream/tree/v0.6.128) (2024-05-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.127...v0.6.128)
+
+## [v0.6.127](https://github.com/nebulastream/nebulastream/tree/v0.6.127) (2024-05-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.126...v0.6.127)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove alpine build files and refactor CMake dependency import [\#4837](https://github.com/nebulastream/nebulastream/issues/4837)
+- \[TASK\] fix tests in MultipleWindowsTest [\#4746](https://github.com/nebulastream/nebulastream/issues/4746)
+- \[TASK\] fix tests in StreamJoinExecutionTest [\#4738](https://github.com/nebulastream/nebulastream/issues/4738)
+
+## [v0.6.126](https://github.com/nebulastream/nebulastream/tree/v0.6.126) (2024-05-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.125...v0.6.126)
+
+**Implemented enhancements:**
+
+- \[BUG\] Bug in Ingestion time handling [\#4880](https://github.com/nebulastream/nebulastream/issues/4880)
+
+## [v0.6.125](https://github.com/nebulastream/nebulastream/tree/v0.6.125) (2024-05-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.124...v0.6.125)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Enable partial joins in NES [\#4587](https://github.com/nebulastream/nebulastream/issues/4587)
+- \[TASK\]\[Expressions\] Extend Support for Arithmetical Functions [\#3540](https://github.com/nebulastream/nebulastream/issues/3540)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix configuration to disable distributed window rule [\#2884](https://github.com/nebulastream/nebulastream/issues/2884)
+
+#### Monitoring 🚥
+
+- Config file to generate MonitoringPlan [\#1353](https://github.com/nebulastream/nebulastream/issues/1353)
+
+### Miscellaneous Issues ✌️
+
+- Enable execution of queries in monitoring emulation experiments [\#1768](https://github.com/nebulastream/nebulastream/issues/1768)
+
+## [v0.6.124](https://github.com/nebulastream/nebulastream/tree/v0.6.124) (2024-05-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.123...v0.6.124)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Running make format on different platforms results in files being formatted differently [\#3221](https://github.com/nebulastream/nebulastream/issues/3221)
+
+## [v0.6.123](https://github.com/nebulastream/nebulastream/tree/v0.6.123) (2024-05-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.122...v0.6.123)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate CUDA Kernel Wrapper to CUDA Plugin [\#4815](https://github.com/nebulastream/nebulastream/issues/4815)
+
+## [v0.6.122](https://github.com/nebulastream/nebulastream/tree/v0.6.122) (2024-05-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.121...v0.6.122)
+
+**Implemented enhancements:**
+
+- \[TASK\] fix tests in JoinDeploymentTest [\#4740](https://github.com/nebulastream/nebulastream/issues/4740)
+
+## [v0.6.121](https://github.com/nebulastream/nebulastream/tree/v0.6.121) (2024-05-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.120...v0.6.121)
+
+**Implemented enhancements:**
+
+- \[TASK\] DataDog Sketch [\#4860](https://github.com/nebulastream/nebulastream/issues/4860)
+- \[TASK\] Remove CompiledDummyPlan.hpp [\#4843](https://github.com/nebulastream/nebulastream/issues/4843)
+- \[TASK\] Implement statistic \(de-\)compression [\#4794](https://github.com/nebulastream/nebulastream/issues/4794)
+
+## [v0.6.120](https://github.com/nebulastream/nebulastream/tree/v0.6.120) (2024-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.119...v0.6.120)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Windows are only able to handle MS accuracy as timestamp [\#2868](https://github.com/nebulastream/nebulastream/issues/2868)
+
+## [v0.6.119](https://github.com/nebulastream/nebulastream/tree/v0.6.119) (2024-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.118...v0.6.119)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Nautilus ABS Function Only Works for Doubles [\#3682](https://github.com/nebulastream/nebulastream/issues/3682)
+
+## [v0.6.118](https://github.com/nebulastream/nebulastream/tree/v0.6.118) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.117...v0.6.118)
+
+**Implemented enhancements:**
+
+- \[TASK\] Code quality improvement for nes-runtime [\#4499](https://github.com/nebulastream/nebulastream/issues/4499)
+
+## [v0.6.117](https://github.com/nebulastream/nebulastream/tree/v0.6.117) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.116...v0.6.117)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove Bucketing from Master [\#4827](https://github.com/nebulastream/nebulastream/issues/4827)
+- \[TASK\] Replace folly dependency with a lightweight patched version [\#4799](https://github.com/nebulastream/nebulastream/issues/4799)
+- \[FEATURE\] Add support for variable sized data larger than the specified PAGE\_SIZE [\#4638](https://github.com/nebulastream/nebulastream/issues/4638)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Build fails / tests cannot be run because of linking issue [\#4773](https://github.com/nebulastream/nebulastream/issues/4773)
+
+#### Operators 
+
+- \[Feature\] Different Data Types for StreamJoin [\#3638](https://github.com/nebulastream/nebulastream/issues/3638)
+
+## [v0.6.116](https://github.com/nebulastream/nebulastream/tree/v0.6.116) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.115...v0.6.116)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrate Vectorization Phase in CUDA Backend for Nautilus [\#4800](https://github.com/nebulastream/nebulastream/issues/4800)
+
+## [v0.6.115](https://github.com/nebulastream/nebulastream/tree/v0.6.115) (2024-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.114...v0.6.115)
+
+**Implemented enhancements:**
+
+- \[TASK\] Reservoir sample [\#4798](https://github.com/nebulastream/nebulastream/issues/4798)
+- \[TASK\] check remaining uses of collectAndPrintStackTrace\(\) and replace with collectstacktrace\(\) if necessary [\#4793](https://github.com/nebulastream/nebulastream/issues/4793)
+- \[TASK\] Add "Enable NES\_DEBUG" message to errors, when stack traces are hidden [\#4791](https://github.com/nebulastream/nebulastream/issues/4791)
+
+## [v0.6.114](https://github.com/nebulastream/nebulastream/tree/v0.6.114) (2024-04-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.113...v0.6.114)
+
+**Implemented enhancements:**
+
+- \[TASK\] Using Statistics in the Optimizer [\#4784](https://github.com/nebulastream/nebulastream/issues/4784)
+
+## [v0.6.113](https://github.com/nebulastream/nebulastream/tree/v0.6.113) (2024-04-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.112...v0.6.113)
+
+**Implemented enhancements:**
+
+- \[TASK\] Fix the fix-guards target [\#4842](https://github.com/nebulastream/nebulastream/issues/4842)
+
+## [v0.6.112](https://github.com/nebulastream/nebulastream/tree/v0.6.112) (2024-04-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.111...v0.6.112)
+
+**Implemented enhancements:**
+
+- \[TASK\] TCP Source Improvments [\#4764](https://github.com/nebulastream/nebulastream/issues/4764)
+
+## [v0.6.111](https://github.com/nebulastream/nebulastream/tree/v0.6.111) (2024-04-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.110...v0.6.111)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enforce newline at end-of-file via clang-format [\#4839](https://github.com/nebulastream/nebulastream/issues/4839)
+
+## [v0.6.110](https://github.com/nebulastream/nebulastream/tree/v0.6.110) (2024-04-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.109...v0.6.110)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create Concurrent Amendment Handler [\#4698](https://github.com/nebulastream/nebulastream/issues/4698)
+
+## [v0.6.109](https://github.com/nebulastream/nebulastream/tree/v0.6.109) (2024-04-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.108...v0.6.109)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate loading only needed stuff from folly library [\#4510](https://github.com/nebulastream/nebulastream/issues/4510)
+
+## [v0.6.108](https://github.com/nebulastream/nebulastream/tree/v0.6.108) (2024-04-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.107...v0.6.108)
+
+### Bug Fixes 🐛
+
+- Inconsistent Output for MultiJoins  [\#2357](https://github.com/nebulastream/nebulastream/issues/2357)
+
+## [v0.6.107](https://github.com/nebulastream/nebulastream/tree/v0.6.107) (2024-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.106...v0.6.107)
+
+**Implemented enhancements:**
+
+- \[TASK\] gitignore CMakeUserPresets.json [\#4788](https://github.com/nebulastream/nebulastream/issues/4788)
+
+## [v0.6.106](https://github.com/nebulastream/nebulastream/tree/v0.6.106) (2024-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.105...v0.6.106)
+
+## [v0.6.105](https://github.com/nebulastream/nebulastream/tree/v0.6.105) (2024-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.104...v0.6.105)
+
+**Implemented enhancements:**
+
+- \[TASK\] Creating additional modules [\#4826](https://github.com/nebulastream/nebulastream/issues/4826)
+
+## [v0.6.104](https://github.com/nebulastream/nebulastream/tree/v0.6.104) (2024-04-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.103...v0.6.104)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Topology::findCommonAncestor gives incorrect result [\#4323](https://github.com/nebulastream/nebulastream/issues/4323)
+- \[BUG\] Regression tests for elegant use cases are not working [\#3720](https://github.com/nebulastream/nebulastream/issues/3720)
+- \[BUG\] Create Elegant regression tests [\#3654](https://github.com/nebulastream/nebulastream/issues/3654)
+- Random Failing Query-controller-integration-tests [\#3576](https://github.com/nebulastream/nebulastream/issues/3576)
+- \[BUG\] Code Coverage Exceptions [\#3539](https://github.com/nebulastream/nebulastream/issues/3539)
+- \[BUG\] Code Coverage GRPC [\#3538](https://github.com/nebulastream/nebulastream/issues/3538)
+- \[BUG\] Code Coverage Rest [\#3537](https://github.com/nebulastream/nebulastream/issues/3537)
+- \[BUG\] Code Coverage Hashing [\#3536](https://github.com/nebulastream/nebulastream/issues/3536)
+- \[BUG\] Code Coverage Monitoring [\#3535](https://github.com/nebulastream/nebulastream/issues/3535)
+- \[BUG\] Code Coverage Spatial [\#3534](https://github.com/nebulastream/nebulastream/issues/3534)
+- \[BUG\] Code Cocerage Sources/Sinks [\#3533](https://github.com/nebulastream/nebulastream/issues/3533)
+- \[BUG\] Code Coverage Windows [\#3531](https://github.com/nebulastream/nebulastream/issues/3531)
+- \[BUG\] Test Coverage Compiler [\#3530](https://github.com/nebulastream/nebulastream/issues/3530)
+- \[BUG\] Randomly Failing Test: ProjectionTest.tumblingWindowQueryTestWithProjection [\#3326](https://github.com/nebulastream/nebulastream/issues/3326)
+- \[BUG\] Deep Hierarchy Test [\#3248](https://github.com/nebulastream/nebulastream/issues/3248)
+- \[BUG\] AllowedLatenessTest fails randomly  [\#3241](https://github.com/nebulastream/nebulastream/issues/3241)
+- \[BUG\] Projection-test fails randomly [\#3240](https://github.com/nebulastream/nebulastream/issues/3240)
+- Track Random Failing Tests [\#3238](https://github.com/nebulastream/nebulastream/issues/3238)
+- \[BUG\] Building NebulaStream with -DNES\_USE\_OPC=1 results in compilation error  [\#3220](https://github.com/nebulastream/nebulastream/issues/3220)
+- \[BUG\] Fix not thrown exception in window handler [\#2874](https://github.com/nebulastream/nebulastream/issues/2874)
+- \[BUG\] No error message if a query with a MQTT sink is submitted but no MQTT server is runnig [\#2731](https://github.com/nebulastream/nebulastream/issues/2731)
+- Visit all ToDos and FIXMEs in the codebase and address them where ever possible. [\#2576](https://github.com/nebulastream/nebulastream/issues/2576)
+- Randomly Failing Tests in BufferManagerTest [\#2437](https://github.com/nebulastream/nebulastream/issues/2437)
+- Add core dump to perform post-mortem analysis of crashes on CI [\#2424](https://github.com/nebulastream/nebulastream/issues/2424)
+- query-deployment-test fails [\#2420](https://github.com/nebulastream/nebulastream/issues/2420)
+- No Map functions between joins  [\#2359](https://github.com/nebulastream/nebulastream/issues/2359)
+- Randomly-Failing-Test ConcurrentWindowDeploymentTest.testCentralWindowEventTime [\#2258](https://github.com/nebulastream/nebulastream/issues/2258)
+- Bug in window concurrent test [\#2127](https://github.com/nebulastream/nebulastream/issues/2127)
+- Query API: Query construction with multiple Sinks [\#1693](https://github.com/nebulastream/nebulastream/issues/1693)
+- Enable SignatureTest [\#1672](https://github.com/nebulastream/nebulastream/issues/1672)
+
+## [v0.6.103](https://github.com/nebulastream/nebulastream/tree/v0.6.103) (2024-04-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.102...v0.6.103)
+
+**Implemented enhancements:**
+
+- \[TASK\] License missing in CMakeLists [\#4796](https://github.com/nebulastream/nebulastream/issues/4796)
+
+## [v0.6.102](https://github.com/nebulastream/nebulastream/tree/v0.6.102) (2024-04-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.101...v0.6.102)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create custom method of getting windowSize, windowSlide, and timestampFieldName of a WindowType [\#4739](https://github.com/nebulastream/nebulastream/issues/4739)
+
+## [v0.6.101](https://github.com/nebulastream/nebulastream/tree/v0.6.101) (2024-04-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.100...v0.6.101)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ILP does not provide default cost properties [\#4807](https://github.com/nebulastream/nebulastream/issues/4807)
+
+## [v0.6.100](https://github.com/nebulastream/nebulastream/tree/v0.6.100) (2024-04-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.99...v0.6.100)
+
+**Implemented enhancements:**
+
+- \[TASK\] Code quality improvement for nes-data-types [\#4795](https://github.com/nebulastream/nebulastream/issues/4795)
+
+## [v0.6.99](https://github.com/nebulastream/nebulastream/tree/v0.6.99) (2024-04-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.98...v0.6.99)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add a flag to force Ubuntu-22 Dependencies [\#4770](https://github.com/nebulastream/nebulastream/issues/4770)
+- \[TASK\] Code quality improvement for nes-operator [\#4509](https://github.com/nebulastream/nebulastream/issues/4509)
+
+## [v0.6.98](https://github.com/nebulastream/nebulastream/tree/v0.6.98) (2024-04-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.97...v0.6.98)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace identifier types with strong types [\#4693](https://github.com/nebulastream/nebulastream/issues/4693)
+
+## [v0.6.97](https://github.com/nebulastream/nebulastream/tree/v0.6.97) (2024-04-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.96...v0.6.97)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Missing method if built with different CMake Flags [\#4783](https://github.com/nebulastream/nebulastream/issues/4783)
+
+## [v0.6.96](https://github.com/nebulastream/nebulastream/tree/v0.6.96) (2024-04-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.95...v0.6.96)
+
+**Implemented enhancements:**
+
+- \[TASK\] Two UtilityFunctions.hpp [\#4716](https://github.com/nebulastream/nebulastream/issues/4716)
+
+## [v0.6.95](https://github.com/nebulastream/nebulastream/tree/v0.6.95) (2024-04-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.94...v0.6.95)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement piggy-backing [\#4792](https://github.com/nebulastream/nebulastream/issues/4792)
+- \[RELEASE\_TASK\] Topology [\#4185](https://github.com/nebulastream/nebulastream/issues/4185)
+
+## [v0.6.94](https://github.com/nebulastream/nebulastream/tree/v0.6.94) (2024-04-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.93...v0.6.94)
+
+**Implemented enhancements:**
+
+- \[TASK\] Without NES\_DEBUG do not show trace of an error to the user [\#4369](https://github.com/nebulastream/nebulastream/issues/4369)
+
+### Bug Fixes 🐛
+
+- \[BUG\] fix stack trace being printed twice [\#4772](https://github.com/nebulastream/nebulastream/issues/4772)
+
+## [v0.6.93](https://github.com/nebulastream/nebulastream/tree/v0.6.93) (2024-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.92...v0.6.93)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove false-postive CLion nullptr checks guarded by `NES_ASSERT` [\#4786](https://github.com/nebulastream/nebulastream/issues/4786)
+
+## [v0.6.92](https://github.com/nebulastream/nebulastream/tree/v0.6.92) (2024-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.91...v0.6.92)
+
+**Implemented enhancements:**
+
+- \[TASK\] Adding Lukas Schwerdtfeder to PR reviewers [\#4785](https://github.com/nebulastream/nebulastream/issues/4785)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Improve error for wrong timestamp data type for window in query [\#4352](https://github.com/nebulastream/nebulastream/issues/4352)
+
+## [v0.6.91](https://github.com/nebulastream/nebulastream/tree/v0.6.91) (2024-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.90...v0.6.91)
+
+**Implemented enhancements:**
+
+- \[TASK\] E2ETest of Statistics [\#4744](https://github.com/nebulastream/nebulastream/issues/4744)
+- \[TASK\] StatisticCallbackHandler [\#4615](https://github.com/nebulastream/nebulastream/issues/4615)
+- \[TASK\] StatisticManager [\#4614](https://github.com/nebulastream/nebulastream/issues/4614)
+- \[TASK\] StatisticProbeHandler [\#4609](https://github.com/nebulastream/nebulastream/issues/4609)
+
+## [v0.6.90](https://github.com/nebulastream/nebulastream/tree/v0.6.90) (2024-04-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.89...v0.6.90)
+
+### Bug Fixes 🐛
+
+- \[BUG\] The master branch does not compile on macOS [\#4717](https://github.com/nebulastream/nebulastream/issues/4717)
+
 ## [v0.6.89](https://github.com/nebulastream/nebulastream/tree/v0.6.89) (2024-04-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.88...v0.6.89)

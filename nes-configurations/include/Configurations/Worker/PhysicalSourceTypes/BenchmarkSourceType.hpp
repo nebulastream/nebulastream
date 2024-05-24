@@ -41,7 +41,9 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param taskQueueId the id to which queue we put buffers of this urce
      * @return a constructed BenchmarkSourceType
      */
-    static BenchmarkSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
+    static BenchmarkSourceTypePtr create(const std::string& logicalSourceName,
+                                         const std::string& physicalSourceName,
+                                         uint8_t* memoryArea,
                                          size_t memoryAreaSize,
                                          uint64_t numberOfBuffersToProduce,
                                          uint64_t gatheringValue,
@@ -84,7 +86,9 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param sourceAffinity the source affinity
      * @param taskQueueId: taskQueueId
      */
-    explicit BenchmarkSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
+    explicit BenchmarkSourceType(const std::string& logicalSourceName,
+                                 const std::string& physicalSourceName,
+                                 uint8_t* memoryArea,
                                  size_t memoryAreaSize,
                                  uint64_t numBuffersToProduce,
                                  uint64_t gatheringValue,
@@ -103,4 +107,4 @@ class BenchmarkSourceType : public PhysicalSourceType {
     uint64_t taskQueueId;
 };
 }// namespace NES
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_

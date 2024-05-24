@@ -14,7 +14,7 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ONNX/ONNXInferenceOperator.hpp>
 #include <Execution/Operators/ONNX/ONNXInferenceOperatorHandler.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <Util/Logger/Logger.hpp>

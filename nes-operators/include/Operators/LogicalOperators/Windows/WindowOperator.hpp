@@ -31,8 +31,8 @@ using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator {
   public:
     WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition,
-                       OperatorId id,
-                       OriginId originId = INVALID_ORIGIN_ID);
+                   OperatorId id,
+                   OriginId originId = INVALID_ORIGIN_ID);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDescriptorPtr
@@ -43,7 +43,7 @@ class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOpe
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
 
     /**
      * @brief Sets the new origin id also to the window definition
@@ -57,4 +57,4 @@ class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOpe
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_

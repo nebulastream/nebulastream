@@ -34,8 +34,7 @@ WorkerId SourceCatalogEntry::getTopologyNodeId() const { return topologyNodeId; 
 
 std::string SourceCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource
-       << " on node=" + std::to_string(topologyNodeId);
+    ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
     return ss.str();
 }
 }// namespace NES::Catalogs::Source

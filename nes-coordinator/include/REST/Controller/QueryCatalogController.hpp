@@ -111,7 +111,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/status", getStatusOfQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             NES_DEBUG("Get current status of the query");
-            auto response = queryCatalog->getQueryEntry(queryId);
+            auto response = queryCatalog->getQueryEntry(QueryId(queryId));
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -124,18 +124,21 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
         try {
             NES_DEBUG("getNumberOfProducedBuffers called");
             //Prepare Input query from user string
-            auto sharedQueryId = queryCatalog->getLinkedSharedQueryId(queryId);
+            auto sharedQueryId = queryCatalog->getLinkedSharedQueryId(QueryId(queryId));
             if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
                 return errorHandler->handleError(Status::CODE_404, "no query found with ID: " + std::to_string(queryId));
             }
             uint64_t processedBuffers = 0;
             if (auto shared_back_reference = coordinator.lock()) {
-                std::vector<Runtime::QueryStatisticsPtr> statistics = shared_back_reference->getQueryStatistics(sharedQueryId);
+                std::vector<Runtime::QueryStatisticsPtr> statistics =
+                    shared_back_reference->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));
                 if (statistics.empty()) {
                     return errorHandler->handleError(Status::CODE_404,
                                                      "no statistics available for query with ID: " + std::to_string(queryId));
                 }
-                processedBuffers = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers();
+                processedBuffers =
+                    shared_back_reference->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId))[0]
+                        ->getProcessedBuffers();
             }
             nlohmann::json response;
             response["producedBuffers"] = processedBuffers;

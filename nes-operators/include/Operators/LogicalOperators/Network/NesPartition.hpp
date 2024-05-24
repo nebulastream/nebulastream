@@ -15,23 +15,29 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <cstdint>
-#include <string>
 #include <fmt/core.h>
+#include <string>
 
 namespace NES::Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
+static constexpr PartitionId DEFAULT_PARTITION_ID = PartitionId(0);
+static constexpr SubpartitionId DEFAULT_SUBPARTITION_ID = SubpartitionId(0);
 
 class NesPartition {
   public:
-    explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId);
+    explicit NesPartition(SharedQueryId sharedQueryId,
+                          OperatorId operatorId,
+                          PartitionId partitionId,
+                          SubpartitionId subpartitionId);
 
     /**
      * @brief getter for the queryId
      * @return the queryId
      */
-    [[nodiscard]] QueryId getQueryId() const;
+    [[nodiscard]] SharedQueryId getQueryId() const;
 
     /**
      * @brief getter for the operatorId
@@ -66,7 +72,7 @@ class NesPartition {
     friend bool operator<(const NesPartition& lhs, const NesPartition& rhs);
 
   private:
-    QueryId queryId;
+    SharedQueryId sharedQueryId;
     OperatorId operatorId;
     PartitionId partitionId;
     SubpartitionId subpartitionId;
@@ -86,4 +92,4 @@ struct formatter<NES::Network::NesPartition> : formatter<std::string> {
     auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
 };
 }//namespace fmt
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_

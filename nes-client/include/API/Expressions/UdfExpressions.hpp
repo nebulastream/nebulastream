@@ -15,7 +15,7 @@
 #define NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 
 #include <API/Expressions/Expressions.hpp>
-#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <memory>
 
 namespace NES {

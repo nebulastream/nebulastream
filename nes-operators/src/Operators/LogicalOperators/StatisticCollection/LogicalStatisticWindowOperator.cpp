@@ -13,9 +13,8 @@
 */
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <numeric>
 #include <utility>
 
 namespace NES::Statistic {
@@ -23,11 +22,15 @@ namespace NES::Statistic {
 LogicalStatisticWindowOperator::LogicalStatisticWindowOperator(OperatorId id,
                                                                Windowing::WindowTypePtr windowType,
                                                                WindowStatisticDescriptorPtr windowStatisticDescriptor,
-                                                               MetricHash metricHash)
+                                                               StatisticMetricHash metricHash,
+                                                               SendingPolicyPtr sendingPolicy,
+                                                               TriggerConditionPtr triggerCondition)
     : Operator(id), LogicalUnaryOperator(id), windowType(std::move(windowType)),
-      windowStatisticDescriptor(std::move(windowStatisticDescriptor)), metricHash(metricHash) {}
+      windowStatisticDescriptor(std::move(windowStatisticDescriptor)), metricHash(metricHash), sendingPolicy(sendingPolicy),
+      triggerCondition(triggerCondition) {}
 
 bool LogicalStatisticWindowOperator::inferSchema() {
+    using enum BasicType;
     if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
@@ -39,11 +42,11 @@ bool LogicalStatisticWindowOperator::inferSchema() {
     // Creating output schema
     const auto qualifierNameWithSeparator = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     outputSchema->clear();
-    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_START, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_END, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_START, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_END, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME, UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME, UINT64);
     windowStatisticDescriptor->addDescriptorFields(*outputSchema, qualifierNameWithSeparator);
 
     NES_DEBUG("OutputSchema is = {}", outputSchema->toString());
@@ -54,10 +57,10 @@ bool LogicalStatisticWindowOperator::inferSchema() {
 bool LogicalStatisticWindowOperator::equal(const NodePtr& rhs) const {
     if (rhs->instanceOf<LogicalStatisticWindowOperator>()) {
         auto rhsStatisticOperatorNode = rhs->as<LogicalStatisticWindowOperator>();
-        return windowType->equal(rhsStatisticOperatorNode->windowType)
-            && statisticId == rhsStatisticOperatorNode->statisticId
+        return windowType->equal(rhsStatisticOperatorNode->windowType) && statisticId == rhsStatisticOperatorNode->statisticId
             && windowStatisticDescriptor->equal(rhsStatisticOperatorNode->windowStatisticDescriptor)
-            && metricHash == rhsStatisticOperatorNode->metricHash;
+            && metricHash == rhsStatisticOperatorNode->metricHash && *sendingPolicy == *rhsStatisticOperatorNode->sendingPolicy
+            && *triggerCondition == *rhsStatisticOperatorNode->triggerCondition;
     }
     return false;
 }
@@ -67,17 +70,25 @@ bool LogicalStatisticWindowOperator::isIdentical(const NodePtr& rhs) const {
 }
 
 std::string LogicalStatisticWindowOperator::toString() const {
-    std::ostringstream oss;
-    oss << "LogicalStatisticWindowOperator(" << id << ", " << statisticId << "): ";
-    oss << "Windowtype: " << windowType->toString() << std::endl;
-    oss << "Descriptor: " << windowStatisticDescriptor->toString();
-    oss << "MetricHash: " << metricHash;
-
-    return oss.str();
+    return fmt::format("LogicalStatisticWindowOperator({}, {}): Windowtype: {} Descriptor: {} InputOriginIds: {} MetricHash: {} "
+                       "SendingPolicy: {} TriggerCondition: {}",
+                       id,
+                       statisticId,
+                       windowType->toString(),
+                       windowStatisticDescriptor->toString(),
+                       fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "),
+                       metricHash,
+                       sendingPolicy->toString(),
+                       triggerCondition->toString());
 }
 
 OperatorPtr LogicalStatisticWindowOperator::copy() {
-    auto copy = LogicalOperatorFactory::createStatisticBuildOperator(windowType, windowStatisticDescriptor, id);
+    auto copy = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
+                                                                     windowStatisticDescriptor,
+                                                                     metricHash,
+                                                                     sendingPolicy,
+                                                                     triggerCondition,
+                                                                     id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -86,7 +97,7 @@ OperatorPtr LogicalStatisticWindowOperator::copy() {
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
     copy->setInputOriginIds(inputOriginIds);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -97,6 +108,10 @@ Windowing::WindowTypePtr LogicalStatisticWindowOperator::getWindowType() const {
 WindowStatisticDescriptorPtr LogicalStatisticWindowOperator::getWindowStatisticDescriptor() const {
     return windowStatisticDescriptor;
 }
+
+SendingPolicyPtr LogicalStatisticWindowOperator::getSendingPolicy() const { return sendingPolicy; }
+
+TriggerConditionPtr LogicalStatisticWindowOperator::getTriggerCondition() const { return triggerCondition; }
 
 void LogicalStatisticWindowOperator::inferStringSignature() {
     auto op = shared_from_this()->as<Operator>();
@@ -110,6 +125,6 @@ void LogicalStatisticWindowOperator::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-MetricHash LogicalStatisticWindowOperator::getMetricHash() const { return metricHash; }
+StatisticMetricHash LogicalStatisticWindowOperator::getMetricHash() const { return metricHash; }
 
 }// namespace NES::Statistic

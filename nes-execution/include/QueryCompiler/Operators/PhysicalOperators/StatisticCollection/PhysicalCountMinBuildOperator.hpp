@@ -14,21 +14,21 @@
 
 #ifndef NES_NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALCOUNTMINBUILDOPERATOR_HPP_
 #define NES_NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALCOUNTMINBUILDOPERATOR_HPP_
-#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalSynopsisBuildOperator.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalSynopsisBuildOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physicaloperator for a CountMinBuild operator
  */
-class PhysicalCountMinBuildOperator : public PhysicalSynopsisBuildOperator, public PhysicalUnaryOperator, public AbstractEmitOperator{
+class PhysicalCountMinBuildOperator : public PhysicalSynopsisBuildOperator,
+                                      public PhysicalUnaryOperator,
+                                      public AbstractEmitOperator {
   public:
-
     /**
      * @brief Creates a PhysicalCountMinBuildOperator
      * @param id
@@ -50,7 +50,7 @@ class PhysicalCountMinBuildOperator : public PhysicalSynopsisBuildOperator, publ
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
                                       const uint64_t depth,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy);
 
@@ -73,7 +73,7 @@ class PhysicalCountMinBuildOperator : public PhysicalSynopsisBuildOperator, publ
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
                                       const uint64_t depth,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy);
 
@@ -89,7 +89,7 @@ class PhysicalCountMinBuildOperator : public PhysicalSynopsisBuildOperator, publ
                                   const std::string& nameOfFieldToTrack,
                                   const uint64_t width,
                                   const uint64_t depth,
-                                  const Statistic::MetricHash metricHash,
+                                  const Statistic::StatisticMetricHash metricHash,
                                   const Windowing::WindowTypePtr windowType,
                                   const Statistic::SendingPolicyPtr sendingPolicy);
 

@@ -44,7 +44,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
 
     // TODO as part of issue #4699, we will solve this better
     QueryState sharedQueryState = QueryState::REGISTERED;
-    SharedQueryId sharedQueryId;
+    SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
     std::vector<RpcAsyncRequest> asyncRequests;
     for (const auto& deploymentContext : deploymentContexts) {
         auto queueForDeploymentContext = std::make_shared<CompletionQueue>();

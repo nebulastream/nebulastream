@@ -16,7 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 
 #include <Exceptions/RequestExecutionException.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
 

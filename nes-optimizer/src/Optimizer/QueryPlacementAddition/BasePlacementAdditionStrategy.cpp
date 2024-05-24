@@ -58,7 +58,7 @@ void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalO
                 "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
                 + pinnedOperator->toString());
         }
-        WorkerId workerId = std::any_cast<uint64_t>(value);
+        WorkerId workerId = std::any_cast<WorkerId>(value);
         //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
         // two physical sources located on same physical node)
         pinnedUpStreamTopologyNodeIds.emplace(workerId);
@@ -72,7 +72,7 @@ void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalO
                 "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
                 + pinnedOperator->toString());
         }
-        WorkerId workerId = std::any_cast<uint64_t>(value);
+        WorkerId workerId = std::any_cast<WorkerId>(value);
         pinnedDownStreamTopologyNodeIds.emplace(workerId);
     }
 
@@ -344,7 +344,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
         //Add operator to processed operator set
         operatorIdToCopiedOperatorMap[operatorId] = pinnedOperator;
         auto copyOfPinnedOperator = pinnedOperator->copy()->as<LogicalOperator>();// Make a copy of the operator
-        auto pinnedWorkerId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_WORKER_ID));
+        auto pinnedWorkerId = std::any_cast<WorkerId>(pinnedOperator->getProperty(PINNED_WORKER_ID));
         if (pinnedOperator->getOperatorState() == OperatorState::TO_BE_PLACED
             || pinnedOperator->getOperatorState() == OperatorState::TO_BE_REPLACED) {
             workerIdToResourceConsumedMap[pinnedWorkerId]++;
@@ -353,7 +353,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
         // 2.2. If the pinnedWorkerId has already placed query sub plans then compute an updated list of query sub plans
         if (computedDecomposedQueryPlans.contains(pinnedWorkerId)) {
             // 2.2.1. Prepare an updated list of query sub plans and a new placed query plan for the operator under
-            // considersation
+            // consideration
             std::vector<DecomposedQueryPlanPtr> updatedDecomposedQueryPlans;
             DecomposedQueryPlanPtr newDecomposedQueryPlan;
 
@@ -438,7 +438,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
             if (!newDecomposedQueryPlan) {
                 if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                     // Create a temporary query sub plans for the operator as it might need to be merged with another query
-                    // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
+                    // sub plan that is already placed on the execution node. Thus, we assign it an invalid sub query plan id.
                     newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                                          sharedQueryId,
                                                                          pinnedWorkerId,
@@ -462,7 +462,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
             DecomposedQueryPlanPtr newDecomposedQueryPlan;
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
-                // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
+                // sub plan that is already placed on the execution node. Thus, we assign it an invalid sub query plan id.
                 newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                                      sharedQueryId,
                                                                      pinnedWorkerId,
@@ -1121,14 +1121,14 @@ TopologyNodePtr BasePlacementAdditionStrategy::getTopologyNode(WorkerId workerId
     NES_TRACE("Get the topology node {}", workerId);
     if (!workerIdToTopologyNodeMap.contains(workerId)) {
         NES_ERROR("Topology node with id {} not considered during the path selection phase.", workerId);
-        throw Exceptions::RuntimeException("Topology node with id " + std::to_string(workerId)
+        throw Exceptions::RuntimeException("Topology node with id " + workerId.toString()
                                            + " not considered during the path selection phase.");
     }
 
     return workerIdToTopologyNodeMap[workerId];
 }
 
-LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(QueryId queryId,
+LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(SharedQueryId sharedQueryId,
                                                                             OperatorId sourceOperatorId,
                                                                             const TopologyNodePtr& sourceTopologyNode) {
 
@@ -1136,7 +1136,10 @@ LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(Quer
     Network::NodeLocation nodeLocation(sourceTopologyNode->getId(),
                                        sourceTopologyNode->getIpAddress(),
                                        sourceTopologyNode->getDataPort());
-    Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
+    Network::NesPartition nesPartition(sharedQueryId,
+                                       sourceOperatorId,
+                                       Network::DEFAULT_PARTITION_ID,
+                                       Network::DEFAULT_SUBPARTITION_ID);
     DecomposedQueryPlanVersion sinkVersion = 0;
     OperatorId id = getNextOperatorId();
     auto numberOfOrigins = 0;
@@ -1147,19 +1150,21 @@ LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(Quer
                                                                                              sinkVersion,
                                                                                              numberOfOrigins,
                                                                                              id),
+                                                      INVALID_WORKER_NODE_ID,
                                                       id);
 }
 
-LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSourceOperator(QueryId queryId,
+LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSourceOperator(SharedQueryId sharedQueryId,
                                                                               SchemaPtr inputSchema,
                                                                               OperatorId operatorId,
                                                                               const TopologyNodePtr& sinkTopologyNode) {
     NES_TRACE("create Network Source operator");
-    NES_ASSERT2_FMT(sinkTopologyNode, "Invalid sink node while placing query " << queryId);
+    NES_ASSERT2_FMT(sinkTopologyNode, "Invalid sink node while placing query " << sharedQueryId);
     Network::NodeLocation upstreamNodeLocation(sinkTopologyNode->getId(),
                                                sinkTopologyNode->getIpAddress(),
                                                sinkTopologyNode->getDataPort());
-    const Network::NesPartition nesPartition = Network::NesPartition(queryId, operatorId, 0, 0);
+    const Network::NesPartition nesPartition =
+        Network::NesPartition(sharedQueryId, operatorId, Network::DEFAULT_PARTITION_ID, Network::DEFAULT_SUBPARTITION_ID);
     const SourceDescriptorPtr& networkSourceDescriptor = Network::NetworkSourceDescriptor::create(std::move(inputSchema),
                                                                                                   nesPartition,
                                                                                                   upstreamNodeLocation,
@@ -1181,7 +1186,7 @@ BasePlacementAdditionStrategy::getTopologyNodesForChildrenOperators(const Logica
             return {};
         }
         TopologyNodePtr childTopologyNode =
-            workerIdToTopologyNodeMap[std::any_cast<uint64_t>(child->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID))];
+            workerIdToTopologyNodeMap[std::any_cast<WorkerId>(child->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID))];
 
         auto existingNode =
             std::find_if(childTopologyNodes.begin(), childTopologyNodes.end(), [&childTopologyNode](const auto& node) {

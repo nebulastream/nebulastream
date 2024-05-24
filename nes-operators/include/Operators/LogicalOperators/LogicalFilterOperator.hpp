@@ -37,7 +37,7 @@ class LogicalFilterOperator : public LogicalUnaryOperator {
      * @param newPredicate the predicate which will be the new predicate of the filter
      */
     void setPredicate(ExpressionNodePtr newPredicate);
-    float getSelectivity();
+    float getSelectivity() const;
     void setSelectivity(float newSelectivity);
 
     /**
@@ -63,12 +63,12 @@ class LogicalFilterOperator : public LogicalUnaryOperator {
      * @brief returns the names of every attribute that is accessed in the predicate of this filter
      * @return a vector containing every attribute name that is accessed by the predicate
      */
-    std::vector<std::string> getFieldNamesUsedByFilterPredicate();
+    std::vector<std::string> getFieldNamesUsedByFilterPredicate() const;
 
   private:
     ExpressionNodePtr predicate;
-    float selectivity;
+    float selectivity = 1.0f;
 };
 
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALFILTEROPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALFILTEROPERATOR_HPP_

@@ -13,27 +13,26 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/ExpressionNode.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Windowing {
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {
+MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(field) {
     this->aggregationType = Type::Max;
 }
 
 MaxAggregationDescriptor::MaxAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    : WindowAggregationDescriptor(field, asField) {
     this->aggregationType = Type::Max;
 }
 
 WindowAggregationDescriptorPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                      FieldAccessExpressionNodePtr asField) {
-    return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(std::move(onField), std::move(asField)));
+                                                                FieldAccessExpressionNodePtr asField) {
+    return std::make_shared<MaxAggregationDescriptor>(std::move(onField), std::move(asField));
 }
 
 WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
@@ -44,10 +43,9 @@ WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const ExpressionNode
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
-void MaxAggregationDescriptor::inferStamp(
-                                          SchemaPtr schema) {
+void MaxAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp( schema);
+    onField->inferStamp(schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
@@ -68,7 +66,7 @@ void MaxAggregationDescriptor::inferStamp(
 }
 
 WindowAggregationDescriptorPtr MaxAggregationDescriptor::copy() {
-    return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+    return std::make_shared<MaxAggregationDescriptor>(this->onField->copy(), this->asField->copy());
 }
 
 DataTypePtr MaxAggregationDescriptor::getInputStamp() { return onField->getStamp(); }

@@ -32,9 +32,9 @@ struct VersionUpdate {
 };
 
 NetworkSink::NetworkSink(const SchemaPtr& schema,
-                         uint64_t uniqueNetworkSinkDescriptorId,
-                         QueryId queryId,
-                         DecomposedQueryPlanId querySubPlanId,
+                         OperatorId uniqueNetworkSinkDescriptorId,
+                         SharedQueryId sharedQueryId,
+                         DecomposedQueryPlanId decomposedQueryPlanId,
                          const NodeLocation& destination,
                          NesPartition nesPartition,
                          Runtime::NodeEnginePtr nodeEngine,
@@ -47,8 +47,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
         numOfProducers,
-        queryId,
-        querySubPlanId,
+        sharedQueryId,
+        decomposedQueryPlanId,
         numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
@@ -78,7 +78,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
                         "Trying to write to invalid channel while no connection is in progress");
 
-        //check if connection was established and buffer it is has not yest been established
+        //check if connection was established and buffer it has not yest been established
         if (!retrieveNewChannelAndUnbuffer(workerContext)) {
             NES_TRACE("context {} buffering data", workerContext.getId());
             workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);

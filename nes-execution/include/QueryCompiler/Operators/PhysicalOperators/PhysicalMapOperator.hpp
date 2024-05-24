@@ -33,8 +33,10 @@ class PhysicalMapOperator : public PhysicalUnaryOperator {
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const FieldAssignmentExpressionNodePtr& mapExpression);
-    static PhysicalOperatorPtr
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
+                                      FieldAssignmentExpressionNodePtr mapExpression);
     std::string toString() const override;
     OperatorPtr copy() override;
 
@@ -49,4 +51,4 @@ class PhysicalMapOperator : public PhysicalUnaryOperator {
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPOPERATOR_HPP_

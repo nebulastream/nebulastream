@@ -13,25 +13,24 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/ExpressionNode.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Windowing {
 
-MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {
+MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(field) {
     this->aggregationType = Type::Min;
 }
 MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    : WindowAggregationDescriptor(field, asField) {
     this->aggregationType = Type::Min;
 }
 
 WindowAggregationDescriptorPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                      FieldAccessExpressionNodePtr asField) {
+                                                                FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -47,10 +46,9 @@ DataTypePtr MinAggregationDescriptor::getInputStamp() { return onField->getStamp
 DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp() { return onField->getStamp(); }
 DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp() { return onField->getStamp(); }
 
-void MinAggregationDescriptor::inferStamp(
-                                          SchemaPtr schema) {
+void MinAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp( schema);
+    onField->inferStamp(schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

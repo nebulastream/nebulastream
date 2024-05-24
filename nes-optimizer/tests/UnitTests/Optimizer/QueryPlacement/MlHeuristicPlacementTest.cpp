@@ -28,7 +28,7 @@
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -37,8 +37,11 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-
 #include <Services/RequestHandlerService.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <z3++.h>
@@ -54,6 +57,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
     NES::Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -82,7 +86,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         std::vector<int> sources{8, 9, 10, 11, 12};
 
         for (int i = 0; i < (int) resources.size(); i++) {
-            WorkerId workerId = i + 1;
+            auto workerId = WorkerId(i + 1);
 
             std::map<std::string, std::any> properties;
             properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -101,8 +105,8 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
             if (i == 0) {
                 topology->addAsRootWorkerId(workerId);
             } else if (i > 1) {
-                topology->addTopologyNodeAsChild(workerId - 1, workerId);
-                topology->removeTopologyNodeAsChild(1, workerId);
+                topology->addTopologyNodeAsChild(WorkerId(workerId.getRawValue() - 1), workerId);
+                topology->removeTopologyNodeAsChild(WorkerId(1), workerId);
             }
         }
 
@@ -136,12 +140,17 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         auto physicalSource = PhysicalSource::create(csvSourceType);
 
         for (int source : sources) {
-            auto streamCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, source + 1);
+            auto streamCatalogEntry =
+                Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(source + 1));
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         Topology::create());
     }
 };
 
@@ -170,7 +179,10 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                             sourceCatalog,
+                                                             Configurations::OptimizerConfiguration(),
+                                                             statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -203,23 +215,23 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     uint64_t totalQuerySubPlansOnNode11 = 3;
     uint64_t totalQuerySubPlansOnNode12 = 2;
     uint64_t totalQuerySubPlansOnNode13 = 1;
-    std::vector<uint64_t> querySubPlanSizeCompare = {totalQuerySubPlansOnNode1,
-                                                     totalQuerySubPlansOnNode2,
-                                                     totalQuerySubPlansOnNode3,
-                                                     totalQuerySubPlansOnNode4,
-                                                     totalQuerySubPlansOnNode5,
-                                                     totalQuerySubPlansOnNode6,
-                                                     totalQuerySubPlansOnNode7,
-                                                     totalQuerySubPlansOnNode8,
-                                                     totalQuerySubPlansOnNode9,
-                                                     totalQuerySubPlansOnNode10,
-                                                     totalQuerySubPlansOnNode11,
-                                                     totalQuerySubPlansOnNode12,
-                                                     totalQuerySubPlansOnNode13};
+    std::vector querySubPlanSizeCompare = {totalQuerySubPlansOnNode1,
+                                           totalQuerySubPlansOnNode2,
+                                           totalQuerySubPlansOnNode3,
+                                           totalQuerySubPlansOnNode4,
+                                           totalQuerySubPlansOnNode5,
+                                           totalQuerySubPlansOnNode6,
+                                           totalQuerySubPlansOnNode7,
+                                           totalQuerySubPlansOnNode8,
+                                           totalQuerySubPlansOnNode9,
+                                           totalQuerySubPlansOnNode10,
+                                           totalQuerySubPlansOnNode11,
+                                           totalQuerySubPlansOnNode12,
+                                           totalQuerySubPlansOnNode13};
     for (const auto& executionNode : executionNodes) {
         auto querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
         NES_INFO("Worker Id {} ", executionNode->operator*()->getId());
-        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->operator*()->getId() - 1]);
+        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->operator*()->getId().getRawValue() - 1]);
         auto querySubPlan = querySubPlans[0];
         std::vector<OperatorPtr> actualRootOperators = querySubPlan->getRootOperators();
         EXPECT_EQ(actualRootOperators.size(), 1U);

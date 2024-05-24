@@ -19,7 +19,9 @@
 
 namespace NES {
 
-ArrowSourceTypePtr ArrowSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig) {
+ArrowSourceTypePtr ArrowSourceType::create(const std::string& logicalSourceName,
+                                           const std::string& physicalSourceName,
+                                           const Yaml::Node& yamlConfig) {
     return std::make_shared<ArrowSourceType>(ArrowSourceType(logicalSourceName, physicalSourceName, yamlConfig));
 }
 
@@ -38,12 +40,8 @@ ArrowSourceType::ArrowSourceType(const std::string& logicalSourceName, const std
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
                                                                         "file path, needed for: ArrowSource.")),
-      skipHeader(Configurations::ConfigurationOption<bool>::create(Configurations::SKIP_HEADER_CONFIG,
-                                                                   false,
-                                                                   "CSV skip header")),
-      delimiter(Configurations::ConfigurationOption<std::string>::create(Configurations::DELIMITER_CONFIG,
-                                                                  ",",
-                                                                  "CSV delimiter")),
+      skipHeader(Configurations::ConfigurationOption<bool>::create(Configurations::SKIP_HEADER_CONFIG, false, "CSV skip header")),
+      delimiter(Configurations::ConfigurationOption<std::string>::create(Configurations::DELIMITER_CONFIG, ",", "CSV delimiter")),
       numberOfBuffersToProduce(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                                                 0,
@@ -98,7 +96,9 @@ ArrowSourceType::ArrowSourceType(const std::string& logicalSourceName,
     }
 }
 
-ArrowSourceType::ArrowSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+ArrowSourceType::ArrowSourceType(const std::string& logicalSourceName,
+                                 const std::string& physicalSourceName,
+                                 Yaml::Node yamlConfig)
     : ArrowSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("ArrowSourceType: Init default Arrow source config object with values from YAML file.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()

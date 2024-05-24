@@ -1,5 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -36,7 +34,7 @@ endforeach ()
 add_custom_command(
         OUTPUT ${OUTPUT_SOURCES}
         COMMAND ${_PROTOBUF_PROTOC}
-        ARGS --grpc_out "${CMAKE_BINARY_DIR}/nes-grpc/"
+        ARGS --grpc_out "generate_mock_code=true:${CMAKE_BINARY_DIR}/nes-grpc/"
         --cpp_out "${CMAKE_BINARY_DIR}/nes-grpc/"
         -I "${PROTO_PATH}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
@@ -75,9 +73,10 @@ target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Identifiers/ Identifiers)
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
-register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Identifiers.hpp Identifiers.hpp)
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Sequencing Sequencing)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/StatisticIdentifiers.hpp StatisticIdentifiers.hpp)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/MetricCollectorType.hpp Util/MetricCollectorType.hpp)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)

@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <sstream>
 #include <utility>
@@ -23,7 +23,7 @@ PhysicalMapOperator::PhysicalMapOperator(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          FieldAssignmentExpressionNodePtr mapExpression)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       mapExpression(std::move(mapExpression)) {}
 
 FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() { return mapExpression; }
@@ -36,8 +36,10 @@ PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id,
     return std::make_shared<PhysicalMapOperator>(id, statisticId, inputSchema, outputSchema, mapExpression);
 }
 
-PhysicalOperatorPtr
-PhysicalMapOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
+PhysicalOperatorPtr PhysicalMapOperator::create(StatisticId statisticId,
+                                                SchemaPtr inputSchema,
+                                                SchemaPtr outputSchema,
+                                                FieldAssignmentExpressionNodePtr mapExpression) {
     return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
 }
 

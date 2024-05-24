@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <condition_variable>
@@ -216,4 +216,4 @@ class QueryCatalog {
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace Catalogs::Query
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_

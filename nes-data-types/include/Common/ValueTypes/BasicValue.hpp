@@ -22,16 +22,16 @@ namespace NES {
 class [[nodiscard]] BasicValue final : public ValueType {
 
   public:
-    [[nodiscard]] inline BasicValue(DataTypePtr&& type, std::string&& value) noexcept
-        : ValueType(std::move(type)), value(std::move(value)) {}
+    [[nodiscard]] inline BasicValue(const DataTypePtr& type, std::string&& value) noexcept
+        : ValueType(type), value(std::move(value)) {}
 
-    ~BasicValue() final = default;
+    ~BasicValue() override = default;
 
     /// @brief Returns a string representation of this value.
-    [[nodiscard]] std::string toString() const noexcept final;
+    [[nodiscard]] std::string toString() const noexcept override;
 
     /// @brief Checks if two values are equal.
-    [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept final;
+    [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept override;
 
     std::string value;
 };

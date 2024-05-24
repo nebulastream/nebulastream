@@ -14,23 +14,22 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES::Windowing {
 
-CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {
+CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(field) {
     this->aggregationType = Type::Count;
 }
 CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    : WindowAggregationDescriptor(field, asField) {
     this->aggregationType = Type::Count;
 }
 
 WindowAggregationDescriptorPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                        FieldAccessExpressionNodePtr asField) {
+                                                                  FieldAccessExpressionNodePtr asField) {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 

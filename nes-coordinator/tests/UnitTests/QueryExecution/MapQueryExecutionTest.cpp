@@ -62,8 +62,8 @@ class MapQueryExecutionTest
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
-    static constexpr uint64_t defaultSharedQueryId = 0;
+    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 
     // The following methods create the test data for the parameterized test.
     // The test data is a four-tuple which contains the nautilus compiler, the name of the test,

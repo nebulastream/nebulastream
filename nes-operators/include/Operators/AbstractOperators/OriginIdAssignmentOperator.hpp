@@ -14,8 +14,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
 
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
 /**
@@ -38,7 +38,7 @@ class OriginIdAssignmentOperator : public virtual Operator {
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    virtual const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
 
     /**
      * @brief Sets the origin id, which is used from this operator as an output
@@ -57,4 +57,4 @@ class OriginIdAssignmentOperator : public virtual Operator {
 };
 }// namespace NES
 // namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_

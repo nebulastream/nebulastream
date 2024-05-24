@@ -23,30 +23,29 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/WindowType.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -253,7 +252,7 @@ TEST_F(QueryAPITest, testQueryExpression) {
  */
 TEST_F(QueryAPITest, windowAggregationWithAs) {
 
-    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, 1);
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(1));
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addPhysicalSource("default_logical", sce);
@@ -429,6 +428,81 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
 
     SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
     EXPECT_EQ(sinkOperators2.size(), 1U);
+}
+
+/*
+ * @brief Test for Sequence-Operator (seqWith) with two sources.
+ * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
+ * Query: SEQ(A,B) WITHIN 2 minutes
+ */
+TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+
+    // Query: SEQ(A,B) WITHIN 2 minutes
+    auto querySeq = Query::from("default_logical")// A in query
+                        .seqWith(subQueryB)
+                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                        .sink(PrintSinkDescriptor::create());
+    // create query with joinWith-operator instead of seqWith for comparison
+    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
+    auto queryJoin = Query::from("default_logical")                   // A in query
+                         .map(Attribute("cep_leftKey") = 1)
+                         .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
+                         .where(Attribute("cep_leftKey"))
+                         .equalsTo(Attribute("cep_rightKey"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .sink(PrintSinkDescriptor::create());
+    auto seqPlan = querySeq.getQueryPlan();
+    auto joinPlan = queryJoin.getQueryPlan();
+    // compare if seq- and join-plan are equal
+    EXPECT_TRUE(seqPlan->compare(joinPlan));
+}
+
+/*
+ * @brief Test for Sequence-Operator (seqWith) with three sources.
+ * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
+ * Query: SEQ(A,B,C) WITHIN 2 minutes
+ */
+TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+    auto subQueryC = Query::from("default_logical").filter(lessExpression);// C in query
+
+    // Query: SEQ(A,B,C) WITHIN 2 minutes
+    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
+    auto querySeq = Query::from("default_logical")                    // A in query
+                        .seqWith(subQueryB)
+                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                        .seqWith(subQueryC)
+                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                        .sink(PrintSinkDescriptor::create());
+    // reset input streams
+    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
+    subQueryC = Query::from("default_logical").filter(lessExpression);// reset C
+    auto queryJoin = Query::from("default_logical")                   // A in query
+                         // create seqWith B
+                         .map(Attribute("cep_leftKey") = 1)
+                         .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
+                         .where(Attribute("cep_leftKey"))
+                         .equalsTo(Attribute("cep_rightKey"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         // create seqWith C
+                         .map(Attribute("cep_leftKey") = 1)
+                         .joinWith(subQueryC.map(Attribute("cep_rightKey") = 1))
+                         .where(Attribute("cep_leftKey"))
+                         .equalsTo(Attribute("cep_rightKey"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .sink(PrintSinkDescriptor::create());
+    auto seqPlan = querySeq.getQueryPlan();
+    auto joinPlan = queryJoin.getQueryPlan();
+    // compare if seq- and join-plan are equal
+    EXPECT_TRUE(seqPlan->compare(joinPlan));
 }
 
 }// namespace NES

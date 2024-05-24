@@ -76,7 +76,7 @@ bool TopologyNode::occupySlots(uint16_t occupySlots) {
               workerId,
               occupiedSlots,
               totalSlots);
-    if(occupySlots > (totalSlots - occupiedSlots)) {
+    if (occupySlots > (totalSlots - occupiedSlots)) {
         NES_WARNING("Amount of resources to be used should not be more than available resources.");
         return false;
     }
@@ -104,10 +104,11 @@ TopologyNodePtr TopologyNode::copy() {
 std::string TopologyNode::getIpAddress() const { return ipAddress; }
 
 std::string TopologyNode::toString() const {
-    std::stringstream ss;
-    ss << "PhysicalNode[id=" + std::to_string(workerId) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(totalSlots)
-            + ", usedResource=" + std::to_string(occupiedSlots) + "]";
-    return ss.str();
+    return fmt::format("PhysicalNode[id={}, ip={}, resourceCapacity={}, usedResource={}]",
+                       workerId,
+                       ipAddress,
+                       totalSlots,
+                       occupiedSlots);
 }
 
 bool TopologyNode::containAsParent(NodePtr parentTopologyNode) {

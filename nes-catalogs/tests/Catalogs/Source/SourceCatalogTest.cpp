@@ -28,6 +28,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <gmock/gmock-more-matchers.h>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -76,6 +77,38 @@ TEST_F(SourceCatalogTest, testAddGetLogSource) {
     EXPECT_EQ(exp, defaultSchema->toString());
 }
 
+TEST_F(SourceCatalogTest, testRemovalOfAllPhysicalSourcesByWorkerId) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    sourceCatalog->addLogicalSource("test_stream", Schema::create());
+    auto logicalSource = sourceCatalog->getLogicalSource("test_stream");
+
+    auto registerPhysicalSource = [&](const std::string& phyName, WorkerId workerId) {
+        sourceCatalog->addPhysicalSource("test_stream",
+                                         Catalogs::Source::SourceCatalogEntry::create(
+                                             PhysicalSource::create(DefaultSourceType::create("test_stream", phyName)),
+                                             logicalSource,
+                                             workerId));
+    };
+
+    registerPhysicalSource("test_stream_1", WorkerId(1));
+    registerPhysicalSource("test_stream_2", WorkerId(1));
+    registerPhysicalSource("test_stream_3", WorkerId(1));
+    registerPhysicalSource("test_stream_4", WorkerId(1));
+    registerPhysicalSource("test_stream_5", WorkerId(3));
+    registerPhysicalSource("test_stream_6", WorkerId(2));
+    registerPhysicalSource("test_stream_7", WorkerId(2));
+
+    EXPECT_THAT(sourceCatalog->getPhysicalSources("test_stream"), ::testing::SizeIs(7));
+    EXPECT_EQ(sourceCatalog->removeAllPhysicalSourcesByWorker(WorkerId(1)), 4);
+    EXPECT_THAT(sourceCatalog->getPhysicalSources("test_stream"), ::testing::SizeIs(3));
+    EXPECT_EQ(sourceCatalog->removeAllPhysicalSourcesByWorker(WorkerId(2)), 2);
+    EXPECT_THAT(sourceCatalog->getPhysicalSources("test_stream"), ::testing::SizeIs(1));
+    EXPECT_EQ(sourceCatalog->getPhysicalSources("test_stream")[0]->getTopologyNodeId(), WorkerId(3));
+    EXPECT_EQ(sourceCatalog->getPhysicalSources("test_stream")[0]->getPhysicalSource()->getPhysicalSourceName(), "test_stream_5");
+    EXPECT_EQ(sourceCatalog->removeAllPhysicalSourcesByWorker(WorkerId(3)), 1);
+    EXPECT_THAT(sourceCatalog->getPhysicalSources("test_stream"), ::testing::IsEmpty());
+}
+
 TEST_F(SourceCatalogTest, testAddRemoveLogSource) {
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
 
@@ -104,14 +137,13 @@ TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
 }
@@ -125,14 +157,13 @@ TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
     EXPECT_TRUE(sourceCatalog->removePhysicalSource(physicalSource->getLogicalSourceName(),
@@ -147,14 +178,13 @@ TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
 }
@@ -182,14 +212,13 @@ TEST_F(SourceCatalogTest, testGetPhysicalSourceForLogicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto sce =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     EXPECT_TRUE(sourceCatalog->addPhysicalSource(logicalSource->getLogicalSourceName(), sce));
     const vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSources =

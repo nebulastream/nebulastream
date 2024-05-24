@@ -21,14 +21,17 @@ option java_package = "stream.nebula.protobuf";
 option java_multiple_files = true;
 
 message SendingPolicyMessage {
-  /* For now, we do not have any members, but we might have to add some variable here. Thus, we already create the
-     infrastructure for the SendingPolicy
-  */
+  enum StatisticDataCodec {
+    // Has to be exactly the same as the cpp version, as we merely do a cast from the enum to the int during serialization
+    DEFAULT = 0;
+    RUN_LENGTH_ENCODED = 1;
+  }
   message SendingPolicyASAP {}
   message SendingPolicyAdaptive {}
   message SendingPolicyLazy {}
 
   google.protobuf.Any details = 1;
+  StatisticDataCodec codec = 2;
 }
 
 message TriggerConditionMessage {
@@ -52,8 +55,6 @@ message StatisticWindowDescriptorMessage {
 
   google.protobuf.Any details = 1;
   SerializableExpression field = 2;
-  SendingPolicyMessage sendingPolicy = 3;
-  TriggerConditionMessage triggerCondition = 4;
   uint64 width = 5;
 }
 

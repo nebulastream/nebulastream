@@ -15,7 +15,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_
 #include <Execution/Operators/Streaming/StatisticCollection/AbstractSynopsesOperatorHandler.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -33,7 +33,7 @@ class CountMinOperatorHandler : public AbstractSynopsesOperatorHandler {
                                              Statistic::SendingPolicyPtr sendingPolicy,
                                              const uint64_t width,
                                              const uint64_t depth,
-                                             Statistic::AbstractStatisticFormatPtr statisticFormat,
+                                             Statistic::StatisticFormatPtr statisticFormat,
                                              const std::vector<OriginId>& inputOrigins,
                                              const uint64_t numberOfBitsInKey);
 
@@ -46,7 +46,7 @@ class CountMinOperatorHandler : public AbstractSynopsesOperatorHandler {
                             Statistic::SendingPolicyPtr sendingPolicy,
                             const uint64_t width,
                             const uint64_t depth,
-                            Statistic::AbstractStatisticFormatPtr statisticFormat,
+                            Statistic::StatisticFormatPtr statisticFormat,
                             const std::vector<OriginId>& inputOrigins,
                             const uint64_t numberOfBitsInKey);
 
@@ -56,6 +56,6 @@ class CountMinOperatorHandler : public AbstractSynopsesOperatorHandler {
     const uint64_t numberOfBitsInKey;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_

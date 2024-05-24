@@ -50,7 +50,7 @@ bool UDFLogicalOperator::inferSchema() {
     outputSchema->copyFields(udfDescriptor->getOutputSchema());
     // Update output schema by changing the qualifier and corresponding attribute names
     const auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (auto& field : outputSchema->fields) {
+    for (const auto& field : outputSchema->fields) {
         //Extract field name without qualifier
         auto fieldName = field->getName();
         //Add new qualifier name to the field and update the field name
@@ -76,7 +76,7 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
     // This makes it easier to users to fix all violations at once.
     std::vector<std::string> errors;
     if (udfInputSchema.getSize() != childOperatorOutputSchema.getSize()) {
-        errors.push_back("UDF input schema and child operator output schema have different sizes.");
+        errors.emplace_back("UDF input schema and child operator output schema have different sizes.");
     }
     for (const auto& field : udfDescriptor->getInputSchema()->fields) {
         const auto& fieldName = field->getName();
@@ -99,8 +99,8 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
             NES_WARNING("Mapping UINT64 field in child operator output schema to signed Java long in UDF input schema: {}",
                         fieldName)
         } else if ((type->equals(DataTypeFactory::createInt8()) && childType->equals(DataTypeFactory::createUInt8()))
-            || (type->equals(DataTypeFactory::createInt16()) && childType->equals(DataTypeFactory::createUInt16()))
-            || (type->equals(DataTypeFactory::createInt32()) && childType->equals(DataTypeFactory::createUInt32()))) {
+                   || (type->equals(DataTypeFactory::createInt16()) && childType->equals(DataTypeFactory::createUInt16()))
+                   || (type->equals(DataTypeFactory::createInt32()) && childType->equals(DataTypeFactory::createUInt32()))) {
             errors.push_back(fmt::format(
                 "Field data type is unsigned integer in child operator output schema; UDFs only support signed integers: {}",
                 fieldName));

@@ -55,11 +55,11 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     for (const auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithOperatorId(upstreamOperator->getId());
         const auto upstreamWorkerId =
-            std::any_cast<OperatorId>(upstreamSharedQueryOperater->getProperty(Optimizer::PINNED_WORKER_ID));
+            std::any_cast<WorkerId>(upstreamSharedQueryOperater->getProperty(Optimizer::PINNED_WORKER_ID));
         const auto downstreamSharedQueryOperator =
             queryPlanForSharedQuery->getOperatorWithOperatorId(downstreamOperator->getId());
         const auto downstreamWorkerId =
-            std::any_cast<OperatorId>(downstreamSharedQueryOperator->getProperty(Optimizer::PINNED_WORKER_ID));
+            std::any_cast<WorkerId>(downstreamSharedQueryOperator->getProperty(Optimizer::PINNED_WORKER_ID));
 
         //assuming that we can always pin this operator will hold as long as only leave nodes are changing their parent
         //in case a node with children changes its parent, this method might not discover some possible paths because it ignores the children
@@ -68,7 +68,6 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
 
         //find all toplogy nodes that are reachable from the pinned upstream operator node
         std::set<WorkerId> reachable;
-        //todo :
         topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
 
         //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
@@ -95,7 +94,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                 if (visitedOperators.contains(currentOperator->getId())) {
                     continue;
                 }
-                const auto currentWorkerId = std::any_cast<OperatorId>(currentOperator->getProperty(Optimizer::PINNED_WORKER_ID));
+                const auto currentWorkerId = std::any_cast<WorkerId>(currentOperator->getProperty(Optimizer::PINNED_WORKER_ID));
                 visitedOperators.insert(currentOperator->getId());
                 upstreamPinned.erase(currentOperator->getId());
                 if (reachable.contains(currentWorkerId)) {

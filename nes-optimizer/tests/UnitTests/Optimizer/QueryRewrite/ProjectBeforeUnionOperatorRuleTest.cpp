@@ -20,6 +20,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
@@ -28,9 +29,8 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 
 namespace NES {
@@ -61,7 +61,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
         LogicalSourcePtr logicalSource1 = LogicalSource::create("x", schema);
         LogicalSourcePtr logicalSource2 = LogicalSource::create("y", schema);
@@ -69,10 +69,8 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::BaseUnitTest {
         PhysicalSourcePtr physicalSource1 = PhysicalSource::create("x", "x1");
         PhysicalSourcePtr physicalSource2 = PhysicalSource::create("y", "y1");
 
-        auto sce1 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, physicalNode->getId());
-        auto sce2 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource2, physicalNode->getId());
+        auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, physicalNode->getId());
+        auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource2, physicalNode->getId());
 
         sourceCatalog->addPhysicalSource("x", sce1);
         sourceCatalog->addPhysicalSource("y", sce2);
@@ -84,8 +82,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::BaseUnitTest {
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferentSchemas) {
 
     // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
@@ -114,8 +111,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas) {
 
     // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");

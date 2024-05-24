@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <chrono>
+#include <fmt/format.h>
 #include <utility>
 
 namespace NES {
@@ -55,8 +56,7 @@ bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
 }
 
 std::string DefaultSourceDescriptor::toString() const {
-    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", "
-        + std::to_string(sourceGatheringInterval.count()) + "ms)";
+    return fmt::format("DefaultSourceDescriptor({}, {}ms)", numbersOfBufferToProduce, sourceGatheringInterval.count());
 }
 SourceDescriptorPtr DefaultSourceDescriptor::copy() {
     auto copy = DefaultSourceDescriptor::create(schema->copy(),

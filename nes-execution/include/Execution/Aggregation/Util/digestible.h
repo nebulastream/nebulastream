@@ -482,4 +482,4 @@ double tdigest<Values, Weight>::quantile(double p) const {
 
 }// namespace digestible
 
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_

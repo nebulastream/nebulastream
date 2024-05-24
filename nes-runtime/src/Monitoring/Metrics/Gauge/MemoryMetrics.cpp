@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -60,7 +61,7 @@ void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId.getRawValue());
     buffer[tupleIndex][cnt++].write<uint64_t>(timestamp);
     buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_RAM);
     buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_SWAP);
@@ -84,7 +85,7 @@ void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     uint64_t cnt = 0;
-    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    nodeId = buffer[tupleIndex][cnt++].read<WorkerId>();
     timestamp = buffer[tupleIndex][cnt++].read<uint64_t>();
     TOTAL_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
     TOTAL_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();

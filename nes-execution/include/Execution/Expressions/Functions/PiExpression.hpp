@@ -28,4 +28,4 @@ class PiExpression : public Expression {
     const ExpressionPtr SubExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_

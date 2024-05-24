@@ -43,9 +43,9 @@ TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPl
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
 PlacementAdditionResult TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                DecomposedQueryPlanVersion querySubPlanVersion) {
+                                                                   const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                   const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                                   DecomposedQueryPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Create copy of the query plan
@@ -78,16 +78,14 @@ void TopDownStrategy::pinOperators(const std::set<LogicalOperatorPtr>& pinnedUpS
     NES_TRACE("Place all sink operators.");
     for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
         NES_TRACE("Get the topology node for the sink operator.");
-        auto workerId = std::any_cast<uint64_t>(pinnedDownStreamOperator->getProperty(PINNED_WORKER_ID));
+        auto workerId = std::any_cast<WorkerId>(pinnedDownStreamOperator->getProperty(PINNED_WORKER_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
         // 1. If pinned down stream operator was already placed then place all its upstream operators
         if (pinnedDownStreamOperator->getOperatorState() == OperatorState::PLACED) {
             //Place all downstream nodes
             for (auto& upStreamOperator : pinnedDownStreamOperator->getChildren()) {
-                identifyPinningLocation(upStreamOperator->as<LogicalOperator>(),
-                                        candidateTopologyNode,
-                                        pinnedUpStreamOperators);
+                identifyPinningLocation(upStreamOperator->as<LogicalOperator>(), candidateTopologyNode, pinnedUpStreamOperators);
             }
         } else {// 2. If pinned operator is not placed then start by placing the operator
             if (candidateTopologyNode->getAvailableResources() == 0) {
@@ -137,7 +135,7 @@ void TopDownStrategy::identifyPinningLocation(const LogicalOperatorPtr& logicalO
 
             if (logicalOperator->instanceOf<SourceLogicalOperator>()) {
                 NES_DEBUG("Received Source operator for placement.");
-                auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_WORKER_ID));
+                auto workerId = std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID));
                 auto pinnedSourceOperatorLocation = getTopologyNode(workerId);
                 if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
@@ -219,7 +217,7 @@ TopDownStrategy::getTopologyNodesForDownStreamOperators(const LogicalOperatorPtr
             return {};
         }
 
-        TopologyNodePtr parentTopologyNode = workerIdToTopologyNodeMap[std::any_cast<uint64_t>(
+        TopologyNodePtr parentTopologyNode = workerIdToTopologyNodeMap[std::any_cast<WorkerId>(
             downstreamOperator->as_if<Operator>()->getProperty(PINNED_WORKER_ID))];
         parentTopologyNodes.push_back(parentTopologyNode);
     }
@@ -227,8 +225,7 @@ TopDownStrategy::getTopologyNodesForDownStreamOperators(const LogicalOperatorPtr
     return parentTopologyNodes;
 }
 
-std::vector<TopologyNodePtr>
-TopDownStrategy::getTopologyNodesForUpStreamOperators(const LogicalOperatorPtr& candidateOperator) {
+std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForUpStreamOperators(const LogicalOperatorPtr& candidateOperator) {
     std::vector<TopologyNodePtr> upStreamTopologyNodes;
 
     NES_TRACE(
@@ -240,7 +237,7 @@ TopDownStrategy::getTopologyNodesForUpStreamOperators(const LogicalOperatorPtr& 
         auto upStreamOperator = upStreamOperators.back()->as<Operator>();
         upStreamOperators.pop_back();
         if (upStreamOperator->hasProperty(PINNED_WORKER_ID)) {
-            auto workerId = std::any_cast<uint64_t>(upStreamOperator->getProperty(PINNED_WORKER_ID));
+            auto workerId = std::any_cast<WorkerId>(upStreamOperator->getProperty(PINNED_WORKER_ID));
             auto pinnedTopologyNode = getTopologyNode(workerId);
             upStreamTopologyNodes.emplace_back(pinnedTopologyNode);
             continue;

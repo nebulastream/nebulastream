@@ -15,7 +15,7 @@
 #ifndef NES_ISQPADDQUERYEVENT_HPP
 #define NES_ISQPADDQUERYEVENT_HPP
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 

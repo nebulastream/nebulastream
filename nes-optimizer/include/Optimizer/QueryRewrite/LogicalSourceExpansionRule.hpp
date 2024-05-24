@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
@@ -142,11 +142,12 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      * @param queryPlan
      * @param siblingStatisticIdToNewStatisticIds: Stores for each sibling id their new statistic ids.
      */
-    void distributeSiblingStatisticId(QueryPlan& queryPlan,
-                                      std::unordered_map<StatisticId, std::vector<StatisticId>>& siblingStatisticIdToNewStatisticIds) const;
+    void distributeSiblingStatisticId(
+        QueryPlan& queryPlan,
+        std::unordered_map<StatisticId, std::vector<StatisticId>>& siblingStatisticIdToNewStatisticIds) const;
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_

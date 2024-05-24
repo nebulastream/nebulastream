@@ -22,8 +22,6 @@ std::string detail::concatenateFunctionHelper(uint64_t value) {
     return ss.str();
 }
 
-std::string detail::concatenateFunctionHelper(const NES::SchemaPtr& schema) {
-    return schema->toString();
-}
+std::string detail::concatenateFunctionHelper(const NES::SchemaPtr& schema) { return schema->toString(); }
 
-} // namespace Util
+}// namespace Util

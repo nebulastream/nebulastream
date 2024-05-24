@@ -13,11 +13,11 @@
 */
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 namespace NES::Exceptions {
-ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message, ExecutionNodeId id)
+ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message, WorkerId id)
     : RequestExecutionException(message), id(id) {}
 
 ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message)
-    : RequestExecutionException(message), id(INVALID_EXECUTION_NODE_ID) {}
+    : RequestExecutionException(message), id(INVALID_WORKER_NODE_ID) {}
 
-ExecutionNodeId ExecutionNodeNotFoundException::getExecutionNodeId() const { return id; }
+WorkerId ExecutionNodeNotFoundException::getWorkerId() const { return id; }
 }// namespace NES::Exceptions

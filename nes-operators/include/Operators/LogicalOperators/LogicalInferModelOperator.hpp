@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_
 
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
@@ -28,9 +28,9 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
 
   public:
     LogicalInferModelOperator(std::string model,
-                                  std::vector<ExpressionNodePtr> inputFields,
-                                  std::vector<ExpressionNodePtr> outputFields,
-                                  OperatorId id);
+                              std::vector<ExpressionNodePtr> inputFields,
+                              std::vector<ExpressionNodePtr> outputFields,
+                              OperatorId id);
 
     /**
      * @brief creates a string representation of this node
@@ -99,9 +99,8 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
      * @brief updates the field to a fully qualified one.
      * @param field
      */
-    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field);
+    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const;
 
-  private:
     std::string model;
     std::vector<ExpressionNodePtr> inputFields;
     std::vector<ExpressionNodePtr> outputFields;
@@ -109,4 +108,4 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
 
 }// namespace NES::InferModel
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_

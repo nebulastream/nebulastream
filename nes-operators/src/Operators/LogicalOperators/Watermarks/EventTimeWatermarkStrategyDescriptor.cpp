@@ -15,10 +15,10 @@
 #include <API/AttributeField.hpp>
 
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/InvalidFieldException.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>
@@ -60,7 +60,7 @@ std::string EventTimeWatermarkStrategyDescriptor::toString() {
     return ss.str();
 }
 
-bool EventTimeWatermarkStrategyDescriptor::inferStamp( SchemaPtr schema) {
+bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema) {
     auto fieldAccessExpression = onField->as<FieldAccessExpressionNode>();
     auto fieldName = fieldAccessExpression->getFieldName();
     //Check if the field exists in the schema

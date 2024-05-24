@@ -7,7 +7,7 @@ logLevel: LOG_DEBUG
 ### Network configuration
 ###
 restIp: 172.33.0.20
-coordinatorIp: 172.33.0.20
+coordinatorHost: 172.33.0.20
 restPort: 8081
 #########################
 

@@ -61,6 +61,8 @@ class DummyStorageHandler : public StorageHandler {
     Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId) override { return nullptr; };
 
     Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId) override { return nullptr; }
+
+    Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override { return nullptr; }
 };
 
 class AbstractRequestTest : public Testing::BaseUnitTest {
@@ -70,7 +72,7 @@ class AbstractRequestTest : public Testing::BaseUnitTest {
 
 TEST_F(AbstractRequestTest, testPromise) {
     constexpr uint32_t responseValue = 20;
-    RequestId requestId = 1;
+    auto requestId = RequestId(1);
     std::vector<ResourceType> requiredResources;
     uint8_t maxRetries = 1;
     DummyRequest request(requiredResources, maxRetries, responseValue);

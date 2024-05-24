@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#quit if command returns non-zero code
-#set -e
-
 if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
   echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]"
   exit 1
 fi
-
-# Install pip
-apt update && apt install -y python3-pip
-# Install guard once
-pip3 install guardonce
 
 # Build NES
 mkdir -p /nebulastream/build

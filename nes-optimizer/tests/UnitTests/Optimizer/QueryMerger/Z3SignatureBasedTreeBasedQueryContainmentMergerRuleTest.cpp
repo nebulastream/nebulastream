@@ -39,7 +39,6 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
@@ -99,7 +98,7 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
         auto csvSourceWindTurbine = CSVSourceType::create("windTurbines", "windTurbines");
         LogicalSourcePtr windTurbinesLogicalSource = LogicalSource::create("windTurbines", schema);
         PhysicalSourcePtr windTurbinesPhysicalSource = PhysicalSource::create(csvSourceWindTurbine);
@@ -191,8 +190,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testMultipleEqua
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -297,8 +296,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testPartialEqual
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -403,8 +402,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourceO
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -499,8 +498,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testContainedFil
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -623,8 +622,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -755,8 +754,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -878,8 +877,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testDifferentNum
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -1000,8 +999,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testSameNumberOf
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -1128,8 +1127,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEquivalentUn
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -1269,8 +1268,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testProjectionCo
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
-    queryPlan1->setQueryId(1);
-    queryPlan2->setQueryId(2);
+    queryPlan1->setQueryId(QueryId(1));
+    queryPlan2->setQueryId(QueryId(2));
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);

@@ -17,7 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -234,13 +234,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     virtual std::vector<Schema::MemoryLayoutType> getSupportedLayouts();
 
     /**
-     * @brief This function checks if the layout of schema can be found in the implementation of getSupportedLayouts()
-     * @param schema
-     * @return
-     */
-    bool checkSupportedLayoutTypes(SchemaPtr& schema);
-
-    /**
      * @brief API method called upon receiving an event.
      * @note Currently has no behaviour. We need to overwrite DataEmitter::onEvent for compliance.
      * @param event
@@ -300,11 +293,15 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
 
     /**
-     * @brief Emits a tuple buffer to the successors.
+     * @brief Emits a tuple buffer to the successors. #4888 discusses, if we should rename the method
      * @param buffer
      */
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
+    /**
+     * @brief #4888 discusses, if we should rename the method
+     * @param buffer
+     */
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
     NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 

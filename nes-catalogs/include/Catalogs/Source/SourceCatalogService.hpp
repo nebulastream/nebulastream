@@ -15,10 +15,11 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <vector>
 
 namespace NES {
@@ -50,9 +51,9 @@ class SourceCatalogService {
      * @param logicalSourceName: logical source name
      * @param physicalSourceName: physical source name
      * @param topologyNodeId : the topology node id
-     * @return bool indicating success
+     * @return first element indicates success, second element is a error message in case of a failure
      */
-    bool
+    std::pair<bool, std::string>
     registerPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
 
     /**
@@ -110,9 +111,24 @@ class SourceCatalogService {
     std::vector<Catalogs::Source::SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
 
     /**
+     * Adds the key distribution for a given source catalog entry.
+     * @param catalogEntry
+     * @return true if success, else false
+     */
+    bool addKeyDistributionEntry(const Catalogs::Source::SourceCatalogEntryPtr& entry, std::set<uint64_t> keys);
+
+    /**
      * @brief Reset source catalog by clearing it from all physical and logical sources
      * @return true if successful
      */
+
+    /**
+     * @brief Removes all physical sources for a single Worker
+     * @param WorkerId identfies the worker
+     * @return true if successful
+     */
+    bool unregisterAllPhysicalSourcesByWorker(WorkerId);
+
     bool reset();
 
   private:
@@ -121,4 +137,4 @@ class SourceCatalogService {
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_

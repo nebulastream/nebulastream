@@ -20,6 +20,7 @@
 #include <deque>
 #include <map>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -69,6 +70,13 @@ class SourceCatalog {
      */
     bool
     removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId);
+
+    /**
+     * @brief method to remove all physical sources of a single worker
+     * @param topologyNodeId worker node identifier
+     * @return number of sucessfully removed physical sources
+     */
+    size_t removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId);
 
     /**
      * @brief method to get the schema from the given logical source
@@ -147,6 +155,19 @@ class SourceCatalog {
      */
     bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
+    /**
+     * Gets the key distribution for a given source catalog entry.
+     * @param catalogEntry
+     * @return the key distribution
+     */
+    std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& getKeyDistributionMap();
+
+    /**
+     * Set the key distribution map for all source catalog entries
+     * @param distributionMap
+     */
+    void setKeyDistributionMap(std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& distributionMap);
+
     SourceCatalog();
 
   private:
@@ -162,9 +183,13 @@ class SourceCatalog {
     std::map<std::string, SchemaPtr> logicalSourceNameToSchemaMapping;
     //map logical source to physical source
     std::map<std::string, std::vector<SourceCatalogEntryPtr>> logicalToPhysicalSourceMapping;
+    //map with value distribution for physical sources
+    //FIXME if #4606 is solved, this will be removed
+    std::map<SourceCatalogEntryPtr, std::set<uint64_t>> keyDistributionMap;
+
     void addDefaultSources();
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

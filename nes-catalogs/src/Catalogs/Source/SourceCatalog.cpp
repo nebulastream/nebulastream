@@ -169,6 +169,20 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
     return false;
 }
 
+size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId) {
+    std::unique_lock lock(catalogMutex);
+    size_t removedElements = 0;
+
+    for (auto& [logicalSource, physicalSources] : logicalToPhysicalSourceMapping) {
+        std::erase_if(physicalSources, [topologyNodeId, &removedElements](const auto& mappingEntry) {
+            removedElements += mappingEntry->getTopologyNodeId() == topologyNodeId;
+            return mappingEntry->getTopologyNodeId() == topologyNodeId;
+        });
+    }
+
+    return removedElements;
+}
+
 SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
@@ -280,5 +294,11 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Sc
     logicalSourceNameToSchemaMapping[logicalSourceName] = std::move(schema);
     return true;
 }
+
+void SourceCatalog::setKeyDistributionMap(std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& distributionMap) {
+    this->keyDistributionMap = distributionMap;
+}
+
+std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& SourceCatalog::getKeyDistributionMap() { return keyDistributionMap; }
 
 }// namespace NES::Catalogs::Source

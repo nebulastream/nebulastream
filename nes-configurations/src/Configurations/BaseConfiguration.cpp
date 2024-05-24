@@ -13,6 +13,7 @@
 */
 
 #include <Configurations/BaseConfiguration.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
@@ -47,8 +48,7 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
         }
         try {
             optionMap[identifier]->parseFromYAMLNode(node);
-        }
-        catch (const ConfigurationException& e) {
+        } catch (const ConfigurationException& e) {
             NES_ERROR("Configuration error: ", e.what());
             throw;
         }
@@ -67,8 +67,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
     } else {
         try {
             optionMap[identifier]->parseFromString(identifier, inputParams);
-        }
-        catch (const ConfigurationException& e) {
+        } catch (const ConfigurationException& e) {
             NES_ERROR("Configuration error: ", e.what());
             throw;
         }
@@ -112,8 +111,7 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
     for (auto [identifier, values] : groupedIdentifiers) {
         try {
             parseFromString(identifier, values);
-        }
-        catch (const ConfigurationException& e) {
+        } catch (const ConfigurationException& e) {
             throw;
         }
     }
@@ -142,13 +140,13 @@ std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionM
     return optionMap;
 }
 
-bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, uint64_t workerId, bool withOverwrite) {
+bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite) {
     std::ifstream configFile(yamlFilePath);
     std::stringstream ss;
     std::string searchKey = "workerId: ";
 
     if (!withOverwrite) {
-        std::string yamlValueAsString = std::to_string(workerId);
+        std::string yamlValueAsString = workerId.toString();
         std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
 
         if (!yamlFilePath.empty()) {
@@ -163,8 +161,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             } catch (const std::exception& e) {
                 throw ConfigurationException("Exception while persisting in yaml file", e.what());
             }
-        }
-        else {
+        } else {
             NES_ERROR("BaseConfiguration: yamlFilePath is empty.");
             return false;
         }
@@ -179,7 +176,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             // find the end of the line
             size_t endPos = yamlContent.find('\n', startPos);
             // replace the old value with the new value for workerId
-            yamlContent.replace(startPos, endPos - startPos, std::to_string(workerId));
+            yamlContent.replace(startPos, endPos - startPos, workerId.toString());
         } else {
             return false;
         }

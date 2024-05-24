@@ -14,6 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_
 
+#include <API/TimeUnit.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
@@ -54,11 +55,12 @@ class TimeFunction {
  */
 class EventTimeFunction final : public TimeFunction {
   public:
-    explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression);
+    explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit);
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
     Value<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) override;
 
   private:
+    Windowing::TimeUnit unit;
     Expressions::ExpressionPtr timestampExpression;
 };
 
@@ -72,4 +74,4 @@ class IngestionTimeFunction final : public TimeFunction {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_

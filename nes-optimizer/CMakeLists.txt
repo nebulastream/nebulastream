@@ -1,5 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,15 +15,18 @@
 add_subdirectory(src)
 get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
+## Find folly
+find_package(folly CONFIG REQUIRED)
+
 # Add Library
 add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
 target_include_directories(nes-optimizer PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes-optimizer PRIVATE nes-common  nes-data-types  nes-configurations nes-operators nes-catalogs)
+target_link_libraries(nes-optimizer PUBLIC nes-catalogs nes-statistics)
 
 # CPR and CURL for Elegant optimizer
-target_link_libraries(nes-optimizer PRIVATE cpr::cpr ${CURL_LIBRARIES})
+target_link_libraries(nes-optimizer PRIVATE folly::folly cpr::cpr ${CURL_LIBRARIES})
 
 # Z3 Solver for signature computation
 find_package(Z3 REQUIRED)

@@ -15,8 +15,9 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_
 
-#include<Operators/LogicalOperators/Network/NesPartition.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/core.h>
 
 namespace NES::Network {
 
@@ -41,13 +42,15 @@ class NodeLocation {
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return hostname.empty() && port == 0 && workerId == 0; }
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool {
+        return hostname.empty() && port == 0 && workerId == INVALID_WORKER_NODE_ID;
+    }
 
     /**
      * @brief Returns the zmq uri for connection
      * @return the zmq uri for connection
      */
-    [[nodiscard]] std::string createZmqURI() const { return "tcp://" + hostname + ":" + std::to_string(port); }
+    [[nodiscard]] std::string createZmqURI() const { return fmt::format("tcp://{}:{}", hostname, std::to_string(port)); }
 
     /**
      * @brief Return the node id
@@ -78,9 +81,9 @@ class NodeLocation {
     }
 
   private:
-    WorkerId workerId;
+    WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::string hostname;
     uint32_t port;
 };
 }// namespace NES::Network
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_

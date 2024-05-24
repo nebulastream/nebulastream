@@ -34,8 +34,8 @@ class LogicalWindowOperator : public WindowOperator {
      * @brief returns the names of every key used in the aggregation
      * @return a vector containing the key names used in the aggregation
      */
-    std::vector<std::string> getGroupByKeyNames();
+    std::vector<std::string> getGroupByKeyNames() const;
 };
 
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_

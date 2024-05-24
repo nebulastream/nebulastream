@@ -1,3 +1,15 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
@@ -63,9 +75,6 @@ add_nes_unit_test(default-statistic-store-test "StatisticCollection/DefaultStati
 ### StatisticIdsExtractorTest ###
 add_nes_unit_test(statistic-ids-extractor-test "StatisticCollection/StatisticIdsExtractorTest.cpp")
 
-### StatisticCoordinatorTest ###
-add_nes_unit_test(statistic-coordinator-test "StatisticCollection/StatisticCoordinatorTest.cpp")
-
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "Runtime/AsyncTaskExecutorTest.cpp")
 
@@ -107,6 +116,7 @@ add_nes_unit_test(isqp-request-test "RequestProcessor/RequestTypes/ISQP/ISQPRequ
 
 ### gRPC Tests
 add_nes_unit_test(grpc-test "gRPC/grpcTests.cpp")
+add_nes_unit_test(coordinator-rpc-server-test "gRPC/CoordinatorRpcServerTest.cpp")
 
 ### Sensor Bus Tests ###
 #add_nes_unit_test(sensor-bus-tests "SensorBusTest.cpp")
@@ -150,7 +160,7 @@ add_nes_unit_test(convert-logical-to-physical-sink-tests "Phases/ConvertLogicalT
 add_nes_unit_test(convert-logical-to-physical-source-tests "Phases/ConvertLogicalToPhysicalSourceTest.cpp")
 
 # SerializationUtilTest
-add_nes_unit_test(serialize-operator-test "Serialization/SerializationUtilTest.cpp")
+add_nes_unit_test(serialize-operator-test "Serialization/SerializationUtilTest.cpp" "Serialization/TimeWindowSerializationTest.cpp")
 
 ### SourceCatalogService Tests ###
 add_nes_unit_test(source-catalog-service-tests "Services/SourceCatalogServiceTest.cpp")

@@ -85,7 +85,6 @@ class PhysicalType {
      * @return True if equal, otherwise false
      */
     bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
-    bool operator!=(const PhysicalType& rhs) const { return !(rhs == *this); }
 
     /// Type that is contained by this PhysicalType container
     DataTypePtr const type;

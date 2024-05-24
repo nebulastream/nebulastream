@@ -13,24 +13,23 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Windowing {
 
-SumAggregationDescriptor::SumAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {
+SumAggregationDescriptor::SumAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(field) {
     this->aggregationType = Type::Sum;
 }
 SumAggregationDescriptor::SumAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    : WindowAggregationDescriptor(field, asField) {
     this->aggregationType = Type::Sum;
 }
 
 WindowAggregationDescriptorPtr SumAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                      FieldAccessExpressionNodePtr asField) {
+                                                                FieldAccessExpressionNodePtr asField) {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -42,10 +41,9 @@ WindowAggregationDescriptorPtr SumAggregationDescriptor::on(const ExpressionNode
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
 
-void SumAggregationDescriptor::inferStamp(
-                                          SchemaPtr schema) {
+void SumAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp( schema);
+    onField->inferStamp(schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("SumAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

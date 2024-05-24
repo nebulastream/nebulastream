@@ -135,27 +135,27 @@ const Value<Boolean>& ExecutionContext::getLastChunk() const { return lastChunk;
 
 void ExecutionContext::setLastChunk(Value<Boolean> lastChunk) { this->lastChunk = lastChunk; }
 
-uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, OriginId originId, SequenceNumber sequenceNumber) {
+uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber) {
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-    return pipelineCtx->getNextChunkNumber({sequenceNumber, originId});
+    return pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
-bool isLastChunkProxy(void* ptrPipelineCtx, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber,
-                      bool isLastChunk) {
+bool isLastChunkProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber, uint64_t chunkNumber, bool isLastChunk) {
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-    return pipelineCtx->isLastChunk({sequenceNumber, originId}, chunkNumber, isLastChunk);
+    return pipelineCtx->isLastChunk({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
-void removeSequenceStateProxy(void* ptrPipelineCtx, OriginId originId, SequenceNumber sequenceNumber) {
+void removeSequenceStateProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber) {
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-    pipelineCtx->removeSequenceState({sequenceNumber, originId});
+    pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
 Value<Boolean> ExecutionContext::isLastChunk() const {
-    return Nautilus::FunctionCall("isLastChunkProxy", isLastChunkProxy,
+    return Nautilus::FunctionCall("isLastChunkProxy",
+                                  isLastChunkProxy,
                                   this->getPipelineContext(),
                                   this->getOriginId(),
                                   this->getSequenceNumber(),
@@ -164,14 +164,16 @@ Value<Boolean> ExecutionContext::isLastChunk() const {
 }
 
 Value<UInt64> ExecutionContext::getNextChunkNr() const {
-    return Nautilus::FunctionCall("getNextChunkNumberProxy", getNextChunkNumberProxy,
+    return Nautilus::FunctionCall("getNextChunkNumberProxy",
+                                  getNextChunkNumberProxy,
                                   this->getPipelineContext(),
                                   this->getOriginId(),
                                   this->getSequenceNumber());
 }
 
 void ExecutionContext::removeSequenceState() const {
-    Nautilus::FunctionCall("removeSequenceStateProxy", removeSequenceStateProxy,
+    Nautilus::FunctionCall("removeSequenceStateProxy",
+                           removeSequenceStateProxy,
                            this->getPipelineContext(),
                            this->getOriginId(),
                            this->getSequenceNumber());

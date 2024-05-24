@@ -38,23 +38,6 @@ std::string escapeJson(const std::string& str) {
     return o.str();
 }
 
-std::string trim(std::string str) {
-    auto not_space = [](char c) {
-        return isspace(c) == 0;
-    };
-    // trim left
-    str.erase(str.begin(), std::find_if(str.begin(), str.end(), not_space));
-    // trim right
-    str.erase(find_if(str.rbegin(), str.rend(), not_space).base(), str.end());
-    return str;
-}
-
-std::string trim(std::string str, char trimFor) {
-    // remove all trimFor characters from left and right
-    str.erase(std::remove(str.begin(), str.end(), trimFor), str.end());
-    return str;
-}
-
 void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
     // Get the first occurrence
     uint64_t pos = data.find(toSearch);
@@ -140,6 +123,38 @@ uint64_t countLines(std::istream& stream) {
     }
 
     return cnt;
+}
+
+std::string_view trimWhiteSpaces(std::string_view in) {
+    // Skip all `isspace` elements from the left (begin) and from the right (end-1)
+    auto left = in.begin();
+    for (;; ++left) {
+        if (left == in.end()) {
+            return {};
+        }
+        if (!isspace(*left)) {
+            break;
+        }
+    }
+    auto right = in.end() - 1;
+    for (; right > left && isspace(*right); --right)
+        ;
+    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
+}
+
+std::string_view trimChar(std::string_view in, char trimFor) {
+    // Skip all `trimFor` elements from the left (begin) and from the right (end-1)
+    auto left = in.begin();
+    for (;; ++left) {
+        if (left == in.end())
+            return {};
+        if (*left != trimFor)
+            break;
+    }
+    auto right = in.end() - 1;
+    for (; right > left && *right == trimFor; --right)
+        ;
+    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
 }
 
 }// namespace NES::Util

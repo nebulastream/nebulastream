@@ -22,7 +22,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <chrono>
-#include <utility>
 
 namespace NES {
 

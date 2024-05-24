@@ -35,9 +35,12 @@ class PhysicalUnionOperator : public PhysicalBinaryOperator {
                           const SchemaPtr& leftSchema,
                           const SchemaPtr& rightSchema,
                           const SchemaPtr& outputSchema);
-    static PhysicalOperatorPtr
-    create(OperatorId id, StatisticId statisticId, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
-    static PhysicalOperatorPtr create(StatisticId statisticId, OperatorId id, const SchemaPtr& schema);
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
+                                      const SchemaPtr& leftSchema,
+                                      const SchemaPtr& rightSchema,
+                                      const SchemaPtr& outputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(StatisticId statisticId, const SchemaPtr& schema);
     std::string toString() const override;
     OperatorPtr copy() override;
@@ -45,4 +48,4 @@ class PhysicalUnionOperator : public PhysicalBinaryOperator {
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNIONOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNIONOPERATOR_HPP_

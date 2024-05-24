@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <list>
 #include <map>
@@ -44,9 +44,9 @@ using PlacedDecomposedQueryPlans = std::map<SharedQueryId, std::map<DecomposedQu
 class ExecutionNode : public Node {
 
   public:
-    static ExecutionNodePtr create(ExecutionNodeId executionNodeId);
+    static ExecutionNodePtr create(WorkerId WorkerId);
 
-    explicit ExecutionNode(ExecutionNodeId executionNodeId);
+    explicit ExecutionNode(WorkerId WorkerId);
 
     virtual ~ExecutionNode() = default;
 
@@ -54,7 +54,7 @@ class ExecutionNode : public Node {
      * Get execution node id
      * @return id of the execution node
      */
-    ExecutionNodeId getId() const;
+    WorkerId getId() const;
 
     /**
      * Register a new decomposed query plan
@@ -127,12 +127,11 @@ class ExecutionNode : public Node {
     std::vector<std::string> toMultilineString() override;
 
   private:
-
     /**
      * Execution node id.
      * Same as physical node id.
      */
-    const ExecutionNodeId executionNodeId;
+    const WorkerId workerId;
 
     /**
      * a map of placed decomposed query plans
@@ -142,4 +141,4 @@ class ExecutionNode : public Node {
 }// namespace Optimizer
 }// namespace NES
 
-#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_

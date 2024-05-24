@@ -15,6 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
 
+#include <folly/concurrency/UnboundedQueue.h>
 #include <memory>
 
 namespace NES {
@@ -35,6 +36,11 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class PlacementAmendmentInstance;
+using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
+
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;
@@ -50,6 +56,11 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
+namespace Statistic {
+class StatisticProbeHandler;
+using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
+}// namespace Statistic
+
 namespace RequestProcessor {
 /**
  * @brief This struct contains smart pointers to the data structures which coordinator requests operate on.
@@ -61,7 +72,9 @@ struct StorageDataStructures {
                           GlobalQueryPlanPtr globalQueryPlan,
                           Catalogs::Query::QueryCatalogPtr queryCatalog,
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                          Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                          Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                          Optimizer::UMPMCAmendmentQueuePtr amendmentQueue,
+                          Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
 
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
@@ -70,6 +83,8 @@ struct StorageDataStructures {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 }// namespace RequestProcessor
 }// namespace NES

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -20,7 +21,7 @@ namespace NES {
 
 void UDFSerializationUtil::serializeJavaUDFDescriptor(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
                                                       JavaUdfDescriptorMessage& JavaUdfDescriptorMessage) {
-    auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+    auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
     // Serialize UDF class name and method name.
     JavaUdfDescriptorMessage.set_udf_class_name(javaUDFDescriptor->getClassName());
     JavaUdfDescriptorMessage.set_udf_method_name(javaUDFDescriptor->getMethodName());

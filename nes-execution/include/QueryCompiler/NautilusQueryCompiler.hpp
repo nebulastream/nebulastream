@@ -53,4 +53,4 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
 
 }// namespace NES::QueryCompilation
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_

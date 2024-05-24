@@ -15,7 +15,7 @@
 #ifndef NES_ISQPREMOVEQUERYEVENT_HPP
 #define NES_ISQPREMOVEQUERYEVENT_HPP
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
 
 namespace NES::RequestProcessor {

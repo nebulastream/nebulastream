@@ -34,8 +34,8 @@
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
@@ -74,7 +74,8 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(queryParsingService) {}
@@ -89,7 +90,8 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(nullptr) {}
@@ -183,6 +185,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
         auto coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
+        auto statisticProbeHandler = storageHandler->getStatisticProbeHandler(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
@@ -199,8 +202,10 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
-        auto topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
+        auto topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                                                      sourceCatalog,
+                                                                                                      optimizerConfigurations,
+                                                                                                      statisticProbeHandler);
         auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         auto memoryLayoutSelectionPhase =
@@ -336,14 +341,14 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
         // Iterate over deployment context and update execution plan
         for (const auto& deploymentContext : deploymentContexts) {
-            auto executionNodeId = deploymentContext->getWorkerId();
+            auto WorkerId = deploymentContext->getWorkerId();
             auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
             auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
             auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
             switch (decomposedQueryPlanState) {
                 case QueryState::MARKED_FOR_REDEPLOYMENT:
                 case QueryState::MARKED_FOR_DEPLOYMENT: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                         sharedQueryId,
                                                                         decomposedQueryPlanId,
                                                                         decomposedQueryPlanVersion,
@@ -351,12 +356,12 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                     break;
                 }
                 case QueryState::MARKED_FOR_MIGRATION: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                         sharedQueryId,
                                                                         decomposedQueryPlanId,
                                                                         decomposedQueryPlanVersion,
                                                                         QueryState::STOPPED);
-                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                    globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
                                                                    sharedQueryId,
                                                                    decomposedQueryPlanId,
                                                                    decomposedQueryPlanVersion);

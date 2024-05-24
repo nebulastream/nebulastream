@@ -22,7 +22,7 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       predicate(std::move(predicate)) {}
 
 PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,
@@ -35,7 +35,10 @@ PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,
 
 ExpressionNodePtr PhysicalFilterOperator::getPredicate() { return predicate; }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
+PhysicalOperatorPtr PhysicalFilterOperator::create(StatisticId statisticId,
+                                                   SchemaPtr inputSchema,
+                                                   SchemaPtr outputSchema,
+                                                   ExpressionNodePtr expression) {
     return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(expression));
 }
 

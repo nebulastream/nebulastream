@@ -14,12 +14,13 @@
 
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 
 namespace NES::Catalogs::UDF {
 
-JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() {
+JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() const {
     return JavaUDFDescriptor::create(className,
                                      methodName,
                                      instance,
@@ -30,7 +31,7 @@ JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() {
                                      outputClassName);
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(const std::string& classFilePath) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(std::string_view classFilePath) {
     for (auto& [className, byteCode] : byteCodeList) {
         std::string copy = className;
         std::replace(copy.begin(), copy.end(), '.', '/');
@@ -47,12 +48,12 @@ JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(const std::
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(const std::string& newClassName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(std::string_view newClassName) {
     this->className = newClassName;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(const std::string& newMethodName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(std::string_view newMethodName) {
     this->methodName = newMethodName;
     return *this;
 }
@@ -72,12 +73,12 @@ JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputSchema(const Schema
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInputClassName(const std::string newInputClassName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInputClassName(std::string_view newInputClassName) {
     this->inputClassName = newInputClassName;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputClassName(const std::string newOutputClassName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputClassName(std::string_view newOutputClassName) {
     this->outputClassName = newOutputClassName;
     return *this;
 }

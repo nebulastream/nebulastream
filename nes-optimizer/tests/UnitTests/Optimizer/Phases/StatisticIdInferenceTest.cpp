@@ -17,16 +17,16 @@
 #include <BaseUnitTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
@@ -55,7 +55,7 @@ class StatisticIdInferenceTest : public Testing::BaseUnitTest {
 
         auto logicalSource = LogicalSource::create("default_logical", Schema::create());
         for (auto i = 0; i < numberOfSources; ++i) {
-            auto physicalNode = TopologyNode::create(i, "localhost", 4000, 4002, 4, properties);
+            auto physicalNode = TopologyNode::create(WorkerId(i), "localhost", 4000, 4002, 4, properties);
             auto csvSourceType = CSVSourceType::create("default_logical", "default_physical_" + std::to_string(i));
             auto physicalSource = PhysicalSource::create(csvSourceType);
             auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
@@ -65,7 +65,6 @@ class StatisticIdInferenceTest : public Testing::BaseUnitTest {
         NES_DEBUG("Created SourceCatalog!");
         return sourceCatalog;
     }
-
 };
 
 /**
@@ -88,7 +87,9 @@ TEST_F(StatisticIdInferenceTest, oneSourceOneQuery) {
     // of each operator. We check for uniqueness by comparing the size of both sets (allOperators, allStatisticIds).
     auto allOperators = queryPlan->getAllOperators();
     std::set<StatisticId> allStatisticIds;
-    std::transform(allOperators.begin(), allOperators.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
+    std::transform(allOperators.begin(),
+                   allOperators.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
                    [](const OperatorPtr& op) {
                        auto statisticId = op->getStatisticId();
                        EXPECT_NE(statisticId, INVALID_STATISTIC_ID);
@@ -116,8 +117,12 @@ TEST_F(StatisticIdInferenceTest, twoSourcesOneQuery) {
     // of each operator. We check for uniqueness by comparing the size of both sets (allOperators, allStatisticIds).
     auto allOperators = queryPlan->getAllOperators();
     std::set<StatisticId> allStatisticIds;
-    std::transform(allOperators.begin(), allOperators.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
-                   [](const OperatorPtr& op) { return op->getStatisticId(); });
+    std::transform(allOperators.begin(),
+                   allOperators.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
+                   [](const OperatorPtr& op) {
+                       return op->getStatisticId();
+                   });
     EXPECT_EQ(allStatisticIds.size(), allOperators.size());
 }
 
@@ -143,17 +148,24 @@ TEST_F(StatisticIdInferenceTest, twoSourcesTwoQueries) {
     // of each operator. We check for uniqueness by comparing the size of both sets (allOperators, allStatisticIds).
     std::set<StatisticId> allStatisticIds;
     auto allOperators1 = queryPlan1->getAllOperators();
-    std::transform(allOperators1.begin(), allOperators1.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
-                   [](const OperatorPtr& op) { return op->getStatisticId(); });
+    std::transform(allOperators1.begin(),
+                   allOperators1.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
+                   [](const OperatorPtr& op) {
+                       return op->getStatisticId();
+                   });
     auto allOperators2 = queryPlan2->getAllOperators();
-    std::transform(allOperators2.begin(), allOperators2.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
-                   [](const OperatorPtr& op) { return op->getStatisticId(); });
+    std::transform(allOperators2.begin(),
+                   allOperators2.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
+                   [](const OperatorPtr& op) {
+                       return op->getStatisticId();
+                   });
 
     // We have to subtract here one, as both queries use the same two sources and a source always has the same statisticId
     // across multiple queries.
     EXPECT_EQ(allStatisticIds.size(), allOperators1.size() + allOperators2.size() - 2);
 }
-
 
 /**
  * @brief Tests if we can infer the statistic id of a query with one physical source, one sink, and one filter and a map
@@ -177,14 +189,15 @@ TEST_F(StatisticIdInferenceTest, oneSourceOneQueryWithFilterAndMap) {
     // of each operator. We check for uniqueness by comparing the size of both sets (allOperators, allStatisticIds).
     auto allOperators = queryPlan->getAllOperators();
     std::set<StatisticId> allStatisticIds;
-    std::transform(allOperators.begin(), allOperators.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
+    std::transform(allOperators.begin(),
+                   allOperators.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
                    [](const OperatorPtr& op) {
                        auto statisticId = op->getStatisticId();
                        EXPECT_NE(statisticId, INVALID_STATISTIC_ID);
                        return statisticId;
                    });
     EXPECT_EQ(allStatisticIds.size(), allOperators.size());
-
 }
 
 /**
@@ -209,7 +222,9 @@ TEST_F(StatisticIdInferenceTest, twoSourcesOneQueryWithFilterAndMap) {
     // of each operator. We check for uniqueness by comparing the size of both sets (allOperators, allStatisticIds).
     auto allOperators = queryPlan->getAllOperators();
     std::set<StatisticId> allStatisticIds;
-    std::transform(allOperators.begin(), allOperators.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
+    std::transform(allOperators.begin(),
+                   allOperators.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
                    [](const OperatorPtr& op) {
                        auto statisticId = op->getStatisticId();
                        NES_INFO("StatisticId {} for op {}", statisticId, op->toString());
@@ -224,14 +239,14 @@ TEST_F(StatisticIdInferenceTest, twoSourcesOneQueryWithFilterAndMap) {
  */
 TEST_F(StatisticIdInferenceTest, twoSourcesTwoQueriesWithFilterAndMap) {
     auto query1 = Query::from("default_logical")
-                     .map(Attribute("f4") = Attribute("f5") * 42)
-                     .filter(Attribute("f4") < Attribute("f2"))
-                     .sink(FileSinkDescriptor::create(""));
+                      .map(Attribute("f4") = Attribute("f5") * 42)
+                      .filter(Attribute("f4") < Attribute("f2"))
+                      .sink(FileSinkDescriptor::create(""));
 
     auto query2 = Query::from("default_logical")
-                     .map(Attribute("f3") = Attribute("f7") * 42)
-                     .filter(Attribute("f1") < Attribute("f2"))
-                     .sink(FileSinkDescriptor::create(""));
+                      .map(Attribute("f3") = Attribute("f7") * 42)
+                      .filter(Attribute("f1") < Attribute("f2"))
+                      .sink(FileSinkDescriptor::create(""));
 
     constexpr auto numberOfSources = 1;
     auto sourceCatalog = setUpSourceCatalog(numberOfSources);
@@ -248,14 +263,18 @@ TEST_F(StatisticIdInferenceTest, twoSourcesTwoQueriesWithFilterAndMap) {
     // of each operator. We check for uniqueness by comparing the size of both sets (allOperators, allStatisticIds).
     std::set<StatisticId> allStatisticIds;
     auto allOperators1 = queryPlan1->getAllOperators();
-    std::transform(allOperators1.begin(), allOperators1.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
+    std::transform(allOperators1.begin(),
+                   allOperators1.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
                    [](const OperatorPtr& op) {
                        auto statisticId = op->getStatisticId();
                        EXPECT_NE(statisticId, INVALID_STATISTIC_ID);
                        return statisticId;
                    });
     auto allOperators2 = queryPlan2->getAllOperators();
-    std::transform(allOperators2.begin(), allOperators2.end(), std::inserter(allStatisticIds, allStatisticIds.end()),
+    std::transform(allOperators2.begin(),
+                   allOperators2.end(),
+                   std::inserter(allStatisticIds, allStatisticIds.end()),
                    [](const OperatorPtr& op) {
                        auto statisticId = op->getStatisticId();
                        EXPECT_NE(statisticId, INVALID_STATISTIC_ID);
@@ -267,5 +286,4 @@ TEST_F(StatisticIdInferenceTest, twoSourcesTwoQueriesWithFilterAndMap) {
     EXPECT_EQ(allStatisticIds.size(), allOperators1.size() + allOperators2.size() - 1);
 }
 
-
-} // namespace NES
+}// namespace NES

@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef ENABLE_KAFKA_BUILD
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+
+#ifdef ENABLE_KAFKA_BUILD
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -39,8 +40,8 @@ class KafkaSink : public SinkMedium {
     * @param numOfProducers
     * @param brokers list of brokers to connect to
     * @param topic list of topics to push to
-    * @param queryId
-    * @param querySubPlanId
+    * @param sharedQueryId
+    * @param decomposedQueryPlanId
     * @param kafkaProducerTimeout timeout how long to wait until the push fails
     * @param numberOfOrigins
     */
@@ -49,8 +50,8 @@ class KafkaSink : public SinkMedium {
               uint32_t numOfProducers,
               const std::string& brokers,
               const std::string& topic,
-              QueryId queryId,
-              DecomposedQueryPlanId querySubPlanId,
+              SharedQueryId sharedQueryId,
+              DecomposedQueryPlanId decomposedQueryPlanId,
               const uint64_t kafkaProducerTimeout = 10 * 1000,
               uint64_t numberOfOrigins = 1);
 
@@ -97,5 +98,5 @@ class KafkaSink : public SinkMedium {
 using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
 }// namespace NES
-#endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif// ENABLE_KAFKA_BUILD
 #endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

@@ -15,13 +15,12 @@
 #ifndef NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SYNOPSES_WINDOWSTATISTICDESCRIPTOR_HPP_
 #define NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SYNOPSES_WINDOWSTATISTICDESCRIPTOR_HPP_
 
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <cstdint>
 
 namespace NES::Statistic {
-
 
 class WindowStatisticDescriptor;
 using WindowStatisticDescriptorPtr = std::shared_ptr<WindowStatisticDescriptor>;
@@ -37,36 +36,14 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      */
     WindowStatisticDescriptor(const FieldAccessExpressionNodePtr& field, uint64_t width);
 
+    virtual ~WindowStatisticDescriptor() = default;
+
     /**
      * @brief Compares for equality
      * @param rhs
      * @return True, if equal, otherwise false.
      */
     virtual bool equal(const WindowStatisticDescriptorPtr& rhs) const = 0;
-
-    /**
-     * @brief Getter for the SendingPolicy
-     * @return SendingPolicyPtr
-     */
-    SendingPolicyPtr getSendingPolicy() const;
-
-    /**
-     * @brief Sets for the SendingPolicy
-     * @param sendingPolicy: New sending policy
-     */
-    void setSendingPolicy(const SendingPolicyPtr& sendingPolicy);
-
-    /**
-     * @brief Sets for the TriggerCondition
-     * @param sendingPolicy: New trigger condition
-     */
-    void setTriggerCondition(const TriggerConditionPtr& triggerCondition);
-
-    /**
-     * @brief Getter for the TriggerCondition
-     * @return TriggerConditionPtr
-     */
-    TriggerConditionPtr getTriggerCondition() const;
 
     /**
      * @brief Getter for the FieldAccessExpression over which the statistic is being collected
@@ -153,8 +130,6 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
 
   protected:
     const FieldAccessExpressionNodePtr field;
-    SendingPolicyPtr sendingPolicy;
-    TriggerConditionPtr triggerCondition;
     const uint64_t width;
 };
 

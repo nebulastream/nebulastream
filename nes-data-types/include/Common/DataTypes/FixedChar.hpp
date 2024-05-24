@@ -33,7 +33,7 @@ class FixedChar final : public ArrayType {
      */
     explicit FixedChar(uint64_t length) noexcept;
 
-    virtual ~FixedChar() = default;
+    ~FixedChar() override = default;
 };
 
 }// namespace NES

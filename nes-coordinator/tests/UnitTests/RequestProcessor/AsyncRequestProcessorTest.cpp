@@ -224,7 +224,8 @@ class AsyncRequestProcessorTest : public Testing::BaseUnitTest, public testing::
     AsyncRequestProcessorPtr getProcessor(uint16_t numThreads) {
         coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
         coordinatorConfig->requestExecutorThreads = numThreads;
-        StorageDataStructures storageDataStructures = {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+        StorageDataStructures storageDataStructures =
+            {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
         return std::make_shared<AsyncRequestProcessor>(storageDataStructures);
     }
 };
@@ -235,7 +236,7 @@ TEST_P(AsyncRequestProcessorTest, startAndDestroy) {
 
     //it should not be possible to submit a request after destruction
     auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, 10, 10);
-    EXPECT_FALSE(processor->runAsync(request));
+    EXPECT_EQ(processor->runAsync(request), INVALID_REQUEST_ID);
 }
 
 TEST_F(AsyncRequestProcessorTest, testWaitingForLock) {

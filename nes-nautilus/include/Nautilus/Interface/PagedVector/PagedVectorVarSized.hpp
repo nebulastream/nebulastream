@@ -16,9 +16,9 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_H
 
 #include <API/Schema.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRef;
@@ -26,6 +26,7 @@ class PagedVectorVarSizedRef;
 struct VarSizedDataEntryMapValue {
     uint8_t* entryPtr;
     uint32_t entryLength;
+    uint64_t entryBufIdx;
 };
 
 /**
@@ -152,6 +153,6 @@ class PagedVectorVarSized {
     std::map<uint64_t, VarSizedDataEntryMapValue> varSizedDataEntryMap;
     uint64_t varSizedDataEntryMapCounter;
 };
-} //NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface
 
 #endif//NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_H

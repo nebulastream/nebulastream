@@ -59,7 +59,10 @@ void triggerKeyedBucketsProxy(void* op,
     auto handler = static_cast<KeyedBucketPreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk},
+    handler->trigger(*workerContext,
+                     *pipelineExecutionContext,
+                     OriginId(originId),
+                     {sequenceNumber, chunkNumber, lastChunk},
                      watermarkTs);
 }
 
@@ -76,7 +79,7 @@ class LocalKeyedBucketStoreState : public Operators::OperatorState {
                                         uint64_t valueSize,
                                         const Value<MemRef>& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
-    
+
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;

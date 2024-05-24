@@ -15,9 +15,9 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_H
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_H
 
-#include <Nautilus/Interface/Record.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <API/Schema.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRefIter;
@@ -151,6 +151,6 @@ class PagedVectorVarSizedRefIter {
     PagedVectorVarSizedRef pagedVectorVarSized;
 };
 
-} //namespace NES::Nautilus::Interface
+}//namespace NES::Nautilus::Interface
 
 #endif//NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_H

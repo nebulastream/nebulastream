@@ -72,7 +72,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
     EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->coordinatorHost.getValue(), coordinatorConfigPtr->coordinatorHost.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(),
               coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
@@ -127,7 +127,7 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
     EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->coordinatorHost.getValue(), coordinatorConfigPtr->coordinatorHost.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(),
               coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
@@ -152,11 +152,11 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml");
 
-    EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorIp.getValue(), workerConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -176,11 +176,11 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY)
                                                       / "workerWithPhysicalSources.yaml");
 
-    EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorIp.getValue(), workerConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -214,7 +214,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
     // given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     auto commandLineParams =
-        makeCommandLineArgs({"--localWorkerIp=localhost",
+        makeCommandLineArgs({"--localWorkerHost=localhost",
                              "--coordinatorPort=5000",
                              "--numWorkerThreads=5",
                              "--numberOfBuffersInGlobalBufferManager=2048",
@@ -231,11 +231,11 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
     // when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     // then
-    EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorIp.getValue(), workerConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -258,7 +258,7 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
     // given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     auto commandLineParams =
-        makeCommandLineArgs({"--localWorkerIp=localhost",
+        makeCommandLineArgs({"--localWorkerHost=localhost",
                              "--coordinatorPort=5000",
                              "--numWorkerThreads=5",
                              "--numberOfBuffersInGlobalBufferManager=2048",
@@ -274,11 +274,11 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
     // when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     // then
-    EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
     EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorIp.getValue(), workerConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -402,7 +402,6 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
     EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), magic_enum::enum_cast<GatheringMode>("ADAPTIVE_MODE").value());
 }
 
-
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
         {"--numaAwareness", {"not_a_bool", "2", "-1"}},
@@ -411,8 +410,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions) {
         {"--enableStatisticOuput", {"not_a_bool", "2", "-1"}},
         {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
         {"--connectSinksAsync", {"not_a_bool", "2", "-1"}},
-        {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
-    };
+        {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -436,8 +434,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions) {
         {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
         {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
         {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
-    };
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -452,8 +449,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions) {
 
 TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
-        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
-    };
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
@@ -468,14 +464,12 @@ TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions) {
 
 TEST_F(ConfigTest, invalidCommandLineInputForIpOptions) {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
-        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
-        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
-    };
+        {"--restIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}}};
 
     for (const auto& optionPair : commandLineArgs) {
         for (const auto& value : optionPair.second) {
             EXPECT_ANY_THROW({
-                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                CoordinatorConfigurationPtr config = std::make_shared<CoordinatorConfiguration>();
                 std::vector<std::string> args = {optionPair.first + "=" + value};
                 config->overwriteConfigWithCommandLineInput(makeCommandLineArgs(args));
             });
@@ -491,8 +485,7 @@ TEST_F(ConfigTest, invalidBooleanYamlInputs) {
         {"enableStatisticOutput", {"not_a_bool", "2", "-1"}},
         {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
         {"connectSinksAsync", {"not_a_bool", "2", "-1"}},
-        {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
-    };
+        {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidBooleanConfigs) {
         for (const auto& value : invalidValues) {
@@ -525,8 +518,7 @@ TEST_F(ConfigTest, invalidIntYamlInputs) {
         {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
         {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
         {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
-    };
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidIntConfigs) {
         for (const auto& value : invalidValues) {
@@ -550,8 +542,7 @@ TEST_F(ConfigTest, invalidIntYamlInputs) {
 
 TEST_F(ConfigTest, invalidFloatYamlInputs) {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidFloatConfigs = {
-        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
-    };
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
 
     for (const auto& [optionName, invalidValues] : invalidFloatConfigs) {
         for (const auto& value : invalidValues) {
@@ -575,9 +566,7 @@ TEST_F(ConfigTest, invalidFloatYamlInputs) {
 
 TEST_F(ConfigTest, invalidIpYamlInputs) {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidIpConfigs = {
-        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
-        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
-    };
+        {"--restIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}}};
 
     for (const auto& [optionName, invalidValues] : invalidIpConfigs) {
         for (const auto& value : invalidValues) {
@@ -590,7 +579,7 @@ TEST_F(ConfigTest, invalidIpYamlInputs) {
             file.close();
 
             EXPECT_ANY_THROW({
-                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                CoordinatorConfigurationPtr config = std::make_shared<CoordinatorConfiguration>();
                 config->overwriteConfigWithYAMLFileInput(filePath);
             });
 

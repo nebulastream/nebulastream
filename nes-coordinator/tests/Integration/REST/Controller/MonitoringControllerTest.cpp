@@ -15,6 +15,7 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
@@ -69,7 +70,7 @@ class MonitoringControllerTest : public Testing::BaseIntegrationTest {
         while (!succes && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             succes = true;
             for (auto& query : monitoringQueries) {
-                auto id = query["query_ID"].get<uint>();
+                auto id = query["query_ID"].get<QueryId>();
                 NES_DEBUG("checking status of query {}", id);
                 if (!TestUtils::checkRunningOrTimeout(id, std::to_string(restPort))) {
                     succes = false;
@@ -228,7 +229,7 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID {}", std::to_string(1));
     NES_INFO("Received Data for node 1: {}", json.dump());
     ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
-    ASSERT_TRUE(MetricValidator::checkNodeIds(json, 1));
+    ASSERT_TRUE(MetricValidator::checkNodeIds(json, WorkerId(1)));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -262,7 +263,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     auto json = jsonsOfResponse[std::to_string(1)];
     NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID {}", std::to_string(1));
     ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
-    ASSERT_TRUE(MetricValidator::checkNodeIds(json, 1));
+    ASSERT_TRUE(MetricValidator::checkNodeIds(json, WorkerId(1)));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }

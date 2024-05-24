@@ -25,9 +25,9 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() {}
+DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() = default;
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) const {
     if (dataType->isBoolean()) {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::BOOLEAN);
     } else if (dataType->isInteger()) {
@@ -46,27 +46,28 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const IntegerPtr& integer) {
+    using enum NES::BasicPhysicalType::NativeType;
     if (integer->lowerBound >= 0) {
         if (integer->getBits() <= 8) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::UINT_8);
+            return BasicPhysicalType::create(integer, UINT_8);
         } else if (integer->getBits() <= 16) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::UINT_16);
+            return BasicPhysicalType::create(integer, UINT_16);
         } else if (integer->getBits() <= 32) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::UINT_32);
+            return BasicPhysicalType::create(integer, UINT_32);
         } else if (integer->getBits() <= 64) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::UINT_64);
+            return BasicPhysicalType::create(integer, UINT_64);
         } else {
             NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + integer->toString());
         }
     } else {
         if (integer->getBits() <= 8) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::INT_8);
+            return BasicPhysicalType::create(integer, INT_8);
         } else if (integer->getBits() <= 16) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::INT_16);
+            return BasicPhysicalType::create(integer, INT_16);
         } else if (integer->getBits() <= 32) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::INT_32);
+            return BasicPhysicalType::create(integer, INT_32);
         } else if (integer->getBits() <= 64) {
-            return BasicPhysicalType::create(integer, BasicPhysicalType::NativeType::INT_64);
+            return BasicPhysicalType::create(integer, INT_64);
         } else {
             NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + integer->toString());
         }
@@ -83,7 +84,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
     }
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayPtr& arrayType) {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayPtr& arrayType) const {
     auto const componentType = getPhysicalType(arrayType->component);
     return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
 }
@@ -92,7 +93,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const CharPtr& charT
     return BasicPhysicalType::create(charType, BasicPhysicalType::NativeType::CHAR);
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TextPtr& textType) {
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TextPtr& textType) const {
     return BasicPhysicalType::create(textType, BasicPhysicalType::NativeType::TEXT);
 }
 

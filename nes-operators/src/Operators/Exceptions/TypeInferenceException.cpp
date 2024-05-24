@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 
 namespace NES {
 TypeInferenceException::TypeInferenceException(const std::string& message) : Exceptions::RequestExecutionException(message) {}

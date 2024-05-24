@@ -34,7 +34,7 @@ CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, 
 std::string CsvFormat::getFormattedSchema() {
     std::string out = Util::toCSVString(schema);
     if (addTimestamp) {
-        out = Util::trim(out);
+        out = Util::trimWhiteSpaces(out);
         out.append(",timestamp\n");
     }
     return out;

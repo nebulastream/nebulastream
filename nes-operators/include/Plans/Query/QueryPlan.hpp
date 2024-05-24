@@ -15,14 +15,14 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
-#include <unordered_set>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace NES {
@@ -76,13 +76,13 @@ class QueryPlan {
      * @brief Get all source operators
      * @return vector of logical source operators
      */
-    std::vector<SourceLogicalOperatorPtr> getSourceOperators();
+    std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
 
     /**
      * @brief Get all sink operators
      * @return vector of logical sink operators
      */
-    std::vector<SinkLogicalOperatorPtr> getSinkOperators();
+    std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
     /**
      * @brief Appends an operator to the query plan and make the new operator as root.
@@ -93,14 +93,14 @@ class QueryPlan {
     /**
      * @brief Returns string representation of the query.
      */
-    std::string toString();
+    std::string toString() const;
 
     /**
      * @brief Get the list of root operators for the query graph.
      * NOTE: in certain stages the sink operators might not be the root operators
      * @return
      */
-    std::vector<OperatorPtr> getRootOperators();
+    std::vector<OperatorPtr> getRootOperators() const;
 
     /**
      * add subQuery's rootnode into the current node for merging purpose.
@@ -124,12 +124,12 @@ class QueryPlan {
         // Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
-        std::set<uint64_t> visitedOpIds;
+        std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators) {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<Operator>();
-                if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                if (visitedOpIds.contains(visitingOp->getId())) {
                     // skip rest of the steps as the node found in already visited node list
                     continue;
                 }
@@ -147,13 +147,13 @@ class QueryPlan {
     * @note: in certain stages the source operators might not be Leaf operators
     * @return returns a vector of leaf operators
     */
-    std::vector<OperatorPtr> getLeafOperators();
+    std::vector<OperatorPtr> getLeafOperators() const;
 
     /**
      * @brief Get all operators in the query plan
      * @return unordered_set of operators
      */
-    std::unordered_set<OperatorPtr> getAllOperators();
+    std::unordered_set<OperatorPtr> getAllOperators() const;
 
     /**
      * Find if the operator with the input Id exists in the plan.
@@ -162,21 +162,21 @@ class QueryPlan {
      * @param operatorId: Id of the operator
      * @return true if the operator exists else false
      */
-    bool hasOperatorWithId(uint64_t operatorId);
+    bool hasOperatorWithId(OperatorId operatorId);
 
     /**
      * @brief Get operator node with input id if present
      * @param operatorId : the input operator id
      * @return operator with the input id
      */
-    OperatorPtr getOperatorWithOperatorId(uint64_t operatorId);
+    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
 
     /**
      * @brief Gets the operator node for the statistic id. This method traverses all operators in the query plan.
      * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @return Operator with the statistic id
      */
-    OperatorPtr getOperatorWithStatisticId(StatisticId statisticId);
+    OperatorPtr getOperatorWithStatisticId(StatisticId statisticId) const;
 
     /**
      * Set the query Id for the plan
@@ -202,7 +202,7 @@ class QueryPlan {
      * @brief Set the logical sources used in the query
      * @param sourceName: the name of the logical source
      */
-    void setSourceConsumed(const std::string& sourceName);
+    void setSourceConsumed(std::string_view sourceName);
 
     /**
      * @brief Set query placement strategy
@@ -223,13 +223,13 @@ class QueryPlan {
      * @return all operators between (excluding) downstream and upstream operators
      */
     std::set<OperatorPtr> findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperators,
-                                                      const std::set<OperatorPtr>& upstreamOperators);
+                                                  const std::set<OperatorPtr>& upstreamOperators);
 
     /**
      * @brief Get state of the query plan
      * @return query state
      */
-    QueryState getQueryState();
+    QueryState getQueryState() const;
 
     /**
      * @brief Set state of the query plan
@@ -241,6 +241,13 @@ class QueryPlan {
      * @brief Clears all root operators
      */
     void clearRootOperators();
+
+    /**
+     * @brief Comparison to another plan and its children nodes by tree traversal.
+     * @param otherPlan: the other plan to be compared to this plan
+     * @return true, if this and other plan are equal in their structure and operators, false else
+     */
+    bool compare(QueryPlanPtr& otherPlan);
 
   private:
     /**
@@ -254,7 +261,7 @@ class QueryPlan {
      * @brief Creates a new query plan with a query id and a query sub plan id.
      * @param queryId :  the query id
      */
-    QueryPlan(QueryId queryId);
+    explicit QueryPlan(QueryId queryId);
 
     /**
      * @brief initialize query plan with a root operator
@@ -274,14 +281,14 @@ class QueryPlan {
      * @return empty or operators between source and target operators
      */
     std::set<OperatorPtr> findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator,
-                                                                           const std::set<OperatorPtr>& targetOperators);
+                                                                       const std::set<OperatorPtr>& targetOperators);
 
     std::vector<OperatorPtr> rootOperators{};
-    QueryId queryId;
+    QueryId queryId = INVALID_QUERY_ID;
     std::string sourceConsumed;
     QueryState currentState;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

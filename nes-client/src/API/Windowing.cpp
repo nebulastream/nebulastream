@@ -14,15 +14,15 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Windowing.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <utility>
 
 namespace NES::API {
@@ -68,15 +68,15 @@ Windowing::TimeMeasure Hours(uint64_t hours) { return Minutes(hours * 60); }
 
 Windowing::TimeMeasure Days(uint64_t days) { return Hours(days); }
 
-Windowing::TimeUnit Milliseconds() { return Windowing::TimeUnit(1); }
+Windowing::TimeUnit Milliseconds() { return Windowing::TimeUnit::Milliseconds(); }
 
-Windowing::TimeUnit Seconds() { return Windowing::TimeUnit(1000); }
+Windowing::TimeUnit Seconds() { return Windowing::TimeUnit::Seconds(); }
 
-Windowing::TimeUnit Minutes() { return Windowing::TimeUnit(1000 * 60); }
+Windowing::TimeUnit Minutes() { return Windowing::TimeUnit::Minutes(); }
 
-Windowing::TimeUnit Hours() { return Windowing::TimeUnit(1000 * 60 * 60); }
+Windowing::TimeUnit Hours() { return Windowing::TimeUnit::Hours(); }
 
-Windowing::TimeUnit Days() { return Windowing::TimeUnit(1000 * 60 * 60 * 24); }
+Windowing::TimeUnit Days() { return Windowing::TimeUnit::Days(); }
 
 Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField) {
     return Windowing::TimeCharacteristic::createEventTime(onField.getExpressionNode());

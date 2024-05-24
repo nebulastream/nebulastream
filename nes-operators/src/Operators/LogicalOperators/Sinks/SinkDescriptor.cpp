@@ -17,8 +17,7 @@
 namespace NES {
 SinkDescriptor::SinkDescriptor() : SinkDescriptor(1) {}
 
-SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins, false) {}
+SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins) : SinkDescriptor(numberOfOrigins, false) {}
 
 SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp)
     : numberOfOrigins(numberOfOrigins), addTimestamp(addTimestamp) {}

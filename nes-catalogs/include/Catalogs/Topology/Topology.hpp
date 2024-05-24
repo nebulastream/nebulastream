@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <any>
 #include <folly/Synchronized.h>
@@ -94,13 +94,13 @@ class Topology {
      * @return worker id
      */
     WorkerId registerWorkerAsRoot(WorkerId newRootWorkerId,
-                            const std::string& address,
-                            const int64_t grpcPort,
-                            const int64_t dataPort,
-                            const uint16_t numberOfSlots,
-                            std::map<std::string, std::any> workerProperties,
-                            uint32_t bandwidthInMbps,
-                            uint32_t latencyInMs);
+                                  const std::string& address,
+                                  const int64_t grpcPort,
+                                  const int64_t dataPort,
+                                  const uint16_t numberOfSlots,
+                                  std::map<std::string, std::any> workerProperties,
+                                  uint32_t bandwidthInMbps,
+                                  uint32_t latencyInMs);
 
     /**
      * @brief Register a new topology node in the topology
@@ -115,13 +115,13 @@ class Topology {
      * @return worker id
      */
     WorkerId registerWorker(WorkerId workerId,
-                                  const std::string& address,
-                                  const int64_t grpcPort,
-                                  const int64_t dataPort,
-                                  const uint16_t numberOfSlots,
-                                  std::map<std::string, std::any> workerProperties,
-                                  uint32_t bandwidthInMbps,
-                                  uint32_t latencyInMs);
+                            const std::string& address,
+                            const int64_t grpcPort,
+                            const int64_t dataPort,
+                            const uint16_t numberOfSlots,
+                            std::map<std::string, std::any> workerProperties,
+                            uint32_t bandwidthInMbps,
+                            uint32_t latencyInMs);
 
     /**
      * @brief returns a vector of parent topology node ids connected to the specified topology node
@@ -176,7 +176,7 @@ class Topology {
      * @param workerId : the id of the topology node
      * @return Topology node copy if found else nullptr
      */
-    TopologyNodePtr getCopyOfTopologyNodeWithId(WorkerId workerId);
+    TopologyNodePtr getCopyOfTopologyNodeWithId(WorkerId workerId) const;
 
     /**
      * @brief checks if a topology node with workerId exists
@@ -220,7 +220,7 @@ class Topology {
      * @brief Get all registered topology nodes
      * @return vector of topology nodes
      */
-    std::vector<WorkerId> getAllRegisteredNodeIds();
+    std::vector<WorkerId> getAllRegisteredNodeIds() const;
 
     /**
      * @brief This method will return a "duplicate" subgraph containing all the paths between start and destination node.
@@ -481,7 +481,7 @@ class Topology {
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
-    std::atomic_uint64_t topologyNodeIdCounter = 0;
+    std::atomic_uint64_t topologyNodeIdCounter = INITIAL_WORKER_NODE_ID.getRawValue();
 };
 }// namespace NES
 #endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

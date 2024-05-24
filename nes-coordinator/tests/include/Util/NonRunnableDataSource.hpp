@@ -29,8 +29,8 @@ class NonRunnableDataSource : public NES::DefaultSource {
         uint64_t numbersOfBufferToProduce,
         uint64_t gatheringInterval,
         OperatorId operatorId,
-        StatisticId statisticId,
         OriginId originId,
+        StatisticId statisticId,
         size_t numSourceLocalBuffers,
         const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
         NES::Runtime::QueryTerminationType terminationType = NES::Runtime::QueryTerminationType::HardStop);
@@ -44,6 +44,12 @@ class NonRunnableDataSource : public NES::DefaultSource {
     void emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer);
 
     void emitBuffer(Runtime::TupleBuffer& buffer);
+
+    /**
+     * @brief #4888 discusses, if we should rename the method
+     * @param buffer
+     */
+    void emitWork(Runtime::TupleBuffer& buffer) override;
 
   private:
     std::promise<bool> canTerminate;

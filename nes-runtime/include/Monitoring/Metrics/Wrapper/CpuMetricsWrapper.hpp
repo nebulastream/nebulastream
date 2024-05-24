@@ -18,6 +18,7 @@
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 
 namespace NES::Monitoring {
 
@@ -74,8 +75,8 @@ class CpuMetricsWrapper {
      */
     [[nodiscard]] CpuMetrics getTotal() const;
 
-    uint64_t getNodeId() const;
-    void setNodeId(uint64_t nodeId);
+    WorkerId getNodeId() const;
+    void setNodeId(WorkerId nodeId);
 
     /**
      * @brief Returns the metrics as json
@@ -88,7 +89,7 @@ class CpuMetricsWrapper {
 
   private:
     std::vector<CpuMetrics> cpuMetrics;
-    uint64_t nodeId;
+    WorkerId nodeId;
     uint64_t timestamp;
 } __attribute__((packed));
 

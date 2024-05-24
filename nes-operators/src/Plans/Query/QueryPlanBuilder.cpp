@@ -13,8 +13,9 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -24,9 +25,8 @@
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
@@ -42,7 +42,7 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
     return queryPlanPtr;
 }
 
-QueryPlanPtr QueryPlanBuilder::addProjection(std::vector<ExpressionNodePtr> expressions, QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addProjection(const std::vector<ExpressionNodePtr>& expressions, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add projection operator to query plan");
     OperatorPtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
     queryPlan->appendOperatorAsNewRoot(op);
@@ -106,9 +106,16 @@ QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr
 
 QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePtr window,
                                                          Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                         Statistic::MetricHash metricHash,
+                                                         Statistic::StatisticMetricHash metricHash,
+                                                         Statistic::SendingPolicyPtr sendingPolicy,
+                                                         Statistic::TriggerConditionPtr triggerCondition,
                                                          QueryPlanPtr queryPlan) {
-    auto op = LogicalOperatorFactory::createStatisticBuildOperator(std::move(window), std::move(statisticDescriptor), metricHash);
+    queryPlan = checkAndAddWatermarkAssignment(queryPlan, window);
+    auto op = LogicalOperatorFactory::createStatisticBuildOperator(window,
+                                                                   std::move(statisticDescriptor),
+                                                                   metricHash,
+                                                                   sendingPolicy,
+                                                                   triggerCondition);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

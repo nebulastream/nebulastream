@@ -47,7 +47,7 @@ class BasicPhysicalType final : public PhysicalType {
      */
     BasicPhysicalType(DataTypePtr type, NativeType nativeType);
 
-    virtual ~BasicPhysicalType() = default;
+    ~BasicPhysicalType() override = default;
 
     /**
      * @brief Factory function to create a new physical type.
@@ -61,7 +61,7 @@ class BasicPhysicalType final : public PhysicalType {
      * @brief Indicates if this is a basic data type.
      * @return true
      */
-    [[nodiscard]] bool isBasicType() const noexcept final { return true; }
+    [[nodiscard]] bool isBasicType() const noexcept override { return true; }
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
@@ -74,20 +74,20 @@ class BasicPhysicalType final : public PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
      */
-    std::string convertRawToString(void const* rawData) const noexcept final;
+    std::string convertRawToString(void const* rawData) const noexcept override;
 
     /**
      * @brief Converts the binary representation of this value to a string.
      * @param rawData a pointer to the raw value
      * @return string
     */
-    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept final;
+    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
 
     /**
      * @brief Returns the string representation of this physical data type.
      * @return string
      */
-    [[nodiscard]] std::string toString() const noexcept final;
+    [[nodiscard]] std::string toString() const noexcept override;
 
     NativeType const nativeType;
 };

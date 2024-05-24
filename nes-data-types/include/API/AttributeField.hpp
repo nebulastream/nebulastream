@@ -51,14 +51,14 @@ class AttributeField {
     void setName(std::string newName);
 
     [[nodiscard]] std::string toString() const;
-    bool isEqual(const AttributeFieldPtr& attr);
+    bool isEqual(const AttributeFieldPtr& attr) const;
 
     uint64_t hash() const;
     /**
      * @brief Make copy of this attribute
      * @return shared pointer
      */
-    AttributeFieldPtr copy();
+    AttributeFieldPtr copy() const;
 
   private:
     std::string name;

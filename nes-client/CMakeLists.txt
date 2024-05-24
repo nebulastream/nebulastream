@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -16,8 +15,8 @@ add_subdirectory(src)
 get_source(nes-client NES_CLIENT_SOURCE_FILES)
 
 # Add Library
-add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
-target_link_libraries(nes-client PUBLIC nes-data-types nes-operators)
+add_library(nes-client ${NES_CLIENT_SOURCE_FILES})
+target_link_libraries(nes-client PRIVATE nes-operators)
 target_link_libraries(nes-client PRIVATE cpr::cpr ${CURL_LIBRARIES} nes-grpc nes-common)
 target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

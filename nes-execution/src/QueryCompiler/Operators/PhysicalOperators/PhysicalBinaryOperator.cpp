@@ -17,9 +17,12 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, StatisticId statisticId, SchemaPtr leftSchema,
-                                               SchemaPtr rightSchema, SchemaPtr outputSchema)
-    : Operator(id), PhysicalOperator(id, statisticId), BinaryOperator(id) {
+PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id,
+                                               StatisticId statisticId,
+                                               SchemaPtr leftSchema,
+                                               SchemaPtr rightSchema,
+                                               SchemaPtr outputSchema)
+    : Operator(id, statisticId), PhysicalOperator(id, statisticId), BinaryOperator(id) {
     BinaryOperator::setLeftInputSchema(std::move(leftSchema));
     BinaryOperator::setRightInputSchema(std::move(rightSchema));
     BinaryOperator::setOutputSchema(std::move(outputSchema));

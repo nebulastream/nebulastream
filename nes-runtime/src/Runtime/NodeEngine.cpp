@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/NetworkManager.hpp>
@@ -26,6 +25,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <StatisticCollection/StatisticManager.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 
 #include <QueryCompiler/QueryCompilationRequest.hpp>// request = QueryCompilation::QueryCompilationRequest::create(..)
@@ -51,7 +51,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
                        OpenCLManagerPtr&& openCLManager,
-                       uint64_t nodeEngineId,
+                       WorkerId nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker,
@@ -60,8 +60,9 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)),
       // TODO for now, we always use the DefaultStatisticStore. A configuration will be done with #4687
-      statisticStore(Statistic::DefaultStatisticStore::create()), openCLManager(std::move(openCLManager)),
-      nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+      statisticManager(Statistic::StatisticManager::create(Statistic::DefaultStatisticStore::create())),
+      openCLManager(std::move(openCLManager)), nodeEngineId(nodeEngineId),
+      numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
 
@@ -330,7 +331,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO: add check if still queryIdAndCatalogEntryMapping are running
     //TODO @Steffen: does it make sense to have force stop still?
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
-    //TODO @all: error handling, e.g., is it an error if the query is stopped but not undeployed? @Steffen?
+    //TODO @all: error handling, e.g., is it an error if the query is stopped but not non-deployed? @Steffen?
 
     bool expected = true;
     if (!isRunning.compare_exchange_strong(expected, false)) {
@@ -398,7 +399,7 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     return bufferManagers[bufferManagerIndex];
 }
 
-uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
+WorkerId NodeEngine::getWorkerId() { return nodeEngineId; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 
@@ -535,22 +536,36 @@ std::vector<DecomposedQueryPlanId> NodeEngine::getDecomposedQueryIds(SharedQuery
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [{}] error [{}] callstack {}", signalNumber, strerror(errno), callstack);
-    std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
-    std::cerr << "Error: " << strerror(errno) << std::endl;
-    std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
-    std::cerr << "Callstack:\n " << callstack << std::endl;
+    if (callstack.empty()) {
+        NES_ERROR("onFatalError: signal [{}] error [{}] (enable NES_DEBUG to view stacktrace)", signalNumber, strerror(errno));
+        std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
+    } else {
+        NES_ERROR("onFatalError: signal [{}] error [{}] callstack {}", signalNumber, strerror(errno), callstack);
+        std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it won't harm us to write to stderr
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
+        std::cerr << "Callstack:\n " << callstack << std::endl;
+    }
 #ifdef ENABLE_CORE_DUMPER
     detail::createCoreDump();
 #endif
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
-    std::cerr << "Runtime failed fatally" << std::endl;
-    std::cerr << "Error: " << strerror(errno) << std::endl;
-    std::cerr << "Exception: " << exception->what() << std::endl;
-    std::cerr << "Callstack:\n " << callstack << std::endl;
+    if (callstack.empty()) {
+        NES_ERROR("onFatalException: exception=[{}] (enable NES_DEBUG to view stacktrace)", exception->what());
+        std::cerr << "Runtime failed fatally" << std::endl;
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Exception: " << exception->what() << std::endl;
+    } else {
+        NES_ERROR("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
+        std::cerr << "Runtime failed fatally" << std::endl;
+        std::cerr << "Error: " << strerror(errno) << std::endl;
+        std::cerr << "Exception: " << exception->what() << std::endl;
+        std::cerr << "Callstack:\n " << callstack << std::endl;
+    }
 #ifdef ENABLE_CORE_DUMPER
     detail::createCoreDump();
 #endif
@@ -558,24 +573,25 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 
 const std::vector<PhysicalSourceTypePtr>& NodeEngine::getPhysicalSourceTypes() const { return physicalSources; }
 
-std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQueryPlan(uint64_t querySubPlanId) const {
+std::shared_ptr<const Execution::ExecutableQueryPlan>
+NodeEngine::getExecutableQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId) const {
     std::unique_lock lock(engineMutex);
-    auto iterator = deployedExecutableQueryPlans.find(querySubPlanId);
+    auto iterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId);
     if (iterator != deployedExecutableQueryPlans.end()) {
         return iterator->second;
     }
     return nullptr;
 }
 
-bool NodeEngine::bufferData(DecomposedQueryPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
+bool NodeEngine::bufferData(DecomposedQueryPlanId decomposedQueryPlanId, OperatorId uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");
     std::unique_lock lock(engineMutex);
-    if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
-        NES_DEBUG("Deployed QEP with ID:  {}  not found", querySubPlanId);
+    if (deployedExecutableQueryPlans.find(decomposedQueryPlanId) == deployedExecutableQueryPlans.end()) {
+        NES_DEBUG("Deployed QEP with ID:  {}  not found", decomposedQueryPlanId);
         return false;
     } else {
-        auto qep = deployedExecutableQueryPlans.at(querySubPlanId);
+        auto qep = deployedExecutableQueryPlans.at(decomposedQueryPlanId);
         auto sinks = qep->getSinks();
         //make sure that query sub plan has network sink with specified id
         auto it = std::find_if(sinks.begin(), sinks.end(), [uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink) {
@@ -592,26 +608,26 @@ bool NodeEngine::bufferData(DecomposedQueryPlanId querySubPlanId, uint64_t uniqu
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                  querySubPlanId,
+                  decomposedQueryPlanId,
                   uniqueNetworkSinkDescriptorId);
         return false;
     }
 }
 
-bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
+bool NodeEngine::updateNetworkSink(WorkerId newNodeId,
                                    const std::string& newHostname,
                                    uint32_t newPort,
-                                   DecomposedQueryPlanId querySubPlanId,
-                                   uint64_t uniqueNetworkSinkDescriptorId) {
+                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   OperatorId uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_ERROR("NodeEngine: Received request to update Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
-    if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
-        NES_DEBUG("Deployed QEP with ID:  {}  not found", querySubPlanId);
+    if (deployedExecutableQueryPlans.find(decomposedQueryPlanId) == deployedExecutableQueryPlans.end()) {
+        NES_DEBUG("Deployed QEP with ID:  {}  not found", decomposedQueryPlanId);
         return false;
     } else {
-        auto qep = deployedExecutableQueryPlans.at(querySubPlanId);
+        auto qep = deployedExecutableQueryPlans.at(decomposedQueryPlanId);
         auto networkSinks = qep->getSinks();
         //make sure that query sub plan has network sink with specified id
         auto it =
@@ -629,54 +645,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                  querySubPlanId,
-                  uniqueNetworkSinkDescriptorId);
-        return false;
-    }
-}
-
-bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
-                                                    const std::string& newHostname,
-                                                    uint32_t newPort,
-                                                    DecomposedQueryPlanId querySubPlanId,
-                                                    uint64_t uniqueNetworkSinkDescriptorId,
-                                                    Network::NesPartition newPartition,
-                                                    DecomposedQueryPlanVersion version) {
-    NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
-    Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
-    std::unique_lock lock(engineMutex);
-    if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
-        NES_DEBUG("Deployed QEP with ID:  {}  not found", querySubPlanId);
-        return false;
-    } else {
-        auto qep = deployedExecutableQueryPlans.at(querySubPlanId);
-        auto networkSinks = qep->getSinks();
-        Network::NetworkSinkPtr networkSink;
-        //make sure that query sub plan has network sink with specified id
-        auto it = std::find_if(networkSinks.begin(),
-                               networkSinks.end(),
-                               [uniqueNetworkSinkDescriptorId, &networkSink](const DataSinkPtr& dataSink) {
-                                   networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
-                                   return networkSink
-                                       && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
-                               });
-        if (it != networkSinks.end()) {
-            auto waitTime = std::chrono::milliseconds(0);//wait time will be ignored
-            auto retries = 0;                            //retries will be ignored
-            auto numberOfOrigins = 0;                    //number of origins will be ignored
-            auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(newNodeLocation,
-                                                                                     newPartition,
-                                                                                     waitTime,
-                                                                                     retries,
-                                                                                     version,
-                                                                                     numberOfOrigins,
-                                                                                     uniqueNetworkSinkDescriptorId);
-            networkSink->configureNewSinkDescriptor(*reconfiguredSinkDescriptor->as<Network::NetworkSinkDescriptor>());
-            return true;
-        }
-        //query sub plan did not have network sink with specified id
-        NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                  querySubPlanId,
+                  decomposedQueryPlanId,
                   uniqueNetworkSinkDescriptorId);
         return false;
     }
@@ -750,5 +719,6 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
 
-const Statistic::AbstractStatisticStorePtr NodeEngine::getStatisticStore() const { return statisticStore; }
+const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
+
 }// namespace NES::Runtime

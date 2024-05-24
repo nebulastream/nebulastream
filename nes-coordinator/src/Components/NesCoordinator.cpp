@@ -32,6 +32,7 @@
 #include <Health.pb.h>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -44,6 +45,11 @@
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
+#include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
@@ -66,7 +72,7 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
-      restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
+      restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorHost),
       rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
@@ -78,6 +84,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
+    placementAmendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
@@ -91,8 +98,21 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     cfg.set("type_check", false);
     auto z3Context = std::make_shared<z3::context>(cfg);
 
-    RequestProcessor::StorageDataStructures storageDataStructures =
-        {this->coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog};
+    // For now, we hardcode the usage of the DefaultStatisticQueryGenerator, see issue #4687
+    auto statisticRegistry = Statistic::StatisticRegistry::create();
+    statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry,
+                                                                     Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                     Statistic::DefaultStatisticCache::create(),
+                                                                     topology);
+    RequestProcessor::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
+                                                                     topology,
+                                                                     globalExecutionPlan,
+                                                                     globalQueryPlan,
+                                                                     queryCatalog,
+                                                                     sourceCatalog,
+                                                                     udfCatalog,
+                                                                     placementAmendmentQueue,
+                                                                     statisticProbeHandler};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     requestHandlerService = std::make_shared<RequestHandlerService>(this->coordinatorConfiguration->optimizer,
@@ -101,7 +121,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                     sourceCatalog,
                                                                     udfCatalog,
                                                                     asyncRequestExecutor,
-                                                                    z3Context);
+                                                                    z3Context,
+                                                                    Statistic::DefaultStatisticQueryGenerator::create(),
+                                                                    statisticRegistry);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
@@ -117,6 +139,8 @@ NesCoordinator::~NesCoordinator() {
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
+
+Statistic::StatisticProbeHandlerPtr NesCoordinator::getStatisticProbeHandler() const { return statisticProbeHandler; }
 
 Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
@@ -151,7 +175,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     //start the coordinator worker that is the sink for all queryIdAndCatalogEntryMapping
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     // Unconditionally set IP of internal worker and set IP and port of coordinator.
-    coordinatorConfiguration->worker.coordinatorIp = rpcIp;
+    coordinatorConfiguration->worker.coordinatorHost = rpcIp;
     coordinatorConfiguration->worker.coordinatorPort = rpcPort;
     // Ensure that coordinator and internal worker enable/disable monitoring together.
     coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
@@ -199,6 +223,12 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start health check");
     coordinatorHealthCheckService->startHealthCheck();
 
+    // Start placement amendment handler
+    auto amendmentThreadCount = coordinatorConfiguration->optimizer.placementAmendmentThreadCount.getValue();
+    placementAmendmentHandler =
+        std::make_shared<Optimizer::PlacementAmendmentHandler>(amendmentThreadCount, placementAmendmentQueue);
+    placementAmendmentHandler->start();
+
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread->join();
@@ -218,6 +248,10 @@ bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force={}", force);
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
+
+        NES_DEBUG("NesCoordinator::stop placement amendment handler");
+        //Terminate placement amendment handler
+        placementAmendmentHandler->shutDown();
 
         NES_DEBUG("NesCoordinator::stop health check");
         coordinatorHealthCheckService->stopHealthCheck();
@@ -258,7 +292,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
-
         return true;
     }
     NES_DEBUG("NesCoordinator: already stopped");
@@ -301,7 +334,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
 
 std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
-    return worker->getNodeEngine()->getQueryStatistics(queryId);
+    return worker->getNodeEngine()->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId));
 }
 
 RequestHandlerServicePtr NesCoordinator::getRequestHandlerService() { return requestHandlerService; }
@@ -309,6 +342,8 @@ RequestHandlerServicePtr NesCoordinator::getRequestHandlerService() { return req
 Catalogs::Query::QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
 
 Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog; }
+
+Optimizer::UMPMCAmendmentQueuePtr NesCoordinator::getPlacementAmendmentQueue() { return placementAmendmentQueue; }
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 

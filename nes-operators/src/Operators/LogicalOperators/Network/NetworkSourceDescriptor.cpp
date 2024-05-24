@@ -14,13 +14,14 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <fmt/format.h>
 #include <utility>
 
 namespace NES::Network {
 
 NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema,
-                                                 NesPartition nesPartition,
-                                                 NodeLocation nodeLocation,
+                                                 const NesPartition& nesPartition,
+                                                 const NodeLocation& nodeLocation,
                                                  std::chrono::milliseconds waitTime,
                                                  uint32_t retryTimes,
                                                  DecomposedQueryPlanVersion version,
@@ -29,8 +30,8 @@ NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema,
       retryTimes(retryTimes), version(version), uniqueNetworkSourceId(uniqueNetworkSourceId) {}
 
 SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema,
-                                                    NesPartition nesPartition,
-                                                    NodeLocation nodeLocation,
+                                                    const NesPartition& nesPartition,
+                                                    const NodeLocation& nodeLocation,
                                                     std::chrono::milliseconds waitTime,
                                                     uint32_t retryTimes,
                                                     DecomposedQueryPlanVersion version,
@@ -53,8 +54,10 @@ bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
 }
 
 std::string NetworkSourceDescriptor::toString() const {
-    return "NetworkSourceDescriptor{Version=" + std::to_string(version) + ";Partition=" + nesPartition.toString()
-        + ";NetworkSinkNodeLocation=" + nodeLocation.createZmqURI() + "}";
+    return fmt::format("NetworkSourceDescriptor{{Version={};Partition={};NetworkSinkNodeLocation={}}}",
+                       version,
+                       nesPartition.toString(),
+                       nodeLocation.createZmqURI());
 }
 
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }

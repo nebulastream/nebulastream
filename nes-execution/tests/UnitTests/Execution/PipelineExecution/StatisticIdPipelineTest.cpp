@@ -58,7 +58,7 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
         NES::Logger::setupLogging("StatisticIdPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatisticIdPipelineTest test class.");
     }
-    
+
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
@@ -88,7 +88,6 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down StatisticIdPipelineTest test class."); }
 
-
     /**
  * @brief This method creates numBuffers buffers (default = 100) with some arbitrary data
  */
@@ -114,7 +113,6 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
         return retBuffers;
     }
 };
-
 
 /**
  * @brief Tests if the statistic id is set correctly for the emitted tuple buffer of a pipeline consisting of a
@@ -144,8 +142,10 @@ TEST_P(StatisticIdPipelineTest, testScanFilterEmitPipeline) {
     executablePipeline->stop(pipelineContext);
 
     // Checking if all buffers have the statisticId of the filterOperator
-    bool statisticIdCheck = std::accumulate(pipelineContext.buffers.begin(), pipelineContext.buffers.end(),
-                                            true, [this](const bool cur, const TupleBuffer& buf) {
+    bool statisticIdCheck = std::accumulate(pipelineContext.buffers.begin(),
+                                            pipelineContext.buffers.end(),
+                                            true,
+                                            [this](const bool cur, const TupleBuffer& buf) {
                                                 return cur && (buf.getStatisticId() == statisticIdFilter);
                                             });
     EXPECT_TRUE(statisticIdCheck);
@@ -188,13 +188,14 @@ TEST_P(StatisticIdPipelineTest, testScanFilterMapEmitPipeline) {
     executablePipeline->stop(pipelineContext);
 
     // Checking if all buffers have the statisticId of the filterOperator
-    bool statisticIdCheck = std::accumulate(pipelineContext.buffers.begin(), pipelineContext.buffers.end(),
-                                            true, [this](const bool cur, const TupleBuffer& buf) {
+    bool statisticIdCheck = std::accumulate(pipelineContext.buffers.begin(),
+                                            pipelineContext.buffers.end(),
+                                            true,
+                                            [this](const bool cur, const TupleBuffer& buf) {
                                                 return cur && (buf.getStatisticId() == statisticIdMap);
                                             });
     EXPECT_TRUE(statisticIdCheck);
 }
-
 
 INSTANTIATE_TEST_CASE_P(testStatisticIdCompilation,
                         StatisticIdPipelineTest,

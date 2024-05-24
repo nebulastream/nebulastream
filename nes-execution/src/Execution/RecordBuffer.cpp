@@ -82,8 +82,8 @@ void RecordBuffer::setChunkNr(const Value<UInt64>& chunkNumber) {
 
 Value<UInt64> RecordBuffer::getChunkNr() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getChunkNumber",
-                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getChunkNumber,
-                   tupleBufferRef);
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getChunkNumber,
+                          tupleBufferRef);
 }
 
 void RecordBuffer::setLastChunk(const Value<Boolean>& isLastChunk) {
@@ -125,7 +125,7 @@ Value<UInt64> RecordBuffer::getCreatingTs() {
 }
 
 void RecordBuffer::setCreationTs(const Value<NES::Nautilus::UInt64>& creationTs) {
-    FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
+    FunctionCall<>("NES__Runtime__TupleBuffer__setCreationTimestampInMS",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS,
                    tupleBufferRef,
                    creationTs);

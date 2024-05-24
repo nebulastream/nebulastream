@@ -19,14 +19,14 @@ namespace NES {
 
 TCPSourceDescriptor::TCPSourceDescriptor(SchemaPtr schema,
                                          TCPSourceTypePtr tcpSourceType,
-                                         std::string logicalSourceName,
-                                         std::string physicalSourceName)
+                                         const std::string& logicalSourceName,
+                                         const std::string& physicalSourceName)
     : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), tcpSourceType(std::move(tcpSourceType)) {}
 
 SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema,
                                                 TCPSourceTypePtr sourceConfig,
-                                                std::string logicalSourceName,
-                                                std::string physicalSourceName) {
+                                                const std::string& logicalSourceName,
+                                                const std::string& physicalSourceName) {
     return std::make_shared<TCPSourceDescriptor>(
         TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), logicalSourceName, physicalSourceName));
 }

@@ -15,8 +15,8 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 
-#include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
 #include <Configurations/Enums/QueryMergerRule.hpp>
+#include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
 #include <memory>
 
 namespace z3 {
@@ -72,4 +72,4 @@ class SignatureInferencePhase {
 };
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_

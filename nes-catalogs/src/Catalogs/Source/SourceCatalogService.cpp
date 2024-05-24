@@ -28,15 +28,15 @@ SourceCatalogService::SourceCatalogService(Catalogs::Source::SourceCatalogPtr so
     NES_ASSERT(this->sourceCatalog, "sourceCatalogPtr has to be valid");
 }
 
-bool SourceCatalogService::registerPhysicalSource(const std::string& physicalSourceName,
-                                                  const std::string& logicalSourceName,
-                                                  WorkerId topologyNodeId) {
+std::pair<bool, std::string> SourceCatalogService::registerPhysicalSource(const std::string& physicalSourceName,
+                                                                          const std::string& logicalSourceName,
+                                                                          WorkerId topologyNodeId) {
 
     std::unique_lock<std::mutex> lock(sourceCatalogMutex);
 
     if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
         NES_ERROR("SourceCatalogService::RegisterPhysicalSource logical source does not exist {}", logicalSourceName);
-        return false;
+        return {false, fmt::format("RegisterPhysicalSource logical source does not exist {}", logicalSourceName)};
     }
 
     NES_DEBUG("SourceCatalogService::RegisterPhysicalSource: try to register physical node id {} physical source= {} logical "
@@ -50,9 +50,9 @@ bool SourceCatalogService::registerPhysicalSource(const std::string& physicalSou
     bool success = sourceCatalog->addPhysicalSource(logicalSourceName, sce);
     if (!success) {
         NES_ERROR("SourceCatalogService::RegisterPhysicalSource: adding physical source was not successful.");
-        return false;
+        return {false, "RegisterPhysicalSource: adding physical source was not successful."};
     }
-    return success;
+    return {success, ""};
 }
 
 bool SourceCatalogService::unregisterPhysicalSource(const std::string& physicalSourceName,
@@ -117,4 +117,24 @@ bool SourceCatalogService::reset() {
     std::unique_lock<std::mutex> lock(sourceCatalogMutex);
     return sourceCatalog->reset();
 }
+
+bool SourceCatalogService::addKeyDistributionEntry(const Catalogs::Source::SourceCatalogEntryPtr& entry,
+                                                   std::set<uint64_t> keys) {
+    std::unique_lock<std::mutex> lock(sourceCatalogMutex);
+    if (sourceCatalog->getKeyDistributionMap().contains(entry)) {
+        NES_WARNING("SourceCatalogService::addKeyDistributionEntry: entry {} already exists, overwriting values",
+                    entry->toString());
+    }
+    sourceCatalog->getKeyDistributionMap()[entry] = std::move(keys);
+    return true;
+}
+
+bool SourceCatalogService::unregisterAllPhysicalSourcesByWorker(WorkerId workerId) {
+    std::unique_lock lock(sourceCatalogMutex);
+    NES_DEBUG("SourceCatalogService::unregisterAllPhysicalSourcesByWorker: remove all physical sources for worker: {}", workerId);
+    sourceCatalog->removeAllPhysicalSourcesByWorker(workerId);
+
+    return true;
+}
+
 }//namespace NES

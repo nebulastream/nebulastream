@@ -40,7 +40,7 @@ class QueryPlanBuilder {
       * @param queryPlan the queryPlan to add the projection node
       * @return the updated queryPlan
       */
-    static QueryPlanPtr addProjection(std::vector<ExpressionNodePtr> expressions, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addProjection(const std::vector<ExpressionNodePtr>& expressions, QueryPlanPtr queryPlan);
 
     /**
      * @brief this call add the rename operator to the queryPlan, this operator renames the source
@@ -81,12 +81,16 @@ class QueryPlanBuilder {
      * @param window
      * @param statisticDescriptor: Descriptor for the synopsis
      * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
+     * @param sendingPolicy: Policy so when and how to send the data
+     * @param triggerCondition: Policy when and how to call the callback method
      * @param queryPlan the queryPlan the synopsis is added to
      * @return the updated queryPlanPtr
      */
     static QueryPlanPtr addStatisticBuildOperator(Windowing::WindowTypePtr window,
                                                   Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                  Statistic::MetricHash metricHash,
+                                                  Statistic::StatisticMetricHash metricHash,
+                                                  Statistic::SendingPolicyPtr sendingPolicy,
+                                                  Statistic::TriggerConditionPtr triggerCondition,
                                                   QueryPlanPtr queryPlan);
 
     /**

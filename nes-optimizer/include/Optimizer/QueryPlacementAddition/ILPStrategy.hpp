@@ -113,8 +113,8 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
                                  std::map<std::string, z3::expr>& placementVariable,
                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                  std::map<OperatorId, z3::expr>& operatorDistanceMap,
-                                 std::map<uint64_t, z3::expr>& nodeUtilizationMap,
-                                 std::map<uint64_t, double>& nodeMileageMap);
+                                 std::map<WorkerId, z3::expr>& nodeUtilizationMap,
+                                 std::map<WorkerId, double>& nodeMileageMap);
 
     /**
     * @brief Populate the placement variables and adds constraints to the optimizer
@@ -133,36 +133,28 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
                         std::vector<TopologyNodeWLock>& topologyNodePath,
                         std::map<std::string, z3::expr>& placementVariable,
                         std::map<OperatorId, z3::expr>& operatorDistanceMap,
-                        std::map<uint64_t, z3::expr>& nodeUtilizationMap,
-                        std::map<uint64_t, double>& nodeMileageMap);
+                        std::map<WorkerId, z3::expr>& nodeUtilizationMap,
+                        std::map<WorkerId, double>& nodeMileageMap);
 
     /**
     * @brief computes heuristics for distance
     * @param pinnedDownStreamOperators: pinned downstream operators
     * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
-    std::map<uint64_t, double> computeMileage(const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
+    std::map<WorkerId, double> computeMileage(const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
     * @brief calculates the mileage property for a node
     * @param node topology node for which mileage is calculated
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    void computeDistance(const TopologyNodePtr& node, std::map<uint64_t, double>& mileages);
+    void computeDistance(const TopologyNodePtr& node, std::map<WorkerId, double>& mileages);
 
     /**
-     * Get default operator output value
-     * @param operatorNode : the operator for which output values are needed
-     * @return weight for the output
+     * Assign default cost values
+     * @param operatorNode : the last operator to strat with
      */
-    double getDefaultOperatorOutput(const LogicalOperatorPtr& operatorNode);
-
-    /**
-     * Get default value for operator cost
-     * @param operatorNode : operator for which cost is to be computed
-     * @return weight indicating operator cost
-     */
-    int getDefaultOperatorCost(const LogicalOperatorPtr& operatorNode);
+    void assignOperatorDefaultProperties(const LogicalOperatorPtr operatorNode);
 };
 }// namespace NES::Optimizer
 

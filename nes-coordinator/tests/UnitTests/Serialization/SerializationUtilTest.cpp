@@ -22,23 +22,25 @@
 #include <API/Windowing.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Operators/Expressions/CaseExpressionNode.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/Functions/FunctionExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/Expressions/WhenExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/CaseExpressionNode.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/Functions/FunctionExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Expressions/WhenExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
@@ -57,24 +59,22 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/Serialization/DataTypeSerializationUtil.hpp>
-#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Types/ThresholdWindow.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <google/protobuf/util/json_util.h>
@@ -271,8 +271,8 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        Network::NodeLocation nodeLocation{0, "*", 31337};
-        Network::NesPartition nesPartition{1, 22, 33, 44};
+        Network::NodeLocation nodeLocation{WorkerId(0), "*", 31337};
+        Network::NesPartition nesPartition{SharedQueryId(1), OperatorId(22), PartitionId(33), SubpartitionId(44)};
         uint16_t version = 55;
         auto uniqueId = 66;
         auto source = Network::NetworkSourceDescriptor::create(schema,
@@ -281,7 +281,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
                                                                NSOURCE_RETRY_WAIT,
                                                                NSOURCE_RETRIES,
                                                                version,
-                                                               uniqueId);
+                                                               OperatorId(uniqueId));
         SerializableOperator_SourceDetails sourceDetails;
         OperatorSerializationUtil::serializeSourceDescriptor(*source, sourceDetails);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(sourceDetails);
@@ -378,12 +378,12 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     }
 
     {
-        Network::NodeLocation nodeLocation{1, "localhost", 31337};
-        Network::NesPartition nesPartition{1, 22, 33, 44};
+        Network::NodeLocation nodeLocation{WorkerId(1), "localhost", 31337};
+        Network::NesPartition nesPartition{SharedQueryId(1), OperatorId(22), PartitionId(33), SubpartitionId(44)};
         auto retryTimes = 8;
         DecomposedQueryPlanVersion version = 5;
         auto numberOfOrigins = 6;
-        OperatorId uniqueId = 7;
+        OperatorId uniqueId = OperatorId(7);
         auto sink = Network::NetworkSinkDescriptor::create(nodeLocation,
                                                            nesPartition,
                                                            std::chrono::seconds(1),
@@ -399,13 +399,15 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
     {
         // Testing for all StatisticSinkFormatType, if we can serialize a statistic sink
-        constexpr auto numberOfOrigins = 42;
-        for (auto sinkFormatType : magic_enum::enum_values<Statistic::StatisticSinkFormatType>()) {
-            auto sink = Statistic::StatisticSinkDescriptor::create(sinkFormatType, numberOfOrigins);
-            SerializableOperator_SinkDetails sinkDescriptor;
-            OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, numberOfOrigins);
-            auto deserializedSinkDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDescriptor);
-            EXPECT_TRUE(sink->equal(deserializedSinkDescriptor));
+        constexpr auto numberOfOrigins = 42;// just some arbitrary number
+        for (auto sinkFormatType : magic_enum::enum_values<Statistic::StatisticSynopsisType>()) {
+            for (auto sinkDataCodec : magic_enum::enum_values<Statistic::StatisticDataCodec>()) {
+                auto sink = Statistic::StatisticSinkDescriptor::create(sinkFormatType, sinkDataCodec, numberOfOrigins);
+                SerializableOperator_SinkDetails sinkDescriptor;
+                OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, numberOfOrigins);
+                auto deserializedSinkDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDescriptor);
+                EXPECT_TRUE(sink->equal(deserializedSinkDescriptor));
+            }
         }
     }
 }
@@ -636,7 +638,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
             NES::Join::LogicalJoinDescriptor::JoinType::INNER_JOIN);
 
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef)->as<LogicalJoinOperator>();
-        join->setOriginId(42);
+        join->setOriginId(OriginId(42));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));
@@ -709,18 +711,20 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         // Testing for all possible combinations of sending policies and trigger conditions, if we can serialize a
         // statistic build operator correctly
-        auto allPossibleSendingPolicies = {Statistic::SENDING_ASAP, Statistic::SENDING_ADAPTIVE, Statistic::SENDING_LAZY};
+        auto allPossibleSendingPolicies = {Statistic::SENDING_ASAP(Statistic::StatisticDataCodec::DEFAULT),
+                                           Statistic::SENDING_ADAPTIVE(Statistic::StatisticDataCodec::DEFAULT),
+                                           Statistic::SENDING_LAZY(Statistic::StatisticDataCodec::DEFAULT)};
         auto allPossibleTriggerCondition = {Statistic::NeverTrigger::create()};
         for (auto sendingPolicy : allPossibleSendingPolicies) {
             for (auto triggerCondition : allPossibleTriggerCondition) {
                 auto metric = Statistic::IngestionRate::create();
                 auto statisticDescriptor = Statistic::CountMinDescriptor::create(metric->getField());
-                statisticDescriptor->setSendingPolicy(sendingPolicy);
-                statisticDescriptor->setTriggerCondition(triggerCondition);
-
                 auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-                auto statisticBuildOperator =
-                    LogicalOperatorFactory::createStatisticBuildOperator(windowType, statisticDescriptor, metric->hash());
+                auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
+                                                                                                   statisticDescriptor,
+                                                                                                   metric->hash(),
+                                                                                                   sendingPolicy,
+                                                                                                   triggerCondition);
                 statisticBuildOperator->setStatisticId(getNextStatisticId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
                 auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -740,7 +744,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     sink->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -762,7 +766,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters) {
     filter3->addChild(filter2);
     sink->addChild(filter3);
 
-    auto queryPlan = QueryPlan::create(1, {sink});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -781,7 +785,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     sink->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -829,7 +833,7 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
     sink1->addChild(map);
     sink2->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink1, sink2});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink1, sink2});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -863,7 +867,7 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     sink1->addChild(map);
     sink2->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink1, sink2});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink1, sink2});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);

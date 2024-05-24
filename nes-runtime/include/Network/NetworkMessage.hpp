@@ -244,7 +244,7 @@ class DataBufferMessage {
 
     uint32_t const payloadSize;
     uint32_t const numOfRecords;
-    uint64_t const originId;
+    OriginId const originId;
     uint64_t const watermark;
     uint64_t const creationTimestamp;
     SequenceData const sequenceData;

@@ -14,7 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
@@ -77,7 +77,7 @@ OperatorPtr LogicalMapOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;

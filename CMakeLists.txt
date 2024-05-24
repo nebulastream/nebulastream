@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,11 +9,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v30)
+set(VCPKG_BINARY_VERSION v31)
 set(LLVM_BINARY_VERSION v2)
 set(LLVM_VERSION 16)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -65,10 +65,8 @@ option(NES_USE_GPU "Build with GPU acceleration" OFF)
 option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
 option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
 option(NES_BUILD_PLUGIN_ONNX "Build ONNX Plugin support" OFF)
+option(NES_BUILD_PLUGIN_CUDA "Build CUDA Plugin" OFF)
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
-
-# Enable exception interception (for debugging purpose)
-option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
@@ -85,15 +83,9 @@ if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     message(FATAL_ERROR "Disabling CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE is not supported for now, please enable it")
 endif ()
 
-# for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
-# The system architecture is normally set in CMAKE_HOST_PROCESSOR,
-# which is set by the PROJECT command. However, we cannot call PROJECT
-# at this point because we want to use a custom toolchain file.
-execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
-
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+set(CMAKE_DEPS_CACHE_DIR "${CMAKE_SOURCE_DIR}/.cache/cmake-deps")
 include(cmake/ImportDependencies.cmake)
-include(cmake/ImportLLVM.cmake)
 project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
@@ -182,7 +174,7 @@ if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
         message(STATUS "Using Numa")
     endif ()
     find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+    set(LIBRARIES ${LIBRARIES} folly::folly folly::folly_deps)
     include_directories(${FOLLY_INCLUDE_DIR})
 endif ()
 
@@ -219,8 +211,13 @@ if (NOT APPLE)
     if (NES_USE_LLD)
         message(STATUS "Use LLD for linking")
         add_link_options("-fuse-ld=lld")
+        add_link_options("-v")
     endif ()
     # as per backward.h
+    find_library(LIBDW_LIBRARY dw)
+    if (NOT LIBDW_LIBRARY)
+        message(FATAL_ERROR "libdw is required on Linux. On Ubuntu, please install 'libdw-dev'")
+    endif ()
     add_link_options("-ldw")
 endif ()
 
@@ -642,6 +639,12 @@ add_subdirectory(nes-client)
 add_subdirectory(nes-execution)
 # Add targets for nautilus
 add_subdirectory(nes-nautilus)
+# Add targets nes-expressions
+add_subdirectory(nes-expressions)
+# Add targets nes-statistics
+add_subdirectory(nes-statistics)
+# Add targets nes-window-types
+add_subdirectory(nes-window-types)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
 

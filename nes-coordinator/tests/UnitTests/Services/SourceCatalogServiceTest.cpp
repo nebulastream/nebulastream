@@ -109,9 +109,9 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
-    uint64_t nodeId =
+    auto nodeId =
         topology->registerWorker(INVALID_WORKER_NODE_ID, address, 4000, 5000, 6, properties, bandwidthInMbps, latencyInMs);
-    EXPECT_NE(nodeId, 0u);
+    EXPECT_NE(nodeId, WorkerId(0u));
 
     //setup test
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
@@ -120,16 +120,17 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     EXPECT_TRUE(successRegisterLogicalSource);
 
     // common case
-    bool successRegisterPhysicalSource = sourceCatalogService->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                                                      physicalSource->getLogicalSourceName(),
-                                                                                      nodeId);
+    bool successRegisterPhysicalSource =
+        sourceCatalogService
+            ->registerPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
+            .first;
     EXPECT_TRUE(successRegisterPhysicalSource);
 
     //test register existing source
     bool successRegisterExistingPhysicalSource =
-        sourceCatalogService->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                     physicalSource->getLogicalSourceName(),
-                                                     nodeId);
+        sourceCatalogService
+            ->registerPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
+            .first;
     EXPECT_TRUE(!successRegisterExistingPhysicalSource);
 
     //test unregister not existing physical source

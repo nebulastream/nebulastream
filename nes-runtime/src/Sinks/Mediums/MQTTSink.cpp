@@ -40,8 +40,8 @@ SinkMediumTypes MQTTSink::getSinkMediumType() { return SinkMediumTypes::MQTT_SIN
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    Runtime::NodeEnginePtr nodeEngine,
                    uint32_t numOfProducers,
-                   QueryId queryId,
-                   DecomposedQueryPlanId querySubPlanId,
+                   SharedQueryId sharedQueryId,
+                   DecomposedQueryPlanId decomposedQueryPlanId,
                    const std::string& address,
                    const std::string& clientId,
                    const std::string& topic,
@@ -52,8 +52,8 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient,
                    uint64_t numberOfOrigins)
-    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, numberOfOrigins), address(address),
-      clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
+    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
+      address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 
     minDelayBetweenSends =
@@ -97,7 +97,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
-        // and afterwards sent to an MQTT broker, via the MQTT client
+        // and afterward sent to an MQTT broker, via the MQTT client
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
             if (formattedTuple == "") {
                 NES_ERROR("MQTTSink:: Error during tuple creation from tuple buffer:  {}", formattedTuple);

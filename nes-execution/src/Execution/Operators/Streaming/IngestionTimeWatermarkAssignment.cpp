@@ -32,26 +32,21 @@ IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionP
     : timeFunction(std::move(timeFunction)){};
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    Operator::open(executionCtx, recordBuffer);
-    executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
+    // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
+    if (hasChild()) {
+        child->open(executionCtx, recordBuffer);
+    }
+
     timeFunction->open(executionCtx, recordBuffer);
-    auto state = (WatermarkState*) executionCtx.getLocalState(this);
     auto emptyRecord = Record();
     Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    if (tsField > state->currentWatermark) {
-        state->currentWatermark = tsField;
+    if (tsField > executionCtx.getWatermarkTs()) {
+        executionCtx.setWatermarkTs(tsField.as<UInt64>());
     }
-    // call next operator
-    executionCtx.setWatermarkTs(state->currentWatermark.as<UInt64>());
 }
 
 void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const {
     child->execute(executionCtx, record);
-}
-void IngestionTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    auto state = (WatermarkState*) executionCtx.getLocalState(this);
-    executionCtx.setWatermarkTs(state->currentWatermark.as<UInt64>());
-    Operator::close(executionCtx, recordBuffer);
 }
 
 }// namespace NES::Runtime::Execution::Operators

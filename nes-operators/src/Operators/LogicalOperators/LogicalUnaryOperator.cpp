@@ -12,13 +12,12 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id)
-    : Operator(id), LogicalOperator(id), UnaryOperator(id) {}
+LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), UnaryOperator(id) {}
 
 bool LogicalUnaryOperator::inferSchema() {
 
@@ -56,7 +55,7 @@ bool LogicalUnaryOperator::inferSchema() {
 
 void LogicalUnaryOperator::inferInputOrigins() {
     // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> inputOriginIds;
+    std::vector<OriginId> inputOriginIds;
     for (auto child : this->children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();

@@ -14,13 +14,14 @@
 
 #include <API/Schema.hpp>
 #include <Exceptions/RpcException.hpp>
+#include <Expressions/ExpressionSerializationUtil.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Statistics/StatisticValue.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -31,11 +32,11 @@ WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPC
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
-    DecomposedQueryPlanId querySubPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    auto decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
     NES_DEBUG("WorkerRPCClient::registerQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
               address,
               sharedQueryId,
-              querySubPlanId);
+              decomposedQueryPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
@@ -84,7 +85,7 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     ClientContext context;
 
     grpc::ChannelArguments args;
-    args.SetInt("test_key", decomposedQueryPlanId);
+    args.SetInt("test_key", decomposedQueryPlanId.getRawValue());
     std::shared_ptr<::grpc::Channel> channel = grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), args);
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
 
@@ -148,11 +149,13 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
     NES_DEBUG("All rpc async requests succeeded");
 }
 
-void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId sharedQueryId, const CompletionQueuePtr& cq) {
+void WorkerRPCClient::unregisterQueryAsync(const std::string& address,
+                                           SharedQueryId sharedQueryId,
+                                           const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, sharedQueryId);
 
     UnregisterQueryRequest request;
-    request.set_queryid(sharedQueryId);
+    request.set_queryid(sharedQueryId.getRawValue());
 
     UnregisterQueryReply reply;
     ClientContext context;
@@ -178,11 +181,11 @@ void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId s
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId sharedQueryId) {
+bool WorkerRPCClient::unregisterQuery(const std::string& address, SharedQueryId sharedQueryId) {
     NES_DEBUG("WorkerRPCClient::unregisterQuery address={} queryId={}", address, sharedQueryId);
 
     UnregisterQueryRequest request;
-    request.set_queryid(sharedQueryId);
+    request.set_queryid(sharedQueryId.getRawValue());
 
     UnregisterQueryReply reply;
     ClientContext context;
@@ -208,8 +211,8 @@ bool WorkerRPCClient::startQuery(const std::string& address,
               decomposedQueryPlanId);
 
     StartQueryRequest request;
-    request.set_sharedqueryid(sharedQueryId);
-    request.set_decomposedqueryid(decomposedQueryPlanId);
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
 
     StartQueryReply reply;
     ClientContext context;
@@ -237,8 +240,8 @@ void WorkerRPCClient::startQueryAsync(const std::string& address,
               decomposedQueryPlanId);
 
     StartQueryRequest request;
-    request.set_sharedqueryid(sharedQueryId);
-    request.set_decomposedqueryid(decomposedQueryPlanId);
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
 
     StartQueryReply reply;
     ClientContext context;
@@ -271,8 +274,8 @@ bool WorkerRPCClient::stopQuery(const std::string& address,
     NES_DEBUG("WorkerRPCClient::markQueryForStop address={} shared queryId={}", address, sharedQueryId);
 
     StopQueryRequest request;
-    request.set_sharedqueryid(sharedQueryId);
-    request.set_decomposedqueryid(decomposedQueryPlanId);
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopQueryReply reply;
@@ -298,8 +301,8 @@ void WorkerRPCClient::stopQueryAsync(const std::string& address,
     NES_DEBUG("WorkerRPCClient::stopQueryAsync address={} shared queryId={}", address, sharedQueryId);
 
     StopQueryRequest request;
-    request.set_sharedqueryid(sharedQueryId);
-    request.set_decomposedqueryid(decomposedQueryPlanId);
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopQueryReply reply;
@@ -477,5 +480,4 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     //location is invalid
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
-
 }// namespace NES

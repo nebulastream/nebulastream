@@ -270,7 +270,7 @@ void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimes
 
 uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }
 
-uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
+OriginId BufferControlBlock::getOriginId() const noexcept { return originId; }
 
 uint64_t BufferControlBlock::getStatisticId() const noexcept { return statisticId; }
 

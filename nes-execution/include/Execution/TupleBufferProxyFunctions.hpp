@@ -36,12 +36,12 @@ extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNum
 
 uint64_t NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    return thisPtr_->getOriginId();
+    return thisPtr_->getOriginId().getRawValue();
 };
 
 void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    thisPtr_->setOriginId(value);
+    thisPtr_->setOriginId(OriginId(value));
 };
 
 uint64_t NES__Runtime__TupleBuffer__getStatisticId(void* thisPtr) {

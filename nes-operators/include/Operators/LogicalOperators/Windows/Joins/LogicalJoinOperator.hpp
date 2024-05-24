@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <memory>
 
 namespace NES {
@@ -27,8 +27,8 @@ namespace NES {
 class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator {
   public:
     explicit LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefinition,
-                                     OperatorId id,
-                                     OriginId originId = INVALID_ORIGIN_ID);
+                                 OperatorId id,
+                                 OriginId originId = INVALID_ORIGIN_ID);
     ~LogicalJoinOperator() override = default;
 
     /**
@@ -44,7 +44,7 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
-    const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
 
     /**
@@ -71,9 +71,9 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
      * @param windowEndFieldName
      * @param windowKeyFieldName
      */
-    void setWindowStartEndKeyFieldName(const std::string& windowStartFieldName,
-                                       const std::string& windowEndFieldName,
-                                       const std::string& windowKeyFieldName);
+    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName,
+                                       std::string_view windowEndFieldName,
+                                       std::string_view windowKeyFieldName);
 
   private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;
@@ -82,4 +82,4 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
     std::string windowKeyFieldName;
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_

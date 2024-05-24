@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -36,8 +37,8 @@ class JoinMultiThreadedTest
     const uint64_t numTuplesPerBuffer = 2;
     static constexpr auto dumpNone = QueryCompilation::DumpMode::NONE;
     static constexpr auto waitTillStoppingQuery = std::chrono::milliseconds(100);
-    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
-    static constexpr uint64_t defaultSharedQueryId = 0;
+    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
@@ -160,35 +161,29 @@ TEST_P(JoinMultiThreadedTest, testOneJoin) {
                 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto inputSchemaLeft = Schema::create()
-                                     ->addField(createField("test1$win1", BasicType::UINT64))
-                                     ->addField(createField("test1$id1", BasicType::UINT64))
-                                     ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto inputSchemaRight = Schema::create()
-                                      ->addField(createField("test2$win2", BasicType::UINT64))
-                                      ->addField(createField("test2$id2", BasicType::UINT64))
-                                      ->addField(createField("test2$timestamp", BasicType::UINT64));
-    const auto joinFieldNameLeft = "test1$id1";
+    const auto inputSchemaLeft = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto inputSchemaRight = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
+    const auto joinFieldNameLeft = "test1$id";
     const auto outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
 
     const std::string fileNameBuffersLeft("window.csv");
     const std::string fileNameBuffersRight("window2.csv");
     const std::vector<ResultRecord> expectedTuples = {
-        {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
-        {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},       {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
-        {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},    {3000, 4000, 1, 3, 1, 3000, 3, 1, 3009},
-        {3000, 4000, 1, 3, 1, 3000, 3, 1, 3201},       {3000, 4000, 11, 3, 11, 3001, 3, 11, 3001},
-        {3000, 4000, 1, 3, 1, 3003, 3, 1, 3009},       {3000, 4000, 1, 3, 1, 3003, 3, 1, 3201},
-        {3000, 4000, 1, 3, 1, 3200, 3, 1, 3009},       {3000, 4000, 1, 3, 1, 3200, 3, 1, 3201},
-        {4000, 5000, 1, 4, 1, 4000, 4, 1, 4001},       {5000, 6000, 1, 5, 1, 5000, 5, 1, 5500},
-        {6000, 7000, 1, 6, 1, 6000, 6, 1, 6000},       {7000, 8000, 1, 7, 1, 7000, 7, 1, 7000},
-        {8000, 9000, 1, 8, 1, 8000, 8, 1, 8000},       {9000, 10000, 1, 9, 1, 9000, 9, 1, 9000},
-        {10000, 11000, 1, 10, 1, 10000, 10, 1, 10000}, {11000, 12000, 1, 11, 1, 11000, 11, 1, 11000},
-        {12000, 13000, 1, 12, 1, 12000, 12, 1, 12000}, {13000, 14000, 1, 13, 1, 13000, 13, 1, 13000},
-        {14000, 15000, 1, 14, 1, 14000, 14, 1, 14000}, {15000, 16000, 1, 15, 1, 15000, 15, 1, 15000},
-        {16000, 17000, 1, 16, 1, 16000, 16, 1, 16000}, {17000, 18000, 1, 17, 1, 17000, 17, 1, 17000},
-        {18000, 19000, 1, 18, 1, 18000, 18, 1, 18000}, {19000, 20000, 1, 19, 1, 19000, 19, 1, 19000},
-        {20000, 21000, 1, 20, 1, 20000, 20, 1, 20000}, {21000, 22000, 1, 21, 1, 21000, 21, 1, 21000}};
+        {1000, 2000, 12, 12, 1, 1001, 12, 5, 1011},    {1000, 2000, 4, 4, 1, 1002, 4, 3, 1102},
+        {1000, 2000, 4, 4, 1, 1002, 4, 3, 1112},       {2000, 3000, 1, 1, 2, 2000, 1, 2, 2010},
+        {2000, 3000, 11, 11, 2, 2001, 11, 2, 2301},    {3000, 4000, 1, 1, 3, 3000, 1, 3, 3009},
+        {3000, 4000, 1, 1, 3, 3000, 1, 3, 3201},       {3000, 4000, 11, 11, 3, 3001, 11, 3, 3001},
+        {3000, 4000, 1, 1, 3, 3003, 1, 3, 3009},       {3000, 4000, 1, 1, 3, 3003, 1, 3, 3201},
+        {3000, 4000, 1, 1, 3, 3200, 1, 3, 3009},       {3000, 4000, 1, 1, 3, 3200, 1, 3, 3201},
+        {4000, 5000, 1, 1, 4, 4000, 1, 4, 4001},       {5000, 6000, 1, 1, 5, 5000, 1, 5, 5500},
+        {6000, 7000, 1, 1, 6, 6000, 1, 6, 6000},       {7000, 8000, 1, 1, 7, 7000, 1, 7, 7000},
+        {8000, 9000, 1, 1, 8, 8000, 1, 8, 8000},       {9000, 10000, 1, 1, 9, 9000, 1, 9, 9000},
+        {10000, 11000, 1, 1, 10, 10000, 1, 10, 10000}, {11000, 12000, 1, 1, 11, 11000, 1, 11, 11000},
+        {12000, 13000, 1, 1, 12, 12000, 1, 12, 12000}, {13000, 14000, 1, 1, 13, 13000, 1, 13, 13000},
+        {14000, 15000, 1, 1, 14, 14000, 1, 14, 14000}, {15000, 16000, 1, 1, 15, 15000, 1, 15, 15000},
+        {16000, 17000, 1, 1, 16, 16000, 1, 16, 16000}, {17000, 18000, 1, 1, 17, 17000, 1, 17, 17000},
+        {18000, 19000, 1, 1, 18, 18000, 1, 18, 18000}, {19000, 20000, 1, 1, 19, 19000, 1, 19, 19000},
+        {20000, 21000, 1, 1, 20, 20000, 1, 20, 20000}, {21000, 22000, 1, 1, 21, 21000, 1, 21, 21000}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -197,7 +192,7 @@ TEST_P(JoinMultiThreadedTest, testOneJoin) {
     const auto testSourceDescriptorRight = executionEngine->createDataSource(inputSchemaRight);
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id2"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .sink(testSinkDescriptor);
@@ -249,19 +244,14 @@ TEST_P(JoinMultiThreadedTest, testTwoJoins) {
                 && window3win3 == rhs.window3win3 && window3id3 == rhs.window3id3 && window3timestamp == rhs.window3timestamp;
         }
     };
-    const auto inputSchemaLeft = Schema::create()
-                                     ->addField(createField("test1$win1", BasicType::UINT64))
-                                     ->addField(createField("test1$id1", BasicType::UINT64))
-                                     ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto inputSchemaRight = Schema::create()
-                                      ->addField(createField("test2$win2", BasicType::UINT64))
-                                      ->addField(createField("test2$id2", BasicType::UINT64))
-                                      ->addField(createField("test2$timestamp", BasicType::UINT64));
+    const auto inputSchemaLeft = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto inputSchemaRight = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
     const auto inputSchemaThird = Schema::create()
-                                      ->addField(createField("test3$win3", BasicType::UINT64))
-                                      ->addField(createField("test3$id3", BasicType::UINT64))
-                                      ->addField(createField("test3$timestamp", BasicType::UINT64));
-    const auto joinFieldNameLeft = "test1$id1";
+                                      ->addField(createField("id3", BasicType::UINT64))
+                                      ->addField(createField("value3", BasicType::UINT64))
+                                      ->addField(createField("timestamp", BasicType::UINT64))
+                                      ->updateSourceName("test3");
+    const auto joinFieldNameLeft = "test1$id";
     const auto joinSchemaLeftRight =
         Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
     const auto outputSchema =
@@ -272,14 +262,14 @@ TEST_P(JoinMultiThreadedTest, testTwoJoins) {
     const std::string fileNameBuffersRight("window2.csv");
     const std::string fileNameBuffersThird("window4.csv");
     const std::vector<ResultRecord> expectedTuples = {
-        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001},
-        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001},
-        {1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300},
-        {3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000},
-        {12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000}};
+        {1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300},
+        {3000, 4000, 11, 3000, 4000, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000},
+        {12000, 13000, 1, 12000, 13000, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {13000, 14000, 1, 13000, 14000, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {14000, 15000, 1, 14000, 15000, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {15000, 16000, 1, 15000, 16000, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -291,11 +281,11 @@ TEST_P(JoinMultiThreadedTest, testTwoJoins) {
 
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id2"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(TestQuery::from(testSourceDescriptorThird))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id3"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .sink(testSinkDescriptor);
@@ -358,23 +348,19 @@ TEST_P(JoinMultiThreadedTest, testThreeJoins) {
                 && window4win4 == rhs.window4win4 && window4id4 == rhs.window4id4 && window4timestamp == rhs.window4timestamp;
         }
     };
-    const auto inputSchemaLeft = Schema::create()
-                                     ->addField(createField("test1$win1", BasicType::UINT64))
-                                     ->addField(createField("test1$id1", BasicType::UINT64))
-                                     ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto inputSchemaRight = Schema::create()
-                                      ->addField(createField("test2$win2", BasicType::UINT64))
-                                      ->addField(createField("test2$id2", BasicType::UINT64))
-                                      ->addField(createField("test2$timestamp", BasicType::UINT64));
+    const auto inputSchemaLeft = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto inputSchemaRight = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
     const auto inputSchemaThird = Schema::create()
-                                      ->addField(createField("test3$win3", BasicType::UINT64))
-                                      ->addField(createField("test3$id3", BasicType::UINT64))
-                                      ->addField(createField("test3$timestamp", BasicType::UINT64));
+                                      ->addField(createField("id3", BasicType::UINT64))
+                                      ->addField(createField("value3", BasicType::UINT64))
+                                      ->addField(createField("timestamp", BasicType::UINT64))
+                                      ->updateSourceName("test3");
     const auto inputSchemaFourth = Schema::create()
-                                       ->addField(createField("test4$win4", BasicType::UINT64))
-                                       ->addField(createField("test4$id4", BasicType::UINT64))
-                                       ->addField(createField("test4$timestamp", BasicType::UINT64));
-    const auto joinFieldNameLeft = "test1$id1";
+                                       ->addField(createField("id4", BasicType::UINT64))
+                                       ->addField(createField("value4", BasicType::UINT64))
+                                       ->addField(createField("timestamp", BasicType::UINT64))
+                                       ->updateSourceName("test4");
+    const auto joinFieldNameLeft = "test1$id";
     const auto joinSchemaLeftRight =
         Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
     const auto joinSchemaLeftRightThird =
@@ -388,14 +374,14 @@ TEST_P(JoinMultiThreadedTest, testThreeJoins) {
     const std::string fileNameBuffersThird("window4.csv");
     const std::string fileNameBuffersFourth("window4.csv");
     const std::vector<ResultRecord> expectedTuples = {
-        {12000, 13000, 1, 12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {13000, 14000, 1, 13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {14000, 15000, 1, 14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {15000, 16000, 1, 15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {3000, 4000, 11, 3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300}};
+        {12000, 13000, 1, 12000, 13000, 1, 12000, 13000, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {13000, 14000, 1, 13000, 14000, 1, 13000, 14000, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {14000, 15000, 1, 14000, 15000, 1, 14000, 15000, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {15000, 16000, 1, 15000, 16000, 1, 15000, 16000, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {3000, 4000, 11, 3000, 4000, 11, 3000, 4000, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -406,15 +392,15 @@ TEST_P(JoinMultiThreadedTest, testThreeJoins) {
     const auto testSourceDescriptorFourth = executionEngine->createDataSource(inputSchemaFourth);
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id2"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(TestQuery::from(testSourceDescriptorThird))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id3"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(TestQuery::from(testSourceDescriptorFourth))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id4"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .sink(testSinkDescriptor);
@@ -459,85 +445,78 @@ TEST_P(JoinMultiThreadedTest, oneJoinSlidingWindow) {
                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
-    const auto inputSchemaLeft = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                     ->addField("test1$value1", BasicType::UINT64)
-                                     ->addField("test1$id1", BasicType::UINT64)
-                                     ->addField("test1$timestamp", BasicType::UINT64);
+    const auto inputSchemaLeft = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto inputSchemaRight = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
 
-    const auto inputSchemaRight = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                      ->addField("test2$value2", BasicType::UINT64)
-                                      ->addField("test2$id2", BasicType::UINT64)
-                                      ->addField("test2$timestamp", BasicType::UINT64);
-
-    const auto joinFieldNameLeft = "test1$id1";
+    const auto joinFieldNameLeft = "test1$id";
     const auto outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
 
     const std::string fileNameBuffersLeft("window7.csv");
     const std::string fileNameBuffersRight("window7.csv");
     const std::vector<ResultRecord> expectedTuples = {
-        {250, 1250, 1, 1, 1, 1240, 1, 1, 1240},       {250, 1250, 4, 2, 4, 1120, 2, 4, 1120},
-        {250, 1250, 12, 3, 12, 1180, 3, 12, 1180},    {500, 1500, 1, 1, 1, 1240, 1, 1, 1240},
-        {500, 1500, 4, 2, 4, 1120, 2, 4, 1120},       {500, 1500, 12, 3, 12, 1180, 3, 12, 1180},
-        {500, 1500, 4, 2, 4, 1120, 6, 4, 1480},       {500, 1500, 12, 3, 12, 1180, 5, 12, 1475},
-        {500, 1500, 12, 5, 12, 1475, 3, 12, 1180},    {500, 1500, 4, 6, 4, 1480, 2, 4, 1120},
-        {500, 1500, 12, 5, 12, 1475, 5, 12, 1475},    {500, 1500, 4, 6, 4, 1480, 6, 4, 1480},
-        {500, 1500, 5, 7, 5, 1350, 7, 5, 1350},       {750, 1750, 1, 1, 1, 1240, 1, 1, 1240},
-        {750, 1750, 4, 2, 4, 1120, 2, 4, 1120},       {750, 1750, 12, 3, 12, 1180, 3, 12, 1180},
-        {750, 1750, 4, 2, 4, 1120, 6, 4, 1480},       {750, 1750, 12, 3, 12, 1180, 5, 12, 1475},
-        {750, 1750, 12, 3, 12, 1180, 4, 12, 1501},    {750, 1750, 12, 5, 12, 1475, 3, 12, 1180},
-        {750, 1750, 4, 6, 4, 1480, 2, 4, 1120},       {750, 1750, 12, 5, 12, 1475, 5, 12, 1475},
-        {750, 1750, 4, 6, 4, 1480, 6, 4, 1480},       {750, 1750, 5, 7, 5, 1350, 7, 5, 1350},
-        {750, 1750, 12, 5, 12, 1475, 4, 12, 1501},    {750, 1750, 12, 4, 12, 1501, 3, 12, 1180},
-        {750, 1750, 12, 4, 12, 1501, 5, 12, 1475},    {750, 1750, 12, 4, 12, 1501, 4, 12, 1501},
-        {750, 1750, 3, 10, 3, 1650, 10, 3, 1650},     {1000, 2000, 1, 1, 1, 1240, 1, 1, 1240},
-        {1000, 2000, 4, 2, 4, 1120, 2, 4, 1120},      {1000, 2000, 12, 3, 12, 1180, 3, 12, 1180},
-        {1000, 2000, 4, 2, 4, 1120, 6, 4, 1480},      {1000, 2000, 12, 3, 12, 1180, 5, 12, 1475},
-        {1000, 2000, 12, 3, 12, 1180, 4, 12, 1501},   {1000, 2000, 1, 1, 1, 1240, 9, 1, 1999},
-        {1000, 2000, 12, 5, 12, 1475, 3, 12, 1180},   {1000, 2000, 4, 6, 4, 1480, 2, 4, 1120},
-        {1000, 2000, 12, 5, 12, 1475, 5, 12, 1475},   {1000, 2000, 4, 6, 4, 1480, 6, 4, 1480},
-        {1000, 2000, 5, 7, 5, 1350, 7, 5, 1350},      {1000, 2000, 12, 5, 12, 1475, 4, 12, 1501},
-        {1000, 2000, 5, 7, 5, 1350, 8, 5, 1750},      {1000, 2000, 12, 4, 12, 1501, 3, 12, 1180},
-        {1000, 2000, 12, 4, 12, 1501, 5, 12, 1475},   {1000, 2000, 12, 4, 12, 1501, 4, 12, 1501},
-        {1000, 2000, 3, 10, 3, 1650, 10, 3, 1650},    {1000, 2000, 1, 9, 1, 1999, 1, 1, 1240},
-        {1000, 2000, 5, 8, 5, 1750, 7, 5, 1350},      {1000, 2000, 5, 8, 5, 1750, 8, 5, 1750},
-        {1000, 2000, 1, 9, 1, 1999, 9, 1, 1999},      {1000, 2000, 20, 12, 20, 1987, 12, 20, 1987},
-        {1250, 2250, 12, 5, 12, 1475, 5, 12, 1475},   {1250, 2250, 4, 6, 4, 1480, 6, 4, 1480},
-        {1250, 2250, 5, 7, 5, 1350, 7, 5, 1350},      {1250, 2250, 12, 5, 12, 1475, 4, 12, 1501},
-        {1250, 2250, 5, 7, 5, 1350, 8, 5, 1750},      {1250, 2250, 12, 4, 12, 1501, 5, 12, 1475},
-        {1250, 2250, 12, 4, 12, 1501, 4, 12, 1501},   {1250, 2250, 3, 10, 3, 1650, 10, 3, 1650},
-        {1250, 2250, 3, 10, 3, 1650, 11, 3, 2240},    {1250, 2250, 5, 8, 5, 1750, 7, 5, 1350},
-        {1250, 2250, 5, 8, 5, 1750, 8, 5, 1750},      {1250, 2250, 1, 9, 1, 1999, 9, 1, 1999},
-        {1250, 2250, 20, 12, 20, 1987, 12, 20, 1987}, {1250, 2250, 20, 12, 20, 1987, 13, 20, 2010},
-        {1250, 2250, 3, 11, 3, 2240, 10, 3, 1650},    {1250, 2250, 20, 13, 20, 2010, 12, 20, 1987},
-        {1250, 2250, 3, 11, 3, 2240, 11, 3, 2240},    {1250, 2250, 20, 13, 20, 2010, 13, 20, 2010},
-        {1250, 2250, 17, 14, 17, 2200, 14, 17, 2200}, {1500, 2500, 12, 4, 12, 1501, 4, 12, 1501},
-        {1500, 2500, 3, 10, 3, 1650, 10, 3, 1650},    {1500, 2500, 3, 10, 3, 1650, 11, 3, 2240},
-        {1500, 2500, 5, 8, 5, 1750, 8, 5, 1750},      {1500, 2500, 1, 9, 1, 1999, 9, 1, 1999},
-        {1500, 2500, 20, 12, 20, 1987, 12, 20, 1987}, {1500, 2500, 20, 12, 20, 1987, 13, 20, 2010},
-        {1500, 2500, 3, 11, 3, 2240, 10, 3, 1650},    {1500, 2500, 20, 13, 20, 2010, 12, 20, 1987},
-        {1500, 2500, 3, 11, 3, 2240, 11, 3, 2240},    {1500, 2500, 20, 13, 20, 2010, 13, 20, 2010},
-        {1500, 2500, 17, 14, 17, 2200, 14, 17, 2200}, {1500, 2500, 42, 17, 42, 2400, 17, 42, 2400},
-        {1750, 2750, 5, 8, 5, 1750, 8, 5, 1750},      {1750, 2750, 1, 9, 1, 1999, 9, 1, 1999},
-        {1750, 2750, 20, 12, 20, 1987, 12, 20, 1987}, {1750, 2750, 20, 12, 20, 1987, 13, 20, 2010},
-        {1750, 2750, 20, 13, 20, 2010, 12, 20, 1987}, {1750, 2750, 3, 11, 3, 2240, 11, 3, 2240},
-        {1750, 2750, 20, 13, 20, 2010, 13, 20, 2010}, {1750, 2750, 17, 14, 17, 2200, 14, 17, 2200},
-        {1750, 2750, 17, 14, 17, 2200, 15, 17, 2600}, {1750, 2750, 42, 17, 42, 2400, 17, 42, 2400},
-        {1750, 2750, 17, 15, 17, 2600, 14, 17, 2200}, {1750, 2750, 17, 15, 17, 2600, 15, 17, 2600},
-        {2000, 3000, 3, 11, 3, 2240, 11, 3, 2240},    {2000, 3000, 20, 13, 20, 2010, 13, 20, 2010},
-        {2000, 3000, 17, 14, 17, 2200, 14, 17, 2200}, {2000, 3000, 17, 14, 17, 2200, 15, 17, 2600},
-        {2000, 3000, 17, 14, 17, 2200, 16, 17, 2800}, {2000, 3000, 42, 17, 42, 2400, 17, 42, 2400},
-        {2000, 3000, 42, 17, 42, 2400, 18, 42, 2990}, {2000, 3000, 17, 15, 17, 2600, 14, 17, 2200},
-        {2000, 3000, 17, 15, 17, 2600, 15, 17, 2600}, {2000, 3000, 17, 15, 17, 2600, 16, 17, 2800},
-        {2000, 3000, 17, 16, 17, 2800, 14, 17, 2200}, {2000, 3000, 42, 18, 42, 2990, 17, 42, 2400},
-        {2000, 3000, 17, 16, 17, 2800, 15, 17, 2600}, {2000, 3000, 17, 16, 17, 2800, 16, 17, 2800},
-        {2000, 3000, 42, 18, 42, 2990, 18, 42, 2990}, {2250, 3250, 42, 17, 42, 2400, 17, 42, 2400},
-        {2250, 3250, 42, 17, 42, 2400, 18, 42, 2990}, {2250, 3250, 17, 15, 17, 2600, 15, 17, 2600},
-        {2250, 3250, 17, 15, 17, 2600, 16, 17, 2800}, {2250, 3250, 42, 18, 42, 2990, 17, 42, 2400},
-        {2250, 3250, 17, 16, 17, 2800, 15, 17, 2600}, {2250, 3250, 17, 16, 17, 2800, 16, 17, 2800},
-        {2250, 3250, 42, 18, 42, 2990, 18, 42, 2990}, {2500, 3500, 17, 15, 17, 2600, 15, 17, 2600},
-        {2500, 3500, 17, 15, 17, 2600, 16, 17, 2800}, {2500, 3500, 17, 16, 17, 2800, 15, 17, 2600},
-        {2500, 3500, 17, 16, 17, 2800, 16, 17, 2800}, {2500, 3500, 42, 18, 42, 2990, 18, 42, 2990},
-        {2750, 3750, 17, 16, 17, 2800, 16, 17, 2800}, {2750, 3750, 42, 18, 42, 2990, 18, 42, 2990}};
+        {250, 1250, 1, 1, 1, 1240, 1, 1, 1240},       {250, 1250, 4, 4, 2, 1120, 4, 2, 1120},
+        {250, 1250, 12, 12, 3, 1180, 12, 3, 1180},    {500, 1500, 1, 1, 1, 1240, 1, 1, 1240},
+        {500, 1500, 4, 4, 2, 1120, 4, 2, 1120},       {500, 1500, 12, 12, 3, 1180, 12, 3, 1180},
+        {500, 1500, 4, 4, 2, 1120, 4, 6, 1480},       {500, 1500, 12, 12, 3, 1180, 12, 5, 1475},
+        {500, 1500, 12, 12, 5, 1475, 12, 3, 1180},    {500, 1500, 4, 4, 6, 1480, 4, 2, 1120},
+        {500, 1500, 12, 12, 5, 1475, 12, 5, 1475},    {500, 1500, 4, 4, 6, 1480, 4, 6, 1480},
+        {500, 1500, 5, 5, 7, 1350, 5, 7, 1350},       {750, 1750, 1, 1, 1, 1240, 1, 1, 1240},
+        {750, 1750, 4, 4, 2, 1120, 4, 2, 1120},       {750, 1750, 12, 12, 3, 1180, 12, 3, 1180},
+        {750, 1750, 4, 4, 2, 1120, 4, 6, 1480},       {750, 1750, 12, 12, 3, 1180, 12, 5, 1475},
+        {750, 1750, 12, 12, 3, 1180, 12, 4, 1501},    {750, 1750, 12, 12, 5, 1475, 12, 3, 1180},
+        {750, 1750, 4, 4, 6, 1480, 4, 2, 1120},       {750, 1750, 12, 12, 5, 1475, 12, 5, 1475},
+        {750, 1750, 4, 4, 6, 1480, 4, 6, 1480},       {750, 1750, 5, 5, 7, 1350, 5, 7, 1350},
+        {750, 1750, 12, 12, 5, 1475, 12, 4, 1501},    {750, 1750, 12, 12, 4, 1501, 12, 3, 1180},
+        {750, 1750, 12, 12, 4, 1501, 12, 5, 1475},    {750, 1750, 12, 12, 4, 1501, 12, 4, 1501},
+        {750, 1750, 3, 3, 10, 1650, 3, 10, 1650},     {1000, 2000, 1, 1, 1, 1240, 1, 1, 1240},
+        {1000, 2000, 4, 4, 2, 1120, 4, 2, 1120},      {1000, 2000, 12, 12, 3, 1180, 12, 3, 1180},
+        {1000, 2000, 4, 4, 2, 1120, 4, 6, 1480},      {1000, 2000, 12, 12, 3, 1180, 12, 5, 1475},
+        {1000, 2000, 12, 12, 3, 1180, 12, 4, 1501},   {1000, 2000, 1, 1, 1, 1240, 1, 9, 1999},
+        {1000, 2000, 12, 12, 5, 1475, 12, 3, 1180},   {1000, 2000, 4, 4, 6, 1480, 4, 2, 1120},
+        {1000, 2000, 12, 12, 5, 1475, 12, 5, 1475},   {1000, 2000, 4, 4, 6, 1480, 4, 6, 1480},
+        {1000, 2000, 5, 5, 7, 1350, 5, 7, 1350},      {1000, 2000, 12, 12, 5, 1475, 12, 4, 1501},
+        {1000, 2000, 5, 5, 7, 1350, 5, 8, 1750},      {1000, 2000, 12, 12, 4, 1501, 12, 3, 1180},
+        {1000, 2000, 12, 12, 4, 1501, 12, 5, 1475},   {1000, 2000, 12, 12, 4, 1501, 12, 4, 1501},
+        {1000, 2000, 3, 3, 10, 1650, 3, 10, 1650},    {1000, 2000, 1, 1, 9, 1999, 1, 1, 1240},
+        {1000, 2000, 5, 5, 8, 1750, 5, 7, 1350},      {1000, 2000, 5, 5, 8, 1750, 5, 8, 1750},
+        {1000, 2000, 1, 1, 9, 1999, 1, 9, 1999},      {1000, 2000, 20, 20, 12, 1987, 20, 12, 1987},
+        {1250, 2250, 12, 12, 5, 1475, 12, 5, 1475},   {1250, 2250, 4, 4, 6, 1480, 4, 6, 1480},
+        {1250, 2250, 5, 5, 7, 1350, 5, 7, 1350},      {1250, 2250, 12, 12, 5, 1475, 12, 4, 1501},
+        {1250, 2250, 5, 5, 7, 1350, 5, 8, 1750},      {1250, 2250, 12, 12, 4, 1501, 12, 5, 1475},
+        {1250, 2250, 12, 12, 4, 1501, 12, 4, 1501},   {1250, 2250, 3, 3, 10, 1650, 3, 10, 1650},
+        {1250, 2250, 3, 3, 10, 1650, 3, 11, 2240},    {1250, 2250, 5, 5, 8, 1750, 5, 7, 1350},
+        {1250, 2250, 5, 5, 8, 1750, 5, 8, 1750},      {1250, 2250, 1, 1, 9, 1999, 1, 9, 1999},
+        {1250, 2250, 20, 20, 12, 1987, 20, 12, 1987}, {1250, 2250, 20, 20, 12, 1987, 20, 13, 2010},
+        {1250, 2250, 3, 3, 11, 2240, 3, 10, 1650},    {1250, 2250, 20, 20, 13, 2010, 20, 12, 1987},
+        {1250, 2250, 3, 3, 11, 2240, 3, 11, 2240},    {1250, 2250, 20, 20, 13, 2010, 20, 13, 2010},
+        {1250, 2250, 17, 17, 14, 2200, 17, 14, 2200}, {1500, 2500, 12, 12, 4, 1501, 12, 4, 1501},
+        {1500, 2500, 3, 3, 10, 1650, 3, 10, 1650},    {1500, 2500, 3, 3, 10, 1650, 3, 11, 2240},
+        {1500, 2500, 5, 5, 8, 1750, 5, 8, 1750},      {1500, 2500, 1, 1, 9, 1999, 1, 9, 1999},
+        {1500, 2500, 20, 20, 12, 1987, 20, 12, 1987}, {1500, 2500, 20, 20, 12, 1987, 20, 13, 2010},
+        {1500, 2500, 3, 3, 11, 2240, 3, 10, 1650},    {1500, 2500, 20, 20, 13, 2010, 20, 12, 1987},
+        {1500, 2500, 3, 3, 11, 2240, 3, 11, 2240},    {1500, 2500, 20, 20, 13, 2010, 20, 13, 2010},
+        {1500, 2500, 17, 17, 14, 2200, 17, 14, 2200}, {1500, 2500, 42, 42, 17, 2400, 42, 17, 2400},
+        {1750, 2750, 5, 5, 8, 1750, 5, 8, 1750},      {1750, 2750, 1, 1, 9, 1999, 1, 9, 1999},
+        {1750, 2750, 20, 20, 12, 1987, 20, 12, 1987}, {1750, 2750, 20, 20, 12, 1987, 20, 13, 2010},
+        {1750, 2750, 20, 20, 13, 2010, 20, 12, 1987}, {1750, 2750, 3, 3, 11, 2240, 3, 11, 2240},
+        {1750, 2750, 20, 20, 13, 2010, 20, 13, 2010}, {1750, 2750, 17, 17, 14, 2200, 17, 14, 2200},
+        {1750, 2750, 17, 17, 14, 2200, 17, 15, 2600}, {1750, 2750, 42, 42, 17, 2400, 42, 17, 2400},
+        {1750, 2750, 17, 17, 15, 2600, 17, 14, 2200}, {1750, 2750, 17, 17, 15, 2600, 17, 15, 2600},
+        {2000, 3000, 3, 3, 11, 2240, 3, 11, 2240},    {2000, 3000, 20, 20, 13, 2010, 20, 13, 2010},
+        {2000, 3000, 17, 17, 14, 2200, 17, 14, 2200}, {2000, 3000, 17, 17, 14, 2200, 17, 15, 2600},
+        {2000, 3000, 17, 17, 14, 2200, 17, 16, 2800}, {2000, 3000, 42, 42, 17, 2400, 42, 17, 2400},
+        {2000, 3000, 42, 42, 17, 2400, 42, 18, 2990}, {2000, 3000, 17, 17, 15, 2600, 17, 14, 2200},
+        {2000, 3000, 17, 17, 15, 2600, 17, 15, 2600}, {2000, 3000, 17, 17, 15, 2600, 17, 16, 2800},
+        {2000, 3000, 17, 17, 16, 2800, 17, 14, 2200}, {2000, 3000, 42, 42, 18, 2990, 42, 17, 2400},
+        {2000, 3000, 17, 17, 16, 2800, 17, 15, 2600}, {2000, 3000, 17, 17, 16, 2800, 17, 16, 2800},
+        {2000, 3000, 42, 42, 18, 2990, 42, 18, 2990}, {2250, 3250, 42, 42, 17, 2400, 42, 17, 2400},
+        {2250, 3250, 42, 42, 17, 2400, 42, 18, 2990}, {2250, 3250, 17, 17, 15, 2600, 17, 15, 2600},
+        {2250, 3250, 17, 17, 15, 2600, 17, 16, 2800}, {2250, 3250, 42, 42, 18, 2990, 42, 17, 2400},
+        {2250, 3250, 17, 17, 16, 2800, 17, 15, 2600}, {2250, 3250, 17, 17, 16, 2800, 17, 16, 2800},
+        {2250, 3250, 42, 42, 18, 2990, 42, 18, 2990}, {2500, 3500, 17, 17, 15, 2600, 17, 15, 2600},
+        {2500, 3500, 17, 17, 15, 2600, 17, 16, 2800}, {2500, 3500, 17, 17, 16, 2800, 17, 15, 2600},
+        {2500, 3500, 17, 17, 16, 2800, 17, 16, 2800}, {2500, 3500, 42, 42, 18, 2990, 42, 18, 2990},
+        {2750, 3750, 17, 17, 16, 2800, 17, 16, 2800}, {2750, 3750, 42, 42, 18, 2990, 42, 18, 2990}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -546,7 +525,7 @@ TEST_P(JoinMultiThreadedTest, oneJoinSlidingWindow) {
     const auto testSourceDescriptorRight = executionEngine->createDataSource(inputSchemaRight);
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id2"))
                            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(250)))
                            .sink(testSinkDescriptor);
@@ -608,22 +587,18 @@ TEST_P(JoinMultiThreadedTest, threeJoinsSlidingWindow) {
                 && window4win4 == rhs.window4win4 && window4id4 == rhs.window4id4 && window4timestamp == rhs.window4timestamp;
         }
     };
-    const auto inputSchemaLeft = Schema::create()
-                                     ->addField(createField("test1$win1", BasicType::UINT64))
-                                     ->addField(createField("test1$id1", BasicType::UINT64))
-                                     ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto inputSchemaRight = Schema::create()
-                                      ->addField(createField("test2$win2", BasicType::UINT64))
-                                      ->addField(createField("test2$id2", BasicType::UINT64))
-                                      ->addField(createField("test2$timestamp", BasicType::UINT64));
+    const auto inputSchemaLeft = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto inputSchemaRight = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
     const auto inputSchemaThird = Schema::create()
-                                      ->addField(createField("test3$win3", BasicType::UINT64))
-                                      ->addField(createField("test3$id3", BasicType::UINT64))
-                                      ->addField(createField("test3$timestamp", BasicType::UINT64));
+                                      ->addField(createField("id3", BasicType::UINT64))
+                                      ->addField(createField("value3", BasicType::UINT64))
+                                      ->addField(createField("timestamp", BasicType::UINT64))
+                                      ->updateSourceName("test3");
     const auto inputSchemaFourth = Schema::create()
-                                       ->addField(createField("test4$win4", BasicType::UINT64))
-                                       ->addField(createField("test4$id4", BasicType::UINT64))
-                                       ->addField(createField("test4$timestamp", BasicType::UINT64));
+                                       ->addField(createField("id4", BasicType::UINT64))
+                                       ->addField(createField("value4", BasicType::UINT64))
+                                       ->addField(createField("timestamp", BasicType::UINT64))
+                                       ->updateSourceName("test4");
     const auto joinFieldNameRight = "test2$id2";
     const auto joinFieldNameThird = "test3$id3";
     const auto joinFieldNameFourth = "test4$id4";
@@ -640,70 +615,70 @@ TEST_P(JoinMultiThreadedTest, threeJoinsSlidingWindow) {
     const std::string fileNameBuffersFourth("window4.csv");
 
     const std::vector<ResultRecord> expectedTuples = {
-        {500, 1500, 12, 500, 1500, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {500, 1500, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {500, 1500, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {500, 1500, 12, 500, 1500, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {500, 1500, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {500, 1500, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {500, 1500, 12, 1000, 2000, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {500, 1500, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {500, 1500, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {500, 1500, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {500, 1500, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {500, 1500, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 12, 500, 1500, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {1000, 2000, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 12, 500, 1500, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {1000, 2000, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 12, 1000, 2000, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {1000, 2000, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
-        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {2500, 3500, 11, 2500, 3500, 11, 2500, 3500, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {2500, 3500, 11, 2500, 3500, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {2500, 3500, 11, 3000, 4000, 11, 2500, 3500, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {2500, 3500, 11, 3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {3000, 4000, 11, 2500, 3500, 11, 2500, 3500, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {3000, 4000, 11, 2500, 3500, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {3000, 4000, 11, 3000, 4000, 11, 2500, 3500, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {3000, 4000, 11, 3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
-        {11500, 12500, 1, 11500, 12500, 1, 11500, 12500, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {11500, 12500, 1, 11500, 12500, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {11500, 12500, 1, 12000, 13000, 1, 11500, 12500, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {11500, 12500, 1, 12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {12000, 13000, 1, 11500, 12500, 1, 11500, 12500, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {12000, 13000, 1, 11500, 12500, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {12000, 13000, 1, 12000, 13000, 1, 11500, 12500, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {12000, 13000, 1, 12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-        {12500, 13500, 1, 12500, 13500, 1, 12500, 13500, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {12500, 13500, 1, 12500, 13500, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {12500, 13500, 1, 13000, 14000, 1, 12500, 13500, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {12500, 13500, 1, 13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {13000, 14000, 1, 12500, 13500, 1, 12500, 13500, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {13000, 14000, 1, 12500, 13500, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {13000, 14000, 1, 13000, 14000, 1, 12500, 13500, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {13000, 14000, 1, 13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-        {13500, 14500, 1, 13500, 14500, 1, 13500, 14500, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {13500, 14500, 1, 13500, 14500, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {13500, 14500, 1, 14000, 15000, 1, 13500, 14500, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {13500, 14500, 1, 14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {14000, 15000, 1, 13500, 14500, 1, 13500, 14500, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {14000, 15000, 1, 13500, 14500, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {14000, 15000, 1, 14000, 15000, 1, 13500, 14500, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {14000, 15000, 1, 14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {14500, 15500, 1, 14500, 15500, 1, 14500, 15500, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {14500, 15500, 1, 14500, 15500, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {14500, 15500, 1, 15000, 16000, 1, 14500, 15500, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {14500, 15500, 1, 15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {15000, 16000, 1, 14500, 15500, 1, 14500, 15500, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {15000, 16000, 1, 14500, 15500, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {15000, 16000, 1, 15000, 16000, 1, 14500, 15500, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
-        {15000, 16000, 1, 15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000}};
+        {500, 1500, 12, 500, 1500, 12, 500, 1500, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {500, 1500, 4, 500, 1500, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 12, 500, 1500, 12, 1000, 2000, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {500, 1500, 4, 500, 1500, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 12, 1000, 2000, 12, 500, 1500, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {500, 1500, 4, 1000, 2000, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 12, 1000, 2000, 12, 1000, 2000, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {500, 1500, 4, 1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 500, 1500, 12, 500, 1500, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {1000, 2000, 4, 500, 1500, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 500, 1500, 12, 1000, 2000, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {1000, 2000, 4, 500, 1500, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 500, 1500, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {1000, 2000, 4, 1000, 2000, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 500, 1500, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 12, 1, 1001, 12, 5, 1011, 12, 1, 1300, 12, 1, 1300},
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 4, 1, 1002, 4, 3, 1112, 4, 4, 1001, 4, 4, 1001},
+        {2500, 3500, 11, 2500, 3500, 11, 2500, 3500, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {2500, 3500, 11, 2500, 3500, 11, 3000, 4000, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {2500, 3500, 11, 3000, 4000, 11, 2500, 3500, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {2500, 3500, 11, 3000, 4000, 11, 3000, 4000, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {3000, 4000, 11, 2500, 3500, 11, 2500, 3500, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {3000, 4000, 11, 2500, 3500, 11, 3000, 4000, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {3000, 4000, 11, 3000, 4000, 11, 2500, 3500, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {3000, 4000, 11, 3000, 4000, 11, 3000, 4000, 11, 11, 3, 3001, 11, 3, 3001, 11, 9, 3000, 11, 9, 3000},
+        {11500, 12500, 1, 11500, 12500, 1, 11500, 12500, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {11500, 12500, 1, 11500, 12500, 1, 12000, 13000, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {11500, 12500, 1, 12000, 13000, 1, 11500, 12500, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {11500, 12500, 1, 12000, 13000, 1, 12000, 13000, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {12000, 13000, 1, 11500, 12500, 1, 11500, 12500, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {12000, 13000, 1, 11500, 12500, 1, 12000, 13000, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {12000, 13000, 1, 12000, 13000, 1, 11500, 12500, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {12000, 13000, 1, 12000, 13000, 1, 12000, 13000, 1, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000, 1, 12, 12000},
+        {12500, 13500, 1, 12500, 13500, 1, 12500, 13500, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {12500, 13500, 1, 12500, 13500, 1, 13000, 14000, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {12500, 13500, 1, 13000, 14000, 1, 12500, 13500, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {12500, 13500, 1, 13000, 14000, 1, 13000, 14000, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {13000, 14000, 1, 12500, 13500, 1, 12500, 13500, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {13000, 14000, 1, 12500, 13500, 1, 13000, 14000, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {13000, 14000, 1, 13000, 14000, 1, 12500, 13500, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {13000, 14000, 1, 13000, 14000, 1, 13000, 14000, 1, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000, 1, 13, 13000},
+        {13500, 14500, 1, 13500, 14500, 1, 13500, 14500, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {13500, 14500, 1, 13500, 14500, 1, 14000, 15000, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {13500, 14500, 1, 14000, 15000, 1, 13500, 14500, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {13500, 14500, 1, 14000, 15000, 1, 14000, 15000, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {14000, 15000, 1, 13500, 14500, 1, 13500, 14500, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {14000, 15000, 1, 13500, 14500, 1, 14000, 15000, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {14000, 15000, 1, 14000, 15000, 1, 13500, 14500, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {14000, 15000, 1, 14000, 15000, 1, 14000, 15000, 1, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000, 1, 14, 14000},
+        {14500, 15500, 1, 14500, 15500, 1, 14500, 15500, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {14500, 15500, 1, 14500, 15500, 1, 15000, 16000, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {14500, 15500, 1, 15000, 16000, 1, 14500, 15500, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {14500, 15500, 1, 15000, 16000, 1, 15000, 16000, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {15000, 16000, 1, 14500, 15500, 1, 14500, 15500, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {15000, 16000, 1, 14500, 15500, 1, 15000, 16000, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {15000, 16000, 1, 15000, 16000, 1, 14500, 15500, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000},
+        {15000, 16000, 1, 15000, 16000, 1, 15000, 16000, 1, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000, 1, 15, 15000}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -714,15 +689,15 @@ TEST_P(JoinMultiThreadedTest, threeJoinsSlidingWindow) {
     const auto testSourceDescriptorFourth = executionEngine->createDataSource(inputSchemaFourth);
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id2"))
                            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .joinWith(TestQuery::from(testSourceDescriptorThird))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id3"))
                            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .joinWith(TestQuery::from(testSourceDescriptorFourth))
-                           .where(Attribute("id1"))
+                           .where(Attribute("id"))
                            .equalsTo(Attribute("id4"))
                            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .sink(testSinkDescriptor);

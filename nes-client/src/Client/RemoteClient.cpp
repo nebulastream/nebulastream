@@ -17,6 +17,7 @@
 #include <Client/QueryConfig.hpp>
 #include <Client/RemoteClient.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -44,7 +45,7 @@ RemoteClient::RemoteClient(const std::string& coordinatorHost,
     }
 }
 
-uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
+QueryId RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     auto queryPlan = query.getQueryPlan();
     SubmitQueryRequest request;
     auto* serializedQueryPlan = request.mutable_queryplan();
@@ -71,7 +72,7 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
 
     if (response.status_code == cpr::status::HTTP_ACCEPTED) {
         if (result.contains("queryId")) {
-            return result["queryId"].get<uint64_t>();
+            return result["queryId"].get<QueryId>();
         } else {
             throw ClientException("Invalid response format queryId is not contained in: " + result.dump());
         }
@@ -101,8 +102,8 @@ bool RemoteClient::testConnection() {
     throw ClientException("Invalid response format");
 }
 
-std::string RemoteClient::getQueryPlan(uint64_t queryId) {
-    auto path = "query/query-plan?queryId=" + std::to_string(queryId);
+std::string RemoteClient::getQueryPlan(QueryId queryId) {
+    auto path = "query/query-plan?queryId=" + queryId.toString();
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
@@ -113,8 +114,8 @@ std::string RemoteClient::getQueryPlan(uint64_t queryId) {
     return result.dump();
 }
 
-std::string RemoteClient::getQueryExecutionPlan(uint64_t queryId) {
-    auto path = "query/execution-plan?queryId=" + std::to_string(queryId);
+std::string RemoteClient::getQueryExecutionPlan(QueryId queryId) {
+    auto path = "query/execution-plan?queryId=" + queryId.toString();
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
@@ -125,8 +126,8 @@ std::string RemoteClient::getQueryExecutionPlan(uint64_t queryId) {
     return result.dump();
 }
 
-std::string RemoteClient::getQueryStatus(uint64_t queryId) {
-    auto path = "query/query-status?queryId=" + std::to_string(queryId);
+std::string RemoteClient::getQueryStatus(QueryId queryId) {
+    auto path = "query/query-status?queryId=" + queryId.toString();
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
@@ -142,8 +143,8 @@ std::string RemoteClient::getQueryStatus(uint64_t queryId) {
     }
 }
 
-RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
-    auto path = "query/stop-query?queryId="s + std::to_string(queryId);
+RemoteClient::QueryStopResult RemoteClient::stopQuery(QueryId queryId) {
+    auto path = "query/stop-query?queryId="s + queryId.toString();
 
     auto future = cpr::DeleteAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
@@ -215,7 +216,7 @@ bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& s
     request.set_sourcename(sourceName);
     request.set_allocated_schema(serializableSchema.get());
     std::string msg = request.SerializeAsString();
-    request.release_schema();
+    auto _ = request.release_schema();
 
     nlohmann::json resultJson;
     auto future = cpr::PostAsync(cpr::Url{getHostName() + path},

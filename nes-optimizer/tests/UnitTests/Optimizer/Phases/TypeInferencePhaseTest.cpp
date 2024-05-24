@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -23,27 +24,27 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
@@ -216,7 +217,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
@@ -248,7 +249,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
@@ -1047,8 +1048,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
             1,
             1);
 
-        batchJoinOp =
-            LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::LogicalBatchJoinOperator>();
+        batchJoinOp = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::LogicalBatchJoinOperator>();
     }
     joinOp->replace(batchJoinOp);
     ASSERT_TRUE(batchJoinOp->inferSchema());
@@ -1336,7 +1336,8 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
+
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$end"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$key"));
@@ -1390,7 +1391,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$end"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$key"));
@@ -1599,6 +1600,34 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
     NES_DEBUG("expected = {}", actualSinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
     EXPECT_TRUE(sinkOutputSchema->getField("logicalSource1$outputAttribute1"));
+}
+
+/**
+ * @brief We test that the datatype of a event time field is always an integer. We create a query with a window that has
+ * a timestamp field with a wrong datatype and run the type inference phase. We expect an exception to be thrown.
+ */
+TEST_F(TypeInferencePhaseTest, windowDataTypeForTimestamp) {
+    // Creating necessary objects for running the type inference phase
+    Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    auto sourceSchema = TestSchemas::getSchemaTemplate("id_time_u64")
+                            ->addField("wrongDataTypeTimeStamp", BasicType::BOOLEAN)
+                            ->updateSourceName("source");
+    streamCatalog->addLogicalSource("source", sourceSchema);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
+
+    // Creating a query with a "correct" window and a "wrong" window
+    auto queryCorrect = Query::from("source")
+                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                            .apply(Sum(Attribute("id")))
+                            .sink(NullOutputSinkDescriptor::create());
+    auto queryWrong = Query::from("source")
+                          .window(TumblingWindow::of(EventTime(Attribute("wrongDataTypeTimeStamp")), Milliseconds(1000)))
+                          .apply(Sum(Attribute("id")))
+                          .sink(NullOutputSinkDescriptor::create());
+
+    // Running the type inference phase
+    ASSERT_NO_THROW(phase->execute(queryCorrect.getQueryPlan()));
+    ASSERT_ANY_THROW(phase->execute(queryWrong.getQueryPlan()));
 }
 
 }// namespace NES

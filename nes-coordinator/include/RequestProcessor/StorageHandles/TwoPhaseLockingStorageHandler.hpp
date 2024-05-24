@@ -134,6 +134,16 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
 
     Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId) override;
 
+    Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override;
+
+    /**
+     * @brief Obtain a mutable statistic probe handler. Will throw an exception if the resource has not been locked in the
+     * acquireResources function
+     * @param requestId
+     * @return A handle to the statistic probe
+     */
+    Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler(RequestId requestId) override;
+
     /**
      * @brief Used for testing
      * @param resource The resource for which the current ticket number should be queried
@@ -179,6 +189,8 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     ResourceHolderData coordinatorConfigurationHolder;
     ResourceHolderData topologyHolder;
@@ -187,6 +199,8 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     ResourceHolderData globalQueryPlanHolder;
     ResourceHolderData sourceCatalogHolder;
     ResourceHolderData udfCatalogHolder;
+    ResourceHolderData amendmentQueueHolder;
+    ResourceHolderData statisticProbeHandlerHolder;
 };
 }// namespace NES::RequestProcessor
 

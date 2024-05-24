@@ -46,7 +46,7 @@ class PartitionManager {
     class PartitionProducerEntry {
       public:
         /**
-         * @brief Creates a new partition entry info with ref cnt = 0
+         * @brief Creates a new partition entry info with ref cnt = 1
          * @param emitter the data emitter that must be notified upon arrival of new data
          */
         explicit PartitionProducerEntry(NodeLocation&& receiverLocation);
@@ -89,7 +89,7 @@ class PartitionManager {
     class PartitionConsumerEntry {
       public:
         /**
-         * @brief Creates a new partition entry info with ref cnt = 0
+         * @brief Creates a new partition entry info with ref cnt = 1
          * @param emitter the data emitter that must be notified upon arrival of new data
          */
         explicit PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& consumer);
@@ -214,7 +214,7 @@ class PartitionManager {
 
     /**
      * @brief checks if a partition is registered
-     * @param the partition
+     * @param partition
      * @return a PartitionRegistrationStatus
      */
     PartitionRegistrationStatus getProducerRegistrationStatus(NesPartition partition) const;

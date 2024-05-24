@@ -35,8 +35,8 @@ class ZmqSink : public SinkMedium {
             const std::string& host,
             uint16_t port,
             bool internal,
-            QueryId queryId,
-            DecomposedQueryPlanId querySubPlanId,
+            SharedQueryId sharedQueryId,
+            DecomposedQueryPlanId decomposedQueryPlanId,
             uint64_t numberOfOrigins = 1);
     ~ZmqSink() override;
 

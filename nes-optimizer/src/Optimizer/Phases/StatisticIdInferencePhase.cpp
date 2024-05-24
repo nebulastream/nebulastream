@@ -47,4 +47,4 @@ void StatisticIdInferencePhase::performInference(std::unordered_set<OperatorPtr>
     }
 }
 
-}// NES::Optimizer
+}// namespace NES::Optimizer

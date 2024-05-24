@@ -52,12 +52,6 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
     /**
-     * @brief return the schema
-     * @return
-     */
-    SchemaPtr getSchema() const;
-
-    /**
      * @brief return the path to the table file to be loaded.
      * @return
      */
@@ -67,7 +61,7 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      * @brief Getter for lateStart.
      * @returns lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      */
-    bool getLateStart();
+    bool getLateStart() const;
 
     SourceDescriptorPtr copy() override;
 
@@ -76,4 +70,4 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
     bool lateStart;
 };
 }// namespace NES::Experimental
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_

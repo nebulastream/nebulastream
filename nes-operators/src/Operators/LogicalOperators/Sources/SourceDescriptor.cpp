@@ -35,7 +35,7 @@ std::string SourceDescriptor::getPhysicalSourceName() const { return physicalSou
 
 void SourceDescriptor::setSchema(const SchemaPtr& schema) { this->schema = schema; }
 
-void SourceDescriptor::setPhysicalSourceName(const std::string& physicalSourceName) {
+void SourceDescriptor::setPhysicalSourceName(std::string_view physicalSourceName) {
     this->physicalSourceName = physicalSourceName;
 }
 

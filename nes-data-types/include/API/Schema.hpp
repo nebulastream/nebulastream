@@ -43,7 +43,7 @@ class Schema {
      */
     enum class MemoryLayoutType : uint8_t { ROW_LAYOUT = 0, COLUMNAR_LAYOUT = 1 };
 
-    Schema(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+    explicit Schema(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
     Schema(SchemaPtr const& query, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
@@ -70,7 +70,7 @@ class Schema {
      * @param srcName
      * @return SchemaPtr
      */
-    SchemaPtr updateSourceName(const std::string& srcName);
+    SchemaPtr updateSourceName(const std::string& srcName) const;
 
     /**
      * @brief Creates a copy of this schema.
@@ -138,14 +138,14 @@ class Schema {
      * @param fieldName
      * @return the index
      */
-    uint64_t getIndex(const std::string& fieldName);
+    uint64_t getIndex(const std::string& fieldName) const;
 
     /**
      * @brief Finds a attribute field by name in the schema
      * @param fieldName
      * @return AttributeField
      */
-    AttributeFieldPtr get(const std::string& fieldName);
+    AttributeFieldPtr get(const std::string& fieldName) const;
 
     /**
      * @brief Finds a attribute field by index in the schema
@@ -186,7 +186,7 @@ class Schema {
      * @param schema
      * @return boolean
     */
-    bool contains(const std::string& fieldName);
+    bool contains(const std::string& fieldName) const;
 
     /**
      * @brief returns a string representation
@@ -232,7 +232,7 @@ class Schema {
     * @brief Is checks if the schema is empty (if it has no fields).
     * @return true if empty
     */
-    bool empty();
+    bool empty() const;
 
     /**
      * @brief method to get the type of the memory layout
@@ -268,7 +268,7 @@ class Schema {
     MemoryLayoutType layoutType;
 };
 
-AttributeFieldPtr createField(std::string name, BasicType type);
+AttributeFieldPtr createField(const std::string& name, BasicType type);
 
 }// namespace NES
 #endif// NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_

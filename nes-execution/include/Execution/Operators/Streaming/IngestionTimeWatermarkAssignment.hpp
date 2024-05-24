@@ -31,11 +31,10 @@ class IngestionTimeWatermarkAssignment : public ExecutableOperator {
     IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
     std::unique_ptr<TimeFunction> timeFunction;
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_INGESTIONTIMEWATERMARKASSIGNMENT_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_INGESTIONTIMEWATERMARKASSIGNMENT_HPP_

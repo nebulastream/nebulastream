@@ -49,6 +49,7 @@ message SerializablePhysicalSourceType{
   enum InputFormat{
       JSON = 0;
       CSV = 1;
+      NES_BINARY = 2;
   };
 
   enum TCPDecideMessageSize{
@@ -330,8 +331,13 @@ message SerializableOperator{
           COUNT_MIN = 0;
           HLL = 1;
       }
+      enum StatisticDataCodec {
+        DEFAULT = 0;
+        RUN_LENGTH_ENCODED = 1;
+      }
 
       StatisticSinkFormatType sinkFormatType = 1;
+      StatisticDataCodec sinkDataCodec = 2;
     }
 
     google.protobuf.Any sinkDescriptor = 1;
@@ -584,6 +590,8 @@ message SerializableOperator{
     google.protobuf.Any windowType = 1;
     StatisticWindowDescriptorMessage statisticWindowDescriptor = 2;
     uint64 metricHash = 3;
+    SendingPolicyMessage sendingPolicy = 4;
+    TriggerConditionMessage triggerCondition = 5;
   }
 
 

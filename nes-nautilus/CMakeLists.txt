@@ -1,5 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -22,7 +20,7 @@ get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
-target_link_libraries(nes-nautilus PRIVATE nes-common nes-compiler nes-grpc nes-data-types nes-operators nes-configurations nes-runtime)
+target_link_libraries(nes-nautilus PUBLIC nes-compiler nes-runtime)
 target_include_directories(nes-nautilus PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

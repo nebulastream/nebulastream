@@ -100,7 +100,7 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink,
                                              const std::string& errorMessage) {
 
-    DecomposedQueryPlanId planId = 0;
+    DecomposedQueryPlanId planId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     Execution::ExecutableQueryPlanPtr qepToFail;
     if (auto* pipe = std::get_if<Execution::ExecutablePipelinePtr>(&pipelineOrSink)) {
         planId = (*pipe)->getDecomposedQueryPlanId();

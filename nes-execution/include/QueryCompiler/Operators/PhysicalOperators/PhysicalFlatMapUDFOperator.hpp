@@ -65,8 +65,10 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
      * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalFlatMapUDFOperator
      */
-    static PhysicalOperatorPtr
-    create(StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
 
     /**
      * @brief Returns the udf descriptor of this map operator
@@ -83,4 +85,4 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
 }// namespace QueryCompilation::PhysicalOperators
 }// namespace NES
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFLATMAPUDFOPERATOR_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFLATMAPUDFOPERATOR_HPP_

@@ -28,7 +28,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -281,6 +281,46 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+}
+
+TEST_F(NonKeyedSlidingWindowTests, testWindowExecutionWithDifferentTimeUnits) {
+    struct Tuple {
+        uint64_t timestamp;
+        uint64_t value;
+    };
+
+    auto schema = Schema::create()
+                      ->addField("timestamp", DataTypeFactory::createUInt64())
+                      ->addField("key", DataTypeFactory::createUInt64());
+
+    auto queryWithWindowOperator =
+        Query::from("tuples")
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Milliseconds(2), Milliseconds(1)))
+            .apply(Count());
+
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("tuples", schema)
+                           .attachWorkerWithMemorySourceToCoordinator("tuples");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.pushElement<Tuple>({10, 1}, WorkerId(2));
+    testHarness.pushElement<Tuple>({20, 1}, WorkerId(2));
+    testHarness.pushElement<Tuple>({30, 1}, WorkerId(2));
+    testHarness.validate().setupTopology();
+
+    // Expected output
+    auto expectedOutput = "10000,10002,1\n"
+                          "20000,20002,1\n"
+                          "30000,30002,1\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers, true));
 }
 
 }// namespace NES

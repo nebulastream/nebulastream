@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Mobility/Waypoint.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <unordered_map>
 #ifdef S2DEF
 #include <s2/s2closest_point_query.h>
@@ -76,7 +76,7 @@ bool LocationIndex::removeNodeFromSpatialIndex(WorkerId topologyNodeId) {
 }
 
 std::optional<WorkerId> LocationIndex::getClosestNodeTo(const Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
-                                                              int radius) const {
+                                                        int radius) const {
 #ifdef S2DEF
     S2ClosestPointQuery<WorkerId> query(&workerPointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -162,14 +162,13 @@ LocationIndex::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLoca
 #endif
 }
 
-void LocationIndex::addMobileNode(WorkerId topologyNodeId,
-                                  NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
+void LocationIndex::addMobileNode(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     workerGeoLocationMap.erase(topologyNodeId);
     workerGeoLocationMap.insert({topologyNodeId, geoLocation});
 }
 
-std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> LocationIndex::getAllNodeLocations() const {
-    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> locationVector;
+std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> LocationIndex::getAllNodeLocations() const {
+    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> locationVector;
     locationVector.reserve(workerGeoLocationMap.size());
     for (auto& [nodeId, geoLocation] : workerGeoLocationMap) {
         if (geoLocation.isValid()) {
@@ -188,8 +187,7 @@ size_t LocationIndex::getSizeOfPointIndex() {
 #endif
 }
 
-std::optional<Spatial::DataTypes::Experimental::GeoLocation>
-LocationIndex::getGeoLocationForNode(WorkerId topologyNodeId) const {
+std::optional<Spatial::DataTypes::Experimental::GeoLocation> LocationIndex::getGeoLocationForNode(WorkerId topologyNodeId) const {
     auto workGeoLocation = workerGeoLocationMap.find(topologyNodeId);
     if (workGeoLocation == workerGeoLocationMap.end()) {
         return {};

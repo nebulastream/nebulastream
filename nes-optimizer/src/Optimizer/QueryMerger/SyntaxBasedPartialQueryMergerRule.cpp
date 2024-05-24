@@ -13,10 +13,10 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
@@ -117,8 +117,8 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-std::map<OperatorPtr, OperatorPtr>
-SyntaxBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan) {
+std::map<OperatorPtr, OperatorPtr> SyntaxBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
+                                                                                         const QueryPlanPtr& hostQueryPlan) {
 
     std::map<OperatorPtr, OperatorPtr> targetHostOperatorMap;
     NES_DEBUG("SyntaxBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
@@ -144,8 +144,8 @@ SyntaxBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& target
     return targetHostOperatorMap;
 }
 
-std::map<OperatorPtr, OperatorPtr>
-SyntaxBasedPartialQueryMergerRule::areOperatorEqual(const OperatorPtr& targetOperator, const OperatorPtr& hostOperator) {
+std::map<OperatorPtr, OperatorPtr> SyntaxBasedPartialQueryMergerRule::areOperatorEqual(const OperatorPtr& targetOperator,
+                                                                                       const OperatorPtr& hostOperator) {
 
     std::map<OperatorPtr, OperatorPtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperator>() && hostOperator->instanceOf<SinkLogicalOperator>()) {

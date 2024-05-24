@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_
 
-#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 
@@ -124,4 +124,4 @@ class AttributeSortRule : public BaseRewriteRule {
     static std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_

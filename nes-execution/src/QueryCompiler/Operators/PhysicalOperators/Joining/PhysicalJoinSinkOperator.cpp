@@ -31,7 +31,12 @@ PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id,
                                                      const SchemaPtr& rightInputSchema,
                                                      const SchemaPtr& outputSchema,
                                                      const Join::JoinOperatorHandlerPtr& joinOperatorHandler) {
-    return std::make_shared<PhysicalJoinSinkOperator>(id, statisticId, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
+    return std::make_shared<PhysicalJoinSinkOperator>(id,
+                                                      statisticId,
+                                                      leftInputSchema,
+                                                      rightInputSchema,
+                                                      outputSchema,
+                                                      joinOperatorHandler);
 }
 
 PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id,

@@ -18,7 +18,7 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalScanOperator::PhysicalScanOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, outputSchema, outputSchema) {}
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, outputSchema, outputSchema) {}
 
 PhysicalOperatorPtr PhysicalScanOperator::create(StatisticId statisticId, SchemaPtr outputSchema) {
     return create(getNextOperatorId(), statisticId, std::move(outputSchema));

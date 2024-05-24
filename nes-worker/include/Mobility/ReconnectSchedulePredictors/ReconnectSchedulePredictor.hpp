@@ -43,7 +43,7 @@ using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfigurati
 }// namespace Configurations::Spatial::Mobility::Experimental
 
 namespace Spatial::DataTypes::Experimental {
-using NodeIdToGeoLocationMap = std::unordered_map<uint64_t, GeoLocation>;
+using NodeIdToGeoLocationMap = std::unordered_map<WorkerId, GeoLocation>;
 }// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {
@@ -103,7 +103,7 @@ class ReconnectSchedulePredictor {
      */
     std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                                           const DataTypes::Experimental::GeoLocation& parentLocation,
-                                                          const S2PointIndex<uint64_t>& FieldNodeIndex,
+                                                          const S2PointIndex<WorkerId>& FieldNodeIndex,
                                                           bool isIndexUpdated);
 #endif
   private:
@@ -125,7 +125,7 @@ class ReconnectSchedulePredictor {
      * @param currentParendLocation : The location of the workers current parent
      * @param fieldNodeIndex : a spatial index containing ids of fixed location nodes
      */
-    bool scheduleReconnects(const S2Point& currentParentLocation, const S2PointIndex<uint64_t>& fieldNodeIndex);
+    bool scheduleReconnects(const S2Point& currentParentLocation, const S2PointIndex<WorkerId>& fieldNodeIndex);
 #endif
 
     /**

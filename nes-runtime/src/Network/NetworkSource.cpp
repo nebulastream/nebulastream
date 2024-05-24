@@ -39,7 +39,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              uint8_t retryTimes,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                              DecomposedQueryPlanVersion version,
-                             uint64_t uniqueNetworkSourceIdentifier,
+                             OperatorId uniqueNetworkSourceIdentifier,
                              const std::string& physicalSourceName)
 
     : DataSource(std::move(schema),
@@ -122,9 +122,11 @@ bool NetworkSource::fail() {
     bool expected = true;
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NetworkSource: fail called on {}", nesPartition);
-        auto newReconf =
-            ReconfigurationMessage(-1, -1, ReconfigurationType::FailEndOfStream, DataSource::shared_from_base<DataSource>());
-        queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
+        auto newReconf = ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                ReconfigurationType::FailEndOfStream,
+                                                DataSource::shared_from_base<DataSource>());
+        queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
         return queryManager->addEndOfStream(shared_from_base<NetworkSource>(), Runtime::QueryTerminationType::Failure);
     }
@@ -138,12 +140,11 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
                     "NetworkSource::stop only supports HardStop or Failure :: partition " << nesPartition);
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NetworkSource: stop called on {}", nesPartition);
-        int invalidId = -1;
-        auto newReconf = ReconfigurationMessage(invalidId,
-                                                invalidId,
+        auto newReconf = ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                 ReconfigurationType::HardEndOfStream,
                                                 DataSource::shared_from_base<DataSource>());
-        queryManager->addReconfigurationMessage(invalidId, invalidId, newReconf, false);
+        queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         NES_DEBUG("NetworkSource: stop called on {} sent hard eos", nesPartition);
@@ -318,11 +319,11 @@ bool NetworkSource::startNewVersion() {
     nextSourceDescriptor = std::nullopt;
     //bind the sink to the new partition
     bind();
-    auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-                                                         -1,
+    auto reconfMessage = Runtime::ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                         INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                          Runtime::ReconfigurationType::UpdateVersion,
                                                          Runtime::Reconfigurable::shared_from_this());
-    queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+    queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
     return true;
 }
 

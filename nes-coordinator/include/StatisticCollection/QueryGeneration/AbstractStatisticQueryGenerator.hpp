@@ -17,14 +17,15 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
+#include <StatisticCollection/Characteristic/Characteristic.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES::Statistic {
 
 class AbstractStatisticQueryGenerator;
-using AbstractStatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
+using StatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
 
 /**
  * @brief Interface for creating a statistic query

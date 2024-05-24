@@ -23,7 +23,6 @@
 #include <Sources/MQTTSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cassert>
@@ -101,6 +100,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
         case Configurations::InputFormat::CSV:
             inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
             break;
+        case Configurations::InputFormat::NES_BINARY: NES_NOT_IMPLEMENTED();
     }
 
     NES_DEBUG("MQTTSource::MQTTSource: Init MQTTSource to {} with client id: {}.", serverAddress, clientId);
@@ -229,7 +229,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer
 bool MQTTSource::connect() {
     if (!connected) {
         NES_DEBUG("MQTTSource was !connect now connect: connected");
-        // connect with user name and password
+        // connect with username and password
         try {
             //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
             auto connOpts =

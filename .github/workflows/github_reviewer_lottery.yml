@@ -11,7 +11,7 @@ on:
       - reopened
 jobs:
   lottery:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, X64, Build ]
     steps:
       - uses: actions/checkout@v4
       - uses: uesteibar/reviewer-lottery@v2

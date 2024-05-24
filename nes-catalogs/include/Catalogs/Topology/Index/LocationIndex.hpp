@@ -14,7 +14,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
@@ -55,8 +55,7 @@ class LocationIndex {
      * @param geoLocation  the new location of the Field node
      * @return true on success, false if the node was not a field node
      */
-    bool updateFieldNodeCoordinates(WorkerId topologyNodeId,
-                                    NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool updateFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
      * Experimental
@@ -74,7 +73,7 @@ class LocationIndex {
      * @return TopologyNodePtr to the closest field node
      */
     std::optional<WorkerId> getClosestNodeTo(const NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
-                                                   int radius = DEFAULT_SEARCH_RADIUS) const;
+                                             int radius = DEFAULT_SEARCH_RADIUS) const;
 
     /**
      * Experimental
@@ -108,7 +107,7 @@ class LocationIndex {
      * @brief get the locations of all the nodes with a known location
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> getAllNodeLocations() const;
+    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> getAllNodeLocations() const;
 
     /**
      * Get geolocation of a node
@@ -135,11 +134,11 @@ class LocationIndex {
     bool setFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     // Map containing locations of all registered worker nodes
-    std::unordered_map<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation> workerGeoLocationMap;
+    std::unordered_map<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation> workerGeoLocationMap;
 #ifdef S2DEF
     // Spatial index that stores ids of all worker nodes and index them based on their geo location
     S2PointIndex<WorkerId> workerPointIndex;
 #endif
 };
 }// namespace NES::Spatial::Index::Experimental
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_

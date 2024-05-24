@@ -20,6 +20,7 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
@@ -27,8 +28,8 @@
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -67,7 +68,8 @@ ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::GlobalQueryPlan,
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration},
+                          ResourceType::CoordinatorConfiguration,
+                          ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(nullptr) {}
@@ -101,6 +103,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
         auto coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
+        auto statisticProbeHandler = storageHandler->getStatisticProbeHandler(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
@@ -115,8 +118,10 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-        auto topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
+        auto topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                                                      sourceCatalog,
+                                                                                                      optimizerConfigurations,
+                                                                                                      statisticProbeHandler);
         auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         auto memoryLayoutSelectionPhase =
@@ -243,14 +248,14 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //28. Iterate over deployment context and update execution plan
         for (const auto& deploymentContext : deploymentContexts) {
-            auto executionNodeId = deploymentContext->getWorkerId();
+            auto WorkerId = deploymentContext->getWorkerId();
             auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
             auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
             auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
             switch (decomposedQueryPlanState) {
                 case QueryState::MARKED_FOR_REDEPLOYMENT:
                 case QueryState::MARKED_FOR_DEPLOYMENT: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                         sharedQueryId,
                                                                         decomposedQueryPlanId,
                                                                         decomposedQueryPlanVersion,
@@ -258,12 +263,12 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                     break;
                 }
                 case QueryState::MARKED_FOR_MIGRATION: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                         sharedQueryId,
                                                                         decomposedQueryPlanId,
                                                                         decomposedQueryPlanVersion,
                                                                         QueryState::STOPPED);
-                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                    globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
                                                                    sharedQueryId,
                                                                    decomposedQueryPlanId,
                                                                    decomposedQueryPlanVersion);
@@ -333,12 +338,12 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
             // Generate Code Snippets for the sub query plan
             auto updatedSubQueryPlan = sampleCodeGenerationPhase->execute(decomposedQueryPlan);
             std::vector<std::string> generatedCodeSnippets;
-            std::set<uint64_t> pipelineIds;
+            std::set<PipelineId> pipelineIds;
             auto queryPlanIterator = PlanIterator(updatedSubQueryPlan);
             for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<Operator>();
                 if (visitingOp->hasProperty("PIPELINE_ID")) {
-                    auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
+                    auto pipelineId = std::any_cast<PipelineId>(visitingOp->getProperty("PIPELINE_ID"));
                     if (pipelineIds.emplace(pipelineId).second) {
                         generatedCodeSnippets.emplace_back(std::any_cast<std::string>(
                             visitingOp->getProperty(Optimizer::ElegantPlacementStrategy::sourceCodeKey)));
@@ -394,9 +399,10 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
                                            multipartPayload,
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
-            throw QueryDeploymentException(decomposedQueryPlan->getDecomposedQueryPlanId(),
-                                           "Error in call to Elegant acceleration service with code "
-                                               + std::to_string(response.status_code) + " and msg " + response.reason);
+            throw QueryDeploymentException(
+                UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryPlanId(), SharedQueryId),
+                "Error in call to Elegant acceleration service with code " + std::to_string(response.status_code) + " and msg "
+                    + response.reason);
         }
 
         nlohmann::json jsonResponse = nlohmann::json::parse(response.text);

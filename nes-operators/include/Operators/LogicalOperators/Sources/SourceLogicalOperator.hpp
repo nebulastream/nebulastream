@@ -55,7 +55,7 @@ class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssign
     OperatorPtr copy() override;
     void setProjectSchema(SchemaPtr schema);
     void inferInputOrigins() override;
-    const std::vector<OriginId> getOutputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;
@@ -65,4 +65,4 @@ class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssign
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATOR_HPP_

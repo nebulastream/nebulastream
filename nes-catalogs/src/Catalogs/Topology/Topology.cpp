@@ -16,6 +16,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
@@ -235,12 +236,12 @@ bool Topology::unregisterWorker(WorkerId topologyNodeId) {
     return true;
 }
 
-TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) {
+TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) const {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     NES_INFO("Finding a physical node with id {}", workerId);
     if (lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
         NES_DEBUG("Found a physical node with id {}", workerId);
-        return (*(*lockedWorkerIdToTopologyNodeMap)[workerId].wlock())->copy();
+        return (*(*lockedWorkerIdToTopologyNodeMap).at(workerId).wlock())->copy();
     }
     NES_WARNING("Unable to find a physical node with id {}", workerId);
     return nullptr;
@@ -364,7 +365,7 @@ TopologyNodeWLock Topology::lockTopologyNode(WorkerId workerId) {
     return nullptr;
 }
 
-std::vector<WorkerId> Topology::getAllRegisteredNodeIds() {
+std::vector<WorkerId> Topology::getAllRegisteredNodeIds() const {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     //Compute a vector of topology node ids
     std::vector<WorkerId> topologyNodeIds;
@@ -521,7 +522,7 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopol
     const auto& destinationTopologyNode = (*(readLockedDestinationTopologyNode));
 
     std::vector<TopologyNodePtr> searchedNodes{destinationTopologyNode};
-    std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
+    std::map<WorkerId, TopologyNodePtr> mapOfUniqueNodes;
     TopologyNodePtr found = find(sourceTopologyNode, searchedNodes, mapOfUniqueNodes);
     if (found) {
         NES_DEBUG("Topology: Found path between {} and {}", sourceTopologyNode->toString(), destinationTopologyNode->toString());
@@ -932,7 +933,7 @@ void Topology::getElegantPayload(nlohmann::json& payload) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
             WorkerId childNodeId = child->as<TopologyNode>()->getId();
-            currentEdgeJsonValue[LINK_ID_KEY] = std::to_string(childNodeId) + "-" + std::to_string(currentNode->getId());
+            currentEdgeJsonValue[LINK_ID_KEY] = fmt::format("{}-{}", childNodeId, currentNode->getId());
             auto linkProperty = currentNode->getLinkProperty(childNodeId);
             currentEdgeJsonValue[TRANSFER_RATE_KEY] = std::to_string(linkProperty->bandwidth);
             edges.push_back(currentEdgeJsonValue);
@@ -1033,5 +1034,5 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
     return nodeInfo;
 }
 
-WorkerId Topology::getNextWorkerId() { return ++topologyNodeIdCounter; }
+WorkerId Topology::getNextWorkerId() { return WorkerId(topologyNodeIdCounter++); }
 }// namespace NES

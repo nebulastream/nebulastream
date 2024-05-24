@@ -17,6 +17,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
@@ -31,6 +32,8 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+
+#include <filesystem>
 
 namespace NES {
 
@@ -126,6 +129,8 @@ namespace TestUtils {
 
 [[nodiscard]] std::string enableNemoPlacement() { return "--optimizer.enableNemoPlacement=true"; }
 
+[[nodiscard]] std::string enableNemoJoin() { return "--optimizer.distributedJoinOptimizationMode=NEMO"; }
+
 [[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
     return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);
 }
@@ -142,8 +147,13 @@ namespace TestUtils {
    * @return coordinator process, which terminates if it leaves the scope
    */
 [[nodiscard]] Util::Subprocess startCoordinator(std::initializer_list<std::string> list) {
-    NES_INFO("Start coordinator");
-    return {std::string(PATH_TO_BINARY_DIR) + "/nes-coordinator/nesCoordinator", list};
+    auto crdPath = std::string(PATH_TO_BINARY_DIR) + "/nes-coordinator/nesCoordinator";
+    if (std::filesystem::exists(crdPath)) {
+        NES_INFO("Start coordinator");
+    } else {
+        NES_ERROR("TestUtils: Coordinator binary does not exist in {}", crdPath);
+    }
+    return {crdPath, list};
 }
 
 /**
@@ -152,8 +162,13 @@ namespace TestUtils {
      * @return worker process, which terminates if it leaves the scope
      */
 [[nodiscard]] Util::Subprocess startWorker(std::initializer_list<std::string> flags) {
-    NES_INFO("Start worker");
-    return {std::string(PATH_TO_BINARY_DIR) + "/nes-worker/nesWorker", flags};
+    auto workerPath = std::string(PATH_TO_BINARY_DIR) + "/nes-worker/nesWorker";
+    if (std::filesystem::exists(workerPath)) {
+        NES_INFO("Start worker");
+    } else {
+        NES_ERROR("TestUtils: Worker binary does not exist in {}", workerPath);
+    }
+    return {workerPath, flags};
 }
 
 /**
@@ -169,12 +184,13 @@ namespace TestUtils {
 /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
      * @param ptr to Runtime
-     * @param queryId
+     * @param sharedQueryId
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-[[nodiscard]] bool checkCompleteOrTimeout(const Runtime::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult) {
-    if (ptr->getQueryStatistics(queryId).empty()) {
+[[nodiscard]] bool
+checkCompleteOrTimeout(const Runtime::NodeEnginePtr& ptr, SharedQueryId sharedQueryId, uint64_t expectedResult) {
+    if (ptr->getQueryStatistics(sharedQueryId).empty()) {
         NES_ERROR("checkCompleteOrTimeout query does not exists");
         return false;
     }
@@ -183,13 +199,13 @@ namespace TestUtils {
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkCompleteOrTimeout: check result NodeEnginePtr");
         //FIXME: handle vector of statistics properly in #977
-        if (ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers() == expectedResult
-            && ptr->getQueryStatistics(queryId)[0]->getProcessedTasks() == expectedResult) {
+        if (ptr->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers() == expectedResult
+            && ptr->getQueryStatistics(sharedQueryId)[0]->getProcessedTasks() == expectedResult) {
             NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr results are correct");
             return true;
         }
         NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr sleep because val={} < {}",
-                  ptr->getQueryStatistics(queryId)[0]->getProcessedTuple(),
+                  ptr->getQueryStatistics(sharedQueryId)[0]->getProcessedTuple(),
                   expectedResult);
         std::this_thread::sleep_for(sleepDuration);
     }
@@ -267,21 +283,21 @@ checkStoppedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& q
 
 /**
      * @brief Check if the query is been stopped successfully within the timeout.
-     * @param queryId: Id of the query to be stopped
+     * @param sharedQueryId: Id of the query to be stopped
      * @param worker: the worker which the query runs on
      * @return true if successful
      */
-[[nodiscard]] bool checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout) {
+[[nodiscard]] bool checkStoppedOrTimeoutAtWorker(SharedQueryId sharedQueryId, NesWorkerPtr worker, std::chrono::seconds timeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (worker->getNodeEngine()->getQueryStatus(queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
-            NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
+        NES_TRACE("checkStoppedOrTimeout: check query status for {}", sharedQueryId);
+        if (worker->getNodeEngine()->getQueryStatus(sharedQueryId) == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+            NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", sharedQueryId);
             return true;
         }
         std::string status;
-        switch (worker->getNodeEngine()->getQueryStatus(queryId)) {
+        switch (worker->getNodeEngine()->getQueryStatus(sharedQueryId)) {
             case Runtime::Execution::ExecutableQueryPlanStatus::Created: status = "created"; break;
             case Runtime::Execution::ExecutableQueryPlanStatus::Deployed: status = "deployed"; break;
             case Runtime::Execution::ExecutableQueryPlanStatus::Running: status = "running"; break;
@@ -291,7 +307,7 @@ checkStoppedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& q
             case Runtime::Execution::ExecutableQueryPlanStatus::Invalid: status = "invalid"; break;
         }
         NES_DEBUG("checkStoppedOrTimeout: status not reached for {} at worker {}. Current state =  {}",
-                  queryId,
+                  sharedQueryId,
                   worker->getWorkerId(),
                   status);
         std::this_thread::sleep_for(sleepDuration);
@@ -498,7 +514,7 @@ checkFailedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& qu
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
         nlohmann::json jsonReturn;
-        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", queryId.toString()}});
         future.wait();
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
@@ -518,7 +534,7 @@ checkFailedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& qu
 
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/getNumberOfProducedBuffers";
         nlohmann::json jsonReturn;
-        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", queryId.toString()}});
         future.wait();
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
@@ -663,7 +679,7 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffe
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
         nlohmann::json jsonReturn;
-        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
+        auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", queryId.toString()}});
         future.wait();
         auto response = future.get();
         nlohmann::json result = nlohmann::json::parse(response.text);
@@ -688,7 +704,7 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffe
 
     std::string url = BASE_URL + restPort + "/v1/nes/query/stop-query";
     nlohmann::json jsonReturn;
-    auto future = cpr::DeleteAsync(cpr::Url{url}, cpr::Parameters{{"queryId", std::to_string(queryId)}});
+    auto future = cpr::DeleteAsync(cpr::Url{url}, cpr::Parameters{{"queryId", queryId.toString()}});
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -712,6 +728,20 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffe
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
     NES_DEBUG("startQueryViaRest: status ={}", result.dump());
+
+    return result;
+}
+
+[[nodiscard]] nlohmann::json addSourceStatistics(const string& queryString, const std::string& restPort) {
+    nlohmann::json json_return;
+
+    std::string url = BASE_URL + restPort + "/v1/nes/sourceCatalog/addSourceStatistics";
+    nlohmann::json jsonReturn;
+    auto future = cpr::PostAsync(cpr::Url{url}, cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{queryString});
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    NES_DEBUG("addSourceStatistics: status ={}", result.dump());
 
     return result;
 }

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
@@ -20,8 +21,10 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
-AbstractStatisticFormatPtr
-StatisticFormatFactory::createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSinkFormatType type) {
+StatisticFormatPtr StatisticFormatFactory::createFromSchema(SchemaPtr schema,
+                                                            uint64_t bufferSize,
+                                                            StatisticSynopsisType type,
+                                                            StatisticDataCodec sinkDataCodec) {
     // 1. We decide what memoryLayout we should use
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     switch (schema->getLayoutType()) {
@@ -36,21 +39,41 @@ StatisticFormatFactory::createFromSchema(SchemaPtr schema, uint64_t bufferSize, 
         default: NES_NOT_IMPLEMENTED();
     }
 
-    // 2. We decide what format to build and return the format
+    // 2. We decide how the post- and preprocessing functions should be, i.e., do we perform some compression for example
+    std::function<std::string(const std::string&)> postProcessingData;
+    std::function<std::string(const std::string&)> preProcessingData;
+
+    switch (sinkDataCodec) {
+        case StatisticDataCodec::DEFAULT: {
+            postProcessingData = [](const std::string& data) {
+                return data;
+            };
+            preProcessingData = [](const std::string& data) {
+                return data;
+            };
+            break;
+        }
+    }
+
+    // 3. We decide what format to build and return the format
     switch (type) {
-        case StatisticSinkFormatType::COUNT_MIN: return createCountMinFormat(memoryLayout);
-        case StatisticSinkFormatType::HLL: return createHyperLogLogFormat(memoryLayout);
+        case StatisticSynopsisType::COUNT_MIN: return createCountMinFormat(memoryLayout, postProcessingData, preProcessingData);
+        case StatisticSynopsisType::HLL: return createHyperLogLogFormat(memoryLayout, postProcessingData, preProcessingData);
     }
 }
 
-AbstractStatisticFormatPtr
-StatisticFormatFactory::createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout) {
-    return CountMinStatisticFormat::create(memoryLayout);
+StatisticFormatPtr
+StatisticFormatFactory::createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                             std::function<std::string(const std::string&)> postProcessingData,
+                                             std::function<std::string(const std::string&)> preProcessingData) {
+    return CountMinStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
 }
 
-AbstractStatisticFormatPtr
-StatisticFormatFactory::createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout) {
-    return HyperLogLogStatisticFormat::create(memoryLayout);
+StatisticFormatPtr
+StatisticFormatFactory::createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+                                                std::function<std::string(const std::string&)> postProcessingData,
+                                                std::function<std::string(const std::string&)> preProcessingData) {
+    return HyperLogLogStatisticFormat::create(memoryLayout, postProcessingData, preProcessingData);
 }
 
 }// namespace NES::Statistic

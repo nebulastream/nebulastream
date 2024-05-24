@@ -15,8 +15,10 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
@@ -27,8 +29,6 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -129,8 +129,8 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
     LogicalOperatorPtr projectPp;
     LogicalJoinOperatorPtr joinOp1;
     QueryCompilation::QueryCompilerOptionsPtr options;
-    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
-    static constexpr uint64_t defaultSharedQueryId = 0;
+    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
 /**
@@ -325,7 +325,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleJoinQuery) {
     auto rightSchema = Schema::create()->addField("right$f2", DataTypeFactory::createInt64());
     joinOp1->setLeftInputSchema(leftSchema);
     joinOp1->setRightInputSchema(rightSchema);
-    joinOp1->setOriginId(1);
+    joinOp1->setOriginId(OriginId(1));
     sourceOp1->setOutputSchema(leftSchema);
     queryPlan->appendOperatorAsNewRoot(joinOp1);
 

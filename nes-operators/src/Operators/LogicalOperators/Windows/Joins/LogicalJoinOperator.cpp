@@ -14,12 +14,12 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {
@@ -48,8 +48,9 @@ bool LogicalJoinOperator::inferSchema() {
 
     //validate that only two different type of schema were present
     if (distinctSchemas.size() != 2) {
-        throw TypeInferenceException("LogicalJoinOperator: Found " + std::to_string(distinctSchemas.size())
-                                     + " distinct schemas but expected 2 distinct schemas.");
+        throw TypeInferenceException(
+            fmt::format("LogicalJoinOperator: Found {} distinct schemas but expected 2 distinct schemas.",
+                        distinctSchemas.size()));
     }
 
     //reset left and right schema
@@ -57,7 +58,7 @@ bool LogicalJoinOperator::inferSchema() {
     rightInputSchema->clear();
 
     // Finds the join schema that contains the joinKey and returns an iterator to the schema
-    auto findSchemaInDinstinctSchemas = [&](FieldAccessExpressionNode& joinKey, SchemaPtr& inputSchema) {
+    auto findSchemaInDinstinctSchemas = [&](FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema) {
         for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
             bool fieldExistsInSchema;
             const auto joinKeyName = joinKey.getFieldName();
@@ -70,7 +71,7 @@ bool LogicalJoinOperator::inferSchema() {
 
             if (fieldExistsInSchema) {
                 inputSchema->copyFields(*itr);
-                joinKey.inferStamp( inputSchema);
+                joinKey.inferStamp(inputSchema);
                 distinctSchemas.erase(itr);
                 return true;
             }
@@ -101,8 +102,7 @@ bool LogicalJoinOperator::inferSchema() {
     //Check if left and right input schema were correctly identified
     NES_ASSERT_THROW_EXCEPTION(!!leftInputSchema,
                                TypeInferenceException,
-                               "LogicalJoinOperator: Left input schema is not initialized for left join key "
-                                   + leftJoinKeyName);
+                               "LogicalJoinOperator: Left input schema is not initialized for left join key " + leftJoinKeyName);
     NES_ASSERT_THROW_EXCEPTION(!!rightInputSchema,
                                TypeInferenceException,
                                "LogicalJoinOperator: Right input schema is not initialized for right join key "
@@ -166,7 +166,7 @@ OperatorPtr LogicalJoinOperator::copy() {
     copy->windowKeyFieldName = windowKeyFieldName;
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -190,7 +190,7 @@ void LogicalJoinOperator::inferStringSignature() {
     NES_TRACE("LogicalJoinOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalJoinOperator: Join should have 2 children.");
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -209,9 +209,7 @@ void LogicalJoinOperator::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-const std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const {
-    return OriginIdAssignmentOperator::getOutputOriginIds();
-}
+std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
 
 void LogicalJoinOperator::setOriginId(OriginId originId) {
     OriginIdAssignmentOperator::setOriginId(originId);
@@ -224,9 +222,9 @@ const std::string& LogicalJoinOperator::getWindowEndFieldName() const { return w
 
 const std::string& LogicalJoinOperator::getWindowKeyFieldName() const { return windowKeyFieldName; }
 
-void LogicalJoinOperator::setWindowStartEndKeyFieldName(const std::string& windowStartFieldName,
-                                                            const std::string& windowEndFieldName,
-                                                            const std::string& windowKeyFieldName) {
+void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowStartFieldName,
+                                                        std::string_view windowEndFieldName,
+                                                        std::string_view windowKeyFieldName) {
     this->windowStartFieldName = windowStartFieldName;
     this->windowEndFieldName = windowEndFieldName;
     this->windowKeyFieldName = windowKeyFieldName;

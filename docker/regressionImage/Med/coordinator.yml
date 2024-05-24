@@ -11,7 +11,7 @@ optimizer:
 ### Network configuration
 ###
 restIp: 172.31.0.2
-coordinatorIp: 172.31.0.2
+coordinatorHost: 172.31.0.2
 restPort: 8081
 
 ###

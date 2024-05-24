@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,3 +12,5 @@
 
 ### TestTupleBuffer Tests ###
 add_nes_runtime_test(test-tuple-buffer-tests "TestTupleBufferTest.cpp")
+### MMapCircularBuffer Tests ###
+add_nes_runtime_test(mmap-circular-buffer-tests "MMapCircularBufferTest.cpp")

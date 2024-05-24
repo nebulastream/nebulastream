@@ -40,7 +40,7 @@ class WorkerHealthCheckService {
     NesWorkerPtr worker;
     std::shared_ptr<std::thread> healthCheckingThread;
     std::atomic<bool> isRunning = false;
-    uint64_t id;
+    WorkerId id;
     std::string healthServiceName;
     std::mutex cvMutex;
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();

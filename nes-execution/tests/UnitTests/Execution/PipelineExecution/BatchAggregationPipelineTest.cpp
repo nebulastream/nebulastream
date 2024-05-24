@@ -105,7 +105,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
-    buffer.setOriginId(0);
+    buffer.setOriginId(INVALID_ORIGIN_ID);
 
     auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchAggregationHandler>();
@@ -182,7 +182,7 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
     testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
-    buffer.setOriginId(0);
+    buffer.setOriginId(INVALID_ORIGIN_ID);
 
     auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();

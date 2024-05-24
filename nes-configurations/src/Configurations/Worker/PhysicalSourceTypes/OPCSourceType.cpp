@@ -19,16 +19,15 @@
 
 namespace NES {
 
-OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig) {
-    return std::make_shared<OPCSourceType>(
-        OPCSourceType(logicalSourceName, physicalSourceName, yamlConfig));
+OPCSourceTypePtr
+OPCSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig) {
+    return std::make_shared<OPCSourceType>(OPCSourceType(logicalSourceName, physicalSourceName, yamlConfig));
 }
 
 OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName,
                                        const std::string& physicalSourceName,
                                        std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<OPCSourceType>(
-        OPCSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
+    return std::make_shared<OPCSourceType>(OPCSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
 OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
@@ -132,9 +131,7 @@ Configurations::StringConfigOption OPCSourceType::getPassword() const { return p
 
 void OPCSourceType::setNamespaceIndex(uint32_t namespaceIndexValue) { namespaceIndex->setValue(namespaceIndexValue); }
 
-void OPCSourceType::setNodeIdentifier(const std::string& nodeIdentifierValue) {
-    nodeIdentifier->setValue(nodeIdentifierValue);
-}
+void OPCSourceType::setNodeIdentifier(const std::string& nodeIdentifierValue) { nodeIdentifier->setValue(nodeIdentifierValue); }
 
 void OPCSourceType::setUserName(const std::string& userNameValue) { userName->setValue(userNameValue); }
 

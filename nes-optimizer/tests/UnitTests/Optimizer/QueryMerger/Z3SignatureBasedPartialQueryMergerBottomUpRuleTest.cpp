@@ -42,6 +42,10 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <z3++.h>
@@ -55,6 +59,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::BaseU
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -81,7 +86,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::BaseU
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(WorkerId(2), "localhost", 123, 124, 4, properties);
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create(DefaultSourceType::create("car", "testCar"));
@@ -101,6 +106,10 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::BaseU
             Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         Topology::create());
     }
 };
 
@@ -111,7 +120,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingEqualQueri
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -191,7 +201,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -278,7 +289,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingQueriesWit
     // Prepare
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -339,7 +351,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -434,7 +447,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -505,17 +519,17 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
     //assert that the at least one sink operator is in the state TO_BE_REMOVED
-    EXPECT_TRUE(
-        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
-            return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
-        }));
+    EXPECT_TRUE(std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
+        return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+    }));
 }
 
 TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
 
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                         sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration());
+                                                                                        Configurations::OptimizerConfiguration(),
+                                                                                        statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -611,8 +625,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
     //assert that the at least one sink operator is in the state TO_BE_REMOVED
-    EXPECT_TRUE(
-        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
-            return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
-        }));
+    EXPECT_TRUE(std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
+        return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+    }));
 }

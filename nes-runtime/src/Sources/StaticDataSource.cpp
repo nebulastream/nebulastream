@@ -28,7 +28,6 @@
 #include <Sources/StaticDataSource.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)
 #include <numa.h>
@@ -67,7 +66,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
     NES_DEBUG("StaticDataSource: id {} Initialize source with schema: |{}| size: {}",
-              std::to_string(operatorId),
+              operatorId,
               this->schema->toString(),
               std::to_string(tupleSizeInBytes));
 

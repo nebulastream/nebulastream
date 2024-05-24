@@ -16,6 +16,7 @@
 
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -94,9 +95,9 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/execution-plan", getExecutionPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
             //throws an exception if query with the provided id does not exists
-            queryCatalog->getQueryEntry(queryId);
+            queryCatalog->getQueryEntry(QueryId(queryId));
             //find the shared query plan id hosting the query
-            auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(queryId);
+            auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(QueryId(queryId));
             //Return the execution nodes running the shared query plan
             auto executionPlanJson = globalExecutionPlan->getAsJson(sharedQueryPlanId);
             NES_DEBUG("QueryController:: execution-plan: {}", executionPlanJson.dump());
@@ -112,7 +113,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/query-plan", getQueryPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
-            auto response = queryCatalog->getQueryEntry(queryId);
+            auto response = queryCatalog->getQueryEntry(QueryId(queryId));
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -125,7 +126,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/optimization-phase", getOptimizationPhase, QUERY(UInt64, queryId, "queryId")) {
         try {
-            auto response = queryCatalog->getQueryEntry(queryId);
+            auto response = queryCatalog->getQueryEntry(QueryId(queryId));
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -141,7 +142,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         //Functionality has been duplicated for compatibility.
         try {
             NES_DEBUG("Get current status of the query");
-            auto response = queryCatalog->getQueryEntry(queryId);
+            auto response = queryCatalog->getQueryEntry(QueryId(queryId));
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -294,7 +295,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
-            bool success = requestHandlerService->validateAndQueueStopQueryRequest(queryId);
+            bool success = requestHandlerService->validateAndQueueStopQueryRequest(QueryId(queryId));
             Status status = success ? Status::CODE_202 : Status::CODE_400;//QueryController catches
                 // InvalidQueryStatus exception, but this is never thrown since it was commented out
             nlohmann::json response;

@@ -151,7 +151,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
         }
         try {
             nlohmann::json response;
-            response = monitoringService->requestMonitoringDataAsJson(nodeId);
+            response = monitoringService->requestMonitoringDataAsJson(WorkerId(nodeId));
             if (!(response == nullptr)) {
                 return createResponse(Status::CODE_200, response.dump());
             }

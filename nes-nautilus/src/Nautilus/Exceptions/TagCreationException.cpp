@@ -15,6 +15,6 @@
 namespace NES::Nautilus {
 
 TagCreationException::TagCreationException(const std::string& message, const std::source_location location)
-    : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
+    : RuntimeException(message, NES::collectStacktrace(), location) {}
 
 }// namespace NES::Nautilus

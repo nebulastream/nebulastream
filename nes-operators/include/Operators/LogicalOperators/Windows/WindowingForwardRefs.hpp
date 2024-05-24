@@ -108,11 +108,6 @@ class TimeMeasure;
 class TimeCharacteristic;
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
-inline uint64_t getTsFromClock() { return time(nullptr) * 1000; }
-
-class WindowAggregationDescriptor;
-using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
-
 class WindowState;
 
 class WatermarkStrategy;
@@ -126,4 +121,4 @@ using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescript
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_

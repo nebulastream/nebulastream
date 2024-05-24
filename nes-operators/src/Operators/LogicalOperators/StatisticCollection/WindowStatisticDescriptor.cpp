@@ -17,23 +17,7 @@
 
 namespace NES::Statistic {
 
-SendingPolicyPtr WindowStatisticDescriptor::getSendingPolicy() const { return sendingPolicy; }
-
-void WindowStatisticDescriptor::inferStamps(const SchemaPtr& inputSchema) {
-    field->inferStamp(inputSchema);
-}
-
-void WindowStatisticDescriptor::setSendingPolicy(const SendingPolicyPtr& sendingPolicy) {
-    WindowStatisticDescriptor::sendingPolicy = sendingPolicy;
-}
-
-TriggerConditionPtr WindowStatisticDescriptor::getTriggerCondition() const {
-    return triggerCondition;
-}
-
-void WindowStatisticDescriptor::setTriggerCondition(const TriggerConditionPtr& triggerCondition) {
-    WindowStatisticDescriptor::triggerCondition = triggerCondition;
-}
+void WindowStatisticDescriptor::inferStamps(const SchemaPtr& inputSchema) { field->inferStamp(inputSchema); }
 
 WindowStatisticDescriptor::WindowStatisticDescriptor(const FieldAccessExpressionNodePtr& field, const uint64_t width)
     : field(field), width(width) {}

@@ -22,7 +22,7 @@
 
 namespace NES::Network {
 
-NetworkManager::NetworkManager(uint64_t nodeEngineId,
+NetworkManager::NetworkManager(WorkerId nodeEngineId,
                                const std::string& hostname,
                                uint16_t port,
                                ExchangeProtocol&& exchangeProtocol,
@@ -46,7 +46,7 @@ NetworkManager::NetworkManager(uint64_t nodeEngineId,
 
 NetworkManager::~NetworkManager() { destroy(); }
 
-NetworkManagerPtr NetworkManager::create(uint64_t nodeEngineId,
+NetworkManagerPtr NetworkManager::create(WorkerId nodeEngineId,
                                          const std::string& hostname,
                                          uint16_t port,
                                          Network::ExchangeProtocol&& exchangeProtocol,
@@ -135,7 +135,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
     std::promise<NetworkChannelPtr> promise;
     auto future = promise.get_future();
 
-    //create a promise that is passed back to the caller an can be used to abort the connection process
+    //create a promise that is passed back to the caller and can be used to abort the connection process
     std::promise<bool> abortConnectionPromise;
     auto abortConnectionFuture = abortConnectionPromise.get_future();
 
@@ -209,7 +209,7 @@ NetworkManager::registerSubpartitionEventProducerAsync(const NodeLocation& nodeL
     std::promise<EventOnlyNetworkChannelPtr> promise;
     auto future = promise.get_future();
 
-    //create a promise that is passed back to the caller an can be used to abort the connection process
+    //create a promise that is passed back to the caller and can be used to abort the connection process
     std::promise<bool> abortConnectionPromise;
     auto abortConnectionFuture = abortConnectionPromise.get_future();
 

@@ -40,14 +40,14 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchema) {
     auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}.setOutputSchema(outputSchema).build();
 
     // Create a MapUdfLogicalOperator with the JavaUDFDescriptor.
-    auto mapUdfLogicalOperator = std::make_shared<MapUDFLogicalOperator>(javaUdfDescriptor, 1);
+    auto mapUdfLogicalOperator = std::make_shared<MapUDFLogicalOperator>(javaUdfDescriptor, OperatorId(1));
 
     // Create a SourceLogicalOperator with a source schema
     // and add it as a child to the MapUdfLogicalOperator to infer the input schema.
     const std::string sourceName = "sourceName";
     auto inputSchema = std::make_shared<Schema>()->addField(sourceName + "$inputAttribute", DataTypeFactory::createUInt64());
     auto sourceDescriptor = std::make_shared<SchemaSourceDescriptor>(inputSchema);
-    mapUdfLogicalOperator->addChild(std::make_shared<SourceLogicalOperator>(sourceDescriptor, 2));
+    mapUdfLogicalOperator->addChild(std::make_shared<SourceLogicalOperator>(sourceDescriptor, OperatorId(2)));
 
     // After calling inferSchema on the MapUdfLogicalOperator, the input schema should be the schema of the source.
     mapUdfLogicalOperator->inferSchema();
@@ -62,11 +62,11 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchema) {
 TEST_F(MapJavaUDFLogicalOperatorTest, InferStringSignature) {
     // Create a MapUdfLogicalOperator with a JavaUDFDescriptor and a source as a child.
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-    auto mapUdfLogicalOperator = std::make_shared<MapUDFLogicalOperator>(javaUDFDescriptor, 1);
+    auto mapUdfLogicalOperator = std::make_shared<MapUDFLogicalOperator>(javaUDFDescriptor, OperatorId(1));
     auto child = std::make_shared<SourceLogicalOperator>(
         std::make_shared<SchemaSourceDescriptor>(
             std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64())),
-        2);
+        OperatorId(2));
     mapUdfLogicalOperator->addChild(child);
 
     // After calling inferStringSignature, the map returned by `getHashBasesStringSignature` contains an entry.

@@ -14,11 +14,10 @@
 
 /* TODO
  * add to Reconfig... constructors:
- -1, // any querID
+ -1, // any query ID
  */
 
 #include <Network/NetworkSink.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -42,7 +41,7 @@ static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
 
 AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                            std::vector<BufferManagerPtr> bufferManagers,
-                                           uint64_t nodeEngineId,
+                                           WorkerId nodeEngineId,
                                            uint16_t numThreads,
                                            HardwareManagerPtr hardwareManager,
                                            uint64_t numberOfBuffersPerEpoch,
@@ -58,7 +57,7 @@ AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusLi
 
 DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                          std::vector<BufferManagerPtr> bufferManagers,
-                                         uint64_t nodeEngineId,
+                                         WorkerId nodeEngineId,
                                          uint16_t numThreads,
                                          HardwareManagerPtr hardwareManager,
                                          uint64_t numberOfBuffersPerEpoch,
@@ -76,7 +75,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
 
 MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                                std::vector<BufferManagerPtr> bufferManagers,
-                                               uint64_t nodeEngineId,
+                                               WorkerId nodeEngineId,
                                                uint16_t numThreads,
                                                HardwareManagerPtr hardwareManager,
                                                uint64_t numberOfBuffersPerEpoch,
@@ -241,7 +240,7 @@ SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId decom
     if (iterator != runningQEPs.end()) {
         return iterator->second->getSharedQueryId();
     }
-    return -1;
+    return INVALID_SHARED_QUERY_ID;
 }
 
 Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(DecomposedQueryPlanId id) {
@@ -301,7 +300,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
-            // we need to think if we wanna remove this after a soft stop
+            // we need to think if we want to remove this after a soft stop
             //            queryToStatisticsMap.erase(qepId);
             NES_DEBUG("AbstractQueryManager: removed running QEP  {}", qepId);
             break;
@@ -312,7 +311,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
     }
 }
 
-uint64_t AbstractQueryManager::getNodeId() const { return nodeEngineId; }
+WorkerId AbstractQueryManager::getNodeId() const { return nodeEngineId; }
 
 bool AbstractQueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 

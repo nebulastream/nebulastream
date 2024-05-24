@@ -38,9 +38,9 @@ TestHarness::TestHarness(Query queryWithoutSink,
                          std::filesystem::path testHarnessResourcePath,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
-    : queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))), coordinatorIPAddress("127.0.0.1"),
+    : queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))), coordinatorHostAddress("127.0.0.1"),
       restPort(restPort), rpcPort(rpcPort), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
-      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
+      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(WorkerId(1)),
       joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
       windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
       filePath(testHarnessResourcePath / "testHarness.csv"), bufferManager(std::make_shared<Runtime::BufferManager>()) {}
@@ -62,14 +62,13 @@ TestHarness& TestHarness::setWindowingStrategy(QueryCompilation::WindowingStrate
 }
 
 void TestHarness::checkAndAddLogicalSources() {
+    auto sourceCatalog = nesCoordinator->getSourceCatalog();
 
     for (const auto& logicalSource : logicalSources) {
-
         auto logicalSourceName = logicalSource->getLogicalSourceName();
         auto schema = logicalSource->getSchema();
 
         // Check if logical source already exists
-        auto sourceCatalog = nesCoordinator->getSourceCatalog();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
             NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
                       logicalSourceName);
@@ -88,7 +87,7 @@ void TestHarness::checkAndAddLogicalSources() {
 }
 
 TestHarness& TestHarness::attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalSourceName,
-                                                                     uint32_t parentId,
+                                                                     WorkerId parentId,
                                                                      WorkerConfigurationPtr workerConfiguration) {
     workerConfiguration->parentId = parentId;
 #ifdef TFDEF
@@ -108,13 +107,13 @@ TestHarness& TestHarness::attachWorkerWithMemorySourceToWorkerWithId(const std::
 
 TestHarness& TestHarness::attachWorkerWithMemorySourceToCoordinator(const std::string& logicalSourceName) {
     //We are assuming coordinator will start with id 1
-    return attachWorkerWithMemorySourceToWorkerWithId(std::move(logicalSourceName), 1);
+    return attachWorkerWithMemorySourceToWorkerWithId(std::move(logicalSourceName), WorkerId(1));
 }
 
 TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(PhysicalSourceTypePtr physicalSource,
                                                                     WorkerConfigurationPtr workerConfiguration) {
     //We are assuming coordinator will start with id 1
-    workerConfiguration->parentId = 1;
+    workerConfiguration->parentId = WorkerId(1);
     auto workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
         TestHarnessWorkerConfiguration::create(workerConfiguration,
@@ -127,11 +126,11 @@ TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(PhysicalSour
     return *this;
 }
 
-TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(const CSVSourceTypePtr& csvSourceType, uint64_t parentId) {
+TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(const CSVSourceTypePtr& csvSourceType, WorkerId parentId) {
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSourceTypes.add(csvSourceType);
     workerConfiguration->parentId = parentId;
-    uint32_t workerId = getNextTopologyId();
+    auto workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
         TestHarnessWorkerConfiguration::create(workerConfiguration,
                                                csvSourceType->getLogicalSourceName(),
@@ -144,14 +143,14 @@ TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(const CSVSourc
 
 TestHarness& TestHarness::attachWorkerWithCSVSourceToCoordinator(const CSVSourceTypePtr& csvSourceType) {
     //We are assuming coordinator will start with id 1
-    return attachWorkerWithCSVSourceToWorkerWithId(csvSourceType, 1);
+    return attachWorkerWithCSVSourceToWorkerWithId(csvSourceType, WorkerId(1));
 }
 
-TestHarness& TestHarness::attachWorkerToWorkerWithId(uint32_t parentId) {
+TestHarness& TestHarness::attachWorkerToWorkerWithId(WorkerId parentId) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->parentId = parentId;
-    uint32_t workerId = getNextTopologyId();
+    auto workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
     testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
     return *this;
@@ -159,7 +158,7 @@ TestHarness& TestHarness::attachWorkerToWorkerWithId(uint32_t parentId) {
 
 TestHarness& TestHarness::attachWorkerToCoordinator() {
     //We are assuming coordinator will start with id 1
-    return attachWorkerToWorkerWithId(1);
+    return attachWorkerToWorkerWithId(WorkerId(1));
 }
 uint64_t TestHarness::getWorkerCount() { return testHarnessWorkerConfigurations.size(); }
 
@@ -315,14 +314,15 @@ std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
     return TestUtils::createTestTupleBuffers(tupleBuffers, schema);
 }
 
-TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor) {
+TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor,
+                                        const std::vector<nlohmann::json>& distributionList) {
     if (!validationDone) {
         NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
     }
 
     //Start Coordinator
     auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
+    coordinatorConfiguration->coordinatorHost = coordinatorHostAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;
 
@@ -350,7 +350,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         //Set ports at runtime
         workerConfiguration->coordinatorPort = coordinatorRPCPort;
-        workerConfiguration->coordinatorIp = coordinatorIPAddress;
+        workerConfiguration->coordinatorHost = coordinatorHostAddress;
 
         switch (workerConf->getSourceType()) {
             case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource: {
@@ -371,7 +371,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         workerIds.emplace_back(nesWorker->getWorkerId());
 
         //We are assuming that coordinator has a node id 1
-        nesWorker->replaceParent(1, nesWorker->getWorkerConfiguration()->parentId.getValue());
+        nesWorker->replaceParent(WorkerId(1), nesWorker->getWorkerConfiguration()->parentId.getValue());
 
         //Add Nes Worker to the configuration.
         //Note: this is required to stop the NesWorker at the end of the test
@@ -388,6 +388,34 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
                 NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find setup topology in given timeout.");
             }
         }
+    }
+
+    // set up the key distribution
+    auto sourceCatalog = nesCoordinator->getSourceCatalog();
+    if (!distributionList.empty()) {
+        for (auto jsonFields : distributionList) {
+            auto workerId = WorkerId(jsonFields["topologyNodeId"]);
+            std::string logSourceName = jsonFields["logicalSource"];
+            std::string phSourceName = jsonFields["physicalSource"];
+            std::string fieldName = jsonFields["fieldName"];
+            std::string value = jsonFields["value"];
+
+            Catalogs::Source::SourceCatalogEntryPtr catalogEntry;
+            std::vector<Catalogs::Source::SourceCatalogEntryPtr> physicalSources =
+                sourceCatalog->getPhysicalSources(logSourceName);
+            for (const auto& phSource : physicalSources) {
+                if (phSource->getLogicalSource()->getLogicalSourceName() == logSourceName
+                    && phSource->getPhysicalSource()->getPhysicalSourceName() == phSourceName
+                    && phSource->getTopologyNodeId() == workerId) {
+                    catalogEntry = phSource;
+                    std::set<uint64_t> vals = {std::stoull(value)};
+                    sourceCatalog->getKeyDistributionMap()[catalogEntry] = {vals};
+                    break;
+                }
+            }
+        }
+    } else {
+        NES_DEBUG("TestHarness: Key distribution list is empty.")
     }
     topologySetupDone = true;
     return *this;
@@ -409,8 +437,8 @@ std::string TestHarness::getNextPhysicalSourceName() {
     return std::to_string(physicalSourceCount);
 }
 
-uint32_t TestHarness::getNextTopologyId() {
-    topologyId++;
+WorkerId TestHarness::getNextTopologyId() {
+    topologyId = WorkerId(topologyId.getRawValue() + 1);
     return topologyId;
 }
 Runtime::BufferManagerPtr TestHarness::getBufferManager() const { return bufferManager; }

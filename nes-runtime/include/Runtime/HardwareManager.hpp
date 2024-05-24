@@ -129,11 +129,6 @@ class HardwareManager {
      */
     NumaRegionMemoryAllocatorPtr getNumaAllocator(uint32_t numaNodeIndex) const;
 #endif
-    /**
-     * @brief Provides the count of available numa nodes
-     * @return the count of available numa nodes
-     */
-    uint32_t getNumberOfNumaRegions() const;
 
     /**
      * @brief Returns the numa region for a particular core

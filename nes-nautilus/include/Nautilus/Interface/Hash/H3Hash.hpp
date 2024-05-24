@@ -61,4 +61,4 @@ class H3Hash : public HashFunction {
 
 }// namespace NES::Nautilus::Interface
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_H3HASH_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_H3HASH_HPP_

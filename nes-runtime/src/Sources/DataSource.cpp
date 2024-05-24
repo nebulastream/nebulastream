@@ -149,7 +149,7 @@ bool DataSource::start() {
                     CPU_SET(sourceAffinity, &cpuset);
                     int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
                     if (rc != 0) {
-                        NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " + std::to_string(operatorId));
+                        NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " << operatorId);
                     }
                 } else {
                     NES_WARNING("Use default affinity for source");
@@ -248,7 +248,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
                 std::rethrow_exception(expPtr);
             }
         } catch (std::exception const& e) {// it would not work if you pass by value
-            // i leave the following lines just as a reminder:
+            // I leave the following lines just as a reminder:
             // here we do not need to call notifySourceFailure because it is done from the main thread
             // the only reason to call notifySourceFailure is when the main thread was not stated
             if (!wasStarted) {
@@ -313,9 +313,9 @@ void DataSource::runningRoutine() {
 }
 
 void DataSource::runningRoutineWithIngestionRate() {
-    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
+    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
     NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
-    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    std::string thName = fmt::format("DataSrc-{}", operatorId);
     setThreadName(thName.c_str());
 
     NES_DEBUG("DataSource {} Running Data Source of type={} ingestion rate={}",
@@ -335,13 +335,13 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
     uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
-    while (running) {
+    while (running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t buffersProcessedCnt = 0;
 
-        //produce buffers until limit for this second or for all perionds is reached or source is topped
+        //produce buffers until limit for this second or for all periods is reached or source is topped
         while (buffersProcessedCnt < buffersToProducePer100Ms && running
                && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
             auto optBuf = receiveData();
@@ -403,8 +403,8 @@ void DataSource::runningRoutineWithIngestionRate() {
 }
 
 void DataSource::runningRoutineWithGatheringInterval() {
-    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
-    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
+    std::string thName = fmt::format("DataSrc-{}", operatorId);
     setThreadName(thName.c_str());
 
     NES_DEBUG("DataSource {}: Running Data Source of type={} interval={}",
@@ -429,13 +429,12 @@ void DataSource::runningRoutineWithGatheringInterval() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-                NES_TRACE("DataSource produced buffer {} type= {} string={}: Received Data: {} tuples iteration= {} "
+                NES_TRACE("DataSource produced buffer {} type= {} string={}: Received Data: {} "
                           "operatorId={} orgID={}",
-                          operatorId,
+                          numberOfBuffersProduced,
                           magic_enum::enum_name(getType()),
                           toString(),
                           buf.getNumberOfTuples(),
-                          numberOfBuffersProduced,
                           this->operatorId,
                           this->operatorId);
 
@@ -484,11 +483,6 @@ uint64_t DataSource::getNumBuffersToProcess() const { return numberOfBuffersToPr
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
 std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts() { return {Schema::MemoryLayoutType::ROW_LAYOUT}; }
-
-bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
-    auto supportedLayouts = getSupportedLayouts();
-    return std::find(supportedLayouts.begin(), supportedLayouts.end(), schema->getLayoutType()) != supportedLayouts.end();
-}
 
 Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() {
     auto buffer = bufferManager->getBufferBlocking();

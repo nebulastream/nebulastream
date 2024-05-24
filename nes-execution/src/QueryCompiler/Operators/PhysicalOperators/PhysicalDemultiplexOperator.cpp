@@ -24,7 +24,7 @@ PhysicalOperatorPtr PhysicalDemultiplexOperator::create(StatisticId statisticId,
 }
 
 PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
 
 std::string PhysicalDemultiplexOperator::toString() const {
     std::stringstream out;

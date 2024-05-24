@@ -14,7 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
 #define NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <memory>
@@ -23,20 +23,20 @@ class AbstractQueryStatusListener {
   public:
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool canTriggerEndOfStream(QueryId queryId,
-                                       DecomposedQueryPlanId subPlanId,
+    virtual bool canTriggerEndOfStream(SharedQueryId sharedQueryId,
+                                       DecomposedQueryPlanId decomposedQueryPlanId,
                                        OperatorId sourceId,
                                        Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifySourceTermination(QueryId queryId,
-                                         DecomposedQueryPlanId subPlanId,
+    virtual bool notifySourceTermination(SharedQueryId sharedQueryId,
+                                         DecomposedQueryPlanId decomposedQueryPlanId,
                                          OperatorId sourceId,
                                          Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifyQueryFailure(QueryId queryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) = 0;
+    virtual bool notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) = 0;
 
-    virtual bool notifyQueryStatusChange(QueryId queryId,
-                                         DecomposedQueryPlanId subQueryId,
+    virtual bool notifyQueryStatusChange(SharedQueryId sharedQueryId,
+                                         DecomposedQueryPlanId decomposedQueryPlanId,
                                          Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
 
     virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) = 0;

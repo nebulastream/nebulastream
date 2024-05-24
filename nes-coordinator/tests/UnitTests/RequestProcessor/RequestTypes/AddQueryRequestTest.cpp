@@ -41,6 +41,10 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
+#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -60,6 +64,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     z3::ContextPtr z3Context;
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
@@ -71,7 +76,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-        int rootNodeId = 1;
+        auto rootNodeId = WorkerId(1);
         topology = Topology::create();
         topology->registerWorker(rootNodeId, "localhost", 4000, 4002, 4, properties, 0, 0);
         topology->addAsRootWorkerId(rootNodeId);
@@ -89,6 +94,10 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         z3Context = std::make_shared<z3::context>();
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
+                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
+                                                                         Statistic::DefaultStatisticCache::create(),
+                                                                         topology);
     }
 };
 
@@ -96,15 +105,23 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
 TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
 
     // Prepare
-    constexpr RequestId requestId = 1;
+    constexpr auto requestId = RequestId(1);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator1 = queryPlan->getSinkOperators()[0];
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto storageHandler = TwoPhaseLockingStorageHandler::create(
-        {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
+    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
+                                                                 topology,
+                                                                 globalExecutionPlan,
+                                                                 globalQueryPlan,
+                                                                 queryCatalog,
+                                                                 sourceCatalog,
+                                                                 udfCatalog,
+                                                                 amendmentQueue,
+                                                                 statisticProbeHandler});
 
     //Create new entry in query catalog service
     queryCatalog->createQueryCatalogEntry("query string",

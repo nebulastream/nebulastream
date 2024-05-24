@@ -15,9 +15,9 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 
+#include <JavaUdfDescriptorMessage.pb.h>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <JavaUdfDescriptorMessage.pb.h>
 
 namespace NES {
 
@@ -45,4 +45,4 @@ class UDFSerializationUtil {
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_

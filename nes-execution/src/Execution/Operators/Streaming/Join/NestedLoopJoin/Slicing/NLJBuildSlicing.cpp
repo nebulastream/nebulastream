@@ -64,11 +64,11 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     }
 
     // Write record to the pagedVector
-     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
-                                                           getNLJPagedVectorProxy,
-                                                           localJoinState->sliceReference,
-                                                           ctx.getWorkerId(),
-                                                           Value<UInt64>(to_underlying(joinBuildSide)));
+    auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
+                                                       getNLJPagedVectorProxy,
+                                                       localJoinState->sliceReference,
+                                                       ctx.getWorkerId(),
+                                                       Value<UInt64>(to_underlying(joinBuildSide)));
     Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
     pagedVectorVarSizedRef.writeRecord(record);
 }

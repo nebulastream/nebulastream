@@ -43,12 +43,21 @@ void* getBucket(void* ptr, uint64_t index) {
     return buckets->operator[](index)->getState()->ptr;
 }
 
-void triggerBucketsProxy(void* op, void* wctx, void* pctx, uint64_t originId, uint64_t sequenceNumber,
-                         uint64_t chunkNumber, bool lastChunk, uint64_t watermarkTs) {
+void triggerBucketsProxy(void* op,
+                         void* wctx,
+                         void* pctx,
+                         uint64_t originId,
+                         uint64_t sequenceNumber,
+                         uint64_t chunkNumber,
+                         bool lastChunk,
+                         uint64_t watermarkTs) {
     auto handler = static_cast<NonKeyedBucketPreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk},
+    handler->trigger(*workerContext,
+                     *pipelineExecutionContext,
+                     OriginId(originId),
+                     {sequenceNumber, chunkNumber, lastChunk},
                      watermarkTs);
 }
 

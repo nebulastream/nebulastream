@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TaggedPointer.hpp>
 #include <atomic>
 #include <functional>
@@ -178,7 +178,7 @@ class alignas(64) BufferControlBlock {
      * @brief get id where this buffer was created
      * @return origin id
      */
-    [[nodiscard]] uint64_t getOriginId() const noexcept;
+    [[nodiscard]] OriginId getOriginId() const noexcept;
 
     /**
      * @brief set originId

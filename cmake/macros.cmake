@@ -63,43 +63,36 @@ macro(get_header_nes_client HEADER_FILES)
     file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
 endmacro()
 
-find_program(CLANG_FORMAT_EXE clang-format)
-
 macro(project_enable_clang_format)
     string(CONCAT FORMAT_DIRS
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/onnx/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/onnx/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/onnx/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/tensorflow/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/tensorflow/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/tensorflow/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/arrow/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/arrow/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins/arrow/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime/include")
-    if (NOT ${CLANG_FORMAT_EXECUTABLE} STREQUAL "CLANG_FORMAT_EXE-NOTFOUND")
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-catalogs,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-configurations,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-execution,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-expressions,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-nautilus,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-operators,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-optimizer,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-statistics,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-window-types,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker"
+    )
+    if (NOT NES_SELF_HOSTING)
+        message(WARNING "Not using self-hosting compiler, thus 'format' is disabled")
+        add_custom_target(format
+                          COMMAND echo -e "\nPlease use NES_SELF_HOST=1 to have uniform clang-format version\n"
+                          COMMAND exit 1)
+        add_custom_target(format-check
+                          COMMAND echo -e "\nPlease use NES_SELF_HOST=1 to have uniform clang-format version\n"
+                          COMMAND exit 1)
+    elseif (CLANG_FORMAT_EXECUTABLE)
         message(STATUS "clang-format found, whole source formatting enabled through 'format' target.")
         add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} --fix USES_TERMINAL)
         add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} USES_TERMINAL)
@@ -205,15 +198,28 @@ macro(get_nes_log_level_value NES_LOGGING_VALUE)
     endif ()
 endmacro(get_nes_log_level_value NES_LOGGING_VALUE)
 
-function(download_file url filename)
-    message("Download: ${url}")
-    file(REMOVE ${filename})
-    if (NOT EXISTS ${filename})
+function(cached_fetch_and_extract url dest)
+    # WARNING: the `dest` directory must not exist before the initial configure run,
+    #          e.g. this function breaks with e.g. dest set to CMAKE_BINARY_DIR
+    #
+    # This is so that copying only happens when `dest` does not exist, to speed up reconfiguration,
+    # since copying the NES deps and clang has takes roughly 2.5s while reconfiguration takes ~15s.
+    message(STATUS "Fetching ${dest} from cache ${CMAKE_DEPS_CACHE_DIR} or form url ${url}")
+    string(REGEX REPLACE "/" "_"  filename ${url})  # url to filename
+    string(REPLACE ":" "_"  filename ${filename})  # filename to filename
+    string(REPLACE ".com" "_"  filename ${filename})  # filename to filename
+    string(REGEX REPLACE "^(.*)(.tar)?\\.[A-Za-z0-9]+$" "\\1" extracted ${filename})  # remove last suffix and maybe .tar, i.e. foo.7z -> foo, bar.tar.gz -> bar
+    message(STATUS "Cache filename zipped: ${filename}")
+    message(STATUS "Cache filename extracted: ${extracted}")
+    set(FRESH_DOWNLOAD FALSE)
+    if (NOT EXISTS ${CMAKE_DEPS_CACHE_DIR}/${filename})
+        message(STATUS "File ${filename} not cached, downloading!")
+        set(FRESH_DOWNLOAD TRUE)
         set(CURRENT_ITERATION "0")
         set(MAX_RETRIES "3")
         while (CURRENT_ITERATION LESS MAX_RETRIES)
             # Throws an error if download is inactive for 10s
-            file(DOWNLOAD ${url} ${filename} SHOW_PROGRESS TIMEOUT 0 INACTIVITY_TIMEOUT 10 STATUS DOWNLOAD_STATUS)
+            file(DOWNLOAD ${url} ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp SHOW_PROGRESS TIMEOUT 0 INACTIVITY_TIMEOUT 10 STATUS DOWNLOAD_STATUS)
             # Retrieve download status info
             list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
             list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
@@ -225,14 +231,39 @@ function(download_file url filename)
                 message(STATUS "Error occurred during download: ${ERROR_MESSAGE}")
                 message(STATUS "Retry attempt ${CURRENT_ITERATION}/${MAX_RETRIES}")
                 # Remove created (incomplete) file which failed to get downloaded
-                file(REMOVE ${filename})
+                file(REMOVE ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp)
             endif ()
         endwhile ()
         if (CURRENT_ITERATION EQUAL MAX_RETRIES)
             message(FATAL_ERROR "Aborting: retry attempts exceeded while failing to download ${url}")
         endif ()
+        file(RENAME ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp ${CMAKE_DEPS_CACHE_DIR}/${filename})
     endif ()
-endfunction(download_file)
+    set(FRESH_EXTRACT FALSE)
+    if (FRESH_DOWNLOAD OR (NOT EXISTS ${CMAKE_DEPS_CACHE_DIR}/${extracted}))
+        set(FRESH_EXTRACT TRUE)
+        message(STATUS "File/Dir ${extracted} not cached, extracting!")
+        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted})
+        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
+        file(ARCHIVE_EXTRACT INPUT ${CMAKE_DEPS_CACHE_DIR}/${filename} DESTINATION ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
+        file(RENAME ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp ${CMAKE_DEPS_CACHE_DIR}/${extracted})
+        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
+    endif ()
+    if (FRESH_EXTRACT OR (NOT EXISTS ${dest}))
+        message(STATUS "Copying from cache to ${dest}!")
+        file(REMOVE_RECURSE ${dest})
+        file(REMOVE_RECURSE ${dest}_tmp)
+        file(COPY ${CMAKE_DEPS_CACHE_DIR}/${extracted}/ DESTINATION ${dest}_tmp)
+        get_filename_component(dest_name ${dest} NAME)
+        if (EXISTS ${dest}_tmp/${dest_name})
+            # remove duplicate dest folder name
+            file(RENAME ${dest}_tmp/${dest_name} ${dest})
+        else()
+            file(RENAME ${dest}_tmp/ ${dest})
+        endif()
+        file(REMOVE_RECURSE ${dest}_tmp)
+    endif ()
+endfunction()
 
 function(get_linux_lsb_release_information)
     find_program(LSB_RELEASE_EXEC lsb_release)
@@ -250,30 +281,4 @@ function(get_linux_lsb_release_information)
         set(LSB_RELEASE_VERSION_SHORT "${LSB_RELEASE_VERSION_SHORT}" PARENT_SCOPE)
         set(LSB_RELEASE_CODENAME_SHORT "${LSB_RELEASE_CODENAME_SHORT}" PARENT_SCOPE)
     endif ()
-endfunction()
-
-function(set_linux_musl_release_information)
-    file(STRINGS "/etc/os-release" data_list REGEX "^(ID|VERSION_ID)=")
-    # Look for lines like "ID="..." and VERSION_ID="..."
-    foreach (_var ${data_list})
-        if ("${_var}" MATCHES "^(ID)=(.*)$")
-            set(ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
-        elseif ("${_var}" MATCHES "^(VERSION_ID)=(.*)$")
-            set(VERSION_ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
-        endif ()
-    endforeach ()
-endfunction()
-
-function(is_host_musl)
-    file(STRINGS "/etc/os-release" data_list REGEX "^(ID|VERSION_ID)=")
-    # Look for lines like "ID="..." and VERSION_ID="..."
-    foreach (_var ${data_list})
-        if ("${_var}" MATCHES "^(ID)=(.*)$")
-            if ("${CMAKE_MATCH_2}" MATCHES "alpine")
-                set(HOST_IS_MUSL TRUE PARENT_SCOPE)
-            else ()
-                set(HOST_IS_MUSL FALSE PARENT_SCOPE)
-            endif ()
-        endif ()
-    endforeach ()
 endfunction()

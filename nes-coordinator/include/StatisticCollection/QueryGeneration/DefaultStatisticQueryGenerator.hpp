@@ -29,7 +29,7 @@ class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator {
      * @brief Creates a DefaultStatisticQueryGenerator
      * @return AbstractStatisticQueryGeneratorPtr
      */
-    static AbstractStatisticQueryGeneratorPtr create();
+    static StatisticQueryGeneratorPtr create();
 
     /**
      * @brief Create a statistic query via a mapping strategy

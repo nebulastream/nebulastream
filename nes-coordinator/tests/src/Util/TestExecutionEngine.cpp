@@ -93,7 +93,7 @@ TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
     NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
     NES_ASSERT(nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId()),
                "query plan could not be started.");
-    return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getSharedQueryId());
+    return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getDecomposedQueryPlanId());
 }
 
 std::shared_ptr<NonRunnableDataSource>

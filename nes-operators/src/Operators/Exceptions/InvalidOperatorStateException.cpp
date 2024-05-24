@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <fmt/core.h>
 #include <sstream>
 
 namespace NES::Exceptions {
@@ -27,9 +29,11 @@ InvalidOperatorStateException::InvalidOperatorStateException(OperatorId operator
     for (const auto& state : expectedState) {
         expectedStatusString << std::string(magic_enum::enum_name(state)) << " ";
     }
-    message = "InvalidOperatorStateException: Operator with id " + std::to_string(operatorId)
-        + ". Expected operator state to be in [" + expectedStatusString.str() + "] but found to be in "
-        + std::string(magic_enum::enum_name(actualState));
+    message = fmt::format(
+        "InvalidOperatorStateException: Operator with id {}. Expected operator state to be in [{}] but found to be in {}",
+        operatorId,
+        expectedStatusString.str(),
+        magic_enum::enum_name(actualState));
 }
 
 const char* InvalidOperatorStateException::what() const noexcept { return message.c_str(); }

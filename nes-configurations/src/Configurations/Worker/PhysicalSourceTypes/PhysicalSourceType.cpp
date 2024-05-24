@@ -18,7 +18,7 @@
 
 namespace NES {
 
-PhysicalSourceType::PhysicalSourceType(std::string  logicalSourceName, std::string  physicalSourceName, SourceType sourceType)
+PhysicalSourceType::PhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, SourceType sourceType)
     : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)), sourceType(sourceType) {
 }
 

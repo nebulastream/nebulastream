@@ -12,13 +12,15 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <algorithm>
+#include <fmt/format.h>
+
 namespace NES {
 
-LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id)
-    : Operator(id), LogicalOperator(id), BinaryOperator(id) {}
+LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), BinaryOperator(id) {}
 
 bool LogicalBinaryOperator::inferSchema() {
 
@@ -38,7 +40,7 @@ bool LogicalBinaryOperator::inferSchema() {
     }
 
     //Identify different type of schemas from children operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         auto childOutputSchema = child->as<Operator>()->getOutputSchema();
         auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](const SchemaPtr& distinctSchema) {
             return childOutputSchema->equals(distinctSchema, false);
@@ -50,14 +52,15 @@ bool LogicalBinaryOperator::inferSchema() {
 
     //validate that only two different type of schema were present
     if (distinctSchemas.size() > 2) {
-        throw TypeInferenceException("BinaryOperator: Found " + std::to_string(distinctSchemas.size())
-                                     + " distinct schemas but expected 2 or less distinct schemas.");
+        throw TypeInferenceException(
+            fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 or less distinct schemas.",
+                        distinctSchemas.size()));
     }
 
     return true;
 }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const SchemaPtr& schema) {
+std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const SchemaPtr& schema) const {
     std::vector<OperatorPtr> operators;
     for (const auto& child : getChildren()) {
         auto childOperator = child->as<Operator>();
@@ -68,15 +71,13 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const Schem
     return operators;
 }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getLeftOperators() { return getOperatorsBySchema(getLeftInputSchema()); }
+std::vector<OperatorPtr> LogicalBinaryOperator::getLeftOperators() const { return getOperatorsBySchema(getLeftInputSchema()); }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() {
-    return getOperatorsBySchema(getRightInputSchema());
-}
+std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() const { return getOperatorsBySchema(getRightInputSchema()); }
 
 void LogicalBinaryOperator::inferInputOrigins() {
     // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> leftInputOriginIds;
+    std::vector<OriginId> leftInputOriginIds;
     for (auto child : this->getLeftOperators()) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();
@@ -85,7 +86,7 @@ void LogicalBinaryOperator::inferInputOrigins() {
     }
     this->leftInputOriginIds = leftInputOriginIds;
 
-    std::vector<uint64_t> rightInputOriginIds;
+    std::vector<OriginId> rightInputOriginIds;
     for (auto child : this->getRightOperators()) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();

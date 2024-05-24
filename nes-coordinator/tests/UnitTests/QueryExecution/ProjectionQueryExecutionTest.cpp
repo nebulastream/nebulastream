@@ -64,8 +64,8 @@ class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
-    static constexpr uint64_t defaultSharedQueryId = 0;
+    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
 TEST_F(ProjectionQueryExecutionTest, projectField) {

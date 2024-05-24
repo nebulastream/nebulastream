@@ -15,9 +15,11 @@
 #ifndef NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
@@ -247,7 +249,7 @@ class WorkerRPCClient {
     bool checkHealth(const std::string& address, std::string healthServiceName);
 
     /**
-     * @brief method to check the location of any node. If the node is a mobile node, its current loction will be returned.
+     * @brief method to check the location of any node. If the node is a mobile node, its current location will be returned.
      * If the node is a field node, its fixed location will be returned. If the node does not have a known location, an
      * invalid location will be returned
      * @param address: the ip address of the node

@@ -22,7 +22,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <numeric>
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {

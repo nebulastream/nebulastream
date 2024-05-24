@@ -28,9 +28,12 @@ TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(StorageDataStructur
       globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       queryCatalog(std::move(storageDataStructures.queryCatalog)), sourceCatalog(std::move(storageDataStructures.sourceCatalog)),
-      udfCatalog(std::move(storageDataStructures.udfCatalog)), coordinatorConfigurationHolder(INVALID_REQUEST_ID),
-      topologyHolder(INVALID_REQUEST_ID), globalExecutionPlanHolder(INVALID_REQUEST_ID), queryCatalogHolder(INVALID_REQUEST_ID),
-      globalQueryPlanHolder(INVALID_REQUEST_ID), sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID) {}
+      udfCatalog(std::move(storageDataStructures.udfCatalog)), amendmentQueue(std::move(storageDataStructures.amendmentQueue)),
+      statisticProbeHandler(std::move(storageDataStructures.statisticProbeHandler)),
+      coordinatorConfigurationHolder(INVALID_REQUEST_ID), topologyHolder(INVALID_REQUEST_ID),
+      globalExecutionPlanHolder(INVALID_REQUEST_ID), queryCatalogHolder(INVALID_REQUEST_ID),
+      globalQueryPlanHolder(INVALID_REQUEST_ID), sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID),
+      amendmentQueueHolder(INVALID_REQUEST_ID), statisticProbeHandlerHolder(INVALID_REQUEST_ID) {}
 
 std::shared_ptr<TwoPhaseLockingStorageHandler>
 TwoPhaseLockingStorageHandler::create(StorageDataStructures storageDataStructures) {
@@ -60,7 +63,7 @@ void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) 
     for (const auto resourceType : resourceTypeList) {
         auto& holder = getHolder(resourceType);
 
-        //if the resouce is not held by the request, proceed to the next resource
+        //if the resource is not held by the request, proceed to the next resource
         if (holder.holderId != requestId) {
             continue;
         }
@@ -96,6 +99,7 @@ TwoPhaseLockingStorageHandler::ResourceHolderData& TwoPhaseLockingStorageHandler
         case ResourceType::GlobalExecutionPlan: return globalExecutionPlanHolder;
         case ResourceType::GlobalQueryPlan: return globalQueryPlanHolder;
         case ResourceType::UdfCatalog: return udfCatalogHolder;
+        case ResourceType::StatisticProbeHandler: return statisticProbeHandlerHolder;
     }
 }
 
@@ -172,9 +176,19 @@ Configurations::CoordinatorConfigurationPtr TwoPhaseLockingStorageHandler::getCo
     return coordinatorConfiguration;
 }
 
+Optimizer::UMPMCAmendmentQueuePtr TwoPhaseLockingStorageHandler::getAmendmentQueue() { return amendmentQueue; }
+
 TicketId TwoPhaseLockingStorageHandler::getCurrentTicket(ResourceType resource) { return getHolder(resource).currentTicket; }
 
 TicketId TwoPhaseLockingStorageHandler::getNextAvailableTicket(ResourceType resource) {
     return getHolder(resource).nextAvailableTicket;
+}
+
+Statistic::StatisticProbeHandlerPtr TwoPhaseLockingStorageHandler::getStatisticProbeHandler(RequestId requestId) {
+    if (statisticProbeHandlerHolder.holderId != requestId) {
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::StatisticProbeHandler);
+    }
+    return statisticProbeHandler;
 }
 }// namespace NES::RequestProcessor

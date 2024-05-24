@@ -20,9 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager,
-                                         NES::SchemaPtr schema,
-                                         uint64_t pageSize)
+PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, NES::SchemaPtr schema, uint64_t pageSize)
     : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize) {
     appendPage();
     appendVarSizedDataPage();
@@ -58,7 +56,7 @@ void PagedVectorVarSized::appendPage() {
     }
 }
 
-void PagedVectorVarSized::appendVarSizedDataPage(){
+void PagedVectorVarSized::appendVarSizedDataPage() {
     auto page = bufferManager->getUnpooledBuffer(pageSize);
     if (page.has_value()) {
         varSizedDataPages.emplace_back(page.value());
@@ -69,21 +67,26 @@ void PagedVectorVarSized::appendVarSizedDataPage(){
 }
 
 uint64_t PagedVectorVarSized::storeText(const char* text, uint32_t length) {
-    // TODO currently the varSizedData must fit onto one single page, see #4638
     NES_ASSERT2_FMT(length > 0, "Length of text has to be larger than 0!");
-    NES_ASSERT2_FMT(length <= pageSize, "Length of text has to be smaller than the page size!");
+    // create a new entry for the varSizedDataEntryMap
+    VarSizedDataEntryMapValue textMapValue(currVarSizedDataEntry, length, varSizedDataPages.size() - 1);
 
-    if (currVarSizedDataEntry + length > varSizedDataPages.back().getBuffer() + pageSize) {
-        appendVarSizedDataPage();
+    // store the text in the varSizedDataPages
+    while (length > 0) {
+        auto remainingSpace = pageSize - (currVarSizedDataEntry - varSizedDataPages.back().getBuffer());
+        if (remainingSpace >= length) {
+            std::memcpy(currVarSizedDataEntry, text, length);
+            currVarSizedDataEntry += length;
+            break;
+        } else {
+            std::memcpy(currVarSizedDataEntry, text, remainingSpace);
+            text += remainingSpace;
+            length -= remainingSpace;
+            appendVarSizedDataPage();
+        }
     }
-    std::memcpy(currVarSizedDataEntry, text, length);
 
-    VarSizedDataEntryMapValue textMapValue;
-    textMapValue.entryPtr = currVarSizedDataEntry;
-    textMapValue.entryLength = length;
     varSizedDataEntryMap.insert(std::make_pair(++varSizedDataEntryMapCounter, textMapValue));
-
-    currVarSizedDataEntry += length;
     return varSizedDataEntryMapCounter;
 }
 
@@ -91,11 +94,29 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
     auto textMapValue = varSizedDataEntryMap.at(textEntryMapKey);
     auto textPtr = textMapValue.entryPtr;
     auto textLength = textMapValue.entryLength;
+    auto bufferIdx = textMapValue.entryBufIdx;
 
-    auto buffer = bufferManager->getUnpooledBuffer(PagedVectorVarSized::PAGE_SIZE);
+    // buffer size should be multiple of pageSize for efficiency reasons
+    auto bufferSize = ((textLength + pageSize - 1) / pageSize) * pageSize;
+    auto buffer = bufferManager->getUnpooledBuffer(bufferSize);
+
     if (buffer.has_value()) {
         auto textValue = TextValue::create(buffer.value(), textLength);
-        std::memcpy(textValue->str(), textPtr, textLength);
+        auto destPtr = textValue->str();
+
+        // load the text from the varSizedDataPages into the buffer
+        while (textLength > 0) {
+            auto remainingSpace = pageSize - (textPtr - varSizedDataPages[bufferIdx++].getBuffer());
+            if (remainingSpace >= textLength) {
+                std::memcpy(destPtr, textPtr, textLength);
+                break;
+            } else {
+                std::memcpy(destPtr, textPtr, remainingSpace);
+                textPtr = varSizedDataPages[bufferIdx].getBuffer();
+                textLength -= remainingSpace;
+                destPtr += remainingSpace;
+            }
+        }
         return textValue;
     } else {
         NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
@@ -108,7 +129,6 @@ void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other) {
     NES_ASSERT2_FMT(entrySize == other.entrySize, "Can not combine PagedVector of different entrySize for now!");
 
     pages.back().setNumberOfTuples(numberOfEntriesOnCurrPage);
-    other.pages.back().setNumberOfTuples(other.numberOfEntriesOnCurrPage);
 
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto entryId = 0UL; entryId < other.totalNumberOfEntries; ++entryId) {
@@ -121,6 +141,7 @@ void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other) {
             if (fieldType->isText()) {
                 auto textEntryMapKey = *reinterpret_cast<uint64_t*>(entryPtr);
                 auto textMapValue = other.varSizedDataEntryMap.at(textEntryMapKey);
+                textMapValue.entryBufIdx += varSizedDataPages.size();
                 varSizedDataEntryMap.insert(std::make_pair(++varSizedDataEntryMapCounter, textMapValue));
                 std::memcpy(entryPtr, &varSizedDataEntryMapCounter, sizeof(uint64_t));
                 entryPtr += sizeof(uint64_t);
@@ -161,4 +182,4 @@ uint64_t PagedVectorVarSized::getVarSizedDataEntryMapCounter() const { return va
 
 uint64_t PagedVectorVarSized::getEntrySize() const { return entrySize; }
 
-} //NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface

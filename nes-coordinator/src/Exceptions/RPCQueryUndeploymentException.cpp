@@ -15,13 +15,13 @@
 #include <utility>
 namespace NES::Exceptions {
 RPCQueryUndeploymentException::RPCQueryUndeploymentException(const std::string& message,
-                                                             std::vector<uint64_t> failedRpcExecutionNodeIds,
+                                                             std::vector<WorkerId> failedRpcWorkerIds,
                                                              RpcClientMode mode)
-    : RequestExecutionException(message), failedExecutionNodeIds(std::move(failedRpcExecutionNodeIds)), mode(mode) {}
+    : RequestExecutionException(message), failedWorkerIds(std::move(failedRpcWorkerIds)), mode(mode) {}
 
 const char* RPCQueryUndeploymentException::what() const noexcept { return message.c_str(); }
 
-std::vector<uint64_t> RPCQueryUndeploymentException::getFailedExecutionNodeIds() { return failedExecutionNodeIds; }
+std::vector<WorkerId> RPCQueryUndeploymentException::getFailedWorkerIds() { return failedWorkerIds; }
 
 RpcClientMode RPCQueryUndeploymentException::getMode() { return mode; }
 }// namespace NES::Exceptions

@@ -43,7 +43,8 @@ class StatisticSerializationUtil {
      * @param triggerCondition
      * @param triggerConditionMessage
      */
-    static void serializeTriggerCondition(const Statistic::TriggerCondition& triggerCondition, TriggerConditionMessage& triggerConditionMessage);
+    static void serializeTriggerCondition(const Statistic::TriggerCondition& triggerCondition,
+                                          TriggerConditionMessage& triggerConditionMessage);
 
     /**
      * @brief Serializes the descriptor into the descriptorMessage
@@ -72,9 +73,10 @@ class StatisticSerializationUtil {
      * @param descriptorMessage
      * @return WindowStatisticDescriptorPtr
      */
-    static Statistic::WindowStatisticDescriptorPtr deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage);
+    static Statistic::WindowStatisticDescriptorPtr
+    deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage);
 };
 
-}
+}// namespace NES
 
 #endif//NES_NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_STATISTICSERIALIZATIONUTIL_HPP_

@@ -16,7 +16,8 @@
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
 
 #include <Catalogs/Topology/LinkProperty.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -254,4 +255,4 @@ struct formatter<NES::TopologyNode> : formatter<std::string> {
 };
 }//namespace fmt
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_

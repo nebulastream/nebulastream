@@ -20,7 +20,7 @@ namespace NES {
 SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name) {
     auto it = testSchemaCatalog.find(name);
     if (it != testSchemaCatalog.end()) {
-        SchemaPtr newSchema = std::make_shared<Schema>();
+        auto newSchema = std::make_shared<Schema>();
         // Use copyFields() to create a deep copy of the fields
         newSchema->copyFields(it->second);
         return newSchema;

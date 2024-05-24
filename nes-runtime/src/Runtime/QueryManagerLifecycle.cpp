@@ -23,8 +23,6 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/Core.hpp>
 #include <iostream>
 #include <memory>
 #include <stack>
@@ -172,8 +170,8 @@ bool MultiQueueQueryManager::registerQuery(const Execution::ExecutableQueryPlanP
     NES_ASSERT2_FMT(queryToStatisticsMap.size() <= numberOfQueues,
                     "AbstractQueryManager::registerQuery: not enough queues are free for numberOfQueues="
                         << numberOfQueues << " query cnt=" << queryToStatisticsMap.size());
-    //currently we asume all queues have same number of threads so we can do this.
-    queryToTaskQueueIdMap[qep->getSharedQueryId()] = currentTaskQueueId++;
+    //currently we assume all queues have same number of threads, so we can do this.
+    queryToTaskQueueIdMap[qep->getDecomposedQueryPlanId()] = currentTaskQueueId++;
     NES_DEBUG("queryToTaskQueueIdMap add for= {}  queue= {}", qep->getSharedQueryId(), currentTaskQueueId - 1);
     return ret;
 }
@@ -361,7 +359,7 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
     }
 
     // TODO evaluate if we need to have this a wait instead of a get
-    // TODO for instance we could wait N seconds and if the stopped is not succesful by then
+    // TODO for instance we could wait N seconds and if the stopped is not successful by then
     // TODO we need to trigger a hard local kill of a QEP
     auto terminationFuture = qep->getTerminationFuture();
     auto terminationStatus = terminationFuture.wait_for(std::chrono::minutes(10));
@@ -402,12 +400,15 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
     // send EOS to `source` itself, iff a network source
     if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
         //add soft eaos for network source
-        auto reconfMessage = ReconfigurationMessage(-1, -1, ReconfigurationType::SoftEndOfStream, netSource);
-        addReconfigurationMessage(-1, -1, reconfMessage, false);
+        auto reconfMessage = ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                    INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                    ReconfigurationType::SoftEndOfStream,
+                                                    netSource);
+        addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
     }
 
     for (auto successor : pipelineSuccessors) {
-        // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
+        // create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
             auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
@@ -448,7 +449,7 @@ bool AbstractQueryManager::addHardEndOfStream(DataSourcePtr source) {
     auto pipelineSuccessors = source->getExecutableSuccessors();
 
     for (auto successor : pipelineSuccessors) {
-        // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
+        // create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
             auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),

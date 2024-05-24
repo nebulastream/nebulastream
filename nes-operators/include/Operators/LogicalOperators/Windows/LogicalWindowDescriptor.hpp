@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWDESCRIPTOR_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <vector>
 
@@ -38,8 +38,8 @@ class LogicalWindowDescriptor {
      * @param window action
      * @param allowedLateness
      */
-    explicit LogicalWindowDescriptor(std::vector<FieldAccessExpressionNodePtr> keys,
-                                     std::vector<WindowAggregationDescriptorPtr> windowAggregations,
+    explicit LogicalWindowDescriptor(const std::vector<FieldAccessExpressionNodePtr>& keys,
+                                     std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                      WindowTypePtr windowType,
                                      uint64_t allowedLateness);
 
@@ -53,7 +53,7 @@ class LogicalWindowDescriptor {
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDescriptorPtr create(std::vector<WindowAggregationDescriptorPtr> windowAggregations,
+    static LogicalWindowDescriptorPtr create(const std::vector<WindowAggregationDescriptorPtr>& windowAggregations,
                                              const WindowTypePtr& windowType,
                                              uint64_t allowedLateness);
 
@@ -76,7 +76,7 @@ class LogicalWindowDescriptor {
      * @brief Returns true if this window is keyed.
      * @return true if keyed.
     */
-    bool isKeyed();
+    bool isKeyed() const;
 
     /**
      * @brief Getter for the number of input edges, which is used for the low watermarks.
@@ -93,18 +93,18 @@ class LogicalWindowDescriptor {
      * @brief Getter for the aggregation functions.
      * @return Vector of WindowAggregations.
      */
-    std::vector<WindowAggregationDescriptorPtr> getWindowAggregation();
+    std::vector<WindowAggregationDescriptorPtr> getWindowAggregation() const;
 
     /**
      * @brief Sets the list of window aggregations.
      * @param windowAggregation
      */
-    void setWindowAggregation(std::vector<WindowAggregationDescriptorPtr> windowAggregation);
+    void setWindowAggregation(const std::vector<WindowAggregationDescriptorPtr>& windowAggregation);
 
     /**
      * @brief Getter for the window type.
      */
-    WindowTypePtr getWindowType();
+    WindowTypePtr getWindowType() const;
 
     /**
      * @brief Setter of the window type.
@@ -116,13 +116,13 @@ class LogicalWindowDescriptor {
      * @brief Getter for the key attributes.
      * @return Vector of key attributes.
      */
-    std::vector<FieldAccessExpressionNodePtr> getKeys();
+    std::vector<FieldAccessExpressionNodePtr> getKeys() const;
 
     /**
      * @brief Setter for the keys.
      * @param keys
      */
-    void setOnKey(std::vector<FieldAccessExpressionNodePtr> keys);
+    void setOnKey(const std::vector<FieldAccessExpressionNodePtr>& keys);
 
     /**
      * @brief Getter for the allowed lateness. The allowed lateness defines,
@@ -135,7 +135,7 @@ class LogicalWindowDescriptor {
      * @brief Getter for the origin id of this window.
      * @return origin id
      */
-    [[nodiscard]] uint64_t getOriginId() const;
+    [[nodiscard]] OriginId getOriginId() const;
 
     /**
      * @brief Setter for the origin id
@@ -147,7 +147,7 @@ class LogicalWindowDescriptor {
      * @brief Creates a copy of the logical window definition
      * @return LogicalWindowDescriptorPtr
      */
-    LogicalWindowDescriptorPtr copy();
+    LogicalWindowDescriptorPtr copy() const;
 
     /**
     * @brief Getter for on trigger action
@@ -159,7 +159,7 @@ class LogicalWindowDescriptor {
      * @brief To string function for the window definition.
      * @return string
      */
-    std::string toString();
+    std::string toString() const;
 
     /**
      * @brief Checks if the input window definition is equal to this window definition by comparing the window key, type,
@@ -167,7 +167,7 @@ class LogicalWindowDescriptor {
      * @param otherWindowDefinition: The other window definition
      * @return true if they are equal else false
      */
-    bool equal(LogicalWindowDescriptorPtr otherWindowDefinition);
+    bool equal(LogicalWindowDescriptorPtr otherWindowDefinition) const;
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
@@ -177,10 +177,10 @@ class LogicalWindowDescriptor {
     std::vector<FieldAccessExpressionNodePtr> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
-    OriginId originId{};
+    OriginId originId = INVALID_ORIGIN_ID;
     uint64_t allowedLateness;
 };
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWDESCRIPTOR_HPP_

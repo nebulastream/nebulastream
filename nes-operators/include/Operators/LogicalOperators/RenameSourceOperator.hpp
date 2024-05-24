@@ -45,11 +45,11 @@ class RenameSourceOperator : public LogicalUnaryOperator {
     bool inferSchema() override;
     OperatorPtr copy() override;
     void inferStringSignature() override;
-    std::string getNewSourceName();
+    std::string getNewSourceName() const;
 
   private:
     const std::string newSourceName;
 };
 
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_RENAMESOURCEOPERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_RENAMESOURCEOPERATOR_HPP_

@@ -15,13 +15,13 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
-#include <unordered_set>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace NES {
@@ -120,20 +120,20 @@ class DecomposedQueryPlan {
      * @brief Get all root operators
      * @return vector of root operators
      */
-    std::vector<OperatorPtr> getRootOperators();
+    std::vector<OperatorPtr> getRootOperators() const;
 
     /**
      * @brief Get all the leaf operators in the query plan (leaf operator is the one without any child)
      * @note: in certain stages the source operators might not be Leaf operators
      * @return returns a vector of leaf operators
      */
-    std::vector<OperatorPtr> getLeafOperators();
+    std::vector<OperatorPtr> getLeafOperators() const;
 
     /**
      * @brief Return the id of the decomposed query plan
      * @return decomposed query plan id
      */
-    DecomposedQueryPlanId getDecomposedQueryPlanId();
+    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
 
     /**
      * @brief Get the new decomposed query plan id
@@ -145,7 +145,7 @@ class DecomposedQueryPlan {
      * @brief Get the shared query id
      * @return shared query id
      */
-    SharedQueryId getSharedQueryId();
+    SharedQueryId getSharedQueryId() const;
 
     /**
      * @brief Get state of the query plan
@@ -182,32 +182,32 @@ class DecomposedQueryPlan {
      * @param operatorId: the id of the operator
      * @return the shared pointer to the operator node
      */
-    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId);
+    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
 
     /**
      * @brief Check if the decomposed query plan contains an operator with input id
      * @param operatorId : the operator id
      * @return true if exists else false
      */
-    bool hasOperatorWithId(OperatorId operatorId);
+    bool hasOperatorWithId(OperatorId operatorId) const;
 
     /**
      * @brief Get all source operators
      * @return vector of logical source operators
      */
-    std::vector<SourceLogicalOperatorPtr> getSourceOperators();
+    std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
 
     /**
      * @brief Get all sink operators
      * @return vector of logical sink operators
      */
-    std::vector<SinkLogicalOperatorPtr> getSinkOperators();
+    std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
     /**
      * @brief Get all operators in the query plan
      * @return vector of operators
      */
-    std::unordered_set<OperatorPtr> getAllOperators();
+    std::unordered_set<OperatorPtr> getAllOperators() const;
 
     /**
      * @brief Create copy of the decomposed query plan
@@ -230,12 +230,12 @@ class DecomposedQueryPlan {
         // Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
-        std::set<uint64_t> visitedOpIds;
+        std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators) {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<Operator>();
-                if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                if (visitedOpIds.contains(visitingOp->getId())) {
                     // skip rest of the steps as the node found in already visited node list
                     continue;
                 }
@@ -253,9 +253,9 @@ class DecomposedQueryPlan {
     DecomposedQueryPlanId decomposedQueryPlanId;
     DecomposedQueryPlanVersion decomposedQueryPlanVersion;
     WorkerId workerId;
-    QueryState currentState;
+    QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators;
 };
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_

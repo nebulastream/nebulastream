@@ -62,7 +62,7 @@ class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest {
                        uint64_t sequenceNumber) {
         auto buffer = bufferManager->getBufferBlocking();
         buffer.setWatermark(wts);
-        buffer.setOriginId(originId);
+        buffer.setOriginId(OriginId(originId));
         buffer.setSequenceNumber(sequenceNumber);
         auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
         context.setWatermarkTs(wts);
@@ -84,17 +84,18 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
 
     auto slicePreAggregation =
         KeyedSlicePreAggregation(0 /*handler index*/,
-                                 std::make_unique<EventTimeFunction>(readTs),
+                                 std::make_unique<EventTimeFunction>(readTs, Windowing::TimeUnit::Milliseconds()),
                                  {readKey},
                                  {integerType},
                                  {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readV1, "sum")},
                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
+                                Value<MemRef>((int8_t*) &pipelineContext));
     auto buffer = bufferManager->getBufferBlocking();
 
     auto rb = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));

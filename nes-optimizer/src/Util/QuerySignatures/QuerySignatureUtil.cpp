@@ -14,38 +14,38 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
+#include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Operators/Exceptions/SignatureComputationException.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Types/WindowType.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Util/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <z3++.h>
 
@@ -68,8 +68,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
             } else if (operatorNode->instanceOf<SinkLogicalOperator>() && children.empty()) {
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have empty children set : " + operatorNode->toString());
-            } else if (!(operatorNode->instanceOf<SourceLogicalOperator>()
-                         || operatorNode->instanceOf<SinkLogicalOperator>())
+            } else if (!(operatorNode->instanceOf<SourceLogicalOperator>() || operatorNode->instanceOf<SinkLogicalOperator>())
                        && children.size() != 1) {
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have only one children : "
                                         + operatorNode->toString() + " found : " + std::to_string(children.size()));
@@ -220,9 +219,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Logic
                                   std::move(unionExpressions));
 }
 
-QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
-    const z3::ContextPtr& context,
-    const NES::InferModel::LogicalInferModelOperatorPtr& inferModelOperator) {
+QuerySignaturePtr
+QuerySignatureUtil::createQuerySignatureForInferModel(const z3::ContextPtr& context,
+                                                      const NES::InferModel::LogicalInferModelOperatorPtr& inferModelOperator) {
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = inferModelOperator->getChildren();
     NES_ASSERT(children.size() == 1, "InferModel operator should only have one non null children.");
@@ -618,7 +617,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     //    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
     //Compute the expression for window size and slide
-    auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+    auto multiplier = timeCharacteristic->getTimeUnit().getMillisecondsConversionMultiplier();
     uint64_t length = 0;
     uint64_t slide = 0;
     if (windowType->instanceOf<Windowing::TumblingWindow>()) {
@@ -731,7 +730,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         windowExpression.insert({"window-id", std::make_shared<z3::expr>(windowId)});
 
         //Compute the expression for window size and slide
-        auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+        auto multiplier = timeCharacteristic->getTimeUnit().getMillisecondsConversionMultiplier();
         if (timeBasedWindowType->instanceOf<Windowing::TumblingWindow>()) {
             auto tumblingWindow = timeBasedWindowType->as<Windowing::TumblingWindow>();
             length = tumblingWindow->getSize().getTime() * multiplier;

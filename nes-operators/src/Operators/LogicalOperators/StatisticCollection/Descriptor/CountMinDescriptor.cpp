@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <StatisticIdentifiers.hpp>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <StatisticIdentifiers.hpp>
 #include <cmath>
 #include <utility>
 namespace NES::Statistic {
@@ -26,8 +26,8 @@ WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNod
 }
 
 WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNodePtr field, double error, double probability) {
-    const auto calcWidth = (uint64_t)std::ceil(std::exp(1) / (probability));
-    const auto calcDepth = (uint64_t)std::ceil(std::log(1.0 / error));
+    const auto calcWidth = static_cast<uint64_t>(std::ceil(std::exp(1) / (probability)));
+    const auto calcDepth = static_cast<uint64_t>(std::ceil(std::log(1.0 / error)));
     return create(std::move(field), calcWidth, calcDepth);
 }
 
@@ -38,10 +38,11 @@ WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNod
 uint64_t CountMinDescriptor::getDepth() const { return depth; }
 
 void CountMinDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
-    outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, BasicType::UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + DEPTH_FIELD_NAME, BasicType::UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY, BasicType::UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
+    using enum BasicType;
+    outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, UINT64);
+    outputSchema.addField(qualifierNameWithSeparator + DEPTH_FIELD_NAME, UINT64);
+    outputSchema.addField(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY, UINT64);
+    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, TEXT);
 }
 CountMinDescriptor::~CountMinDescriptor() = default;
 
@@ -50,10 +51,7 @@ std::string CountMinDescriptor::toString() { return "CountMinDescriptor"; }
 bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     if (rhs->instanceOf<CountMinDescriptor>()) {
         auto rhsCountMinDescriptor = rhs->as<CountMinDescriptor>();
-        return field->equal(rhsCountMinDescriptor->field)
-            && *triggerCondition == *rhsCountMinDescriptor->triggerCondition
-            && *sendingPolicy == *rhsCountMinDescriptor->sendingPolicy
-            && depth == rhsCountMinDescriptor->depth
+        return field->equal(rhsCountMinDescriptor->field) && depth == rhsCountMinDescriptor->depth
             && width == rhsCountMinDescriptor->width;
     }
     return false;

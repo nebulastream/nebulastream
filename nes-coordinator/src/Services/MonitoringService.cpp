@@ -16,6 +16,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
@@ -49,8 +50,8 @@ nlohmann::json MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::M
     return metricsJson;
 }
 
-nlohmann::json MonitoringService::requestMonitoringDataAsJson(uint64_t nodeId) {
-    NES_DEBUG("MonitoringService: Requesting monitoring data from worker id= {}", std::to_string(nodeId));
+nlohmann::json MonitoringService::requestMonitoringDataAsJson(WorkerId nodeId) {
+    NES_DEBUG("MonitoringService: Requesting monitoring data from worker id= {}", nodeId);
     return monitoringManager->requestRemoteMonitoringData(nodeId);
 }
 
@@ -58,10 +59,10 @@ nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
     nlohmann::json metricsJson;
     auto nodeIds = topology->getAllRegisteredNodeIds();
     for (const auto& nodeId : nodeIds) {
-        NES_INFO("MonitoringService: Requesting metrics for node {}", std::to_string(nodeId));
-        metricsJson[std::to_string(nodeId)] = requestMonitoringDataAsJson(nodeId);
+        NES_INFO("MonitoringService: Requesting metrics for node {}", nodeId);
+        metricsJson[nodeId.toString()] = requestMonitoringDataAsJson(nodeId);
         Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(nodeId);
-        metricsJson[std::to_string(nodeId)][toString(Monitoring::MetricType::RegistrationMetric)] =
+        metricsJson[nodeId.toString()][toString(Monitoring::MetricType::RegistrationMetric)] =
             Monitoring::MetricUtils::toJson(tMetrics)[toString(Monitoring::MetricType::RegistrationMetric)][0]["value"];
     }
     return metricsJson;
@@ -71,9 +72,9 @@ nlohmann::json MonitoringService::requestNewestMonitoringDataFromMetricStoreAsJs
     nlohmann::json metricsJson;
     auto nodeIds = topology->getAllRegisteredNodeIds();
     for (const auto& nodeId : nodeIds) {
-        NES_INFO("MonitoringService: Requesting metrics for node {}", std::to_string(nodeId));
+        NES_INFO("MonitoringService: Requesting metrics for node {}", nodeId);
         Monitoring::StoredNodeMetricsPtr parsedValues = monitoringManager->getMonitoringDataFromMetricStore(nodeId);
-        metricsJson[std::to_string(nodeId)] = Monitoring::MetricUtils::toJson(parsedValues);
+        metricsJson[nodeId.toString()] = Monitoring::MetricUtils::toJson(parsedValues);
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received\n{}", metricsJson.dump());
     return metricsJson;

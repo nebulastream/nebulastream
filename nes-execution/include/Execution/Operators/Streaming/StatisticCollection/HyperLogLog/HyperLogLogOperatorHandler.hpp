@@ -17,7 +17,6 @@
 
 #include <Execution/Operators/Streaming/StatisticCollection/AbstractSynopsesOperatorHandler.hpp>
 
-
 namespace NES::Runtime::Execution::Operators {
 class HyperLogLogOperatorHandler;
 using HyperLogLogOperatorHandlerPtr = std::shared_ptr<HyperLogLogOperatorHandler>;
@@ -30,7 +29,7 @@ class HyperLogLogOperatorHandler : public AbstractSynopsesOperatorHandler {
     static HyperLogLogOperatorHandlerPtr create(const uint64_t windowSize,
                                                 const uint64_t windowSlide,
                                                 Statistic::SendingPolicyPtr sendingPolicy,
-                                                Statistic::AbstractStatisticFormatPtr statisticFormat,
+                                                Statistic::StatisticFormatPtr statisticFormat,
                                                 const uint64_t width,
                                                 const std::vector<OriginId>& inputOrigins);
 
@@ -40,7 +39,7 @@ class HyperLogLogOperatorHandler : public AbstractSynopsesOperatorHandler {
     HyperLogLogOperatorHandler(const uint64_t windowSize,
                                const uint64_t windowSlide,
                                const Statistic::SendingPolicyPtr& sendingPolicy,
-                               const Statistic::AbstractStatisticFormatPtr& statisticFormat,
+                               const Statistic::StatisticFormatPtr& statisticFormat,
                                const std::vector<OriginId>& inputOrigins,
                                const uint64_t width);
 
@@ -48,5 +47,5 @@ class HyperLogLogOperatorHandler : public AbstractSynopsesOperatorHandler {
     const uint64_t width;
 };
 
-} //namespace NES::Runtime::Execution::Operators
+}//namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_HYPERLOGLOG_HYPERLOGLOGOPERATORHANDLER_HPP_

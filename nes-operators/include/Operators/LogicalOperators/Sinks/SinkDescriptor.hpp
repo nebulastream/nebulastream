@@ -35,7 +35,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
      * @return descriptor for sink
      */
     SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp);
-    SinkDescriptor(uint64_t numberOfOrigins);
+    explicit SinkDescriptor(uint64_t numberOfOrigins);
     SinkDescriptor();
 
     virtual ~SinkDescriptor() = default;
@@ -49,7 +49,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     bool instanceOf() const {
         if (dynamic_cast<const SinkType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 
@@ -97,4 +97,4 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_

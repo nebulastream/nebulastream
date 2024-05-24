@@ -25,16 +25,16 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -67,7 +67,7 @@ class FilterPushDownRuleTest : public Testing::BaseIntegrationTest {
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
         auto csvSourceType = CSVSourceType::create("example", "test_stream");
         PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
         LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
@@ -839,13 +839,12 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowThreeMapsWithOneFieldSubsti
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     NES_INFO("Setup FilterPushDownTest test case.");
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto csvSourceType = CSVSourceType::create("example", "test_stream");
     PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("example", Schema::create());
-    auto sce1 =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     sourceCatalog->addPhysicalSource("example", sce1);
 
@@ -890,9 +889,8 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowThreeMapsWithOneFieldSubsti
     ++itr;
     EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
     NES_DEBUG("filterOperatorPQ1: {}", filterOperatorPQ1->toString());
-    NES_DEBUG(
-        "filterOperatorPQ1 Predicate: {}",
-        filterOperatorPQ1->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<SubExpressionNode>()[0]->toString());
+    NES_DEBUG("filterOperatorPQ1 Predicate: {}",
+              filterOperatorPQ1->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<SubExpressionNode>()[0]->toString());
     NES_DEBUG("mapOperatorPQ2 map expression: {}",
               mapOperatorPQ2->as<LogicalMapOperator>()->getMapExpression()->getAssignment()->toString());
     EXPECT_TRUE(filterOperatorPQ1->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<SubExpressionNode>()[0]->equal(
@@ -915,13 +913,12 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowTwoMapsWithTwoFieldSubstitu
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     NES_INFO("Setup FilterPushDownTest test case.");
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
 
     auto csvSourceType = CSVSourceType::create("example", "test_stream");
     PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("example", Schema::create());
-    auto sce1 =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
+    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
 
     sourceCatalog->addPhysicalSource("example", sce1);
 
@@ -971,9 +968,8 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowTwoMapsWithTwoFieldSubstitu
     ++itr;
     EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
     NES_DEBUG("filterOperatorPQ1: {}", filterOperatorPQ1->toString());
-    NES_DEBUG(
-        "filterOperatorPQ1 Predicate: {}",
-        filterOperatorPQ1->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->toString());
+    NES_DEBUG("filterOperatorPQ1 Predicate: {}",
+              filterOperatorPQ1->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->toString());
     NES_DEBUG("mapOperatorPQ3 map expression: {}",
               mapOperatorPQ3->as<LogicalMapOperator>()->getMapExpression()->getAssignment()->toString());
     EXPECT_TRUE(filterOperatorPQ1->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->equal(
@@ -1207,8 +1203,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToBothSourcesLeft) {
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
         watermarkOperatorAboveSrc2->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
     ++itr;
@@ -1218,8 +1213,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToBothSourcesLeft) {
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
         watermarkOperatorAboveSrc1->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc1->as<UnaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc1->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
 }
@@ -1296,8 +1290,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToBothSourcesRight) {
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
         watermarkOperatorAboveSrc2->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
     ++itr;
@@ -1309,8 +1302,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToBothSourcesRight) {
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
         watermarkOperatorAboveSrc1->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc1->as<UnaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc1->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
 }
@@ -1560,13 +1552,11 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     ++itr;
     EXPECT_TRUE(filterOperatorAorC->equal((*itr)));
     NES_DEBUG("FilterOperatorAorC: {}", filterOperatorAorC->toString());
-    NES_DEBUG("FilterOperatorAorC Predicate: {}",
-              filterOperatorAorC->as<LogicalFilterOperator>()->getPredicate()->toString());
+    NES_DEBUG("FilterOperatorAorC Predicate: {}", filterOperatorAorC->as<LogicalFilterOperator>()->getPredicate()->toString());
     //check if schema still correct
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(sinkOperator->as<UnaryOperator>()->getInputSchema()));
     EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getOutputSchema()->equals(sinkOperator->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(
-        joinOperator1and2and3->as<BinaryOperator>()->getOutputSchema()));
+        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(joinOperator1and2and3->as<BinaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(joinOperator1and2and3->equal((*itr)));
     ++itr;
@@ -1578,31 +1568,26 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     NES_DEBUG("filterOperatorC: {}", filterOperatorC->toString());
     NES_DEBUG("filterOperatorC Predicate: {}", filterOperatorC->as<LogicalFilterOperator>()->getPredicate()->toString());
     //check if schema updated correctly
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc3->as<UnaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperator>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc3->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(filterOperatorId->equal((*itr)));
     NES_DEBUG("filterOperatorId: {}", filterOperatorId->toString());
     NES_DEBUG("filterOperatorId Predicate: {}", filterOperatorId->as<LogicalFilterOperator>()->getPredicate()->toString());
     //check if schema updated correctly
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc3->as<UnaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperator>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc3->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc3->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorAorB->equal((*itr)));
     NES_DEBUG("filterOperatorAorB: {}", filterOperatorAorB->toString());
-    NES_DEBUG("filterOperatorAorB Predicate: {}",
-              filterOperatorAorB->as<LogicalFilterOperator>()->getPredicate()->toString());
+    NES_DEBUG("filterOperatorAorB Predicate: {}", filterOperatorAorB->as<LogicalFilterOperator>()->getPredicate()->toString());
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
         joinOperator1and2and3->as<BinaryOperator>()->getLeftInputSchema()));
-    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(
-        joinOperator1and2->as<BinaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE(
+        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(joinOperator1and2->as<BinaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(joinOperator1and2->equal((*itr)));
     ++itr;
@@ -1612,36 +1597,32 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     NES_DEBUG("filterOperatorB: {}", filterOperatorB->toString());
     NES_DEBUG("filterOperatorB Predicate: {}", filterOperatorB->as<LogicalFilterOperator>()->getPredicate()->toString());
     //check if schema updated correctly
-    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
-        watermarkOperator2->as<UnaryOperator>()->getInputSchema()));
     EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
+        (*itr)->as<UnaryOperator>()->getOutputSchema()->equals(watermarkOperator2->as<UnaryOperator>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     std::vector<std::string> accessedFields;
     accessedFields.push_back("src2$id");//a duplicate filter that accesses src2$id should be pushed down
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), accessedFields));
     //check if schema updated correctly
-    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
-        watermarkOperator2->as<UnaryOperator>()->getInputSchema()));
     EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
+        (*itr)->as<UnaryOperator>()->getOutputSchema()->equals(watermarkOperator2->as<UnaryOperator>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(watermarkOperator3->equal((*itr)));
     //check if schema updated correctly
-    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(
-        watermarkOperator3->as<UnaryOperator>()->getInputSchema()));
     EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(mapOperatorA->as<UnaryOperator>()->getOutputSchema()));
+        (*itr)->as<UnaryOperator>()->getOutputSchema()->equals(watermarkOperator3->as<UnaryOperator>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(mapOperatorA->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(mapOperatorA->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorA->equal((*itr)));
     NES_DEBUG("filterOperatorA: {}", filterOperatorA->toString());
-    NES_DEBUG(
-        "filterOperatorA Predicate: {}",
-        filterOperatorA->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->toString());
+    NES_DEBUG("filterOperatorA Predicate: {}",
+              filterOperatorA->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->toString());
     NES_DEBUG("mapOperatorA map expression: {}",
               mapOperatorA->as<LogicalMapOperator>()->getMapExpression()->getAssignment()->toString());
     EXPECT_TRUE(filterOperatorA->as<LogicalFilterOperator>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->equal(
@@ -1651,10 +1632,8 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     accessedFields2.push_back("src1$id");//a duplicate filter that accesses src2$id should be pushed down
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), accessedFields2));
     //check if schema updated correctly
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getOutputSchema()->equals(mapOperatorA->as<UnaryOperator>()->getInputSchema()));
-    EXPECT_TRUE(
-        (*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc1->as<UnaryOperator>()->getOutputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getOutputSchema()->equals(mapOperatorA->as<UnaryOperator>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperator>()->getInputSchema()->equals(srcOperatorSrc1->as<UnaryOperator>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
     ++itr;

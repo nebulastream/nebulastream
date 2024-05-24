@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES {
 
@@ -44,4 +44,4 @@ class PlanIdGenerator {
     static QueryId getNextQueryId();
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_

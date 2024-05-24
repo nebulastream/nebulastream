@@ -40,14 +40,12 @@ bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
         && lateStart == otherTableDescr->lateStart;
 }
 
-SchemaPtr StaticDataSourceDescriptor::getSchema() const { return schema; }
-
 SourceDescriptorPtr StaticDataSourceDescriptor::copy() {
     return StaticDataSourceDescriptor::create(schema->copy(), pathTableFile, lateStart);
 }
 
 std::string StaticDataSourceDescriptor::getPathTableFile() const { return pathTableFile; }
 
-bool StaticDataSourceDescriptor::getLateStart() { return lateStart; };
+bool StaticDataSourceDescriptor::getLateStart() const { return lateStart; };
 
 }// namespace NES::Experimental

@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
 #define NES_NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <sstream>
 
 namespace NES {

@@ -71,7 +71,6 @@ class StatisticIdInferencePhase {
      * @param allOperators
      */
     void performInference(std::unordered_set<OperatorPtr> allOperators);
-
 };
 
 }// namespace Optimizer

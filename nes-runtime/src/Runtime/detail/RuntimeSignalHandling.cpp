@@ -17,16 +17,19 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <csignal>
-#include <folly/experimental/exception_tracer/ExceptionTracerLib.h>
 #include <memory>
 
 namespace NES::Runtime {
 namespace detail {
-static backward::SignalHandling sh;
 
 /// called when a signal is intercepted
 void nesErrorHandler(int signal) {
-    auto stacktrace = collectAndPrintStacktrace();
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    std::string stacktrace;
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
+        stacktrace = collectStacktrace();
+    }
     Exceptions::invokeErrorHandlers(signal, std::move(stacktrace));
 }
 
@@ -37,7 +40,12 @@ void nesKillHandler(int signal) {
 
 /// called when std::terminate() is invoked
 void nesTerminateHandler() {
-    auto stacktrace = collectAndPrintStacktrace();
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    std::string stacktrace;
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
+        stacktrace = collectStacktrace();
+    }
     auto unknown = std::current_exception();
     std::shared_ptr<std::exception> currentException;
     try {
@@ -57,7 +65,12 @@ void nesTerminateHandler() {
 
 /// called when an exception is not caught in our code
 void nesUnexpectedException() {
-    auto stacktrace = collectAndPrintStacktrace();
+    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+    std::string stacktrace;
+    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
+        stacktrace = collectStacktrace();
+    }
     auto unknown = std::current_exception();
     std::shared_ptr<std::exception> currentException;
     try {
@@ -73,38 +86,12 @@ void nesUnexpectedException() {
     }
     Exceptions::invokeErrorHandlers(currentException, std::move(stacktrace));
 }
-#ifdef __linux__
-#ifdef NES_ENABLE_CXA_THROW_HOOK
-void nesCxaThrowHook(void* ex, std::type_info* info, void (**deleter)(void*)) noexcept {
-    using namespace std::string_literals;
 
-    ((void) ex);
-    ((void) deleter);
-    auto* exceptionName = const_cast<const std::type_info*>(info)->name();
-    int status;
-    std::unique_ptr<char, void (*)(void*)> realExceptionName(abi::__cxa_demangle(exceptionName, 0, 0, &status), &std::free);
-    if (status == 0) {
-        constexpr auto* zmqErrorType = "zmq::error_t";
-        const auto* exceptionName = const_cast<const char*>(realExceptionName.get());
-        if (strcmp(zmqErrorType, exceptionName) != 0) {
-            auto stacktrace = NES::collectAndPrintStacktrace();
-            NES_ERROR("Exception caught: {} with stacktrace: {}" << exceptionName, stacktrace);
-        }
-    }
-    //Ventura: do not invoke error handlers here, as we let the exception to be intercepted in some catch block
-}
-#endif
-#endif
 struct ErrorHandlerLoader {
   public:
     explicit ErrorHandlerLoader() {
         std::set_terminate(nesTerminateHandler);
         std::set_new_handler(nesTerminateHandler);
-#ifdef __linux__
-#ifdef NES_ENABLE_CXA_THROW_HOOK
-        folly::exception_tracer::registerCxaThrowCallback(nesCxaThrowHook);
-#endif
-#endif
 #ifdef __linux__
         std::set_unexpected(nesUnexpectedException);
 #elif defined(__APPLE__)

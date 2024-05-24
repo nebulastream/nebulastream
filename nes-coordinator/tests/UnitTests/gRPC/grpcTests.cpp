@@ -21,7 +21,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Core.hpp>
@@ -89,9 +89,10 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    QueryId subQueryId = 1;
+    auto subQueryId = DecomposedQueryPlanId(1);
     std::string errormsg = "Query failed.";
-    bool successOfNotifyingQueryFailure = wrk->notifyQueryFailure(queryId, subQueryId, errormsg);
+    bool successOfNotifyingQueryFailure =
+        wrk->notifyQueryFailure(UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId), subQueryId, errormsg);
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
 
@@ -146,7 +147,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     EXPECT_TRUE(retStart1);
     NES_INFO("GrpcNotifyErrorTest: Worker started successfully");
 
-    uint64_t workerId = wrk1->getWorkerId();
+    auto workerId = wrk1->getWorkerId();
     std::string errormsg = "Too much memory allocation";
     bool successOfTransferringErrors = wrk1->notifyErrors(workerId, errormsg);
     EXPECT_TRUE(successOfTransferringErrors);

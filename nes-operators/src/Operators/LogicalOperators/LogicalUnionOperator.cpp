@@ -78,7 +78,7 @@ OperatorPtr LogicalUnionOperator::copy() {
     copy->setOutputSchema(outputSchema);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
+    for (const auto& [key, value] : properties) {
         copy->addProperty(key, value);
     }
     return copy;
@@ -97,7 +97,7 @@ void LogicalUnionOperator::inferStringSignature() {
     NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalUnionOperator: Union should have 2 children.");
     //Infer query signatures for child operators
-    for (auto&& child : children) {
+    for (const auto& child : children) {
         child->as<LogicalOperator>()->inferStringSignature();
     }
     std::stringstream signatureStream;
@@ -115,7 +115,7 @@ void LogicalUnionOperator::inferStringSignature() {
 void LogicalUnionOperator::inferInputOrigins() {
 
     // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> combinedInputOriginIds;
+    std::vector<OriginId> combinedInputOriginIds;
     for (auto child : this->children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();

@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_NETWORKCONGESTIONCOST_HPP
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_NETWORKCONGESTIONCOST_HPP
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Optimizer/QueryPlacementAddition/CostFunction/AbstractQueryPlacementCost.hpp>
 
 namespace NES::Optimizer {
@@ -35,16 +35,16 @@ class NetworkCongestionCost : public AbstractQueryPlacementCost {
      * @param rowIdx the row representing the node to compute
      * @return bytes of event stream produced per second.
      */
-    float getNodeOutputRate(const PlacementMatrix &candidate, uint32_t rowIdx);
+    float getNodeOutputRate(const PlacementMatrix& candidate, uint32_t rowIdx);
 
     /**
      * @brief obtain the average ingestion rate in the last 'period' of second from the Statistic coordinator
      * @param period time in seconds
-     * @param executionNodeId id of the node to query
+     * @param WorkerId id of the node to query
      * @return ingestion rate in tuple/s
      * TODO #4664: implement an actual call from the statistic coordinator
      */
-    float stubGetNodeIngestionRate(uint32_t period, ExecutionNodeId executionNodeId);
+    float stubGetNodeIngestionRate(uint32_t period, WorkerId WorkerId);
 
     /**
      * @brief obtain the selectivity for the given 'pinnedUpStreamOperator'
@@ -56,12 +56,12 @@ class NetworkCongestionCost : public AbstractQueryPlacementCost {
     float stubGetOperatorSelectivity(uint32_t period, OperatorId operatorId);
 
     /**
-     * @brief obtain the output bandwidth of a given 'executionNodeId'
-     * @param executionNodeId the id of the node to query
+     * @brief obtain the output bandwidth of a given 'WorkerId'
+     * @param WorkerId the id of the node to query
      * @return the output bandwidth of the node in bytes/s
      * TODO #4664: implement an actual call from the statistic coordinator
      */
-    float stubGetNodeOutputBandwidth(ExecutionNodeId executionNodeId);
+    float stubGetNodeOutputBandwidth(WorkerId WorkerId);
 
     /**
      * @brief get the actual operatorId from the placement matrix
@@ -71,14 +71,11 @@ class NetworkCongestionCost : public AbstractQueryPlacementCost {
      * @return an actual operatorId
      * // TODO #4664: implement actual method to obtain the operator Id from a given global query plan
      */
-     OperatorId stubGetOperatorIdFromCandidateEntry(const PlacementMatrix &candidate,
-                                                   uint32_t row,
-                                                   uint32_t col);
+    OperatorId stubGetOperatorIdFromCandidateEntry(const PlacementMatrix& candidate, uint32_t row, uint32_t col);
 
-     ExecutionNodeId stubGetExecutionNodeFromCandidateEnetry(const PlacementMatrix &candidate,
-                                                             uint32_t rowIdx);
+    WorkerId stubGetExecutionNodeFromCandidateEnetry(const PlacementMatrix& candidate, uint32_t rowIdx);
 
-     uint32_t samplingInterval;
+    uint32_t samplingInterval;
 };
-} // namespace NES::Optimizer
+}// namespace NES::Optimizer
 #endif//NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_NETWORKCONGESTIONCOST_HPP

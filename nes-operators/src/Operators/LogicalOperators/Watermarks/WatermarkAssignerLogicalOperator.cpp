@@ -53,8 +53,8 @@ OperatorPtr WatermarkAssignerLogicalOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (auto [key, value] : properties) {
-        copy->addProperty(key, value);
+    for (const auto& pair : properties) {
+        copy->addProperty(pair.first, pair.second);
     }
     return copy;
 }
@@ -72,7 +72,7 @@ void WatermarkAssignerLogicalOperator::inferStringSignature() {
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
-    for (auto& child : children) {
+    for (const auto& child : children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }

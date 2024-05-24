@@ -27,7 +27,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
                              uint64_t numberOfBuffersPerWorker,
                              uint32_t queueId)
     : workerId(workerId), queueId(queueId) {
-    //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
+    //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the parameter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     localBufferPoolTLS.reset(localBufferPool.get(), [](auto*, folly::TLPDestructionMode) {
         // nop
@@ -48,8 +48,6 @@ uint32_t WorkerContext::getQueueId() const { return queueId; }
 void WorkerContext::setObjectRefCnt(void* object, uint32_t refCnt) {
     objectRefCounters[reinterpret_cast<uintptr_t>(object)] = refCnt;
 }
-
-uint32_t WorkerContext::increaseObjectRefCnt(void* object) { return objectRefCounters[reinterpret_cast<uintptr_t>(object)]++; }
 
 uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
     auto ptr = reinterpret_cast<uintptr_t>(object);
@@ -242,7 +240,7 @@ void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
     auto& promise = iteratorOperatorId->second.second;
     //signal connection process to stop
     promise.set_value(true);
-    //wait for the future to be set so we can make sure that channel is closed in case it has already been created
+    //wait for the future to be set, so we can make sure that channel is closed in case it has already been created
     auto& future = iteratorOperatorId->second.first;
     auto channel = future.get();
     if (channel) {

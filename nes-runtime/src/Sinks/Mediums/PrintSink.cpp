@@ -23,11 +23,11 @@ namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format,
                      Runtime::NodeEnginePtr nodeEngine,
                      uint32_t numOfProducers,
-                     QueryId queryId,
-                     DecomposedQueryPlanId querySubPlanId,
+                     SharedQueryId sharedQueryId,
+                     DecomposedQueryPlanId decomposedQueryPlanId,
                      std::ostream& pOutputStream,
                      uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins),
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;

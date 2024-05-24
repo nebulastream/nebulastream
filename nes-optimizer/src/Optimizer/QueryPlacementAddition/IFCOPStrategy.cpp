@@ -15,12 +15,12 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/QueryPlacementAddition/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <random>
@@ -320,10 +320,10 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
     }*/
 }
 
-PlacementAdditionResult IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
-                                              const std::set<LogicalOperatorPtr>& /*pinnedUpStreamNodes*/,
-                                              const std::set<LogicalOperatorPtr>& /*pinnedDownStreamNodes*/,
-                                              DecomposedQueryPlanVersion /*querySubPlanVersion*/) {
+PlacementAdditionResult IFCOPStrategy::updateGlobalExecutionPlan(SharedQueryId /*queryId*/,
+                                                                 const std::set<LogicalOperatorPtr>& /*pinnedUpStreamNodes*/,
+                                                                 const std::set<LogicalOperatorPtr>& /*pinnedDownStreamNodes*/,
+                                                                 DecomposedQueryPlanVersion /*querySubPlanVersion*/) {
     NES_NOT_IMPLEMENTED();
 }
 

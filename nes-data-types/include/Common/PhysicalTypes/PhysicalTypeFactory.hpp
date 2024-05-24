@@ -32,13 +32,14 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 class PhysicalTypeFactory {
   public:
     PhysicalTypeFactory() = default;
+    virtual ~PhysicalTypeFactory() = default;
 
     /**
      * @brief Translates a nes data type into a corresponding physical type.
      * @param dataType
      * @return PhysicalTypePtr
      */
-    virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) = 0;
+    virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const = 0;
 };
 
 }// namespace NES

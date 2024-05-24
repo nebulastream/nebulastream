@@ -15,20 +15,20 @@
 #include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 
 namespace NES {
 
@@ -125,7 +125,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         // Two MQTT clients with the same client-id can not communicate with the same broker. Therefore, client-ids should generally be unique.
         // If the user does not pass a client-id explicitly, we utilize the operatorId to generate a client-id that is guaranteed to be unique.
         std::string clientId =
-            (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(operatorId);
+            (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : operatorId.toString();
         return createMQTTSink(schema,
                               pipelineQueryPlan->getQueryId(),
                               pipelineQueryPlan->getQuerySubPlanId(),
@@ -192,7 +192,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    pipelineQueryPlan->getQueryId(),
                                    pipelineQueryPlan->getQuerySubPlanId(),
                                    statisticSinkDescriptor->getNumberOfOrigins(),
-                                   statisticSinkDescriptor->getSinkFormatType());
+                                   statisticSinkDescriptor->getSinkFormatType(),
+                                   statisticSinkDescriptor->getSinkDataCodec());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

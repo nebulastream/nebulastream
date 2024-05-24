@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 namespace NES::Statistic {
 
-AbstractStatisticStorePtr DefaultStatisticStore::create() { return std::make_shared<DefaultStatisticStore>(); }
+StatisticStorePtr DefaultStatisticStore::create() { return std::make_shared<DefaultStatisticStore>(); }
 
 std::vector<StatisticPtr> DefaultStatisticStore::getStatistics(const StatisticHash& statisticHash,
                                                                const Windowing::TimeMeasure& startTs,

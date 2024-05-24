@@ -19,16 +19,15 @@
 
 namespace NES {
 
-MQTTSourceTypePtr MQTTSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
-    return std::make_shared<MQTTSourceType>(
-        MQTTSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+MQTTSourceTypePtr
+MQTTSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<MQTTSourceType>(MQTTSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
 
 MQTTSourceTypePtr MQTTSourceType::create(const std::string& logicalSourceName,
                                          const std::string& physicalSourceName,
                                          std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<MQTTSourceType>(
-        MQTTSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
+    return std::make_shared<MQTTSourceType>(MQTTSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
 MQTTSourceTypePtr MQTTSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {

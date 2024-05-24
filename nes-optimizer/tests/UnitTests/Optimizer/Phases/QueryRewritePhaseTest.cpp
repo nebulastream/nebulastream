@@ -21,8 +21,8 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -94,7 +94,8 @@ TEST_F(QueryRewritePhaseTest, applyRewritePhaseToFilterDominatedQuery) {
     EXPECT_EQ(filters.size(), 1);
 
     auto actualFilter = filters[0];
-    auto expectedPredicate = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84 && Attribute("r") > Attribute("q") && Attribute("m") > Attribute("m") - 4);
+    auto expectedPredicate = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84
+                              && Attribute("r") > Attribute("q") && Attribute("m") > Attribute("m") - 4);
     inputSchema->updateSourceName(sourceName);
     expectedPredicate->inferStamp(inputSchema);
     EXPECT_EQ(actualFilter->getPredicate()->toString(), expectedPredicate->toString());
@@ -144,7 +145,8 @@ TEST_F(QueryRewritePhaseTest, applyRewritePhaseToSameQueryMultipleTime) {
     auto filters = resultPlan->getOperatorByType<LogicalFilterOperator>();
     EXPECT_EQ(filters.size(), 1);
     auto actualFilter = filters[0];
-    auto expectedPredicate = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84 && Attribute("r") > Attribute("q") && Attribute("m") > Attribute("m") - 4);
+    auto expectedPredicate = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84
+                              && Attribute("r") > Attribute("q") && Attribute("m") > Attribute("m") - 4);
     inputSchema->updateSourceName(sourceName);
     expectedPredicate->inferStamp(inputSchema);
     EXPECT_EQ(actualFilter->getPredicate()->toString(), expectedPredicate->toString());

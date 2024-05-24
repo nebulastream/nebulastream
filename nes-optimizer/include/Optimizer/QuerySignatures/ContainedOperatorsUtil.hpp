@@ -39,7 +39,7 @@ class ContainedOperatorsUtil {
      * @return contained window operator and its watermark operator
      */
     static std::vector<LogicalOperatorPtr> createContainedWindowOperator(const LogicalOperatorPtr& containedOperator,
-                                                                             const LogicalOperatorPtr& containerOperator);
+                                                                         const LogicalOperatorPtr& containerOperator);
     /**
      * @brief extracts the contained projection operator, i.e. extracts the most downstream projection operator from the contained upstream operator chain
      * @param containedOperator operator that we identified as contained
@@ -53,7 +53,7 @@ class ContainedOperatorsUtil {
      * @return all filter upstream filter operations from the contained query
      */
     static LogicalOperatorPtr createContainedFilterOperators(const LogicalOperatorPtr& container,
-                                                                 const LogicalOperatorPtr& containee);
+                                                             const LogicalOperatorPtr& containee);
     /**
      * @brief Validate if the map assignment field is used in the filter predicate of the operator
      * @param filterOperator : filter operator whose predicate need to be checked
@@ -84,13 +84,12 @@ class ContainedOperatorsUtil {
      * @return true, if the container chain has only one parent relationship and no map function transforms any of the filter's
      * predicates, false otherwise
      */
-    static bool
-    checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorPtr& containedOperator,
-                                                              const LogicalOperatorPtr& extractedContainedOperator,
-                                                              std::vector<std::string>& mapAttributeNames);
+    static bool checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorPtr& containedOperator,
+                                                                          const LogicalOperatorPtr& extractedContainedOperator,
+                                                                          std::vector<std::string>& mapAttributeNames);
 };
 
 }// namespace Optimizer
 }// namespace NES
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_CONTAINEDOPERATORSUTIL_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_CONTAINEDOPERATORSUTIL_HPP_
