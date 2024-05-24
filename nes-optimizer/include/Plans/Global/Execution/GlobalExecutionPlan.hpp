@@ -188,10 +188,11 @@ class GlobalExecutionPlan {
      *//*
     void mapExecutionNodeToSharedQueryId(const ExecutionNodePtr& executionNode);*/
 
+
     /**
      * Index based on nodeId for faster access to the execution nodes
      */
-    std::unordered_map<ExecutionNodeId, folly::Synchronized<ExecutionNodePtr>> idToExecutionNodeMap;
+    folly::Synchronized<std::unordered_map<ExecutionNodeId, folly::Synchronized<ExecutionNodePtr>>> idToExecutionNodeMap;
 
     /**
      * Index based on shared query Id for faster access to the execution nodes
