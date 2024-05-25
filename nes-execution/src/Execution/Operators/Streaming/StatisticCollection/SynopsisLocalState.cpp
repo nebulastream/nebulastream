@@ -22,10 +22,8 @@ SynopsisLocalState::SynopsisLocalState(const Nautilus::Value<Nautilus::UInt64>& 
     : synopsisStartTs(synopsisStartTs), synopsisEndTs(synopsisEndTs), synopsisReference(synopsisReference) {}
 
 Nautilus::Value<Nautilus::Boolean> SynopsisLocalState::correctSynopsesForTimestamp(const Nautilus::Value<Nautilus::UInt64>& ts) const {
-    if (synopsisStartTs <= ts && ts < synopsisEndTs) {
-        return Nautilus::Value<Nautilus::Boolean>(true);
-    } else {
-        return Nautilus::Value<Nautilus::Boolean>(false);
-    }
+    Nautilus::Value<Nautilus::Boolean> correctSynopses(false);
+    correctSynopses = (synopsisStartTs <= ts && ts < synopsisEndTs);
+    return correctSynopses;
 }
 } // namespace NES::Runtime::Execution::Operators

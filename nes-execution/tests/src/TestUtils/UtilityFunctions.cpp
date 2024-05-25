@@ -116,6 +116,8 @@ void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupl
             sampleStatistic = allReservoirSampleStatistics[0];
         }
         const auto reservoirSample = sampleStatistic->as<Statistic::ReservoirSampleStatistic>();
+        // Incrementing the number of observed tuples
+        reservoirSample->incrementObservedTuples();
         const auto nextIndexInSample = reservoirSample->getNextRandomInteger();
         if (nextIndexInSample < reservoirSample->getSampleSize()) {
             // Writing the data now via the provided memory layout
@@ -123,7 +125,6 @@ void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupl
             const auto reservoirBaseAddress = reservoirSample->getReservoirSpace();
             DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
             for (uint64_t i = 0; i < schema->getSize(); i++) {
-                auto& fieldName = schema->fields[i]->getName();
                 const auto fieldOffset = sampleMemoryLayout->getFieldOffset(nextIndexInSample, i);
                 const auto fieldAddress = reservoirBaseAddress + fieldOffset;
                 auto valueAddress = tuple[i].getAddressPointer();
@@ -133,9 +134,6 @@ void updateTestReservoirSampleStatistic(MemoryLayouts::TestTupleBuffer& testTupl
                 std::memcpy(fieldAddress, valueAddress, physicalType->size());
             }
         }
-
-        // Incrementing the number of observed tuples
-        reservoirSample->incrementObservedTuples();
     }
 
 }

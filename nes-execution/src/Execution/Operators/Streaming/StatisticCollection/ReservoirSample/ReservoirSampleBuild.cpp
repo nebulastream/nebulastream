@@ -30,6 +30,7 @@ namespace NES::Runtime::Execution::Operators {
 uint64_t getNextIndexProxy(void* ptrReservoirSampleStatistic) {
     NES_ASSERT2_FMT(ptrReservoirSampleStatistic != nullptr, "reservoir sample context should not be null!");
     auto* reservoirSample = static_cast<Statistic::ReservoirSampleStatistic*>(ptrReservoirSampleStatistic);
+    reservoirSample->incrementObservedTuples(1); //Incrementing the observed tuples as we have seen one more
     const auto nextIdx = reservoirSample->getNextRandomInteger();
     if (nextIdx < reservoirSample->getSampleSize()) {
         return nextIdx + 1;
@@ -41,13 +42,7 @@ uint64_t getNextIndexProxy(void* ptrReservoirSampleStatistic) {
 void* getReservoirBaseAddressRefProxy(void* ptrReservoirSample) {
     NES_ASSERT2_FMT(ptrReservoirSample != nullptr, "reservoir sample should not be null!");
     auto* sample = static_cast<Statistic::ReservoirSampleStatistic*>(ptrReservoirSample);
-    return sample->getReservoirSpace();
-}
-
-void incrementNumberOfObservedTuplesProxy(void* ptrReservoirSample) {
-    NES_ASSERT2_FMT(ptrReservoirSample != nullptr, "reservoir sample should not be null!");
-    auto* sample = static_cast<Statistic::ReservoirSampleStatistic*>(ptrReservoirSample);
-    sample->incrementObservedTuples();
+    return sample->getStatisticData();
 }
 
 void* getReservoirSampleRefProxy(void* ptrOpHandler, const uint64_t metricHash, const uint64_t statisticId,
@@ -79,28 +74,57 @@ void checkReservoirSampleSendingProxy(void* ptrOpHandler,
     opHandler->checkStatisticsSending(bufferMetaData, statisticHash, pipelineCtx);
 }
 
+void ReservoirSampleBuild::updateLocalState(ExecutionContext& ctx,
+                                            ReservoirSampleLocalState& localState,
+                                            const Value<UInt64>& timestamp) const {
+    // We have to get the slice for the current timestamp
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto workerId = ctx.getWorkerId();
+    auto sliceReference = Nautilus::FunctionCall("getReservoirSampleRefProxy",
+                                                 getReservoirSampleRefProxy,
+                                                 operatorHandlerMemRef,
+                                                 Value<UInt64>(metricHash),
+                                                 ctx.getCurrentStatisticId(),
+                                                 workerId,
+                                                 timestamp);
+    auto reservoirMemRef = Nautilus::FunctionCall("getReservoirBaseAddressRefProxy",
+                                                  getReservoirBaseAddressRefProxy,
+                                                  sliceReference);
 
-void ReservoirSampleBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
-    if (hasChild()) {
-        child->open(executionCtx, recordBuffer);
-    }
+    // We have to get the synopsis start and end timestamp
+    auto startTs = Nautilus::FunctionCall("getSynopsisStartProxy",
+                                          getSynopsisStartProxy,
+                                          operatorHandlerMemRef,
+                                          Value<UInt64>(metricHash),
+                                          ctx.getCurrentStatisticId(),
+                                          workerId,
+                                          timestamp);
+    auto endTs = Nautilus::FunctionCall("getSynopsisEndProxy",
+                                        getSynopsisEndProxy,
+                                        operatorHandlerMemRef,
+                                        Value<UInt64>(metricHash),
+                                        ctx.getCurrentStatisticId(),
+                                        workerId,
+                                        timestamp);
+
+    // Updating the local join state
+    localState.synopsisStartTs = startTs;
+    localState.synopsisEndTs = endTs;
+    localState.synopsisReference = sliceReference;
+    localState.sampleBaseAddress = reservoirMemRef;
 }
 
 void ReservoirSampleBuild::execute(ExecutionContext& ctx, Record& record) const {
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto reservoirSampleLocalState = dynamic_cast<ReservoirSampleLocalState*>(ctx.getLocalState(this));
 
-    // 1. Get the memRef to the Reservoir sample and to the underlying reservoir
-    auto timestampVal = timeFunction->getTs(ctx, record);
-    auto sampleMemRef = Nautilus::FunctionCall("getReservoirSampleRefProxy", getReservoirSampleRefProxy,
-                                               operatorHandlerMemRef, Value<UInt64>(metricHash),
-                                               ctx.getCurrentStatisticId(),
-                                               ctx.getWorkerThreadId(), timestampVal);
-    auto reservoirMemRef = Nautilus::FunctionCall("getReservoirBaseAddressRefProxy", getReservoirBaseAddressRefProxy,
-                                                  sampleMemRef);
+    // 1. Get the memRef to the Reservoir sample and to the underlying reservoir, if not in the local state
+    const auto timestampVal = timeFunction->getTs(ctx, record);
+    if (!reservoirSampleLocalState->correctSynopsesForTimestamp(timestampVal)) {
+        updateLocalState(ctx, *reservoirSampleLocalState, timestampVal);
+    }
 
     // 2. Get the index we should write the next tuple to
-    Value<UInt64> indexInSample = Nautilus::FunctionCall("getNextIndexProxy", getNextIndexProxy, sampleMemRef);
+    Value<UInt64> indexInSample = Nautilus::FunctionCall("getNextIndexProxy", getNextIndexProxy, reservoirSampleLocalState->synopsisReference);
 
     // 3. If the index is 0, we do not write the record to the sample
     if (indexInSample != 0_u64) {
@@ -108,11 +132,23 @@ void ReservoirSampleBuild::execute(ExecutionContext& ctx, Record& record) const 
         // We are using the memory provider, as we do not support variable sized data currently.
         // The memory provider was written as a connection to a tuple buffer. We do not store the data as a tuple buffer
         // and therefore, this only works for fixed data types.
-        reservoirMemoryProvider->write(indexInSample, reservoirMemRef, record);
+        reservoirMemoryProvider->write(indexInSample, reservoirSampleLocalState->sampleBaseAddress, record);
+    }
+}
+
+void ReservoirSampleBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
+    // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
+    if (hasChild()) {
+        child->open(executionCtx, recordBuffer);
     }
 
-    // 4. Incrementing the number of observed tuples
-    Nautilus::FunctionCall("incrementNumberOfObservedTuplesProxy", incrementNumberOfObservedTuplesProxy, sampleMemRef);
+    // Creating a count min local state
+    auto nullPtrRef1 = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
+    auto nullPtrRef2 = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
+    auto localState = std::make_unique<ReservoirSampleLocalState>(nullPtrRef1, nullPtrRef2);
+
+    // Setting the local state
+    executionCtx.setLocalOperatorState(this, std::move(localState));
 }
 
 void ReservoirSampleBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {

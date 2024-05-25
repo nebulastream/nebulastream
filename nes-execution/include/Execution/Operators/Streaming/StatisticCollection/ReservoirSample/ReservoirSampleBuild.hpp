@@ -17,9 +17,11 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Streaming/StatisticCollection/SynopsisLocalState.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Util/Common.hpp>
+#include <Util/StdInt.hpp>
 #include <cstdint>
 
 
@@ -27,6 +29,19 @@ namespace NES::Runtime::Execution::Operators {
 
 class ReservoirSampleBuild : public ExecutableOperator{
   public:
+
+    struct ReservoirSampleLocalState : public SynopsisLocalState {
+        ReservoirSampleLocalState(const Value<UInt64>& synopsisStartTs,
+                                  const Value<UInt64>& synopsisEndTs,
+                                  const Value<MemRef>& synopsisReference,
+                                  const Value<MemRef>& sampleBaseAddress)
+            : SynopsisLocalState(synopsisStartTs, synopsisEndTs, synopsisReference), sampleBaseAddress(sampleBaseAddress) {}
+        ReservoirSampleLocalState(const Value<MemRef>& synopsisReference,
+                                  const Value<MemRef>& sampleBaseAddress)
+            : ReservoirSampleLocalState(0_u64, 0_u64, synopsisReference, sampleBaseAddress) {}
+        Value<MemRef> sampleBaseAddress;
+    };
+
     ReservoirSampleBuild(const uint64_t operatorHandlerIndex,
                          const Statistic::StatisticMetricHash metricHash,
                          TimeFunctionPtr timeFunction,
@@ -36,6 +51,7 @@ class ReservoirSampleBuild : public ExecutableOperator{
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void updateLocalState(ExecutionContext& ctx, ReservoirSampleLocalState& localState, const Value<UInt64>& timestamp) const;
 
   private:
     const uint64_t operatorHandlerIndex;

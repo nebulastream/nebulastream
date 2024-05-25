@@ -42,7 +42,8 @@ StatisticPtr ReservoirSampleStatistic::createInit(const Windowing::TimeMeasure& 
                                                   const Windowing::TimeMeasure& endTs,
                                                   const uint64_t sampleSize,
                                                   const SchemaPtr schema) {
-    std::vector<int8_t> reservoirSpace(sampleSize * schema->getSchemaSizeInBytes(), 0);
+    const auto dataSize = sampleSize * schema->getSchemaSizeInBytes();
+    std::vector<int8_t> reservoirSpace(dataSize, 0);
     constexpr auto observedTuples = 0;
     return std::make_shared<ReservoirSampleStatistic>(ReservoirSampleStatistic(startTs, endTs, observedTuples, sampleSize, reservoirSpace, schema));
 }

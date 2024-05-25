@@ -87,7 +87,7 @@ class ReservoirSampleStatistic : public SynopsesStatistic {
 
     uint64_t sampleSize;
     std::vector<int8_t> reservoirSpace;
-    std::mt19937_64 gen;
+    std::mt19937 gen;
     const uint64_t tupleSize;
     const SchemaPtr schema;
 };

@@ -83,7 +83,7 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
         if (keepOnlyRequiredField) {
-            outputSchema->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64);
+            outputSchema->addField(fieldToBuildReservoirSampleOver, BasicType::INT64);
         } else {
             outputSchema->copyFields(inputSchema);
         }
@@ -96,7 +96,7 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
         triggerCondition = Statistic::NeverTrigger::create();
 
         // Creating the sampleMemoryLayout
-        const auto sampleSchema = keepOnlyRequiredField ? Schema::create()->addField(fieldToBuildReservoirSampleOver, BasicType::UINT64) : Statistic::StatisticUtil::createSampleSchema(inputSchema);
+        const auto sampleSchema = keepOnlyRequiredField ? Schema::create()->addField(fieldToBuildReservoirSampleOver, BasicType::INT64) : Statistic::StatisticUtil::createSampleSchema(inputSchema);
         sampleMemoryLayout = NES::Util::createMemoryLayout(sampleSchema, sampleSize * sampleSchema->getSchemaSizeInBytes());
     }
 
@@ -313,7 +313,7 @@ TEST_P(ReservoirSampleBuildExecutionTest, multipleInputBuffersIngestionTime) {
 
 INSTANTIATE_TEST_CASE_P(testReservoirSample,
                         ReservoirSampleBuildExecutionTest,
-                        ::testing::Combine(::testing::Values(1),     // numWorkerThread, we can only test with one thread, as the merging + building of local samples is not deterministic
+                        ::testing::Combine(::testing::Values(1),           // numWorkerThread, we can only test with one thread, as the merging + building of local samples is not deterministic
                                            ::testing::Values(1, 100, 5000),// sampleSize
                                            ::testing::ValuesIn(            // All possible statistic data codecs
                                                magic_enum::enum_values<Statistic::StatisticDataCodec>()),
