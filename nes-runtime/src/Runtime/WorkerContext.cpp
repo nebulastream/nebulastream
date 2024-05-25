@@ -372,7 +372,7 @@ bool WorkerContext::doesEventChannelExist(OperatorId operatorId) { return revers
 
 void WorkerContext::increaseReconnectCount(OperatorId operatorId) {
     if (reconnectCounts.contains(operatorId)) {
-        reconnectCounts[operatorId]++;
+        reconnectCounts[operatorId] = reconnectCounts[operatorId] + 1;
     } else {
         reconnectCounts[operatorId] = 0;
     }

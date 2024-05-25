@@ -85,12 +85,18 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     auto changeCount = nodeEngine->getParenChangeCount();
-    if (static_cast<int64_t>(receiver) != parent || workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId()) != changeCount) {
-            // NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
-        if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
-            NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", nodeEngine->getNodeId(), receiver, parent)
-        }
-//        NES_ERROR("write bufferedc data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
+    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    if (static_cast<int64_t>(receiver) != parent || actualReconnectCount != changeCount) {
+        NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+                  "actual reconnects: {}",
+                  receiver,
+                  parent,
+                  changeCount,
+                  actualReconnectCount);
+        // if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
+        //     NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", nodeEngine->getNodeId(), receiver, parent)
+        // }
+        //        NES_ERROR("write bufferedc data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         return false;
     }
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
@@ -138,12 +144,21 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
     auto changeCount = nodeEngine->getParenChangeCount();
-    if (static_cast<int64_t>(receiver) != parent || workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId()) != changeCount) {
-        // NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
-        if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
-            NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", nodeEngine->getNodeId(), receiver, parent)
-        }
-//        NES_ERROR("write data: parent mismatch, store buffer in reconnect storage. Receiver: {}, parent: {}", receiver, parent)
+    auto actualReconnectCount = workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId());
+    if (static_cast<int64_t>(receiver) != parent || actualReconnectCount != changeCount) {
+        NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}, parentChanges: {}, "
+                  "actual reconnects: {}",
+                  receiver,
+                  parent,
+                  changeCount,
+                  actualReconnectCount);
+        // if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
+        //     NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}",
+        //               nodeEngine->getNodeId(),
+        //               receiver,
+        //               parent)
+        // }
+        //        NES_ERROR("write data: parent mismatch, store buffer in reconnect storage. Receiver: {}, parent: {}", receiver, parent)
         workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
         return true;
     }
@@ -180,7 +195,10 @@ void NetworkSink::shutdown() {
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
-    NES_ERROR("NetworkSink: reconfigure() called {} qep {} on node {}", nesPartition.toString(), decomposedQueryPlanId, nodeEngine->getNodeId());
+    NES_ERROR("NetworkSink: reconfigure() called {} qep {} on node {}",
+              nesPartition.toString(),
+              decomposedQueryPlanId,
+              nodeEngine->getNodeId());
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
@@ -202,7 +220,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                                               reconf,
                                                                                               queryManager,
                                                                                               version);
-                auto pair = std::make_pair(std::make_pair(std::move(networkChannelFuture.first), receiverLocation.getNodeId()), std::move(networkChannelFuture.second));
+                auto pair = std::make_pair(std::make_pair(std::move(networkChannelFuture.first), receiverLocation.getNodeId()),
+                                           std::move(networkChannelFuture.second));
                 //workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
                 workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(pair));
                 workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr, 0);
@@ -214,7 +233,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                             waitTime,
                                                                             retryTimes);
                 NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
-                workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel), receiverLocation.getNodeId());
+                workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+                                                  std::move(channel),
+                                                  receiverLocation.getNodeId());
                 NES_DEBUG("NetworkSink: reconfigure() stored channel on {} Thread {} ref cnt {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId(),
@@ -303,7 +324,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                     NES_DEBUG("NetworkSink: reconfigure() established connection for operator {} Thread {}",
                               nesPartition.toString(),
                               Runtime::NesThread::getId());
-                    workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel.first), channel.second);
+                    workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+                                                      std::move(channel.first),
+                                                      channel.second);
                 } else {
                     // NES_ASSERT(false,
                     //            "Could not connect to channel with partition "
@@ -424,7 +447,8 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                                                                   reconf,
                                                                                   queryManager,
                                                                                   newVersion);
-    auto pair = std::make_pair(std::make_pair(std::move(networkChannelFuture.first), newNodeLocation.getNodeId()), std::move(networkChannelFuture.second));
+    auto pair = std::make_pair(std::make_pair(std::move(networkChannelFuture.first), newNodeLocation.getNodeId()),
+                               std::move(networkChannelFuture.second));
     //todo: #4282 use QueryTerminationType::Redeployment
     // workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(pair));
@@ -440,7 +464,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
     // auto topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
-     auto topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
+    auto topBuffer = workerContext.peekBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
 
     NES_INFO("sending buffered data");
     auto numBuffers = 0;
@@ -529,9 +553,8 @@ WorkerId NetworkSink::getReceiverId() { return receiverLocation.getNodeId(); }
 bool NetworkSink::checkParentDiff(int64_t receiver, int64_t parent) {
     // NES_ERROR("checking parent diff")
     // NES_ERROR("receiver {}, parent{}", receiver, parent)
-    auto res =  (parent == receiver - 1) || (receiver == 2 && parent == 11);
+    auto res = (parent == receiver - 1) || (receiver == 2 && parent == 11);
     // NES_ERROR("receiver {}, parent{}, result {}", receiver, parent, res);
     return res;
 }
 }// namespace NES::Network
-
