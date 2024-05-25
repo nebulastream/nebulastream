@@ -257,8 +257,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
         }
 
+        auto mockParent = -1;
         if (requestHandlerService->isIncrementalPlacementEnabled()) {
-            return;
+            mockParent = 0;
         }
 
         if (!sourceNodeMapInitialized) {
@@ -293,7 +294,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             auto grpcPort = node->operator*()->getGrpcPort();
             //construct the adress
             std::string address = ipAddress + ":" + std::to_string(grpcPort);
-            workerRPCClient->startBufferingAsync(address, completionQueue, -1);
+            workerRPCClient->startBufferingAsync(address, completionQueue, mockParent);
         }
     }
 

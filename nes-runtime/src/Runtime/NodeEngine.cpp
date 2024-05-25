@@ -851,7 +851,7 @@ const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { r
 
 int64_t NodeEngine::getParentId() {
     std::unique_lock lock(parentMutex);
-    if (connected && parentChangeCount == receiverChangeCount) {
+    if (connected) {
         // NES_ERROR("returning id {} on node {} because node is connected", parentId, nodeId);
         return parentId;
     }
@@ -863,6 +863,9 @@ void NodeEngine::setParentId(int64_t newParent) {
     NES_ERROR("updating parent id {} to id {} on node {}", parentId, newParent, nodeId);
     std::unique_lock lock(parentMutex);
     ++parentChangeCount;
+    if (newParent == 0) {
+        return;
+    }
     if (newParent == -1) {
         connected = false;
     } else {
@@ -883,6 +886,7 @@ void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
         connected = true;
         // NES_ERROR("reactivated {}", parentId);
     } else {
+        ++parentChangeCount;
         // NES_ERROR("did not reactivate {}", parentId);
     }
 }
