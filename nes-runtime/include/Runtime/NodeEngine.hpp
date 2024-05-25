@@ -408,6 +408,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::mutex parentMutex;
     uint64_t parentId;
     bool connected = true;
+    uint64_t receiverChangeCount = 0;
+    uint64_t parentChangeCount = 0;
+
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
