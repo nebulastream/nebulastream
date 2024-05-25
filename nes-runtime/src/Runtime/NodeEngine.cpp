@@ -886,7 +886,7 @@ void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
         connected = true;
         // NES_ERROR("reactivated {}", parentId);
     } else {
-        ++parentChangeCount;
+        // ++parentChangeCount;
         // NES_ERROR("did not reactivate {}", parentId);
     }
 }
