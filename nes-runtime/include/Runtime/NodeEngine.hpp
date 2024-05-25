@@ -317,6 +317,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void setParentId(int64_t newParent);
     void setParentIdIfInvalid(WorkerId newParent);
     void initializeParentId(WorkerId newParent);
+    uint64_t getParenChangeCount();
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
     /**
@@ -408,7 +409,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::mutex parentMutex;
     uint64_t parentId;
     bool connected = true;
-    uint64_t receiverChangeCount = 0;
+    // uint64_t receiverChangeCount = 0;
     uint64_t parentChangeCount = 0;
 
 };

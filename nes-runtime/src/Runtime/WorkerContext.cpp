@@ -369,4 +369,21 @@ void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId, uint64_t 
 bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return dataChannels.contains(operatorId); }
 
 bool WorkerContext::doesEventChannelExist(OperatorId operatorId) { return reverseEventChannels.contains(operatorId); }
+
+void WorkerContext::increaseReconnectCount(OperatorId operatorId) {
+    if (reconnectCounts.contains(operatorId)) {
+        reconnectCounts[operatorId]++;
+    } else {
+        reconnectCounts[operatorId] = 0;
+    }
+}
+
+uint64_t WorkerContext::getReconnectCount(OperatorId operatorId) {
+    if (reconnectCounts.contains(operatorId)) {
+        return reconnectCounts[operatorId];
+    }
+    return 0;
+}
+
+
 }// namespace NES::Runtime

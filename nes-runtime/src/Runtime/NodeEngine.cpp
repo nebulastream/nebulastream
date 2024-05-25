@@ -874,7 +874,7 @@ void NodeEngine::setParentId(int64_t newParent) {
 void NodeEngine::setParentIdIfInvalid(WorkerId newParent) {
     //lock
     std::unique_lock lock(parentMutex);
-    ++receiverChangeCount;
+    // ++receiverChangeCount;
     // NES_ERROR("trying to reactive  parent id {} with id {} on node {}", parentId, newParent, nodeId);
     if (parentId != newParent) {
         // NES_ERROR("parents do not match new: {}, expected: {}", newParent, parentId)
@@ -893,6 +893,10 @@ void NodeEngine::initializeParentId(WorkerId newParent) {
     if (parentId == 0) {
         parentId = newParent;
     }
+}
+
+uint64_t NodeEngine::getParenChangeCount() {
+    return parentChangeCount;
 }
 
 }// namespace NES::Runtime

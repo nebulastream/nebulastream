@@ -84,7 +84,8 @@ bool NetworkSink::writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::
 
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
-    if (static_cast<int64_t>(receiver) != parent) {
+    auto changeCount = nodeEngine->getParenChangeCount();
+    if (static_cast<int64_t>(receiver) != parent || workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId()) != changeCount) {
             // NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
             NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", nodeEngine->getNodeId(), receiver, parent)
@@ -136,7 +137,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     unbuffer(workerContext);
     // auto receiver = static_cast<int64_t>(receiverLocation.getNodeId());
     auto parent = nodeEngine->getParentId();
-    if (static_cast<int64_t>(receiver) != parent) {
+    auto changeCount = nodeEngine->getParenChangeCount();
+    if (static_cast<int64_t>(receiver) != parent || workerContext.getReconnectCount(getUniqueNetworkSinkDescriptorId()) != changeCount) {
         // NES_DEBUG("write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", receiver, parent)
         if (!checkParentDiff(static_cast<int64_t>(receiver), parent)) {
             NES_ERROR("Node {}: write buffered data: parent mismatch, do not unbuffer data. Receiver: {}, parent: {}", nodeEngine->getNodeId(), receiver, parent)
@@ -486,7 +488,7 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                       std::move(newNetworkChannelFutureOptional.value().first),
                                       newNetworkChannelFutureOptional.value().second);
-
+    workerContext.increaseReconnectCount(getUniqueNetworkSinkDescriptorId());
     nodeEngine->setParentIdIfInvalid(newNetworkChannelFutureOptional.value().second);
     NES_INFO("stop buffering data for context {}", workerContext.getId());
     unbuffer(workerContext);
