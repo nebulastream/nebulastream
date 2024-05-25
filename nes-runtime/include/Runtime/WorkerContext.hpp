@@ -69,7 +69,6 @@ class WorkerContext {
     std::unordered_map<OperatorId, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>>
         reverseEventChannelFutures;
     std::unordered_map<WorkerId, uint64_t> reconnectCounts;
- ;
     /// worker local buffer pool stored in tls
     static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
     /// worker local buffer pool stored :: use this for fast access
