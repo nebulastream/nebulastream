@@ -13,13 +13,14 @@
 */
 
 #include <Execution/Operators/Streaming/StatisticCollection/SynopsisLocalState.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 SynopsisLocalState::SynopsisLocalState(const Nautilus::Value<Nautilus::UInt64>& synopsisStartTs,
                                        const Nautilus::Value<Nautilus::UInt64>& synopsisEndTs,
                                        const Nautilus::Value<Nautilus::MemRef>& synopsisReference)
-    : synopsisStartTs(synopsisStartTs), synopsisEndTs(synopsisEndTs), synopsisReference(synopsisReference) {}
+    : synopsisStartTs(synopsisStartTs), synopsisEndTs(synopsisEndTs), synopsisReference(synopsisReference), currentIncrement(0_u64) {}
 
 Nautilus::Value<Nautilus::Boolean> SynopsisLocalState::correctSynopsesForTimestamp(const Nautilus::Value<Nautilus::UInt64>& ts) const {
     Nautilus::Value<Nautilus::Boolean> correctSynopses(false);

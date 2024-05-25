@@ -32,11 +32,13 @@ void* getCountMinRefProxy(void* ptrOpHandler,
     auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
 
     const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
-    auto statistic = opHandler->getStatistic(workerThreadId, statisticHash, timestamp);
+    return opHandler->getStatistic(workerThreadId, statisticHash, timestamp).get();
+}
 
-    //Incrementing the observed tuples as we have seen one more, before returning the statistic
-    statistic->incrementObservedTuples(1);
-    return statistic->getStatisticData();
+void* getCountersRefProxy(void* ptrCountMin) {
+    NES_ASSERT2_FMT(ptrCountMin != nullptr, "opHandler context should not be null!");
+    auto* countMin = static_cast<Statistic::CountMinStatistic*>(ptrCountMin);
+    return countMin->getStatisticData();
 }
 
 void* getH3SeedsProxy(void* ptrOpHandler) {
@@ -68,7 +70,15 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
 }
 
 void CountMinBuild::updateLocalState(ExecutionContext& ctx, CountMinLocalState& localState, const Value<UInt64>& timestamp) const {
-    // We have to get the slice for the current timestamp
+    // Check, if we have to increment the old synopsis reference with the currentIncrement of the local state
+    if (localState.currentIncrement > 0_u64) {
+        Nautilus::FunctionCall("incrementObservedTuplesStatisticProxy",
+                               incrementObservedTuplesStatisticProxy,
+                               localState.synopsisReference,
+                               localState.currentIncrement);
+    }
+
+    // We have to get the slice and the memRef for the counters for the current timestamp
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto workerId = ctx.getWorkerId();
     auto sliceReference = Nautilus::FunctionCall("getCountMinRefProxy",
@@ -78,6 +88,10 @@ void CountMinBuild::updateLocalState(ExecutionContext& ctx, CountMinLocalState& 
                                                  ctx.getCurrentStatisticId(),
                                                  workerId,
                                                  timestamp);
+
+    auto countersReference = Nautilus::FunctionCall("getCountersRefProxy",
+                                                    getCountersRefProxy,
+                                                    sliceReference);
 
     // We have to get the synopsis start and end timestamp
     auto startTs = Nautilus::FunctionCall("getSynopsisStartProxy",
@@ -99,6 +113,8 @@ void CountMinBuild::updateLocalState(ExecutionContext& ctx, CountMinLocalState& 
     localState.synopsisStartTs = startTs;
     localState.synopsisEndTs = endTs;
     localState.synopsisReference = sliceReference;
+    localState.countersMemRef = countersReference;
+    localState.currentIncrement = 0_u64;
 }
 
 void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
@@ -126,11 +142,14 @@ void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
         // 2.3. Calculating the memory address of the counter we want to increment
         using namespace Statistic;
         Value<UInt64> counterOffset = (((col) + (row * width)) * (uint64_t)sizeof(CountMinStatistic::COUNTER_DATA_TYPE)).as<UInt64>();
-        Value<MemRef> counterMemRef = (countMinLocalState->synopsisReference + counterOffset).as<MemRef>();
+        Value<MemRef> counterMemRef = (countMinLocalState->countersMemRef + counterOffset).as<MemRef>();
 
         // 2.4. Incrementing the counter by one
         counterMemRef.store(counterMemRef.load<UInt64>() + 1_u64);
     }
+
+    // 3. Incrementing the current increment of the local state so that we reduce the number of function calls
+    countMinLocalState->currentIncrement = countMinLocalState->currentIncrement + 1_u64;
 }
 
 void CountMinBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
@@ -142,7 +161,8 @@ void CountMinBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
     // Creating a count min local state
     auto nullPtrRef1 = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
     auto nullPtrRef2 = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
-    auto localState = std::make_unique<CountMinLocalState>(nullPtrRef1, nullPtrRef2);
+    auto nullPtrRef3 = Nautilus::FunctionCall("getNullPtrMemRefProxy", getNullPtrMemRefProxy);
+    auto localState = std::make_unique<CountMinLocalState>(nullPtrRef1, nullPtrRef2, nullPtrRef3);
 
     // Adding the h3SeedsMemRef to the local state
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -154,6 +174,15 @@ void CountMinBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
 }
 
 void CountMinBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    auto countMinLocalState = dynamic_cast<CountMinLocalState*>(ctx.getLocalState(this));
+    // Check, if we have to increment the old synopsis reference with the currentIncrement of the local state
+    if (countMinLocalState->currentIncrement > 0_u64) {
+        Nautilus::FunctionCall("incrementObservedTuplesStatisticProxy",
+                               incrementObservedTuplesStatisticProxy,
+                               countMinLocalState->synopsisReference,
+                               countMinLocalState->currentIncrement);
+    }
+
     // Update the watermark for the count min build operator and send the created statistics upward
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("checkCountMinSketchesSendingProxy",

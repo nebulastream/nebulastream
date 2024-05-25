@@ -24,6 +24,12 @@
 namespace NES::Runtime::Execution::Operators {
 
 
+void incrementObservedTuplesStatisticProxy(void* ptrSynopsis, uint64_t increment) {
+    NES_ASSERT2_FMT(ptrSynopsis != nullptr, "synopsis should not be null!");
+    auto* synopsis = static_cast<Statistic::Statistic*>(ptrSynopsis);
+    synopsis->incrementObservedTuples(increment);
+}
+
 uint64_t getSynopsisStartProxy(void* ptrOpHandler,
                                Statistic::StatisticMetricHash metricHash,
                                StatisticId statisticId,

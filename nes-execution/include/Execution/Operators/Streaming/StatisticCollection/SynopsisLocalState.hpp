@@ -32,6 +32,7 @@ struct SynopsisLocalState : public Operators::OperatorState {
     Nautilus::Value<Nautilus::UInt64> synopsisStartTs;
     Nautilus::Value<Nautilus::UInt64> synopsisEndTs;
     Nautilus::Value<Nautilus::MemRef> synopsisReference;
+    Nautilus::Value<Nautilus::UInt64> currentIncrement;
 };
 } // namespace NES::Runtime::Execution::Operators
 

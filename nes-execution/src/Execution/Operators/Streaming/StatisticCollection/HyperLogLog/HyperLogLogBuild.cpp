@@ -78,6 +78,14 @@ void HyperLogLogBuild::open(ExecutionContext& executionCtx, RecordBuffer& record
 void HyperLogLogBuild::updateLocalState(ExecutionContext& ctx,
                                         SynopsisLocalState& localState,
                                         const Value<UInt64>& timestamp) const {
+    if (localState.currentIncrement > 0_u64) {
+        Nautilus::FunctionCall("incrementObservedTuplesStatisticProxy",
+                               incrementObservedTuplesStatisticProxy,
+                               localState.synopsisReference,
+                               localState.currentIncrement);
+    }
+
+
     // We have to get the slice for the current timestamp
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto workerId = ctx.getWorkerId();
@@ -109,6 +117,7 @@ void HyperLogLogBuild::updateLocalState(ExecutionContext& ctx,
     localState.synopsisStartTs = startTs;
     localState.synopsisEndTs = endTs;
     localState.synopsisReference = sliceReference;
+    localState.currentIncrement = 0_u64;
 }
 
 void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const {
@@ -123,9 +132,21 @@ void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const {
     // 2. Updating the hyperloglog sketch for this record
     Value<UInt64> hash = murmurHash->calculate(record.read(fieldToTrackFieldName));
     Nautilus::FunctionCall("updateHLLProxy", updateHLLProxy, localState->synopsisReference, hash);
+
+    // 3. Incrementing the current increment of the local state so that we reduce the number of function calls
+    localState->currentIncrement = localState->currentIncrement + 1_u64;
 }
 
 void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    auto localState = dynamic_cast<SynopsisLocalState*>(ctx.getLocalState(this));
+    // Check, if we have to increment the old synopsis reference with the currentIncrement of the local state
+    if (localState->currentIncrement > 0_u64) {
+        Nautilus::FunctionCall("incrementObservedTuplesStatisticProxy",
+                               incrementObservedTuplesStatisticProxy,
+                               localState->synopsisReference,
+                               localState->currentIncrement);
+    }
+
     // Update the watermark for the HyperLogLog build operator and send the created statistics upward
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("checkHLLSketchesSendingProxy",

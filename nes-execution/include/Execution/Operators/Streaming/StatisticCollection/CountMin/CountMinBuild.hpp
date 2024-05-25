@@ -36,11 +36,14 @@ class CountMinBuild : public ExecutableOperator {
         CountMinLocalState(const Value<UInt64>& synopsisStartTs,
                            const Value<UInt64>& synopsisEndTs,
                            const Value<MemRef>& synopsisReference,
-                           const Value<MemRef>& h3SeedsMemRef)
-            : SynopsisLocalState(synopsisStartTs, synopsisEndTs, synopsisReference), h3SeedsMemRef(h3SeedsMemRef) {}
+                           const Value<MemRef>& h3SeedsMemRef,
+                           const Value<MemRef>& countersMemRef)
+            : SynopsisLocalState(synopsisStartTs, synopsisEndTs, synopsisReference), h3SeedsMemRef(h3SeedsMemRef), countersMemRef(countersMemRef) {}
         CountMinLocalState(const Value<MemRef>& synopsisMemRef,
-                           const Value<MemRef>& h3SeedsMemRef) : SynopsisLocalState(0_u64, 0_u64, synopsisMemRef), h3SeedsMemRef(h3SeedsMemRef) {}
+                           const Value<MemRef>& h3SeedsMemRef,
+                           const Value<MemRef>& countersMemRef) : SynopsisLocalState(0_u64, 0_u64, synopsisMemRef), h3SeedsMemRef(h3SeedsMemRef), countersMemRef(countersMemRef) {}
         Value<MemRef> h3SeedsMemRef;
+        Value<MemRef> countersMemRef;
     };
 
     CountMinBuild(const uint64_t operatorHandlerIndex,
