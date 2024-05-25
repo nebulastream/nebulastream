@@ -259,7 +259,8 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
         auto mockParent = -1;
         if (requestHandlerService->isIncrementalPlacementEnabled()) {
-            mockParent = 0;
+            // mockParent = 0;
+            return;
         }
 
         if (!sourceNodeMapInitialized) {
