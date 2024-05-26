@@ -17,4 +17,6 @@ add_source_files(nes-execution
         LocalHashTable.cpp
         MergingHashTable.cpp
         StreamJoinHashTable.cpp
+        StreamJoinHashTableVarSized.cpp
+        MergingHashTableVarSized.cpp
 )

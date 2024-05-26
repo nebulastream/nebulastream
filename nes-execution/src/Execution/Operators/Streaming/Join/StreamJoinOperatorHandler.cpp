@@ -13,11 +13,21 @@
 */
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, uint32_t) { NES_INFO("Started StreamJoinOperatorHandler!"); }
-void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-    NES_INFO("Stopped StreamJoinOperatorHandler!");
+void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, uint32_t) {
+    NES_INFO("Started StreamJoinOperatorHandler!");
+    setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+    setBufferManager(pipelineCtx->getBufferManager());
+}
+
+void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineCtx) {
+    NES_INFO("Stopped StreamJoinOperatorHandler with {}!", magic_enum::enum_name(queryTerminationType));
+    if (queryTerminationType == QueryTerminationType::Graceful) {
+        triggerAllSlices(pipelineCtx.get());
+    }
 }
 
 std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(uint64_t sliceIdentifier) {

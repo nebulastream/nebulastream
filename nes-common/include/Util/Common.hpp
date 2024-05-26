@@ -33,6 +33,7 @@ static constexpr auto NUMBER_OF_BITS_IN_HASH_VALUE = 64;
 namespace NES::QueryCompilation {
 enum class StreamJoinStrategy : uint8_t {
     HASH_JOIN_LOCAL,
+    HASH_JOIN_VAR_SIZED,
     HASH_JOIN_GLOBAL_LOCKING,
     HASH_JOIN_GLOBAL_LOCK_FREE,
     NESTED_LOOP_JOIN
