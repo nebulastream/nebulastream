@@ -17,7 +17,8 @@
 
 namespace NES::Runtime::Execution {
 
-Operators::StreamJoinHashTableVarSized* HJSliceVarSized::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerId) const {
+Operators::StreamJoinHashTableVarSized* HJSliceVarSized::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
+                                                                      uint64_t workerId) const {
     if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
         workerId = workerId % hashTableLeftSide.size();
         return hashTableLeftSide.at(workerId).get();
@@ -48,15 +49,13 @@ void HJSliceVarSized::mergeLocalToGlobalHashTable() {
 
     for (const auto& workerHashTableLeft : hashTableLeftSide) {
         for (auto bucketPos = 0_u64; bucketPos < workerHashTableLeft->getNumBuckets(); ++bucketPos) {
-            mergingHashTableLeftSide.insertBucket(
-                bucketPos, workerHashTableLeft->getBucketPagedVector(bucketPos));
+            mergingHashTableLeftSide.insertBucket(bucketPos, workerHashTableLeft->getBucketPagedVector(bucketPos));
         }
     }
 
     for (const auto& workerHashTableRight : hashTableRightSide) {
         for (auto bucketPos = 0_u64; bucketPos < workerHashTableRight->getNumBuckets(); ++bucketPos) {
-            mergingHashTableRightSide.insertBucket(
-                bucketPos, workerHashTableRight->getBucketPagedVector(bucketPos));
+            mergingHashTableRightSide.insertBucket(bucketPos, workerHashTableRight->getBucketPagedVector(bucketPos));
         }
     }
 }
@@ -74,11 +73,11 @@ HJSliceVarSized::HJSliceVarSized(size_t numberOfWorker,
 
     for (auto i = 0UL; i < numberOfWorker; ++i) {
         hashTableLeftSide.emplace_back(
-            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions,bufferManager,pageSize,leftSchema));
+            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, pageSize, leftSchema));
     }
     for (auto i = 0UL; i < numberOfWorker; ++i) {
         hashTableRightSide.emplace_back(
-            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions,bufferManager,pageSize,rightSchema));
+            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, pageSize, rightSchema));
     }
 
     NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} ",
