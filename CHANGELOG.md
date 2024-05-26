@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.134](https://github.com/nebulastream/nebulastream/tree/v0.6.134) (2024-05-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.133...v0.6.134)
+
+**Implemented enhancements:**
+
+- \[TASK\] HashJoin Variable Sized Data [\#4647](https://github.com/nebulastream/nebulastream/issues/4647)
+
 ## [v0.6.133](https://github.com/nebulastream/nebulastream/tree/v0.6.133) (2024-05-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.132...v0.6.133)
