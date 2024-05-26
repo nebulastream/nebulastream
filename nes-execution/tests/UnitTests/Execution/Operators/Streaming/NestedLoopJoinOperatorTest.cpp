@@ -121,6 +121,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                                           leftPageSize,
                                                                           rightPageSize);
         bm = std::make_shared<BufferManager>(8196, 5000);
+        nljOperatorHandler->setBufferManager(bm);
     }
 
     /**

@@ -58,10 +58,12 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
     ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,                                                    \
                       QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,                                            \
                       QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,                                          \
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL)
+                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,                                                     \
+                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED)
 
 /**
- * @brief This define states all window strategies that will be tested in all join-specific tests
+ * @brief This define states all window strategies that will be tested in all join-specific tests. Note that BUCKETING
+ * is not supported for HASH_JOIN_VAR_SIZED
  */
 #define ALL_WINDOW_STRATEGIES                                                                                                    \
     ::testing::Values(QueryCompilation::WindowingStrategy::SLICING, QueryCompilation::WindowingStrategy::BUCKETING)

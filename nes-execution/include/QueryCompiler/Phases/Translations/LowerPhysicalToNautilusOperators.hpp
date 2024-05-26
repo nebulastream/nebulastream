@@ -184,6 +184,18 @@ class LowerPhysicalToNautilusOperators {
                    Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
     /**
+     * @brief Lowers a hash join slicing build operator for variable sized data
+     * @param hashJoinBuildOperator
+     * @param operatorHandlerIndex
+     * @param timeFunction
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerHJSlicingVarSized(const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& hashJoinBuildOperator,
+                           uint64_t operatorHandlerIndex,
+                           Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
+
+    /**
      * @brief Lowers a hash join bucketing build operator
      * @param hashJoinBuildOperator
      * @param operatorHandlerIndex
