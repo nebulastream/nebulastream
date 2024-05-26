@@ -20,12 +20,13 @@
 #include <mutex>
 #include <ostream>
 #include <vector>
+#include <Runtime/Execution/StreamSliceInterface.hpp>
 
 namespace NES::Runtime::Execution {
 /**
  * @brief This class represents a single slice for a join. It stores all values for the left and right stream.
  */
-class StreamSlice {
+class StreamSlice: public StreamSliceInterface {
   public:
     /**
      * @brief Constructor for creating a slice
@@ -52,13 +53,13 @@ class StreamSlice {
      * @brief Getter for the start ts of the slice
      * @return uint64_t
      */
-    [[nodiscard]] uint64_t getSliceStart() const;
+    [[nodiscard]] uint64_t getSliceStart() const override;
 
     /**
      * @brief Getter for the end ts of the slice
      * @return uint64_t
      */
-    [[nodiscard]] uint64_t getSliceEnd() const;
+    [[nodiscard]] uint64_t getSliceEnd() const override;
 
     /**
      * @brief Returns the number of tuples in this slice for the left side
