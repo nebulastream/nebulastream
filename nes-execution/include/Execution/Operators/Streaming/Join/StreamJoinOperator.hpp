@@ -51,6 +51,10 @@ class StreamJoinOperator {
         auto joinStrategy = magic_enum::enum_value<QueryCompilation::StreamJoinStrategy>(joinStrategyInt);
         auto windowingStrategy = magic_enum::enum_value<QueryCompilation::WindowingStrategy>(windowingStrategyInt);
         switch (joinStrategy) {
+            case QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
+                if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+                    NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
+                }
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL: {

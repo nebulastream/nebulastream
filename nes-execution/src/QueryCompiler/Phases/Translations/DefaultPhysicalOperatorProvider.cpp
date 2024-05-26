@@ -363,6 +363,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
     StreamJoinOperatorHandlerPtr joinOperatorHandler;
     switch (joinStrategy) {
         case StreamJoinStrategy::HASH_JOIN_LOCAL:
+        case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
         case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
         case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
             joinOperatorHandler = lowerStreamingHashJoin(streamJoinOperators, streamJoinConfig);

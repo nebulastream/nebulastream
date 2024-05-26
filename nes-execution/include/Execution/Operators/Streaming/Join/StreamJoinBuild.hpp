@@ -62,14 +62,6 @@ class StreamJoinBuild : public StreamJoinOperator, public ExecutableOperator {
      */
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-    /**
-     * @brief Triggers all slices that have been seen by both sides of the join
-     * @param executionCtx
-     */
-    void terminate(ExecutionContext& executionCtx) const override;
-
-    void setup(ExecutionContext& executionCtx) const override;
-
   protected:
     const uint64_t operatorHandlerIndex;
     const SchemaPtr schema;

@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_nes_execution_test(execution-stream-hash-join-operator-test "HashJoinOperatorTest.cpp")
+add_nes_execution_test(execution-stream-hash-join-operator-var-sized-test "HashJoinOperatorVarSizedTest.cpp")
 add_nes_execution_test(execution-stream-nested-loop-join-operator-test "NestedLoopJoinOperatorTest.cpp")
 
 add_subdirectory(Aggregations)

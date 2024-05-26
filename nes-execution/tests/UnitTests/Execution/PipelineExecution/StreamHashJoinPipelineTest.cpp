@@ -223,6 +223,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                                                                           hashJoinOpHandler,
                                                                           PipelineId(curPipelineId++));
 
+        hashJoinOpHandler->start(std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft), 0);
+
         auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
         auto executablePipelineRight = provider->create(pipelineBuildRight, options);
         auto executablePipelineSink = provider->create(pipelineProbe, options);
@@ -240,6 +242,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         }
         hashJoinWorks = hashJoinWorks && (executablePipelineLeft->stop(pipelineExecCtxLeft) == 0);
         hashJoinWorks = hashJoinWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
+        hashJoinOpHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft));
+        hashJoinOpHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
         // Assure that at least one buffer has been emitted
         hashJoinWorks =
