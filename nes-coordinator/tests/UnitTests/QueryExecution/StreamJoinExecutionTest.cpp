@@ -217,7 +217,7 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
 
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-            && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
         GTEST_SKIP();
     }
 

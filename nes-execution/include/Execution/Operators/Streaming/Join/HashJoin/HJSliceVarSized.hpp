@@ -15,8 +15,8 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICEVARSIZED_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICEVARSIZED_HPP_
 
-#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTableVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/MergingHashTableVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTableVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Util/Common.hpp>
 
@@ -29,7 +29,7 @@ namespace NES::Runtime::Execution {
 class HJSliceVarSized : public StreamSlice {
 
   public:
-     /**
+    /**
       * @brief Constructor for a StreamJoinWindowVarSized
       * @param numberOfWorker
       * @param sliceStart
@@ -104,7 +104,6 @@ class HJSliceVarSized : public StreamSlice {
     Operators::MergingHashTableVarSized mergingHashTableRightSide;
     bool alreadyMergedLocalToGlobalHashTable;
     std::mutex mutexMergeLocalToGlobalHashTable;
-
 };
 }// namespace NES::Runtime::Execution
 

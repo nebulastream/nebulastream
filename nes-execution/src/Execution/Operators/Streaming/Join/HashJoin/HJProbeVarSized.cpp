@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -90,40 +90,41 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
 
     const auto windowStart =
         FunctionCall("getHJWindowStartVarSizedProxy", getHJWindowStartVarSizedProxy, joinPartitionIdSliceIdMemRef);
-    const auto windowEnd =
-        FunctionCall("getHJWindowEndVarSizedProxy", getHJWindowEndVarSizedProxy, joinPartitionIdSliceIdMemRef);
+    const auto windowEnd = FunctionCall("getHJWindowEndVarSizedProxy", getHJWindowEndVarSizedProxy, joinPartitionIdSliceIdMemRef);
     const auto partitionId =
         FunctionCall("getPartitionIdVarSizedProxy", getPartitionIdVarSizedProxy, joinPartitionIdSliceIdMemRef);
 
     const auto sliceIdLeft = FunctionCall("getHJSliceIdVarSizedProxy",
-                                                      getHJSliceIdVarSizedProxy,
-                                                      joinPartitionIdSliceIdMemRef,
-                                                      Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+                                          getHJSliceIdVarSizedProxy,
+                                          joinPartitionIdSliceIdMemRef,
+                                          Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
     const auto sliceIdRight = FunctionCall("getHJSliceIdVarSizedProxy",
-                                                       getHJSliceIdVarSizedProxy,
-                                                       joinPartitionIdSliceIdMemRef,
-                                                       Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+                                           getHJSliceIdVarSizedProxy,
+                                           joinPartitionIdSliceIdMemRef,
+                                           Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
     const Value<UInt64> workerIdForPagedVectors(0_u64);
 
-    const auto hashSliceRefLeft =
-        FunctionCall("getHashSliceRefFromIdVarSizedProxy", getHashSliceRefFromIdVarSizedProxy, operatorHandlerMemRef, sliceIdLeft);
-    const auto hashSliceRefRight =
-        FunctionCall("getHashSliceRefFromIdVarSizedProxy", getHashSliceRefFromIdVarSizedProxy, operatorHandlerMemRef, sliceIdRight);
+    const auto hashSliceRefLeft = FunctionCall("getHashSliceRefFromIdVarSizedProxy",
+                                               getHashSliceRefFromIdVarSizedProxy,
+                                               operatorHandlerMemRef,
+                                               sliceIdLeft);
+    const auto hashSliceRefRight = FunctionCall("getHashSliceRefFromIdVarSizedProxy",
+                                                getHashSliceRefFromIdVarSizedProxy,
+                                                operatorHandlerMemRef,
+                                                sliceIdRight);
 
-    const auto leftPagedVectorRef =
-        FunctionCall("getHJBucketAtPosVarSizedProxy",
-                     getHJBucketAtPosVarSizedProxy,
-                     hashSliceRefLeft,
-                     Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
-                     partitionId);
-    const auto rightPagedVectorRef =
-        FunctionCall("getHJBucketAtPosVarSizedProxy",
-                     getHJBucketAtPosVarSizedProxy,
-                     hashSliceRefRight,
-                     Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
-                     partitionId);
+    const auto leftPagedVectorRef = FunctionCall("getHJBucketAtPosVarSizedProxy",
+                                                 getHJBucketAtPosVarSizedProxy,
+                                                 hashSliceRefLeft,
+                                                 Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                                 partitionId);
+    const auto rightPagedVectorRef = FunctionCall("getHJBucketAtPosVarSizedProxy",
+                                                  getHJBucketAtPosVarSizedProxy,
+                                                  hashSliceRefRight,
+                                                  Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                  partitionId);
 
     Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
     Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
@@ -165,6 +166,6 @@ HJProbeVarSized::HJProbeVarSized(const uint64_t operatorHandlerIndex,
                       joinStrategy,
                       windowingStrategy,
                       withDeletion),
-    leftSchema(leftSchema), rightSchema(rightSchema) {}
+      leftSchema(leftSchema), rightSchema(rightSchema) {}
 
 }// namespace NES::Runtime::Execution::Operators

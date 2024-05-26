@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief Stores the reference to the pagedVector, slice start, slice end, and the slice reference
  */
 class LocalHashJoinState : public OperatorState {
-public:
+  public:
     LocalHashJoinState(Value<MemRef>& operatorHandler, Value<MemRef>& pagedVectorVarSizedRef, Value<MemRef>& sliceReference)
         : joinOperatorHandler(operatorHandler), pagedVectorVarSizedRef(pagedVectorVarSizedRef), sliceReference(sliceReference),
           sliceStart(0_u64), sliceEnd(0_u64){};
@@ -107,11 +107,11 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
 
     // Write record to the pagedVector
     auto hjPagedVectorMemRef = FunctionCall("getHJPagedVectorVarSizedProxy",
-                                                          getHJPagedVectorVarSizedProxy,
-                                                          joinState->sliceReference,
-                                                          ctx.getWorkerId(),
-                                                          Value<UInt64>(to_underlying(joinBuildSide)),
-                                                          record.read(joinFieldName).as<UInt64>());
+                                            getHJPagedVectorVarSizedProxy,
+                                            joinState->sliceReference,
+                                            ctx.getWorkerId(),
+                                            Value<UInt64>(to_underlying(joinBuildSide)),
+                                            record.read(joinFieldName).as<UInt64>());
 
     Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
     pagedVectorVarSizedRef.writeRecord(record);

@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class StreamJoinHashTableVarSized {
   public:
-     /**
+    /**
       * @brief Constructor for a StreamJoinHashTableVarSized
       * @param numPartitions
       * @param bufferManager
