@@ -1,3 +1,4 @@
+*/nes-data-parser/include/generation/third_party/*
 */nes-common/include/Util/Backward/*
 */nes-common/include/Util/libcuckoo/*
 */nes-coordinator/include/Util/jitify/*

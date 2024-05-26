@@ -648,6 +648,7 @@ add_subdirectory(nes-window-types)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
 
+add_subdirectory(nes-data-parser)
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)

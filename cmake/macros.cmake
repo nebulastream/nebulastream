@@ -65,6 +65,7 @@ endmacro()
 
 macro(project_enable_clang_format)
     string(CONCAT FORMAT_DIRS
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-parser,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-catalogs,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-client,"

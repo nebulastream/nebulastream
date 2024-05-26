@@ -10,6 +10,9 @@ macro(project_enable_fixguards)
 
     # converts to `#pragma once` and then back to include guard, so that guarding variable is derived from file path
     add_custom_target(fix-guards
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-data-parser/include/
+        COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif // %\\n' nes-data-parser/include/
+
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.guard2once -r nes-benchmark/include/
         COMMAND PYTHONPATH=${guardonce_SOURCE_DIR} python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-benchmark/include/
 
