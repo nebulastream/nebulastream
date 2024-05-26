@@ -15,4 +15,5 @@ add_subdirectory(ThresholdWindow)
 add_subdirectory(Streaming)
 
 add_nes_execution_test(execution-scan-operator-test "ScanOperatorTest.cpp")
+add_nes_execution_test(execution-scan-raw-operator-test "ScanRawOperatorTest.cpp")
 add_nes_execution_test(execution-emit-operator-test "EmitOperatorTest.cpp")
