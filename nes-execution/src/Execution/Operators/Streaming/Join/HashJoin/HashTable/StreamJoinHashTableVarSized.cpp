@@ -23,8 +23,7 @@ StreamJoinHashTableVarSized::StreamJoinHashTableVarSized(size_t numPartitions,
     : mask(numPartitions - 1) {
 
     for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, schema, pageSize));
+        buckets.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, schema, pageSize));
     }
 }
 

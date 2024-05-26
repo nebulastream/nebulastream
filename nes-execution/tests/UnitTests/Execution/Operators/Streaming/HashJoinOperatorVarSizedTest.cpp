@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
-#include <BaseIntegrationTest.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -91,21 +91,21 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
     auto hashJoinOpHandler = std::dynamic_pointer_cast<Operators::HJOperatorHandlerSlicing>(
         Operators::HJOperatorHandlerSlicing::create(std::vector({OriginId(1)}),
-                                                      outputOriginId,
-                                                      buildHelper.windowSize,
-                                                      buildHelper.windowSize,
-                                                      buildHelper.schema,
-                                                      buildHelper.schema,
-                                                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
-                                                      buildHelper.joinSizeInByte,
-                                                      buildHelper.preAllocPageCnt,
-                                                      buildHelper.pageSize,
-                                                      buildHelper.numPartitions));
+                                                    outputOriginId,
+                                                    buildHelper.windowSize,
+                                                    buildHelper.windowSize,
+                                                    buildHelper.schema,
+                                                    buildHelper.schema,
+                                                    QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
+                                                    buildHelper.joinSizeInByte,
+                                                    buildHelper.preAllocPageCnt,
+                                                    buildHelper.pageSize,
+                                                    buildHelper.numPartitions));
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        INVALID_PIPELINE_ID,// mock pipeline id
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
+        INVALID_PIPELINE_ID,             // mock pipeline id
+        INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
         buildHelper.bufferManager,
         buildHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef) {
@@ -124,8 +124,8 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     // Execute record and thus fill the hash table
     for (auto i = 0UL; i < buildHelper.numberOfTuplesToProduce + 1; ++i) {
         auto record = Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
-                                     {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 1)},
-                                     {buildHelper.schema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+                              {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 1)},
+                              {buildHelper.schema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
 
         if (i == 0) {
             auto tupleBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
@@ -225,7 +225,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        INVALID_PIPELINE_ID,// mock pipeline id
+        INVALID_PIPELINE_ID,     // mock pipeline id
         DecomposedQueryPlanId(1),// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
@@ -274,17 +274,16 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                              joinSchema.joinSchema->get(1)->getName(),
                                              joinSchema.joinSchema->get(2)->getName());
 
-    auto hashJoinProbe =
-        std::make_shared<Operators::HJProbeVarSized>(handlerIndex,
-                                                     joinSchema,
-                                                     hashJoinProbeHelper.joinFieldNameLeft,
-                                                     hashJoinProbeHelper.joinFieldNameRight,
-                                                     windowMetaData,
-                                                     hashJoinProbeHelper.leftSchema,
-                                                     hashJoinProbeHelper.rightSchema,
-                                                     QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
-                                                     QueryCompilation::WindowingStrategy::SLICING,
-                                                     /*withDeletion*/ false);
+    auto hashJoinProbe = std::make_shared<Operators::HJProbeVarSized>(handlerIndex,
+                                                                      joinSchema,
+                                                                      hashJoinProbeHelper.joinFieldNameLeft,
+                                                                      hashJoinProbeHelper.joinFieldNameRight,
+                                                                      windowMetaData,
+                                                                      hashJoinProbeHelper.leftSchema,
+                                                                      hashJoinProbeHelper.rightSchema,
+                                                                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
+                                                                      QueryCompilation::WindowingStrategy::SLICING,
+                                                                      /*withDeletion*/ false);
     auto collector = std::make_shared<Operators::CollectOperator>();
     hashJoinProbe->setChild(collector);
     hashJoinBuildLeft->setup(executionContext);
@@ -298,15 +297,13 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     //create buffers
     for (auto i = 0UL; i < hashJoinProbeHelper.numberOfTuplesToProduce + 1; ++i) {
-        auto recordLeft =
-            Record({{hashJoinProbeHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
-                              {hashJoinProbeHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
-                              {hashJoinProbeHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+        auto recordLeft = Record({{hashJoinProbeHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
+                                  {hashJoinProbeHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
+                                  {hashJoinProbeHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
         NES_DEBUG("Tuple left id={} key={} ts={}", i, (i % 10) + 10, i);
-        auto recordRight =
-            Record({{hashJoinProbeHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
-                              {hashJoinProbeHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
-                              {hashJoinProbeHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+        auto recordRight = Record({{hashJoinProbeHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
+                                   {hashJoinProbeHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
+                                   {hashJoinProbeHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
         NES_DEBUG("Tuple right f1_left={} kef2_left(key)={} ts={}", i + 1000, (i % 10) + 10, i);
 
         if (recordRight.read(hashJoinProbeHelper.timeStampFieldRight) > lastTupleTimeStampWindow) {
@@ -513,9 +510,9 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTest) {
     installGlobalErrorListener(runner);
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                        ->addField("f1_left", BasicType::UINT64)
-                                        ->addField("f2_left", BasicType::UINT64)
-                                        ->addField("left$timestamp", BasicType::UINT64);
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
 
     const auto joinFieldNameLeft = "f2_left";
     const auto timeStampField = "left$timestamp";
@@ -541,9 +538,9 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTest) {
 
 TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestRight) {
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                         ->addField("f1_right", BasicType::UINT64)
-                                         ->addField("f2_right", BasicType::UINT64)
-                                         ->addField("left$timestamp", BasicType::UINT64);
+                                 ->addField("f1_right", BasicType::UINT64)
+                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("left$timestamp", BasicType::UINT64);
 
     const auto joinFieldNameRight = "f2_right";
     const auto timeStampField = "left$timestamp";
@@ -569,9 +566,9 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestRight) {
 
 TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultiplePagesPerBucket) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                        ->addField("f1_left", BasicType::UINT64)
-                                        ->addField("f2_left", BasicType::UINT64)
-                                        ->addField("left$timestamp", BasicType::UINT64);
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
 
     const auto joinFieldNameLeft = "f2_left";
     const auto timeStampField = "left$timestamp";
@@ -600,9 +597,9 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultiplePagesPerBucket) {
 
 TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultipleWindows) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                        ->addField("f1_left", BasicType::UINT64)
-                                        ->addField("f2_left", BasicType::UINT64)
-                                        ->addField("left$timestamp", BasicType::UINT64);
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
 
     const auto joinFieldNameLeft = "f2_left";
     const auto timeStampField = "left$timestamp";
@@ -631,14 +628,14 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultipleWindows) {
 
 TEST_F(HashJoinOperatorVarSizedTest, joinProbeTest) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                        ->addField("left$f1_left", BasicType::UINT64)
-                                        ->addField("left$f2_left", BasicType::UINT64)
-                                        ->addField("left$timestamp", BasicType::UINT64);
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                         ->addField("right$f1_right", BasicType::UINT64)
-                                         ->addField("right$f2_right", BasicType::UINT64)
-                                         ->addField("right$timestamp", BasicType::UINT64);
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
+                                 ->addField("right$timestamp", BasicType::UINT64);
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
@@ -660,14 +657,14 @@ TEST_F(HashJoinOperatorVarSizedTest, joinProbeTest) {
 
 TEST_F(HashJoinOperatorVarSizedTest, joinProbeTestMultipleBuckets) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                        ->addField("left$f1_left", BasicType::UINT64)
-                                        ->addField("left$f2_left", BasicType::UINT64)
-                                        ->addField("left$timestamp", BasicType::UINT64);
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                         ->addField("right$f1_right", BasicType::UINT64)
-                                         ->addField("right$f2_right", BasicType::UINT64)
-                                         ->addField("right$timestamp", BasicType::UINT64);
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
+                                 ->addField("right$timestamp", BasicType::UINT64);
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
@@ -687,14 +684,14 @@ TEST_F(HashJoinOperatorVarSizedTest, joinProbeTestMultipleBuckets) {
 TEST_F(HashJoinOperatorVarSizedTest, joinProbeTestMultipleWindows) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                        ->addField("left$f1_left", BasicType::UINT64)
-                                        ->addField("left$f2_left", BasicType::UINT64)
-                                        ->addField("left$timestamp", BasicType::UINT64);
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                         ->addField("right$f1_right", BasicType::UINT64)
-                                         ->addField("right$f2_right", BasicType::UINT64)
-                                         ->addField("right$timestamp", BasicType::UINT64);
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
+                                 ->addField("right$timestamp", BasicType::UINT64);
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 

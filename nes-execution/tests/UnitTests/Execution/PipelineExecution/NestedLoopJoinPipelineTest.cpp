@@ -235,7 +235,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         nljWorks = nljWorks && (executablePipelineLeft->stop(pipelineExecCtxLeft) == 0);
         nljWorks = nljWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
         nljOperatorHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft));
-        nljOperatorHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
+        nljOperatorHandler->stop(QueryTerminationType::Graceful,
+                                 std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
         // Assure that at least one buffer has been emitted
         nljWorks = nljWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());

@@ -93,8 +93,7 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
         const uint64_t capacityPerPage = pageSize / entrySize;
         const uint64_t expectedNumberOfEntries = allRecords.size();
         const uint64_t numberOfPages = std::ceil((double) expectedNumberOfEntries / capacityPerPage);
-        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(
-            Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema);
+        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema);
 
         for (auto& record : allRecords) {
             pagedVectorVarSizedRef.writeRecord(record);
@@ -111,8 +110,7 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
     }
 
     void runRetrieveTest(PagedVectorVarSized& pagedVector, const SchemaPtr& schema, const std::vector<Record>& allRecords) {
-        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(
-            Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema);
+        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema);
         ASSERT_EQ(pagedVector.getNumberOfEntries(), allRecords.size());
 
         auto itemPos = 0_u64;
