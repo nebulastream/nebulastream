@@ -13,8 +13,8 @@
 add_nes_unit_test(schema-buffer-test "SchemaBufferTest.cpp" "RuntimeSchemaAdapterTest.cpp")
 target_link_libraries(schema-buffer-test nes-data-parser nes-data-parser-benchmark simdjson scn::scn)
 
-add_nes_unit_test(parser-factory-test "ParserFactoryTest.cpp")
-target_link_libraries(parser-factory-test nes-data-parser)
+add_nes_unit_test(parser-factory-test "ParserFactoryTest.cpp" "ParserTest.cpp")
+target_link_libraries(parser-factory-test nes-data-parser simdjson scn::scn)
 
 add_nes_unit_test(simdjson-test "JSONTest.cpp")
 target_link_libraries(simdjson-test nes-data-parser nes-data-parser-benchmark simdjson)
