@@ -111,6 +111,7 @@ TEST_F(SinkTest, testCSVFileSink) {
         }
     }
     buffer.setNumberOfTuples(4);
+    csvSink->setup();
     write_result = csvSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
