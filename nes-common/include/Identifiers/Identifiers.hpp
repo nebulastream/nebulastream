@@ -16,6 +16,7 @@
 #define NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
 
 #include <Identifiers/NESStrongType.hpp>
+#include <cstddef>
 #include <cstdint>
 
 #define UNSURE_CONVERSION_TODO_4761(from, to) (to(from.getRawValue()))
@@ -32,6 +33,7 @@ using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
 using SharedQueryId = NESStrongType<uint64_t, struct SharedQueryId_, 0, 1>;
 using DecomposedQueryPlanId = NESStrongType<uint64_t, struct DecomposedQueryPlanId_, 0, 1>;
 using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>;// a unique identifier of the worker node or topology node
+using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
 
 // Unique identifier across the system so that we can track statistic over the item, for more information take a look at the StatisticKey class
@@ -66,6 +68,10 @@ static constexpr DecomposedQueryPlanVersion INVALID_DECOMPOSED_QUERY_PLAN_VERSIO
 static constexpr RequestId INVALID_REQUEST_ID = INVALID<RequestId>;
 static constexpr ChunkNumber INVALID_CHUNK_NUMBER = 0;
 static constexpr SequenceNumber INVALID_SEQ_NUMBER = 0;
+
+/// Special overloads for commonly occuring patterns
+// overload modulo operator for WorkerThreadId as it is commonly use to index into buckets
+inline size_t operator%(const WorkerThreadId id, const size_t containerSize) { return id.getRawValue() % containerSize; }
 
 }// namespace NES
 

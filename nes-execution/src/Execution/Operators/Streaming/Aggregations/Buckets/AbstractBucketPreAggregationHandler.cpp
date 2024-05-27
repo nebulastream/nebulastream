@@ -29,8 +29,8 @@ AbstractBucketPreAggregationHandler<SliceType, SliceStore>::AbstractBucketPreAgg
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)){};
 
 template<class SliceType, typename SliceStore>
-SliceStore* AbstractBucketPreAggregationHandler<SliceType, SliceStore>::getThreadLocalBucketStore(uint64_t workerId) {
-    auto index = workerId % threadLocalBuckets.size();
+SliceStore* AbstractBucketPreAggregationHandler<SliceType, SliceStore>::getThreadLocalBucketStore(WorkerThreadId workerThreadId) {
+    auto index = workerThreadId % threadLocalBuckets.size();
     return threadLocalBuckets[index].get();
 }
 template<class SliceType, typename SliceStore>

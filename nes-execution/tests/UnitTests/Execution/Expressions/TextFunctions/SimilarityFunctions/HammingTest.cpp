@@ -35,7 +35,7 @@ class HammingTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
+        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
         NES_DEBUG("Setup HammingTestTest test case.")
     }
     /* Will be called after all tests in this class are finished. */

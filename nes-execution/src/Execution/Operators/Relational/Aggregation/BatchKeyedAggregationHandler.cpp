@@ -23,8 +23,8 @@ namespace NES::Runtime::Execution::Operators {
 
 BatchKeyedAggregationHandler::BatchKeyedAggregationHandler() {}
 
-Nautilus::Interface::ChainedHashMap* BatchKeyedAggregationHandler::getThreadLocalStore(uint64_t workerId) {
-    auto index = workerId % threadLocalSliceStores.size();
+Nautilus::Interface::ChainedHashMap* BatchKeyedAggregationHandler::getThreadLocalStore(WorkerThreadId workerThreadId) {
+    auto index = workerThreadId % threadLocalSliceStores.size();
     return threadLocalSliceStores[index].get();
 }
 

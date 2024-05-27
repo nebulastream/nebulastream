@@ -50,7 +50,7 @@ class NonKeyedSlicePreAggregationTest : public testing::Test {
     void SetUp() override {
         std::cout << "Setup NonKeyedSlicePreAggregationTest test case." << std::endl;
         bufferManager = std::make_shared<BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called before a test is executed. */

@@ -104,7 +104,7 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeYOLOV8) {
 
     auto buffer_manager = std::make_shared<BufferManager>();
     // needed for Text Allocation
-    auto worker_context = std::make_shared<WorkerContext>(0, buffer_manager, 10);
+    auto worker_context = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buffer_manager, 10);
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) worker_context.get()), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -155,7 +155,7 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeBase64Encoding) {
 
     auto buffer_manager = std::make_shared<BufferManager>();
     // needed for Text Allocation
-    auto worker_context = std::make_shared<WorkerContext>(0, buffer_manager, 10);
+    auto worker_context = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buffer_manager, 10);
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) worker_context.get()), Value<MemRef>((int8_t*) &pipelineContext));
 

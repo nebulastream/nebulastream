@@ -66,7 +66,7 @@ class BenchmarkRunner {
         provider = ExecutablePipelineProviderRegistry::getPlugin(compiler).get();
         table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
         options.setOptimize(true);
         options.setDumpToFile(false);

@@ -88,7 +88,7 @@ struct HashJoinBuildHelper {
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     OriginId outputOriginId = OriginId(1);
     auto workerContext =
-        std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
+        std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
     auto hashJoinOpHandler = std::dynamic_pointer_cast<Operators::HJOperatorHandlerSlicing>(
         Operators::HJOperatorHandlerSlicing::create(std::vector({OriginId(1)}),
                                                     outputOriginId,
@@ -205,7 +205,7 @@ uint64_t calculateExpNoTuplesInWindow(uint64_t totalTuples, uint64_t windowIdent
 }
 
 bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
-    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
+    auto workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>,
                                                          hashJoinProbeHelper.bufferManager,
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
     auto inputOriginIds = std::vector({OriginId(1), OriginId(2)});

@@ -54,12 +54,13 @@ void AbstractSynopsesOperatorHandler::stop(QueryTerminationType terminationType,
     }
 }
 
-Statistic::StatisticPtr
-AbstractSynopsesOperatorHandler::getStatistic(uint64_t workerId, Statistic::StatisticHash statisticHash, uint64_t timestamp) {
+Statistic::StatisticPtr AbstractSynopsesOperatorHandler::getStatistic(WorkerThreadId workerThreadId,
+                                                                      Statistic::StatisticHash statisticHash,
+                                                                      uint64_t timestamp) {
     auto sliceStart = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(timestamp));
     auto sliceEnd = Windowing::TimeMeasure(sliceAssigner.getSliceEndTs(timestamp));
-    // We have to do this modulo, as the workerIds might not always start at 0
-    auto workerSpecificStatisticStore = operatorStatisticStores[workerId % operatorStatisticStores.size()];
+    // We have to do this modulo, as the workerThreadIds might not always start at 0
+    auto workerSpecificStatisticStore = operatorStatisticStores[workerThreadId % operatorStatisticStores.size()];
 
     auto statistics = workerSpecificStatisticStore->getStatistics(statisticHash, sliceStart, sliceEnd);
     if (statistics.empty()) {

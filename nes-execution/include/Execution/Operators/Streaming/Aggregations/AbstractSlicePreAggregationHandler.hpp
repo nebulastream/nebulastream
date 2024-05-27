@@ -48,10 +48,10 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
 
     /**
      * @brief Returns a thread local slice store for a specific worker
-     * @param workerId
+     * @param workerThreadId
      * @return SliceStore*
      */
-    SliceStore* getThreadLocalSliceStore(uint64_t workerId);
+    SliceStore* getThreadLocalSliceStore(WorkerThreadId workerThreadId);
 
     /**
      * @brief This method triggers the thread local state and appends all slices,

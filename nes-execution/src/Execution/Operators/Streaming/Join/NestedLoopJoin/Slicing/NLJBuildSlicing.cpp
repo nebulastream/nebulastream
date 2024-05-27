@@ -59,7 +59,7 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
 
     if (!(localJoinState->sliceStart <= timestampVal && timestampVal < localJoinState->sliceEnd)) {
         // We have to get the slice for the current timestamp
-        auto workerId = ctx.getWorkerId();
+        auto workerThreadId = ctx.getWorkerThreadId();
         updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal);
     }
 
@@ -67,7 +67,7 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                        getNLJPagedVectorProxy,
                                                        localJoinState->sliceReference,
-                                                       ctx.getWorkerId(),
+                                                       ctx.getWorkerThreadId(),
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
     Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
     pagedVectorVarSizedRef.writeRecord(record);
@@ -89,12 +89,12 @@ void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinSt
 void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    auto workerId = ctx.getWorkerId();
+    auto workerThreadId = ctx.getWorkerThreadId();
     auto sliceReference = Nautilus::FunctionCall("getCurrentWindowProxy", getCurrentWindowProxy, opHandlerMemRef);
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                        getNLJPagedVectorProxy,
                                                        sliceReference,
-                                                       workerId,
+                                                       workerThreadId,
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
     auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, sliceReference, pagedVectorVarSizedRef);

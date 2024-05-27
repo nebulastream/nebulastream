@@ -25,13 +25,13 @@ namespace NES::Runtime::Execution::Operators {
 void* getCountMinRefProxy(void* ptrOpHandler,
                           Statistic::StatisticMetricHash metricHash,
                           StatisticId statisticId,
-                          uint64_t workerId,
+                          WorkerThreadId workerThreadId,
                           uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
 
     const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
-    return opHandler->getStatistic(workerId, statisticHash, timestamp).get();
+    return opHandler->getStatistic(workerThreadId, statisticHash, timestamp).get();
 }
 
 void* getH3SeedsProxy(void* ptrOpHandler) {
@@ -78,7 +78,7 @@ void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                  operatorHandlerMemRef,
                                                  Value<UInt64>(metricHash),
                                                  ctx.getCurrentStatisticId(),
-                                                 ctx.getWorkerId(),
+                                                 ctx.getWorkerThreadId(),
                                                  timestampVal);
 
     // 2. Updating the count min sketch for this record

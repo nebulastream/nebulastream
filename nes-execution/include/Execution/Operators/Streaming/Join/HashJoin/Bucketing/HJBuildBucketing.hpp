@@ -52,7 +52,7 @@ class HJBuildBucketing : public StreamJoinBuildBucketing {
 
     void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
                                Value<UInt64>& curIndex,
-                               Value<UInt64>& workerId,
+                               ValueId<WorkerThreadId>& workerThreadId,
                                Record& record) const override;
 };
 }// namespace NES::Runtime::Execution::Operators

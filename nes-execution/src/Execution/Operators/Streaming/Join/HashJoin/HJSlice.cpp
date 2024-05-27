@@ -17,23 +17,23 @@
 
 namespace NES::Runtime::Execution {
 
-Operators::StreamJoinHashTable* HJSlice::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerId) {
+Operators::StreamJoinHashTable* HJSlice::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
+                                                      WorkerThreadId workerThreadId) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
-        workerId = 0;
+        // Both strategies use a single bucket
+        workerThreadId = INITIAL<WorkerThreadId>;
     }
 
     if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
-        workerId = workerId % hashTableLeftSide.size();
-        return hashTableLeftSide.at(workerId).get();
+        return hashTableLeftSide.at(workerThreadId % hashTableLeftSide.size()).get();
     } else {
-        workerId = workerId % hashTableRightSide.size();
-        return hashTableRightSide.at(workerId).get();
+        return hashTableRightSide.at(workerThreadId % hashTableRightSide.size()).get();
     }
 }
 
-uint64_t HJSlice::getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx) {
-    return getHashTable(joinBuildSide, workerIdx)->getNumberOfTuples();
+uint64_t HJSlice::getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId) {
+    return getHashTable(joinBuildSide, workerThreadId)->getNumberOfTuples();
 }
 
 Operators::MergingHashTable& HJSlice::getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide) {

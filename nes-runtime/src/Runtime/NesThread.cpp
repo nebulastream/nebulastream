@@ -17,7 +17,7 @@
 namespace NES::Runtime {
 
 /// The first thread will have index 0.
-std::atomic<uint32_t> NesThread::next_index{0};
+std::atomic<WorkerThreadId::Underlying> NesThread::next_index{INITIAL<WorkerThreadId>.getRawValue()};
 
 /// No thread IDs have been used yet.
 std::atomic<bool> NesThread::id_used[MaxNumThreads] = {};

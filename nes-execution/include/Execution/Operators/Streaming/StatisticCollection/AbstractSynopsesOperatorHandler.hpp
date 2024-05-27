@@ -44,12 +44,12 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
     /**
      * @brief Returns the statistic for the statisticHash and the timestamp. If no statistic exists, we create one by
      * calling @see createInitStatistic
-     * @param workerId
+     * @param workerThreadId
      * @param statisticHash
      * @param timestamp
      * @return StatisticPtr
      */
-    Statistic::StatisticPtr getStatistic(uint64_t workerId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
+    Statistic::StatisticPtr getStatistic(WorkerThreadId workerThreadId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
 
     /**
      * @brief Checks if we can/have to send/emit sketches to the sink

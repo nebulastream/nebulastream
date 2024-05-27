@@ -16,7 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACEBUCKETING_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
-
+#include <Identifiers/Identifiers.hpp>
 #include <cstdint>
 #include <vector>
 
@@ -27,10 +27,10 @@ class JoinOperatorHandlerInterfaceBucketing {
      * @brief Gets the pointer to all windows (represented by StreamSlices) that should be filled for the given timestamp.
      * If any windows does not exist for the timestamp, it will be created
      * @param ts
-     * @param workerId
+     * @param workerThreadId
      * @return Vector of pointer to StreamSlices
      */
-    virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) = 0;
+    virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId) = 0;
 };
 }// namespace NES::Runtime::Execution::Operators
 
