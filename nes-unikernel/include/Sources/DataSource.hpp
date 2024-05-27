@@ -266,7 +266,7 @@ class DataSource {
                 maxSequenceNumber++;
                 buffer.setSequenceNumber(maxSequenceNumber);
             }
-            NES_DEBUG("DataSource produced buffer {} type= {} tuples= {} "
+            NES_TRACE("DataSource produced buffer {} type= {} tuples= {} "
                       "orgID={}",
                       Config::OperatorId,
                       magic_enum::enum_name(Config::SourceType::SourceType),

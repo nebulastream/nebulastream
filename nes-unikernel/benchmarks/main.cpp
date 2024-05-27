@@ -18,13 +18,18 @@
 #include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <UnikernelExecutionPlan.hpp>
 
 #include "TestSource.hpp"
 
+#include <PerfCounter.hpp>
+
 NES::Runtime::BufferManagerPtr TheBufferManager = nullptr;
 NES::Runtime::WorkerContextPtr TheWorkerContext = nullptr;
+
+PerfCounter PerfCounterInstance{};
 
 #define NEXMARK_BID_GENERATOR
 #ifdef NEXMARK_BID_GENERATOR
@@ -83,7 +88,7 @@ void fillBuffer(NES::Unikernel::SchemaBuffer<Schema, BufferSize>& tb, int ts) {
 }
 #endif
 void ignore(auto) {}
-#define NUMBER_OF_BUFFERS 1000000
+#define NUMBER_OF_BUFFERS 100000
 int main() {
     NES::Logger::setupLogging(static_cast<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL));
 
@@ -91,16 +96,21 @@ int main() {
     TheBufferManager = std::make_shared<NES::Runtime::BufferManager>(8192, NUMBER_OF_BUFFERS + 300);
     TheWorkerContext = new NES::Runtime::WorkerContext(NES::WorkerThreadId(1), TheBufferManager, 1, 1);
 
+#ifdef IN_MEMORY
     std::vector<NES::Runtime::TupleBuffer> buffers;
-
-    for (int i = 0; i < NUMBER_OF_BUFFERS; i++) {
-        auto buffer = TheBufferManager->getBufferBlocking();
-        auto schemaBuffer = NES::Unikernel::SchemaBuffer<NES::Unikernel::SourceConfig35::Schema, 8192>::of(buffer);
-        fillBuffer(schemaBuffer, i * schemaBuffer.getCapacity());
-        buffers.push_back(std::move(buffer));
+    std::ifstream fs(INPUT_FILE_NAME, std::ios::in | std::ios::binary);
+    NES_ASSERT(fs, "Could not open file");
+    fs.seekg(0, std::ios::beg);
+    while (!fs.eof()) {
+        size_t bufferSize;
+        fs.read(std::bit_cast<char*>(&bufferSize), sizeof(bufferSize));
+        auto tb = TheBufferManager->getBufferBlocking();
+        fs.read(std::bit_cast<char*>(tb.getBuffer()), bufferSize);
+        tb.setNumberOfTuples(bufferSize / NES::Unikernel::SourceConfig35::Schema::TupleSize);
+        buffers.push_back(std::move(tb));
     }
 
-    NES_INFO("Generation Done");
+    NES_INFO("Generation Done: {} Buffers", buffers.size());
 
     std::vector<std::jthread> threads;
     std::apply(
@@ -116,6 +126,15 @@ int main() {
         },
         NES::Unikernel::sources{});
 
+#endif
+    auto start = std::chrono::high_resolution_clock::now();
     NES::Unikernel::QueryPlan::setup();
     NES::Unikernel::QueryPlan::wait();
+    auto stop = std::chrono::high_resolution_clock::now();
+    NES_INFO("Test: {}ms", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+
+    NES_INFO("PerfCounter: \nFound:{}\nPrepend:{}\nInsert:{}",
+             PerfCounterInstance.found,
+             PerfCounterInstance.prepand,
+             PerfCounterInstance.insert);
 }

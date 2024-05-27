@@ -3,7 +3,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-label"
 #pragma GCC diagnostic ignored "-Wtautological-compare"
-static inline auto setup(uint8_t* var_0_129 ,uint8_t* var_0_130 ){
+static inline auto setup(uint8_t* var_0_119 ,uint8_t* var_0_120 ){
 //variable declarations
 NES::NESStrongType<unsigned long, NES::OriginId_, 0, 1> var_0_0 = NES::INVALID<NES::NESStrongType<unsigned long, NES::OriginId_, 0, 1>>;
 uint64_t var_0_1;
@@ -21,14 +21,6 @@ uint8_t* var_0_14;
 uint64_t var_0_15;
 uint64_t var_0_17;
 uint8_t* var_0_18;
-uint64_t var_0_20;
-uint8_t* var_0_21;
-uint64_t var_0_22;
-uint64_t var_0_23;
-uint64_t var_0_25;
-uint8_t* var_0_26;
-uint64_t var_0_27;
-uint64_t var_0_28;
 //basic blocks
 Block_0:
 var_0_0 = NES::NESStrongType<unsigned long, NES::OriginId_, 0, 1>(0);
@@ -39,26 +31,16 @@ var_0_4 = 0;
 var_0_5 = 0;
 var_0_6 = 1;
 var_0_7 = 0;
-var_0_8 = static_cast<uint8_t*>(getGlobalOperatorHandlerProxy(var_0_129,var_0_7));
+var_0_8 = static_cast<uint8_t*>(getGlobalOperatorHandlerProxy(var_0_119,var_0_7));
 var_0_9 = 0;
 var_0_10 = 8;
 var_0_11 = var_0_9+var_0_10;
-setupSliceMergingHandler(var_0_8,var_0_129,var_0_11);
+setupSliceMergingHandler(var_0_8,var_0_119,var_0_11);
 var_0_14 = static_cast<uint8_t*>(getDefaultMergingState(var_0_8));
 var_0_15 = 0;
 *reinterpret_cast<uint64_t*>(var_0_14) = var_0_15;
 var_0_17 = 8;
 var_0_18 = var_0_14+var_0_17;
-var_0_20 = 1;
-var_0_21 = static_cast<uint8_t*>(getGlobalOperatorHandlerProxy(var_0_129,var_0_20));
-var_0_22 = 3;
-var_0_23 = 1;
-setNumberOfWorkerThreadsProxy(var_0_21,var_0_129,var_0_22,var_0_23);
-var_0_25 = 1;
-var_0_26 = static_cast<uint8_t*>(getGlobalOperatorHandlerProxy(var_0_129,var_0_25));
-var_0_27 = 3;
-var_0_28 = 1;
-setBufferManagerProxy(var_0_26,var_0_129,var_0_27,var_0_28);
 return;
 
 }
@@ -74,7 +56,7 @@ uint64_t var_0_5;
 bool var_0_6;
 uint64_t var_0_7;
 uint8_t* var_0_8;
-NES::NESStrongType<unsigned long, NES::WorkerThreadId_, 0, 1> var_0_9 = NES::INVALID<NES::NESStrongType<unsigned long, NES::WorkerThreadId_, 0, 1>>;
+NES::NESStrongType<unsigned int, NES::WorkerThreadId_, 4294967295, 0> var_0_9 = NES::INVALID<NES::NESStrongType<unsigned int, NES::WorkerThreadId_, 4294967295, 0>>;
 uint8_t* var_0_10;
 uint64_t var_0_11;
 uint8_t* var_0_12;
@@ -186,7 +168,7 @@ uint64_t var_4_114;
 uint64_t var_4_115;
 uint8_t* var_4_116;
 uint64_t var_4_117;
-NES::NESStrongType<unsigned long, NES::WorkerThreadId_, 0, 1> var_4_0 = NES::INVALID<NES::NESStrongType<unsigned long, NES::WorkerThreadId_, 0, 1>>;
+NES::NESStrongType<unsigned int, NES::WorkerThreadId_, 4294967295, 0> var_4_0 = NES::INVALID<NES::NESStrongType<unsigned int, NES::WorkerThreadId_, 4294967295, 0>>;
 uint8_t* var_4_1;
 uint64_t var_4_3;
 uint64_t var_4_5;
@@ -202,7 +184,7 @@ uint64_t var_6_129;
 uint64_t var_6_130;
 uint64_t var_6_131;
 uint8_t* var_6_132;
-NES::NESStrongType<unsigned long, NES::WorkerThreadId_, 0, 1> var_4_7 = NES::INVALID<NES::NESStrongType<unsigned long, NES::WorkerThreadId_, 0, 1>>;
+NES::NESStrongType<unsigned int, NES::WorkerThreadId_, 4294967295, 0> var_4_7 = NES::INVALID<NES::NESStrongType<unsigned int, NES::WorkerThreadId_, 4294967295, 0>>;
 uint64_t var_4_8;
 uint8_t* var_4_9;
 uint64_t var_4_10;
@@ -240,7 +222,7 @@ var_0_5 = 0;
 var_0_6 = 1;
 var_0_7 = 1;
 var_0_8 = static_cast<uint8_t*>(getGlobalOperatorHandlerProxy(var_0_140,var_0_7));
-var_0_9 = getWorkerIdProxy(var_0_141);
+var_0_9 = getWorkerThreadIdProxy(var_0_141);
 var_0_10 = static_cast<uint8_t*>(getCurrentWindowProxy(var_0_8));
 var_0_11 = 0;
 var_0_12 = static_cast<uint8_t*>(getNLJPagedVectorProxy(var_0_10,var_0_9,var_0_11));
@@ -406,7 +388,7 @@ var_5_112 = var_2_127;
 goto Block_5;}
 
 Block_4:
-var_4_0 = getWorkerIdProxy(var_4_106);
+var_4_0 = getWorkerThreadIdProxy(var_4_106);
 var_4_1 = static_cast<uint8_t*>(getNLJSliceRefProxy(var_4_116,var_4_117));
 var_4_3 = getNLJSliceStartProxy(var_4_1);
 var_4_5 = getNLJSliceEndProxy(var_4_1);
@@ -426,7 +408,7 @@ var_6_132 = var_4_1;
 goto Block_6;
 
 Block_6:
-var_4_7 = getWorkerIdProxy(var_6_122);
+var_4_7 = getWorkerThreadIdProxy(var_6_122);
 var_4_8 = 0;
 var_4_9 = static_cast<uint8_t*>(getNLJPagedVectorProxy(var_6_132,var_4_7,var_4_8));
 var_4_10 = allocateEntryProxy(var_4_9);
@@ -443,7 +425,7 @@ var_4_22 = var_4_18+var_4_21;
 deleteNonKeyedSlice(var_6_128);
 var_4_25 = 1;
 var_4_26 = static_cast<uint8_t*>(getGlobalOperatorHandlerProxy(var_6_121,var_4_25));
-var_4_27 = 3;
+var_4_27 = 4;
 var_4_28 = 1;
 checkWindowsTriggerProxy(var_4_26,var_6_121,var_6_122,var_6_123,var_6_124,var_6_125,var_6_126,var_6_127,var_4_27,var_4_28);
 return;
@@ -466,7 +448,7 @@ goto Block_6;
 
 }
 
-static inline auto terminate(uint8_t* var_0_113 ,uint8_t* var_0_114 ){
+static inline auto terminate(uint8_t* var_0_108 ,uint8_t* var_0_109 ){
 //variable declarations
 NES::NESStrongType<unsigned long, NES::OriginId_, 0, 1> var_0_0 = NES::INVALID<NES::NESStrongType<unsigned long, NES::OriginId_, 0, 1>>;
 uint64_t var_0_1;
@@ -475,10 +457,6 @@ uint64_t var_0_3;
 uint64_t var_0_4;
 uint64_t var_0_5;
 bool var_0_6;
-uint64_t var_0_7;
-uint8_t* var_0_8;
-uint64_t var_0_9;
-uint64_t var_0_10;
 //basic blocks
 Block_0:
 var_0_0 = NES::NESStrongType<unsigned long, NES::OriginId_, 0, 1>(0);
@@ -488,11 +466,6 @@ var_0_3 = 0;
 var_0_4 = 0;
 var_0_5 = 0;
 var_0_6 = 1;
-var_0_7 = 1;
-var_0_8 = static_cast<uint8_t*>(getGlobalOperatorHandlerProxy(var_0_113,var_0_7));
-var_0_9 = 3;
-var_0_10 = 1;
-triggerAllWindowsProxy(var_0_8,var_0_113,var_0_9,var_0_10);
 return;
 
 }

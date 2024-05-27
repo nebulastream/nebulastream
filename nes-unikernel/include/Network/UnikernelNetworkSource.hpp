@@ -119,11 +119,13 @@ class UnikernelNetworkSource : DataEmitter {
     //MPSC Queue
     using Queue = typename folly::MPMCQueue<QueueItemType>;
     using BufferType = NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>;
-    void emitWork(Runtime::TupleBuffer& buffer) override {
+
+    void emitWork(Runtime::TupleBuffer& buffer, bool) override {
         NES_DEBUG("Network Source {} Received Data", Config::OperatorId);
         NES_DEBUG("Buffer origin: {}", buffer.getOriginId());
         queue.write(buffer);
     }
+
     void onEvent(Runtime::EventPtr event) override {
         NES_INFO("Network Source {} Received Event", Config::OperatorId);
         queue.write(event);

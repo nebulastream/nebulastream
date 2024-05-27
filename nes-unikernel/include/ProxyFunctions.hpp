@@ -96,7 +96,7 @@ PROXY_FN T min(T a, T b) {
     return std::min(a, b);
 }
 
-PROXY_FN NES::WorkerThreadId getWorkerIdProxy(void* workerContext) {
+PROXY_FN NES::WorkerThreadId getWorkerThreadIdProxy(void* workerContext) {
     TRACE_PROXY_FUNCTION_NO_ARG;
     auto* wc = static_cast<NES::Runtime::WorkerContext*>(workerContext);
     return wc->getId();
@@ -142,6 +142,7 @@ PROXY_FN void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
 template<typename OutputClass = NES::Runtime::Execution::Operators::StreamJoinOperatorHandler>
 static NES::Runtime::Execution::Operators::NLJOperatorHandler*
 getSpecificOperatorHandler(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+    NES_INFO("{} == {}", windowingStrategyInt, static_cast<uint8_t>(NES::QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN));
     NES_ASSERT(magic_enum::enum_value<NES::QueryCompilation::StreamJoinStrategy>(joinStrategyInt)
                    == NES::QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                "Only NLJ is supported");
