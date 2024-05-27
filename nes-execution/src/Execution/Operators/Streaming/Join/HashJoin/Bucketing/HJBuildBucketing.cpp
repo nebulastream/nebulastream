@@ -23,26 +23,26 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, uint64_t workerId, uint64_t joinBuildSideInt) {
+void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrWindowVector != nullptr, "ptrPagedVector should not be null!");
     auto allWindowVec = static_cast<std::vector<HJSlice*>*>(ptrWindowVector);
     auto nljWindow = allWindowVec->operator[](index);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
 
-    NES_INFO("getHashTableRefProxy for index {} workerId {} nljWindow {}", index, workerId, nljWindow->toString());
-    return nljWindow->getHashTable(joinBuildSide, workerId);
+    NES_INFO("getHashTableRefProxy for index {} workerThreadId {} nljWindow {}", index, workerThreadId, nljWindow->toString());
+    return nljWindow->getHashTable(joinBuildSide, workerThreadId);
 }
 
 void HJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
                                              Value<UInt64>& curIndex,
-                                             Value<UInt64>& workerId,
+                                             ValueId<WorkerThreadId>& workerThreadId,
                                              Record& record) const {
 
     auto hashTableReference = Nautilus::FunctionCall("getHashTableRefProxy",
                                                      getHashTableRefProxy,
                                                      allWindowsToFill,
                                                      curIndex,
-                                                     workerId,
+                                                     workerThreadId,
                                                      Value<UInt64>(to_underlying(joinBuildSide)));
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();

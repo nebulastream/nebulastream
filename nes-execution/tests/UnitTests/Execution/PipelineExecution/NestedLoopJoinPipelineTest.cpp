@@ -86,7 +86,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     bool checkIfNLJWorks(const std::string& fileNameBuffersLeft,

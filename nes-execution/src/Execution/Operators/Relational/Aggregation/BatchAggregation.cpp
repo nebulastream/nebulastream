@@ -27,9 +27,9 @@ void setupHandler(void* ss, void* ctx, uint64_t size) {
     handler->setup(*pipelineExecutionContext, size);
 }
 
-void* getThreadLocalState(void* op, uint64_t workerId) {
+void* getThreadLocalState(void* op, WorkerThreadId workerThreadId) {
     auto handler = static_cast<BatchAggregationHandler*>(op);
-    return handler->getThreadLocalState(workerId);
+    return handler->getThreadLocalState(workerThreadId);
 }
 
 class ThreadLocalAggregationState : public OperatorState {
@@ -59,7 +59,7 @@ void BatchAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local state according to the worker id.
     auto defaultState =
-        Nautilus::FunctionCall("getThreadLocalState", getThreadLocalState, globalOperatorHandler, ctx.getWorkerId());
+        Nautilus::FunctionCall("getThreadLocalState", getThreadLocalState, globalOperatorHandler, ctx.getWorkerThreadId());
     auto threadLocalState = std::make_unique<ThreadLocalAggregationState>(defaultState);
     ctx.setLocalOperatorState(this, std::move(threadLocalState));
     ExecutableOperator::open(ctx, rb);

@@ -53,7 +53,7 @@ class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorH
      */
     AbstractBucketPreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
 
-    SliceStore* getThreadLocalBucketStore(uint64_t workerId);
+    SliceStore* getThreadLocalBucketStore(WorkerThreadId workerThreadId);
     void trigger(WorkerContext& wctx,
                  PipelineExecutionContext& ctx,
                  OriginId originId,

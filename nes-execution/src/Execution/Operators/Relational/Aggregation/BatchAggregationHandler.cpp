@@ -19,8 +19,8 @@ static constexpr uint64_t STATE_ALIGNMENT = 8;
 
 BatchAggregationHandler::BatchAggregationHandler() = default;
 
-BatchAggregationHandler::State BatchAggregationHandler::getThreadLocalState(uint64_t workerId) {
-    auto index = workerId % threadLocalStateStores.size();
+BatchAggregationHandler::State BatchAggregationHandler::getThreadLocalState(WorkerThreadId workerThreadId) {
+    auto index = workerThreadId % threadLocalStateStores.size();
     return threadLocalStateStores[index];
 }
 

@@ -54,17 +54,17 @@ class NLJSlice : public StreamSlice {
 
     /**
      * @brief Retrieves the pointer to paged vector for the left or right side
-     * @param workerId: The id of the worker, which request the PagedVectorRef
+     * @param workerThreadId: The id of the worker, which request the PagedVectorRef
      * @return Void pointer to the pagedVector
      */
-    void* getPagedVectorRefLeft(uint64_t workerId);
+    void* getPagedVectorRefLeft(WorkerThreadId workerThreadId);
 
     /**
      * @brief Retrieves the pointer to paged vector for the left or right side
-     * @param workerId: The id of the worker, which request the PagedVectorRef
+     * @param workerThreadId: The id of the worker, which request the PagedVectorRef
      * @return Void pointer to the pagedVector
      */
-    void* getPagedVectorRefRight(uint64_t workerId);
+    void* getPagedVectorRefRight(WorkerThreadId workerThreadId);
 
     /**
      * @brief combines the PagedVectors for the left and right side. Afterwards, all tuples are stored in the first

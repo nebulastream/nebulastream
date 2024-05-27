@@ -67,13 +67,13 @@ std::string NLJSlice::toString() {
     return basicOstringstream.str();
 }
 
-void* NLJSlice::getPagedVectorRefLeft(uint64_t workerId) {
-    const auto pos = workerId % leftTuples.size();
+void* NLJSlice::getPagedVectorRefLeft(WorkerThreadId workerThreadId) {
+    const auto pos = workerThreadId % leftTuples.size();
     return leftTuples[pos].get();
 }
 
-void* NLJSlice::getPagedVectorRefRight(uint64_t workerId) {
-    const auto pos = workerId % rightTuples.size();
+void* NLJSlice::getPagedVectorRefRight(WorkerThreadId workerThreadId) {
+    const auto pos = workerThreadId % rightTuples.size();
     return rightTuples[pos].get();
 }
 

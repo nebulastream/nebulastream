@@ -24,9 +24,9 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getSliceStoreProxy(void* op, uint64_t workerId) {
+void* getSliceStoreProxy(void* op, WorkerThreadId workerThreadId) {
     auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(op);
-    return handler->getThreadLocalSliceStore(workerId);
+    return handler->getThreadLocalSliceStore(workerThreadId);
 }
 
 void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
@@ -37,7 +37,7 @@ void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
 void triggerThreadLocalStateProxy(void* op,
                                   void* wctx,
                                   void* pctx,
-                                  uint64_t,
+                                  WorkerThreadId,
                                   uint64_t originId,
                                   uint64_t sequenceNumber,
                                   uint64_t chunkNumber,
@@ -100,7 +100,7 @@ void NonKeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) 
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
+    auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerThreadId());
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalGlobalPreAggregationState>(sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
@@ -134,7 +134,7 @@ void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) co
                            globalOperatorHandler,
                            ctx.getWorkerContext(),
                            ctx.getPipelineContext(),
-                           ctx.getWorkerId(),
+                           ctx.getWorkerThreadId(),
                            ctx.getOriginId(),
                            ctx.getSequenceNumber(),
                            ctx.getChunkNumber(),

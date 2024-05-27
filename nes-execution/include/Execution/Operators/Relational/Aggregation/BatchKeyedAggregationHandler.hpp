@@ -45,10 +45,10 @@ class BatchKeyedAggregationHandler : public Runtime::Execution::OperatorHandler,
 
     /**
      * @brief Returns the thread local slice store by a specific worker thread id
-     * @param workerId
+     * @param workerThreadId
      * @return GlobalThreadLocalSliceStore
      */
-    Nautilus::Interface::ChainedHashMap* getThreadLocalStore(uint64_t workerId);
+    Nautilus::Interface::ChainedHashMap* getThreadLocalStore(WorkerThreadId workerThreadId);
 
     ~BatchKeyedAggregationHandler() override;
 

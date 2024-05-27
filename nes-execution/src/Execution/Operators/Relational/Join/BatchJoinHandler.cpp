@@ -20,8 +20,8 @@ namespace NES::Runtime::Execution::Operators {
 
 BatchJoinHandler::BatchJoinHandler() = default;
 
-Nautilus::Interface::PagedVector* BatchJoinHandler::getThreadLocalState(uint64_t workerId) {
-    auto index = workerId % threadLocalStateStores.size();
+Nautilus::Interface::PagedVector* BatchJoinHandler::getThreadLocalState(WorkerThreadId workerThreadId) {
+    auto index = workerThreadId % threadLocalStateStores.size();
     return threadLocalStateStores[index].get();
 }
 

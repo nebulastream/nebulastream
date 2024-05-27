@@ -22,7 +22,7 @@ namespace NES::Runtime {
 
 folly::ThreadLocalPtr<LocalBufferPool> WorkerContext::localBufferPoolTLS{};
 
-WorkerContext::WorkerContext(uint32_t workerId,
+WorkerContext::WorkerContext(WorkerThreadId workerId,
                              const BufferManagerPtr& bufferManager,
                              uint64_t numberOfBuffersPerWorker,
                              uint32_t queueId)
@@ -41,7 +41,7 @@ WorkerContext::~WorkerContext() {
     localBufferPoolTLS.reset(nullptr);
 }
 
-uint32_t WorkerContext::getId() const { return workerId; }
+WorkerThreadId WorkerContext::getId() const { return workerId; }
 
 uint32_t WorkerContext::getQueueId() const { return queueId; }
 

@@ -65,12 +65,12 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param localStateBucketing
      * @param opHandlerMemRef
      * @param ts
-     * @param workerId
+     * @param workerThreadId
      */
     void updateLocalState(LocalStateBucketing* localStateBucketing,
                           Value<MemRef>& opHandlerMemRef,
                           Value<UInt64>& ts,
-                          Value<UInt64>& workerId) const;
+                          ValueId<WorkerThreadId>& workerThreadId) const;
 
     /**
      * @brief Checks if the current local hash join state is up-to-date, meaning the correct windows are stored
@@ -102,12 +102,12 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @brief Inserts the record for the current index
      * @param allWindowsToFill
      * @param curIndex
-     * @param workerId
+     * @param workerThreadId
      * @param record
      */
     virtual void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
                                        Value<UInt64>& curIndex,
-                                       Value<UInt64>& workerId,
+                                       ValueId<WorkerThreadId>& workerThreadId,
                                        Record& record) const = 0;
 
   private:

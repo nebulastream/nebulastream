@@ -46,13 +46,14 @@ TEST_F(LimitOperatorTest, TestLimit) {
     constexpr uint64_t TUPLES = 20;
 
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(0, bm, 100);
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
+                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto limitOperator = Limit(0);
     auto collector = std::make_shared<CollectOperator>();
@@ -73,13 +74,14 @@ TEST_F(LimitOperatorTest, TestLimitZero) {
     constexpr uint64_t TUPLES = 20;
 
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(0, bm, 100);
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
+                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto limitOperator = Limit(0);
     auto collector = std::make_shared<CollectOperator>();

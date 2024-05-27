@@ -158,7 +158,7 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
 */
 TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
+    auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bm, 1024);
     inputSchema = Schema::create()
                       ->addField("byteVariable", BasicType::INT8)
                       ->addField("shortVariable", BasicType::INT16)

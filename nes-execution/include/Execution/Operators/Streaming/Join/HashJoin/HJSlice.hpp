@@ -79,10 +79,10 @@ class HJSlice : public StreamSlice {
     /**
      * @brief Returns the local hash table of either the left or the right join side
      * @param joinBuildSide
-     * @param index
+     * @param workerThreadId
      * @return Reference to the hash table
      */
-    Operators::StreamJoinHashTable* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t index);
+    Operators::StreamJoinHashTable* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
@@ -99,10 +99,10 @@ class HJSlice : public StreamSlice {
     /**
      * @brief Returns the number of tuples in this window
      * @param joinBuildSide
-     * @param workerIdx
+     * @param workerThreadId
      * @return uint64_t
      */
-    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx);
+    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId);
 
   protected:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;

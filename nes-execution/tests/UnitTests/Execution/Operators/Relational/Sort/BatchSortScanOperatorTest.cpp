@@ -119,7 +119,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
     constexpr auto NUM_FIELDS = 1;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto handler =
         std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
@@ -161,7 +161,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
     constexpr auto NUM_FIELDS = 2;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto pType = Util::getPhysicalTypePtr<NativeType>();
     auto handler = std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({pType, pType}),
@@ -202,7 +202,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest) {
     constexpr auto NUM_FIELDS = 1;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto handler =
         std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
@@ -243,7 +243,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest) {
     constexpr auto NUM_FIELDS = 2;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto pType = Util::getPhysicalTypePtr<NativeType>();
     auto handler = std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({pType, pType}),
@@ -292,7 +292,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage) {
     constexpr auto NUM_FIELDS = 1;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto handler =
         std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),

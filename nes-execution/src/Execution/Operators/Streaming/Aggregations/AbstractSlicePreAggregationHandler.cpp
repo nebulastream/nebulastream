@@ -103,8 +103,8 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(WorkerCo
     dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(), collectedSlices);
 };
 template<class SliceType, typename SliceStore>
-SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThreadLocalSliceStore(uint64_t workerId) {
-    auto index = workerId % threadLocalSliceStores.size();
+SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThreadLocalSliceStore(WorkerThreadId workerThreadId) {
+    auto index = workerThreadId % threadLocalSliceStores.size();
     return threadLocalSliceStores[index].get();
 }
 template<class SliceType, typename SliceStore>
