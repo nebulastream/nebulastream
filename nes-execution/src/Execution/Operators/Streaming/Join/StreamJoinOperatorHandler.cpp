@@ -174,10 +174,11 @@ void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, Wor
 }
 
 uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
-    auto minVal =
-        std::min_element(std::begin(workerThreadIdToWatermarkMap), std::end(workerThreadIdToWatermarkMap), [](const auto& l, const auto& r) {
-            return l.second < r.second;
-        });
+    auto minVal = std::min_element(std::begin(workerThreadIdToWatermarkMap),
+                                   std::end(workerThreadIdToWatermarkMap),
+                                   [](const auto& l, const auto& r) {
+                                       return l.second < r.second;
+                                   });
     return minVal == workerThreadIdToWatermarkMap.end() ? -1 : minVal->second;
 }
 

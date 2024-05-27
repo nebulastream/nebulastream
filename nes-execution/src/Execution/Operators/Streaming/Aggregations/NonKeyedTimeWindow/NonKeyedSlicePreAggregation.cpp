@@ -100,7 +100,8 @@ void NonKeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) 
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerThreadId());
+    auto sliceStore =
+        Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerThreadId());
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalGlobalPreAggregationState>(sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
