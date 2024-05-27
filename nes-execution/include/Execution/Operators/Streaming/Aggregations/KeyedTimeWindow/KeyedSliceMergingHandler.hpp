@@ -47,8 +47,6 @@ class KeyedSliceMergingHandler : public OperatorHandler {
      * @return GlobalSlicePtr
      */
     KeyedSlicePtr createGlobalSlice(SliceMergeTask<KeyedSlice>* sliceMergeTask, uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
-    ~KeyedSliceMergingHandler() override;
-
   private:
     uint64_t keySize;
     uint64_t valueSize;

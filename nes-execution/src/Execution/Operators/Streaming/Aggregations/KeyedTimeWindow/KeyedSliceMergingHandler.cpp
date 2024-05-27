@@ -43,5 +43,4 @@ KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<KeyedSl
     auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
     return std::make_unique<KeyedSlice>(std::move(hashMap), sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
-KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 }// namespace NES::Runtime::Execution::Operators

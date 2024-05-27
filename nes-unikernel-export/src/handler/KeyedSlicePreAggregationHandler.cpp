@@ -24,7 +24,6 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-KeyedSlice::~KeyedSlice() = default;
 KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t windowSize,
                                                                  uint64_t windowSlide,
                                                                  const std::vector<OriginId>& origins)
