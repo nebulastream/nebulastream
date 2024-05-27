@@ -26,6 +26,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <YamlExport.h>
+#include <fstream>
 #include <ranges>
 
 static std::optional<NES::Optimizer::ExecutionNodePtr> findNodeByOperator(const NES::SourceLogicalOperatorPtr sourceOp,

@@ -24,6 +24,7 @@
 #include <Stage/QueryPipeliner.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <YamlExport.h>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <ranges>

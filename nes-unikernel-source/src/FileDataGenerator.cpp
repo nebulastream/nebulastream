@@ -12,6 +12,7 @@
      limitations under the License.
 */
 
+#include <filesystem>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -21,7 +22,7 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 
-FileDataGenerator::FileDataGenerator(NES::SchemaPtr s, boost::filesystem::path p) : schema(std::move(s)), path(std::move(p)) {
+FileDataGenerator::FileDataGenerator(NES::SchemaPtr s, std::filesystem::path p) : schema(std::move(s)), path(std::move(p)) {
     auto extension = path.extension().string();
     if (path.extension() == ".csv") {
         std::vector<NES::PhysicalTypePtr> physicalTypes;
@@ -105,7 +106,7 @@ std::vector<NES::Runtime::TupleBuffer> FileDataGenerator::createData(size_t numb
 NES::SchemaPtr FileDataGenerator::getSchema() { return schema; }
 std::string FileDataGenerator::getName() { return fmt::format("FileDataGenerator({})", path.string()); }
 std::string FileDataGenerator::toString() { return fmt::format("FileDataGenerator({})", path.string()); }
-std::unique_ptr<FileDataGenerator> FileDataGenerator::create(NES::SchemaPtr schema, boost::filesystem::path path) {
+std::unique_ptr<FileDataGenerator> FileDataGenerator::create(NES::SchemaPtr schema, std::filesystem::path path) {
     return std::make_unique<FileDataGenerator>(schema, path);
 }
 NES::Configurations::SchemaTypePtr FileDataGenerator::getSchemaType() { NES_NOT_IMPLEMENTED(); }

@@ -5,6 +5,7 @@
 #ifndef NES_OPTIONS_H
 #define NES_OPTIONS_H
 
+#include <filesystem>
 #include <Identifiers/Identifiers.hpp>
 #include <Result.hpp>
 #include <Sinks/Formats/FormatType.hpp>
@@ -32,7 +33,7 @@ struct Options {
     SchemaType schemaType;
     SourceType type;
     DataSourceType dataSource;
-    boost::filesystem::path path;
+    std::filesystem::path path;
     unsigned long numberOfBuffers;
     bool print;
 

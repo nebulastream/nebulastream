@@ -104,7 +104,7 @@ Options::Result Options::fromCLI(int argc, char** argv) {
 
     parser.parse_args(argc, argv);
 
-    if (!boost::filesystem::exists(filepath)) {
+    if (!std::filesystem::exists(filepath)) {
         return "\'" + filepath + "\' File does not Exists";
     }
 

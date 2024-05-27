@@ -19,17 +19,18 @@
 #include <DataGeneration/DataGenerator.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <boost/filesystem.hpp>
+#include <filesystem>
+#include <fstream>
 
 class FileDataGenerator : public NES::Benchmark::DataGeneration::DataGenerator {
     NES::SchemaPtr schema;
     std::optional<size_t> numberOfTupleToCreate;
-    boost::filesystem::path path;
-    boost::filesystem::ifstream file;
+    std::filesystem::path path;
+    std::ifstream file;
     std::unique_ptr<NES::Parser> parser_impl;
 
   public:
-    FileDataGenerator(NES::SchemaPtr schema, boost::filesystem::path path);
+    FileDataGenerator(NES::SchemaPtr schema, std::filesystem::path path);
     std::vector<NES::Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
     NES::SchemaPtr getSchema() override;
     std::string getName() override;
@@ -38,7 +39,7 @@ class FileDataGenerator : public NES::Benchmark::DataGeneration::DataGenerator {
     void setNumberOfTupleToCreate(const std::optional<size_t>& numberOfTupleToCreate) {
         this->numberOfTupleToCreate = numberOfTupleToCreate;
     }
-    static std::unique_ptr<FileDataGenerator> create(NES::SchemaPtr schema, boost::filesystem::path path);
+    static std::unique_ptr<FileDataGenerator> create(NES::SchemaPtr schema, std::filesystem::path path);
     NES::Configurations::SchemaTypePtr getSchemaType() override;
 };
 

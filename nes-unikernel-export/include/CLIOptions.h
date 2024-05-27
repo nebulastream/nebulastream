@@ -3,7 +3,6 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <YAMLModel.h>
-#include <boost/filesystem.hpp>
 #include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <boost/outcome.hpp>
 #include <optional>

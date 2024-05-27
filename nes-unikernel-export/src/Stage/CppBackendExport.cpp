@@ -26,7 +26,6 @@
 #include <Stage/QueryPipeliner.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
-#include <boost/filesystem/fstream.hpp>
 #include <string>
 
 namespace NES::Unikernel::Export {

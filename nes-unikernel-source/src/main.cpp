@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <boost/asio.hpp>
 #include <execution>
+#include <filesystem>
 #include <memory>
 #include <span>
 #include <string>
@@ -51,7 +52,7 @@ class Adhoc : public APrioriDataGenerator {
 };
 
 class DirectFileDataGenerator : public APrioriDataGenerator {
-    boost::filesystem::path filename;
+    std::filesystem::path filename;
     std::vector<std::unique_ptr<char[]>> data_chunks;
     std::jthread generatorThread;
     std::atomic<bool> done = false;
@@ -59,14 +60,14 @@ class DirectFileDataGenerator : public APrioriDataGenerator {
     constexpr static size_t chunk_size = 8192 + 8;
 
   public:
-    explicit DirectFileDataGenerator(boost::filesystem::path filename) : filename(std::move(filename)) {}
+    explicit DirectFileDataGenerator(std::filesystem::path filename) : filename(std::move(filename)) {}
 
     void startGenerator(size_t /*numberOfBuffers*/) override {
         NES_INFO("Starting DirectFileDataGenerator ({})", filename.string());
         generatorThread = std::jthread([this]() {
-            boost::filesystem::ifstream file(filename);
+            std::ifstream file(filename);
             NES_ASSERT(file.good(), "Could not open file");
-            file_size = boost::filesystem::file_size(filename);
+            file_size = std::filesystem::file_size(filename);
             auto chunk = std::make_unique<char[]>(file_size);
             file.read(chunk.get(), file_size);
             data_chunks.emplace_back(std::move(chunk));
@@ -153,12 +154,12 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
             }
 
             if (dynamic_cast<NES::NesFormat*>(this->format.get())) {
-                boost::filesystem::ofstream output("data.bin");
+                std::ofstream output("data.bin");
                 for (const auto& chunk : data_chunks) {
                     output.write(chunk.data(), chunk.size());
                 }
             } else if (dynamic_cast<NES::CsvFormat*>(this->format.get())) {
-                boost::filesystem::ofstream output("data.csv");
+                std::ofstream output("data.csv");
                 for (const auto& chunk : data_chunks) {
                     output.write(chunk.data(), chunk.size());
                 }

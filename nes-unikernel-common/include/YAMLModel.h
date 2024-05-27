@@ -15,6 +15,7 @@
 #ifndef NES_YAMLMODEL_H
 #define NES_YAMLMODEL_H
 
+#include <filesystem>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/Float.hpp>
@@ -24,7 +25,6 @@
 #include <Sinks/Formats/FormatType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <boost/filesystem.hpp>
 #include <queue>
 #include <type_traits>
 #include <yaml-cpp/yaml.h>
@@ -242,7 +242,7 @@ struct SourceEndpointConfiguration {
     std::optional<size_t> numberOfBuffers;
     std::optional<bool> print;
     std::optional<DataSourceType> dataSource;
-    std::optional<boost::filesystem::path> path;
+    std::optional<std::filesystem::path> path;
     std::optional<NES::FormatTypes> format;
     std::string ip;
     uint32_t port{};
@@ -254,9 +254,9 @@ struct SourceEndpointConfiguration {
 
 namespace YAML {
 template<>
-struct convert<boost::filesystem::path> {
-    static Node encode(const boost::filesystem::path& rhs) { return Node(rhs.string()); }
-    static Node decode(const Node& node, boost::filesystem::path& rhs) {
+struct convert<std::filesystem::path> {
+    static Node encode(const std::filesystem::path& rhs) { return Node(rhs.string()); }
+    static Node decode(const Node& node, std::filesystem::path& rhs) {
         rhs = node.as<std::string>();
         return node;
     }

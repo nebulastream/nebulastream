@@ -44,6 +44,4 @@ void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminati
 KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<KeyedSlice>* sliceMergeTask, uint64_t numberOfKeys) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
-KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
-
 }// namespace NES::Runtime::Execution::Operators
