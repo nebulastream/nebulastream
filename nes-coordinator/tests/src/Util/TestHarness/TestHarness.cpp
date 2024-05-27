@@ -63,13 +63,14 @@ TestHarness& TestHarness::setWindowingStrategy(QueryCompilation::WindowingStrate
 }
 
 void TestHarness::checkAndAddLogicalSources() {
-    auto sourceCatalog = nesCoordinator->getSourceCatalog();
 
     for (const auto& logicalSource : logicalSources) {
+
         auto logicalSourceName = logicalSource->getLogicalSourceName();
         auto schema = logicalSource->getSchema();
 
         // Check if logical source already exists
+        auto sourceCatalog = nesCoordinator->getSourceCatalog();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
             NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
                       logicalSourceName);
@@ -322,7 +323,7 @@ std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
 }
 
 TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor,
-                                        const std::vector<nlohmann::json>& distributionList) {
+        const std::vector<nlohmann::json>& distributionList) {
     if (!validationDone) {
         NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
     }
@@ -456,7 +457,7 @@ TestHarness& TestHarness::setOutputFilePath(const std::string& newOutputFilePath
 }
 
 TestHarness& TestHarness::setAppendMode(bool newAppendMode) {
-    this->appendMode = newAppendMode;
+    this->appendMode = newAppendMode ? "APPEND" : "OVERWRITE";
     return *this;
 }
 
