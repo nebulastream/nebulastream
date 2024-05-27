@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.135](https://github.com/nebulastream/nebulastream/tree/v0.6.135) (2024-05-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.134...v0.6.135)
+
+**Implemented enhancements:**
+
+- \[TASK\] Strong Type Identifier In Nautilus [\#4919](https://github.com/nebulastream/nebulastream/issues/4919)
+
 ## [v0.6.134](https://github.com/nebulastream/nebulastream/tree/v0.6.134) (2024-05-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.133...v0.6.134)
