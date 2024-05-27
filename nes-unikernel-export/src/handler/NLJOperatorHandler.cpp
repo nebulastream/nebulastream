@@ -38,4 +38,9 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
 void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
+
+void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
+    NES_THROW_RUNTIME_ERROR("Not Implemented!");
+}
+
 }// namespace NES::Runtime::Execution::Operators

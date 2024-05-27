@@ -18,15 +18,15 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {
+void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(WorkerThreadId::Underlying) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
 
-std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) {
+std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t, WorkerThreadId) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
 
-std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsForSlice(StreamSlice& slice) {
+std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsForSlice(StreamSlice&) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
 }// namespace NES::Runtime::Execution::Operators

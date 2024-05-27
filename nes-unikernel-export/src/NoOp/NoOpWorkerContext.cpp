@@ -21,7 +21,7 @@
 namespace NES::Runtime {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
-uint32_t WorkerContext::getId() const { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
+WorkerThreadId WorkerContext::getId() const { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
 uint32_t WorkerContext::getQueueId() const { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 

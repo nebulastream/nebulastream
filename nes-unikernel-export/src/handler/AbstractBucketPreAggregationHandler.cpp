@@ -29,7 +29,7 @@ AbstractBucketPreAggregationHandler<SliceType, SliceStore>::AbstractBucketPreAgg
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)){};
 
 template<class SliceType, typename SliceStore>
-SliceStore* AbstractBucketPreAggregationHandler<SliceType, SliceStore>::getThreadLocalBucketStore(uint64_t workerId) {
+SliceStore* AbstractBucketPreAggregationHandler<SliceType, SliceStore>::getThreadLocalBucketStore(WorkerThreadId ) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 template<class SliceType, typename SliceStore>

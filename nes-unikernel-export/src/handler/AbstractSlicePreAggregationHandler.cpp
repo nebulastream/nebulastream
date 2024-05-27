@@ -57,7 +57,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(WorkerCo
 };
 
 template<class SliceType, typename SliceStore>
-SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThreadLocalSliceStore(uint64_t workerId) {
+SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThreadLocalSliceStore(WorkerThreadId workerThreadId) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 

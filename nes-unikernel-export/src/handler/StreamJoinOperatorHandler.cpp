@@ -65,11 +65,11 @@ OriginId StreamJoinOperatorHandler::getOutputOriginId() const { NES_THROW_RUNTIM
 
 uint64_t StreamJoinOperatorHandler::getNextSequenceNumber() { NES_THROW_RUNTIME_ERROR("Not Implemented!"); }
 
-void StreamJoinOperatorHandler::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {
+void StreamJoinOperatorHandler::setNumberOfWorkerThreads(WorkerThreadId::Underlying numberOfWorkerThreads) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
 
-void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uint64_t workerId) {
+void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, WorkerThreadId workerThreadId) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
 
