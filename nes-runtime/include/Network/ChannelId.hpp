@@ -22,7 +22,8 @@ namespace NES::Network {
 
 class ChannelId {
   public:
-    explicit ChannelId(NesPartition nesPartition, WorkerThreadId workerThreadId) : nesPartition(nesPartition), workerThreadId(workerThreadId) {
+    explicit ChannelId(NesPartition nesPartition, WorkerThreadId workerThreadId)
+        : nesPartition(nesPartition), workerThreadId(workerThreadId) {
         // nop
     }
 

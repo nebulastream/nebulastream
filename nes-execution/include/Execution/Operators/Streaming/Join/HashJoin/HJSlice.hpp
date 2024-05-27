@@ -82,7 +82,8 @@ class HJSlice : public StreamSlice {
      * @param workerThreadId
      * @return Reference to the hash table
      */
-    Operators::StreamJoinHashTable* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId);
+    Operators::StreamJoinHashTable* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
+                                                 WorkerThreadId workerThreadId);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
