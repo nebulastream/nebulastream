@@ -32,4 +32,5 @@ bool TimeMeasure::operator==(const TimeMeasure& other) const { return milliSecon
 
 bool TimeMeasure::equals(const TimeMeasure& other) const { return this->milliSeconds == other.milliSeconds; }
 
+
 }// namespace NES::Windowing

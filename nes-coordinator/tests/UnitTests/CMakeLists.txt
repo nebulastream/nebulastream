@@ -72,6 +72,9 @@ add_nes_unit_test(default-statistic-query-generator-test "StatisticCollection/De
 ### DefaultStatisticStoreTest ###
 add_nes_unit_test(default-statistic-store-test "StatisticCollection/DefaultStatisticStoreTest.cpp")
 
+### BPlusTreeWithBucketing ###
+add_nes_unit_test(tree-with-bucketing-test "StatisticCollection/BPlusTreeWithBucketingTest.cpp")
+
 ### StatisticIdsExtractorTest ###
 add_nes_unit_test(statistic-ids-extractor-test "StatisticCollection/StatisticIdsExtractorTest.cpp")
 

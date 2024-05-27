@@ -65,6 +65,9 @@ class TimeMeasure : public WindowMeasure {
      */
     bool operator==(const TimeMeasure& other) const;
 
+
+
+
   private:
     const uint64_t milliSeconds;
 };
