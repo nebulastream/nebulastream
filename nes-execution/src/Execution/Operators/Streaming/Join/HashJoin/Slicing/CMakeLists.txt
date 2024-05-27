@@ -12,6 +12,7 @@
 
 add_source_files(unikernel-export
         HJBuildSlicing.cpp
+        HJBuildSlicingVarSized.cpp
 )
 add_source_files(nes-execution
         HJBuildSlicing.cpp

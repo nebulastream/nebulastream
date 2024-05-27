@@ -128,15 +128,9 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
 
     Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
     Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
-    const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
-    const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
 
-    for (Value<UInt64> leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
-        for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
-            auto leftRecord = leftPagedVector.readRecord(leftCnt);
-            auto rightRecord = rightPagedVector.readRecord(rightCnt);
-
-            // TODO This can be later replaced by an interface that returns boolean and gets passed the two Nautilus::Records (left and right) #3691
+     for (auto leftRecord : leftPagedVector) {
+        for (auto rightRecord : rightPagedVector) {
             if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                 Record joinedRecord;
                 createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);

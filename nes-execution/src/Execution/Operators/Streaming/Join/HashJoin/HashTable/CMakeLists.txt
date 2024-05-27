@@ -12,6 +12,8 @@
 
 add_source_files(unikernel-export
         StreamJoinHashTable.cpp
+        StreamJoinHashTableVarSized.cpp
+        MergingHashTableVarSized.cpp
         GlobalHashTableLockFree.cpp
         GlobalHashTableLocking.cpp
         FixedPagesLinkedList.cpp

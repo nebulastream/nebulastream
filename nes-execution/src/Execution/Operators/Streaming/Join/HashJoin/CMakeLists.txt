@@ -16,6 +16,8 @@ add_subdirectory(Slicing)
 add_source_files(unikernel-export
         HJProbe.cpp
         HJSlice.cpp
+        HJSliceVarSized.cpp
+        HJProbeVarSized.cpp
 )
 add_source_files(nes-execution
         HJOperatorHandler.cpp
