@@ -28,6 +28,7 @@ namespace NES {
 // In the following we define the NES_COMPILE_TIME_LOG_LEVEL macro.
 // This macro indicates the log level, which was chosen at compilation time and enables the complete
 // elimination of log messages.
+#ifndef NES_COMPILE_TIME_LOG_LEVEL
 #if defined(NES_LOGLEVEL_TRACE)
 #define NES_COMPILE_TIME_LOG_LEVEL 7
 #elif defined(NES_LOGLEVEL_DEBUG)
@@ -43,7 +44,7 @@ namespace NES {
 #elif defined(NES_LOGLEVEL_NONE)
 #define NES_COMPILE_TIME_LOG_LEVEL 1
 #endif
-
+#endif
 /**
  * @brief LogCaller is our compile-time trampoline to invoke the Logger method for the desired level of logging L
  * @tparam L the level of logging
