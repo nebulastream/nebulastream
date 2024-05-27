@@ -146,7 +146,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @brief Sets the number of worker threads for this operator handler
      * @param numberOfWorkerThreads
      */
-    virtual void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
+    virtual void setNumberOfWorkerThreads(WorkerThreadId::Underlying numberOfWorkerThreads);
 
     /**
      * @brief update the watermark for a particular worker
@@ -176,7 +176,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void setBufferManager(const BufferManagerPtr& bufManager);
 
   protected:
-    uint64_t numberOfWorkerThreads = 1;
+    WorkerThreadId::Underlying numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
     SliceAssigner sliceAssigner;
     uint64_t windowSize;

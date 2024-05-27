@@ -16,7 +16,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {
+void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(WorkerThreadId::Underlying numberOfWorkerThreads) {
     StreamJoinOperatorHandler::setNumberOfWorkerThreads(numberOfWorkerThreads);
 
     windowsToFill.reserve(numberOfWorkerThreads);

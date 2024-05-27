@@ -166,7 +166,7 @@ OriginId StreamJoinOperatorHandler::getOutputOriginId() const { return outputOri
 
 uint64_t StreamJoinOperatorHandler::getNextSequenceNumber() { return sequenceNumber++; }
 
-void StreamJoinOperatorHandler::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {
+void StreamJoinOperatorHandler::setNumberOfWorkerThreads(WorkerThreadId::Underlying numberOfWorkerThreads) {
     if (StreamJoinOperatorHandler::alreadySetup) {
         NES_DEBUG("StreamJoinOperatorHandler::setup was called already!");
         return;
