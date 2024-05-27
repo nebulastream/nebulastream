@@ -43,7 +43,7 @@ using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 namespace Catalog::Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
+}// namespace Catalog::Query
 
 namespace REST::Controller {
 class BenchmarkController : public oatpp::web::server::api::ApiController {//BenchmarkController 继承了 ApiController
@@ -86,7 +86,6 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
                                                      errorHandler);
     }
 
-    // (HTTP method, path,name,para)
     ENDPOINT("POST", "/micro", micro, BODY_STRING(String, request)) {
 
         NES_INFO("receive request with parameters");
@@ -94,18 +93,15 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
             std::string req = request.getValue("{}");
             nlohmann::json requestJson = nlohmann::json::parse(req);
 
-            //            const auto workloadType = requestJson["workloadType"].get<std::string>();
-            //            const auto noOfQueries = requestJson["noOfQueries"].get<uint64_t>();
             const std::vector<std::string> queryStrings = requestJson["queries"].get<std::vector<std::string>>();
             const auto queryMergerRule = static_cast<Optimizer::QueryMergerRule>(requestJson["queryMergerRule"].get<uint8_t>());
             const auto deploy = requestJson["deploy"].get<bool>();
-            //send the queryset from request
 
             const auto response = requestHandlerService->validateAndQueueSharingIdentificationBenchmarkRequest(
                 queryStrings,
                 queryMergerRule,
                 Optimizer::PlacementStrategy::TopDown,
-                deploy);// no deploy
+                deploy);
 
             return createResponse(Status::CODE_200, response.dump());//serialize
 

@@ -100,7 +100,6 @@ class SharingIdentificationBenchmarkRequest : public AbstractUniRequest {
     const std::vector<std::string> queryStrings;
     const Optimizer::QueryMergerRule queryMergerRule;
 
-    QueryId queryId;
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;
     z3::ContextPtr z3Context;

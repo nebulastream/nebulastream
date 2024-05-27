@@ -106,9 +106,8 @@ SharingIdentificationBenchmarkRequest::SharingIdentificationBenchmarkRequest(
                           ResourceType::SourceCatalog,
                           ResourceType::CoordinatorConfiguration},
                          maxRetries),
-      queryStrings(queryStrings), queryMergerRule(queryMergerRule), queryId(INVALID_QUERY_ID),
-      queryPlacementStrategy(queryPlacementStrategy), z3Context(z3Context), queryParsingService(queryParsingService),
-      deploy(deploy) {}
+      queryStrings(queryStrings), queryMergerRule(queryMergerRule), queryPlacementStrategy(queryPlacementStrategy),
+      z3Context(z3Context), queryParsingService(queryParsingService), deploy(deploy) {}
 
 SharingIdentificationBenchmarkRequestPtr
 SharingIdentificationBenchmarkRequest::create(const std::vector<std::string>& queryStrings,
@@ -215,7 +214,7 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             }
 
             // Set unique identifier and additional properties to the query
-            queryId = PlanIdGenerator::getNextQueryId();
+            const auto queryId = PlanIdGenerator::getNextQueryId();
             queryIds.push_back(queryId);
             queryPlan->setQueryId(queryId);
             queryPlan->setPlacementStrategy(queryPlacementStrategy);
@@ -318,70 +317,72 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         if (!deploy)
             return {};
 
-        //add a for-loop!!
-        //19. Get the shared query plan id for the added query
-        auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
-        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-            throw Exceptions::SharedQueryPlanNotFoundException(
-                "Could not find shared query id in global query plan. Shared query id is invalid.",
-                sharedQueryId);
-        }
+        for (const auto queryId : queryIds) {
+            //19. Get the shared query plan id for the added query
+            auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+            if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+                throw Exceptions::SharedQueryPlanNotFoundException(
+                    "Could not find shared query id in global query plan. Shared query id is invalid.",
+                    sharedQueryId);
+            }
 
-        //20. Get the shared query plan for the added query
-        auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-        if (!sharedQueryPlan) {
-            throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
-                                                               sharedQueryId);
-        }
+            //20. Get the shared query plan for the added query
+            auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+            if (!sharedQueryPlan) {
+                throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
+                                                                   sharedQueryId);
+            }
 
-        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
-            queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
-        } else {
-            queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
-        }
-        //Link both catalogs
-        queryCatalog->linkSharedQuery(queryId, sharedQueryId);
+            if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
+                queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
+            } else {
+                queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
+            }
+            //Link both catalogs
+            queryCatalog->linkSharedQuery(queryId, sharedQueryId);
 
-        //21. Perform placement of updated shared query plan
-        NES_DEBUG("Performing Operator placement for shared query plan");
-        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+            //21. Perform placement of updated shared query plan
+            NES_DEBUG("Performing Operator placement for shared query plan");
+            auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-        //22. Perform deployment of re-placed shared query plan
-        deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
+            //22. Perform deployment of re-placed shared query plan
+            deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
-        //23. Update the shared query plan as deployed
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
+            //23. Update the shared query plan as deployed
+            sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
-        // Iterate over deployment context and update execution plan
-        for (const auto& deploymentContext : deploymentContexts) {
-            auto WorkerId = deploymentContext->getWorkerId();
-            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
-            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
-            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-            switch (decomposedQueryPlanState) {
-                case QueryState::MARKED_FOR_REDEPLOYMENT:
-                case QueryState::MARKED_FOR_DEPLOYMENT: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
-                                                                        sharedQueryId,
-                                                                        decomposedQueryPlanId,
-                                                                        decomposedQueryPlanVersion,
-                                                                        QueryState::RUNNING);
-                    break;
+            // Iterate over deployment context and update execution plan
+            for (const auto& deploymentContext : deploymentContexts) {
+                auto WorkerId = deploymentContext->getWorkerId();
+                auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+                auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+                auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+                switch (decomposedQueryPlanState) {
+                    case QueryState::MARKED_FOR_REDEPLOYMENT:
+                    case QueryState::MARKED_FOR_DEPLOYMENT: {
+                        globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
+                                                                            sharedQueryId,
+                                                                            decomposedQueryPlanId,
+                                                                            decomposedQueryPlanVersion,
+                                                                            QueryState::RUNNING);
+                        break;
+                    }
+                    case QueryState::MARKED_FOR_MIGRATION: {
+                        globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
+                                                                            sharedQueryId,
+                                                                            decomposedQueryPlanId,
+                                                                            decomposedQueryPlanVersion,
+                                                                            QueryState::STOPPED);
+                        globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
+                                                                       sharedQueryId,
+                                                                       decomposedQueryPlanId,
+                                                                       decomposedQueryPlanVersion);
+                        break;
+                    }
+                    default:
+                        NES_WARNING("Unhandled Deployment context with status: {}",
+                                    magic_enum::enum_name(decomposedQueryPlanState));
                 }
-                case QueryState::MARKED_FOR_MIGRATION: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
-                                                                        sharedQueryId,
-                                                                        decomposedQueryPlanId,
-                                                                        decomposedQueryPlanVersion,
-                                                                        QueryState::STOPPED);
-                    globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
-                                                                   sharedQueryId,
-                                                                   decomposedQueryPlanId,
-                                                                   decomposedQueryPlanVersion);
-                    break;
-                }
-                default:
-                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
     } catch (RequestExecutionException& exception) {

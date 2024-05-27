@@ -224,7 +224,6 @@ nlohmann::json PlanJsonGenerator::getSharedQueryPlanAsJson(const QueryPlanPtr& q
     std::vector<nlohmann::json> edges{};
 
     std::set<OperatorId> existingNodes;
-    //    const auto& queryPlan = sharedQueryPlan->getQueryPlan();
     const auto& roots = queryPlan->getRootOperators();
     if (roots.empty()) {
         nlohmann::json node;
