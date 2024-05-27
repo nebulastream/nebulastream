@@ -41,7 +41,7 @@ uint64_t BasicPhysicalType::size() const {
         case DOUBLE: return sizeof(double);
         case BOOLEAN: return sizeof(bool);
         case CHAR: return sizeof(char);
-        case TEXT: return sizeof(uint32_t);// we store the child buffer index (NestedTupleBufferKey) in the tuple
+        case TEXT: return sizeof(uint64_t);// we store the child buffer index (NestedTupleBufferKey) in the tuple
         case UNDEFINED: return -1;
     }
     return -1;

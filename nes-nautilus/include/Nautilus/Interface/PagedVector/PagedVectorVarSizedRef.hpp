@@ -77,12 +77,6 @@ class PagedVectorVarSizedRef {
 
   private:
     /**
-     * @brief Returns the capacity per page
-     * @return UInt64
-     */
-    Value<UInt64> getCapacityPerPage();
-
-    /**
      * @brief Sets the total number of entries to the given value
      * @param val
      */

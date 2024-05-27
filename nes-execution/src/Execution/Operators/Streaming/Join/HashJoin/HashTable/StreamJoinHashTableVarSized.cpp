@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTableVarSized.hpp>
 #include <Util/Common.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 StreamJoinHashTableVarSized::StreamJoinHashTableVarSized(size_t numPartitions,
@@ -23,7 +24,8 @@ StreamJoinHashTableVarSized::StreamJoinHashTableVarSized(size_t numPartitions,
     : mask(numPartitions - 1) {
 
     for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, schema, pageSize));
+        auto memoryLayout = Util::createMemoryLayout(schema, pageSize);
+        buckets.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, memoryLayout));
     }
 }
 

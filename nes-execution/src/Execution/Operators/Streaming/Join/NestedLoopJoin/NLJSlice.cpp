@@ -15,6 +15,7 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Util/Core.hpp>
 #include <sstream>
 namespace NES::Runtime::Execution {
 
@@ -28,13 +29,15 @@ NLJSlice::NLJSlice(uint64_t windowStart,
                    uint64_t rightPageSize)
     : StreamSlice(windowStart, windowEnd) {
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
+        auto memoryLayout = Util::createMemoryLayout(leftSchema, leftPageSize);
         leftTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, leftSchema, leftPageSize));
+            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, memoryLayout));
     }
 
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
+        auto memoryLayout = Util::createMemoryLayout(rightSchema, rightPageSize);
         rightTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, rightSchema, rightPageSize));
+            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, memoryLayout));
     }
     NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
               NLJSlice::toString(),

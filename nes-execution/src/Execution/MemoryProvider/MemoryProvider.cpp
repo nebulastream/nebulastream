@@ -139,6 +139,8 @@ MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize
     } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::HYBRID_LAYOUT) {
+        NES_NOT_IMPLEMENTED();
     } else {
         NES_NOT_IMPLEMENTED();
     }

@@ -54,14 +54,17 @@ MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(b
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (size_t fieldIndex = 0; fieldIndex < schema->fields.size(); fieldIndex++) {
         auto field = schema->fields[fieldIndex];
-        auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        physicalFieldSizes.emplace_back(physicalFieldSize->size());
-        physicalTypes.emplace_back(physicalFieldSize);
-        recordSize += physicalFieldSize->size();
+        auto physicalFieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        physicalFieldSizes.emplace_back(physicalFieldType->size());
+        physicalTypes.emplace_back(physicalFieldType);
+        recordSize += physicalFieldType->size();
         nameFieldIndexMap[field->getName()] = fieldIndex;
     }
     // calculate the buffer capacity only if the record size is larger then zero
     capacity = recordSize > 0 ? bufferSize / recordSize : 0;
+
+    NES_ASSERT2_FMT(recordSize > 0, "RecordSize has to be larger than 0!");
+    NES_ASSERT2_FMT(capacity > 0, "Capacity has to be larger than 0!");
 }
 
 std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& fieldName) const {

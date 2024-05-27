@@ -17,6 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -44,19 +45,17 @@ struct VarSizedDataEntryMapValue {
  *
  * There are already issues solving these shortcoming that will improve this PagedVector implementation.
  * - #4639: Optimize appendAllPages()
- * - #4658: Add MemoryLayout class for PagedVectorVarSized to support different layouts
  */
 class PagedVectorVarSized {
   public:
     static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
-     * @brief Constructor. It calculates the entrySize and the capacityPerPage based on the schema and the pageSize.
+     * @brief Constructor. It takes a BufferManager and a MemoryLayout.
      * @param bufferManager
-     * @param schema
-     * @param pageSize
+     * @param memoryLayout
      */
-    PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
+    PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     /**
      * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
@@ -149,10 +148,7 @@ class PagedVectorVarSized {
   private:
     friend PagedVectorVarSizedRef;
     Runtime::BufferManagerPtr bufferManager;
-    SchemaPtr schema;
-    uint64_t entrySize;
-    uint64_t pageSize;
-    uint64_t capacityPerPage;
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     uint64_t totalNumberOfEntries;
     uint64_t numberOfEntriesOnCurrPage;
     std::vector<Runtime::TupleBuffer> pages;

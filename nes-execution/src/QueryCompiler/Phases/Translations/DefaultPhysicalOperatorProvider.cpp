@@ -449,6 +449,7 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
 Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
 DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperators& streamJoinOperators,
                                                         const StreamJoinConfigs& streamJoinConfig) {
+    // TODO create MemoryLayout and pass down
     using namespace Runtime::Execution;
     const auto joinOperator = streamJoinOperators.operatorNode->as<LogicalJoinOperator>();
     Operators::HJOperatorHandlerPtr joinOperatorHandler;

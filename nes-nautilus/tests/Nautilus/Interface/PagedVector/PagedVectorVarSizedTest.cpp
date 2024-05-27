@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
@@ -134,7 +135,8 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
                 differentPageSizes++;
             }
             pageSize += differentPageSizes * entrySize;
-            allPagedVectors.emplace_back(std::make_unique<PagedVectorVarSized>(bufferManager, schema, pageSize));
+            auto memoryLayout = Util::createMemoryLayout(schema, pageSize);
+            allPagedVectors.emplace_back(std::make_unique<PagedVectorVarSized>(bufferManager, memoryLayout));
             runStoreTest(*allPagedVectors.back(), schema, entrySize, pageSize, allRecords);
             runRetrieveTest(*allPagedVectors.back(), schema, allRecords);
         }
@@ -173,7 +175,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues) {
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
+    auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    PagedVectorVarSized pagedVector(bufferManager, memoryLayout);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }
@@ -188,7 +191,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
+    auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    PagedVectorVarSized pagedVector(bufferManager, memoryLayout);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }
@@ -200,7 +204,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues) {
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 2 * pageSize);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
+    auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    PagedVectorVarSized pagedVector(bufferManager, memoryLayout);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }
@@ -215,7 +220,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes) {
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
+    auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    PagedVectorVarSized pagedVector(bufferManager, memoryLayout);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }
@@ -229,7 +235,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize) {
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
+    auto memoryLayout = Util::createMemoryLayout(testSchema, pageSize);
+    PagedVectorVarSized pagedVector(bufferManager, memoryLayout);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }

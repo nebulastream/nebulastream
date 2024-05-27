@@ -92,6 +92,7 @@ Runtime::MemoryLayouts::MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schem
     switch (schema->getLayoutType()) {
         case Schema::MemoryLayoutType::ROW_LAYOUT: return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+        case Schema::MemoryLayoutType::HYBRID_LAYOUT: NES_NOT_IMPLEMENTED();
     }
 }
 

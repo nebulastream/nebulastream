@@ -257,6 +257,7 @@ std::string Schema::getLayoutTypeAsString() const {
     switch (this->layoutType) {
         case Schema::MemoryLayoutType::ROW_LAYOUT: return "ROW_LAYOUT";
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: return "COL_LAYOUT";
+        case Schema::MemoryLayoutType::HYBRID_LAYOUT: return "HYB_LAYOUT";
     }
 }
 Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }

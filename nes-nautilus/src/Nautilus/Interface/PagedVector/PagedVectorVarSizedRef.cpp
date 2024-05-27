@@ -62,8 +62,9 @@ TextValue* loadTextProxy(void* pagedVectorVarSizedPtr, uint64_t textEntryMapKey)
     return pagedVectorVarSized->loadText(textEntryMapKey);
 }
 
-Value<UInt64> PagedVectorVarSizedRef::getCapacityPerPage() {
-    return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, capacityPerPage).load<UInt64>();
+uint64_t getCapacityProxy(void* pagedVectorVarSizedPtr) {
+    auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
+    return pagedVectorVarSized->getCapacityPerPage();
 }
 
 Value<UInt64> PagedVectorVarSizedRef::getTotalNumberOfEntries() {
@@ -84,7 +85,9 @@ void PagedVectorVarSizedRef::setNumberOfEntriesOnCurrPage(const Value<>& val) {
 
 void PagedVectorVarSizedRef::writeRecord(Record record) {
     auto tuplesOnPage = getNumberOfEntriesOnCurrPage();
-    if (tuplesOnPage >= getCapacityPerPage()) {
+    auto capacityPerPage =
+        Nautilus::FunctionCall("getCapacityProxy", getCapacityProxy, pagedVectorVarSizedRef);
+    if (tuplesOnPage >= capacityPerPage) {
         Nautilus::FunctionCall("allocateNewPageVarSizedProxy", allocateNewPageVarSizedProxy, pagedVectorVarSizedRef);
         tuplesOnPage = 0_u64;
     }
