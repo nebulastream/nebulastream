@@ -67,12 +67,14 @@ void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& b
     FunctionCall<>("emitBufferProxy", emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
 }
 
-uint64_t getWorkerIdProxy(void* workerContext) {
-    auto* wc = (Runtime::WorkerContext*) workerContext;
+WorkerThreadId getWorkerThreadIdProxy(void* workerContext) {
+    auto* wc = static_cast<Runtime::WorkerContext*>(workerContext);
     return wc->getId();
 }
 
-Value<UInt64> ExecutionContext::getWorkerId() { return FunctionCall("getWorkerIdProxy", getWorkerIdProxy, workerContext); }
+ValueId<WorkerThreadId> ExecutionContext::getWorkerThreadId() {
+    return FunctionCall("getWorkerThreadIdProxy", getWorkerThreadIdProxy, workerContext);
+}
 
 Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op) {
     auto stateEntry = localStateMap.find(op);

@@ -104,7 +104,7 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
                                            Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const Value<UInt64> workerIdForPagedVectors(0_u64);
+    const ValueId<WorkerThreadId> workerThreadIdForPagedVectors(INITIAL<WorkerThreadId>);
 
     const auto hashSliceRefLeft = FunctionCall("getHashSliceRefFromIdVarSizedProxy",
                                                getHashSliceRefFromIdVarSizedProxy,

@@ -169,16 +169,16 @@ void StreamJoinOperatorHandler::setNumberOfWorkerThreads(uint64_t numberOfWorker
     StreamJoinOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
 }
 
-void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uint64_t workerId) {
-    workerIdToWatermarkMap[workerId] = watermark;
+void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, WorkerThreadId workerThreadId) {
+    workerThreadIdToWatermarkMap[workerThreadId] = watermark;
 }
 
 uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     auto minVal =
-        std::min_element(std::begin(workerIdToWatermarkMap), std::end(workerIdToWatermarkMap), [](const auto& l, const auto& r) {
+        std::min_element(std::begin(workerThreadIdToWatermarkMap), std::end(workerThreadIdToWatermarkMap), [](const auto& l, const auto& r) {
             return l.second < r.second;
         });
-    return minVal == workerIdToWatermarkMap.end() ? -1 : minVal->second;
+    return minVal == workerThreadIdToWatermarkMap.end() ? -1 : minVal->second;
 }
 
 uint64_t StreamJoinOperatorHandler::getWindowSlide() const { return sliceAssigner.getWindowSlide(); }

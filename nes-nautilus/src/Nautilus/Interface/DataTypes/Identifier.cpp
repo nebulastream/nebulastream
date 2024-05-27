@@ -11,14 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Util/CastUtils.hpp>
 
+#include <Nautilus/Interface/DataTypes/Identifier.hpp>
 namespace NES::Nautilus {
-
-TypeIdentifier::TypeIdentifier(const std::type_info& typeInfo) : typeInfo(typeInfo) {}
-
-const std::type_info& TypeIdentifier::getTypeInfo() const { return typeInfo; }
-
-Typed::Typed(const TypeIdentifier* typeIdentifier) : typeIdentifier(typeIdentifier) {}
-
+bool Identifier::isIdentifier(const Any& val) { return dynamic_cast<const Identifier*>(&val) != nullptr; }
 }// namespace NES::Nautilus
