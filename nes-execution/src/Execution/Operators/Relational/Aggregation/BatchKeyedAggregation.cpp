@@ -75,7 +75,8 @@ void BatchKeyedAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 2. load the thread local hash map according to the worker id.
-    auto hashMap = Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerThreadId());
+    auto hashMap =
+        Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerThreadId());
     auto hashMapRef = Interface::ChainedHashMapRef(hashMap, keyDataTypes, keySize, valueSize);
 
     // 3. store the reference to the hash map in the local operator state.

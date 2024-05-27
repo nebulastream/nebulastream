@@ -49,7 +49,8 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      * @param timestamp
      * @return StatisticPtr
      */
-    Statistic::StatisticPtr getStatistic(WorkerThreadId workerThreadId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
+    Statistic::StatisticPtr
+    getStatistic(WorkerThreadId workerThreadId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
 
     /**
      * @brief Checks if we can/have to send/emit sketches to the sink
