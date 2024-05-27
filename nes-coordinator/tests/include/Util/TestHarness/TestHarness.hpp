@@ -255,7 +255,7 @@ class TestHarness {
      * @param newAppendMode The file sink APPEND mode (i.e., APPEND to append, OVERWRITE to overwrite).
      * @return This test harness.
      */
-    TestHarness& setAppendMode(bool newAppendMode);
+    TestHarness& setAppendMode(const std::string_view newAppendMode);
 
     /**
      * @brief Method to setup the topology

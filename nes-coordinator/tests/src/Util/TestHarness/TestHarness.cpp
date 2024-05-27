@@ -456,8 +456,8 @@ TestHarness& TestHarness::setOutputFilePath(const std::string& newOutputFilePath
     return *this;
 }
 
-TestHarness& TestHarness::setAppendMode(bool newAppendMode) {
-    this->appendMode = newAppendMode ? "APPEND" : "OVERWRITE";
+TestHarness& TestHarness::setAppendMode(const std::string_view newAppendMode) {
+    this->appendMode = newAppendMode;
     return *this;
 }
 
