@@ -70,8 +70,7 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
      * @param windowStartFieldName
      * @param windowEndFieldName
      */
-    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName,
-                                       std::string_view windowEndFieldName);
+    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
 
   private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;

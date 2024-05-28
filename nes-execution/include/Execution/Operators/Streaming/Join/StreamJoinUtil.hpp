@@ -117,8 +117,7 @@ struct JoinSchema {
  */
 struct WindowMetaData {
   public:
-    WindowMetaData(const std::string& windowStartFieldName,
-                   const std::string& windowEndFieldName)
+    WindowMetaData(const std::string& windowStartFieldName, const std::string& windowEndFieldName)
         : windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName) {}
 
     std::string windowStartFieldName;

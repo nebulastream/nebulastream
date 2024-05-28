@@ -14,20 +14,17 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <unordered_set>
+#include <utility>
 
 namespace NES {
 
@@ -92,30 +89,34 @@ bool LogicalJoinOperator::inferSchema() {
     std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
     auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinExpression());
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
-        if((*itr)->instanceOf<BinaryExpressionNode>()){
-        auto visitingOp = (*itr)->as<BinaryExpressionNode>();
-        if (visitedExpressions.contains(visitingOp)) {
-            // skip rest of the steps as the node found in already visited node list
-            continue;
-        }else{
-            visitedExpressions.insert(visitingOp);
-            if(!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()){
-                //Find the schema for left and right join key
-                const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft()->as<FieldAccessExpressionNode>();
-                const auto leftJoinKeyName = leftJoinKey->getFieldName();
-                const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
-                NES_ASSERT_THROW_EXCEPTION(foundLeftKey, TypeInferenceException,
-                               "LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName + " in schemas.");
-                const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight()->as<FieldAccessExpressionNode>();
-                const auto rightJoinKeyName = rightJoinKey->getFieldName();
-                const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
-                NES_ASSERT_THROW_EXCEPTION(foundRightKey,TypeInferenceException,
-                               "LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName + " in schemas.");
-
-                NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
+        if ((*itr)->instanceOf<BinaryExpressionNode>()) {
+            auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+            if (visitedExpressions.contains(visitingOp)) {
+                // skip rest of the steps as the node found in already visited node list
+                continue;
+            } else {
                 visitedExpressions.insert(visitingOp);
+                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) {
+                    //Find the schema for left and right join key
+                    const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft()->as<FieldAccessExpressionNode>();
+                    const auto leftJoinKeyName = leftJoinKey->getFieldName();
+                    const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
+                    NES_ASSERT_THROW_EXCEPTION(foundLeftKey,
+                                               TypeInferenceException,
+                                               "LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName
+                                                   + " in schemas.");
+                    const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight()->as<FieldAccessExpressionNode>();
+                    const auto rightJoinKeyName = rightJoinKey->getFieldName();
+                    const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
+                    NES_ASSERT_THROW_EXCEPTION(foundRightKey,
+                                               TypeInferenceException,
+                                               "LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName
+                                                   + " in schemas.");
+
+                    NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
+                    visitedExpressions.insert(visitingOp);
+                }
             }
-        }
         }
     }
     // Clearing now the distinct schemas

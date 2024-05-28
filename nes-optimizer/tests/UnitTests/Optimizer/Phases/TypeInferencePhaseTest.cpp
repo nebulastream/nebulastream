@@ -1227,7 +1227,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 18);
     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2default_logical3default_logical4$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2default_logical3default_logical4$end"));
-     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2$start"));
+    EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2$end"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical$f1"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical$f2"));

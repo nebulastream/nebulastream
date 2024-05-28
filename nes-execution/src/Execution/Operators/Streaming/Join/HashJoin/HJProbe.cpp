@@ -185,14 +185,14 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
                     Record joinedRecord;
                     createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-                    if (joinExpression->execute(joinedRecord).as<Boolean>()){
+                    if (joinExpression->execute(joinedRecord).as<Boolean>()) {
                         // Calling the child operator for this joinedRecord
                         child->execute(ctx, joinedRecord);
                     }//end of key expression compare
-                }//end of for every right key
-            }//end of for every right page
-        }//end of for every left key
-    }//end of for every left page
+                }    //end of for every right key
+            }        //end of for every right page
+        }            //end of for every left key
+    }                //end of for every left page
 }
 
 HJProbe::HJProbe(const uint64_t operatorHandlerIndex,

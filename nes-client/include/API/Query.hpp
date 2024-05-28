@@ -482,9 +482,7 @@ class Query {
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(const Query& subQueryRhs,
-                    ExpressionNodePtr joinExpression,
-                    Windowing::WindowTypePtr const& windowType);
+    Query& joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -507,9 +505,7 @@ class Query {
      * @param windowType Window definition.
      * @return the query
      */
-    Query& andWith(const Query& subQueryRhs,
-                   ExpressionNodePtr joinExpressions,
-                   Windowing::WindowTypePtr const& windowType);
+    Query& andWith(const Query& subQueryRhs, ExpressionNodePtr joinExpressions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -521,9 +517,7 @@ class Query {
      * @param windowType Window definition.
      * @return the query
      */
-    Query& seqWith(const Query& subQueryRhs,
-                   ExpressionNodePtr joinExpressions,
-                   Windowing::WindowTypePtr const& windowType);
+    Query& seqWith(const Query& subQueryRhs, ExpressionNodePtr joinExpressions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use

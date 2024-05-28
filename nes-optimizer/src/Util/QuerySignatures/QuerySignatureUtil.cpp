@@ -34,11 +34,6 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunction.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
@@ -51,6 +46,7 @@
 #include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
+#include <Util/UtilityFunction.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <z3++.h>
 
