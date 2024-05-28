@@ -50,7 +50,7 @@ void checkEquiWidthHistogramSendingProxy(void* ptrOpHandler,
     opHandler->checkStatisticsSending(bufferMetaData, statisticHash, pipelineCtx);
 }
 
-void updateEquiWidthHistogramProxy(void* ptrEquiWidthHistMemRef, uint64_t lowerBound, uint64_t upperBound, uint64_t count) {
+void updateEquiWidthHistogramProxy(void* ptrEquiWidthHistMemRef, int64_t lowerBound, int64_t upperBound, uint64_t count) {
     NES_ASSERT2_FMT(ptrEquiWidthHistMemRef != nullptr, "equiWidthHistMemRef context should not be null");
     auto* equiWidthHist = static_cast<Statistic::EquiWidthHistogramStatistic*>(ptrEquiWidthHistMemRef);
     equiWidthHist->update(lowerBound, upperBound, count);
@@ -68,7 +68,7 @@ void EquiWidthHistogramBuild::execute(ExecutionContext& ctx, Record& record) con
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    // 1. Get the memRef to the EquiWidthHistogram sketch
+    //Get the memRef to the EquiWidthHistogram sketch
     auto timestampVal = timeFunction->getTs(ctx, record);
     auto equiWidthHistMemRef = Nautilus::FunctionCall("getEquiWidthHistogramRefProxy", getEquiWidthHistogramRefProxy,
                                                  operatorHandlerMemRef, Value<UInt64>(metricHash), ctx.getCurrentStatisticId(),

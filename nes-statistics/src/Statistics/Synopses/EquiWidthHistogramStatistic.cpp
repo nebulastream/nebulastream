@@ -40,7 +40,7 @@ StatisticPtr EquiWidthHistogramStatistic::createInit(const Windowing::TimeMeasur
     return std::make_shared<EquiWidthHistogramStatistic>(EquiWidthHistogramStatistic(startTs, endTs, observedTuples, binWidth, std::vector<Bin>{}));
 }
 
-void EquiWidthHistogramStatistic::update(uint64_t lowerBound, uint64_t upperBound, uint64_t increment) {
+void EquiWidthHistogramStatistic::update(int64_t lowerBound, int64_t upperBound, uint64_t increment) {
     // First, we find the bin belonging to the lowerBound and upperBound
     auto bin = std::find_if(equiWidthData.begin(), equiWidthData.end(), [lowerBound, upperBound](const Bin& bin) {
         return bin.lowerBound == lowerBound && bin.upperBound == upperBound;
@@ -109,7 +109,7 @@ std::string EquiWidthHistogramStatistic::getEquiWidthHistDataAsString() const {
 
 }
 
-uint64_t EquiWidthHistogramStatistic::getCountForValue(uint64_t value) const {
+uint64_t EquiWidthHistogramStatistic::getCountForValue(int64_t value) const {
     // This is not the most optimal and most efficient, but good enough for now
     const auto bin = std::find_if(equiWidthData.begin(), equiWidthData.end(), [value](const Bin& bin) {
         return bin.lowerBound <= value && bin.upperBound >= value;

@@ -25,13 +25,13 @@ class EquiWidthHistogramStatistic : public SynopsesStatistic {
   public:
 
     struct Bin {
-        Bin(uint64_t lowerBound, uint64_t upperBound, uint64_t count) : lowerBound(lowerBound), upperBound(upperBound), count(count) {}
+        Bin(int64_t lowerBound, int64_t upperBound, uint64_t count) : lowerBound(lowerBound), upperBound(upperBound), count(count) {}
         Bin() : Bin(0, 0, 0) {}
         bool operator==(const Bin& other) const {
             return lowerBound == other.lowerBound && upperBound == other.upperBound && count == other.count;
         }
-        uint64_t lowerBound;
-        uint64_t upperBound;
+        int64_t lowerBound;
+        int64_t upperBound;
         uint64_t count;
     };
 
@@ -52,7 +52,7 @@ class EquiWidthHistogramStatistic : public SynopsesStatistic {
      * @param upperBound
      * @param increment
      */
-    void update(uint64_t lowerBound, uint64_t upperBound, uint64_t increment);
+    void update(int64_t lowerBound, int64_t upperBound, uint64_t increment);
 
 
     void* getStatisticData() const override;
@@ -62,7 +62,7 @@ class EquiWidthHistogramStatistic : public SynopsesStatistic {
     std::string getEquiWidthHistDataAsString() const;
     uint64_t getNumberOfBins() const;
     uint64_t getBinWidth() const;
-    uint64_t getCountForValue(uint64_t value) const;
+    uint64_t getCountForValue(int64_t value) const;
 
 
   private:
