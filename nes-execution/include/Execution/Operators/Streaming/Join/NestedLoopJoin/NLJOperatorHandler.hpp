@@ -38,10 +38,8 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
                        const OriginId outputOriginId,
                        const uint64_t windowSize,
                        const uint64_t windowSlide,
-                       const SchemaPtr& leftSchema,
-                       const SchemaPtr& rightSchema,
-                       const uint64_t pageSizeLeft,
-                       const uint64_t pageSizeRight);
+                       const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                       const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout);
 
     ~NLJOperatorHandler() override = default;
 
@@ -51,17 +49,13 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
                              StreamSlice& sliceRight,
                              const WindowInfo& windowInfo,
                              PipelineExecutionContext* pipelineCtx) override;
-
-  protected:
-    const uint64_t pageSizeLeft;
-    const uint64_t pageSizeRight;
 };
 
 /**
  * @brief Proxy function for returning the pointer to the correct PagedVector
  * @param ptrNljWindow
  * @param workerId
- * @param joinBuildSide
+ * @param joinBuildSideInt
  * @return void* that will be translated to a MemRef
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt);

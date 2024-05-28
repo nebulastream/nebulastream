@@ -33,6 +33,7 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Core.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <string>
@@ -178,14 +179,14 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(1);
+        auto leftMemoryLayout = NES::Util::createMemoryLayout(leftSchema, leftPageSize);
+        auto rightMemoryLayout = NES::Util::createMemoryLayout(rightSchema, rightPageSize);
         auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(originIds,
                                                                                outputOriginId,
                                                                                windowSize,
                                                                                windowSize,
-                                                                               leftSchema,
-                                                                               rightSchema,
-                                                                               leftPageSize,
-                                                                               rightPageSize);
+                                                                               leftMemoryLayout,
+                                                                               rightMemoryLayout);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

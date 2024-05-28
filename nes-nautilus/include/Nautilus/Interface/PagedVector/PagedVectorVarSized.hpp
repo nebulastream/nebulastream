@@ -48,8 +48,6 @@ struct VarSizedDataEntryMapValue {
  */
 class PagedVectorVarSized {
   public:
-    static constexpr uint64_t PAGE_SIZE = 4096;
-
     /**
      * @brief Constructor. It takes a BufferManager and a MemoryLayout.
      * @param bufferManager
@@ -101,13 +99,13 @@ class PagedVectorVarSized {
      * @brief Returns the number of pages.
      * @return uint64_t
      */
-    uint64_t getNumberOfPages();
+    uint64_t getNumberOfPages() const;
 
     /**
      * @brief Returns the number of varSizedPages.
      * @return uint64_t
      */
-    uint64_t getNumberOfVarSizedPages();
+    uint64_t getNumberOfVarSizedPages() const;
 
     /**
      * @brief Return the total number of entries across all pages.

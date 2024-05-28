@@ -35,6 +35,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <random>
 
@@ -84,6 +85,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
     std::shared_ptr<Runtime::BufferManager> bm;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
+    MemoryLayouts::MemoryLayoutPtr leftMemoryLayout;
+    MemoryLayouts::MemoryLayoutPtr rightMemoryLayout;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
     std::string timestampFieldNameLeft;
@@ -106,6 +109,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
         rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test2");
+        leftMemoryLayout = NES::Util::createMemoryLayout(leftSchema, leftPageSize);
+        rightMemoryLayout = NES::Util::createMemoryLayout(rightSchema, rightPageSize);
 
         joinFieldNameLeft = leftSchema->get(1)->getName();
         joinFieldNameRight = rightSchema->get(1)->getName();
@@ -116,10 +121,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                                           OriginId(1),
                                                                           windowSize,
                                                                           windowSize,
-                                                                          leftSchema,
-                                                                          rightSchema,
-                                                                          leftPageSize,
-                                                                          rightPageSize);
+                                                                          leftMemoryLayout,
+                                                                          rightMemoryLayout);
         bm = std::make_shared<BufferManager>(8196, 5000);
         nljOperatorHandler->setBufferManager(bm);
     }
@@ -520,10 +523,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
                                                                       OriginId(1),
                                                                       windowSize,
                                                                       windowSize,
-                                                                      leftSchema,
-                                                                      rightSchema,
-                                                                      leftPageSize,
-                                                                      rightPageSize);
+                                                                      leftMemoryLayout,
+                                                                      rightMemoryLayout);
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }

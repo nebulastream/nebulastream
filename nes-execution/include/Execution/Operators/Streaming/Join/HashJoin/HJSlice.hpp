@@ -36,22 +36,21 @@ class HJSlice : public StreamSlice {
     /**
      * @brief Constructor for a StreamJoinWindow
      * @param numberOfWorkerThreads
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
      * @param sliceStart
      * @param sliceEnd
+     * @param leftMemoryLayout
+     * @param rightMemoryLayout
      * @param maxHashTableSize
-     * @param pageSize
      * @param preAllocPageSizeCnt
      * @param numPartitions
+     * @param joinStrategy
      */
     explicit HJSlice(size_t numberOfWorkerThreads,
                      uint64_t sliceStart,
                      uint64_t sliceEnd,
-                     size_t sizeOfRecordLeft,
-                     size_t sizeOfRecordRight,
+                     const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                     const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                      size_t maxHashTableSize,
-                     size_t pageSize,
                      size_t preAllocPageSizeCnt,
                      size_t numPartitions,
                      QueryCompilation::StreamJoinStrategy joinStrategy);

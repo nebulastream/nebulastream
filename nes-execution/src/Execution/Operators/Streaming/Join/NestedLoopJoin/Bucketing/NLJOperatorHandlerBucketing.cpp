@@ -19,35 +19,22 @@ NLJOperatorHandlerBucketing::NLJOperatorHandlerBucketing(const std::vector<Origi
                                                          const OriginId outputOriginId,
                                                          const uint64_t windowSize,
                                                          const uint64_t windowSlide,
-                                                         const SchemaPtr& leftSchema,
-                                                         const SchemaPtr& rightSchema,
-                                                         const uint64_t pageSizeLeft,
-                                                         const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
-      NLJOperatorHandler(inputOrigins,
-                         outputOriginId,
-                         windowSize,
-                         windowSlide,
-                         leftSchema,
-                         rightSchema,
-                         pageSizeLeft,
-                         pageSizeRight) {}
+                                                         const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                                                         const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftMemoryLayout, rightMemoryLayout),
+      NLJOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftMemoryLayout, rightMemoryLayout) {}
 
 NLJOperatorHandlerPtr NLJOperatorHandlerBucketing::create(const std::vector<OriginId>& inputOrigins,
                                                           const OriginId outputOriginId,
                                                           const uint64_t windowSize,
                                                           const uint64_t windowSlide,
-                                                          const SchemaPtr& leftSchema,
-                                                          const SchemaPtr& rightSchema,
-                                                          const uint64_t pageSizeLeft,
-                                                          const uint64_t pageSizeRight) {
+                                                          const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                                                          const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout) {
     return std::make_shared<NLJOperatorHandlerBucketing>(inputOrigins,
                                                          outputOriginId,
                                                          windowSize,
                                                          windowSlide,
-                                                         leftSchema,
-                                                         rightSchema,
-                                                         pageSizeLeft,
-                                                         pageSizeRight);
+                                                         leftMemoryLayout,
+                                                         rightMemoryLayout);
 }
 }// namespace NES::Runtime::Execution::Operators

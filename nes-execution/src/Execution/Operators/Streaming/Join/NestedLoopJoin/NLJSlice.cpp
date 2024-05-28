@@ -23,21 +23,17 @@ NLJSlice::NLJSlice(uint64_t windowStart,
                    uint64_t windowEnd,
                    uint64_t numberOfWorker,
                    BufferManagerPtr& bufferManager,
-                   SchemaPtr& leftSchema,
-                   uint64_t leftPageSize,
-                   SchemaPtr& rightSchema,
-                   uint64_t rightPageSize)
+                   MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                   MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout)
     : StreamSlice(windowStart, windowEnd) {
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        auto memoryLayout = Util::createMemoryLayout(leftSchema, leftPageSize);
         leftTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, memoryLayout));
+            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, leftMemoryLayout));
     }
 
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        auto memoryLayout = Util::createMemoryLayout(rightSchema, rightPageSize);
         rightTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, memoryLayout));
+            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, rightMemoryLayout));
     }
     NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
               NLJSlice::toString(),

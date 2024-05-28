@@ -44,15 +44,15 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
+     * @param leftMemoryLayout
+     * @param rightMemoryLayout
      */
     StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                               const OriginId outputOriginId,
                               const uint64_t windowSize,
                               const uint64_t windowSlide,
-                              const SchemaPtr& leftSchema,
-                              const SchemaPtr& rightSchema);
+                              MemoryLayouts::MemoryLayoutPtr leftMemoryLayout,
+                              MemoryLayouts::MemoryLayoutPtr rightMemoryLayout);
 
     ~StreamJoinOperatorHandler() override = default;
 
@@ -190,11 +190,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     const OriginId outputOriginId;
     std::atomic<uint64_t> sequenceNumber;
     std::atomic<bool> alreadySetup{false};
-    // TODO with issue #4517 we can remove the sizes
-    size_t sizeOfRecordLeft;
-    size_t sizeOfRecordRight;
-    SchemaPtr leftSchema;
-    SchemaPtr rightSchema;
+    MemoryLayouts::MemoryLayoutPtr leftMemoryLayout;
+    MemoryLayouts::MemoryLayoutPtr rightMemoryLayout;
     BufferManagerPtr bufferManager;
 };
 }// namespace NES::Runtime::Execution::Operators

@@ -34,19 +34,17 @@ class HJSliceVarSized : public StreamSlice {
       * @param numberOfWorker
       * @param sliceStart
       * @param sliceEnd
-      * @param leftSchema
-      * @param rightSchema
+      * @param leftMemoryLayout
+      * @param rightMemoryLayout
       * @param bufferManager
-      * @param pageSize
       * @param numPartitions
       */
     explicit HJSliceVarSized(size_t numberOfWorker,
                              uint64_t sliceStart,
                              uint64_t sliceEnd,
-                             SchemaPtr& leftSchema,
-                             SchemaPtr& rightSchema,
+                             MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                             MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                              BufferManagerPtr& bufferManager,
-                             size_t pageSize,
                              size_t numPartitions);
 
     ~HJSliceVarSized() override = default;

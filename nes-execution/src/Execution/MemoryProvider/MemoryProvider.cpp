@@ -106,10 +106,10 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
         switch (basicType->nativeType) {
             case BasicPhysicalType::NativeType::TEXT: {
                 auto textValue = value.as<Nautilus::Text>();
-                auto childIndex = Nautilus::FunctionCall("storeAssociatedTextValue",
-                                                         storeAssociatedTextValue,
-                                                         bufferReference,
-                                                         textValue->getReference());
+                auto childIndex = FunctionCall("storeAssociatedTextValue",
+                                                           storeAssociatedTextValue,
+                                                           bufferReference,
+                                                           textValue->getReference());
                 fieldReference.store(childIndex);
                 return value;
             };
@@ -135,10 +135,10 @@ MemoryProvider::~MemoryProvider() {}
 MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema) {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         auto rowMemoryLayout = MemoryLayouts::RowLayout::create(schema, bufferSize);
-        return std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+        return std::make_unique<RowMemoryProvider>(rowMemoryLayout);
     } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
-        return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+        return std::make_unique<ColumnMemoryProvider>(columnMemoryLayout);
     } else if (schema->getLayoutType() == Schema::MemoryLayoutType::HYBRID_LAYOUT) {
         NES_NOT_IMPLEMENTED();
     } else {

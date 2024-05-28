@@ -26,6 +26,7 @@
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
   public:
+    static constexpr uint64_t PAGE_SIZE = 4096;
     std::shared_ptr<Runtime::BufferManager> bufferManager;
 
     /* Will be called before any test in this class are executed. */
@@ -62,7 +63,7 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
                 auto tupleNo = schema->getSize() * i + fieldCnt++;
 
                 if (fieldType->isText()) {
-                    auto buffer = bufferManager->getUnpooledBuffer(PagedVectorVarSized::PAGE_SIZE);
+                    auto buffer = bufferManager->getUnpooledBuffer(PAGE_SIZE);
                     if (buffer.has_value()) {
                         std::stringstream ss;
                         ss << "testing TextValue" << tupleNo;
@@ -171,7 +172,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues) {
                           ->addField(createField("value2", BasicType::UINT64))
                           ->addField(createField("value3", BasicType::UINT64));
     const auto entrySize = 3 * sizeof(uint64_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto pageSize = PAGE_SIZE;
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
@@ -187,7 +188,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
                           ->addField(createField("value2", BasicType::TEXT))
                           ->addField(createField("value3", BasicType::TEXT));
     const auto entrySize = 3 * sizeof(uint64_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto pageSize = PAGE_SIZE;
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
@@ -216,7 +217,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes) {
                           ->addField(createField("value2", BasicType::TEXT))
                           ->addField(createField("value3", BasicType::FLOAT64));
     const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto pageSize = PAGE_SIZE;
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
@@ -246,7 +247,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors) {
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::TEXT));
     const auto entrySize = 2 * sizeof(uint64_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto pageSize = PAGE_SIZE;
     const auto numItems = 507_u64;
     const auto numVectors = 2_u64;
     const auto totalNumTextFields = 1 * numItems * numVectors;
@@ -272,7 +273,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors) {
                           ->addField(createField("value2", BasicType::TEXT))
                           ->addField(createField("value3", BasicType::FLOAT64));
     const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto pageSize = PAGE_SIZE;
     const auto numItems = 507_u64;
     const auto numVectors = 4_u64;
     const auto totalNumTextFields = 1 * numItems * numVectors;
@@ -298,7 +299,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectorsWithDifferentPageSi
                           ->addField(createField("value2", BasicType::TEXT))
                           ->addField(createField("value3", BasicType::FLOAT64));
     const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto pageSize = PAGE_SIZE;
     const auto numItems = 507_u64;
     const auto numVectors = 4_u64;
     const auto totalNumTextFields = 1 * numItems * numVectors;

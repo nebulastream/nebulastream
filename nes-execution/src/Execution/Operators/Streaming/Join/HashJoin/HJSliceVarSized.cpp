@@ -63,27 +63,25 @@ void HJSliceVarSized::mergeLocalToGlobalHashTable() {
 HJSliceVarSized::HJSliceVarSized(size_t numberOfWorker,
                                  uint64_t sliceStart,
                                  uint64_t sliceEnd,
-                                 SchemaPtr& leftSchema,
-                                 SchemaPtr& rightSchema,
+                                 MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                                 MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                                  BufferManagerPtr& bufferManager,
-                                 size_t pageSize,
                                  size_t numPartitions)
     : StreamSlice(sliceStart, sliceEnd), mergingHashTableLeftSide(Operators::MergingHashTableVarSized(numPartitions)),
       mergingHashTableRightSide(Operators::MergingHashTableVarSized(numPartitions)), alreadyMergedLocalToGlobalHashTable(false) {
 
     for (auto i = 0UL; i < numberOfWorker; ++i) {
         hashTableLeftSide.emplace_back(
-            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, pageSize, leftSchema));
+            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, leftMemoryLayout));
     }
     for (auto i = 0UL; i < numberOfWorker; ++i) {
         hashTableRightSide.emplace_back(
-            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, pageSize, rightSchema));
+            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, rightMemoryLayout));
     }
 
-    NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} ",
+    NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={}",
               numberOfWorker,
-              numPartitions,
-              pageSize);
+              numPartitions);
 }
 
 std::string HJSliceVarSized::toString() {

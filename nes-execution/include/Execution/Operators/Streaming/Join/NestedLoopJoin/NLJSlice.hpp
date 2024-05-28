@@ -36,19 +36,15 @@ class NLJSlice : public StreamSlice {
      * @param sliceEnd: End timestamp of this slice
      * @param numWorkerThreads: The number of worker threads that will operate on this slice
      * @param bufferManager: Allocates pages for both pagedVectorVarSized
-     * @param leftSchema: schema of the tuple on the left
-     * @param rightSchema: schema of the tuple on the right
-     * @param leftPageSize: Size of a single page for the left paged vectors
-     * @param rightPageSize: Size of a singe page for the right paged vectors
+     * @param leftMemoryLayout: memory layout of the tuples on the left
+     * @param rightMemoryLayout: memory layout of the tuples on the right
      */
     explicit NLJSlice(uint64_t sliceStart,
                       uint64_t sliceEnd,
                       uint64_t numWorkerThreads,
                       BufferManagerPtr& bufferManager,
-                      SchemaPtr& leftSchema,
-                      uint64_t leftPageSize,
-                      SchemaPtr& rightSchema,
-                      uint64_t rightPageSize);
+                      MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                      MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout);
 
     ~NLJSlice() override = default;
 

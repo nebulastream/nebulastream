@@ -69,10 +69,9 @@ void HJSlice::mergeLocalToGlobalHashTable() {
 HJSlice::HJSlice(size_t numberOfWorker,
                  uint64_t sliceStart,
                  uint64_t sliceEnd,
-                 size_t sizeOfRecordLeft,
-                 size_t sizeOfRecordRight,
+                 const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                 const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                  size_t maxHashTableSize,
-                 size_t pageSize,
                  size_t preAllocPageSizeCnt,
                  size_t numPartitions,
                  QueryCompilation::StreamJoinStrategy joinStrategy)
@@ -81,47 +80,49 @@ HJSlice::HJSlice(size_t numberOfWorker,
       alreadyMergedLocalToGlobalHashTable(false), joinStrategy(joinStrategy) {
 
     std::cout << "HJSlice for sliceStart: " << sliceStart << " and sliceEnd: " << sliceEnd << std::endl;
+    auto pageSize = leftMemoryLayout->getBufferSize() > rightMemoryLayout->getBufferSize() ?
+                           leftMemoryLayout->getBufferSize() : rightMemoryLayout->getBufferSize();
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
         //TODO they all take the same allocator
         for (auto i = 0UL; i < numberOfWorker; ++i) {
-            hashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
-                                                                                       numPartitions,
-                                                                                       fixedPagesAllocator,
-                                                                                       pageSize,
-                                                                                       preAllocPageSizeCnt));
+            hashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(leftMemoryLayout->getTupleSize(),
+                                                                                         numPartitions,
+                                                                                         fixedPagesAllocator,
+                                                                                         pageSize,
+                                                                                         preAllocPageSizeCnt));
         }
 
         for (auto i = 0UL; i < numberOfWorker; ++i) {
-            hashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
-                                                                                        numPartitions,
-                                                                                        fixedPagesAllocator,
-                                                                                        pageSize,
-                                                                                        preAllocPageSizeCnt));
+            hashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(rightMemoryLayout->getTupleSize(),
+                                                                                          numPartitions,
+                                                                                          fixedPagesAllocator,
+                                                                                          pageSize,
+                                                                                          preAllocPageSizeCnt));
         }
     } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
-        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(sizeOfRecordLeft,
-                                                                                           numPartitions,
-                                                                                           fixedPagesAllocator,
-                                                                                           pageSize,
-                                                                                           preAllocPageSizeCnt));
-
-        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(sizeOfRecordRight,
-                                                                                            numPartitions,
-                                                                                            fixedPagesAllocator,
-                                                                                            pageSize,
-                                                                                            preAllocPageSizeCnt));
-    } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
-        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(sizeOfRecordLeft,
-                                                                                            numPartitions,
-                                                                                            fixedPagesAllocator,
-                                                                                            pageSize,
-                                                                                            preAllocPageSizeCnt));
-
-        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(sizeOfRecordRight,
+        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(leftMemoryLayout->getTupleSize(),
                                                                                              numPartitions,
                                                                                              fixedPagesAllocator,
                                                                                              pageSize,
                                                                                              preAllocPageSizeCnt));
+
+        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(rightMemoryLayout->getTupleSize(),
+                                                                                              numPartitions,
+                                                                                              fixedPagesAllocator,
+                                                                                              pageSize,
+                                                                                              preAllocPageSizeCnt));
+    } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(leftMemoryLayout->getTupleSize(),
+                                                                                              numPartitions,
+                                                                                              fixedPagesAllocator,
+                                                                                              pageSize,
+                                                                                              preAllocPageSizeCnt));
+
+        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(rightMemoryLayout->getTupleSize(),
+                                                                                               numPartitions,
+                                                                                               fixedPagesAllocator,
+                                                                                               pageSize,
+                                                                                               preAllocPageSizeCnt));
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -131,8 +132,8 @@ HJSlice::HJSlice(size_t numberOfWorker,
               numberOfWorker,
               numPartitions,
               pageSize,
-              sizeOfRecordLeft,
-              sizeOfRecordRight);
+              leftMemoryLayout->getTupleSize(),
+              rightMemoryLayout->getTupleSize());
 }
 
 std::string HJSlice::toString() {

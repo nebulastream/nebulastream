@@ -33,24 +33,22 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
+     * @param leftMemoryLayout
+     * @param rightMemoryLayout
      * @param joinStrategy
      * @param totalSizeForDataStructures
      * @param preAllocPageSizeCnt
-     * @param pageSize
      * @param numPartitions
      */
     HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                       const OriginId outputOriginId,
                       const uint64_t windowSize,
                       const uint64_t windowSlide,
-                      const SchemaPtr& leftSchema,
-                      const SchemaPtr& rightSchema,
+                      const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                      const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                       const QueryCompilation::StreamJoinStrategy joinStrategy,
                       uint64_t totalSizeForDataStructures,
                       uint64_t preAllocPageSizeCnt,
-                      uint64_t pageSize,
                       uint64_t numPartitions);
 
     StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
@@ -64,12 +62,6 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
      * @return
      */
     uint64_t getPreAllocPageSizeCnt() const;
-
-    /**
-     * @brief get the page size in the HT
-     * @return
-     */
-    uint64_t getPageSize() const;
 
     /**
      * @brief get the number of partitions in the HT
@@ -87,7 +79,6 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
     QueryCompilation::StreamJoinStrategy joinStrategy;
     uint64_t totalSizeForDataStructures;
     uint64_t preAllocPageSizeCnt;
-    uint64_t pageSize;
     uint64_t numPartitions;
 };
 

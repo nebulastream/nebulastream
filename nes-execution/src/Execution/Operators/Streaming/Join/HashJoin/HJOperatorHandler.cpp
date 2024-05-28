@@ -25,10 +25,9 @@ StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t s
             return std::make_shared<HJSliceVarSized>(numberOfWorkerThreads,
                                                      sliceStart,
                                                      sliceEnd,
-                                                     leftSchema,
-                                                     rightSchema,
+                                                     leftMemoryLayout,
+                                                     rightMemoryLayout,
                                                      bufferManager,
-                                                     pageSize,
                                                      numPartitions);
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL:
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
@@ -36,10 +35,9 @@ StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t s
             return std::make_shared<HJSlice>(numberOfWorkerThreads,
                                              sliceStart,
                                              sliceEnd,
-                                             sizeOfRecordLeft,
-                                             sizeOfRecordRight,
+                                             leftMemoryLayout,
+                                             rightMemoryLayout,
                                              totalSizeForDataStructures,
-                                             pageSize,
                                              preAllocPageSizeCnt,
                                              numPartitions,
                                              joinStrategy);
@@ -108,8 +106,6 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
 
 uint64_t HJOperatorHandler::getPreAllocPageSizeCnt() const { return preAllocPageSizeCnt; }
 
-uint64_t HJOperatorHandler::getPageSize() const { return pageSize; }
-
 uint64_t HJOperatorHandler::getNumPartitions() const { return numPartitions; }
 
 uint64_t HJOperatorHandler::getTotalSizeForDataStructures() const { return totalSizeForDataStructures; }
@@ -118,16 +114,15 @@ HJOperatorHandler::HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                      const OriginId outputOriginId,
                                      const uint64_t windowSize,
                                      const uint64_t windowSlide,
-                                     const SchemaPtr& leftSchema,
-                                     const SchemaPtr& rightSchema,
+                                     const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                                     const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                                      const QueryCompilation::StreamJoinStrategy joinStrategy,
                                      uint64_t totalSizeForDataStructures,
                                      uint64_t preAllocPageSizeCnt,
-                                     uint64_t pageSize,
                                      uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftMemoryLayout, rightMemoryLayout),
       joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
-      preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {}
+      preAllocPageSizeCnt(preAllocPageSizeCnt), numPartitions(numPartitions) {}
 
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");

@@ -157,9 +157,9 @@ void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other) {
 
 std::vector<Runtime::TupleBuffer>& PagedVectorVarSized::getPages() { return pages; }
 
-uint64_t PagedVectorVarSized::getNumberOfPages() { return pages.size(); }
+uint64_t PagedVectorVarSized::getNumberOfPages() const { return pages.size(); }
 
-uint64_t PagedVectorVarSized::getNumberOfVarSizedPages() { return varSizedDataPages.size(); }
+uint64_t PagedVectorVarSized::getNumberOfVarSizedPages() const { return varSizedDataPages.size(); }
 
 uint64_t PagedVectorVarSized::getNumberOfEntries() const { return totalNumberOfEntries; }
 

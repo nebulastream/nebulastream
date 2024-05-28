@@ -33,6 +33,7 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Core.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
@@ -182,18 +183,19 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         // Creating the hash join operator
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(2);
+        auto leftMemoryLayout = NES::Util::createMemoryLayout(leftSchema, Configurations::DEFAULT_HASH_PAGE_SIZE);
+        auto rightMemoryLayout = NES::Util::createMemoryLayout(rightSchema, Configurations::DEFAULT_HASH_PAGE_SIZE);
         auto hashJoinOpHandler =
             Operators::HJOperatorHandlerSlicing::create(originIds,
                                                         outputOriginId,
                                                         windowSize,
                                                         windowSlide,
-                                                        leftSchema,
-                                                        rightSchema,
+                                                        leftMemoryLayout,
+                                                        rightMemoryLayout,
                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                        NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
-                                                        NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                        NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
-                                                        NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
+                                                        Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+                                                        Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+                                                        Configurations::DEFAULT_HASH_NUM_PARTITIONS);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

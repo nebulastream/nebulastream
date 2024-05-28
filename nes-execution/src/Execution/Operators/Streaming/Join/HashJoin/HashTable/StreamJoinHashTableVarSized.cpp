@@ -19,12 +19,10 @@
 namespace NES::Runtime::Execution::Operators {
 StreamJoinHashTableVarSized::StreamJoinHashTableVarSized(size_t numPartitions,
                                                          BufferManagerPtr& bufferManager,
-                                                         size_t pageSize,
-                                                         SchemaPtr& schema)
+                                                         MemoryLayouts::MemoryLayoutPtr& memoryLayout)
     : mask(numPartitions - 1) {
 
     for (auto i = 0UL; i < numPartitions; ++i) {
-        auto memoryLayout = Util::createMemoryLayout(schema, pageSize);
         buckets.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, memoryLayout));
     }
 }

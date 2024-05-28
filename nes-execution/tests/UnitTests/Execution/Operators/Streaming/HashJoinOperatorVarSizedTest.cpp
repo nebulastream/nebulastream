@@ -24,6 +24,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -89,17 +90,17 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     OriginId outputOriginId = OriginId(1);
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
+    auto memoryLayout = NES::Util::createMemoryLayout(buildHelper.schema, buildHelper.pageSize);
     auto hashJoinOpHandler = std::dynamic_pointer_cast<Operators::HJOperatorHandlerSlicing>(
         Operators::HJOperatorHandlerSlicing::create(std::vector({OriginId(1)}),
                                                     outputOriginId,
                                                     buildHelper.windowSize,
                                                     buildHelper.windowSize,
-                                                    buildHelper.schema,
-                                                    buildHelper.schema,
+                                                    memoryLayout,
+                                                    memoryLayout,
                                                     QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
                                                     buildHelper.joinSizeInByte,
                                                     buildHelper.preAllocPageCnt,
-                                                    buildHelper.pageSize,
                                                     buildHelper.numPartitions));
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
@@ -210,17 +211,18 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
     auto inputOriginIds = std::vector({OriginId(1), OriginId(2)});
     OriginId outputOriginId = OriginId(3);
+    auto leftMemoryLayout = NES::Util::createMemoryLayout(hashJoinProbeHelper.leftSchema, hashJoinProbeHelper.pageSize);
+    auto rightMemoryLayout = NES::Util::createMemoryLayout(hashJoinProbeHelper.rightSchema, hashJoinProbeHelper.pageSize);
     auto hashJoinOpHandler =
         Operators::HJOperatorHandlerSlicing::create(inputOriginIds,
                                                     outputOriginId,
                                                     hashJoinProbeHelper.windowSize,
                                                     hashJoinProbeHelper.windowSize,
-                                                    hashJoinProbeHelper.leftSchema,
-                                                    hashJoinProbeHelper.rightSchema,
+                                                    leftMemoryLayout,
+                                                    rightMemoryLayout,
                                                     QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
                                                     hashJoinProbeHelper.joinSizeInByte,
                                                     hashJoinProbeHelper.preAllocPageCnt,
-                                                    hashJoinProbeHelper.pageSize,
                                                     hashJoinProbeHelper.numPartitions);
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;

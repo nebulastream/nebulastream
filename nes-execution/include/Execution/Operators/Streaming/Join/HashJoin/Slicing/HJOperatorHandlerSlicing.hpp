@@ -32,24 +32,22 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
+     * @param leftMemoryLayout
+     * @param rightMemoryLayout
      * @param joinStrategy
      * @param totalSizeForDataStructures
      * @param preAllocPageSizeCnt
-     * @param pageSize
      * @param numPartitions
      */
     HJOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
                              const OriginId outputOriginId,
                              const uint64_t windowSize,
                              const uint64_t windowSlide,
-                             const SchemaPtr& leftSchema,
-                             const SchemaPtr& rightSchema,
+                             const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                             const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                              const QueryCompilation::StreamJoinStrategy joinStrategy,
                              const uint64_t totalSizeForDataStructures,
                              const uint64_t preAllocPageSizeCnt,
-                             const uint64_t pageSize,
                              const uint64_t numPartitions);
 
     /**
@@ -58,12 +56,11 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
+     * @param leftMemoryLayout
+     * @param rightMemoryLayout
      * @param joinStrategy
      * @param totalSizeForDataStructures
      * @param preAllocPageSizeCnt
-     * @param pageSize
      * @param numPartitions
      * @return HJOperatorHandlerPtr
      */
@@ -71,12 +68,11 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
                                        const OriginId outputOriginId,
                                        const uint64_t windowSize,
                                        const uint64_t windowSlide,
-                                       const SchemaPtr& leftSchema,
-                                       const SchemaPtr& rightSchema,
+                                       const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                                       const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout,
                                        const QueryCompilation::StreamJoinStrategy joinStrategy,
                                        const uint64_t totalSizeForDataStructures,
                                        const uint64_t preAllocPageSizeCnt,
-                                       const uint64_t pageSize,
                                        const uint64_t numPartitions);
 };
 }// namespace NES::Runtime::Execution::Operators

@@ -28,19 +28,15 @@ class NLJOperatorHandlerBucketing : public NLJOperatorHandler, public StreamJoin
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
-     * @param pageSizeLeft
-     * @param pageSizeRight
+     * @param leftMemoryLayout
+     * @param rightMemoryLayout
      */
     NLJOperatorHandlerBucketing(const std::vector<OriginId>& inputOrigins,
                                 const OriginId outputOriginId,
                                 const uint64_t windowSize,
                                 const uint64_t windowSlide,
-                                const SchemaPtr& leftSchema,
-                                const SchemaPtr& rightSchema,
-                                const uint64_t pageSizeLeft,
-                                const uint64_t pageSizeRight);
+                                const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                                const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout);
 
     /**
      * @brief Creates a NLJOperatorHandlerBucketing
@@ -48,20 +44,16 @@ class NLJOperatorHandlerBucketing : public NLJOperatorHandler, public StreamJoin
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
-     * @param pageSizeLeft
-     * @param pageSizeRight
+     * @param leftMemoryLayout
+     * @param rightMemoryLayout
      * @return NLJOperatorHandlerPtr
      */
     static NLJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
                                         const OriginId outputOriginId,
                                         const uint64_t windowSize,
                                         const uint64_t windowSlide,
-                                        const SchemaPtr& leftSchema,
-                                        const SchemaPtr& rightSchema,
-                                        const uint64_t pageSizeLeft,
-                                        const uint64_t pageSizeRight);
+                                        const MemoryLayouts::MemoryLayoutPtr& leftMemoryLayout,
+                                        const MemoryLayouts::MemoryLayoutPtr& rightMemoryLayout);
 };
 }// namespace NES::Runtime::Execution::Operators
 
