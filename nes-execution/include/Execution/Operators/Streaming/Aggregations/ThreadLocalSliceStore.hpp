@@ -16,6 +16,7 @@
 
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <PerfCounter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
 #include <list>
@@ -70,6 +71,7 @@ class ThreadLocalSliceStore {
         }
         // Handle the individual cases and append a slice if required.
         if (sliceIter == slices.rend()) {
+            ++PerfCounterInstance.prepand;
             // We are in case 1. thus we have to prepend a new slice
             auto newSliceStart = windowAssigner.getSliceStartTs(ts);
             auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
@@ -77,6 +79,7 @@ class ThreadLocalSliceStore {
             readLock.unlock();
             return synchronizedSlices.wlock()->emplace_front(std::move(newSlice));
         } else if ((*sliceIter)->getStart() < ts && (*sliceIter)->getEnd() <= ts) {
+            ++PerfCounterInstance.insert;
             // We are in case 2. thus we have to append a new slice after the current iterator
             auto newSliceStart = windowAssigner.getSliceStartTs(ts);
             auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
@@ -85,6 +88,7 @@ class ThreadLocalSliceStore {
             auto slice = synchronizedSlices.wlock()->emplace(sliceIter.base(), std::move(newSlice));
             return *slice;
         } else if ((*sliceIter)->coversTs(ts)) {
+           PerfCounterInstance.found.fetch_add(1, std::memory_order::relaxed);
             // We are in case 3. and found a slice which covers the current ts.
             // Thus, we return a reference to the slice.
             return *sliceIter;
