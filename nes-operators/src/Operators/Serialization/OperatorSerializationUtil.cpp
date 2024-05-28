@@ -739,7 +739,8 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
 
     LogicalOperatorPtr ptr;
     auto serializedJoinExpression = joinDetails.joinexpression();
-    auto joinExpression = ExpressionSerializationUtil::deserializeExpression(serializedJoinExpression)->as<BinaryExpressionNode>();
+    auto joinExpression =
+        ExpressionSerializationUtil::deserializeExpression(serializedJoinExpression)->as<BinaryExpressionNode>();
 
     auto joinDefinition = Join::LogicalJoinDescriptor::create(joinExpression,
                                                               window,
@@ -747,8 +748,7 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
                                                               joinDetails.numberofinputedgesright(),
                                                               joinType);
     auto joinOperator = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<LogicalJoinOperator>();
-    joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(),
-                                                joinDetails.windowendfieldname());
+    joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(), joinDetails.windowendfieldname());
     joinOperator->setOriginId(OriginId(joinDetails.origin()));
     return joinOperator;
 

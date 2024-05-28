@@ -99,8 +99,8 @@ StreamJoinProbe::StreamJoinProbe(const uint64_t operatorHandlerIndex,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy,
                                  bool withDeletion)
-    : StreamJoinOperator(joinStrategy, windowingStrategy), operatorHandlerIndex(operatorHandlerIndex), joinSchema(joinSchema), withDeletion(withDeletion),
-      joinExpression(joinExpression), windowMetaData(windowMetaData) {}
+    : StreamJoinOperator(joinStrategy, windowingStrategy), operatorHandlerIndex(operatorHandlerIndex), joinSchema(joinSchema),
+      withDeletion(withDeletion), joinExpression(joinExpression), windowMetaData(windowMetaData) {}
 
 void StreamJoinProbe::terminate(ExecutionContext& ctx) const {
     // Delete all slices, as the query has ended

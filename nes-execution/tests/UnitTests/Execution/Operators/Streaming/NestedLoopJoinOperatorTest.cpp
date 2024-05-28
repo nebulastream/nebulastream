@@ -19,6 +19,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -39,7 +40,6 @@
 #include <Util/Common.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <random>
-#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -371,7 +371,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                         joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                     }
 
-                    if (joinExpression->execute(joinedRecord).as<Boolean>()){
+                    if (joinExpression->execute(joinedRecord).as<Boolean>()) {
                         auto it = std::find(collector->records.begin(), collector->records.end(), joinedRecord);
                         if (it == collector->records.end()) {
                             NES_ERROR("Could not find joinedRecord {} in the emitted records!", joinedRecord.toString());
@@ -394,9 +394,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      * @param allRightRecords
      */
     void checkWindowsInProbe(uint64_t maxTimestamp, std::vector<Record>& allLeftRecords, std::vector<Record>& allRightRecords) {
-        Operators::JoinSchema joinSchema(leftSchema,
-                                         rightSchema,
-                                         Util::createJoinSchema(leftSchema, rightSchema));
+        Operators::JoinSchema joinSchema(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
         Operators::WindowMetaData windowMetaData(joinSchema.joinSchema->get(0)->getName(),
                                                  joinSchema.joinSchema->get(1)->getName());
 
@@ -543,7 +541,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleExpression
     auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>("test1$value");
     auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>("test2$value");
     auto expression = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey, onRightKey);
-    joinExpression = std::make_shared<Expressions::AndExpression>(joinExpression,expression);
+    joinExpression = std::make_shared<Expressions::AndExpression>(joinExpression, expression);
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }

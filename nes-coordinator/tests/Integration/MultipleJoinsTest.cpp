@@ -114,7 +114,7 @@ TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
                            .where(Attribute("id") == Attribute("id2"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(Query::from("window3"))
-                           .where(Attribute("id") == Attribute("id3") )
+                           .where(Attribute("id") == Attribute("id3"))
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     runJoinQuery(query, csvFileParams, joinParams, expectedOutput);
 }
