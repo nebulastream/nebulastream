@@ -113,19 +113,16 @@ struct JoinSchema {
 };
 
 /**
- * @brief Stores the window start, window end and join key field name
+ * @brief Stores the window start and window end
  */
 struct WindowMetaData {
   public:
     WindowMetaData(const std::string& windowStartFieldName,
-                   const std::string& windowEndFieldName,
-                   const std::string& windowKeyFieldName)
-        : windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName),
-          windowKeyFieldName(windowKeyFieldName) {}
+                   const std::string& windowEndFieldName)
+        : windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName) {}
 
     std::string windowStartFieldName;
     std::string windowEndFieldName;
-    std::string windowKeyFieldName;
 };
 
 }// namespace Operators
@@ -136,10 +133,9 @@ namespace Util {
  * @brief Creates the join schema from the left and right schema
  * @param leftSchema
  * @param rightSchema
- * @param keyFieldName
- * @return
+ * @return outputSchema
  */
-SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const std::string& keyFieldName);
+SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema);
 
 }// namespace Util
 }// namespace NES::Runtime::Execution

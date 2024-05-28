@@ -10,5 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Expressions)
-add_subdirectory(Util)
+add_source_files(nes-expressions
+        UtilityFunction.cpp
+)

@@ -48,8 +48,7 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
      */
     StreamJoinProbe(const uint64_t operatorHandlerIndex,
                     const JoinSchema& joinSchema,
-                    std::string joinFieldNameLeft,
-                    std::string joinFieldNameRight,
+                    Expressions::ExpressionPtr joinExpression,
                     const WindowMetaData& windowMetaData,
                     QueryCompilation::StreamJoinStrategy joinStrategy,
                     QueryCompilation::WindowingStrategy windowingStrategy,
@@ -86,6 +85,7 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
     const uint64_t operatorHandlerIndex;
     const JoinSchema joinSchema;
     bool withDeletion;
+    Expressions::ExpressionPtr joinExpression;
 
     // TODO these will be replaced by an interface function with #3691
     const std::string joinFieldNameLeft;

@@ -636,8 +636,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     auto joinDetails = SerializableOperator_JoinDetails();
     auto joinDefinition = joinOperator.getJoinDefinition();
 
-    ExpressionSerializationUtil::serializeExpression(joinDefinition->getLeftJoinKey(), joinDetails.mutable_onleftkey());
-    ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightJoinKey(), joinDetails.mutable_onrightkey());
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getJoinExpression(), joinDetails.mutable_joinexpression());
 
     auto windowType = joinDefinition->getWindowType();
     auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
@@ -673,7 +672,6 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
     joinDetails.set_windowstartfieldname(joinOperator.getWindowStartFieldName());
     joinDetails.set_windowendfieldname(joinOperator.getWindowEndFieldName());
-    joinDetails.set_windowkeyfieldname(joinOperator.getWindowKeyFieldName());
     joinDetails.set_origin(joinOperator.getOutputOriginIds()[0].getRawValue());
 
     if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::INNER_JOIN) {
@@ -740,20 +738,17 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
     }
 
     LogicalOperatorPtr ptr;
-    auto leftKeyAccessExpression =
-        ExpressionSerializationUtil::deserializeExpression(joinDetails.onleftkey())->as<FieldAccessExpressionNode>();
-    auto rightKeyAccessExpression =
-        ExpressionSerializationUtil::deserializeExpression(joinDetails.onrightkey())->as<FieldAccessExpressionNode>();
-    auto joinDefinition = Join::LogicalJoinDescriptor::create(leftKeyAccessExpression,
-                                                              rightKeyAccessExpression,
+    auto serializedJoinExpression = joinDetails.joinexpression();
+    auto joinExpression = ExpressionSerializationUtil::deserializeExpression(serializedJoinExpression)->as<BinaryExpressionNode>();
+
+    auto joinDefinition = Join::LogicalJoinDescriptor::create(joinExpression,
                                                               window,
                                                               joinDetails.numberofinputedgesleft(),
                                                               joinDetails.numberofinputedgesright(),
                                                               joinType);
     auto joinOperator = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<LogicalJoinOperator>();
     joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(),
-                                                joinDetails.windowendfieldname(),
-                                                joinDetails.windowkeyfieldname());
+                                                joinDetails.windowendfieldname());
     joinOperator->setOriginId(OriginId(joinDetails.origin()));
     return joinOperator;
 

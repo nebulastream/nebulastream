@@ -137,8 +137,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
     Query subQuery = Query::from("src1");
     Query query = Query::from("src2")
                       .joinWith(subQuery)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(windowType1)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -174,8 +173,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
     Query subQuery = Query::from("src2");
     Query query = Query::from("src1")
                       .joinWith(subQuery)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(windowType1)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -213,8 +211,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
     Query query = Query::from("src2")
                       .unionWith(subQuery1)
                       .joinWith(subQuery2)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(windowType1)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -263,8 +260,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
     Query query = Query::from("src1")
                       .unionWith(subQuery1)
                       .joinWith(subQuery2)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(windowType1)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();

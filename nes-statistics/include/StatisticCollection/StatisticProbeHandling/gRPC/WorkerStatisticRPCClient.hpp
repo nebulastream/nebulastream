@@ -20,6 +20,7 @@
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
+#include <Statistics/StatisticValue.hpp>
 
 using grpc::Channel;
 using grpc::ClientAsyncResponseReader;

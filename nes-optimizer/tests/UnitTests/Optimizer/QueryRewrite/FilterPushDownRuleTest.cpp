@@ -1004,8 +1004,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToSrc1) {
 
     Query query = Query::from("src1")
                       .joinWith(subQuery)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                       .filter(Attribute("A") < 9999)
                       .sink(printSinkDescriptor);
@@ -1078,8 +1077,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinNotPossible) {
 
     Query query = Query::from("src1")
                       .joinWith(subQuery)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                       .filter(Attribute("src1$A") < 9999 || Attribute("src2$X") < 9999)
                       .sink(printSinkDescriptor);
@@ -1155,8 +1153,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToBothSourcesLeft) {
 
     Query query = Query::from("src1")
                       .joinWith(subQuery)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                       .filter(Attribute("src1$id") < 9999)
                       .sink(printSinkDescriptor);
@@ -1244,8 +1241,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToBothSourcesRight) {
 
     Query query = Query::from("src1")
                       .joinWith(subQuery)
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                       .filter(Attribute("src2$id") < 9999)
                       .sink(printSinkDescriptor);
@@ -1479,12 +1475,10 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
         Query::from("src1")
             .map(Attribute("A") = Attribute("A") * 3)
             .joinWith(Query::from("src2"))
-            .where(Attribute("id"))
-            .equalsTo(Attribute("id"))
+            .where(Attribute("id") == Attribute("id"))
             .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
             .joinWith(Query::from("src3").map(Attribute("ts") = Attribute("ts") * 2))
-            .where(Attribute("id"))
-            .equalsTo(Attribute("id"))
+            .where(Attribute("id") == Attribute("id"))
             .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
             .filter(
                 Attribute("src3$id")

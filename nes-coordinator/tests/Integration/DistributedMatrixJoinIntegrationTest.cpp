@@ -138,8 +138,7 @@ TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
     };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     // create flat topology with 1 coordinator and 4 sources
