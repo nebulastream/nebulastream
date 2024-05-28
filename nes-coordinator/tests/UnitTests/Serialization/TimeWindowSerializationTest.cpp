@@ -19,6 +19,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
@@ -86,10 +87,11 @@ TEST_P(WindowSerializationTest, testSerializeDeserializeWindowJoinOperators) {
         TumblingWindow::of(EventTime(Attribute("event_time"), std::get<1>(GetParam())), std::get<0>(GetParam())),
         TumblingWindow::of(IngestionTime(), std::get<0>(GetParam()))};
 
+        auto joinExpression = EqualsExpressionNode::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>());
+
     for (const auto& logical_window_descriptor : descriptors) {
         auto joinDescriptor = Join::LogicalJoinDescriptor::create(
-            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
-            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+            joinExpression,
             logical_window_descriptor,
             1,
             1,

@@ -45,30 +45,18 @@ class LogicalJoinDescriptor {
      */
     enum class JoinType : uint8_t { INNER_JOIN, CARTESIAN_PRODUCT };
 
-    static LogicalJoinDescriptorPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
-                                           const FieldAccessExpressionNodePtr& rightJoinKeyType,
+    static LogicalJoinDescriptorPtr create(ExpressionNodePtr joinExpression,
                                            const Windowing::WindowTypePtr& windowType,
                                            uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight,
                                            JoinType joinType);
 
-    explicit LogicalJoinDescriptor(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                   FieldAccessExpressionNodePtr rightJoinKeyType,
+    explicit LogicalJoinDescriptor(ExpressionNodePtr joinExpression,
                                    Windowing::WindowTypePtr windowType,
                                    uint64_t numberOfInputEdgesLeft,
                                    uint64_t numberOfInputEdgesRight,
                                    JoinType joinType,
                                    OriginId originId = INVALID_ORIGIN_ID);
-
-    /**
-    * @brief getter/setter for on left join key
-    */
-    FieldAccessExpressionNodePtr getLeftJoinKey() const;
-
-    /**
-   * @brief getter/setter for on left join key
-   */
-    FieldAccessExpressionNodePtr getRightJoinKey() const;
 
     /**
    * @brief getter left source type
@@ -139,6 +127,12 @@ class LogicalJoinDescriptor {
     void setOriginId(OriginId originId);
 
     /**
+     * @brief Getter keys
+     * @return keys
+     */
+    [[nodiscard]] ExpressionNodePtr getJoinExpression();
+
+    /**
      * @brief Checks if these two are equal
      * @param other: LogicalJoinDescriptor that we want to check if they are equal
      * @return Boolean
@@ -146,8 +140,7 @@ class LogicalJoinDescriptor {
     bool equals(const LogicalJoinDescriptor& other) const;
 
   private:
-    FieldAccessExpressionNodePtr leftJoinKeyType;
-    FieldAccessExpressionNodePtr rightJoinKeyType;
+    ExpressionNodePtr joinExpression;
     SchemaPtr leftSourceType = Schema::create();
     SchemaPtr rightSourceType = Schema::create();
     SchemaPtr outputSchema = Schema::create();

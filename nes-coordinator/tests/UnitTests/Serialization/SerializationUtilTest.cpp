@@ -629,9 +629,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
+        auto joinExpression = EqualsExpressionNode::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>());
+
         Join::LogicalJoinDescriptorPtr joinDef = Join::LogicalJoinDescriptor::create(
-            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
-            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+            joinExpression,
             Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
             1,
             1,

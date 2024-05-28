@@ -15,6 +15,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
 #include <memory>
+#include <Expressions/ConstantValueExpressionNode.hpp>
+
 namespace NES {
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;

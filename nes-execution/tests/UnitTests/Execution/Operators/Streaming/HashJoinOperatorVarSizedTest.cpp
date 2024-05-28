@@ -24,6 +24,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -268,16 +269,16 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     Operators::JoinSchema joinSchema(hashJoinProbeHelper.leftSchema,
                                      hashJoinProbeHelper.rightSchema,
                                      Util::createJoinSchema(hashJoinProbeHelper.leftSchema,
-                                                            hashJoinProbeHelper.rightSchema,
-                                                            hashJoinProbeHelper.joinFieldNameLeft));
+                                                            hashJoinProbeHelper.rightSchema));
     Operators::WindowMetaData windowMetaData(joinSchema.joinSchema->get(0)->getName(),
-                                             joinSchema.joinSchema->get(1)->getName(),
-                                             joinSchema.joinSchema->get(2)->getName());
+                                             joinSchema.joinSchema->get(1)->getName());
+    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameLeft);
+    auto onRightKey= std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameRight);
+    auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
     auto hashJoinProbe = std::make_shared<Operators::HJProbeVarSized>(handlerIndex,
                                                                       joinSchema,
-                                                                      hashJoinProbeHelper.joinFieldNameLeft,
-                                                                      hashJoinProbeHelper.joinFieldNameRight,
+                                                                      keyExpressions,
                                                                       windowMetaData,
                                                                       hashJoinProbeHelper.leftSchema,
                                                                       hashJoinProbeHelper.rightSchema,

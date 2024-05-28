@@ -259,8 +259,7 @@ TEST_F(NemoJoinPlacementTest, testNemoJoin) {
     //run the placement
     Query query = Query::from(logSourceNameLeft)
                       .joinWith(Query::from(logSourceNameRight))
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
 

@@ -121,16 +121,13 @@ class QueryPlanBuilder {
      * @brief This methods add the join operator to a query
      * @param leftQueryPlan the left query plan to combine by the join
      * @param rightQueryPlan the right query plan to combine by the join
-     * @param onLeftKey key attribute of the left source
-     * @param onRightKey key attribute of the right source
+     * @param joinExpression set of join Expressions
      * @param windowType Window definition.
-     * @param joinType the definition of how the composition of the sources should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the updated queryPlan
      */
     static QueryPlanPtr addJoin(QueryPlanPtr leftQueryPlan,
                                 QueryPlanPtr rightQueryPlan,
-                                ExpressionNodePtr onLeftKey,
-                                ExpressionNodePtr onRightKey,
+                                ExpressionNodePtr joinExpression,
                                 const Windowing::WindowTypePtr& windowType,
                                 Join::LogicalJoinDescriptor::JoinType joinType);
 

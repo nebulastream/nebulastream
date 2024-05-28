@@ -428,8 +428,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     auto query = Query::from("car")
                      .filter(Attribute("f1") < 10)
                      .joinWith(Query::from("truck"))
-                     .where(Attribute("f1"))
-                     .equalsTo(Attribute("f1"))
+                     .where(Attribute("f1") == Attribute("f1"))
                      .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
                      .map(Attribute("f1") = Attribute("f1"))
                      .sink(FileSinkDescriptor::create(""));

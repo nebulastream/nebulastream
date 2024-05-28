@@ -276,8 +276,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
 
     auto queryWithJoinOperator = Query::from("window1")
                                      .joinWith(Query::from("window2"))
-                                     .where(Attribute("id"))
-                                     .equalsTo(Attribute("id2"))
+                                     .where(Attribute("id") == Attribute("id2"))
                                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -307,11 +306,11 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     // Expected output
-    const auto expectedOutput = "1000, 2000, 4, 4, 1002, 4, 1102\n"
-                                "1000, 2000, 4, 4, 1002, 4, 1112\n"
-                                "1000, 2000, 12, 12, 1001, 12, 1011\n"
-                                "2000, 3000, 11, 11, 2001, 11, 2301\n"
-                                "2000, 3000, 1, 1, 2000, 1, 2010\n";
+    const auto expectedOutput = "1000, 2000, 4, 1002, 4, 1102\n"
+                                "1000, 2000, 4, 1002, 4, 1112\n"
+                                "1000, 2000, 12, 1001, 12, 1011\n"
+                                "2000, 3000, 11, 2001, 11, 2301\n"
+                                "2000, 3000, 1, 2000, 1, 2010\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();

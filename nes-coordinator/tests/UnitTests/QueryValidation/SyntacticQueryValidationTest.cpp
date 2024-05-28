@@ -167,12 +167,12 @@ TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
 
     // Field-rename in Join's Where expression is not allowed
     std::string queryStringWithJoinWhere =
-        R"(Query::from("default_logical").joinWith(subQuery).where(Attribute("id").as("identity")).equalsTo(Attribute("id")).window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10))).sink(printSinkDescriptor);)";
+        R"(Query::from("default_logical").joinWith(subQuery).where(Attribute("id").as("identity") == Attribute("id")).window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10))).sink(printSinkDescriptor);)";
     TestForException(queryStringWithJoinWhere);
 
     // Field-rename in Join's EqualsTo expression is not allowed
     std::string queryStringWithJoinEqualsTo =
-        R"(Query::from("default_logical").joinWith(subQuery).where(Attribute("id")).equalsTo(Attribute("id").as("identity")).window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10))).sink(printSinkDescriptor);)";
+        R"(Query::from("default_logical").joinWith(subQuery).where(Attribute("id") == Attribute("id").as("identity")).window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10))).sink(printSinkDescriptor);)";
     TestForException(queryStringWithJoinEqualsTo);
 }
 

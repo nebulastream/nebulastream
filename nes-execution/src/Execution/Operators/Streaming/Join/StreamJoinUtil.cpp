@@ -23,25 +23,14 @@
 namespace NES::Runtime::Execution {
 
 namespace Util {
-SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const std::string& keyFieldName) {
+SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema) {
     NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
                "Left and right schema do not have the same layout type");
-    NES_ASSERT(leftSchema->contains(keyFieldName) || rightSchema->contains(keyFieldName) || leftSchema->getField(keyFieldName)
-                   || rightSchema->getField(keyFieldName),
-               "KeyFieldName = " << keyFieldName << " is not in either left or right schema");
-
     auto retSchema = Schema::create(leftSchema->getLayoutType());
     auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier();
 
     retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
     retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
-
-    // We check if the keyFieldName was from the left or right schema and then add the field + data type
-    if (leftSchema->getField(keyFieldName) != nullptr) {
-        retSchema->addField(newQualifierForSystemField + "$key", leftSchema->getField(keyFieldName)->getDataType());
-    } else {
-        retSchema->addField(newQualifierForSystemField + "$key", rightSchema->getField(keyFieldName)->getDataType());
-    }
 
     for (auto& fields : leftSchema->fields) {
         retSchema->addField(fields->getName(), fields->getDataType());
@@ -79,4 +68,3 @@ std::string WindowInfo::toString() const {
 }
 
 }// namespace NES::Runtime::Execution
- // namespace NES::Runtime::Execution
