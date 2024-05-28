@@ -1,0 +1,8 @@
+//
+// Created by benji on 28.05.24.
+//
+
+#ifndef NES_IJOPERATORHANDLER_HPP
+#define NES_IJOPERATORHANDLER_HPP
+
+#endif//NES_IJOPERATORHANDLER_HPP

@@ -19,7 +19,13 @@ add_subdirectory(src)
 get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 
 # Add Library
-add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
+add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES}
+        include/Execution/Operators/Streaming/Join/IntervalJoin/IJSlice.hpp
+        include/Execution/Operators/Streaming/Join/IntervalJoin/IJProbe.hpp
+        include/Execution/Operators/Streaming/Join/IntervalJoin/IJOperatorHandler.hpp
+        src/Execution/Operators/Streaming/Join/IntervalJoin/IJSlice.cpp
+        src/Execution/Operators/Streaming/Join/IntervalJoin/IJProbe.cpp
+        src/Execution/Operators/Streaming/Join/IntervalJoin/IJOperatorHandler.cpp)
 # link libraries
 target_link_libraries(nes-execution PUBLIC nes-nautilus)
 target_include_directories(nes-execution PUBLIC
