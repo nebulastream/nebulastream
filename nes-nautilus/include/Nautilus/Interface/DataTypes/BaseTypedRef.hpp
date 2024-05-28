@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataTypes/Any.hpp>
-
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BASETYPEDREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BASETYPEDREF_HPP_
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+
 namespace NES::Nautilus {
 
 class BaseTypedRef : public Any {

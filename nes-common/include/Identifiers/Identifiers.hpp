@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
-#define NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
+#ifndef NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_
+#define NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_
 
 #include <Identifiers/NESStrongType.hpp>
 #include <cstddef>
@@ -75,4 +75,4 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize) { r
 
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
+#endif// NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_
