@@ -14,13 +14,20 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <unordered_set>
 
 namespace NES {
 
@@ -58,7 +65,7 @@ bool LogicalJoinOperator::inferSchema() {
     rightInputSchema->clear();
 
     // Finds the join schema that contains the joinKey and returns an iterator to the schema
-    auto findSchemaInDinstinctSchemas = [&](FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema) {
+    auto findSchemaInDistinctSchemas = [&](FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema) {
         for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
             bool fieldExistsInSchema;
             const auto joinKeyName = joinKey.getFieldName();
@@ -80,33 +87,39 @@ bool LogicalJoinOperator::inferSchema() {
         return false;
     };
 
-    //Find the schema for left join key
-    const auto leftJoinKey = joinDefinition->getLeftJoinKey();
-    const auto leftJoinKeyName = leftJoinKey->getFieldName();
-    const auto foundLeftKey = findSchemaInDinstinctSchemas(*leftJoinKey, leftInputSchema);
-    NES_ASSERT_THROW_EXCEPTION(foundLeftKey,
-                               TypeInferenceException,
+    NES_DEBUG("LogicalJoinOperator: Iterate over all ExpressionNode to if check join field is in schema.");
+    // Maintain a list of visited nodes as there are multiple root nodes
+    std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
+    auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinExpression());
+    for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
+        if((*itr)->instanceOf<BinaryExpressionNode>()){
+        auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+        if (visitedExpressions.contains(visitingOp)) {
+            // skip rest of the steps as the node found in already visited node list
+            continue;
+        }else{
+            visitedExpressions.insert(visitingOp);
+            if(!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()){
+                //Find the schema for left and right join key
+                const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft()->as<FieldAccessExpressionNode>();
+                const auto leftJoinKeyName = leftJoinKey->getFieldName();
+                const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
+                NES_ASSERT_THROW_EXCEPTION(foundLeftKey, TypeInferenceException,
                                "LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName + " in schemas.");
-
-    //Find the schema for right join key
-    const auto rightJoinKey = joinDefinition->getRightJoinKey();
-    const auto rightJoinKeyName = rightJoinKey->getFieldName();
-    const auto foundRightKey = findSchemaInDinstinctSchemas(*rightJoinKey, rightInputSchema);
-    NES_ASSERT_THROW_EXCEPTION(foundRightKey,
-                               TypeInferenceException,
+                const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight()->as<FieldAccessExpressionNode>();
+                const auto rightJoinKeyName = rightJoinKey->getFieldName();
+                const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
+                NES_ASSERT_THROW_EXCEPTION(foundRightKey,TypeInferenceException,
                                "LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName + " in schemas.");
 
+                NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
+                visitedExpressions.insert(visitingOp);
+            }
+        }
+        }
+    }
     // Clearing now the distinct schemas
     distinctSchemas.clear();
-
-    //Check if left and right input schema were correctly identified
-    NES_ASSERT_THROW_EXCEPTION(!!leftInputSchema,
-                               TypeInferenceException,
-                               "LogicalJoinOperator: Left input schema is not initialized for left join key " + leftJoinKeyName);
-    NES_ASSERT_THROW_EXCEPTION(!!rightInputSchema,
-                               TypeInferenceException,
-                               "LogicalJoinOperator: Right input schema is not initialized for right join key "
-                                   + rightJoinKeyName);
 
     // Checking if left and right input schema are not empty and are not equal
     NES_ASSERT_THROW_EXCEPTION(leftInputSchema->getSchemaSizeInBytes() > 0,
@@ -131,10 +144,8 @@ bool LogicalJoinOperator::inferSchema() {
 
     windowStartFieldName = newQualifierForSystemField + "$start";
     windowEndFieldName = newQualifierForSystemField + "$end";
-    windowKeyFieldName = newQualifierForSystemField + "$key";
     outputSchema->addField(createField(windowStartFieldName, BasicType::UINT64));
     outputSchema->addField(createField(windowEndFieldName, BasicType::UINT64));
-    outputSchema->addField(AttributeField::create(windowKeyFieldName, leftJoinKey->getStamp()));
 
     // create dynamic fields to store all fields from left and right sources
     for (const auto& field : leftInputSchema->fields) {
@@ -145,7 +156,7 @@ bool LogicalJoinOperator::inferSchema() {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    NES_DEBUG("Outputschema for join={}", outputSchema->toString());
+    NES_DEBUG("Output schema for join={}", outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
     joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);
     return true;
@@ -163,7 +174,6 @@ OperatorPtr LogicalJoinOperator::copy() {
     copy->setOriginId(originId);
     copy->windowStartFieldName = windowStartFieldName;
     copy->windowEndFieldName = windowEndFieldName;
-    copy->windowKeyFieldName = windowKeyFieldName;
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties) {
@@ -176,8 +186,7 @@ bool LogicalJoinOperator::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<LogicalJoinOperator>()) {
         auto rhsJoin = rhs->as<LogicalJoinOperator>();
         return joinDefinition->getWindowType()->equal(rhsJoin->joinDefinition->getWindowType())
-            && joinDefinition->getLeftJoinKey()->equal(rhsJoin->joinDefinition->getLeftJoinKey())
-            && joinDefinition->getRightJoinKey()->equal(rhsJoin->joinDefinition->getRightJoinKey())
+            && joinDefinition->getJoinExpression()->equal(rhsJoin->joinDefinition->getJoinExpression())
             && joinDefinition->getOutputSchema()->equals(rhsJoin->joinDefinition->getOutputSchema())
             && joinDefinition->getRightSourceType()->equals(rhsJoin->joinDefinition->getRightSourceType())
             && joinDefinition->getLeftSourceType()->equals(rhsJoin->joinDefinition->getLeftSourceType());
@@ -194,9 +203,8 @@ void LogicalJoinOperator::inferStringSignature() {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
+
     std::stringstream signatureStream;
-    signatureStream << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
-    signatureStream << "RIGHT-KEY=" << joinDefinition->getRightJoinKey()->toString() << ",";
     signatureStream << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
 
     auto rightChildSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
@@ -216,18 +224,16 @@ void LogicalJoinOperator::setOriginId(OriginId originId) {
     joinDefinition->setOriginId(originId);
 }
 
+const ExpressionNodePtr LogicalJoinOperator::getJoinExpression() const { return joinDefinition->getJoinExpression(); }
+
 const std::string& LogicalJoinOperator::getWindowStartFieldName() const { return windowStartFieldName; }
 
 const std::string& LogicalJoinOperator::getWindowEndFieldName() const { return windowEndFieldName; }
 
-const std::string& LogicalJoinOperator::getWindowKeyFieldName() const { return windowKeyFieldName; }
-
 void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowStartFieldName,
-                                                        std::string_view windowEndFieldName,
-                                                        std::string_view windowKeyFieldName) {
+                                                        std::string_view windowEndFieldName) {
     this->windowStartFieldName = windowStartFieldName;
     this->windowEndFieldName = windowEndFieldName;
-    this->windowKeyFieldName = windowKeyFieldName;
 }
 
 }// namespace NES

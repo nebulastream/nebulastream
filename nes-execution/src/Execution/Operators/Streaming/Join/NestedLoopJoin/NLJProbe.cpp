@@ -21,10 +21,12 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
+#include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -118,12 +120,9 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
         for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
             auto leftRecord = leftPagedVector.readRecord(leftCnt);
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
-            /* This can be later replaced by an interface that returns boolean and gets passed the
-             * two Nautilus::Records (left and right) #3691 */
-            if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
-                Record joinedRecord;
-                createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-
+            Record joinedRecord;
+            createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
+            if (joinExpression->execute(joinedRecord).as<Boolean>()){
                 // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }
@@ -133,8 +132,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
 NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const JoinSchema& joinSchema,
-                   const std::string& joinFieldNameLeft,
-                   const std::string& joinFieldNameRight,
+                   const Expressions::ExpressionPtr joinExpression,
                    const WindowMetaData& windowMetaData,
                    const SchemaPtr& leftSchema,
                    const SchemaPtr& rightSchema,
@@ -143,8 +141,7 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    bool withDeletion)
     : StreamJoinProbe(operatorHandlerIndex,
                       joinSchema,
-                      joinFieldNameLeft,
-                      joinFieldNameRight,
+                      std::move(joinExpression),
                       windowMetaData,
                       joinStrategy,
                       windowingStrategy,

@@ -98,12 +98,11 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     }
 
     const auto schema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
-    TestUtils::JoinParams joinParams(schema, schema, "id", "id");
+    TestUtils::JoinParams joinParams({schema, schema});
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
@@ -120,12 +119,11 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
 
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
@@ -142,12 +140,11 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
 
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
@@ -164,12 +161,11 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
 
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName("test2");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
@@ -185,15 +181,14 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
     }
 
     const auto schema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
-    TestUtils::JoinParams joinParams(schema, schema, "id", "id");
+    TestUtils::JoinParams joinParams({schema, schema});
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
     auto query =
         Query::from("test1")
             .joinWith(Query::from("test2"))
-            .where(Attribute("id"))
-            .equalsTo(Attribute("id"))
+            .where(Attribute("id") == Attribute("id"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
@@ -210,15 +205,14 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
 
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName("test2");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
     auto query =
         Query::from("test1")
             .joinWith(Query::from("test2"))
-            .where(Attribute("id"))
-            .equalsTo(Attribute("id2"))
+            .where(Attribute("id") == Attribute("id2"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
@@ -232,7 +226,7 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
         || (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-            && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)) {
         GTEST_SKIP();
     }
 
@@ -246,12 +240,11 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
                                  ->addField("test2$timestamp", BasicType::UINT64)
                                  ->updateSourceName("test2");
 
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
     TestUtils::CsvFileParams csvFileParams("window5.csv", "window6.csv", "window_sink4.csv");
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id1") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
@@ -265,12 +258,11 @@ TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
 
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName("test2");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
     TestUtils::CsvFileParams csvFileParams("window8.csv", "window9.csv", "window_sink8.csv");
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);

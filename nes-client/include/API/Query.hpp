@@ -80,7 +80,6 @@ static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 namespace JoinOperatorBuilder {
 
 class JoinWhere;
-class JoinCondition;
 
 class Join {
   public:
@@ -92,11 +91,12 @@ class Join {
     Join(const Query& subQueryRhs, Query& originalQuery);
 
     /**
-     * @brief sets the left key item, after that it can be compared with the function implemented in Condition
-     * @param onLeftKey
-     * @return object of type JoinWhere on which equalsTo function is defined and can be called.
+     * @brief is called to append all joinExpressions (key predicates) to the previous defined join, i.e.,
+     * it sets all condition for the join matches
+     * @param joinExpression : a set of binary expressions to compare left and right tuples
+     * @return object of type JoinWhere on which window function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(const ExpressionItem& onLeftKey) const;
+    [[nodiscard]] JoinWhere where(ExpressionNodePtr joinExpression) const;
 
   private:
     const Query& subQueryRhs;
@@ -106,39 +106,12 @@ class Join {
 class JoinWhere {
   public:
     /**
-     * @brief Constructor. Initialises always subQueryRhs, original Query and onLeftKey
+     * @brief Constructor. Initialises always subQueryRhs, original Query and the joinExpression
      * @param subQueryRhs
      * @param originalQuery
-     * @param onLeftKey
+     * @param joinExpression : a set of binary expressions to compare left and right tuples
      */
-    JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey);
-
-    /**
-     * @brief sets the rightKey item
-     * @param onRightKey
-     * @return object of type JoinCondition on which windowing & the original joinWith function can be called.
-     */
-    [[nodiscard]] JoinCondition equalsTo(const ExpressionItem& onRightKey) const;
-
-  private:
-    const Query& subQueryRhs;
-    Query& originalQuery;
-    ExpressionNodePtr onLeftKey;
-};
-
-class JoinCondition {
-  public:
-    /**
-    * @brief: Constructor. Initialises always subQueryRhs, originalQuery, onLeftKey and onRightKey
-    * @param subQueryRhs
-    * @param originalQuery
-    * @param onLeftKey
-    * @param onRightKey
-    */
-    JoinCondition(const Query& subQueryRhs,
-                  Query& originalQuery,
-                  const ExpressionItem& onLeftKey,
-                  const ExpressionItem& onRightKey);
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionNodePtr joinExpressions);
 
     /**
      * @brief: calls internal the original joinWith function with all the gathered parameters.
@@ -150,8 +123,7 @@ class JoinCondition {
   private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionNodePtr onLeftKey;
-    ExpressionNodePtr onRightKey;
+    ExpressionNodePtr joinExpressions;
 };
 
 }//namespace JoinOperatorBuilder
@@ -175,39 +147,16 @@ class Join {
      */
     Join(const Query& subQueryRhs, Query& originalQuery);
 
-    /**
-     * @brief sets the left key item, after that it can be compared with the function implemented in Condition
-     * @param onProbeKey (probe key should be given as the left key)
+    /** @brief is called to append all joinExpressions (key predicates) to the previous defined join, i.e.,
+     * it sets all condition for the join matches
+     * @param joinExpression : a set of binary expressions to compare left and right tuples
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(const ExpressionItem& onProbeKey) const;
+    [[nodiscard]] Query& where(const ExpressionNodePtr joinExpression) const;
 
   private:
     const Query& subQueryRhs;
     Query& originalQuery;
-};
-
-class JoinWhere {
-  public:
-    /**
-     * @brief Constructor. Initialises always subQueryRhs, original Query and onLeftKey
-     * @param subQueryRhs
-     * @param originalQuery
-     * @param onLeftKey
-     */
-    JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey);
-
-    /**
-     * @brief sets the rightKey item
-     * @param onBuildKey (build key should be given as right key)
-     * @return Joined Query.
-     */
-    [[nodiscard]] Query& equalsTo(const ExpressionItem& onBuildKey) const;
-
-  private:
-    const Query& subQueryRhs;
-    Query& originalQuery;
-    ExpressionNodePtr onProbeKey;
 };
 
 }//namespace Experimental::BatchJoinOperatorBuilder
@@ -252,8 +201,7 @@ class And {
   private:
     Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionNodePtr onLeftKey;
-    ExpressionNodePtr onRightKey;
+    ExpressionNodePtr joinExpression;
 };
 
 class Seq {
@@ -275,8 +223,7 @@ class Seq {
   private:
     Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionNodePtr onLeftKey;
-    ExpressionNodePtr onRightKey;
+    ExpressionNodePtr joinExpression;
 };
 
 /**
@@ -348,9 +295,9 @@ class Query {
     virtual ~Query() = default;
 
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
-    friend class JoinOperatorBuilder::JoinCondition;
+    friend class JoinOperatorBuilder::JoinWhere;
+    friend class NES::Experimental::BatchJoinOperatorBuilder::Join;
     friend class CrossJoinOperatorBuilder::CrossJoin;
-    friend class NES::Experimental::BatchJoinOperatorBuilder::JoinWhere;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
@@ -563,8 +510,7 @@ class Query {
      * @return the query
      */
     Query& joinWith(const Query& subQueryRhs,
-                    ExpressionItem onLeftKey,
-                    ExpressionItem onRightKey,
+                    ExpressionNodePtr joinExpression,
                     Windowing::WindowTypePtr const& windowType);
 
     /**
@@ -576,7 +522,7 @@ class Query {
      * @param onLeftKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey);
+    Query& batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression);
 
     /**
      * We call it only internal as a last step during the CrossJoin operation
@@ -598,8 +544,7 @@ class Query {
      * @return the query
      */
     Query& andWith(const Query& subQueryRhs,
-                   ExpressionItem onLeftKey,
-                   ExpressionItem onRightKey,
+                   ExpressionNodePtr joinExpressions,
                    Windowing::WindowTypePtr const& windowType);
 
     /**
@@ -613,8 +558,7 @@ class Query {
      * @return the query
      */
     Query& seqWith(const Query& subQueryRhs,
-                   ExpressionItem onLeftKey,
-                   ExpressionItem onRightKey,
+                   ExpressionNodePtr joinExpressions,
                    Windowing::WindowTypePtr const& windowType);
 
     /**
@@ -628,14 +572,22 @@ class Query {
 
     /**
       * @brief: Creates a keyed window aggregation.
-      * @param keys keys.
+      * @param joinExpressions keys.
       * @param windowType Window definition.
       * @param aggregations Window aggregation functions.
       * @return query.
       */
-    Query& windowByKey(std::vector<ExpressionNodePtr> keys,
+    Query& windowByKey(std::vector<ExpressionNodePtr> joinExpressions,
                        Windowing::WindowTypePtr const& windowType,
                        std::vector<API::WindowAggregationPtr> aggregations);
+
+    /**
+      * @brief: Given a Expression is identifies which JoinType has to be used for processing, i.e., Equi-Join enables
+      * different Join algorithms, while all other join types right lead to the NestedLoopJoin
+      * @param joinExpressions key expressions
+      * @return joinType
+      */
+    Join::LogicalJoinDescriptor::JoinType identifyJoinType(ExpressionNodePtr joinExpressions);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

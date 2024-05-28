@@ -46,6 +46,16 @@ std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog =
          ->addField("id2", BasicType::UINT64)
          ->addField("value2", BasicType::UINT64)
          ->addField("timestamp", BasicType::UINT64)},
+    {"id3_val3_time_u64",
+     Schema::create()
+         ->addField("id3", BasicType::UINT64)
+         ->addField("value3", BasicType::UINT64)
+         ->addField("timestamp", BasicType::UINT64)},
+     {"id4_val4_time_u64",
+     Schema::create()
+         ->addField("id4", BasicType::UINT64)
+         ->addField("value4", BasicType::UINT64)
+         ->addField("timestamp", BasicType::UINT64)},
     {"id_val_time_u32",
      Schema::create()
          ->addField("id", BasicType::UINT32)

@@ -30,9 +30,9 @@ dataProviderMode: MemCopy
 outputFile: JoinMultipleSources.csv
 benchmarkName: JoinMultipleSources
 query: 'Query::from("input1").filter(Attribute("value") < 100).joinWith(Query::from("input2").filter(Attribute("value") < 500))
-                                  .where(Attribute("value")).equalsTo(Attribute("value"))
+                                  .where(Attribute("value") == Attribute("value"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
                              .joinWith(Query::from("input3").filter(Attribute("value") < 900))
-                                  .where(Attribute("value")).equalsTo(Attribute("value"))
+                                  .where(Attribute("value") == Attribute("value"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
                              .sink(NullOutputSinkDescriptor::create());'

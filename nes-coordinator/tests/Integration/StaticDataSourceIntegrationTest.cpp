@@ -604,7 +604,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     std::string queryString =
         R"(Query::from("tpch_nation").filter(Attribute("N_NATIONKEY") == 21).map(Attribute("timeForWindow") = 1)
             .joinWith(Query::from("tpch_customer").map(Attribute("timeForWindow") = 1))
-                .where(Attribute("NATIONKEY")).equalsTo(Attribute("N_NATIONKEY"))
+                .where(Attribute("NATIONKEY") == Attribute("N_NATIONKEY"))
                 .window(TumblingWindow::of(EventTime(Attribute("timeForWindow")), Milliseconds(1)))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
@@ -1332,7 +1332,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
         R"(Query::from("static_integers_only_0")
             .batchJoinWith(
                 Query::from("static_integers_only_1")
-                ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
+                ).where(Attribute("static_integers_only_1$id") == Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
@@ -1419,7 +1419,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
         R"(Query::from("static_integers_only_0")
             .batchJoinWith(
                 Query::from("static_integers_only_1")
-                ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
+                ).where(Attribute("static_integers_only_1$id") == Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
@@ -1505,7 +1505,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
             .batchJoinWith(
                 Query::from("static_integers_only_1")
                 .project(Attribute("value"), Attribute("id"), Attribute("one"))
-                ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
+                ).where(Attribute("static_integers_only_1$id") == Attribute("static_integers_only_0$id"))
             .map(Attribute("IDplusID") = Attribute("static_integers_only_1$id") + Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
@@ -1589,7 +1589,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
         R"(Query::from("static_integers_only_0")
             .batchJoinWith(
                 Query::from("static_integers_only_1")
-                ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
+                ).where(Attribute("static_integers_only_1$id") == Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
@@ -1678,7 +1678,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     //register query
     std::string queryLogic = R"(Query::from("static_integers_only_2")
         .batchJoinWith(Query::from("tpch_customer"))
-            .where(Attribute("tpch_customer$C_NATIONKEY")).equalsTo(Attribute("static_integers_only_2$id")))";
+            .where(Attribute("tpch_customer$C_NATIONKEY") == Attribute("static_integers_only_2$id")))";
     std::string querySink = benchmark ? ".sink(NullOutputSinkDescriptor::create());"
                                       : ".sink(FileSinkDescriptor::create(\"" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryString = queryLogic + querySink;
@@ -1827,7 +1827,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             //register query
             std::string queryLogic = R"(Query::from("build_side")
             .batchJoinWith(Query::from("probe_side"))
-            .where(Attribute("probe_side$id")).equalsTo(Attribute("build_side$id")))";
+            .where(Attribute("probe_side$id") == Attribute("build_side$id")))";
             std::string querySink = benchmark
                 ? ".sink(NullOutputSinkDescriptor::create());"
                 : ".sink(FileSinkDescriptor::create(\"" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";

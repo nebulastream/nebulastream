@@ -161,8 +161,7 @@ TEST_F(DistributedNemoJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
     };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))
-                      .where(Attribute("value"))
-                      .equalsTo(Attribute("value"))
+                      .where(Attribute("value") == Attribute("value"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     // create flat topology with 1 coordinator and 4 sources

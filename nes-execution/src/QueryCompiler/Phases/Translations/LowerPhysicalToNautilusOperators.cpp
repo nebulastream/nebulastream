@@ -83,7 +83,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
@@ -103,6 +102,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
@@ -338,14 +338,16 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         operatorHandlers.push_back(probeOperator->getJoinOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
+        auto keys = probeOperator->getJoinExpression();
+        auto joinExpression = expressionProvider->lowerExpression(keys);
+
         Runtime::Execution::Operators::OperatorPtr joinProbeNautilus;
         switch (probeOperator->getJoinStrategy()) {
             case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
                 joinProbeNautilus =
                     std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(handlerIndex,
                                                                                      probeOperator->getJoinSchema(),
-                                                                                     probeOperator->getJoinFieldNameLeft(),
-                                                                                     probeOperator->getJoinFieldNameRight(),
+                                                                                     joinExpression,
                                                                                      probeOperator->getWindowMetaData(),
                                                                                      probeOperator->getLeftInputSchema(),
                                                                                      probeOperator->getRightInputSchema(),
@@ -358,8 +360,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                 joinProbeNautilus =
                     std::make_shared<Runtime::Execution::Operators::HJProbe>(handlerIndex,
                                                                              probeOperator->getJoinSchema(),
-                                                                             probeOperator->getJoinFieldNameLeft(),
-                                                                             probeOperator->getJoinFieldNameRight(),
+                                                                             joinExpression,
                                                                              probeOperator->getWindowMetaData(),
                                                                              probeOperator->getJoinStrategy(),
                                                                              probeOperator->getWindowingStrategy());
@@ -370,8 +371,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                 joinProbeNautilus =
                     std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
                                                                               probeOperator->getJoinSchema(),
-                                                                              probeOperator->getJoinFieldNameLeft(),
-                                                                              probeOperator->getJoinFieldNameRight(),
+                                                                              joinExpression,
                                                                               probeOperator->getWindowMetaData(),
                                                                               leftSchema,
                                                                               rightSchema,

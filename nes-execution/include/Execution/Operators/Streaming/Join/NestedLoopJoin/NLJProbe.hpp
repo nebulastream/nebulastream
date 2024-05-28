@@ -25,8 +25,6 @@ class NLJProbe : public StreamJoinProbe {
      * @brief Constructor for a NLJProbe join phase
      * @param operatorHandlerIndex
      * @param joinSchema
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param windowMetaData
      * @param leftEntrySize
      * @param rightEntrySize
@@ -36,8 +34,7 @@ class NLJProbe : public StreamJoinProbe {
      */
     NLJProbe(const uint64_t operatorHandlerIndex,
              const JoinSchema& joinSchema,
-             const std::string& joinFieldNameLeft,
-             const std::string& joinFieldNameRight,
+             Expressions::ExpressionPtr joinExpression,
              const WindowMetaData& windowMetaData,
              const SchemaPtr& leftSchema,
              const SchemaPtr& rightSchema,
