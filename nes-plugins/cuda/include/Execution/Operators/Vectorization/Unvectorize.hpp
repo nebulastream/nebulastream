@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_UNVECTORIZE_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_UNVECTORIZE_HPP_
+#ifndef NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_UNVECTORIZE_HPP_
+#define NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_UNVECTORIZE_HPP_
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
@@ -42,4 +42,4 @@ class Unvectorize : public VectorizableOperator {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_UNVECTORIZE_HPP_
+#endif// NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_UNVECTORIZE_HPP_

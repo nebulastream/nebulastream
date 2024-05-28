@@ -11,6 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_
+
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -23,9 +27,6 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/TestPhaseProvider.hpp>
-
-#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_
-#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_
 
 namespace NES::TestUtils {
 
