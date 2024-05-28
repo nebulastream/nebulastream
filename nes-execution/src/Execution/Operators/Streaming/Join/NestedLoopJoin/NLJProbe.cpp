@@ -89,7 +89,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     const auto windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
 
     // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const Value<UInt64> workerIdForPagedVectors(0_u64);
+    const ValueId<WorkerThreadId> workerThreadIdForPages = WorkerThreadId(0);
 
     // Getting the left and right paged vector
     const auto sliceRefLeft =
@@ -100,13 +100,13 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
         Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                getNLJPagedVectorProxy,
                                sliceRefLeft,
-                               workerIdForPagedVectors,
+                               workerThreadIdForPages,
                                Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
     const auto rightPagedVectorRef =
         Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                getNLJPagedVectorProxy,
                                sliceRefRight,
-                               workerIdForPagedVectors,
+                               workerThreadIdForPages,
                                Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);

@@ -87,6 +87,11 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
 };
 
 TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinator) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -120,6 +125,11 @@ TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
 }
 
 TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinatorSequential) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -163,6 +173,11 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
 }
 
 TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinatorNested) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -211,6 +226,11 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
  *
  */
 TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -268,6 +288,11 @@ TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
 }
 
 TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorSequential) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -367,6 +392,11 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
 }
 
 TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorNested) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -470,6 +500,11 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
  * Three-way join with data IDs as join-key for tumbling windows.
  */
 TEST_P(MultipleJoinsTest, testMapNotKeyWithDifferentSourceTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -504,6 +539,11 @@ TEST_P(MultipleJoinsTest, testMapNotKeyWithDifferentSourceTumblingWindow) {
  * Three-way join with map as join-key for tumbling windows.
  */
 TEST_P(MultipleJoinsTest, testMapsAsKeysWithDifferentSourceTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -538,6 +578,11 @@ TEST_P(MultipleJoinsTest, testMapsAsKeysWithDifferentSourceTumblingWindow) {
 * Three-way join on three keys with same name for tumbling windows.
  */
 TEST_P(MultipleJoinsTest, testMapsThreeSameKeynamesTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -572,6 +617,11 @@ TEST_P(MultipleJoinsTest, testMapsThreeSameKeynamesTumblingWindow) {
  * Three-way join with data IDs as keys for sliding windows.
  */
 TEST_P(MultipleJoinsTest, testMapNotKeyWithDifferentSourceSlidingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()
@@ -606,6 +656,11 @@ TEST_P(MultipleJoinsTest, testMapNotKeyWithDifferentSourceSlidingWindow) {
  * Three-way join with map as keys for sliding windows.
  */
 TEST_P(MultipleJoinsTest, testMapAsKeyWithDifferentSourceSlidingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
     const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
     const auto window3Schema = Schema::create()

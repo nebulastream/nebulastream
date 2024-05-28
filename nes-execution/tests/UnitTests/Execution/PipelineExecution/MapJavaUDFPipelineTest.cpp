@@ -53,7 +53,7 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
         NES_INFO("Setup MapJavaUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
         options.setDumpToConsole(true);
     }
 

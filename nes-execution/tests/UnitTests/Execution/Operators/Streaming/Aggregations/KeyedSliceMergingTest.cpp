@@ -50,7 +50,7 @@ class KeyedSliceMergingTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     std::shared_ptr<KeyedSlice> createSlice(size_t start, size_t end, const std::vector<std::pair<uint64_t, uint64_t>>& values) {

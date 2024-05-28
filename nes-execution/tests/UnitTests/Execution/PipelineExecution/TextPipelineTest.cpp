@@ -56,7 +56,7 @@ class TextPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineEx
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */

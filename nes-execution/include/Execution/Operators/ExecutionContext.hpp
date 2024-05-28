@@ -66,10 +66,10 @@ class ExecutionContext final {
     Value<MemRef> getGlobalOperatorHandler(uint64_t handlerIndex);
 
     /**
-     * @brief Get worker id of the current execution.
-     * @return Value<UInt64>
+     * @brief Get worker thread id of the current execution.
+     * @return ValueId<WorkerThreadId>
      */
-    Value<UInt64> getWorkerId();
+    ValueId<WorkerThreadId> getWorkerThreadId();
 
     /**
      * @brief Allocate a new tuple buffer.

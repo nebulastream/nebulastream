@@ -19,9 +19,9 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getStates(void* op, uint64_t workerId) {
+void* getStates(void* op, WorkerThreadId workerThreadId) {
     auto handler = static_cast<BatchAggregationHandler*>(op);
-    return handler->getThreadLocalState(workerId);
+    return handler->getThreadLocalState(workerThreadId);
 }
 
 BatchAggregationScan::BatchAggregationScan(
@@ -36,7 +36,7 @@ void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // 2. load the thread local state.
 
     // TODO merge all thread local states to support concurrent aggregations with multiple thread local states.
-    auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerId());
+    auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerThreadId());
 
     // 3. perform final aggregation.
     Record result;

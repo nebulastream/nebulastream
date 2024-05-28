@@ -121,6 +121,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                                           leftPageSize,
                                                                           rightPageSize);
         bm = std::make_shared<BufferManager>(8196, 5000);
+        nljOperatorHandler->setBufferManager(bm);
     }
 
     /**
@@ -235,18 +236,18 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
             auto nljWindow =
                 std::dynamic_pointer_cast<NLJSlice>(nljOperatorHandler->getSliceBySliceIdentifier(windowIdentifier).value());
-            Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
+            Nautilus::Value<UInt64> zeroVal(static_cast<uint64_t>(0));
 
-            auto leftPagedVectorRef =
-                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
+            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+                static_cast<int8_t*>(nljWindow->getPagedVectorRefLeft(INITIAL<WorkerThreadId>)));
             checkRecordsInBuild(windowIdentifier,
                                 leftPagedVectorRef,
                                 expectedNumberOfTuplesInWindowLeft,
                                 allLeftRecords,
                                 leftSchema);
 
-            auto rightPagedVectorRef =
-                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
+            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+                static_cast<int8_t*>(nljWindow->getPagedVectorRefRight(INITIAL<WorkerThreadId>)));
             checkRecordsInBuild(windowIdentifier,
                                 rightPagedVectorRef,
                                 expectedNumberOfTuplesInWindowRight,
@@ -286,7 +287,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             QueryCompilation::WindowingStrategy::SLICING);
 
         NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
-        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
+        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
         auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                  Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
@@ -401,7 +402,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
         NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
-        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
+        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
         auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                  Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
@@ -461,7 +462,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto nljOpHandler = std::dynamic_pointer_cast<Operators::NLJOperatorHandlerSlicing>(nljOperatorHandler);
             auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto leftPagedVectorRef =
-                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(INITIAL<WorkerThreadId>));
             Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
             leftPagedVector.writeRecord(leftRecord);
         }
@@ -473,7 +474,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto nljOpHandler = std::dynamic_pointer_cast<Operators::NLJOperatorHandlerSlicing>(nljOperatorHandler);
             auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto rightPagedVectorRef =
-                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(INITIAL<WorkerThreadId>));
             Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
             rightPagedVector.writeRecord(rightRecord);
         }

@@ -52,8 +52,8 @@ class JoinMultiThreadedTest
         BaseIntegrationTest::SetUp();
 
         // Creating the execution engine
-        const auto joinStrategy = std::get<0>(JoinMultiThreadedTest::GetParam());
-        const auto windowingStrategy = std::get<1>(JoinMultiThreadedTest::GetParam());
+        joinStrategy = std::get<0>(JoinMultiThreadedTest::GetParam());
+        windowingStrategy = std::get<1>(JoinMultiThreadedTest::GetParam());
         const uint64_t numberOfWorkerThreads = std::get<2>(JoinMultiThreadedTest::GetParam());
         executionEngine =
             std::make_shared<Testing::TestExecutionEngine>(dumpNone, numberOfWorkerThreads, joinStrategy, windowingStrategy);
@@ -133,9 +133,17 @@ class JoinMultiThreadedTest
 
         return result;
     }
+
+    QueryCompilation::StreamJoinStrategy joinStrategy;
+    QueryCompilation::WindowingStrategy windowingStrategy;
 };
 
 TEST_P(JoinMultiThreadedTest, testOneJoin) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -210,6 +218,11 @@ TEST_P(JoinMultiThreadedTest, testOneJoin) {
 }
 
 TEST_P(JoinMultiThreadedTest, testTwoJoins) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2window3start;
         uint64_t window1window2window3end;
@@ -304,6 +317,11 @@ TEST_P(JoinMultiThreadedTest, testTwoJoins) {
 }
 
 TEST_P(JoinMultiThreadedTest, testThreeJoins) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct ResultRecord {
         uint64_t window1window2window3window4start;
         uint64_t window1window2window3window4end;
@@ -420,6 +438,11 @@ TEST_P(JoinMultiThreadedTest, testThreeJoins) {
 }
 
 TEST_P(JoinMultiThreadedTest, oneJoinSlidingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -543,6 +566,11 @@ TEST_P(JoinMultiThreadedTest, oneJoinSlidingWindow) {
 }
 
 TEST_P(JoinMultiThreadedTest, threeJoinsSlidingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct ResultRecord {
         uint64_t window1window2window3window4start;
         uint64_t window1window2window3window4end;

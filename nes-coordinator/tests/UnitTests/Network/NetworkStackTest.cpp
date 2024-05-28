@@ -228,7 +228,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         auto nesPartition = NesPartition(INVALID_SHARED_QUERY_ID, INVALID_OPERATOR_ID, PartitionId(0), SubpartitionId(0));
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
 
         std::thread t([&netManager, &completed, &nesPartition] {
@@ -315,7 +315,7 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
         auto nesPartition = NesPartition(INVALID_SHARED_QUERY_ID, INVALID_OPERATOR_ID, PartitionId(0), SubpartitionId(0));
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
 
         std::thread t([&netManagerReceiver, &completed, &nesPartition] {
@@ -415,7 +415,7 @@ TEST_F(NetworkStackTest, startCloseMaxChannel) {
             NetworkManager::create(INVALID_WORKER_NODE_ID, "127.0.0.1", *senderPort, std::move(dummyProtocol), buffMgr, 4, 2);
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
 
         std::thread t([&netManagerReceiver, &netManagerSender, &completed, &connectionsReady] {
@@ -511,7 +511,7 @@ TEST_F(NetworkStackTest, testSendData) {
                                    buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
         std::thread t([&netManager, &nesPartition, &completedProm, &completed] {
             // register the incoming channel
@@ -608,7 +608,7 @@ TEST_F(NetworkStackTest, testCorrectHandlingEOS) {
                                    numNetworkReceivingThreads);
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
         std::thread t([&netManager, &nesPartition, &completedProm, totalNumBuffer, nodeLocation] {
             // register the incoming channel
@@ -697,7 +697,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                                    buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
         std::thread t([&netManager, &nesPartition, &completedProm, totalNumBuffer, nodeLocation] {
             // register the incoming channel
@@ -795,7 +795,7 @@ TEST_F(NetworkStackTest, testMassiveSendingWithChildrenBuffer) {
                                    buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
         std::thread t([&netManager, &nesPartition, &completedProm, totalNumBuffer, nodeLocation] {
             // register the incoming channel
@@ -971,7 +971,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
-            void emitWork(TupleBuffer&) override {}
+            void emitWork(TupleBuffer&, bool) override {}
         };
         std::thread receivingThread([&netManager, &nesPartitions, &completedPromises, this] {
             // register the incoming channel

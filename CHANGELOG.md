@@ -1,5 +1,41 @@
 # Changelog
 
+## [v0.6.135](https://github.com/nebulastream/nebulastream/tree/v0.6.135) (2024-05-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.134...v0.6.135)
+
+**Implemented enhancements:**
+
+- \[TASK\] Strong Type Identifier In Nautilus [\#4919](https://github.com/nebulastream/nebulastream/issues/4919)
+
+## [v0.6.134](https://github.com/nebulastream/nebulastream/tree/v0.6.134) (2024-05-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.133...v0.6.134)
+
+**Implemented enhancements:**
+
+- \[TASK\] HashJoin Variable Sized Data [\#4647](https://github.com/nebulastream/nebulastream/issues/4647)
+
+## [v0.6.133](https://github.com/nebulastream/nebulastream/tree/v0.6.133) (2024-05-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.132...v0.6.133)
+
+**Implemented enhancements:**
+
+- \[TASK\] Rename emitWork and emitWorkFromSource [\#4888](https://github.com/nebulastream/nebulastream/issues/4888)
+
+## [v0.6.132](https://github.com/nebulastream/nebulastream/tree/v0.6.132) (2024-05-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.131...v0.6.132)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move all CI jobs to self hosted servers [\#4913](https://github.com/nebulastream/nebulastream/issues/4913)
+
+### Bug Fixes 🐛
+
+- \[BUG\] CMake build is broken for external toolchain files and non self hosting [\#4908](https://github.com/nebulastream/nebulastream/issues/4908)
+
 ## [v0.6.131](https://github.com/nebulastream/nebulastream/tree/v0.6.131) (2024-05-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.130...v0.6.131)

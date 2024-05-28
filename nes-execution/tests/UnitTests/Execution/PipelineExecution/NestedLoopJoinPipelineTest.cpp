@@ -86,7 +86,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     bool checkIfNLJWorks(const std::string& fileNameBuffersLeft,
@@ -215,6 +215,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                                                                                 nljOperatorHandler,
                                                                                 PipelineId(curPipelineId++));
 
+        nljOperatorHandler->start(std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft), 0);
+
         auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
         auto executablePipelineRight = provider->create(pipelineBuildRight, options);
         auto executablePipelineSink = provider->create(pipelineSink, options);
@@ -232,6 +234,9 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         }
         nljWorks = nljWorks && (executablePipelineLeft->stop(pipelineExecCtxLeft) == 0);
         nljWorks = nljWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
+        nljOperatorHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft));
+        nljOperatorHandler->stop(QueryTerminationType::Graceful,
+                                 std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
         // Assure that at least one buffer has been emitted
         nljWorks = nljWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());

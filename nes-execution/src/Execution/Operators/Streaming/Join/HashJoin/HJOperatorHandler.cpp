@@ -14,21 +14,38 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) {
-    return std::make_shared<HJSlice>(numberOfWorkerThreads,
-                                     sliceStart,
-                                     sliceEnd,
-                                     sizeOfRecordLeft,
-                                     sizeOfRecordRight,
-                                     totalSizeForDataStructures,
-                                     pageSize,
-                                     preAllocPageSizeCnt,
-                                     numPartitions,
-                                     joinStrategy);
+    switch (joinStrategy) {
+        case QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
+            return std::make_shared<HJSliceVarSized>(numberOfWorkerThreads,
+                                                     sliceStart,
+                                                     sliceEnd,
+                                                     leftSchema,
+                                                     rightSchema,
+                                                     bufferManager,
+                                                     pageSize,
+                                                     numPartitions);
+        case QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL:
+        case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
+        case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
+            return std::make_shared<HJSlice>(numberOfWorkerThreads,
+                                             sliceStart,
+                                             sliceEnd,
+                                             sizeOfRecordLeft,
+                                             sizeOfRecordRight,
+                                             totalSizeForDataStructures,
+                                             pageSize,
+                                             preAllocPageSizeCnt,
+                                             numPartitions,
+                                             joinStrategy);
+        case QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN:
+            NES_THROW_RUNTIME_ERROR("Can't create NLJ Slice in HJOpHandler!");
+    }
 }
 
 void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
@@ -36,8 +53,20 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
                                             const WindowInfo& windowInfo,
                                             PipelineExecutionContext* pipelineCtx) {
     if (sliceLeft.getNumberOfTuplesLeft() > 0 && sliceRight.getNumberOfTuplesRight() > 0) {
-        dynamic_cast<HJSlice&>(sliceLeft).mergeLocalToGlobalHashTable();
-        dynamic_cast<HJSlice&>(sliceRight).mergeLocalToGlobalHashTable();
+        switch (joinStrategy) {
+            case QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
+                dynamic_cast<HJSliceVarSized&>(sliceLeft).mergeLocalToGlobalHashTable();
+                dynamic_cast<HJSliceVarSized&>(sliceRight).mergeLocalToGlobalHashTable();
+                break;
+            case QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL:
+            case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
+            case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
+                dynamic_cast<HJSlice&>(sliceLeft).mergeLocalToGlobalHashTable();
+                dynamic_cast<HJSlice&>(sliceRight).mergeLocalToGlobalHashTable();
+                break;
+            case QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN:
+                NES_THROW_RUNTIME_ERROR("Can't emit NLJ Slice in HJOpHandler!");
+        }
 
         for (auto i = 0UL; i < getNumPartitions(); ++i) {
 

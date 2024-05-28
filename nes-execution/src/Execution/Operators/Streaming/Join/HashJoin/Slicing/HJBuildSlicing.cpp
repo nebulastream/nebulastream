@@ -66,15 +66,15 @@ uint64_t getSliceEndProxy(void* ptrHashSlice) {
     return hashSlice->getSliceEnd();
 }
 
-void* getLocalHashTableProxy(void* ptrHashSlice, size_t workerIdx, uint64_t joinBuildSideInt) {
+void* getLocalHashTableProxy(void* ptrHashSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrHashSlice != nullptr, "hash window handler context should not be null");
     auto* hashSlice = static_cast<HJSlice*>(ptrHashSlice);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
-    NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}",
+    NES_DEBUG("Insert into HT for window={} is left={} workerThreadId={}",
               hashSlice->getSliceIdentifier(),
               magic_enum::enum_name(joinBuildSide),
-              workerIdx);
-    auto ptr = hashSlice->getHashTable(joinBuildSide, workerIdx);
+              workerThreadId);
+    auto ptr = hashSlice->getHashTable(joinBuildSide, workerThreadId);
     auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;
 }
@@ -110,7 +110,7 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         joinState->hashTableReference = Nautilus::FunctionCall("getLocalHashTableProxy",
                                                                getLocalHashTableProxy,
                                                                joinState->sliceReference,
-                                                               ctx.getWorkerId(),
+                                                               ctx.getWorkerThreadId(),
                                                                Value<UInt64>(to_underlying(joinBuildSide)));
 
         joinState->sliceStart = Nautilus::FunctionCall("getSliceStartProxy", getSliceStartProxy, joinState->sliceReference);

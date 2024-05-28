@@ -84,7 +84,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after a test is executed. */
@@ -223,6 +223,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                                                                           hashJoinOpHandler,
                                                                           PipelineId(curPipelineId++));
 
+        hashJoinOpHandler->start(std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft), 0);
+
         auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
         auto executablePipelineRight = provider->create(pipelineBuildRight, options);
         auto executablePipelineSink = provider->create(pipelineProbe, options);
@@ -240,6 +242,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         }
         hashJoinWorks = hashJoinWorks && (executablePipelineLeft->stop(pipelineExecCtxLeft) == 0);
         hashJoinWorks = hashJoinWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
+        hashJoinOpHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft));
+        hashJoinOpHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
         // Assure that at least one buffer has been emitted
         hashJoinWorks =

@@ -23,9 +23,9 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getBucketStore(void* op, uint64_t workerId) {
+void* getBucketStore(void* op, WorkerThreadId workerThreadId) {
     auto handler = static_cast<NonKeyedBucketPreAggregationHandler*>(op);
-    return handler->getThreadLocalBucketStore(workerId);
+    return handler->getThreadLocalBucketStore(workerThreadId);
 }
 
 void* findBucketsByTs(void* ss, uint64_t ts) {
@@ -108,7 +108,7 @@ void NonKeyedBucketPreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb)
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto bucketStore = Nautilus::FunctionCall("getBucketStore", getBucketStore, globalOperatorHandler, ctx.getWorkerId());
+    auto bucketStore = Nautilus::FunctionCall("getBucketStore", getBucketStore, globalOperatorHandler, ctx.getWorkerThreadId());
     // 3. store the reference to the slice store in the local operator state.
     auto localState = std::make_unique<LocalBucketPreAggregationState>(bucketStore);
     ctx.setLocalOperatorState(this, std::move(localState));

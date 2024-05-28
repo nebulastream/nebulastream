@@ -46,8 +46,8 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::BaseUnitTest::SetUp();
-        const auto joinStrategy = std::get<0>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
-        const auto windowingStrategy = std::get<1>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
+        joinStrategy = std::get<0>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
+        windowingStrategy = std::get<1>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
         const auto numWorkerThreads = 1;
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode,
                                                                          numWorkerThreads,
@@ -210,9 +210,17 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
         // We return the result records, as someone might want to print them to std::out or do something else
         return resultRecords;
     }
+
+    QueryCompilation::StreamJoinStrategy joinStrategy;
+    QueryCompilation::WindowingStrategy windowingStrategy;
 };
 
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t test1test2Start;
         uint64_t test1test2End;
@@ -258,6 +266,11 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
 * Test deploying join with same data and same schema
  * */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -294,6 +307,11 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
  * Test deploying join with same data but different names in the schema
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -330,6 +348,11 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInpu
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -366,6 +389,11 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) 
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -401,6 +429,11 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -435,6 +468,11 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
 }
 
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -471,6 +509,11 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -508,6 +551,11 @@ TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
  */
 // TODO this test can be enabled once #3638 is merged
 TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -546,6 +594,11 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
 }
 
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         int64_t test1test2$start;
         int64_t test1test2$end;
@@ -634,6 +687,11 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
 }
 
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     struct __attribute__((packed)) ResultRecord {
         int64_t test1test2$start;
         int64_t test1test2$end;

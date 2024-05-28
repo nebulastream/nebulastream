@@ -48,7 +48,7 @@ static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
 /**
  * @brief Stores the information of a window. The start, end, and the identifier
  */
-enum class WindowInfoState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_PROBE, ONCE_SEEN_DURING_TERMINATION };
+enum class WindowInfoState : uint8_t { BOTH_SIDES_FILLING, ONCE_SEEN_DURING_TERMINATION, EMITTED_TO_PROBE };
 class WindowInfo {
   public:
     WindowInfo();

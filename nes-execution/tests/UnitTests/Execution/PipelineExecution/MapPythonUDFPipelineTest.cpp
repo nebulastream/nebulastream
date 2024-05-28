@@ -52,7 +52,7 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
         NES_INFO("Setup MapPythonUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 
     std::string testDataPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "PythonUDFTestData";

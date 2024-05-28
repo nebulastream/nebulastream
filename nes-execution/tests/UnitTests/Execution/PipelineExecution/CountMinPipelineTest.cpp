@@ -91,7 +91,7 @@ class CountMinPipelineTest : public Testing::BaseUnitTest,
         provider = ExecutablePipelineProviderRegistry::getPlugin(std::get<0>(GetParam())).get();
         sinkDataCodec = std::get<1>(GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
         inputSchema = Schema::create()
                           ->addField(fieldToBuildCountMinOver, BasicType::INT64)
                           ->addField(timestampFieldName, BasicType::UINT64);

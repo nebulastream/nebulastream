@@ -81,24 +81,31 @@ DataSource::DataSource(SchemaPtr pSchema,
     }
 }
 
-void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
-    // set the origin id for this source
-    buffer.setOriginId(originId);
-    // set the creation timestamp
-    buffer.setCreationTimestampInMS(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count());
-    // Set the sequence number of this buffer.
-    // A data source generates a monotonic increasing sequence number
-    maxSequenceNumber++;
-    buffer.setSequenceNumber(maxSequenceNumber);
-    buffer.setChunkNumber(1);
-    buffer.setLastChunk(true);
-    buffer.setStatisticId(statisticId);
-    emitWork(buffer);
-}
+void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) {
+    if (addBufferMetaData) {
+        // set the origin id for this source
+        buffer.setOriginId(originId);
+        // set the creation timestamp
+        buffer.setCreationTimestampInMS(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count());
+        // Set the sequence number of this buffer.
+        // A data source generates a monotonic increasing sequence number
+        maxSequenceNumber++;
+        buffer.setSequenceNumber(maxSequenceNumber);
+        buffer.setChunkNumber(1);
+        buffer.setLastChunk(true);
+        buffer.setStatisticId(statisticId);
+        NES_DEBUG("Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} "
+                  "statisticId={}",
+                  buffer.getOriginId(),
+                  buffer.getOriginId(),
+                  buffer.getSequenceNumber(),
+                  buffer.getChunkNumber(),
+                  buffer.isLastChunk(),
+                  buffer.getStatisticId());
+    }
 
-void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
         //find the queue to which this sources pushes
@@ -350,7 +357,7 @@ void DataSource::runningRoutineWithIngestionRate() {
                 // here we got a valid buffer
                 NES_TRACE("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
-                emitWorkFromSource(buf);
+                emitWork(buf);
 
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
@@ -444,7 +451,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                     NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
                 }
 
-                emitWorkFromSource(buf);
+                emitWork(buf);
                 ++numberOfBuffersProduced;
             } else {
                 NES_DEBUG("DataSource {}: stopping cause of invalid buffer", operatorId);

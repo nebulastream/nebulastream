@@ -50,7 +50,7 @@ class EmitOperatorTest : public Testing::BaseUnitTest {
  */
 TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(0, bm, 100);
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -83,7 +83,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
  */
 TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(0, bm, 100);
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -120,7 +120,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
  */
 TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(0, bm, 100);
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);

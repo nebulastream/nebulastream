@@ -270,8 +270,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
     MOCK_METHOD(SourceType, getType, (), (const));
-    MOCK_METHOD(void, emitWork, (Runtime::TupleBuffer & buffer));
-    MOCK_METHOD(void, emitWorkFromSource, (Runtime::TupleBuffer & buffer));
+    MOCK_METHOD(void, emitWork, (Runtime::TupleBuffer & buffer, bool addBufferMetaData));
     MOCK_METHOD(void, recycleUnpooledBuffer, (Runtime::detail::MemorySegment * buffer));
 
     Runtime::TupleBuffer getRecyclableBuffer() {
@@ -853,7 +852,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
-    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(SharedQueryId(this->queryId),
                                                                          DecomposedQueryPlanId(this->queryId),
                                                                          {mDataSource},
@@ -866,7 +865,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     ASSERT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(this->queryId)),
               Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1));
+    EXPECT_CALL(*mDataSource, emitWork(_, _)).Times(Exactly(1));
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
@@ -902,7 +901,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
-    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(SharedQueryId(this->queryId),
                                                                          DecomposedQueryPlanId(this->queryId),
                                                                          {mDataSource},
@@ -915,7 +914,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     ASSERT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(this->queryId)),
               Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
+    EXPECT_CALL(*mDataSource, emitWork(_, _)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
         mDataSource->running = false;
         return;
     }));
@@ -951,7 +950,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceKFRoutineBufWithValue) {
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
-    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                                          this->queryId,
                                                                          {mDataSource},
@@ -963,7 +962,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceKFRoutineBufWithValue) {
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
+    EXPECT_CALL(*mDataSource, emitWork(_, _)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
         mDataSource->running = false;
         return;
     }));
@@ -999,7 +998,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
     ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
-    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    ON_CALL(*mDataSource, emitWork(_, _)).WillByDefault(Return());
     auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
                                                                          this->queryId,
                                                                          {mDataSource},
@@ -1012,7 +1011,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     auto oldInterval = mDataSource->gatheringInterval;
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
+    EXPECT_CALL(*mDataSource, emitWork(_, _)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
         mDataSource->running = false;
         return;
     }));

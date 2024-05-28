@@ -23,6 +23,9 @@
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRef;
 
+class PagedVectorVarSized;
+using PagedVectorVarSizedPtr = std::shared_ptr<PagedVectorVarSized>;
+
 struct VarSizedDataEntryMapValue {
     uint8_t* entryPtr;
     uint32_t entryLength;
@@ -35,12 +38,11 @@ struct VarSizedDataEntryMapValue {
  * Entries consume a fixed size, which has to be smaller then the page size.
  * Each page can contain page_size/entry_size entries.
  * Additionally to the fixed data types, this PagedVector also supports variable sized data. Currently,
- * the same constraints apply to the variable sized data part as to the fixed data part.
- * To know where each variable sized data lies, we store the entryPtr and the entryLength in the
+ * similar constraints apply to the variable sized data part as to the fixed data part.
+ * To know where each variable sized data lies, we store the entryPtr, the entryLength and the entryBufIdx in the
  * map varSizedDataEntryMap[varSizedDataEntryMapCounter] and increment for each new record varSizedDataEntryMapCounter.
  *
  * There are already issues solving these shortcoming that will improve this PagedVector implementation.
- * - #4638: Add support for variable sized data larger than the specified PAGE_SIZE
  * - #4639: Optimize appendAllPages()
  * - #4658: Add MemoryLayout class for PagedVectorVarSized to support different layouts
  */
@@ -137,6 +139,12 @@ class PagedVectorVarSized {
      * @return uint64_t
      */
     uint64_t getEntrySize() const;
+
+    /**
+     * @brief Returns the page capacity.
+     * @return uint64_t
+     */
+    uint64_t getCapacityPerPage() const;
 
   private:
     friend PagedVectorVarSizedRef;

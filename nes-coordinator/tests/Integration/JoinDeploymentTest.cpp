@@ -92,8 +92,12 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 * Test deploying join with same data and same schema
  * */
 TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
-    const auto schema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
 
+    const auto schema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     TestUtils::JoinParams joinParams(schema, schema, "id", "id");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
     auto query = Query::from("test1")
@@ -109,9 +113,13 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
  * Test deploying join with same data but different names in the schema
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
-
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
     auto query = Query::from("test1")
@@ -127,9 +135,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
-
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
     auto query = Query::from("test1")
@@ -145,9 +157,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName("test2");
-
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
     auto query = Query::from("test1")
@@ -163,8 +179,12 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
-    const auto schema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
 
+    const auto schema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     TestUtils::JoinParams joinParams(schema, schema, "id", "id");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
     const auto windowSize = 1000UL;
@@ -183,9 +203,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName("test2");
-
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
     const auto windowSize = 1000UL;
@@ -206,7 +230,9 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
 TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE
-        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
+        || (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+            && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)) {
         GTEST_SKIP();
     }
 
@@ -232,9 +258,13 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
 }
 
 TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
     const auto rightSchema = TestSchemas::getSchemaTemplate("id2_time_u64")->updateSourceName("test2");
-
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id2");
     TestUtils::CsvFileParams csvFileParams("window8.csv", "window9.csv", "window_sink8.csv");
     auto query = Query::from("test1")

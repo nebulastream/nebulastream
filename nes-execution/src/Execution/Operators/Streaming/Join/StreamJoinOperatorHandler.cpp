@@ -13,11 +13,21 @@
 */
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, uint32_t) { NES_INFO("Started StreamJoinOperatorHandler!"); }
-void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-    NES_INFO("Stopped StreamJoinOperatorHandler!");
+void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, uint32_t) {
+    NES_INFO("Started StreamJoinOperatorHandler!");
+    setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+    setBufferManager(pipelineCtx->getBufferManager());
+}
+
+void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineCtx) {
+    NES_INFO("Stopped StreamJoinOperatorHandler with {}!", magic_enum::enum_name(queryTerminationType));
+    if (queryTerminationType == QueryTerminationType::Graceful) {
+        triggerAllSlices(pipelineCtx.get());
+    }
 }
 
 std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(uint64_t sliceIdentifier) {
@@ -159,16 +169,17 @@ void StreamJoinOperatorHandler::setNumberOfWorkerThreads(uint64_t numberOfWorker
     StreamJoinOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
 }
 
-void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uint64_t workerId) {
-    workerIdToWatermarkMap[workerId] = watermark;
+void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, WorkerThreadId workerThreadId) {
+    workerThreadIdToWatermarkMap[workerThreadId] = watermark;
 }
 
 uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
-    auto minVal =
-        std::min_element(std::begin(workerIdToWatermarkMap), std::end(workerIdToWatermarkMap), [](const auto& l, const auto& r) {
-            return l.second < r.second;
-        });
-    return minVal == workerIdToWatermarkMap.end() ? -1 : minVal->second;
+    auto minVal = std::min_element(std::begin(workerThreadIdToWatermarkMap),
+                                   std::end(workerThreadIdToWatermarkMap),
+                                   [](const auto& l, const auto& r) {
+                                       return l.second < r.second;
+                                   });
+    return minVal == workerThreadIdToWatermarkMap.end() ? -1 : minVal->second;
 }
 
 uint64_t StreamJoinOperatorHandler::getWindowSlide() const { return sliceAssigner.getWindowSlide(); }

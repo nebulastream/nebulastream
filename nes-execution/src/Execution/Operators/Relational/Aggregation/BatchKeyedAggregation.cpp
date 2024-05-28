@@ -24,9 +24,9 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getKeyedStateProxy(void* op, uint64_t workerId) {
+void* getKeyedStateProxy(void* op, WorkerThreadId workerThreadId) {
     auto handler = static_cast<BatchKeyedAggregationHandler*>(op);
-    return handler->getThreadLocalStore(workerId);
+    return handler->getThreadLocalStore(workerThreadId);
 }
 
 void setupHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
@@ -75,7 +75,8 @@ void BatchKeyedAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 2. load the thread local hash map according to the worker id.
-    auto hashMap = Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerId());
+    auto hashMap =
+        Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerThreadId());
     auto hashMapRef = Interface::ChainedHashMapRef(hashMap, keyDataTypes, keySize, valueSize);
 
     // 3. store the reference to the hash map in the local operator state.

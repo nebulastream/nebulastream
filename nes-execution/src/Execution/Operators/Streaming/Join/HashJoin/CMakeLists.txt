@@ -18,4 +18,6 @@ add_source_files(nes-execution
         HJOperatorHandler.cpp
         HJProbe.cpp
         HJSlice.cpp
+        HJSliceVarSized.cpp
+        HJProbeVarSized.cpp
 )

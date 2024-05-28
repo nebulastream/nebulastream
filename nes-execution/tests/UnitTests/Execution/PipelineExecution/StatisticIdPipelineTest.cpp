@@ -68,7 +68,7 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
         schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                      ->addField("f1", BasicType::INT64)

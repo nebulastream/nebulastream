@@ -14,6 +14,7 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
@@ -48,10 +49,10 @@ class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
 
     /**
      * @brief Returns the thread local state by a specific worker thread id
-     * @param workerId
+     * @param workerThreadId
      * @return State
      */
-    State getThreadLocalState(uint64_t workerId);
+    State getThreadLocalState(WorkerThreadId workerThreadId);
 
     ~BatchAggregationHandler() override;
 

@@ -20,7 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, NES::SchemaPtr schema, uint64_t pageSize)
+PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize)
     : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize) {
     appendPage();
     appendVarSizedDataPage();
@@ -106,7 +106,9 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
 
         // load the text from the varSizedDataPages into the buffer
         while (textLength > 0) {
-            auto remainingSpace = pageSize - (textPtr - varSizedDataPages[bufferIdx++].getBuffer());
+            auto varSizedDataPage = varSizedDataPages[bufferIdx];
+            ++bufferIdx;
+            auto remainingSpace = varSizedDataPage.getBufferSize() - (textPtr - varSizedDataPage.getBuffer());
             if (remainingSpace >= textLength) {
                 std::memcpy(destPtr, textPtr, textLength);
                 break;
@@ -125,7 +127,6 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
 
 void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other) {
     // TODO optimize appending the maps, see #4639
-    NES_ASSERT2_FMT(pageSize == other.pageSize, "Can not combine PagedVector of different pageSizes for now!");
     NES_ASSERT2_FMT(entrySize == other.entrySize, "Can not combine PagedVector of different entrySize for now!");
 
     pages.back().setNumberOfTuples(numberOfEntriesOnCurrPage);
@@ -181,5 +182,7 @@ bool PagedVectorVarSized::varSizedDataEntryMapEmpty() const { return varSizedDat
 uint64_t PagedVectorVarSized::getVarSizedDataEntryMapCounter() const { return varSizedDataEntryMapCounter; }
 
 uint64_t PagedVectorVarSized::getEntrySize() const { return entrySize; }
+
+uint64_t PagedVectorVarSized::getCapacityPerPage() const { return capacityPerPage; }
 
 }// namespace NES::Nautilus::Interface
