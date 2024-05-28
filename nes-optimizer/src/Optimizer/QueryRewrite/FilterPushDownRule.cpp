@@ -14,10 +14,10 @@
 
 #include <API/Schema.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -33,9 +33,9 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/ContentBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
-#include <Types/ContentBasedWindowType.hpp>
 #include <queue>
 
 namespace NES::Optimizer {
@@ -163,9 +163,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
 
-        renameFieldAccessExpressionNodes(newPredicate,
-                                         equiJoinKeyNames.first,
-                                         equiJoinKeyNames.second);
+        renameFieldAccessExpressionNodes(newPredicate, equiJoinKeyNames.first, equiJoinKeyNames.second);
 
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
@@ -182,9 +180,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
-        renameFieldAccessExpressionNodes(newPredicate,
-                                         equiJoinKeyNames.second,
-                                         equiJoinKeyNames.first);
+        renameFieldAccessExpressionNodes(newPredicate, equiJoinKeyNames.second, equiJoinKeyNames.first);
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
 

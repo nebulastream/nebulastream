@@ -106,8 +106,7 @@ struct SourceTypeConfigCSV {
  * @brief Struct for storing all parameter for the join
  */
 struct JoinParams {
-     JoinParams(const std::vector<SchemaPtr>& inputSchemas)
-        : inputSchemas(inputSchemas) {
+    JoinParams(const std::vector<SchemaPtr>& inputSchemas) : inputSchemas(inputSchemas) {
         NES_ASSERT(inputSchemas.size() >= 2, "JoinParams expect to have at least two input schemas");
         const std::shared_ptr<Schema>& inputSchema1 = inputSchemas[0];
         const std::shared_ptr<Schema>& inputSchema2 = inputSchemas[1];

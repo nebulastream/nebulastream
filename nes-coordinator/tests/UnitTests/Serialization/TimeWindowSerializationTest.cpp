@@ -87,15 +87,16 @@ TEST_P(WindowSerializationTest, testSerializeDeserializeWindowJoinOperators) {
         TumblingWindow::of(EventTime(Attribute("event_time"), std::get<1>(GetParam())), std::get<0>(GetParam())),
         TumblingWindow::of(IngestionTime(), std::get<0>(GetParam()))};
 
-        auto joinExpression = EqualsExpressionNode::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>());
+    auto joinExpression = EqualsExpressionNode::create(
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>());
 
     for (const auto& logical_window_descriptor : descriptors) {
-        auto joinDescriptor = Join::LogicalJoinDescriptor::create(
-            joinExpression,
-            logical_window_descriptor,
-            1,
-            1,
-            Join::LogicalJoinDescriptor::JoinType::INNER_JOIN);
+        auto joinDescriptor = Join::LogicalJoinDescriptor::create(joinExpression,
+                                                                  logical_window_descriptor,
+                                                                  1,
+                                                                  1,
+                                                                  Join::LogicalJoinDescriptor::JoinType::INNER_JOIN);
 
         auto joinOperator = LogicalOperatorFactory::createJoinOperator(joinDescriptor, operatorId);
         std::dynamic_pointer_cast<OriginIdAssignmentOperator>(joinOperator)->setOriginId(OriginId(1));

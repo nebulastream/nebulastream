@@ -235,9 +235,9 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
 
         bool operator==(const ResultRecord& rhs) const {
             return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1f1_left == rhs.test1f1_left && test1f2_left == rhs.test1f2_left
-                && test1timestamp == rhs.test1timestamp && test2f1_right == rhs.test2f1_right
-                && test2f2_right == rhs.test2f2_right && test2timestamp == rhs.test2timestamp;
+                && test1f1_left == rhs.test1f1_left && test1f2_left == rhs.test1f2_left && test1timestamp == rhs.test1timestamp
+                && test2f1_right == rhs.test2f1_right && test2f2_right == rhs.test2f2_right
+                && test2timestamp == rhs.test2timestamp;
         }
     };
 
@@ -286,9 +286,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
 
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1value == rhs.window1value && window1id == rhs.window1id
-                && window1timestamp == rhs.window1timestamp && window2value == rhs.window2value && window2id == rhs.window2id
-                && window2timestamp == rhs.window2timestamp;
+                && window1value == rhs.window1value && window1id == rhs.window1id && window1timestamp == rhs.window1timestamp
+                && window2value == rhs.window2value && window2id == rhs.window2id && window2timestamp == rhs.window2timestamp;
         }
     };
 
@@ -326,9 +325,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInpu
 
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+                && window1value1 == rhs.window1value1 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
+                && window2value2 == rhs.window2value2 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
 
@@ -366,9 +364,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) 
 
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+                && window1value1 == rhs.window1value1 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
+                && window2value2 == rhs.window2value2 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
 
@@ -405,9 +402,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
 
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
-                && window2timestamp == rhs.window2timestamp;
+                && window1value1 == rhs.window1value1 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
+                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
 
@@ -445,9 +441,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
 
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+                && window1value1 == rhs.window1value1 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
+                && window2value2 == rhs.window2value2 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
 
@@ -482,9 +477,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
         uint64_t window2timestamp;
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+                && window1value1 == rhs.window1value1 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
+                && window2value2 == rhs.window2value2 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
 
@@ -522,9 +516,8 @@ TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
 
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
-                && window2timestamp == rhs.window2timestamp;
+                && window1value1 == rhs.window1value1 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
+                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
         }
     };
 
@@ -609,11 +602,10 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
         uint64_t test2$count;
 
         bool operator==(const ResultRecord& rhs) const {
-            return test1test2$start == rhs.test1test2$start && test1test2$end == rhs.test1test2$end
-                && test1$key == rhs.test1$key && test1$values == rhs.test1$values
-                && test1$values2 == rhs.test1$values2 && test1$timestamp == rhs.test1$timestamp
-                && test2$timestamp == rhs.test2$timestamp && test2$end == rhs.test2$end && test2$key == rhs.test2$key
-                && test2$count == rhs.test2$count;
+            return test1test2$start == rhs.test1test2$start && test1test2$end == rhs.test1test2$end && test1$key == rhs.test1$key
+                && test1$values == rhs.test1$values && test1$values2 == rhs.test1$values2
+                && test1$timestamp == rhs.test1$timestamp && test2$timestamp == rhs.test2$timestamp && test2$end == rhs.test2$end
+                && test2$key == rhs.test2$key && test2$count == rhs.test2$count;
         }
     };
     const auto leftSchema = TestSchemas::getSchemaTemplate("id_2val_time_u64")->updateSourceName(*srcName);
@@ -698,10 +690,9 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
 
         bool operator==(const ResultRecord& rhs) const {
             return test1test2$start == rhs.test1test2$start && test1test2$end == rhs.test1test2$end
-                && test1$start == rhs.test1$start && test1$end == rhs.test1$end
-                && test1$f2_left == rhs.test1$f2_left && test1$fieldForSum1 == rhs.test1$fieldForSum1
-                && test2$start == rhs.test2$start && test2$end == rhs.test2$end && test2$f2_right == rhs.test2$f2_right
-                && test2$fieldForSum2 == rhs.test2$fieldForSum2;
+                && test1$start == rhs.test1$start && test1$end == rhs.test1$end && test1$f2_left == rhs.test1$f2_left
+                && test1$fieldForSum1 == rhs.test1$fieldForSum1 && test2$start == rhs.test2$start && test2$end == rhs.test2$end
+                && test2$f2_right == rhs.test2$f2_right && test2$fieldForSum2 == rhs.test2$fieldForSum2;
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)

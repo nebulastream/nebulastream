@@ -19,9 +19,9 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
-#include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -122,7 +122,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
             Record joinedRecord;
             createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-            if (joinExpression->execute(joinedRecord).as<Boolean>()){
+            if (joinExpression->execute(joinedRecord).as<Boolean>()) {
                 // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }

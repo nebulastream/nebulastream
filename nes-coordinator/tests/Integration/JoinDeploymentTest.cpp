@@ -226,7 +226,7 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
         || (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)) {
+            && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)) {
         GTEST_SKIP();
     }
 

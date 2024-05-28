@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
-#include <string>
 #include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <unordered_set>
-#include <Util/Logger/Logger.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <string>
+#include <unordered_set>
 
 namespace NES {
-std::pair<std::basic_string<char>,std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::ExpressionNode> joinExpression){
+std::pair<std::basic_string<char>, std::basic_string<char>>
+findEquiJoinKeyNames(std::shared_ptr<NES::ExpressionNode> joinExpression) {
     std::basic_string<char> leftJoinKeyNameEqui;
     std::basic_string<char> rightJoinKeyNameEqui;
 
@@ -32,15 +33,16 @@ std::pair<std::basic_string<char>,std::basic_string<char>> findEquiJoinKeyNames(
 
     auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
-        if((*itr)->instanceOf<BinaryExpressionNode>()){
+        if ((*itr)->instanceOf<BinaryExpressionNode>()) {
             auto visitingOp = (*itr)->as<BinaryExpressionNode>();
             if (visitedExpressions.contains(visitingOp)) {
                 // skip rest of the steps as the node found in already visited node list
                 continue;
-            } else{
+            } else {
                 visitedExpressions.insert(visitingOp);
                 //Find the schema for left and right join key
-                if(!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>() && (*itr)->instanceOf<EqualsExpressionNode>()){
+                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()
+                    && (*itr)->instanceOf<EqualsExpressionNode>()) {
                     const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft()->as<FieldAccessExpressionNode>();
                     leftJoinKeyNameEqui = leftJoinKey->getFieldName();
 
@@ -49,10 +51,10 @@ std::pair<std::basic_string<char>,std::basic_string<char>> findEquiJoinKeyNames(
 
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedExpressions.insert(visitingOp);
-                    } // if Equals
-                } // else new node
-            } // if binary expression
-        } // for
-        return std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
+                }// if Equals
+            }    // else new node
+        }        // if binary expression
+    }            // for
+    return std::make_pair(leftJoinKeyNameEqui, rightJoinKeyNameEqui);
 }
-}// NES
+}// namespace NES

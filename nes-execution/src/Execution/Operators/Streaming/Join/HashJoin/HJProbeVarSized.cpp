@@ -138,7 +138,7 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
 
             Record joinedRecord;
             createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-            if (joinExpression->execute(joinedRecord).as<Boolean>()){
+            if (joinExpression->execute(joinedRecord).as<Boolean>()) {
                 // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }

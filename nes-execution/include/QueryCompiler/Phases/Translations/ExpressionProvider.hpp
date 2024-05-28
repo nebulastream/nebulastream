@@ -14,8 +14,8 @@
 
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
-#include <memory>
 #include <Expressions/ConstantValueExpressionNode.hpp>
+#include <memory>
 
 namespace NES {
 class ExpressionNode;

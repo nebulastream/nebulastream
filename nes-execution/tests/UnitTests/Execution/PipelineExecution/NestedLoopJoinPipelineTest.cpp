@@ -15,11 +15,11 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessEqualsExpression.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -164,9 +164,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        Operators::JoinSchema joinSchemaStruct(leftSchema,
-                                               rightSchema,
-                                               Util::createJoinSchema(leftSchema, rightSchema));
+        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);
 
         auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
@@ -293,7 +291,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
 
     auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
-    auto onRightKey= std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
     auto joinExpression = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
     const auto timeStampFieldRight = rightSchema->get(2)->getName();
@@ -341,7 +339,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
 
     auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
-    auto onRightKey= std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
     auto joinExpression = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
     const auto timeStampFieldRight = rightSchema->get(2)->getName();
@@ -387,7 +385,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
 
     const auto joinFieldName1Right = rightSchema->get(0)->getName();
     const auto joinFieldName1Left = leftSchema->get(0)->getName();
-     const auto joinFieldName2Right = rightSchema->get(1)->getName();
+    const auto joinFieldName2Right = rightSchema->get(1)->getName();
     const auto joinFieldName2Left = leftSchema->get(1)->getName();
 
     //create joinExpression: id == id && value > value
@@ -397,8 +395,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     auto onRightKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Right);
     auto joinExpressionEq = std::make_shared<Expressions::EqualsExpression>(onLeftKey1, onRightKey1);
     auto joinExpressionGt = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey2, onRightKey2);
-    auto joinExpression = std::make_shared<Expressions::AndExpression>(joinExpressionEq,joinExpressionGt);
-
+    auto joinExpression = std::make_shared<Expressions::AndExpression>(joinExpressionEq, joinExpressionGt);
 
     const auto timeStampFieldRight = rightSchema->get(2)->getName();
     const auto timeStampFieldLeft = leftSchema->get(2)->getName();
@@ -443,7 +440,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
 
     const auto joinFieldName1Right = rightSchema->get(0)->getName();
     const auto joinFieldName1Left = leftSchema->get(0)->getName();
-     const auto joinFieldName2Right = rightSchema->get(1)->getName();
+    const auto joinFieldName2Right = rightSchema->get(1)->getName();
     const auto joinFieldName2Left = leftSchema->get(1)->getName();
 
     //create joinExpression: id <= id && value > value
@@ -453,8 +450,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     auto onRightKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Right);
     auto keyExpressionEq = std::make_shared<Expressions::LessEqualsExpression>(onLeftKey1, onRightKey1);
     auto keyExpressionGt = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey2, onRightKey2);
-    auto keyExpressions = std::make_shared<Expressions::AndExpression>(keyExpressionEq,keyExpressionGt);
-
+    auto keyExpressions = std::make_shared<Expressions::AndExpression>(keyExpressionEq, keyExpressionGt);
 
     const auto timeStampFieldRight = rightSchema->get(2)->getName();
     const auto timeStampFieldLeft = leftSchema->get(2)->getName();
@@ -500,7 +496,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
 
     auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
-    auto onRightKey= std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
     auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
     const auto timeStampFieldRight = rightSchema->get(1)->getName();

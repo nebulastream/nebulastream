@@ -14,14 +14,14 @@
 
 #include <API/Schema.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 #include <unordered_set>
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <utility>
 
 namespace NES::Join {
 
@@ -31,8 +31,8 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(ExpressionNodePtr joinExpression,
                                              uint64_t numberOfInputEdgesRight,
                                              JoinType joinType,
                                              OriginId originId)
-    : joinExpression(joinExpression), leftSourceType(Schema::create()), rightSourceType(Schema::create()), outputSchema(Schema::create()),
-      windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
+    : joinExpression(joinExpression), leftSourceType(Schema::create()), rightSourceType(Schema::create()),
+      outputSchema(Schema::create()), windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
       numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType), originId(originId) {
     NES_ASSERT(this->windowType, "Invalid window type");
     NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
@@ -95,11 +95,10 @@ void LogicalJoinDescriptor::setOriginId(OriginId originId) { this->originId = or
 ExpressionNodePtr LogicalJoinDescriptor::getJoinExpression() { return this->joinExpression; }
 
 bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const {
-     return leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
+    return leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
         && outputSchema->equals(other.outputSchema) && windowType->equal(other.windowType)
-        && joinExpression->equal(other.joinExpression)
-        && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft && numberOfInputEdgesRight == other.numberOfInputEdgesRight
-        && joinType == other.joinType && originId == other.originId;
+        && joinExpression->equal(other.joinExpression) && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft
+        && numberOfInputEdgesRight == other.numberOfInputEdgesRight && joinType == other.joinType && originId == other.originId;
 }
 
 };// namespace NES::Join
