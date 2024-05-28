@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NUMBERVALIDATION_HPP
-#define NES_NUMBERVALIDATION_HPP
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
 
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <regex>
@@ -35,4 +35,4 @@ class NumberValidation : public ConfigurationValidation {
 };
 }// namespace NES::Configurations
 
-#endif//NES_NUMBERVALIDATION_HPP
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
