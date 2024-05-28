@@ -388,7 +388,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
         R"(Query::from("window1")
             .project(Attribute("id1").as("id1New"), Attribute("timestamp"))
             .joinWith(Query::from("window2").project(Attribute("id2").as("id2New"), Attribute("timestamp")))
-            .where(Attribute("id1New")).equalsTo(Attribute("id2New")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+            .where(Attribute("id1New") == Attribute("id2New")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
             Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 

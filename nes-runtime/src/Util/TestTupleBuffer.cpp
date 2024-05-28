@@ -91,7 +91,13 @@ std::string DynamicTuple::toString(const SchemaPtr& schema) {
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
         const auto dataType = schema->get(i)->getDataType();
         DynamicField currentField = this->operator[](i);
-        ss << currentField.toString() << "|";
+        if (dataType->isText()) {
+            const auto index = currentField.read<TupleBuffer::NestedTupleBufferKey>();
+            const auto string = readVarSizedData(buffer, index);
+            ss << string << "|";
+        } else {
+            ss << currentField.toString() << "|";
+        }
     }
     return ss.str();
 }
@@ -110,8 +116,8 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const {
             return false;
         }
 
-        auto thisDynamicField = this->operator[](field->getName());
-        auto otherDynamicField = other.operator[](field->getName());
+        auto thisDynamicField = (*this)[field->getName()];
+        auto otherDynamicField = other[field->getName()];
 
         if (field->getDataType()->isText()) {
             const auto thisString = readVarSizedData(buffer, thisDynamicField.read<TupleBuffer::NestedTupleBufferKey>());

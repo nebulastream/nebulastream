@@ -15,6 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
@@ -122,14 +123,30 @@ QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePt
 
 QueryPlanPtr QueryPlanBuilder::addJoin(QueryPlanPtr leftQueryPlan,
                                        QueryPlanPtr rightQueryPlan,
-                                       ExpressionNodePtr onLeftKey,
-                                       ExpressionNodePtr onRightKey,
+                                       ExpressionNodePtr joinExpression,
                                        const Windowing::WindowTypePtr& windowType,
-                                       Join::LogicalJoinDescriptor::JoinType joinType) {
-    NES_DEBUG("Query: joinWith the subQuery to current query");
+                                       Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT) {
+    NES_DEBUG("QueryPlanBuilder: joinWith the subQuery to current query");
 
-    auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
-    auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "leftSide");
+    NES_DEBUG("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
+    std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
+    auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
+    for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
+        if((*itr)->instanceOf<BinaryExpressionNode>()){
+            auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+            if (visitedExpressions.contains(visitingOp)) {
+                // skip rest of the steps as the node found in already visited node list
+                continue;
+            } else{
+                visitedExpressions.insert(visitingOp);
+                auto onLeftKey = (*itr)->as<BinaryExpressionNode>()->getLeft();
+                auto onRightKey = (*itr)->as<BinaryExpressionNode>()->getRight();
+                NES_DEBUG("QueryPlanBuilder: Check if Expressions are FieldExpressions.");
+                auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
+                auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "rightSide");
+            }
+        }
+    }
 
     NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
@@ -143,7 +160,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(QueryPlanPtr leftQueryPlan,
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
     auto joinDefinition =
-        Join::LogicalJoinDescriptor::create(leftKeyFieldAccess, rightQueryPlanKeyFieldAccess, windowType, 1, 1, joinType);
+        Join::LogicalJoinDescriptor::create(joinExpression, windowType, 1, 1, joinType);
 
     NES_DEBUG("QueryPlanBuilder: add join operator to query plan");
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
@@ -219,8 +236,8 @@ QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr oper
 
 std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(ExpressionNodePtr expression, std::string side) {
     if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key ({}) has to be an FieldAccessExpression but it was a  {}", side, expression->toString());
-        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
+        NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessExpression but it was a  {}", side, expression->toString());
+        NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: window key has to be an FieldAccessExpression");
     }
     return expression->as<FieldAccessExpressionNode>();
 }

@@ -1229,8 +1229,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementOfSelfJoinQuery) {
     Query query = Query::from("car")
                       .as("c1")
                       .joinWith(Query::from("car").as("c2"))
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
     auto testQueryPlan = query.getQueryPlan();
@@ -1354,8 +1353,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementOfSelfJoinQuery) {
     Query query = Query::from("car")
                       .as("c1")
                       .joinWith(Query::from("car").as("c2"))
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
     auto testQueryPlan = query.getQueryPlan();
@@ -1733,8 +1731,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
 
     Query query = Query::from("car1")
                       .joinWith(Query::from("car2"))
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
+                      .where(Attribute("id") == Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
 

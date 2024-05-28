@@ -753,8 +753,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
     auto query = Query::from("default_logical")
                      .as("y")
                      .joinWith(subQuery)
-                     .where(Attribute("f1"))
-                     .equalsTo(Attribute("f1"))
+                     .where(Attribute("f1") == Attribute("f1"))
                      .window(windowType1)
                      .filter(Attribute("x$default_logical$f2") < 42)
                      .project(Attribute("x$default_logical$f1").as("f3"), Attribute("y$default_logical$f2").as("f4"))
@@ -780,7 +779,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", filterOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(filterOutputSchema->fields.size() == 9);
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 8);
     EXPECT_TRUE(filterOutputSchema->getField("x$default_logical$f2"));
     EXPECT_TRUE(filterOutputSchema->getField("x$default_logical$f1"));
     EXPECT_TRUE(filterOutputSchema->getField("x$default_logical$ts"));
@@ -789,7 +788,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
     EXPECT_TRUE(filterOutputSchema->getField("y$default_logical$ts"));
     EXPECT_TRUE(filterOutputSchema->getField("yx$start"));
     EXPECT_TRUE(filterOutputSchema->getField("yx$end"));
-    EXPECT_TRUE(filterOutputSchema->getField("yx$key"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
     EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
@@ -836,12 +834,10 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
     auto subQuery2 = Query::from("default_logical3");
     auto query = Query::from("default_logical")
                      .joinWith(subQuery)
-                     .where(Attribute("f1"))
-                     .equalsTo(Attribute("f3"))
+                     .where(Attribute("f1") == Attribute("f3"))
                      .window(windowType1)
                      .joinWith(subQuery2)
-                     .where(Attribute("f5"))
-                     .equalsTo(Attribute("f3"))
+                     .where(Attribute("f5") == Attribute("f3"))
                      .window(windowType2)
                      .filter(Attribute("default_logical$f1") < 42)
                      .project(Attribute("default_logical$f1").as("f23"), Attribute("default_logical2$f3").as("f44"))
@@ -875,16 +871,14 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", filterOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(filterOutputSchema->fields.size() == 15);
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 13);
     EXPECT_TRUE(filterOutputSchema->getField("default_logical3default_logicaldefault_logical2$start"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logical3default_logicaldefault_logical2$end"));
-    EXPECT_TRUE(filterOutputSchema->getField("default_logical3default_logicaldefault_logical2$key"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logical3$f5"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logical3$f6"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logical3$ts"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logicaldefault_logical2$start"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logicaldefault_logical2$end"));
-    EXPECT_TRUE(filterOutputSchema->getField("default_logicaldefault_logical2$key"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logical$f1"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logical$f2"));
     EXPECT_TRUE(filterOutputSchema->getField("default_logical$ts"));
@@ -978,8 +972,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
 
     auto query = Query::from("default_logical")
                      .joinWith(subQuery)
-                     .where(Attribute("f1"))
-                     .equalsTo(Attribute("f3"))
+                     .where(Attribute("f1") == Attribute("f3"))
                      .window(windowType1)
                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                      .byKey(Attribute("default_logical$f1"))
@@ -1031,8 +1024,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
 
     auto query = Query::from("probe")
                      .joinWith(subQuery)
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id1") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                      .sink(FileSinkDescriptor::create(""));
 
@@ -1099,8 +1091,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
 
     auto query = Query::from("probe")
                      .batchJoinWith(subQuery)
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id1") == Attribute("id2"))
                      .sink(FileSinkDescriptor::create(""));
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -1146,15 +1137,13 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     auto subQuery3 = Query::from("default_logical4");
 
     auto subQuery2 =
-        Query::from("default_logical3").joinWith(subQuery3).where(Attribute("f5")).equalsTo(Attribute("f7")).window(windowType3);
+        Query::from("default_logical3").joinWith(subQuery3).where(Attribute("f5") == Attribute("f7")).window(windowType3);
     auto query = Query::from("default_logical")
                      .joinWith(subQuery)
-                     .where(Attribute("f1"))
-                     .equalsTo(Attribute("f3"))
+                     .where(Attribute("f1") == Attribute("f3"))
                      .window(windowType1)
                      .joinWith(subQuery2)
-                     .where(Attribute("f1"))
-                     .equalsTo(Attribute("f5"))
+                     .where(Attribute("f1") == Attribute("f5"))
                      .window(windowType2)
                      .sink(FileSinkDescriptor::create(""));
 
@@ -1189,13 +1178,11 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
 
     SchemaPtr joinOutSchema1 = joinOperators[0]->getOutputSchema();
     NES_DEBUG("expected join1= {}", joinOperators[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(joinOutSchema1->fields.size() == 21);
+    EXPECT_TRUE(joinOutSchema1->fields.size() == 18);
     EXPECT_TRUE(joinOutSchema1->getField("default_logicaldefault_logical2default_logical3default_logical4$start"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logicaldefault_logical2default_logical3default_logical4$end"));
-    EXPECT_TRUE(joinOutSchema1->getField("default_logicaldefault_logical2default_logical3default_logical4$key"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logicaldefault_logical2$start"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logicaldefault_logical2$end"));
-    EXPECT_TRUE(joinOutSchema1->getField("default_logicaldefault_logical2$key"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical$f1"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical$f2"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical$ts"));
@@ -1204,7 +1191,6 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     EXPECT_TRUE(joinOutSchema1->getField("default_logical2$ts"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical3default_logical4$start"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical3default_logical4$end"));
-    EXPECT_TRUE(joinOutSchema1->getField("default_logical3default_logical4$key"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical3$f5"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical3$f6"));
     EXPECT_TRUE(joinOutSchema1->getField("default_logical3$ts"));
@@ -1214,10 +1200,9 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
 
     SchemaPtr joinOutSchema2 = joinOperators[1]->getOutputSchema();
     NES_DEBUG("expected join2= {}", joinOperators[1]->getOutputSchema()->toString());
-    EXPECT_TRUE(joinOutSchema2->fields.size() == 9);
+    EXPECT_TRUE(joinOutSchema2->fields.size() == 8);
     EXPECT_TRUE(joinOutSchema2->getField("default_logicaldefault_logical2$start"));
     EXPECT_TRUE(joinOutSchema2->getField("default_logicaldefault_logical2$end"));
-    EXPECT_TRUE(joinOutSchema2->getField("default_logicaldefault_logical2$key"));
     EXPECT_TRUE(joinOutSchema2->getField("default_logical$f1"));
     EXPECT_TRUE(joinOutSchema2->getField("default_logical$f2"));
     EXPECT_TRUE(joinOutSchema2->getField("default_logical$ts"));
@@ -1227,10 +1212,9 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
 
     SchemaPtr joinOutSchema3 = joinOperators[2]->getOutputSchema();
     NES_DEBUG("expected join3= {}", joinOperators[2]->getOutputSchema()->toString());
-    EXPECT_TRUE(joinOutSchema3->fields.size() == 9);
+    EXPECT_TRUE(joinOutSchema3->fields.size() == 8);
     EXPECT_TRUE(joinOutSchema3->getField("default_logical3default_logical4$start"));
     EXPECT_TRUE(joinOutSchema3->getField("default_logical3default_logical4$end"));
-    EXPECT_TRUE(joinOutSchema3->getField("default_logical3default_logical4$key"));
     EXPECT_TRUE(joinOutSchema3->getField("default_logical3$f5"));
     EXPECT_TRUE(joinOutSchema3->getField("default_logical3$f6"));
     EXPECT_TRUE(joinOutSchema3->getField("default_logical3$ts"));
@@ -1240,13 +1224,11 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected sinkOutputSchema= {}", sinkOutputSchema->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 18);
     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2default_logical3default_logical4$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2default_logical3default_logical4$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2default_logical3default_logical4$key"));
-    EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2$start"));
+     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("default_logicaldefault_logical2$key"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical$f1"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical$f2"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical$ts"));
@@ -1255,7 +1237,6 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical2$ts"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical3default_logical4$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical3default_logical4$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("default_logical3default_logical4$key"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical3$f5"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical3$f6"));
     EXPECT_TRUE(sinkOutputSchema->getField("default_logical3$ts"));
@@ -1337,21 +1318,21 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
 
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 19);
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$key"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$key"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$sensor_id"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$timestamp"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$velocity"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$quantity"));
+    EXPECT_TRUE(sinkOutputSchema->getField("QnV$cep_leftKey"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV1$sensor_id"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV1$timestamp"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV1$velocity"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV1$quantity"));
+    EXPECT_TRUE(sinkOutputSchema->getField("QnV1$cep_rightKey"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV2$sensor_id"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV2$timestamp"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV2$velocity"));
@@ -1391,13 +1372,11 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 19);
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1QnV2$key"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$key"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$sensor_id"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$timestamp"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$velocity"));
@@ -1425,7 +1404,6 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
-    streamCatalog->addLogicalSource("QnV2", inputSchema);
 
     auto query = Query::from("QnV")
                      .filter(Attribute("velocity") > 50)
@@ -1443,10 +1421,9 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 13);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 12);
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$start"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$end"));
-    EXPECT_TRUE(sinkOutputSchema->getField("QnVQnV1$key"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$sensor_id"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$timestamp"));
     EXPECT_TRUE(sinkOutputSchema->getField("QnV$velocity"));

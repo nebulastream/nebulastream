@@ -19,9 +19,9 @@ dataProviderMode: MemCopy
 outputFile: JoinTwoSources.csv
 benchmarkName: JoinTwoSources
 query: 'Query::from("input1").joinWith(Query::from("input2"))
-                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .where(Attribute("id") == Attribute("id"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
                              .joinWith(Query::from("input3"))
-                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .where(Attribute("id") == Attribute("id"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
                              .sink(NullOutputSinkDescriptor::create());'

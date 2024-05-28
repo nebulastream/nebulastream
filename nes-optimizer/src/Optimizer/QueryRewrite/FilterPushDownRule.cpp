@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
@@ -32,8 +33,9 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Types/ContentBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UtilityFunction.hpp>
+#include <Types/ContentBasedWindowType.hpp>
 #include <queue>
 
 namespace NES::Optimizer {
@@ -150,7 +152,10 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
     Join::LogicalJoinDescriptorPtr joinDefinition = joinOperator->getJoinDefinition();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
-    if (joinDefinition->getLeftJoinKey()->getFieldName() == predicateFields[0]) {
+    // returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
+    auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinExpression());
+
+    if (equiJoinKeyNames.first == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
         auto copyOfFilter = filterOperator->copy()->as<LogicalFilterOperator>();
         copyOfFilter->setId(getNextOperatorId());
@@ -159,8 +164,8 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
 
         renameFieldAccessExpressionNodes(newPredicate,
-                                         joinDefinition->getLeftJoinKey()->getFieldName(),
-                                         joinDefinition->getRightJoinKey()->getFieldName());
+                                         equiJoinKeyNames.first,
+                                         equiJoinKeyNames.second);
 
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
@@ -170,7 +175,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
         pushDownFilter(copyOfFilter, joinOperator->getRightOperators()[0], joinOperator);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
-    } else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
+    } else if (equiJoinKeyNames.second == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
         auto copyOfFilter = filterOperator->copy()->as<LogicalFilterOperator>();
         copyOfFilter->setId(getNextOperatorId());
@@ -178,8 +183,8 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
         renameFieldAccessExpressionNodes(newPredicate,
-                                         joinDefinition->getRightJoinKey()->getFieldName(),
-                                         joinDefinition->getLeftJoinKey()->getFieldName());
+                                         equiJoinKeyNames.second,
+                                         equiJoinKeyNames.first);
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
 

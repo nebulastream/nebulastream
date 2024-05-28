@@ -136,11 +136,9 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
             auto leftRecord = leftPagedVector.readRecord(leftCnt);
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
 
-            // TODO This can be later replaced by an interface that returns boolean and gets passed the two Nautilus::Records (left and right) #3691
-            if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
-                Record joinedRecord;
-                createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-
+            Record joinedRecord;
+            createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
+            if (joinExpression->execute(joinedRecord).as<Boolean>()){
                 // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }
@@ -150,8 +148,7 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
 
 HJProbeVarSized::HJProbeVarSized(const uint64_t operatorHandlerIndex,
                                  const JoinSchema& joinSchema,
-                                 const std::string& joinFieldNameLeft,
-                                 const std::string& joinFieldNameRight,
+                                 Expressions::ExpressionPtr joinExpression,
                                  const WindowMetaData& windowMetaData,
                                  const SchemaPtr& leftSchema,
                                  const SchemaPtr& rightSchema,
@@ -160,8 +157,7 @@ HJProbeVarSized::HJProbeVarSized(const uint64_t operatorHandlerIndex,
                                  bool withDeletion)
     : StreamJoinProbe(operatorHandlerIndex,
                       joinSchema,
-                      joinFieldNameLeft,
-                      joinFieldNameRight,
+                      joinExpression,
                       windowMetaData,
                       joinStrategy,
                       windowingStrategy,

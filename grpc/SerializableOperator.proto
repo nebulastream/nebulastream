@@ -522,17 +522,13 @@ message SerializableOperator{
 
     google.protobuf.Any windowType = 1;
     DistributionCharacteristic distrChar = 2;
-    SerializableExpression onLeftKey = 3;
-    SerializableExpression onRightKey = 4;
-    SerializableExpression leftSourceType = 5;
-    SerializableExpression rightSourceType = 6;
-    uint64 numberOfInputEdgesLeft = 7;
-    uint64 numberOfInputEdgesRight = 8;
-    JoinTypeCharacteristic jointype = 9;
-    string windowStartFieldName = 10;
-    string windowEndFieldName = 11;
-    string windowKeyFieldName = 12;
-    uint64 origin = 13;
+    SerializableExpression joinExpression = 3;
+    uint64 numberOfInputEdgesLeft = 4;
+    uint64 numberOfInputEdgesRight = 5;
+    JoinTypeCharacteristic jointype = 6;
+    string windowStartFieldName = 7;
+    string windowEndFieldName = 8;
+    uint64 origin = 9;
   }
 
   /**
