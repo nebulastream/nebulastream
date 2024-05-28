@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#ifndef NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
+#define NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
+
 #include <cstdint>
 #if __has_include(<span> )
 #include <span>
@@ -21,8 +24,6 @@
 #define SPAN_TYPE absl::Span
 #endif
 
-#ifndef NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
 /**
  * A CircularBuffer which efficiently allows a writer to append data to the buffer which a reader can consume from the Buffer,
  * after the writer commits its changes, during destruction.
@@ -124,4 +125,4 @@ class MMapCircularBuffer {
     bool acive_read = false;
     bool acive_write = false;
 };
-#endif//NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
+#endif// NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_

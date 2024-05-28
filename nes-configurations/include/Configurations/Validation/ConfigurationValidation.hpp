@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONVALIDATION_H
-#define NES_CONFIGURATIONVALIDATION_H
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_CONFIGURATIONVALIDATION_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_CONFIGURATIONVALIDATION_HPP_
 
 #include <string>
 
@@ -32,4 +32,4 @@ class ConfigurationValidation {
     virtual bool isValid(const std::string&) const = 0;
 };
 }// namespace NES::Configurations
-#endif//NES_CONFIGURATIONVALIDATION_H
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_CONFIGURATIONVALIDATION_HPP_
