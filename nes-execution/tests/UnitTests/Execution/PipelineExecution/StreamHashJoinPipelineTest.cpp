@@ -16,6 +16,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -37,7 +38,6 @@
 #include <cstring>
 #include <gtest/gtest.h>
 #include <string>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -166,13 +166,11 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        Operators::JoinSchema joinSchemaStruct(leftSchema,
-                                               rightSchema,
-                                               Util::createJoinSchema(leftSchema, rightSchema));
+        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);
 
         auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
-        auto onRightKey= std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+        auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
         auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
         auto joinProbe = std::make_shared<Operators::HJProbe>(handlerIndex,

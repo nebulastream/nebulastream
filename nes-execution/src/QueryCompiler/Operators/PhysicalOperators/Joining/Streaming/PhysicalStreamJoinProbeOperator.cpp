@@ -79,8 +79,8 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
     : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
-      PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema), joinExpression(joinExpression), windowMetaData(windowStartFieldName, windowEndFieldName)
-       {}
+      PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema), joinExpression(joinExpression),
+      windowMetaData(windowStartFieldName, windowEndFieldName) {}
 
 std::string PhysicalStreamJoinProbeOperator::toString() const {
     std::stringstream out;
@@ -115,8 +115,6 @@ Runtime::Execution::Operators::JoinSchema PhysicalStreamJoinProbeOperator::getJo
     return Runtime::Execution::Operators::JoinSchema(getLeftInputSchema(), getRightInputSchema(), getOutputSchema());
 }
 
-ExpressionNodePtr PhysicalStreamJoinProbeOperator::getJoinExpression() const {
-    return joinExpression;
-}
+ExpressionNodePtr PhysicalStreamJoinProbeOperator::getJoinExpression() const { return joinExpression; }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

@@ -23,6 +23,7 @@
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
@@ -41,12 +42,6 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
@@ -80,8 +75,8 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
-#include <Util/UtilityFunction.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UtilityFunction.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
