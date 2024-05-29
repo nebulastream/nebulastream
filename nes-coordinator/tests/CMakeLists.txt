@@ -35,8 +35,12 @@ add_library(nes-coordinator-test-util "src/Util/DummySink.cpp"
         "src/Util/MetricValidator.cpp"
         "src/Util/TestSink.cpp"
         "src/Util/PythonUDFDescriptorBuilder.cpp"
-        UnitTests/StatisticCollection/BPlusTreeWithBucketingTest.cpp
-        UnitTests/StatisticCollection/BPlusTreeWithBucketingTest.cpp)
+        UnitTests/StatisticCollection/ChainedStatisticStoreNewTest.cpp
+        #UnitTests/StatisticCollection/HybridStatisticStoreTest.cpp
+        UnitTests/StatisticCollection/ChainedStatisticStoreTest.cpp
+        #UnitTests/StatisticCollection/BPlusTreeWithBucketingTest.cpp
+        #UnitTests/StatisticCollection/BPlusTreeWithBucketingTest.cpp
+)
 target_include_directories(nes-coordinator-test-util PUBLIC "./include")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")

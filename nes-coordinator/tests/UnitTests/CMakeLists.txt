@@ -75,6 +75,15 @@ add_nes_unit_test(default-statistic-store-test "StatisticCollection/DefaultStati
 ### BPlusTreeWithBucketing ###
 add_nes_unit_test(tree-with-bucketing-test "StatisticCollection/BPlusTreeWithBucketingTest.cpp")
 
+### ChainedStatisticStoreTest ###
+add_nes_unit_test(chained-statistic-store-test "StatisticCollection/ChainedStatisticStoreTest.cpp")
+
+### ChainedStatisticStoreNewTest ###
+add_nes_unit_test(chained-statistic-store-new-test "StatisticCollection/ChainedStatisticStoreNewTest.cpp")
+
+### HybridStatisticStoreTest ###
+add_nes_unit_test(hybrid-statistic-store-test "StatisticCollection/HybridStatisticStoreTest.cpp")
+
 ### StatisticIdsExtractorTest ###
 add_nes_unit_test(statistic-ids-extractor-test "StatisticCollection/StatisticIdsExtractorTest.cpp")
 

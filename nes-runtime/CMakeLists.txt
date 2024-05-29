@@ -20,18 +20,16 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 # Add Library
 add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES}
         include/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/BPlusTreeWithBucketing.hpp
-        include/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/BPlusTreeWithBucketing.hpp
-        src/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/BPlusTreeWithBucketing.cpp
         src/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/BPlusTreeWithBucketing.cpp
         include/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Bucket.hpp
-        include/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Bucket.hpp
-        include/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Node.hpp
         include/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Node.hpp
         src/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Node.cpp
-        src/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Node.cpp
         src/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Bucket.cpp
-        src/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Bucket.cpp
-        src/StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Bucket.cpp)
+        src/StatisticCollection/StatisticStorage/ColumnarStatisticStore.cpp
+        src/StatisticCollection/StatisticStorage/HybridStatisticStore.cpp
+        src/StatisticCollection/StatisticStorage/ChainedStatisticStoreNew.cpp
+        src/StatisticCollection/StatisticStorage/ChainedStatisticStore.cpp
+)
 
 target_link_libraries(nes-runtime PUBLIC nes-statistics)
 target_include_directories(nes-runtime PUBLIC
