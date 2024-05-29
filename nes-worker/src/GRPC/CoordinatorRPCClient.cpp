@@ -20,6 +20,8 @@
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/Waypoint.hpp>
+#include <Util/Latency/NetworkCoordinate.hpp>
+#include <Util/Latency/Waypoint.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <filesystem>
 #include <fstream>
@@ -552,6 +554,28 @@ CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::
     return nodesInRange;
 }
 
+std::vector<std::pair<uint64_t, Synthetic::DataTypes::Experimental::NetworkCoordinate>>
+CoordinatorRPCClient::getNodeIdsInNetworkRange(const Synthetic::DataTypes::Experimental::NetworkCoordinate& networkCoordinate, double radius) {
+    if (!networkCoordinate.isValid()) {
+        return {};
+    }
+    GetNodesInNetworkRangeRequest request;
+    NES::Synthetic::Protobuf::NetworkCoordinate* pCoordinates = request.mutable_networkcoordinate();
+    pCoordinates->set_x1(networkCoordinate.getX1());
+    pCoordinates->set_x2(networkCoordinate.getX2());
+    request.set_radius(radius);
+    GetNodesInNetworkRangeReply reply;
+    ClientContext context;
+
+    Status status = coordinatorStub->GetNodesInNetworkRange(&context, request, &reply);
+
+    std::vector<std::pair<uint64_t, Synthetic::DataTypes::Experimental::NetworkCoordinate>> nodesInRange;
+    for (const auto& workerCoordinate : *reply.mutable_nodes()) {
+        nodesInRange.emplace_back(workerCoordinate.id(), workerCoordinate.networkcoordinate());
+    }
+    return nodesInRange;
+}
+
 bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName) const {
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<grpc::health::v1::Health::StubInterface> workerStub = grpc::health::v1::Health::NewStub(chan);
@@ -709,6 +733,25 @@ bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experime
         waypoint->set_timestamp(locationUpdate.getTimestamp().value());
     }
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
+    return reply.success();
+}
+
+bool CoordinatorRPCClient::sendCoordinateUpdate(const Synthetic::DataTypes::Experimental::Waypoint& coordinateUpdate) {
+    ClientContext context;
+    NetworkCoordinateUpdateRequest request;
+    NetworkCoordinateUpdateReply reply;
+
+    request.set_workerid(workerId.getRawValue());
+
+    NES::Synthetic::Protobuf::Waypoint* waypoint = request.mutable_waypoint();
+    NES::Synthetic::Protobuf::NetworkCoordinate* networkCoordinate = waypoint->mutable_networkcoordinate();
+    networkCoordinate->set_x1(coordinateUpdate.getCoordinate().getX1());
+    networkCoordinate->set_x2(coordinateUpdate.getCoordinate().getX2());
+
+    if (coordinateUpdate.getTimestamp()) {
+        waypoint->set_timestamp(coordinateUpdate.getTimestamp().value());
+    }
+    coordinatorStub->SendCoordinateUpdate(&context, request, &reply);
     return reply.success();
 }
 

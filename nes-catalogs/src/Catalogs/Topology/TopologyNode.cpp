@@ -185,4 +185,12 @@ void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatia
 Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
     return std::any_cast<Spatial::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
 }
+
+void TopologyNode::setSyntheticType(NES::Synthetic::Experimental::SyntheticType syntheticType) {
+    nodeProperties[NES::Worker::Configuration::SYNTHETIC_SUPPORT] = syntheticType;
+}
+
+Synthetic::Experimental::SyntheticType TopologyNode::getSyntheticNodeType() {
+    return std::any_cast<Synthetic::Experimental::SyntheticType>(nodeProperties[NES::Worker::Configuration::SYNTHETIC_SUPPORT]);
+}
 }// namespace NES

@@ -44,18 +44,18 @@ NetworkCoordinate NetworkCoordinate::fromString(const std::string& coordinates) 
     }
 
     std::stringstream stringStream(coordinates);
-    double lat;
-    stringStream >> lat;
+    double x1;
+    stringStream >> x1;
     char separator = 0;
     stringStream >> separator;
     if (separator != ',') {
-        NES_ERROR("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
+        NES_ERROR("input string is not of format \"<x1>, <x2>\". Node will be created as NC_DISABLED node");
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
-    double lng;
-    stringStream >> lng;
+    double x2;
+    stringStream >> x2;
 
-    return {lat, lng};
+    return {x1, x2};
 }
 
 bool NetworkCoordinate::operator==(const NetworkCoordinate& other) const {

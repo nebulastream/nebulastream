@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Index/NetworkCoordinateIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -24,6 +25,9 @@
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Util/Latency/NetworkCoordinate.hpp>
+#include <Util/Latency/SyntheticType.hpp>
+#include <Util/Latency/SyntheticTypeUtility.hpp>
 #include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <algorithm>
 #include <deque>
@@ -31,7 +35,10 @@
 
 namespace NES {
 
-Topology::Topology() { locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>(); }
+Topology::Topology() {
+    locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    networkCoordinateIndex = std::make_shared<NES::Synthetic::Index::Experimental::NetworkCoordinateIndex>();
+}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
@@ -706,6 +713,7 @@ nlohmann::json Topology::toJson() {
 
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     auto lockedLocationIndex = locationIndex.wlock();
+    auto lockedNetworkCoordinateIndex = networkCoordinateIndex.wlock();
     std::vector<nlohmann::json> nodes = {};
     std::vector<nlohmann::json> edges = {};
 
@@ -735,9 +743,19 @@ nlohmann::json Topology::toJson() {
                 locationInfo["longitude"] = geoLocation.value().getLongitude();
             }
             currentNodeJsonValue["location"] = locationInfo;
-            //TODO: Add the logic for NCS here
         }
         currentNodeJsonValue["nodeType"] = Spatial::Util::SpatialTypeUtility::toString(currentNode->getSpatialNodeType());
+
+        if (currentNode->getSyntheticNodeType() != NES::Synthetic::Experimental::SyntheticType::NC_DISABLED) {
+            auto networkCoordinate = (*lockedNetworkCoordinateIndex)->getNetworkCoordinateForNode(currentNode->getId());
+            auto networkCoordinateInfo = nlohmann::json{};
+            if (networkCoordinate.has_value() && networkCoordinate.value().isValid()) {
+                networkCoordinateInfo["x1"] = networkCoordinate.value().getX1();
+                networkCoordinateInfo["x2"] = networkCoordinate.value().getX2();
+            }
+            currentNodeJsonValue["networkCoordinates"] = networkCoordinateInfo;
+        }
+        currentNodeJsonValue["networkCoordinateStatus"] = Synthetic::Util::SyntheticTypeUtility::toString(currentNode->getSyntheticNodeType());
 
         auto children = currentNode->getChildren();
         for (const auto& child : children) {
@@ -1031,6 +1049,103 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
     nodeInfo["id"] = workerId;
     nlohmann::json locJson = convertLocationToJson(std::move(geoLocation));
     nodeInfo["location"] = locJson;
+    return nodeInfo;
+}
+
+std::vector<std::pair<WorkerId, NES::Synthetic::DataTypes::Experimental::NetworkCoordinate>>
+Topology::getTopologyNodeIdsInNetworkRange(NES::Synthetic::DataTypes::Experimental::NetworkCoordinate center, double radius) {
+    auto lockedNetworkCoordinateIndex = networkCoordinateIndex.wlock();
+    return (*lockedNetworkCoordinateIndex)->getNodeIdsInRange(center, radius);
+}
+
+bool Topology::addNetworkCoordinate(WorkerId workerId, NES::Synthetic::DataTypes::Experimental::NetworkCoordinate&& networkCoordinate) {
+
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    if (!lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
+        NES_ERROR("Unable to find node with id {}", workerId);
+        return false;
+    }
+
+    auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[workerId].wlock();
+    lockedWorkerIdToTopologyNodeMap.unlock();
+
+    if (networkCoordinate.isValid()) {
+        if ((*lockedTopologyNode)->getSyntheticNodeType() == Synthetic::Experimental::SyntheticType::NC_ENABLED) {
+            NES_DEBUG("added node with network coordinate: {}, {}", networkCoordinate.getX1(), networkCoordinate.getX2());
+            auto lockedNetworkCoordinateIndex = networkCoordinateIndex.wlock();
+            (*lockedNetworkCoordinateIndex)->initializeNetworkCoordinates(workerId, std::move(networkCoordinate));
+
+        } else if ((*lockedTopologyNode)->getSyntheticNodeType() == Synthetic::Experimental::SyntheticType::NC_DISABLED) {
+            NES_DEBUG("Network coordinates are disabled for worker with id {}", workerId);
+        } else {
+            NES_DEBUG("Synthetic node type is invalid for the worker with id {}", workerId);
+        }
+    } else {
+        NES_ERROR("The given coordinates {} {} are invalid network coordinates", networkCoordinate.getX1(), networkCoordinate.getX2());
+    }
+    return true;
+}
+
+bool Topology::updateNetworkCoordinate(WorkerId workerId, NES::Synthetic::DataTypes::Experimental::NetworkCoordinate&& networkCoordinate) {
+
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    if (!lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
+        NES_ERROR("Unable to find node with id {}", workerId);
+        return false;
+    }
+
+    auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[workerId].wlock();
+    lockedWorkerIdToTopologyNodeMap.unlock();
+
+    if (networkCoordinate.isValid()) {
+        if ((*lockedTopologyNode)->getSyntheticNodeType() == Synthetic::Experimental::SyntheticType::NC_ENABLED) {
+            auto lockedNetworkCoordinateIndex = networkCoordinateIndex.wlock();
+            (*lockedNetworkCoordinateIndex)->updateNetworkCoordinates(workerId, std::move(networkCoordinate));
+            NES_DEBUG("added node with network coordinate: {}, {}", networkCoordinate.getX1(), networkCoordinate.getX2());
+            return true;
+        } else if ((*lockedTopologyNode)->getSyntheticNodeType() == Synthetic::Experimental::SyntheticType::NC_DISABLED) {
+            NES_DEBUG("Network coordinates are disabled for worker with id {}", workerId);
+            return false;
+        } else {
+            NES_DEBUG("Synthetic node type is invalid for the worker with id {}", workerId);
+            return false;
+        }
+    } else {
+        NES_ERROR("The given coordinates {} {} are invalid network coordinates", networkCoordinate.getX1(), networkCoordinate.getX2());
+        return false;
+    }
+}
+
+Synthetic::Experimental::SyntheticType Topology::getSyntheticType(WorkerId workerId) {
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    if (!lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
+        NES_ERROR("Unable to find node with id {}", workerId);
+        return Synthetic::Experimental::SyntheticType::INVALID;
+    }
+    auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[workerId].wlock();
+    return (*lockedTopologyNode)->getSyntheticNodeType();
+}
+
+std::optional<NES::Synthetic::DataTypes::Experimental::NetworkCoordinate> Topology::getNetworkCoordinateForNode(WorkerId nodeId) {
+    auto lockedNetworkCoordinate = networkCoordinateIndex.wlock();
+    return (*lockedNetworkCoordinate)->getNetworkCoordinateForNode(nodeId);
+}
+
+nlohmann::json Topology::convertNetworkCoordinateToJson(NES::Synthetic::DataTypes::Experimental::NetworkCoordinate networkCoordinate) {
+    nlohmann::json locJson;
+    if (networkCoordinate.isValid()) {
+        locJson["x1"] = networkCoordinate.getX1();
+        locJson["x2"] = networkCoordinate.getX2();
+    }
+    return locJson;
+}
+
+nlohmann::json Topology::convertNodeNetworkCoordinateInfoToJson(WorkerId workerId,
+                                                       NES::Synthetic::DataTypes::Experimental::NetworkCoordinate networkCoordinate) {
+    nlohmann::json nodeInfo;
+    nodeInfo["id"] = workerId;
+    nlohmann::json ncJson = convertNetworkCoordinateToJson(std::move(networkCoordinate));
+    nodeInfo["networkCoordinate"] = ncJson;
     return nodeInfo;
 }
 

@@ -47,6 +47,12 @@ namespace Spatial::Mobility::Experimental {
 struct ReconnectPoint;
 }
 
+namespace Synthetic::DataTypes::Experimental {
+class NetworkCoordinate;
+class Waypoint;
+}// namespace Synthetic::DataTypes::Experimental
+
+
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
  */
@@ -187,6 +193,16 @@ class CoordinatorRPCClient {
     getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius);
 
     /**
+     * Experimental
+     * @brief Method to get all nodes within a certain range around a point in the synthetic coordinate system
+     * @param networkCoordinate: center of the query area
+     * @param radius: radius in ms to define query area
+     * @return list of node IDs and their corresponding coordinates as NetworkCoordinate objects
+     */
+    std::vector<std::pair<uint64_t, NES::Synthetic::DataTypes::Experimental::NetworkCoordinate>>
+    getNodeIdsInNetworkRange(const NES::Synthetic::DataTypes::Experimental::NetworkCoordinate& networkCoordinate, double radius);
+
+    /**
      * @brief method to let the Coordinator know of errors and exceptions
      * @param workerId
      * @param errorMsg
@@ -238,6 +254,14 @@ class CoordinatorRPCClient {
      * @return true if the information has benn succesfully processed
      */
     bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint& locationUpdate);
+
+    /**
+     * @brief this method can be called by a worker to tell the coordinator, that the devices network coordinate has changed
+     * @param coordinateUpdate a tuple containing the devices location and a timestamp indicating when the device was located
+     * at the transmitted position
+     * @return true if the information has been successfully processed
+     */
+    bool sendCoordinateUpdate(const NES::Synthetic::DataTypes::Experimental::Waypoint& coordinateUpdate);
 
     /**
      * @brief the function queries for the ids of the parents of a node with a given id

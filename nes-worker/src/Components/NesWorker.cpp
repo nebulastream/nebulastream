@@ -23,6 +23,8 @@
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Mobility/WorkerMobilityHandler.hpp>
+#include <Latency/NetworkCoordinateProviders/NetworkCoordinateProvider.hpp>
+#include <Latency/WorkerLatencyHandler.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -35,6 +37,7 @@
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Util/Latency/SyntheticTypeUtility.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <csignal>
@@ -60,7 +63,9 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr workerConfig, Monito
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), metricStore(metricStore),
       parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
-          workerConfig->mobilityConfiguration)) {
+          workerConfig->mobilityConfiguration)),
+      latencyConfig(std::make_shared<NES::Configurations::Synthetic::Latency::Experimental::WorkerLatencyConfiguration>(
+          workerConfig->latencyConfiguration))  {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -101,7 +106,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
 }
 
 void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& portPromise) {
-    WorkerRPCServer service(nodeEngine, monitoringAgent, locationProvider, trajectoryPredictor);
+    WorkerRPCServer service(nodeEngine, monitoringAgent, locationProvider, trajectoryPredictor, networkCoordinateProvider);
     ServerBuilder builder;
     int actualRpcPort;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials(), &actualRpcPort);
@@ -181,6 +186,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         }
     }
 
+    if (workerConfig->nodeSyntheticType.getValue() != NES::Synthetic::Experimental::SyntheticType::NC_DISABLED) {
+        networkCoordinateProvider = NES::Synthetic::Latency::Experimental::NetworkCoordinateProvider::create(workerConfig);
+    }
+
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
         NES_DEBUG("NesWorker: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
@@ -219,6 +228,22 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                         "currently not supported, mobility handler will not be started");
         } else {
             workerMobilityHandler->start(parentIds);
+        }
+    }
+
+    if (withConnect && networkCoordinateProvider
+        && networkCoordinateProvider->getSyntheticType() == NES::Synthetic::Experimental::SyntheticType::NC_ENABLED) {
+        workerLatencyHandler =
+            std::make_shared<NES::Synthetic::Latency::Experimental::WorkerLatencyHandler>(networkCoordinateProvider,
+                                                                                          coordinatorRpcClient,
+                                                                                          nodeEngine,
+                                                                                          latencyConfig);
+        auto parentIds = coordinatorRpcClient->getParents(workerId);
+        if (parentIds.size() > 1) {
+            NES_WARNING("Attempting to start worker latency handler for worker with multiple parents. This is"
+                        "currently not supported, latency handler will not be started");
+        } else {
+            workerLatencyHandler->start(parentIds);
         }
     }
 
@@ -270,6 +295,12 @@ bool NesWorker::stop(bool) {
             workerMobilityHandler->stop();
             NES_INFO("triggered stopping of location update push thread");
         }
+
+        if (workerLatencyHandler) {
+            workerLatencyHandler->stop();
+            NES_INFO("triggered stopping of coordinate update push thread");
+        }
+
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
@@ -340,6 +371,8 @@ bool NesWorker::connect() {
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::SpatialTypeUtility::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
+    registrationRequest.set_synthetictype(
+        NES::Synthetic::Util::SyntheticTypeUtility::toProtobufEnum(workerConfig->nodeSyntheticType.getValue()));
     for (auto i = 0u; i < nodeEngine->getOpenCLManager()->getDevices().size(); ++i) {
         serializeOpenCLDeviceInfo(nodeEngine->getOpenCLManager()->getDevices()[i].deviceInfo,
                                   i,
@@ -355,6 +388,17 @@ bool NesWorker::connect() {
         auto geolocation = waypoint->mutable_geolocation();
         geolocation->set_lat(currentWaypoint.getLocation().getLatitude());
         geolocation->set_lng(currentWaypoint.getLocation().getLongitude());
+    }
+
+    if (networkCoordinateProvider) {
+        auto waypointnc = registrationRequest.mutable_waypointnc();
+        auto currentWaypointnc = networkCoordinateProvider->getCurrentWaypoint();
+        if (currentWaypointnc.getTimestamp()) {
+            waypointnc->set_timestamp(currentWaypointnc.getTimestamp().value());
+        }
+        auto networkCoordinate = waypointnc->mutable_networkcoordinate();
+        networkCoordinate->set_x1(currentWaypointnc.getCoordinate().getX1());
+        networkCoordinate->set_x2(currentWaypointnc.getCoordinate().getX2());
     }
 
     bool successPRCRegister = coordinatorRpcClient->registerWorker(registrationRequest);
@@ -638,5 +682,9 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr NesWorker::g
 }
 
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr NesWorker::getMobilityHandler() { return workerMobilityHandler; }
+
+NES::Synthetic::Latency::Experimental::NetworkCoordinateProviderPtr NesWorker::getNetworkCoordinateProvider() { return networkCoordinateProvider; }
+
+NES::Synthetic::Latency::Experimental::WorkerLatencyHandlerPtr NesWorker::getLatencyHandler() { return workerLatencyHandler; }
 
 }// namespace NES

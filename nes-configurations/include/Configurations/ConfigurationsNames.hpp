@@ -124,6 +124,18 @@ const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
+//worker latency config names
+const std::string LATENCY_CONFIG_CONFIG = "latency";
+const std::string SYNTHETIC_TYPE_CONFIG = "nodeSyntheticType";
+const std::string NETWORK_COORDINATE_BUFFER_SIZE_CONFIG = "networkCoordinateBufferSize";
+const std::string SEND_DEVICE_NETWORK_COORDINATE_UPDATE_THRESHOLD_CONFIG = "sendDeviceNetworkCoordinateUpdateThreshold";
+const std::string PUSH_DEVICE_NETWORK_COORDINATE_UPDATES_CONFIG = "pushDeviceNetworkCoordinateUpdates";
+const std::string SEND_LATENCY_UPDATE_INTERVAL_CONFIG = "latencyHandlerUpdateInterval";
+const std::string NETWORK_COORDINATE_PROVIDER_CONFIG = "networkCoordinateProviderConfig";
+const std::string NETWORK_COORDINATE_PROVIDER_TYPE_CONFIG = "networkCoordinateProviderType";
+const std::string NETWORK_COORDINATE_SIMULATED_START_TIME_CONFIG = "networkCoordinateProviderSimulatedStartTime";
+
+
 //worker mobility config names
 const std::string MOBILITY_CONFIG_CONFIG = "mobility";
 const std::string SPATIAL_TYPE_CONFIG = "nodeSpatialType";

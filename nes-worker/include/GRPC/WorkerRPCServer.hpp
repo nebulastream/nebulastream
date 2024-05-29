@@ -46,12 +46,18 @@ class ReconnectSchedulePredictor;
 using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 }// namespace Spatial::Mobility::Experimental
 
+namespace Synthetic::Latency::Experimental {
+class NetworkCoordinateProvider;
+using NetworkCoordinateProviderPtr = std::shared_ptr<NetworkCoordinateProvider>;
+}// namespace Synthetic::Latency::Experimental
+
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
     WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                     Monitoring::MonitoringAgentPtr monitoringAgent,
                     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor);
+                    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor,
+                    NES::Synthetic::Latency::Experimental::NetworkCoordinateProviderPtr networkCoordinateProvider);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -74,12 +80,15 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) override;
 
+    Status GetNetworkCoordinate(ServerContext*, const GetNetworkCoordinateRequest* request, GetNetworkCoordinateReply* reply) override;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Statistic::StatisticManagerPtr statisticManager;
     Monitoring::MonitoringAgentPtr monitoringAgent;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
+    NES::Synthetic::Latency::Experimental::NetworkCoordinateProviderPtr networkCoordinateProvider;
 };
 
 }// namespace NES

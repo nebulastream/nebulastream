@@ -27,6 +27,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/Waypoint.hpp>
+#include <Util/Latency/Waypoint.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -885,6 +886,22 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
  */
 void writeWaypointsToCsv(const std::string& csvPath,
                          const std::vector<NES::Spatial::DataTypes::Experimental::Waypoint>& waypoints);
+
+/**
+ * @brief read nc enabled device waypoints from csv
+ * @param csvPath path to the csv with lines in the format <x1, x2, offsetFromStartTime>
+ * @param startTime the real or simulated start time of the LocationProvider
+ * @return a vector of waypoints with timestamps calculated by adding startTime to the offset obtained from csv
+ */
+std::vector<NES::Synthetic::DataTypes::Experimental::Waypoint> getNCWaypointsFromCSV(const std::string& csvPath, Timestamp startTime);
+
+/**
+ * @brief write nc enabled device waypoints to a csv file to use as input for the NetworkCoordinateProviderCSV class
+ * @param csvPath path to the output file
+ * @param waypoints a vector of waypoints to be written to the file
+ */
+void writeNCWaypointsToCSV(const std::string& csvPath,
+                         const std::vector<NES::Synthetic::DataTypes::Experimental::Waypoint>& waypoints);
 
 /**
  * This function counts the number of times the search string appears within the

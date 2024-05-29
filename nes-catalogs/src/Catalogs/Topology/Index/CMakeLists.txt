@@ -12,5 +12,6 @@
 
 add_source_files(nes-catalogs
         LocationIndex.cpp
+        NetworkCoordinateIndex.cpp
         )
 

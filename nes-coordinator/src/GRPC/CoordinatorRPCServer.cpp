@@ -29,6 +29,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Util/Latency/SyntheticTypeUtility.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <utility>
 
@@ -96,6 +97,10 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
     workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
         NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
+
+    workerProperties[NES::Worker::Configuration::SYNTHETIC_SUPPORT] =
+        NES::Synthetic::Util::SyntheticTypeUtility::protobufEnumToNodeType(registrationRequest->synthetictype());
+
     deserializeOpenCLDeviceInfo(workerProperties[NES::Worker::Configuration::OPENCL_DEVICES],
                                 registrationRequest->opencldevices());
 
@@ -121,6 +126,15 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
 
     if (!topology->addGeoLocation(workerId, std::move(geoLocation))) {
         NES_ERROR("Unable to update geo location of the topology");
+        reply->set_workerid(0);
+        return Status::CANCELLED;
+    }
+
+    NES::Synthetic::DataTypes::Experimental::NetworkCoordinate networkCoordinate(registrationRequest->waypointnc().networkcoordinate().x1(),
+                                                                                 registrationRequest->waypointnc().networkcoordinate().x2());
+
+    if (!topology->addNetworkCoordinate(workerId, std::move(networkCoordinate))) {
+        NES_ERROR("Unable to update the network coordinates of the topology");
         reply->set_workerid(0);
         return Status::CANCELLED;
     }
@@ -463,6 +477,25 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
     //todo #2862: update coordinator trajectory prediction
     auto geoLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates);
     if (!topology->updateGeoLocation(WorkerId(request->workerid()), std::move(geoLocation))) {
+        reply->set_success(true);
+        return Status::OK;
+    }
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
+Status CoordinatorRPCServer::SendCoordinateUpdate(ServerContext*,
+                                                const NetworkCoordinateUpdateRequest* request,
+                                                  NetworkCoordinateUpdateReply* reply) {
+    auto coordinates = request->waypoint().networkcoordinate();
+    auto timestamp = request->waypoint().timestamp();
+    NES_DEBUG("Coordinator received coordinate update from node with id {} which reports [{}, {}] at TS {}",
+              request->workerid(),
+              coordinates.x1(),
+              coordinates.x2(),
+              timestamp);
+    auto networkCoordinate = NES::Synthetic::DataTypes::Experimental::NetworkCoordinate(coordinates);
+    if (!topology->updateNetworkCoordinate(WorkerId(request->workerid()), std::move(networkCoordinate))) {
         reply->set_success(true);
         return Status::OK;
     }

@@ -887,6 +887,62 @@ void writeWaypointsToCsv(const std::string& csvPath,
     ASSERT_FALSE(outFile.fail());
 }
 
+/**
+ * @brief read mobile device path waypoints from csv
+ * @param csvPath path to the csv with lines in the format <latitude, longitude, offsetFromStartTime>
+ * @param startTime the real or simulated start time of the LocationProvider
+ * @return a vector of waypoints with timestamps calculated by adding startTime to the offset obtained from csv
+ */
+std::vector<NES::Synthetic::DataTypes::Experimental::Waypoint> getNCWaypointsFromCSV(const std::string& csvPath,
+                                                                                 Timestamp startTime) {
+    std::vector<NES::Synthetic::DataTypes::Experimental::Waypoint> waypoints;
+    std::string csvLine;
+    std::ifstream inputStream(csvPath);
+    std::string x1String;
+    std::string x2String;
+    std::string timeString;
+
+    NES_DEBUG("Creating list of network coordinate waypoints with startTime {}", startTime)
+
+    //read network coordinates and time offsets from csv, calculate absolute timestamps from offsets by adding start time
+    while (std::getline(inputStream, csvLine)) {
+        std::stringstream stringStream(csvLine);
+        getline(stringStream, x1String, ',');
+        getline(stringStream, x2String, ',');
+        getline(stringStream, timeString, ',');
+        Timestamp time = std::stoul(timeString);
+        //TODO: Change this to NES_TRACE
+        NES_DEBUG("Read from csv: {}, {}, {}", x1String, x2String, time);
+
+        //add startTime to the offset obtained from csv to get absolute timestamp
+        time += startTime;
+
+        //construct a pair containing a location and the time at which the device is at exactly that point
+        // and save it to a vector containing all waypoints
+        waypoints.push_back(NES::Synthetic::DataTypes::Experimental::Waypoint(
+            NES::Synthetic::DataTypes::Experimental::NetworkCoordinate(std::stod(x1String), std::stod(x2String)),
+            time));
+    }
+    return waypoints;
+}
+
+/**
+ * @brief write network coordinate waypoints to a csv file to use as input for the NetworkCoordinateProviderCSV class
+ * @param csvPath path to the output file
+ * @param waypoints a vector of waypoints to be written to the file
+ */
+void writeNCWaypointsToCSV(const std::string& csvPath,
+                         const std::vector<NES::Synthetic::DataTypes::Experimental::Waypoint>& waypoints) {
+    remove(csvPath.c_str());
+    std::ofstream outFile(csvPath);
+    for (auto& point : waypoints) {
+        ASSERT_TRUE(point.getTimestamp().has_value());
+        outFile << point.getCoordinate().toString() << "," << std::to_string(point.getTimestamp().value()) << std::endl;
+    }
+    outFile.close();
+    ASSERT_FALSE(outFile.fail());
+}
+
 std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBuffersFromCsv(const string& csvFileName,
                                                                           const SchemaPtr& schema,
                                                                           const Runtime::BufferManagerPtr& bufferManager,

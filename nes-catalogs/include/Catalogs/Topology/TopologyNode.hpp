@@ -20,6 +20,7 @@
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/Latency/SyntheticType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <any>
 #include <atomic>
@@ -219,6 +220,21 @@ class TopologyNode : public Node {
      * @return true if the node is running on a mobile device
      */
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
+
+    /**
+     * Experimental
+     * @brief sets the status of the node as enabling network coordinates for efficient latency estimation.
+     * To be run right after node creation.
+     * @param syntheticType
+     */
+    void setSyntheticType(NES::Synthetic::Experimental::SyntheticType syntheticType);
+
+    /**
+     * Experimental
+     * @brief check if the node is supporting network coordinates or not
+     * @return true if the node has network coordinates
+     */
+    NES::Synthetic::Experimental::SyntheticType getSyntheticNodeType();
 
   private:
     WorkerId workerId;

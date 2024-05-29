@@ -16,6 +16,7 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Latency/NetworkCoordinateProviders/NetworkCoordinateProvider.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
@@ -32,10 +33,11 @@ namespace NES {
 WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  Monitoring::MonitoringAgentPtr monitoringAgent,
                                  NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                                 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
+                                 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor,
+                                 NES::Synthetic::Latency::Experimental::NetworkCoordinateProviderPtr networkCoordinateProvider)
     : nodeEngine(std::move(nodeEngine)), statisticManager(this->nodeEngine->getStatisticManager()),
       monitoringAgent(std::move(monitoringAgent)), locationProvider(std::move(locationProvider)),
-      trajectoryPredictor(std::move(trajectoryPredictor)) {
+      trajectoryPredictor(std::move(trajectoryPredictor)), networkCoordinateProvider(std::move(networkCoordinateProvider)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -200,6 +202,28 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
         auto coord = protoWaypoint->mutable_geolocation();
         coord->set_lat(loc.getLatitude());
         coord->set_lng(loc.getLongitude());
+    }
+    if (waypoint.getTimestamp()) {
+        protoWaypoint->set_timestamp(waypoint.getTimestamp().value());
+    }
+    return Status::OK;
+}
+
+Status WorkerRPCServer::GetNetworkCoordinate(ServerContext*, const GetNetworkCoordinateRequest* request, GetNetworkCoordinateReply* reply) {
+    (void) request;
+    NES_DEBUG("WorkerRPCServer received network coordinate request")
+    if (!networkCoordinateProvider) {
+        NES_DEBUG("WorkerRPCServer: networkCoordinateProvider not set, node doesn't have known coordinate")
+        //return an empty reply
+        return Status::OK;
+    }
+    auto waypoint = networkCoordinateProvider->getCurrentWaypoint();
+    auto coord = waypoint.getCoordinate();
+    auto protoWaypoint = reply->mutable_waypoint();
+    if (coord.isValid()) {
+        auto coordinate = protoWaypoint->mutable_networkcoordinate();
+        coordinate->set_x1(coord.getX1());
+        coordinate->set_x2(coord.getX2());
     }
     if (waypoint.getTimestamp()) {
         protoWaypoint->set_timestamp(waypoint.getTimestamp().value());

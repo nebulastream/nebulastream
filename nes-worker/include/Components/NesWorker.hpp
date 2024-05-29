@@ -57,6 +57,25 @@ class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
 }// namespace Configurations::Spatial::Mobility::Experimental
 
+namespace Synthetic::Index::Experimental {
+class Coordinate;
+using CoordinatePtr = std::shared_ptr<Coordinate>;
+}// namespace Synthetic::Index::Experimental
+
+namespace Synthetic::Latency::Experimental {
+class NetworkCoordinateProvider;
+using NetworkCoordinateProviderPtr = std::shared_ptr<NetworkCoordinateProvider>;
+
+class WorkerLatencyHandler;
+using WorkerLatencyHandlerPtr = std::shared_ptr<WorkerLatencyHandler>;
+
+}// namespace Synthetic::Latency::Experimental
+
+namespace Configurations::Synthetic::Latency::Experimental {
+class WorkerLatencyConfiguration;
+using WorkerLatencyConfigurationPtr = std::shared_ptr<WorkerLatencyConfiguration>;
+}// namespace Configurations::Synthetic::Latency::Experimental
+
 class WorkerRPCServer;
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
@@ -243,6 +262,15 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
+    /**
+     * get the class containing all the network coordinate info on this worker if it NC is enabled and the functionality to
+     * query the current coordinates
+     * @return
+     */
+    NES::Synthetic::Latency::Experimental::NetworkCoordinateProviderPtr getNetworkCoordinateProvider();
+
+    NES::Synthetic::Latency::Experimental::WorkerLatencyHandlerPtr getLatencyHandler();
+
   private:
     /**
      * @brief method to register physical source with the coordinator
@@ -270,6 +298,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr workerMobilityHandler;
+    NES::Synthetic::Latency::Experimental::NetworkCoordinateProviderPtr networkCoordinateProvider;
+    NES::Synthetic::Latency::Experimental::WorkerLatencyHandlerPtr workerLatencyHandler;
     std::atomic<bool> isRunning{false};
     WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::unique_ptr<WorkerHealthCheckService> healthCheckService;
@@ -285,6 +315,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     WorkerId parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
+    NES::Configurations::Synthetic::Latency::Experimental::WorkerLatencyConfigurationPtr latencyConfig;
     Util::PluginLoader pluginLoader = Util::PluginLoader();
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;

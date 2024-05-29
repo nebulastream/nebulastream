@@ -54,6 +54,9 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 
+class CoordinateService;
+using CoordinateServicePtr = std::shared_ptr<CoordinateService>;
+
 /**
  * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
  */
@@ -249,6 +252,15 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @return OK in any case
      */
     Status SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) override;
+
+    /**
+     * @brief inform the coordinator that the devices coordinate has changed
+     * @param request : sent from worker to coordinator containing the id of the device, its new coordinate and the time
+     * when this coordinate was recorded
+     * @param reply : sent from coordinator to worker containing no data
+     * @return OK in any case
+     */
+    Status SendCoordinateUpdate(ServerContext*, const NetworkCoordinateUpdateRequest* request, NetworkCoordinateUpdateReply* reply) override;
 
     Status GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) override;
 

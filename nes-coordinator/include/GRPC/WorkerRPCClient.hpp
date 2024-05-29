@@ -257,6 +257,15 @@ class WorkerRPCClient {
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
+    /**
+     * @brief method to check the network coordinate of any node.
+     * If the node does not have a known coordinate, an
+     * invalid location will be returned
+     * @param address: the ip address of the node
+     * @return coordinate representing the nodes network coordinate or invalid if no such coordinate exists
+     */
+    NES::Synthetic::DataTypes::Experimental::Waypoint getNCWaypoint(const std::string& address);
+
   private:
     WorkerRPCClient() = default;
 };

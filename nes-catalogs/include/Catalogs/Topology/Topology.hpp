@@ -17,6 +17,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/Latency/SyntheticType.hpp>
 #include <any>
 #include <folly/Synchronized.h>
 #include <map>
@@ -40,7 +41,6 @@ using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 
 namespace DataTypes::Experimental {
 class GeoLocation;
-class NetworkCoordinate;
 }
 
 namespace Mobility::Experimental {
@@ -48,6 +48,21 @@ struct ReconnectPoint;
 }
 
 }// namespace Spatial
+
+namespace Synthetic {
+
+namespace Index::Experimental {
+enum class NodeType;
+
+class NetworkCoordinateIndex;
+using NetworkCoordinateIndexPtr = std::shared_ptr<NetworkCoordinateIndex>;
+}// namespace Index::Experimental
+
+namespace DataTypes::Experimental {
+class NetworkCoordinate;
+}
+
+}// namespace Synthetic
 
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
@@ -364,12 +379,16 @@ class Topology {
      * or Euclidean space and used for estimating the network distance between the nodes.
      */
 
+    std::vector<std::pair<WorkerId, NES::Synthetic::DataTypes::Experimental::NetworkCoordinate>>
+    getTopologyNodeIdsInNetworkRange(NES::Synthetic::DataTypes::Experimental::NetworkCoordinate center, double radius);
+
     /**
      * Add NetworkCoordinates of a worker node
      * @param workerId : worker node id
-     * @return initial coordinates if successful
+     * @param networkCoordinate : network coordinates of the node
+     * @return true if successful
      */
-    bool addNetworkCoordinate(WorkerId workerId);
+    bool addNetworkCoordinate(WorkerId workerId, NES::Synthetic::DataTypes::Experimental::NetworkCoordinate&& networkCoordinate);
 
     /**
      * Update NetworkCoordinate of a worker node
@@ -377,7 +396,7 @@ class Topology {
      * @param networkCoordinate : synthetic coordinate of the worker node
      * @return true if successful
      */
-    bool updateNetworkCoordinate(WorkerId workerId, NES::Spatial::DataTypes::Experimental::NetworkCoordinate&& networkCoordinate);
+    bool updateNetworkCoordinate(WorkerId workerId, NES::Synthetic::DataTypes::Experimental::NetworkCoordinate&& networkCoordinate);
 
 
     /**
@@ -385,7 +404,7 @@ class Topology {
      * @param nodeId : node id of the worker
      * @return networkCoordinate of the node
      */
-    std::optional<NES::Spatial::DataTypes::Experimental::NetworkCoordinate> getNetworkCoordinateForNode(WorkerId nodeId);
+    std::optional<NES::Synthetic::DataTypes::Experimental::NetworkCoordinate> getNetworkCoordinateForNode(WorkerId nodeId);
 
 
     /**
@@ -394,6 +413,13 @@ class Topology {
      * @return true if successful
      */
     bool removeNetworkCoordinate(WorkerId workerId);
+
+    /**
+     * @brief Get synthetic type of the topology node with given id
+     * @param workerId : the topology node id
+     * @return Synthetic type if defined else Invalid
+     */
+    NES::Synthetic::Experimental::SyntheticType getSyntheticType(WorkerId workerId);
 
 
   private:
@@ -435,7 +461,7 @@ class Topology {
      *   <x2>,
      * ]
      */
-    static nlohmann::json convertNetworkCoordinateToJson(NES::Spatial::DataTypes::Experimental::NetworkCoordinate networkCoordinate);
+    static nlohmann::json convertNetworkCoordinateToJson(NES::Synthetic::DataTypes::Experimental::NetworkCoordinate networkCoordinate);
 
     /**
      * Use a node id and a NetworkCoordinate to construct a Json representation containing these values.
@@ -451,7 +477,7 @@ class Topology {
         }
      */
     static nlohmann::json convertNodeNetworkCoordinateInfoToJson(WorkerId workerId,
-                                                        NES::Spatial::DataTypes::Experimental::NetworkCoordinate networkCoordinate);
+                                                        NES::Synthetic::DataTypes::Experimental::NetworkCoordinate networkCoordinate);
 
 
     /**
@@ -480,6 +506,7 @@ class Topology {
     std::vector<WorkerId> rootWorkerIds;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
+    folly::Synchronized<NES::Synthetic::Index::Experimental::NetworkCoordinateIndexPtr> networkCoordinateIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
     std::atomic_uint64_t topologyNodeIdCounter = INITIAL_WORKER_NODE_ID.getRawValue();
 };

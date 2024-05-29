@@ -60,6 +60,12 @@ service CoordinatorRPCService {
   //lets a mobile device inform the coordinator about its current location
   rpc SendLocationUpdate (LocationUpdateRequest) returns (LocationUpdateReply) {}
 
+  // queries for all nodes within a specified radius around the supplied coordinates
+  rpc GetNodesInNetworkRange (GetNodesInNetworkRangeRequest) returns (GetNodesInNetworkRangeReply) {}
+
+  //lets a device inform the coordinator about its current network coordinate
+  rpc SendCoordinateUpdate (NetworkCoordinateUpdateRequest) returns (NetworkCoordinateUpdateReply) {}
+
   // send a notification when a query fails to the coordinator
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 
@@ -103,6 +109,8 @@ message RegisterWorkerRequest {
   bool javaUDFSupported = 11;
   uint64 workerId = 12;
   repeated SerializedOpenCLDeviceInfo openCLDevices = 13;
+  NES.Synthetic.Protobuf.Waypoint waypointNC = 14;
+  NES.Synthetic.Protobuf.SyntheticType syntheticType = 15;
 }
 
 message RegisterWorkerReply {
@@ -202,6 +210,11 @@ message GetNodesInRangeRequest {
   double radius = 2;
 }
 
+message GetNodesInNetworkRangeRequest {
+  NES.Synthetic.Protobuf.NetworkCoordinate networkCoordinate = 1;
+  double radius = 2;
+}
+
 message QueryFailureNotification{
   uint64 queryId = 1;
   uint64 subQueryId = 2;
@@ -226,7 +239,9 @@ message GetNodesInRangeReply{
   repeated NES.Spatial.Protobuf.WorkerLocationInfo nodes = 1;
 }
 
-//TODO Alphan: Investigate if you should write here functions for Network Coordinates
+message GetNodesInNetworkRangeReply{
+  repeated NES.Synthetic.Protobuf.WorkerCoordinateInfo nodes = 1;
+}
 
 message SendScheduledReconnectRequest {
   uint64 deviceId = 1;
@@ -244,6 +259,15 @@ message LocationUpdateRequest {
 }
 
 message LocationUpdateReply {
+  bool success = 1;
+}
+
+message NetworkCoordinateUpdateRequest {
+  uint64 workerId = 1;
+  NES.Synthetic.Protobuf.Waypoint waypoint = 2;
+}
+
+message NetworkCoordinateUpdateReply {
   bool success = 1;
 }
 

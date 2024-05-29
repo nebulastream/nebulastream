@@ -22,6 +22,8 @@
 #include <Configurations/Worker/GeoLocationFactory.hpp>
 #include <Configurations/Worker/NetworkCoordinateFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Configurations/Worker/WorkerLatencyConfiguration.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -263,11 +265,26 @@ class WorkerConfiguration : public BaseConfiguration {
         "the configuration data for the location provider class"};
 
     /**
+     * @brief specify if network coordinates are enabled or disabled for the worker node, if it is a node with a known fixed loction
+     */
+    EnumOption<NES::Synthetic::Experimental::SyntheticType> nodeSyntheticType = {
+        SYNTHETIC_TYPE_CONFIG,
+        NES::Synthetic::Experimental::SyntheticType::NC_DISABLED,
+        "specifies if network coordinates are enabled or disabled for the worker node."};
+
+    /**
      * @brief network coordinate of the node if any
      */
     WrapOption<NES::Synthetic::DataTypes::Experimental::NetworkCoordinate,
                Configurations::Synthetic::Index::Experimental::NetworkCoordinateFactory>
         networkCoordinates = {NETWORK_COORDINATES_CONFIG, "the network coordinate of the worker"};
+
+    /**
+     * @brief specifies the path to a yaml file containing a latency configuration
+     */
+    Synthetic::Latency::Experimental::WorkerLatencyConfiguration latencyConfiguration = {
+        LATENCY_CONFIG_CONFIG,
+        "the configuration data for the network coordinate provider class"};
 
     /**
      * @brief Configuration yaml path.
@@ -381,6 +398,9 @@ class WorkerConfiguration : public BaseConfiguration {
                 &locationCoordinates,
                 &nodeSpatialType,
                 &mobilityConfiguration,
+                &nodeSyntheticType,
+                &networkCoordinates,
+                &latencyConfiguration,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,

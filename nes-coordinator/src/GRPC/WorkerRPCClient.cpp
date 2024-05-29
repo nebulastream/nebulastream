@@ -24,6 +24,8 @@
 #include <Statistics/StatisticValue.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
+#include <Util/Latency/NetworkCoordinate.hpp>
+#include <Util/Latency/Waypoint.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
@@ -480,4 +482,30 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     //location is invalid
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
+
+Synthetic::DataTypes::Experimental::Waypoint WorkerRPCClient::getNCWaypoint(const std::string& address) {
+    NES_DEBUG("WorkerRPCClient: Requesting network coordinate from {}", address)
+    ClientContext context;
+    GetNetworkCoordinateRequest request;
+    GetNetworkCoordinateReply reply;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->GetNetworkCoordinate(&context, request, &reply);
+    if (reply.has_waypoint()) {
+        auto waypoint = reply.waypoint();
+        auto timestamp = waypoint.timestamp();
+        auto networkCoordinate = waypoint.networkcoordinate();
+        //if timestamp is valid, include it in waypoint
+        if (timestamp != 0) {
+            return {Synthetic::DataTypes::Experimental::NetworkCoordinate(networkCoordinate.x1(), networkCoordinate.x2()), timestamp};
+        }
+        //no valid timestamp to include
+        return NES::Synthetic::DataTypes::Experimental::Waypoint(
+            NES::Synthetic::DataTypes::Experimental::NetworkCoordinate(networkCoordinate.x1(), networkCoordinate.x2()));
+    }
+    //coordiante is invalid
+    return Synthetic::DataTypes::Experimental::Waypoint(Synthetic::DataTypes::Experimental::Waypoint::invalid());
+}
+
 }// namespace NES

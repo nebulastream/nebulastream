@@ -145,3 +145,6 @@ add_nes_integration_test(explain-request-integration-test "ExplainRequestIntegra
 # Enabled with issue #4270
 #add_nes_integration_test(location-integration-tests "LocationIntegrationTests.cpp")
 #target_link_libraries(location-integration-tests nes-coordinator-test-util)
+
+### Network Coordinate Integration Tests ###
+add_nes_integration_test(network-coordinate-integration-tests "NetworkCoordinateIntegrationTests.cpp")

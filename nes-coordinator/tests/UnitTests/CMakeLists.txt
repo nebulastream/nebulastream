@@ -84,6 +84,9 @@ add_nes_unit_test(location-provider-csv-unit-tests "Spatial/LocationProviderCSVT
 ### Reconnect Schedule Predictor Test ###
 add_nes_unit_test(reconnect-schedule-predictor-tests "Spatial/ReconnectSchedulePredictorTest.cpp")
 
+### Network Coordinate Provider CSV Tests ###
+add_nes_unit_test(network-coordinate-provider-csv-unit-tests "Synthetic/NetworkCoordinateProviderCSVTest.cpp")
+
 ### Serial Storage Handler Test ###
 add_nes_unit_test(serial-storage-handler-tests "RequestProcessor/StorageHandles/SerialStorageHandlerTest.cpp")
 
