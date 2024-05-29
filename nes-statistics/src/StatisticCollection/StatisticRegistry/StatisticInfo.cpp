@@ -21,15 +21,15 @@ StatisticInfo::StatisticInfo(const Windowing::WindowTypePtr window,
                              const TriggerConditionPtr triggerCondition,
                              const std::function<void(CharacteristicPtr)> callBack,
                              const QueryId& queryId,
-                             const MetricPtr metric)
+                             const CharacteristicPtr characteristic)
     : window(window), triggerCondition(std::move(triggerCondition)), callBack(callBack), queryId(queryId),
-      metric(std::move(metric)) {}
+      characteristic(characteristic){}
 
 [[maybe_unused]] TriggerConditionPtr StatisticInfo::getTriggerCondition() const { return triggerCondition; }
 
 Windowing::WindowTypePtr StatisticInfo::getWindow() const { return window; }
 
-MetricPtr StatisticInfo::getMetric() const { return metric; }
+MetricPtr StatisticInfo::getMetric() const { return characteristic->getType(); }
 
 const std::function<void(CharacteristicPtr)>& StatisticInfo::getCallBack() const { return callBack; }
 
@@ -44,7 +44,7 @@ std::string StatisticInfo::toString() const {
     oss << "TriggerCondition: " << triggerCondition->toString() << " "
         << "Window: " << window->toString() << " "
         << "QueryId: " << queryId << " "
-        << "Metric: " << metric->toString() << " ";
+        << "Characteristic: " << characteristic->toString() << " ";
     if (callBack != nullptr) {
         oss << "Callback: " << callBack.target_type().name() << std::endl;
     } else {
@@ -57,7 +57,7 @@ void StatisticInfo::setQueryId(const QueryId queryId) { this->queryId = queryId;
 
 bool StatisticInfo::operator==(const StatisticInfo& rhs) const {
     return triggerCondition == rhs.triggerCondition && queryId == rhs.queryId && window->equal(rhs.window)
-        && metric->equal(*rhs.metric);
+        && characteristic->getType()->equal(*rhs.getMetric());
 }
 
 bool StatisticInfo::operator!=(const StatisticInfo& rhs) const { return !(rhs == *this); }

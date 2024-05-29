@@ -44,7 +44,7 @@ class StatisticInfo {
                   const TriggerConditionPtr triggerCondition,
                   const std::function<void(CharacteristicPtr)> callBack,
                   const QueryId& queryId,
-                  const MetricPtr metric);
+                  const CharacteristicPtr characteristic);
 
     /**
      * @brief Gets the TriggerCondition
@@ -118,7 +118,7 @@ class StatisticInfo {
     TriggerConditionPtr triggerCondition;
     std::function<void(CharacteristicPtr)> callBack;
     QueryId queryId = INVALID_QUERY_ID;
-    MetricPtr metric;
+    CharacteristicPtr characteristic;
 };
 using StatisticInfoWLock = std::shared_ptr<folly::Synchronized<StatisticInfo>::WLockedPtr>;
 
