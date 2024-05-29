@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.140](https://github.com/nebulastream/nebulastream/tree/v0.6.140) (2024-05-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.139...v0.6.140)
+
+**Implemented enhancements:**
+
+- \[TASK\] Re-enable format and guard check before merging onto master [\#4841](https://github.com/nebulastream/nebulastream/issues/4841)
+
+## [v0.6.139](https://github.com/nebulastream/nebulastream/tree/v0.6.139) (2024-05-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.138...v0.6.139)
+
 ## [v0.6.138](https://github.com/nebulastream/nebulastream/tree/v0.6.138) (2024-05-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.137...v0.6.138)
