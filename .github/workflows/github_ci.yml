@@ -83,16 +83,18 @@ jobs:
       - name: preamble-check
         run: |
           docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nebulastream/nes-build-image:latest
-      #      - name: format-check
-      #        run: |
-      #          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
-      #      - name: guard-check
-      #        run: |
-      #          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
+      - name: format-check
+        run: |
+          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
+      - name: guard-check
+        run: |
+          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_preamble-check
+          docker rm -f ${{ github.run_id }}_format-check
+          docker rm -f ${{ github.run_id }}_guard-check
 
   # Deactivate coverage report in #3564
   #  build-x64-linux-code-coverage:
