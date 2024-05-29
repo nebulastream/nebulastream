@@ -26,6 +26,10 @@ if (NES_BUILD_PLUGIN_CUDA AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTE
     add_subdirectory(cuda)
 endif ()
 
+if (NES_BUILD_PLUGIN_MEOS)
+    add_subdirectory(meos)
+endif ()
+
 if (NES_BUILD_PLUGIN_TENSORFLOW)
     add_subdirectory(tensorflow)
 endif ()
