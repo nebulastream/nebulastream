@@ -367,8 +367,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
 
     auto query = Query::from("A")
                      .joinWith(Query::from("A").as("C"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(3)))
                      .sink(NullOutputSinkDescriptor::create());
 
@@ -421,8 +420,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
                                    .window(TumblingWindow::of(EventTime(Attribute("value")), Seconds(3)))
                                    .byKey(Attribute("id"))
                                    .apply(Avg(Attribute("x"))))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("x")), Seconds(3)))
                      .sink(NullOutputSinkDescriptor::create());
 

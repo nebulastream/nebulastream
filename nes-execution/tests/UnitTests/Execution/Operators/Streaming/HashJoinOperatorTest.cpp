@@ -18,6 +18,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
@@ -282,17 +283,16 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     Operators::JoinSchema joinSchema(hashJoinProbeHelper.leftSchema,
                                      hashJoinProbeHelper.rightSchema,
-                                     Util::createJoinSchema(hashJoinProbeHelper.leftSchema,
-                                                            hashJoinProbeHelper.rightSchema,
-                                                            hashJoinProbeHelper.joinFieldNameLeft));
-    Operators::WindowMetaData windowMetaData(joinSchema.joinSchema->get(0)->getName(),
-                                             joinSchema.joinSchema->get(1)->getName(),
-                                             joinSchema.joinSchema->get(2)->getName());
+                                     Util::createJoinSchema(hashJoinProbeHelper.leftSchema, hashJoinProbeHelper.rightSchema));
+    Operators::WindowMetaData windowMetaData(joinSchema.joinSchema->get(0)->getName(), joinSchema.joinSchema->get(1)->getName());
+
+    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameLeft);
+    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameRight);
+    auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
     auto hashJoinProbe = std::make_shared<Operators::HJProbe>(handlerIndex,
                                                               joinSchema,
-                                                              hashJoinProbeHelper.joinFieldNameLeft,
-                                                              hashJoinProbeHelper.joinFieldNameRight,
+                                                              keyExpressions,
                                                               windowMetaData,
                                                               QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
                                                               QueryCompilation::WindowingStrategy::SLICING,
@@ -480,8 +480,6 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                             Nautilus::Value<Any> windowEndVal(windowEnd);
                             joinedRecord.write(joinSchema.joinSchema->get(0)->getName(), windowStartVal);
                             joinedRecord.write(joinSchema.joinSchema->get(1)->getName(), windowEndVal);
-                            joinedRecord.write(joinSchema.joinSchema->get(2)->getName(),
-                                               leftRecordInner.read(hashJoinProbeHelper.joinFieldNameLeft));
 
                             // Writing the leftSchema fields
                             for (auto& field : hashJoinProbeHelper.leftSchema->fields) {

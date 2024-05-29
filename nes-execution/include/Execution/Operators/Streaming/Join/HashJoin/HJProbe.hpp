@@ -30,8 +30,6 @@ class HJProbe : public StreamJoinProbe {
      * @brief Constructor for a HJProbe join phase
      * @param operatorHandlerIndex
      * @param joinSchema
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param windowMetaData
      * @param joinStrategy
      * @param windowingStrategy
@@ -39,8 +37,7 @@ class HJProbe : public StreamJoinProbe {
      */
     HJProbe(const uint64_t operatorHandlerIndex,
             const JoinSchema& joinSchema,
-            const std::string& joinFieldNameLeft,
-            const std::string& joinFieldNameRight,
+            const Expressions::ExpressionPtr joinExpression,
             const WindowMetaData& windowMetaData,
             QueryCompilation::StreamJoinStrategy joinStrategy,
             QueryCompilation::WindowingStrategy windowingStrategy,

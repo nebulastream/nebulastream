@@ -60,26 +60,22 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
     const std::string& getWindowEndFieldName() const;
 
     /**
-     * @brief Getter for the window key field name
-     * @return std::string
+     * @brief Getter for join expression, i.e. a set of binary expressions
+     * @return joinExpressions
      */
-    const std::string& getWindowKeyFieldName() const;
+    const ExpressionNodePtr getJoinExpression() const;
 
     /**
      * @brief Sets the window start, end, and key field name during the serialization of the operator
      * @param windowStartFieldName
      * @param windowEndFieldName
-     * @param windowKeyFieldName
      */
-    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName,
-                                       std::string_view windowEndFieldName,
-                                       std::string_view windowKeyFieldName);
+    void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
 
   private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
-    std::string windowKeyFieldName;
 };
 }// namespace NES
 #endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_

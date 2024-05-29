@@ -16,6 +16,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -109,8 +110,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                               const std::string& timeStampFieldLeft,
                               const std::string& timeStampFieldRight,
                               const std::string& windowStartFieldName,
-                              const std::string& windowEndFieldName,
-                              const std::string& windowKeyFieldName) {
+                              const std::string& windowEndFieldName) {
         bool hashJoinWorks = true;
 
         // Creating the input left and right buffers and the expected output buffer
@@ -166,15 +166,16 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        Operators::JoinSchema joinSchemaStruct(leftSchema,
-                                               rightSchema,
-                                               Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
-        Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName);
+        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
+        Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);
+
+        auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
+        auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+        auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
         auto joinProbe = std::make_shared<Operators::HJProbe>(handlerIndex,
                                                               joinSchemaStruct,
-                                                              joinFieldNameLeft,
-                                                              joinFieldNameRight,
+                                                              keyExpressions,
                                                               windowMetaData,
                                                               QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
                                                               QueryCompilation::WindowingStrategy::SLICING);
@@ -287,10 +288,9 @@ TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline) {
     const auto timeStampFieldLeft = leftSchema->get(2)->getName();
 
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema);
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
-    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
@@ -311,8 +311,7 @@ TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline) {
                                      timeStampFieldLeft,
                                      timeStampFieldRight,
                                      windowStartFieldName,
-                                     windowEndFieldName,
-                                     windowKeyFieldName));
+                                     windowEndFieldName));
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

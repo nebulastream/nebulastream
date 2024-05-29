@@ -119,15 +119,15 @@ ExpressionProvider::lowerConstantExpression(const std::shared_ptr<ConstantValueE
             case BasicPhysicalType::NativeType::UINT_8: {
                 auto intValue = (uint8_t) std::stoul(stringValue);
                 return std::make_shared<ConstantUInt8ValueExpression>(intValue);
-            }
+            };
             case BasicPhysicalType::NativeType::UINT_16: {
                 auto intValue = (uint16_t) std::stoul(stringValue);
                 return std::make_shared<ConstantUInt16ValueExpression>(intValue);
-            }
+            };
             case BasicPhysicalType::NativeType::UINT_32: {
                 auto intValue = (uint32_t) std::stoul(stringValue);
                 return std::make_shared<ConstantUInt32ValueExpression>(intValue);
-            }
+            };
             case BasicPhysicalType::NativeType::UINT_64: {
                 auto intValue = (uint64_t) std::stoull(stringValue);
                 return std::make_shared<ConstantUInt64ValueExpression>(intValue);

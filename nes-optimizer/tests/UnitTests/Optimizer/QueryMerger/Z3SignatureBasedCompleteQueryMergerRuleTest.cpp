@@ -1723,8 +1723,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
                        .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
@@ -1738,8 +1737,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
                        .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType2)
                        .sink(printSinkDescriptor);
 
@@ -1796,8 +1794,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
                        .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
@@ -1811,8 +1808,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
                        .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType2)
                        .sink(printSinkDescriptor);
 
@@ -1869,8 +1865,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
                        .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
@@ -1884,8 +1879,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
                        .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
@@ -1945,8 +1939,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
                        .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
@@ -1960,8 +1953,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     Query subQuery2 = Query::from("car");
     Query query2 = Query::from("truck")
                        .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType2)
                        .sink(printSinkDescriptor);
 
@@ -2019,12 +2011,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
                        .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType1)
                        .joinWith(Query::from("truck"))
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
@@ -2038,8 +2028,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     Query subQuery2 = Query::from("car");
     Query query2 = Query::from("truck")
                        .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
+                       .where(Attribute("value") == Attribute("value"))
                        .window(windowType2)
                        .sink(printSinkDescriptor);
 

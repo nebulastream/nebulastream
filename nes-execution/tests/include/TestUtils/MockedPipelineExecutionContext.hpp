@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
+#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINEEXECUTIONCONTEXT_HPP_
+#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINEEXECUTIONCONTEXT_HPP_
+
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
 #include <set>
 #include <vector>
-#ifndef NES_NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINECONTEXT_HPP_
-#define NES_NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINECONTEXT_HPP_
 
 namespace NES::Runtime::Execution {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -35,4 +36,4 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 };
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINECONTEXT_HPP_
+#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINEEXECUTIONCONTEXT_HPP_

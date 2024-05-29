@@ -15,6 +15,10 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/LessEqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -102,7 +106,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                          const std::string& timeStampFieldRight,
                          const std::string& windowStartFieldName,
                          const std::string& windowEndFieldName,
-                         const std::string& windowKeyFieldName) {
+                         Expressions::ExpressionPtr joinExpression) {
 
         bool nljWorks = true;
 
@@ -160,15 +164,12 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        Operators::JoinSchema joinSchemaStruct(leftSchema,
-                                               rightSchema,
-                                               Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
-        Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName);
+        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
+        Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);
 
         auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
                                                               joinSchemaStruct,
-                                                              joinFieldNameLeft,
-                                                              joinFieldNameRight,
+                                                              joinExpression,
                                                               windowMetaData,
                                                               leftSchema,
                                                               rightSchema,
@@ -288,14 +289,18 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
 
     const auto joinFieldNameRight = rightSchema->get(1)->getName();
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
+
+    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
+    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+    auto joinExpression = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
+
     const auto timeStampFieldRight = rightSchema->get(2)->getName();
     const auto timeStampFieldLeft = leftSchema->get(2)->getName();
 
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema);
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
-    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
@@ -316,7 +321,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
                                 timeStampFieldRight,
                                 windowStartFieldName,
                                 windowEndFieldName,
-                                windowKeyFieldName));
+                                joinExpression));
 }
 
 TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
@@ -332,14 +337,18 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
 
     const auto joinFieldNameRight = rightSchema->get(1)->getName();
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
+
+    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
+    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+    auto joinExpression = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
+
     const auto timeStampFieldRight = rightSchema->get(2)->getName();
     const auto timeStampFieldLeft = leftSchema->get(2)->getName();
 
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema);
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
-    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
@@ -360,7 +369,117 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
                                 timeStampFieldRight,
                                 windowStartFieldName,
                                 windowEndFieldName,
-                                windowKeyFieldName));
+                                joinExpression));
+}
+
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDifferentExpressions) {
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("left$id", BasicType::UINT64)
+                                ->addField("left$value", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("right$id", BasicType::UINT64)
+                                 ->addField("right$value", BasicType::UINT64)
+                                 ->addField("right$timestamp", BasicType::UINT64);
+
+    const auto joinFieldName1Right = rightSchema->get(0)->getName();
+    const auto joinFieldName1Left = leftSchema->get(0)->getName();
+    const auto joinFieldName2Right = rightSchema->get(1)->getName();
+    const auto joinFieldName2Left = leftSchema->get(1)->getName();
+
+    //create joinExpression: id == id && value > value
+    auto onLeftKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Left);
+    auto onRightKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Right);
+    auto onLeftKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Left);
+    auto onRightKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Right);
+    auto joinExpressionEq = std::make_shared<Expressions::EqualsExpression>(onLeftKey1, onRightKey1);
+    auto joinExpressionGt = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey2, onRightKey2);
+    auto joinExpression = std::make_shared<Expressions::AndExpression>(joinExpressionEq, joinExpressionGt);
+
+    const auto timeStampFieldRight = rightSchema->get(2)->getName();
+    const auto timeStampFieldLeft = leftSchema->get(2)->getName();
+
+    EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+
+    // read values from csv file into one buffer for each join side and for one window
+    const auto windowSize = 1000UL;
+    const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
+    const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink4.csv");
+
+    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
+                                fileNameBuffersRight,
+                                fileNameBuffersSink,
+                                windowSize,
+                                leftSchema,
+                                rightSchema,
+                                joinSchema,
+                                joinFieldName1Left,
+                                joinFieldName2Right,
+                                timeStampFieldLeft,
+                                timeStampFieldRight,
+                                windowStartFieldName,
+                                windowEndFieldName,
+                                joinExpression));
+}
+
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDifferentExpressionsNoEquals) {
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("left$id", BasicType::UINT64)
+                                ->addField("left$value", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("right$id", BasicType::UINT64)
+                                 ->addField("right$value", BasicType::UINT64)
+                                 ->addField("right$timestamp", BasicType::UINT64);
+
+    const auto joinFieldName1Right = rightSchema->get(0)->getName();
+    const auto joinFieldName1Left = leftSchema->get(0)->getName();
+    const auto joinFieldName2Right = rightSchema->get(1)->getName();
+    const auto joinFieldName2Left = leftSchema->get(1)->getName();
+
+    //create joinExpression: id <= id && value > value
+    auto onLeftKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Left);
+    auto onRightKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Right);
+    auto onLeftKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Left);
+    auto onRightKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Right);
+    auto keyExpressionEq = std::make_shared<Expressions::LessEqualsExpression>(onLeftKey1, onRightKey1);
+    auto keyExpressionGt = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey2, onRightKey2);
+    auto keyExpressions = std::make_shared<Expressions::AndExpression>(keyExpressionEq, keyExpressionGt);
+
+    const auto timeStampFieldRight = rightSchema->get(2)->getName();
+    const auto timeStampFieldLeft = leftSchema->get(2)->getName();
+
+    EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+
+    // read values from csv file into one buffer for each join side and for one window
+    const auto windowSize = 1000UL;
+    const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
+    const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink5.csv");
+
+    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
+                                fileNameBuffersRight,
+                                fileNameBuffersSink,
+                                windowSize,
+                                leftSchema,
+                                rightSchema,
+                                joinSchema,
+                                joinFieldName1Left,
+                                joinFieldName2Right,
+                                timeStampFieldLeft,
+                                timeStampFieldRight,
+                                windowStartFieldName,
+                                windowEndFieldName,
+                                keyExpressions));
 }
 
 TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes) {
@@ -375,14 +494,18 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
 
     const auto joinFieldNameRight = rightSchema->get(0)->getName();
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
+
+    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
+    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
+    auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
+
     const auto timeStampFieldRight = rightSchema->get(1)->getName();
     const auto timeStampFieldLeft = leftSchema->get(2)->getName();
 
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema);
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
-    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
@@ -402,7 +525,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
                                 timeStampFieldRight,
                                 windowStartFieldName,
                                 windowEndFieldName,
-                                windowKeyFieldName));
+                                keyExpressions));
 }
 
 INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,

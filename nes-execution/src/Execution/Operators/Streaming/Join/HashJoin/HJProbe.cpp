@@ -182,14 +182,13 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
                 for (auto rightRecordRef : rightFixedPageRef) {
                     auto rightRecord = rightMemProvider->read({}, rightRecordRef, zeroValue);
-                    if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
-                        Record joinedRecord;
-                        StreamJoinProbe::createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
 
+                    Record joinedRecord;
+                    createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
+                    if (joinExpression->execute(joinedRecord).as<Boolean>()) {
                         // Calling the child operator for this joinedRecord
                         child->execute(ctx, joinedRecord);
-
-                    }//end of key compare
+                    }//end of key expression compare
                 }    //end of for every right key
             }        //end of for every right page
         }            //end of for every left key
@@ -198,16 +197,14 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
 HJProbe::HJProbe(const uint64_t operatorHandlerIndex,
                  const JoinSchema& joinSchema,
-                 const std::string& joinFieldNameLeft,
-                 const std::string& joinFieldNameRight,
+                 const Expressions::ExpressionPtr joinExpression,
                  const WindowMetaData& windowMetaData,
                  QueryCompilation::StreamJoinStrategy joinStrategy,
                  QueryCompilation::WindowingStrategy windowingStrategy,
                  bool withDeletion)
     : StreamJoinProbe(operatorHandlerIndex,
                       joinSchema,
-                      joinFieldNameLeft,
-                      joinFieldNameRight,
+                      joinExpression,
                       windowMetaData,
                       joinStrategy,
                       windowingStrategy,

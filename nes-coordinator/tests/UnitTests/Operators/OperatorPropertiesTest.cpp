@@ -177,8 +177,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
 
     auto query = Query::from("default_logical")
                      .joinWith(subQuery)
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                      .sink(PrintSinkDescriptor::create());
 

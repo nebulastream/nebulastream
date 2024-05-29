@@ -17,6 +17,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
@@ -88,11 +89,13 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
+        auto joinExpression = EqualsExpressionNode::create(
+            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>());
         {
             auto joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
             Join::LogicalJoinDescriptorPtr joinDef = Join::LogicalJoinDescriptor::create(
-                FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
-                FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                joinExpression,
                 Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
                 1,
                 1,

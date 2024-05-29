@@ -540,7 +540,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidJoinQueryWithNemo) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"left\\\").joinWith(Query::from(\\\"right\\\")).where(Attribute(\\\"value\\\")).equalsTo(Attribute("
+    ss << "\"Query::from(\\\"left\\\").joinWith(Query::from(\\\"right\\\")).where(Attribute(\\\"value\\\") == Attribute("
           "\\\"value\\\"))"
           ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Milliseconds(1000)))"
           ".sink(FileSinkDescriptor::create(\\\"";

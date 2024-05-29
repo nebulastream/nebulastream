@@ -56,8 +56,8 @@ set(VCPKG_TARGET_TRIPLET ${NES_HOST_PROCESSOR}-${NES_HOST_NAME}-nes)
 message(STATUS "Use VCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}")
 
 # Ensure linux users without a custom toolchain file or using self hosting use a supported distribution
+get_linux_lsb_release_information()
 if (NES_HOST_NAME STREQUAL "linux" AND NOT CMAKE_TOOLCHAIN_FILE AND NES_SELF_HOSTING)
-    get_linux_lsb_release_information()
     message(STATUS "Linux ${LSB_RELEASE_ID_SHORT} ${LSB_RELEASE_VERSION_SHORT} ${LSB_RELEASE_CODENAME_SHORT}")
     set(NES_SUPPORTED_UBUNTU_VERSIONS 20.04 22.04)
     if ((NOT${LSB_RELEASE_ID_SHORT} STREQUAL "Ubuntu") OR (NOT ${LSB_RELEASE_VERSION_SHORT} IN_LIST NES_SUPPORTED_UBUNTU_VERSIONS))

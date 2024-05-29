@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.6.138](https://github.com/nebulastream/nebulastream/tree/v0.6.138) (2024-05-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.137...v0.6.138)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nested Loop Join Multiple Keys [\#3691](https://github.com/nebulastream/nebulastream/issues/3691)
+
+#### Operators 
+
+- Extend Join Operator \(Nested Loop\) to support different join types in NES  [\#2425](https://github.com/nebulastream/nebulastream/issues/2425)
+
+## [v0.6.137](https://github.com/nebulastream/nebulastream/tree/v0.6.137) (2024-05-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.136...v0.6.137)
+
+## [v0.6.136](https://github.com/nebulastream/nebulastream/tree/v0.6.136) (2024-05-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.135...v0.6.136)
+
 ## [v0.6.135](https://github.com/nebulastream/nebulastream/tree/v0.6.135) (2024-05-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.134...v0.6.135)

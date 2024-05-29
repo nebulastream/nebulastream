@@ -106,29 +106,24 @@ struct SourceTypeConfigCSV {
  * @brief Struct for storing all parameter for the join
  */
 struct JoinParams {
-    JoinParams(const SchemaPtr& leftSchema,
-               const SchemaPtr& rightSchema,
-               const string& joinFieldNameLeft,
-               const std::string& joinFieldNameRight)
-        : JoinParams({leftSchema, rightSchema}, {joinFieldNameLeft, joinFieldNameRight}) {}
-
-    JoinParams(const std::vector<SchemaPtr>& inputSchemas, const std::vector<std::string>& joinFieldNames)
-        : inputSchemas(inputSchemas), joinFieldNames(joinFieldNames) {
+    JoinParams(const std::vector<SchemaPtr>& inputSchemas) : inputSchemas(inputSchemas) {
         NES_ASSERT(inputSchemas.size() >= 2, "JoinParams expect to have at least two input schemas");
-        outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchemas[0], inputSchemas[1], joinFieldNames[0]);
+        const std::shared_ptr<Schema>& inputSchema1 = inputSchemas[0];
+        const std::shared_ptr<Schema>& inputSchema2 = inputSchemas[1];
+        outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchema1, inputSchema2);
 
         if (inputSchemas.size() > 2) {
             auto cnt = 0_u64;
             for (auto it = inputSchemas.begin() + 2; it != inputSchemas.end(); ++it) {
-                outputSchema = Runtime::Execution::Util::createJoinSchema(outputSchema, *it, joinFieldNames[0]);
+                const std::shared_ptr<Schema>& inputSchema = *it;
+                outputSchema = Runtime::Execution::Util::createJoinSchema(outputSchema, inputSchema);
                 cnt++;
             }
         }
     }
 
-    std::vector<SchemaPtr> inputSchemas;
+    const std::vector<SchemaPtr> inputSchemas;
     SchemaPtr outputSchema;
-    const std::vector<std::string> joinFieldNames;
 };
 
 static constexpr auto defaultTimeout = std::chrono::seconds(60);

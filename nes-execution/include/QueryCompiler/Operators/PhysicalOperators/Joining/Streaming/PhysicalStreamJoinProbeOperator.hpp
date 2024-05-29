@@ -15,6 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINPROBEOPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINPROBEOPERATOR_HPP_
 
+#include <Execution/Expressions/Expression.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
@@ -36,12 +37,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param operatorHandler
      * @param windowStartFieldName: name for the field name that stores the window start value
      * @param windowEndFieldName: name for the field name that stores the window end value
-     * @param windowKeyFieldName: name for the join key field, e.g., how the field name is called that stores the predicate value
      * @return PhysicalStreamJoinProbeOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
@@ -49,11 +47,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const std::string& joinFieldNameLeft,
-                                      const std::string& joinFieldNameRight,
+                                      const ExpressionNodePtr joinExpression,
                                       const std::string& windowStartFieldName,
                                       const std::string& windowEndFieldName,
-                                      const std::string& windowKeyFieldName,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       QueryCompilation::StreamJoinStrategy joinStrategy,
                                       QueryCompilation::WindowingStrategy windowingStrategy);
@@ -64,23 +60,18 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param operatorHandler
      * @param windowStartFieldName
      * @param windowEndFieldName
-     * @param windowKeyFieldName
      * @return PhysicalStreamJoinProbeOperator
      */
     static PhysicalOperatorPtr create(StatisticId statisticId,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const std::string& joinFieldNameLeft,
-                                      const std::string& joinFieldNameRight,
+                                      ExpressionNodePtr joinExpression,
                                       const std::string& windowStartFieldName,
                                       const std::string& windowEndFieldName,
-                                      const std::string& windowKeyFieldName,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       QueryCompilation::StreamJoinStrategy joinStrategy,
                                       QueryCompilation::WindowingStrategy windowingStrategy);
@@ -92,8 +83,6 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param operatorHandler
      */
     PhysicalStreamJoinProbeOperator(OperatorId id,
@@ -101,11 +90,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
                                     const SchemaPtr& leftSchema,
                                     const SchemaPtr& rightSchema,
                                     const SchemaPtr& outputSchema,
-                                    const std::string& joinFieldNameLeft,
-                                    const std::string& joinFieldNameRight,
+                                    ExpressionNodePtr joinExpression,
                                     const std::string& windowStartFieldName,
                                     const std::string& windowEndFieldName,
-                                    const std::string& windowKeyFieldName,
                                     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                     QueryCompilation::StreamJoinStrategy joinStrategy,
                                     QueryCompilation::WindowingStrategy windowingStrategy);
@@ -123,18 +110,6 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
     OperatorPtr copy() override;
 
     /**
-     * @brief getter for left join field name
-     * @return
-     */
-    const std::string& getJoinFieldNameLeft() const;
-
-    /**
-     * @brief getter for right join field name
-     * @return std::string
-     */
-    const std::string& getJoinFieldNameRight() const;
-
-    /**
      * @brief Getter for the window meta data
      * @return WindowMetaData
      */
@@ -146,9 +121,14 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      */
     Runtime::Execution::Operators::JoinSchema getJoinSchema();
 
+    /**
+     * @brief Getter for joinExpression
+     * @return joinExpression
+     */
+    ExpressionNodePtr getJoinExpression() const;
+
   protected:
-    const std::string joinFieldNameLeft;
-    const std::string joinFieldNameRight;
+    ExpressionNodePtr joinExpression;
     const Runtime::Execution::Operators::WindowMetaData windowMetaData;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
