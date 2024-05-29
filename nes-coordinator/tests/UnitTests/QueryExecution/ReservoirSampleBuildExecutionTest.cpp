@@ -144,9 +144,9 @@ class ReservoirSampleBuildExecutionTest : public Testing::BaseUnitTest,
         // Emitting the input buffers and creating the expected reservoir sample  in testStatisticStore
         auto source = executionEngine->getDataSource(plan, 0);
         for (auto buf : allInputBuffers) {
-            // We call here emit work, as we do not want the metadata of the buffer to change, due to as setting it
+            // We call here emit buffer without changing the metadata of the buffer, due to as setting it
             // in Util::createDataForOneFieldAndTimeStamp()
-            source->emitWork(buf);
+            source->emitBuffer(buf, false);
 
             // Now creating the expected reservoir sample  in testStatisticStore
             auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);

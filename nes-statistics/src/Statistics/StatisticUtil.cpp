@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/Schema.hpp>
 #include <StatisticIdentifiers.hpp>
 #include <Statistics/StatisticUtil.hpp>
 #include <Common/DataTypes/DataType.hpp>

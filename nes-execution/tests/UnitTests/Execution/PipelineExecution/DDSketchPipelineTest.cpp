@@ -97,7 +97,7 @@ class DDSketchPipelineTest : public Testing::BaseUnitTest, public ::testing::Wit
         provider = ExecutablePipelineProviderRegistry::getPlugin(std::get<0>(GetParam())).get();
         sinkDataCodec = std::get<1>(GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(WorkerThreadId(0), bufferManager, 100);
         inputSchema = Schema::create()->addField(fieldToBuildDDSketchOver, BasicType::INT64)->addField(timestampFieldName, BasicType::UINT64);
         outputSchema = Schema::create()->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)

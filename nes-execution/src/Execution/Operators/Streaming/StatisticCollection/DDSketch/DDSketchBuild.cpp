@@ -27,7 +27,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* getDDSketchRefProxy(void* ptrOpHandler, Statistic::StatisticMetricHash metricHash, StatisticId statisticId,
-                          uint64_t workerId, uint64_t timestamp)  {
+                          WorkerThreadId workerId, uint64_t timestamp)  {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<DDSketchOperatorHandler*>(ptrOpHandler);
 
@@ -77,7 +77,7 @@ void DDSketchBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto timestampVal = timeFunction->getTs(ctx, record);
     auto ddsketchRef = Nautilus::FunctionCall("getDDSketchRefProxy", getDDSketchRefProxy,
                                                  operatorHandlerMemRef, Value<UInt64>(metricHash), ctx.getCurrentStatisticId(),
-                                                 ctx.getWorkerId(), timestampVal);
+                                                 ctx.getWorkerThreadId(), timestampVal);
 
     // 2. Calculate the correct index
     auto value = record.read(fieldToTrackFieldName);

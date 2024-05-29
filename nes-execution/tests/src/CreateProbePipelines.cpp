@@ -86,7 +86,7 @@ CreateProbePipelines::createReservoirSamplePipeline(const SchemaPtr inputProbeSc
 }
 
 CreateProbePipelines::CreateProbePipelines() : bufferManager(std::make_shared<BufferManager>()) {
-    workerContext = std::make_shared<WorkerContext>(0, bufferManager, 2);
+    workerContext = std::make_shared<WorkerContext>(WorkerThreadId(0), bufferManager, 2);
 }
 
 } // namespace NES::Runtime::Execution

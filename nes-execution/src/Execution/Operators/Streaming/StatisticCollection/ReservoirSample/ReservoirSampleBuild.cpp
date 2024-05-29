@@ -51,7 +51,7 @@ void incrementNumberOfObservedTuplesProxy(void* ptrReservoirSample) {
 }
 
 void* getReservoirSampleRefProxy(void* ptrOpHandler, const uint64_t metricHash, const uint64_t statisticId,
-                                 const uint64_t workerId, const uint64_t timestamp) {
+                                 const WorkerThreadId workerId, const uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<ReservoirSampleOperatorHandler*>(ptrOpHandler);
 
@@ -95,7 +95,7 @@ void ReservoirSampleBuild::execute(ExecutionContext& ctx, Record& record) const 
     auto sampleMemRef = Nautilus::FunctionCall("getReservoirSampleRefProxy", getReservoirSampleRefProxy,
                                                operatorHandlerMemRef, Value<UInt64>(metricHash),
                                                ctx.getCurrentStatisticId(),
-                                               ctx.getWorkerId(), timestampVal);
+                                               ctx.getWorkerThreadId(), timestampVal);
     auto reservoirMemRef = Nautilus::FunctionCall("getReservoirBaseAddressRefProxy", getReservoirBaseAddressRefProxy,
                                                   sampleMemRef);
 

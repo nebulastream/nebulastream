@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* getEquiWidthHistogramRefProxy(void* ptrOpHandler, Statistic::StatisticMetricHash metricHash, StatisticId statisticId,
-                          uint64_t workerId, uint64_t timestamp)  {
+                                    WorkerThreadId workerId, uint64_t timestamp)  {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<EquiWidthHistogramOperatorHandler*>(ptrOpHandler);
 
@@ -55,6 +55,7 @@ void updateEquiWidthHistogramProxy(void* ptrEquiWidthHistMemRef, int64_t lowerBo
     auto* equiWidthHist = static_cast<Statistic::EquiWidthHistogramStatistic*>(ptrEquiWidthHistMemRef);
     equiWidthHist->update(lowerBound, upperBound, count);
 }
+
 void EquiWidthHistogramBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
     if (hasChild()) {
@@ -63,16 +64,13 @@ void EquiWidthHistogramBuild::open(ExecutionContext& executionCtx, RecordBuffer&
 }
 
 void EquiWidthHistogramBuild::execute(ExecutionContext& ctx, Record& record) const {
-    ((void) ctx);
-    ((void) record);
-
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     //Get the memRef to the EquiWidthHistogram sketch
     auto timestampVal = timeFunction->getTs(ctx, record);
     auto equiWidthHistMemRef = Nautilus::FunctionCall("getEquiWidthHistogramRefProxy", getEquiWidthHistogramRefProxy,
                                                  operatorHandlerMemRef, Value<UInt64>(metricHash), ctx.getCurrentStatisticId(),
-                                                 ctx.getWorkerId(), timestampVal);
+                                                 ctx.getWorkerThreadId(), timestampVal);
 
     const auto value = record.read(fieldToTrackFieldName);
     const auto lowerBound = value - (value % binWidth);

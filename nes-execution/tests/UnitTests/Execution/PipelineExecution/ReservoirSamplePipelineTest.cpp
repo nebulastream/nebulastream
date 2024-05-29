@@ -94,7 +94,7 @@ class ReservoirSamplePipelineTest : public Testing::BaseUnitTest,
         provider = ExecutablePipelineProviderRegistry::getPlugin(std::get<0>(GetParam())).get();
         sinkDataCodec = std::get<1>(GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(WorkerThreadId(0), bufferManager, 100);
         inputSchema = Schema::create()
                           ->addField(fieldToBuildReservoirSampleOver, BasicType::INT64)
                           ->addField(timestampFieldName, BasicType::UINT64);
