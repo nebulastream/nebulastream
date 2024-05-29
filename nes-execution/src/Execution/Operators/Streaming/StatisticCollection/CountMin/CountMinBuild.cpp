@@ -80,13 +80,13 @@ void CountMinBuild::updateLocalState(ExecutionContext& ctx, CountMinLocalState& 
 
     // We have to get the slice and the memRef for the counters for the current timestamp
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto workerId = ctx.getWorkerId();
+    auto workerThreadId = ctx.getWorkerThreadId();
     auto sliceReference = Nautilus::FunctionCall("getCountMinRefProxy",
                                                  getCountMinRefProxy,
                                                  operatorHandlerMemRef,
                                                  Value<UInt64>(metricHash),
                                                  ctx.getCurrentStatisticId(),
-                                                 workerId,
+                                                 workerThreadId,
                                                  timestamp);
 
     auto countersReference = Nautilus::FunctionCall("getCountersRefProxy",
@@ -95,18 +95,18 @@ void CountMinBuild::updateLocalState(ExecutionContext& ctx, CountMinLocalState& 
 
     // We have to get the synopsis start and end timestamp
     auto startTs = Nautilus::FunctionCall("getSynopsisStartProxy",
-                                         getSynopsisStartProxy,
-                                         operatorHandlerMemRef,
-                                         Value<UInt64>(metricHash),
-                                         ctx.getCurrentStatisticId(),
-                                         workerId,
+                                          getSynopsisStartProxy,
+                                          operatorHandlerMemRef,
+                                          Value<UInt64>(metricHash),
+                                          ctx.getCurrentStatisticId(),
+                                          workerThreadId,
                                          timestamp);
     auto endTs = Nautilus::FunctionCall("getSynopsisEndProxy",
                                         getSynopsisEndProxy,
                                         operatorHandlerMemRef,
                                         Value<UInt64>(metricHash),
                                         ctx.getCurrentStatisticId(),
-                                        workerId,
+                                        workerThreadId,
                                         timestamp);
 
     // Updating the local join state

@@ -79,13 +79,13 @@ void ReservoirSampleBuild::updateLocalState(ExecutionContext& ctx,
                                             const Value<UInt64>& timestamp) const {
     // We have to get the slice for the current timestamp
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto workerId = ctx.getWorkerId();
+    auto workerThreadId = ctx.getWorkerThreadId();
     auto sliceReference = Nautilus::FunctionCall("getReservoirSampleRefProxy",
                                                  getReservoirSampleRefProxy,
                                                  operatorHandlerMemRef,
                                                  Value<UInt64>(metricHash),
                                                  ctx.getCurrentStatisticId(),
-                                                 workerId,
+                                                 workerThreadId,
                                                  timestamp);
     auto reservoirMemRef = Nautilus::FunctionCall("getReservoirBaseAddressRefProxy",
                                                   getReservoirBaseAddressRefProxy,
@@ -97,14 +97,14 @@ void ReservoirSampleBuild::updateLocalState(ExecutionContext& ctx,
                                           operatorHandlerMemRef,
                                           Value<UInt64>(metricHash),
                                           ctx.getCurrentStatisticId(),
-                                          workerId,
+                                          workerThreadId,
                                           timestamp);
     auto endTs = Nautilus::FunctionCall("getSynopsisEndProxy",
                                         getSynopsisEndProxy,
                                         operatorHandlerMemRef,
                                         Value<UInt64>(metricHash),
                                         ctx.getCurrentStatisticId(),
-                                        workerId,
+                                        workerThreadId,
                                         timestamp);
 
     // Updating the local join state

@@ -79,7 +79,7 @@ void DDSketchBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
 void DDSketchBuild::updateLocalState(ExecutionContext& ctx, SynopsisLocalState& localState, const Value<UInt64>& timestamp) const {
     // We have to get the slice for the current timestamp
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto workerId = ctx.getWorkerId();
+    auto workerThreadId = ctx.getWorkerThreadId();
     auto sliceReference = Nautilus::FunctionCall("getDDSketchRefProxy", getDDSketchRefProxy,
                                                  operatorHandlerMemRef, Value<UInt64>(metricHash), ctx.getCurrentStatisticId(),
                                                  ctx.getWorkerThreadId(), timestamp);
@@ -90,14 +90,14 @@ void DDSketchBuild::updateLocalState(ExecutionContext& ctx, SynopsisLocalState& 
                                           operatorHandlerMemRef,
                                           Value<UInt64>(metricHash),
                                           ctx.getCurrentStatisticId(),
-                                          workerId,
+                                          workerThreadId,
                                           timestamp);
     auto endTs = Nautilus::FunctionCall("getSynopsisEndProxy",
                                         getSynopsisEndProxy,
                                         operatorHandlerMemRef,
                                         Value<UInt64>(metricHash),
                                         ctx.getCurrentStatisticId(),
-                                        workerId,
+                                        workerThreadId,
                                         timestamp);
 
     // Updating the local join state

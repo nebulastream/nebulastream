@@ -88,13 +88,13 @@ void HyperLogLogBuild::updateLocalState(ExecutionContext& ctx,
 
     // We have to get the slice for the current timestamp
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto workerId = ctx.getWorkerId();
+    auto workerThreadId = ctx.getWorkerThreadId();
     auto sliceReference = Nautilus::FunctionCall("getHLLRefProxy",
                                                  getHLLRefProxy,
                                                  operatorHandlerMemRef,
                                                  Value<UInt64>(metricHash),
                                                  ctx.getCurrentStatisticId(),
-                                                 ctx.getWorkerId(),
+                                                 workerThreadId,
                                                  timestamp);
 
     // We have to get the synopsis start and end timestamp
@@ -103,14 +103,14 @@ void HyperLogLogBuild::updateLocalState(ExecutionContext& ctx,
                                           operatorHandlerMemRef,
                                           Value<UInt64>(metricHash),
                                           ctx.getCurrentStatisticId(),
-                                          workerId,
+                                          workerThreadId,
                                           timestamp);
     auto endTs = Nautilus::FunctionCall("getSynopsisEndProxy",
                                         getSynopsisEndProxy,
                                         operatorHandlerMemRef,
                                         Value<UInt64>(metricHash),
                                         ctx.getCurrentStatisticId(),
-                                        workerId,
+                                        workerThreadId,
                                         timestamp);
 
     // Updating the local join state

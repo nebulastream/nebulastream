@@ -33,7 +33,7 @@ void incrementObservedTuplesStatisticProxy(void* ptrSynopsis, uint64_t increment
 uint64_t getSynopsisStartProxy(void* ptrOpHandler,
                                Statistic::StatisticMetricHash metricHash,
                                StatisticId statisticId,
-                               uint64_t workerId,
+                               WorkerThreadId workerId,
                                uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);
@@ -46,7 +46,7 @@ uint64_t getSynopsisStartProxy(void* ptrOpHandler,
 uint64_t getSynopsisEndProxy(void* ptrOpHandler,
                              Statistic::StatisticMetricHash metricHash,
                              StatisticId statisticId,
-                             uint64_t workerId,
+                             WorkerThreadId workerId,
                              uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<AbstractSynopsesOperatorHandler*>(ptrOpHandler);

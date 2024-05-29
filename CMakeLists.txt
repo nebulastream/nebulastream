@@ -214,12 +214,11 @@ if (NOT APPLE)
         add_link_options("-v")
     endif ()
     # as per backward.h
-    # Commented out, as we do not need this on node55
-#    find_library(LIBDW_LIBRARY dw)
-#    if (NOT LIBDW_LIBRARY)
-#        message(FATAL_ERROR "libdw is required on Linux. On Ubuntu, please install 'libdw-dev'")
-#    endif ()
-#    add_link_options("-ldw")
+    find_library(LIBDW_LIBRARY dw)
+    if (NOT LIBDW_LIBRARY)
+        message(FATAL_ERROR "libdw is required on Linux. On Ubuntu, please install 'libdw-dev'")
+    endif ()
+    add_link_options("-ldw")
 endif ()
 
 include(cmake/Sanitizers.cmake)

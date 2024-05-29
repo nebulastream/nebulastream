@@ -32,13 +32,13 @@ void incrementObservedTuplesStatisticProxy(void* ptrSynopsis, uint64_t increment
 uint64_t getSynopsisStartProxy(void* ptrOpHandler,
                                Statistic::StatisticMetricHash metricHash,
                                StatisticId statisticId,
-                               uint64_t workerId,
+                               WorkerThreadId workerId,
                                uint64_t timestamp);
 
 uint64_t getSynopsisEndProxy(void* ptrOpHandler,
                              Statistic::StatisticMetricHash metricHash,
                              StatisticId statisticId,
-                             uint64_t workerId,
+                             WorkerThreadId workerId,
                              uint64_t timestamp);
 
 void* getNullPtrMemRefProxy();
