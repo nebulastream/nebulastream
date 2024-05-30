@@ -182,7 +182,7 @@ RequestHandlerService::trackStatisticRequest(const Statistic::CharacteristicPtr&
         StatisticKey newKey(metric, statisticId);
         statisticKeysForThisTrackRequest.emplace_back(newKey);
         if (!statisticRegistry->contains(newKey.hash())) {
-            StatisticInfo statisticInfo(window, triggerCondition, callBack, queryId, metric);
+            StatisticInfo statisticInfo(window, triggerCondition, callBack, queryId, characteristic);
             statisticRegistry->insert(newKey.hash(), statisticInfo);
         }
     }
