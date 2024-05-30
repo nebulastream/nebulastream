@@ -14,10 +14,10 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
 
-#include <Configurations/ConfigurationException.hpp>
-#include <Configurations/TypedBaseOption.hpp>
-#include <Configurations/Validation/ConfigurationValidation.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Configurations/ConfigurationException.hpp"
+#include "Configurations/TypedBaseOption.hpp"
+#include "Configurations/Validation/ConfigurationValidation.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <ostream>
 
 namespace NES::Configurations {
@@ -47,12 +47,12 @@ class ScalarOption : public TypedBaseOption<T> {
      * @param name of the option.
      * @param defaultValue of the option. Has to be of type T.
      * @param description of the option.
-     * @param validator class to validate the configuration value
+     * @param validators to validate the configuration value
      */
     ScalarOption(const std::string& name,
                  const std::string& defaultValue,
                  const std::string& description,
-                 std::shared_ptr<ConfigurationValidation> validator);
+                 std::vector<std::shared_ptr<ConfigurationValidation>> validators);
     /**
      * @brief Operator to assign a new value as a value of this option.
      * @param value that will be assigned
@@ -82,8 +82,7 @@ class ScalarOption : public TypedBaseOption<T> {
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
   private:
-    template<class X>
-        requires std::is_base_of_v<BaseOption, X>
+    template<DerivedBaseOption X>
     friend class SequenceOption;
     /**
      * @brief Private constructor to create an scalar option without a name and description.
@@ -140,11 +139,10 @@ template<class T>
 ScalarOption<T>::ScalarOption(const std::string& name,
                               const std::string& value,
                               const std::string& description,
-                              std::shared_ptr<ConfigurationValidation> validator)
-    : TypedBaseOption<T>(name, convertFromString<T>(value), description, validator) {
-    if (!validator->isValid(value)) {
-        throw ConfigurationException("Validation failed for " + name + " with value: " + value);
-    }
+                              std::vector<std::shared_ptr<ConfigurationValidation>> validators)
+    : TypedBaseOption<T>(name, convertFromString<T>(value), description, validators) {
+    this->validators = validators;
+    this->isValid(value);
 }
 
 template<class T>
@@ -165,9 +163,7 @@ bool ScalarOption<T>::operator==(const T& other) {
 
 template<class T>
 void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node) {
-    if (this->validator && !this->validator->isValid(node.As<std::string>())) {
-        throw ConfigurationException("Validation failed for value: " + node.As<std::string>());
-    }
+    this->isValid(node.As<std::string>());
     this->value = node.As<T>();
 }
 
@@ -180,9 +176,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::stri
     if (value.empty()) {
         throw ConfigurationException("Identifier " + identifier + " is not known.");
     }
-    if (this->validator && !this->validator->isValid(value)) {
-        throw ConfigurationException("Validation failed for " + identifier + " with value: " + value);
-    }
+    this->isValid(value);
     try {
         this->value = Yaml::impl::StringConverter<T>::Get(value);
     } catch (const std::exception& e) {

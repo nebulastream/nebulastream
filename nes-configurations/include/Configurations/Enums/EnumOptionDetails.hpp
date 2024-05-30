@@ -14,56 +14,52 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_
 
-#include <Configurations/Enums/EnumOption.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include "Configurations/Enums/EnumOption.hpp"
+#include "Util/magicenum/magic_enum.hpp"
+#include "Util/yaml/Yaml.hpp"
 
 using namespace magic_enum::ostream_operators;
 namespace NES::Configurations {
 
-template<class EnumType>
-    requires std::is_enum<EnumType>::value
-EnumOption<EnumType>::EnumOption(const std::string& name, EnumType defaultValue, const std::string& description)
-    : TypedBaseOption<EnumType>(name, defaultValue, description){};
+template<IsEnum T>
+EnumOption<T>::EnumOption(const std::string& name, T defaultValue, const std::string& description)
+    : TypedBaseOption<T>(name, defaultValue, description){};
 
-template<class EnumType>
-    requires std::is_enum<EnumType>::value
-EnumOption<EnumType>& EnumOption<EnumType>::operator=(const EnumType& value) {
+template<IsEnum T>
+EnumOption<T>& EnumOption<T>::operator=(const T& value) {
     this->value = value;
     return *this;
 }
 
-template<class EnumType>
-    requires std::is_enum<EnumType>::value
-void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
+template<IsEnum T>
+void EnumOption<T>::parseFromYAMLNode(Yaml::Node node) {
 
-    if (!magic_enum::enum_contains<EnumType>(node.As<std::string>())) {
+    if (!magic_enum::enum_contains<T>(node.As<std::string>())) {
         std::stringstream ss;
-        for (const auto& name : magic_enum::enum_names<EnumType>()) {
+        for (const auto& name : magic_enum::enum_names<T>()) {
             ss << name;
         }
         throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + ss.str());
     }
-    this->value = magic_enum::enum_cast<EnumType>(node.As<std::string>()).value();
+    this->value = magic_enum::enum_cast<T>(node.As<std::string>()).value();
 }
 
-template<class EnumType>
-    requires std::is_enum<EnumType>::value
-void EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+template<IsEnum T>
+void EnumOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     auto value = inputParams[identifier];
     // Check if the value is a member of this enum type.
-    if (!magic_enum::enum_contains<EnumType>(value)) {
+    if (!magic_enum::enum_contains<T>(value)) {
         std::stringstream ss;
-        for (const auto& name : magic_enum::enum_names<EnumType>()) {
+        for (const auto& name : magic_enum::enum_names<T>()) {
             ss << name;
         }
         throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + ss.str());
     }
-    this->value = magic_enum::enum_cast<EnumType>(value).value();
+    this->value = magic_enum::enum_cast<T>(value).value();
 }
 
-template<class EnumType>
-    requires std::is_enum<EnumType>::value
-std::string EnumOption<EnumType>::toString() {
+template<IsEnum T>
+std::string EnumOption<T>::toString() {
     std::stringstream os;
     os << "Name: " << this->name << "\n";
     os << "Description: " << this->description << "\n";

@@ -14,18 +14,14 @@
 
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/ConfigurationException.hpp>
-#include <Configurations/Enums/EnumOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/SequenceOption.hpp>
-#include <Configurations/Validation/BooleanValidation.hpp>
-#include <Configurations/Validation/FloatValidation.hpp>
-#include <Configurations/Validation/IpValidation.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
-#include <Configurations/WrapOption.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Util/yaml/Yaml.hpp>
+#include "Configurations/BaseOption.hpp"
+#include "Configurations/ConfigurationException.hpp"
+#include "Configurations/Enums/EnumOption.hpp"
+#include "Configurations/ScalarOption.hpp"
+#include "Configurations/SequenceOption.hpp"
+#include "Configurations/WrapOption.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Util/yaml/Yaml.hpp"
 #include <map>
 #include <string>
 
