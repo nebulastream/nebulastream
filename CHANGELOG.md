@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.141](https://github.com/nebulastream/nebulastream/tree/v0.6.141) (2024-05-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.140...v0.6.141)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Print an error and fail the worker if the numWorkerThreads is set to 0 [\#4723](https://github.com/nebulastream/nebulastream/issues/4723)
+
 ## [v0.6.140](https://github.com/nebulastream/nebulastream/tree/v0.6.140) (2024-05-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.139...v0.6.140)
