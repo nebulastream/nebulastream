@@ -15,8 +15,11 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
 
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
+#include "Configurations/BaseConfiguration.hpp"
+#include "Configurations/ConfigurationsNames.hpp"
+#include "Configurations/Validation/BooleanValidation.hpp"
+#include "Configurations/Validation/FloatValidation.hpp"
+#include "Configurations/Validation/NonZeroValidation.hpp"
 #include <memory>
 
 namespace NES::Configurations {
@@ -37,7 +40,7 @@ class ElegantConfigurations : public BaseConfiguration {
     BoolOption accelerateJavaUDFs = {ACCELERATE_JAVA_UDFS,
                                      "false",
                                      "Accelerate java UDFs.",
-                                     std::make_unique<BooleanValidation>()};
+                                     {std::make_unique<BooleanValidation>()}};
 
     /**
      * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
@@ -55,7 +58,7 @@ class ElegantConfigurations : public BaseConfiguration {
     FloatOption transferRate = {TRANSFER_RATE,
                                 "100.0",
                                 "Network delay between two worker nodes in MBit/s",
-                                std::make_unique<FloatValidation>()};
+                                {std::make_unique<FloatValidation>(), std::make_unique<NonZeroValidation>()}};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

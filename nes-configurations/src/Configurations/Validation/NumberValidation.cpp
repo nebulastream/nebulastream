@@ -13,6 +13,7 @@
 */
 
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <regex>
 
 namespace NES::Configurations {
 

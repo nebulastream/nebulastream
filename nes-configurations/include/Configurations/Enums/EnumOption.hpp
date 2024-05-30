@@ -13,35 +13,36 @@
 */
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
-#include <Configurations/ConfigurationException.hpp>
-#include <Configurations/TypedBaseOption.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include "Configurations/TypedBaseOption.hpp"
+#include "Util/yaml/Yaml.hpp"
 #include <string>
 #include <type_traits>
 
 namespace NES::Configurations {
+
+template<class T>
+concept IsEnum = std::is_enum<T>::value;
 /**
  * @brief This class defines an option, which has only the member of an enum as possible values.
- * @tparam EnumType
+ * @tparam T
  */
-template<class EnumType>
-    requires std::is_enum<EnumType>::value
-class EnumOption : public TypedBaseOption<EnumType> {
+template<IsEnum T>
+class EnumOption : public TypedBaseOption<T> {
   public:
     /**
      * @brief Constructor to define a EnumOption with a specific default value.
      * @param name of the EnumOption.
-     * @param defaultValue of the EnumOption, has to be an member of the EnumType.
+     * @param defaultValue of the EnumOption, has to be an member of the T.
      * @param description of the EnumOption.
      */
-    EnumOption(const std::string& name, EnumType defaultValue, const std::string& description);
+    EnumOption(const std::string& name, T defaultValue, const std::string& description);
 
     /**
      * @brief Operator to assign a new value as a value of this option.
      * @param value that will be assigned
      * @return Reference to this option.
      */
-    EnumOption<EnumType>& operator=(const EnumType& value);
+    EnumOption<T>& operator=(const T& value);
     std::string toString() override;
 
   protected:
