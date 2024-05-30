@@ -10,6 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Runtime)
-add_subdirectory(Util)
-add_subdirectory(Sinks)
+add_subdirectory(Formats)
