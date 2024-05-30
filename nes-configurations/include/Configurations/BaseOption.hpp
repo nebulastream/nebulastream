@@ -13,7 +13,7 @@
 */
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
-#include <Util/yaml/Yaml.hpp>
+#include "Util/yaml/Yaml.hpp"
 #include <string>
 namespace NES::Configurations {
 
@@ -83,6 +83,10 @@ class BaseOption {
     std::string name;
     std::string description;
 };
+
+template<class T>
+concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
+
 }// namespace NES::Configurations
 
 #endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_

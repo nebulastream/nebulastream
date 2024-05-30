@@ -15,8 +15,7 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
 
-#include <Configurations/Validation/ConfigurationValidation.hpp>
-#include <regex>
+#include "Configurations/Validation/ConfigurationValidation.hpp"
 #include <string>
 
 namespace NES::Configurations {

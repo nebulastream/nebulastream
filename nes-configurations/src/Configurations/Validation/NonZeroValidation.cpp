@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Configurations/Validation/FloatValidation.hpp>
+#include <Configurations/Validation/NonZeroValidation.hpp>
 #include <regex>
 
 namespace NES::Configurations {
 
-bool FloatValidation::isValid(const std::string& parameter) const {
-    std::regex numberRegex("^\\d*\\.?\\d+$");
-    if (!std::regex_match(parameter, numberRegex)) {
+bool NonZeroValidation::isValid(const std::string& parameter) const {
+    std::regex numberRegex("^0.?0?$");
+    if (std::regex_match(parameter, numberRegex)) {
         return false;
     }
     return true;

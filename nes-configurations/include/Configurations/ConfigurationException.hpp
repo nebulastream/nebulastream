@@ -15,7 +15,7 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
 
-#include <Exceptions/RuntimeException.hpp>
+#include "Exceptions/RuntimeException.hpp"
 #include <string>
 namespace NES::Configurations {
 

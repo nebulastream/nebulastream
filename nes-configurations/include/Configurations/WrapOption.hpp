@@ -14,7 +14,7 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
 
-#include <Configurations/TypedBaseOption.hpp>
+#include "Configurations/TypedBaseOption.hpp"
 
 namespace NES::Configurations {
 
@@ -51,8 +51,7 @@ class WrapOption : public TypedBaseOption<Type> {
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
   private:
-    template<class X>
-        requires std::is_base_of_v<BaseOption, X>
+    template<DerivedBaseOption X>
     friend class SequenceOption;
     WrapOption() : TypedBaseOption<Type>() {}
 };

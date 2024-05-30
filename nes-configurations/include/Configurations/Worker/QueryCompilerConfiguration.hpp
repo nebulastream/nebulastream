@@ -15,23 +15,21 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_
 
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Configurations/Enums/DumpMode.hpp>
-#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
-#include <Configurations/Enums/NautilusBackend.hpp>
-#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
-#include <Configurations/Enums/PipeliningStrategy.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
-#include <Configurations/Enums/QueryExecutionMode.hpp>
-#include <Configurations/Enums/WindowingStrategy.hpp>
-#include <Util/Common.hpp>
-#include <iostream>
-#include <map>
+#include "Configurations/BaseConfiguration.hpp"
+#include "Configurations/ConfigurationOption.hpp"
+#include "Configurations/Enums/CompilationStrategy.hpp"
+#include "Configurations/Enums/DumpMode.hpp"
+#include "Configurations/Enums/MemoryLayoutPolicy.hpp"
+#include "Configurations/Enums/NautilusBackend.hpp"
+#include "Configurations/Enums/OutputBufferOptimizationLevel.hpp"
+#include "Configurations/Enums/PipeliningStrategy.hpp"
+#include "Configurations/Enums/QueryCompilerType.hpp"
+#include "Configurations/Enums/QueryExecutionMode.hpp"
+#include "Configurations/Enums/WindowingStrategy.hpp"
+#include "Configurations/Validation/BooleanValidation.hpp"
+#include "Configurations/Validation/NumberValidation.hpp"
+#include "Util/Common.hpp"
 #include <string>
-#include <thread>
-#include <utility>
 
 namespace NES::Configurations {
 
@@ -115,7 +113,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG,
                                       "false",
                                       "Enable use compilation caching",
-                                      std::make_shared<BooleanValidation>()};
+                                      {std::make_shared<BooleanValidation>()}};
 
     /**
      * Config options for hash join
@@ -123,20 +121,20 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     UIntOption numberOfPartitions = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG,
                                      std::to_string(NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS),
                                      "Partitions in the hash table",
-                                     std::make_shared<NumberValidation>()};
+                                     {std::make_shared<NumberValidation>()}};
     UIntOption pageSize = {STREAM_HASH_JOIN_PAGE_SIZE_CONFIG,
                            std::to_string(NES::Configurations::DEFAULT_HASH_PAGE_SIZE),
                            "Page size of hash table",
-                           std::make_shared<NumberValidation>()};
+                           {std::make_shared<NumberValidation>()}};
     UIntOption preAllocPageCnt = {STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
                                   std::to_string(NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT),
                                   "Page count of pre allocated pages in each bucket hash table",
-                                  std::make_shared<NumberValidation>()};
+                                  {std::make_shared<NumberValidation>()}};
 
     UIntOption maxHashTableSize = {STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG,
                                    std::to_string(NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE),
                                    "Maximum size of hash table",
-                                   std::make_shared<NumberValidation>()};
+                                   {std::make_shared<NumberValidation>()}};
 
     EnumOption<QueryCompilation::StreamJoinStrategy> joinStrategy = {
         JOIN_STRATEGY,

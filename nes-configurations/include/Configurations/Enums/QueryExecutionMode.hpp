@@ -15,6 +15,7 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_
 
+#include <cstdint>
 namespace NES::Runtime {
 enum class QueryExecutionMode : uint8_t {
     /// MPMC work queue
