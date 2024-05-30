@@ -253,9 +253,7 @@ TEST_P(EquiWidthHistBuildExecutionTest, singleInputTupleNegativeValues) {
                                                                    *executionEngine->getBufferManager(),
                                                                    inputSchema,
                                                                    fieldToBuildEquiHistOver,
-                                                                   timestampFieldName,
-                                                                   /* minValue= */ -100,
-                                                                   /* maxValue= */ 0);
+                                                                   timestampFieldName);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM, statisticDataCodec);
