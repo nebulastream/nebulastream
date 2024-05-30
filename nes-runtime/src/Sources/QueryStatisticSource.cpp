@@ -112,8 +112,17 @@ QueryStatisticSource::QueryStatisticSource(
                  executableSuccessors,
                  sourceAffinity,
                  taskQueueId) {
-
-    // TODO Tim hier die qualifierName vom Schema holen (gibt eine Funktion) und dann vor den Feldern hängen
-    processedTasksFieldName = schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + PROCESSED_TASKS_FIELD_NAME;
+                    
+    const auto schemaQualifierName = schema->getQualifierNameForSystemGeneratedFieldsWithSeparator();
+    processedTasksFieldName = schemaQualifierName + PROCESSED_TASKS_FIELD_NAME;
+    timestampLastProcessedTaskFieldName = schemaQualifierName + TIMESTAMP_LAST_PROCESSED_TASK_FIELD_NAME;
+    processedTuplesFieldName = schemaQualifierName + PROCESSED_TUPLES_FIELD_NAME;
+    processedBuffersFieldName = schemaQualifierName + PROCESSED_BUFFERS_FIELD_NAME;
+    processedWatermarksFieldName = schemaQualifierName + PROCESSED_WATERMARKS_FIELD_NAME;
+    latencySumFieldName = schemaQualifierName + LATENCY_SUM_FIELD_NAME;
+    queueSizeSumFieldName = schemaQualifierName + QUEUE_SIZE_SUM_FIELD_NAME;
+    availableGlobalBufferSumFieldName = schemaQualifierName + AVAILABLE_GLOBAL_BUFFER_SUM_FIELD_NAME;
+    availableFixedBufferSumFieldName = schemaQualifierName + AVAILABLE_FIXED_BUFFER_SUM_FIELD_NAME;
+    timestampFirstProcessedTaskFieldName = schemaQualifierName + TIMESTAMP_FIRST_PROCESSED_TASK_FIELD_NAME;
 }
 }// namespace NES
