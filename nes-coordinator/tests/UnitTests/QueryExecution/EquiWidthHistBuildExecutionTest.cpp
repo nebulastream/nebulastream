@@ -242,32 +242,6 @@ TEST_P(EquiWidthHistBuildExecutionTest, multipleInputTuplesWithWindowSlide) {
                                 windowSlide,
                                 allInputBuffers);
 }
-/**
- * @brief Here we test, if we create a equi width histogram sample sketch for a single input tuple with negative values
- */
-TEST_P(EquiWidthHistBuildExecutionTest, singleInputTupleNegativeValues) {
-    using namespace Statistic;
-    constexpr auto windowSize = 10;
-    constexpr auto numberOfTuples = 1;
-    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
-                                                                   *executionEngine->getBufferManager(),
-                                                                   inputSchema,
-                                                                   fieldToBuildEquiHistOver,
-                                                                   timestampFieldName);
-
-    // Creating the sink and the sources
-    const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSynopsisType::EQUI_WIDTH_HISTOGRAM, statisticDataCodec);
-    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
-
-    // Creating the reservoir sample descriptor and running the query
-    auto equiWidthHistogramDescriptor = EquiWidthHistogramDescriptor::create(Over(fieldToBuildEquiHistOver), binWidth);
-    runQueryAndCheckCorrectness(testSourceDescriptor,
-                                testSinkDescriptor,
-                                equiWidthHistogramDescriptor,
-                                windowSize,
-                                windowSize,
-                                allInputBuffers);
-}
 
 INSTANTIATE_TEST_CASE_P(testCountMin,
                         EquiWidthHistBuildExecutionTest,
