@@ -48,12 +48,16 @@ std::vector<Statistic::StatisticKey> createRandomStatisticKey(const uint64_t num
 
 std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t numberOfInfos) {
     std::vector<Statistic::StatisticInfo> randomInfos;
+    std::vector<Statistic::StatisticKey> randomKeys = createRandomStatisticKey(numberOfInfos);
+    //std::vector<Statistic::CharacteristicPtr> characteristics = {Statistic::IngestionRate::create()};
+    auto metricPtr = Statistic::IngestionRate::create();
+    auto characteristic= Statistic::InfrastructureStatistic::create(metricPtr, WorkerId(0));
     for (auto i = 0_u64; i < numberOfInfos; ++i) {
         randomInfos.emplace_back(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(rand())),
                                  Statistic::NeverTrigger::create(),
                                  nullptr,
                                  QueryId(rand()),
-                                 Statistic::IngestionRate::create());
+                                 characteristic);
     }
     return randomInfos;
 }
