@@ -148,7 +148,6 @@ void ZmqServer::getServerSocketInfo(std::string& hostname, uint16_t& port) {
 void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std::promise<bool>>& startPromise) {
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
-    auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
 
     try {
         auto address = "tcp://" + hostname + ":" + std::to_string(requestedPort);
@@ -174,6 +173,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
     currentPort = actualPort;
     NES_DEBUG("ZmqServer: Created socket on {}: {}", hostname, actualPort);
 
+    auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
     for (int i = 0; i < numHandlerThreads; ++i) {
         handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
             setThreadName("zmq-evt-%d", i);
