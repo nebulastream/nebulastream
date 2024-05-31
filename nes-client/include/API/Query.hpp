@@ -373,10 +373,10 @@ class Query {
      */
     NES::Experimental::BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
 
-    /** TODO
+    /**
      * @brief can be called on the original query with the query to be cross joined with and sets this query in the class CrossJoinOperatorBuilder::Join.
      * @param subQueryRhs
-     * @return object of type JoinCondition on which windowing & the original joinWith function can be called.
+     * @return object of type CrossJoin on which the window can be can be called.
      */
     CrossJoinOperatorBuilder::CrossJoin crossJoinWith(const Query& subQueryRhs);
 
@@ -578,7 +578,13 @@ class Query {
      */
     Query& batchJoinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey);
 
-    // TODO comments; private crossJoin method for query
+    /**
+     * We call it only internal as a last step during the CrossJoin operation
+     * @note Internal crossJoinWith function.
+     * @param subQueryRhs subQuery to be joined.
+     * @param windowType the window type which should be used.
+     * @return the query
+     */
     Query& crossJoinWith(const Query& subQueryRhs, Windowing::WindowTypePtr const& windowType);
 
     /**
