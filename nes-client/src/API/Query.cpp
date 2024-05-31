@@ -40,6 +40,8 @@ NES::Experimental::BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Que
     return NES::Experimental::BatchJoinOperatorBuilder::Join(subQueryRhs, *this);
 }
 
+CrossJoinOperatorBuilder::CrossJoin Query::crossJoinWith(const Query& subQueryRhs) { return CrossJoinOperatorBuilder::CrossJoin(subQueryRhs, *this); }
+
 CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
 CEPOperatorBuilder::Seq Query::seqWith(const Query& subQueryRhs) { return CEPOperatorBuilder::Seq(subQueryRhs, *this); }
@@ -51,6 +53,15 @@ CEPOperatorBuilder::Times Query::times(const uint64_t minOccurrences, const uint
 CEPOperatorBuilder::Times Query::times(const uint64_t maxOccurrences) { return CEPOperatorBuilder::Times(maxOccurrences, *this); }
 
 CEPOperatorBuilder::Times Query::times() { return CEPOperatorBuilder::Times(*this); }
+
+namespace CrossJoinOperatorBuilder {
+    CrossJoin::CrossJoin(const Query& subQueryRhs, Query& originalQuery)
+        : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
+    Query& CrossJoin::window(const Windowing::WindowTypePtr& windowType) {
+        // return originalQuery.joinWith(subQueryRhs).where(onLeftKey).equalsTo(onRightKey).window(windowType);
+        return originalQuery.crossJoinWith(subQueryRhs, windowType);
+    }
+}// namespace CrossJoinOperatorBuilder
 
 namespace JoinOperatorBuilder {
 
@@ -275,6 +286,20 @@ Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionItem onProbeKey,
     return *this;
 }
 
+Query& Query::crossJoinWith(const Query& subQueryRhs, const Windowing::WindowTypePtr& windowType) {
+    NES_DEBUG("Query: add JoinType (INNER_JOIN) to CrossJoin Operator");
+    auto onLeftKey = FieldAccessExpressionNode::create(DataTypeFactory::createBoolean(), "left");
+    auto onRightKey = FieldAccessExpressionNode::create(DataTypeFactory::createBoolean(), "right");
+    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
+                                                subQueryRhs.getQueryPlan(),
+                                                onLeftKey,
+                                                onRightKey,
+                                                windowType,
+                                                joinType);
+    return *this;
+}
+
 Query& Query::andWith(const Query& subQueryRhs,
                       ExpressionItem onLeftKey,
                       ExpressionItem onRightKey,
@@ -377,3 +402,8 @@ Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& w
 QueryPlanPtr Query::getQueryPlan() const { return queryPlan; }
 
 }// namespace NES
+
+
+
+// andwith test, crossjoin + test, times test
+// future: issue mit dem seqwith multiple

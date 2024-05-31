@@ -212,6 +212,25 @@ class JoinWhere {
 
 }//namespace Experimental::BatchJoinOperatorBuilder
 
+namespace CrossJoinOperatorBuilder {
+
+class CrossJoin {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param subQueryRhs
+     * @param originalQuery
+     */
+    CrossJoin(const Query& subQueryRhs, Query& originalQuery);
+    Query& window(const Windowing::WindowTypePtr& windowType);
+
+  private:
+    const Query& subQueryRhs;
+    Query& originalQuery;
+};
+
+}//namespace CrossJoinOperatorBuilder
+
 namespace CEPOperatorBuilder {
 
 class And {
@@ -330,6 +349,7 @@ class Query {
 
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinCondition;
+    friend class CrossJoinOperatorBuilder::CrossJoin;
     friend class NES::Experimental::BatchJoinOperatorBuilder::JoinWhere;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
@@ -352,6 +372,13 @@ class Query {
      * @return object where where() function is defined and can be called by user
      */
     NES::Experimental::BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
+
+    /** TODO
+     * @brief can be called on the original query with the query to be cross joined with and sets this query in the class CrossJoinOperatorBuilder::Join.
+     * @param subQueryRhs
+     * @return object of type JoinCondition on which windowing & the original joinWith function can be called.
+     */
+    CrossJoinOperatorBuilder::CrossJoin crossJoinWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
@@ -550,6 +577,9 @@ class Query {
      * @return the query
      */
     Query& batchJoinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey);
+
+    // TODO comments; private crossJoin method for query
+    Query& crossJoinWith(const Query& subQueryRhs, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.

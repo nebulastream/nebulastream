@@ -505,4 +505,58 @@ TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
     EXPECT_TRUE(seqPlan->compare(joinPlan));
 }
 
+/*
+ * @brief Test for crossJoin-Operator (crossJoinWith) with two sources.
+ */
+TEST_F(QueryAPITest, testQueryCrossJoinTwoSources) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+
+    auto queryJoin = Query::from("default_logical")                   // A in query
+                         .crossJoinWith(subQueryB)
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .sink(PrintSinkDescriptor::create());
+    auto joinPlan = queryJoin.getQueryPlan();
+    std::cout << "joinPlan" << std::endl;
+    std::cout << joinPlan->toString() << std::endl;
+    // compare if seq- and join-plan are equal
+    // EXPECT_TRUE(seqPlan->compare(joinPlan));
+}
+
+/*
+ * @brief Test for AND-Operator (andWith) with two sources.
+ * Compares the actual query plan of andWith with the expected query plan.
+ */
+TEST_F(QueryAPITest, testQueryAndWithTwoSources) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+
+    auto queryAnd = Query::from("default_logical")                   // A in query
+                         .andWith(subQueryB)
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .sink(PrintSinkDescriptor::create());
+    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
+    auto queryJoin = Query::from("default_logical")                   // A in query
+                         // create seqWith B
+                         .map(Attribute("cep_leftKey") = 1)
+                         .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
+                         .where(Attribute("cep_leftKey"))
+                         .equalsTo(Attribute("cep_rightKey"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .sink(PrintSinkDescriptor::create());
+    auto andPlan = queryAnd.getQueryPlan();
+    auto joinPlan = queryJoin.getQueryPlan();
+    std::cout << "andPlan" << std::endl;
+    std::cout << andPlan->toString() << std::endl;
+    std::cout << joinPlan->toString() << std::endl;
+    // compare if seq- and join-plan are equal
+    EXPECT_TRUE(andPlan->compare(joinPlan));
+}
+
+
 }// namespace NES
