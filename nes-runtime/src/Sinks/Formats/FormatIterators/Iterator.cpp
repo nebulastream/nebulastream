@@ -33,6 +33,7 @@ std::string Iterator::serializeTupleAsJson() {
         if (physicalType->type->isText()) {
             // Variable-sized text fields have to be handled specially.
             auto childIdx = *reinterpret_cast<uint32_t const*>(fieldData);
+            // TODO Runtime::MemoryLayouts::readVarSizedData is test code, see https://github.com/nebulastream/nebulastream/pull/4906/files#diff-98f7107f5f147a602792bd6cfdc79bc29718c33a79fcbfe1367c43a8b5281ef3
             jsonObject[fieldName] = Runtime::MemoryLayouts::readVarSizedData(buffer, childIdx);
         } else if (physicalType->isBasicType()) {
             auto basicFieldType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
@@ -51,11 +52,12 @@ std::string Iterator::serializeTupleAsJson() {
                 case DOUBLE: jsonObject[fieldName] = *reinterpret_cast<double const*>(fieldData); break;
                 case BOOLEAN: jsonObject[fieldName] = *reinterpret_cast<bool const*>(fieldData); break;
                 case TEXT: // Should never be here because variable-sized TEXT fields are handled specially above.
-                case CHAR: // TODO: Do we still support CHAR?
+                case CHAR: // TODO: Remove support for single CHAR fields: https://github.com/nebulastream/nebulastream/issues/4941
                 case UNDEFINED:
                 NES_FATAL_ERROR("Encountered unsupported type during conversion to JSON: {}", physicalType->toString());
             }
         } else {
+            // TODO Remove Support for CHAR arrays: https://github.com/nebulastream/nebulastream/issues/4907
             NES_FATAL_ERROR("Encountered unsupported type during conversion to JSON: {}", physicalType->toString());
         }
     }
