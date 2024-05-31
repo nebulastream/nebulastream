@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.142](https://github.com/nebulastream/nebulastream/tree/v0.6.142) (2024-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.141...v0.6.142)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve Error message for binding errors in the ZMQ Server [\#4915](https://github.com/nebulastream/nebulastream/issues/4915)
+
 ## [v0.6.141](https://github.com/nebulastream/nebulastream/tree/v0.6.141) (2024-05-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.140...v0.6.141)
