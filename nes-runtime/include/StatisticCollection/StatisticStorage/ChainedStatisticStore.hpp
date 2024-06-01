@@ -6,6 +6,7 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_CHAINEDSTATISTICSTORE_HPP_
 
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
+#include <unordered_map>
 
 namespace NES::Statistic {
 
@@ -32,6 +33,15 @@ class ChainedStatisticStore : public AbstractStatisticStore {
 
      ~ChainedStatisticStore() override = default;
 
+private:
+    struct TimedStatistic {
+        uint64_t timestamp;
+        StatisticPtr statistic;
+
+        TimedStatistic(uint64_t timestamp, StatisticPtr statistic)
+            : timestamp(std::move(timestamp)), statistic(std::move(statistic)) {}
+    };
+  std::unordered_map<StatisticHash, std::vector<TimedStatistic>> table;
 };
 
 }

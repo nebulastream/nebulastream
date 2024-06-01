@@ -7,17 +7,8 @@ namespace NES::Statistic {
 
 StatisticStorePtr ChainedStatisticStore::create() { return std::make_shared<ChainedStatisticStore>(); }
 
-struct TimedStatistic {
-    uint64_t timestamp;
-    StatisticPtr statistic;
 
-    TimedStatistic(uint64_t  timestamp, StatisticPtr statistic)
-        : timestamp(std::move(timestamp)), statistic(std::move(statistic)) {}
-};
-
-std::unordered_map<StatisticHash, std::vector<TimedStatistic>> table;
-
-/*std::vector<StatisticPtr> ChainedStatisticStore::getStatistics(const StatisticHash& statisticHash,
+std::vector<StatisticPtr> ChainedStatisticStore::getStatistics(const StatisticHash& statisticHash,
                                                                const Windowing::TimeMeasure& startTs,
                                                                const Windowing::TimeMeasure& endTs) {
     std::vector<StatisticPtr> returnStatisticsVector;
@@ -38,9 +29,9 @@ std::unordered_map<StatisticHash, std::vector<TimedStatistic>> table;
     }
 
     return returnStatisticsVector;
-}*/
+}
 
-std::vector<StatisticPtr> ChainedStatisticStore::getStatistics(const StatisticHash& statisticHash,
+/*std::vector<StatisticPtr> ChainedStatisticStore::getStatistics(const StatisticHash& statisticHash,
                                                                const Windowing::TimeMeasure& startTs,
                                                                const Windowing::TimeMeasure& endTs) {
 
@@ -59,7 +50,7 @@ std::vector<StatisticPtr> ChainedStatisticStore::getStatistics(const StatisticHa
     }
 
     return returnStatisticsVector;
-}
+}*/
 
 std::optional<StatisticPtr> ChainedStatisticStore::getSingleStatistic(const StatisticHash& statisticHash,
                                                                       const Windowing::TimeMeasure& startTs,
