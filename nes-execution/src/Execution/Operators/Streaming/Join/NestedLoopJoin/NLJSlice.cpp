@@ -15,7 +15,7 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <sstream>
+#include <ostream>
 namespace NES::Runtime::Execution {
 
 NLJSlice::NLJSlice(uint64_t windowStart,
@@ -94,6 +94,26 @@ void NLJSlice::combinePagedVectors() {
             rightTuples[0]->appendAllPages(*rightTuples[i]);
         }
         rightTuples.erase(rightTuples.begin() + 1, rightTuples.end());
+    }
+}
+
+void NLJSlice::serialize(std::ostream& out) {
+    for (auto& pagedVec : leftTuples) {
+       pagedVec->serialize(out);
+    }
+
+    for (auto& pagedVec : rightTuples) {
+        pagedVec->serialize(out);
+    }
+}
+
+void NLJSlice::deserialize(std::ifstream& in) {
+    for (auto& pagedVec : leftTuples) {
+       pagedVec->deserialize(in);
+    }
+
+    for (auto& pagedVec : rightTuples) {
+        pagedVec->deserialize(in);
     }
 }
 };// namespace NES::Runtime::Execution

@@ -147,6 +147,8 @@ class PagedVectorVarSizedRefIter {
      */
     void setPos(Value<UInt64> newValue);
 
+    // void serializeTextValue();
+
     Value<UInt64> pos;
     PagedVectorVarSizedRef pagedVectorVarSized;
 };

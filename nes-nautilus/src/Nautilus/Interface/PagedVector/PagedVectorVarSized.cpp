@@ -18,6 +18,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fstream>
 
 namespace NES::Nautilus::Interface {
 PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager,
@@ -183,5 +184,164 @@ bool PagedVectorVarSized::varSizedDataEntryMapEmpty() const { return varSizedDat
 uint64_t PagedVectorVarSized::getVarSizedDataEntryMapCounter() const { return varSizedDataEntryMapCounter; }
 
 uint64_t PagedVectorVarSized::getEntrySize() const { return entrySize; }
+
+void PagedVectorVarSized::serialize([[maybe_unused]] std::ostream& out) {
+
+    // Save number of records in paged vector
+    out.write(reinterpret_cast<char*>(totalNumberOfEntries), sizeof(uint64_t));
+
+    DefaultPhysicalTypeFactory physicalDataTypeFactory;
+    auto numPages = totalNumberOfEntries / capacityPerPage;
+
+    // 2. Go over pages
+    for (auto pageIdx = 0UL; pageIdx <= numPages; ++pageIdx) {
+        // link to the start of the current page
+        auto entryPtr = pages[pageIdx].getBuffer();
+        // calculate global entry index
+        auto currGlobalEntryIndx = pageIdx * capacityPerPage;
+
+        // go over entries on the page
+        for (auto entryIndx = 0UL; entryIndx < capacityPerPage && currGlobalEntryIndx + entryIndx  < totalNumberOfEntries; ++entryIndx) {
+
+            // go over fields in record
+            for (auto& field : schema->fields) {
+                auto fieldType = field->getDataType();
+                if (fieldType->isText()) {
+                    // get text entry id from page
+                    auto textEntryMapKey = *reinterpret_cast<uint64_t*>(entryPtr);
+                    auto textMapValue = varSizedDataEntryMap.at(textEntryMapKey);
+                    auto textValLength = textMapValue.entryLength;
+
+                    // serialize text field of entry: write the size of variable-sized text
+                    out.write(reinterpret_cast<char*>(textValLength), sizeof(uint64_t));
+                    entryPtr += sizeof(uint64_t);
+
+                    // write variable-sized data
+                    //char* dest = new char[textValLength];
+                    //std::memcpy(dest, textMapValue.entryPtr, textValLength);
+                    out.write(reinterpret_cast<char*>(entryPtr), textValLength);
+                    //delete[] dest;
+
+                    entryPtr += textValLength;
+                } else {
+                    auto fieldSize = physicalDataTypeFactory.getPhysicalType(fieldType)->size();
+
+                    //auto dest = new std::byte[fieldSize];
+                    //std::memcpy(dest, entryPtr, fieldSize);
+                    out.write(reinterpret_cast<char*>(entryPtr), fieldSize);
+                    //delete[] dest;
+
+                    entryPtr += fieldSize;
+                }
+            }
+        }
+    }
+}
+
+/*
+ std::shared_ptr<PagedVectorVarSized> PagedVectorVarSized::deserialize(std::ifstream& in, Runtime::BufferManagerPtr& bufferManager, SchemaPtr& schema, uint64_t pageSize) {
+     auto pageVector = std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, schema, pageSize);
+
+     // read number of entries in the file
+     in.read(reinterpret_cast<char*>(pageVector->totalNumberOfEntries), sizeof(uint64_t));
+
+     DefaultPhysicalTypeFactory physicalDataTypeFactory;
+     auto numPages = pageVector->totalNumberOfEntries / pageVector->capacityPerPage;
+
+     for (auto pageIdx = 0UL; pageIdx <= numPages; ++pageIdx) {
+         auto entryPtr = pageVector->pages[pageIdx].getBuffer();
+         auto currGlobalEntryIndx = pageIdx * pageVector->capacityPerPage;
+
+         for (auto entryIndx = 0UL; entryIndx < pageVector->capacityPerPage && currGlobalEntryIndx + entryIndx  < pageVector->totalNumberOfEntries; ++entryIndx) {
+             for (auto& field : pageVector->schema->fields) {
+                 auto fieldType = field->getDataType();
+                 if (fieldType->isText()) {
+
+                     // read size of the text value
+                     uint64_t textSize;
+                     in.read(reinterpret_cast<char*>(&textSize), sizeof(uint64_t));
+                     entryPtr += sizeof(uint64_t);
+
+                     VarSizedDataEntryMapValue textMapValue(pageVector->currVarSizedDataEntry, textSize, pageVector->varSizedDataPages.size() - 1);
+
+                     auto curLength = textSize;
+                     while (textSize > 0) {
+                         auto remainingSpace = pageVector->pageSize - (pageVector->currVarSizedDataEntry - pageVector->varSizedDataPages.back().getBuffer());
+                         if (remainingSpace >= curLength) {
+                             in.read(reinterpret_cast<char*>(pageVector->currVarSizedDataEntry), curLength);
+                             pageVector->currVarSizedDataEntry += curLength;
+                             entryPtr += textSize;
+                             break;
+                         } else {
+                             in.read(reinterpret_cast<char*>(pageVector->currVarSizedDataEntry), remainingSpace);
+                             entryPtr += remainingSpace;
+                             curLength -= remainingSpace;
+                             pageVector->appendVarSizedDataPage();
+                         }
+                     }
+
+                     pageVector->varSizedDataEntryMap.insert(std::make_pair(++pageVector->varSizedDataEntryMapCounter, textMapValue));
+                 } else {
+                     auto fieldSize = physicalDataTypeFactory.getPhysicalType(fieldType)->size();
+                     in.read(reinterpret_cast<char*>(entryPtr), fieldSize);
+                     entryPtr += fieldSize;
+                 }
+             }
+         }
+         pageVector->appendPage();
+     }
+    return pageVector;
+}*/
+
+void PagedVectorVarSized::deserialize(std::ifstream& in) {
+     // read number of entries in the file
+     in.read(reinterpret_cast<char*>(totalNumberOfEntries), sizeof(uint64_t));
+
+     DefaultPhysicalTypeFactory physicalDataTypeFactory;
+     auto numPages = totalNumberOfEntries / capacityPerPage;
+
+     for (auto pageIdx = 0UL; pageIdx <= numPages; ++pageIdx) {
+         auto entryPtr = pages[pageIdx].getBuffer();
+         auto currGlobalEntryIndx = pageIdx * capacityPerPage;
+
+         for (auto entryIndx = 0UL; entryIndx < capacityPerPage && currGlobalEntryIndx + entryIndx  < totalNumberOfEntries; ++entryIndx) {
+             for (auto& field : schema->fields) {
+                 auto fieldType = field->getDataType();
+                 if (fieldType->isText()) {
+
+                     // read size of the text value
+                     uint64_t textSize;
+                     in.read(reinterpret_cast<char*>(&textSize), sizeof(uint64_t));
+                     entryPtr += sizeof(uint64_t);
+
+                     VarSizedDataEntryMapValue textMapValue(currVarSizedDataEntry, textSize, varSizedDataPages.size() - 1);
+
+                     auto curLength = textSize;
+                     while (textSize > 0) {
+                         auto remainingSpace = pageSize - (currVarSizedDataEntry - varSizedDataPages.back().getBuffer());
+                         if (remainingSpace >= curLength) {
+                             in.read(reinterpret_cast<char*>(currVarSizedDataEntry), curLength);
+                             currVarSizedDataEntry += curLength;
+                             entryPtr += textSize;
+                             break;
+                         } else {
+                             in.read(reinterpret_cast<char*>(currVarSizedDataEntry), remainingSpace);
+                             entryPtr += remainingSpace;
+                             curLength -= remainingSpace;
+                             appendVarSizedDataPage();
+                         }
+                     }
+
+                     varSizedDataEntryMap.insert(std::make_pair(++varSizedDataEntryMapCounter, textMapValue));
+                 } else {
+                     auto fieldSize = physicalDataTypeFactory.getPhysicalType(fieldType)->size();
+                     in.read(reinterpret_cast<char*>(entryPtr), fieldSize);
+                     entryPtr += fieldSize;
+                 }
+             }
+         }
+         appendPage();
+     }
+}
 
 } //NES::Nautilus::Interface

@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <mutex>
 #include <ostream>
+#include <fstream>
 #include <vector>
 
 namespace NES::Runtime::Execution {
@@ -89,6 +90,9 @@ class NLJSlice : public StreamSlice {
      * @return String
      */
     std::string toString() override;
+
+    void serialize(std::ostream& out);
+    void deserialize(std::ifstream& in);
 
   private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftTuples;

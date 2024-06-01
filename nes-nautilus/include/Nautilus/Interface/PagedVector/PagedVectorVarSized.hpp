@@ -138,6 +138,10 @@ class PagedVectorVarSized {
      */
     uint64_t getEntrySize() const;
 
+    void serialize(std::ostream& out);
+
+    void deserialize(std::ifstream& in);
+
   private:
     friend PagedVectorVarSizedRef;
     Runtime::BufferManagerPtr bufferManager;

@@ -12,5 +12,5 @@
 
 add_nes_execution_test(execution-stream-hash-join-operator-test "HashJoinOperatorTest.cpp")
 add_nes_execution_test(execution-stream-nested-loop-join-operator-test "NestedLoopJoinOperatorTest.cpp")
-
+add_nes_execution_test(nlj-slice-serialization-test "NLJSliceSerializationTest.cpp")
 add_subdirectory(Aggregations)
