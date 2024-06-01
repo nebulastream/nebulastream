@@ -84,6 +84,9 @@ add_nes_unit_test(chained-statistic-store-new-test "StatisticCollection/ChainedS
 ### HybridStatisticStoreTest ###
 add_nes_unit_test(hybrid-statistic-store-test "StatisticCollection/HybridStatisticStoreTest.cpp")
 
+### SortedVectorStatisticStoreTest ###
+add_nes_unit_test(sortedvector-statistic-store-test "StatisticCollection/SortedVectorStatisticStoreTest.cpp")
+
 ### StatisticIdsExtractorTest ###
 add_nes_unit_test(statistic-ids-extractor-test "StatisticCollection/StatisticIdsExtractorTest.cpp")
 
