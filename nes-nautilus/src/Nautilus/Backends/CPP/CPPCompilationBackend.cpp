@@ -19,7 +19,6 @@
 #include <Nautilus/Backends/CPP/CPPCompilationBackend.hpp>
 #include <Nautilus/Backends/CPP/CPPExecutable.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 
 namespace NES::Nautilus::Backends::CPP {

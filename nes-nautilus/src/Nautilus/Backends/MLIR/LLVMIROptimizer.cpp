@@ -23,7 +23,6 @@
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/FileCollector.h>
-#include <memory>
 #include <mlir/ExecutionEngine/OptUtils.h>
 namespace NES::Nautilus::Backends::MLIR {
 

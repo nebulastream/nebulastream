@@ -82,7 +82,7 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     std::time_t time = timegm(&tm);
     // Convert the `std::time_t` object to milliseconds since the Unix epoch.
     std::chrono::duration<int64_t, std::milli> dur(time);
-    //has we current only except time formats with hour, minutes and seconds, we need to multiple by 1000 to represent milliseconds
+    //has we current only except time formats with hour, minutes and seconds, we need to multiply by 1000 to represent milliseconds
     return dur.count() * 1000;
 }
 

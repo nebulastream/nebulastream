@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>

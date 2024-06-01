@@ -17,6 +17,7 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+
 namespace NES::Nautilus {
 
 class FloatInvocationPlugin : public InvocationPlugin {
