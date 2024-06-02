@@ -15,16 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/Coordinator/ElegantConfigurations.hpp>
-#include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Configurations/Enums/StorageHandlerType.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <iostream>
-#include <map>
+#include "Configurations/BaseConfiguration.hpp"
+#include "Configurations/Coordinator/ElegantConfigurations.hpp"
+#include "Configurations/Coordinator/LogicalSourceTypeFactory.hpp"
+#include "Configurations/Coordinator/OptimizerConfiguration.hpp"
+#include "Configurations/Enums/StorageHandlerType.hpp"
+#include "Configurations/Validation/IpValidation.hpp"
+#include "Configurations/Worker/WorkerConfiguration.hpp"
 #include <string>
-#include <thread>
 
 namespace NES::Configurations {
 
@@ -39,12 +37,12 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief IP of the REST server.
      */
-    StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server.", std::make_shared<IpValidation>()};
+    StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server.", {std::make_shared<IpValidation>()}};
 
     /**
      * @brief Port of the REST server.
      */
-    UIntOption restPort = {REST_PORT_CONFIG, "8081", "Port exposed for rest endpoints", std::make_shared<NumberValidation>()};
+    UIntOption restPort = {REST_PORT_CONFIG, "8081", "Port exposed for rest endpoints", {std::make_shared<NumberValidation>()}};
 
     /**
      * @brief IP or hostname of the Coordinator.
@@ -55,7 +53,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Port for the RPC server of the Coordinator.
      * This is used to receive control messages.
      */
-    UIntOption rpcPort = {RPC_PORT_CONFIG, "4000", "RPC server port of the Coordinator", std::make_shared<NumberValidation>()};
+    UIntOption rpcPort = {RPC_PORT_CONFIG, "4000", "RPC server port of the Coordinator", {std::make_shared<NumberValidation>()}};
 
     /**
      * @brief The current log level. Controls the detail of log messages.
@@ -67,7 +65,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Indicates if the monitoring stack is enables.
      */
-    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, "false", "Enable monitoring", std::make_shared<BooleanValidation>()};
+    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG,
+                                   "false",
+                                   "Enable monitoring",
+                                   {std::make_shared<BooleanValidation>()}};
 
     /**
      * @brief Indicates the number of request executor threads
@@ -75,7 +76,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG,
                                          "1",
                                          "Number of request executor thread",
-                                         std::make_shared<NumberValidation>()};
+                                         {std::make_shared<NumberValidation>()}};
 
     /**
      * @brief Storage handler for request executor
@@ -120,7 +121,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME,
                                                  "1",
                                                  "Number of seconds to wait between health checks",
-                                                 std::make_shared<NumberValidation>()};
+                                                 {std::make_shared<NumberValidation>()}};
 
     /**
      * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server.

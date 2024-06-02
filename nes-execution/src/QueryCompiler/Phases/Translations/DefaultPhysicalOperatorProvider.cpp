@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
+
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
@@ -21,6 +21,8 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -73,8 +75,8 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UtilityFunction.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -335,8 +337,9 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
 
     auto joinOperator = operatorNode->as<LogicalJoinOperator>();
     const auto& joinDefinition = joinOperator->getJoinDefinition();
-    const auto& joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
-    const auto& joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
+
+    // returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
+    auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinExpression());
 
     const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     const auto& windowSize = windowType->getSize().getTime();
@@ -352,8 +355,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
     const auto joinStrategy = options->getStreamJoinStrategy();
 
     const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
-    const StreamJoinConfigs streamJoinConfig(joinFieldNameLeft,
-                                             joinFieldNameRight,
+    const StreamJoinConfigs streamJoinConfig(equiJoinKeyNames.first,
+                                             equiJoinKeyNames.second,
                                              windowSize,
                                              windowSlide,
                                              timeStampFieldLeft,
@@ -401,11 +404,9 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                                                    joinOperator->getLeftInputSchema(),
                                                                    joinOperator->getRightInputSchema(),
                                                                    joinOperator->getOutputSchema(),
-                                                                   streamJoinConfig.joinFieldNameLeft,
-                                                                   streamJoinConfig.joinFieldNameRight,
+                                                                   joinOperator->getJoinExpression(),
                                                                    joinOperator->getWindowStartFieldName(),
                                                                    joinOperator->getWindowEndFieldName(),
-                                                                   joinOperator->getWindowKeyFieldName(),
                                                                    joinOperatorHandler,
                                                                    options->getStreamJoinStrategy(),
                                                                    options->getWindowingStrategy());

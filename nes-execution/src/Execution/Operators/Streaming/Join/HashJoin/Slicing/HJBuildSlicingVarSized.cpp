@@ -55,15 +55,15 @@ uint64_t getSliceEndVarSizedProxy(void* ptrHashSlice) {
     return hashSlice->getSliceEnd();
 }
 
-void* getHJPagedVectorVarSizedProxy(void* ptrHashSlice, size_t workerIdx, uint64_t joinBuildSideInt, uint64_t key) {
+void* getHJPagedVectorVarSizedProxy(void* ptrHashSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt, uint64_t key) {
     NES_ASSERT2_FMT(ptrHashSlice != nullptr, "hash window handler context should not be null");
     auto* hashSlice = static_cast<HJSliceVarSized*>(ptrHashSlice);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
-    NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}",
+    NES_DEBUG("Insert into HT for window={} is left={} workerThreadId={}",
               hashSlice->getSliceIdentifier(),
               magic_enum::enum_name(joinBuildSide),
-              workerIdx);
-    auto ptr = hashSlice->getHashTable(joinBuildSide, workerIdx)->insert(key);
+              workerThreadId);
+    auto ptr = hashSlice->getHashTable(joinBuildSide, workerThreadId)->insert(key);
     auto pagedVectorVarSizedMemRef = ptr.get();
     return pagedVectorVarSizedMemRef;
 }
@@ -112,7 +112,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
     auto hjPagedVectorMemRef = FunctionCall("getHJPagedVectorVarSizedProxy",
                                             getHJPagedVectorVarSizedProxy,
                                             joinState->sliceReference,
-                                            ctx.getWorkerId(),
+                                            ctx.getWorkerThreadId(),
                                             Value<UInt64>(to_underlying(joinBuildSide)),
                                             record.read(joinFieldName).as<UInt64>());
 

@@ -90,7 +90,7 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer__GPU) {
     auto stagingHandler = std::make_shared<StagingHandler>(stageBufferSize, schemaSize);
     handlers.push_back(stagingHandler);
     auto bufferManager = std::make_shared<BufferManager>();
-    auto workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+    auto workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers, true, bufferManager);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) pipelineContext.get()));

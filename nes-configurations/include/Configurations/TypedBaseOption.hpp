@@ -13,9 +13,13 @@
 */
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/Validation/ConfigurationValidation.hpp>
+#include "Configurations/BaseOption.hpp"
+#include "Configurations/ConfigurationException.hpp"
+#include "Configurations/Validation/ConfigurationValidation.hpp"
 #include <memory>
+#include <typeinfo>
+#include <vector>
+
 namespace NES::Configurations {
 
 /**
@@ -51,12 +55,12 @@ class TypedBaseOption : public BaseOption {
      * @param name of the option.
      * @param defaultValue of the option. Has to be of type T.
      * @param description of the option.
-     * @param validator class to validate the configuration value
+     * @param validators to validate the configuration value
      */
     TypedBaseOption(const std::string& name,
                     T defaultValue,
                     const std::string& description,
-                    std::shared_ptr<ConfigurationValidation> validator);
+                    std::vector<std::shared_ptr<ConfigurationValidation>> validators);
 
     /**
      * @brief Operator to directly access the value of this option.
@@ -90,7 +94,13 @@ class TypedBaseOption : public BaseOption {
   protected:
     T value;
     T defaultValue;
-    std::shared_ptr<ConfigurationValidation> validator;
+    std::vector<std::shared_ptr<ConfigurationValidation>> validators = {};
+
+    /**
+    * @brief Iterates over all validators of this option before setting a new value.
+    * @param pValue is the value to be tested for validity.
+    */
+    void isValid(std::string);
 };
 
 template<class T>
@@ -107,8 +117,8 @@ template<class T>
 TypedBaseOption<T>::TypedBaseOption(const std::string& name,
                                     T defaultValue,
                                     const std::string& description,
-                                    std::shared_ptr<ConfigurationValidation> validator)
-    : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue), validator(validator) {}
+                                    std::vector<std::shared_ptr<ConfigurationValidation>> validators)
+    : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue), validators(validators) {}
 
 template<class T>
 T TypedBaseOption<T>::getValue() const {
@@ -127,6 +137,31 @@ const T& TypedBaseOption<T>::getDefaultValue() const {
 template<class T>
 void TypedBaseOption<T>::clear() {
     this->value = defaultValue;
+}
+
+template<class T>
+void TypedBaseOption<T>::isValid(std::string pValue) {
+    bool invalid = false;
+    std::map<std::string, std::string> failureMessages;
+    if (this->validators.empty()) {
+        return;
+    }
+    for (auto validator : this->validators) {
+        if (!(validator->isValid(pValue))) {
+            std::string validatorName;
+            std::string message;
+            validatorName = typeid(validator).name();
+            message = "Validator (" + validatorName + ") failed for " + this->name + " with value: " + pValue;
+            failureMessages[validatorName] = message;
+        }
+    }
+    if (!failureMessages.empty()) {
+        std::string exceptionMessage = "";
+        for (auto pair : failureMessages) {
+            exceptionMessage += pair.second + "\n";
+        }
+        throw ConfigurationException(exceptionMessage);
+    }
 }
 
 }// namespace NES::Configurations

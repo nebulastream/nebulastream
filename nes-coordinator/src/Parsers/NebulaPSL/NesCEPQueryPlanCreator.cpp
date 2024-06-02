@@ -407,13 +407,13 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
             NES_DEBUG("NesCEPQueryPlanCreater: add name cepLeftKey {} and name cepRightKey {}", cepLeftKey, cepRightKey);
             ExpressionItem onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
             ExpressionItem onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+            auto joinExpression = onLeftKey == onRightKey;
             auto leftKeyFieldAccess = onLeftKey.getExpressionNode()->as<FieldAccessExpressionNode>();
             auto rightKeyFieldAccess = onRightKey.getExpressionNode()->as<FieldAccessExpressionNode>();
 
             leftQueryPlan = QueryPlanBuilder::addJoin(leftQueryPlan,
                                                       rightQueryPlan,
-                                                      leftKeyFieldAccess,
-                                                      rightKeyFieldAccess,
+                                                      joinExpression,
                                                       windowType,
                                                       Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT);
 

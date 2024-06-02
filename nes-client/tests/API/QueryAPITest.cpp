@@ -200,8 +200,7 @@ TEST_F(QueryAPITest, testQueryJoin) {
 
     auto query = Query::from("default_logical")
                      .joinWith(subQuery)
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                      .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
@@ -450,8 +449,7 @@ TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
     auto queryJoin = Query::from("default_logical")                   // A in query
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
-                         .where(Attribute("cep_leftKey"))
-                         .equalsTo(Attribute("cep_rightKey"))
+                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                          .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
                          .sink(PrintSinkDescriptor::create());
@@ -487,15 +485,13 @@ TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
                          // create seqWith B
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
-                         .where(Attribute("cep_leftKey"))
-                         .equalsTo(Attribute("cep_rightKey"))
+                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                          .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
                          // create seqWith C
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryC.map(Attribute("cep_rightKey") = 1))
-                         .where(Attribute("cep_leftKey"))
-                         .equalsTo(Attribute("cep_rightKey"))
+                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                          .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
                          .sink(PrintSinkDescriptor::create());

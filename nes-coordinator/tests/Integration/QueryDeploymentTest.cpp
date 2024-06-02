@@ -1381,8 +1381,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     csvSourceType2->setSkipHeader(false);
     auto query = Query::from("window")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -1397,12 +1396,12 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     // Expected output
-    const auto expectedOutput = "1000, 2000, 4, 4, 1, 1002, 4, 1, 1002\n"
-                                "1000, 2000, 1, 1, 1, 1000, 1, 1, 1000\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 1, 1001\n"
-                                "2000, 3000, 1, 1, 2, 2000, 1, 2, 2000\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2001\n"
-                                "2000, 3000, 16, 16, 2, 2002, 16, 2, 2002\n";
+    const auto expectedOutput = "1000, 2000, 4, 1, 1002, 4, 1, 1002\n"
+                                "1000, 2000, 1, 1, 1000, 1, 1, 1000\n"
+                                "1000, 2000, 12, 1, 1001, 12, 1, 1001\n"
+                                "2000, 3000, 1, 2, 2000, 1, 2, 2000\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2001\n"
+                                "2000, 3000, 16, 2, 2002, 16, 2, 2002\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -1527,8 +1526,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     auto query = Query::from("window")
                      .as("w1")
                      .joinWith(Query::from("window").as("w2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", windowSchema)
@@ -1591,8 +1589,7 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
 
     auto query = Query::from("window1")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
@@ -1603,11 +1600,11 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
                                   .setupTopology();
 
     // Expected output
-    const auto expectedOutput = "2000, 3000, 1, 1, 2, 2000, 1, 2, 2010\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1102\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1112\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2301\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 5, 1011\n";
+    const auto expectedOutput = "2000, 3000, 1, 2, 2000, 1, 2, 2010\n"
+                                "1000, 2000,  4, 1, 1002, 4, 3, 1102\n"
+                                "1000, 2000,  4, 1, 1002, 4, 3, 1112\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2301\n"
+                                "1000, 2000, 12, 1, 1001, 12, 5, 1011\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -1641,8 +1638,7 @@ TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
                           .byKey(Attribute("id"))
                           .apply(Count())
                           .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("id"), Attribute("count")))
-            .where(Attribute("id"))
-            .equalsTo(Attribute("id"))
+            .where(Attribute("id") == Attribute("id"))
             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -1673,14 +1669,14 @@ TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
     testHarness.validate().setupTopology();
 
     // Run the query and get the actual dynamic buffers
-    auto expectedOutput = "0,1000,1,1,15,15,100,0,1000,1,3\n"
-                          "0,1000,1,1,15,15,100,500,1500,1,2\n"
-                          "0,1000,1,1,15,15,700,0,1000,1,3\n"
-                          "0,1000,1,1,15,15,700,500,1500,1,2\n"
-                          "0,1000,1,1,15,15,800,0,1000,1,3\n"
-                          "0,1000,1,1,15,15,800,500,1500,1,2\n"
-                          "1000,2000,1,1,15,15,1600,1000,2000,1,1\n"
-                          "1000,2000,1,1,15,15,1600,1500,2500,1,1\n";
+    auto expectedOutput = "0,1000,1,15,15,100,0,1000,1,3\n"
+                          "0,1000,1,15,15,100,500,1500,1,2\n"
+                          "0,1000,1,15,15,700,0,1000,1,3\n"
+                          "0,1000,1,15,15,700,500,1500,1,2\n"
+                          "0,1000,1,15,15,800,0,1000,1,3\n"
+                          "0,1000,1,15,15,800,500,1500,1,2\n"
+                          "1000,2000,1,15,15,1600,1000,2000,1,1\n"
+                          "1000,2000,1,15,15,1600,1500,2500,1,1\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -1732,8 +1728,7 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
     csvSourceType3->setSkipHeader(false);
     auto query = Query::from("window1")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -1746,16 +1741,16 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
                                   .setupTopology();
 
     // Expected output
-    const auto expectedOutput = "1000, 2000, 4, 4, 1, 1002, 4, 3, 1102\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1112\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1102\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1112\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 5, 1011\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 5, 1011\n"
-                                "2000, 3000, 1, 1, 2, 2000, 1, 2, 2010\n"
-                                "2000, 3000, 1, 1, 2, 2000, 1, 2, 2010\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2301\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2301\n";
+    const auto expectedOutput = "1000, 2000, 4, 1, 1002, 4, 3, 1102\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1112\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1102\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1112\n"
+                                "1000, 2000, 12, 1, 1001, 12, 5, 1011\n"
+                                "1000, 2000, 12, 1, 1001, 12, 5, 1011\n"
+                                "2000, 3000, 1, 2, 2000, 1, 2, 2010\n"
+                                "2000, 3000, 1, 2, 2000, 1, 2, 2010\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2301\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2301\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -1815,8 +1810,7 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
 
     auto query = Query::from("window1")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
@@ -1829,26 +1823,26 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
                                   .setupTopology();
 
     // Expected output
-    const auto expectedOutput = "1000, 2000, 4, 4, 1, 1002, 4, 3, 1102\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1112\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1102\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1112\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1102\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1112\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1102\n"
-                                "1000, 2000, 4, 4, 1, 1002, 4, 3, 1112\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 5, 1011\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 5, 1011\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 5, 1011\n"
-                                "1000, 2000, 12, 12, 1, 1001, 12, 5, 1011\n"
-                                "2000, 3000, 1, 1, 2, 2000, 1, 2, 2010\n"
-                                "2000, 3000, 1, 1, 2, 2000, 1, 2, 2010\n"
-                                "2000, 3000, 1, 1, 2, 2000, 1, 2, 2010\n"
-                                "2000, 3000, 1, 1, 2, 2000, 1, 2, 2010\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2301\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2301\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2301\n"
-                                "2000, 3000, 11, 11, 2, 2001, 11, 2, 2301\n";
+    const auto expectedOutput = "1000, 2000, 4, 1, 1002, 4, 3, 1102\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1112\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1102\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1112\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1102\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1112\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1102\n"
+                                "1000, 2000, 4, 1, 1002, 4, 3, 1112\n"
+                                "1000, 2000, 12, 1, 1001, 12, 5, 1011\n"
+                                "1000, 2000, 12, 1, 1001, 12, 5, 1011\n"
+                                "1000, 2000, 12, 1, 1001, 12, 5, 1011\n"
+                                "1000, 2000, 12, 1, 1001, 12, 5, 1011\n"
+                                "2000, 3000, 1, 2, 2000, 1, 2, 2010\n"
+                                "2000, 3000, 1, 2, 2000, 1, 2, 2010\n"
+                                "2000, 3000, 1, 2, 2000, 1, 2, 2010\n"
+                                "2000, 3000, 1, 2, 2000, 1, 2, 2010\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2301\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2301\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2301\n"
+                                "2000, 3000, 11, 2, 2001, 11, 2, 2301\n";
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -1960,12 +1954,10 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
 
     auto query = Query::from("window1")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id1") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                      .joinWith(Query::from("window3"))
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id3"))
+                     .where(Attribute("id1") == Attribute("id3"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
@@ -2117,12 +2109,10 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
 
     auto query = Query::from("window1")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id2"))
+                     .where(Attribute("id1") == Attribute("id2"))
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                      .joinWith(Query::from("window3"))
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id3"))
+                     .where(Attribute("id1") == Attribute("id3"))
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 

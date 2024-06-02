@@ -104,8 +104,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 
     auto query = Query::from("input1")
                      .joinWith(Query::from("input2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                      .sink(NullOutputSinkDescriptor::create());
 

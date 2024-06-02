@@ -240,7 +240,7 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
 */
 TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
+    auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bm, 1024);
     auto inputRecord = Record({{"id", Value<Text>("testValue")}});
     auto javaUDFDescriptor =
         Catalogs::UDF::JavaUDFDescriptorBuilder()
@@ -262,7 +262,7 @@ TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
 */
 TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
+    auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bm, 1024);
     auto inputSchema =
         Schema::create()
             ->addField("byteVariable", BasicType::INT8)

@@ -27,7 +27,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, uint64_t workerId, uint64_t joinBuildSideInt) {
+void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrWindowVector != nullptr, "ptrPagedVector should not be null!");
     auto allWindowVec = static_cast<std::vector<NLJSlice*>*>(ptrWindowVector);
     auto nljWindow = allWindowVec->operator[](index);
@@ -35,23 +35,23 @@ void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, uint64_t wor
     NES_INFO("allWindowVec->size(): {}", allWindowVec->size());
     NES_INFO("joinBuildSide: {}", magic_enum::enum_name(joinBuildSide));
 
-    NES_INFO("getPagedVectorRefProxy for index {} workerId {} nljWindow {}", index, workerId, nljWindow->toString());
+    NES_INFO("getPagedVectorRefProxy for index {} workerThreadId {} nljWindow {}", index, workerThreadId, nljWindow->toString());
 
     switch (joinBuildSide) {
-        case QueryCompilation::JoinBuildSideType::Left: return nljWindow->getPagedVectorRefLeft(workerId);
-        case QueryCompilation::JoinBuildSideType::Right: return nljWindow->getPagedVectorRefRight(workerId);
+        case QueryCompilation::JoinBuildSideType::Left: return nljWindow->getPagedVectorRefLeft(workerThreadId);
+        case QueryCompilation::JoinBuildSideType::Right: return nljWindow->getPagedVectorRefRight(workerThreadId);
     }
 }
 
 void NLJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
                                               Value<UInt64>& curIndex,
-                                              Value<UInt64>& workerId,
+                                              ValueId<WorkerThreadId>& workerThreadId,
                                               Record& record) const {
     auto curPagedVectorRef = Nautilus::FunctionCall("getPagedVectorRefProxy",
                                                     getPagedVectorRefProxy,
                                                     allWindowsToFill,
                                                     curIndex,
-                                                    workerId,
+                                                    workerThreadId,
                                                     Value<UInt64>(to_underlying(joinBuildSide)));
 
     // Write record to the pagedVector

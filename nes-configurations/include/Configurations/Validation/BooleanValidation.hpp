@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_BOOLEANVALIDATION_HPP
-#define NES_BOOLEANVALIDATION_HPP
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
 
-#include <Configurations/Validation/ConfigurationValidation.hpp>
-#include <regex>
+#include "Configurations/Validation/ConfigurationValidation.hpp"
 #include <string>
 
 namespace NES::Configurations {
@@ -35,4 +34,4 @@ class BooleanValidation : public ConfigurationValidation {
 };
 }// namespace NES::Configurations
 
-#endif//NES_BOOLEANVALIDATION_HPP
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_

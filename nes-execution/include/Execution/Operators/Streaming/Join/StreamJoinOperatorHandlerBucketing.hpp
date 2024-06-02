@@ -15,6 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERBUCKETING_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERBUCKETING_HPP_
 
+#include "Identifiers/Identifiers.hpp"
 #include <Execution/Operators/Streaming/Join/OperatorHandlerInterfaces/JoinOperatorHandlerInterfaceBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
@@ -23,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
 class StreamJoinOperatorHandlerBucketing : public virtual JoinOperatorHandlerInterfaceBucketing,
                                            public virtual StreamJoinOperatorHandler {
   public:
-    std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) override;
+    std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId) override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) override;
 

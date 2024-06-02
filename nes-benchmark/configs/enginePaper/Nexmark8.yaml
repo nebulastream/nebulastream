@@ -43,8 +43,8 @@ numberOfPreAllocatedBuffer: 1000
 dataProvider: Internal
 dataProviderMode: ZeroCopy
 
-#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(RecordCreationTs()), Hours(12))).sink(NullOutputSinkDescriptor::create());'
-query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(TumblingWindow::of(IngestionTime(),Hours(12))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId") == Attribute("id")).window(TumblingWindow::of(EventTime(RecordCreationTs()), Hours(12))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId") == Attribute("id")).window(TumblingWindow::of(IngestionTime(),Hours(12))).sink(NullOutputSinkDescriptor::create());'
 
 gatheringValues: 50000
 #generatorPinList: 12

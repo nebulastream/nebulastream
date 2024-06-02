@@ -17,18 +17,17 @@ if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
   exit 1
 fi
 
-# Build NES
+# generate buildsystem
 mkdir -p /nebulastream/build
 cd /nebulastream/build
 cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSOR_FLOW=1 -DNES_USE_S2=1 ..
 
 make fix-guards
-git status
-clean=$(git status | grep "nothing to commit (working directory clean)")
-if [ -z "$clean" ]; then
-    echo "Please run fix-guards target locally before shipping your changes on remote"
-    exit 1
-else
-    echo "No change detected."
-    exit 0
+
+if ! git diff --quiet; then
+  git status  # print files with non-conforming include guards
+  echo "Please run 'fix-guards' target locally before shipping your changes on remote"
+  exit 1
 fi
+
+echo "No change detected."

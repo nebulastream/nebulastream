@@ -15,11 +15,10 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
 
-#include <Util/yaml/Yaml.hpp>
+#include "Util/yaml/Yaml.hpp"
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace NES::Configurations {
 

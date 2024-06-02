@@ -146,8 +146,7 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1UL)))
                           .byKey(Attribute("producerId"))
                           .apply(Sum(Attribute("consumedPower"))))
-            .where(Attribute("producerId"))
-            .equalsTo(Attribute("producerId"))
+            .where(Attribute("producerId") == Attribute("producerId"))
             .window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1)))
             .map(Attribute("DifferenceProducedConsumedPower") = Attribute("producedPower") - Attribute("consumedPower"))
             //Todo: #4068: Use 'Attribute("start").as("timestamp")' instead of 'Attribute("start")'

@@ -25,7 +25,8 @@ void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(uint64_t numbe
     }
 }
 
-std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) {
+std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts,
+                                                                                        WorkerThreadId workerThreadId) {
     auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
 
     int64_t timestamp = ts;
@@ -33,8 +34,8 @@ std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFi
     int64_t lastStart = (timestamp - remainder);
     int64_t lowerBound = timestamp - windowSize;
 
-    // Getting the vector for the current worker (via workerId)
-    auto& workerVec = windowsToFill[workerId % windowsToFill.size()];
+    // Getting the vector for the current worker (via workerThreadId)
+    auto& workerVec = windowsToFill[workerThreadId % windowsToFill.size()];
     workerVec.clear();
     for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide) {
         WindowInfo windowInfo(start, start + windowSize);

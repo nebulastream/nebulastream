@@ -14,9 +14,8 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
 
-#include <Util/yaml/Yaml.hpp>
+#include "Util/yaml/Yaml.hpp"
 #include <map>
-#include <memory>
 #include <string>
 
 namespace NES::Spatial::DataTypes::Experimental {

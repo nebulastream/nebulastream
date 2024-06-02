@@ -57,10 +57,10 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
 
     /**
      * @brief Returns the thread local state for a  specific worker thread id
-     * @param workerId
+     * @param workerThreadId
      * @return Nautilus::Interface::PagedVector*
      */
-    Nautilus::Interface::PagedVector* getThreadLocalState(uint64_t workerId);
+    Nautilus::Interface::PagedVector* getThreadLocalState(WorkerThreadId workerThreadId);
 
     /**
      * @brief This function creates the global hash map. To this end, it builds a new hash map based on the thread local paged vectors.

@@ -13,51 +13,44 @@
 */
 
 #include <API/Schema.hpp>
+#include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <unordered_set>
 #include <utility>
 
 namespace NES::Join {
 
-LogicalJoinDescriptor::LogicalJoinDescriptor(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                             FieldAccessExpressionNodePtr rightJoinKeyType,
+LogicalJoinDescriptor::LogicalJoinDescriptor(ExpressionNodePtr joinExpression,
                                              Windowing::WindowTypePtr windowType,
                                              uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight,
                                              JoinType joinType,
                                              OriginId originId)
-    : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
-      windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
+    : joinExpression(joinExpression), leftSourceType(Schema::create()), rightSourceType(Schema::create()),
+      outputSchema(Schema::create()), windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
       numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType), originId(originId) {
-
-    NES_ASSERT(this->leftJoinKeyType, "Invalid left join key type");
-    NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");
-
     NES_ASSERT(this->windowType, "Invalid window type");
     NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
     NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
     NES_ASSERT((this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT), "Invalid Join Type");
 }
 
-LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
-                                                       const FieldAccessExpressionNodePtr& rightJoinKeyType,
+LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(ExpressionNodePtr joinExpressions,
                                                        const Windowing::WindowTypePtr& windowType,
                                                        uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight,
                                                        JoinType joinType) {
-    return std::make_shared<Join::LogicalJoinDescriptor>(leftJoinKeyType,
-                                                         rightJoinKeyType,
+    return std::make_shared<Join::LogicalJoinDescriptor>(joinExpressions,
                                                          windowType,
                                                          numberOfInputEdgesLeft,
                                                          numberOfInputEdgesRight,
                                                          joinType);
 }
-
-FieldAccessExpressionNodePtr LogicalJoinDescriptor::getLeftJoinKey() const { return leftJoinKeyType; }
-
-FieldAccessExpressionNodePtr LogicalJoinDescriptor::getRightJoinKey() const { return rightJoinKeyType; }
 
 SchemaPtr LogicalJoinDescriptor::getLeftSourceType() const { return leftSourceType; }
 
@@ -99,12 +92,13 @@ void LogicalJoinDescriptor::setNumberOfInputEdgesRight(uint64_t numberOfInputEdg
 OriginId LogicalJoinDescriptor::getOriginId() const { return originId; }
 void LogicalJoinDescriptor::setOriginId(OriginId originId) { this->originId = originId; }
 
+ExpressionNodePtr LogicalJoinDescriptor::getJoinExpression() { return this->joinExpression; }
+
 bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const {
-    return leftJoinKeyType->equal(other.leftJoinKeyType) && rightJoinKeyType->equal(other.rightJoinKeyType)
-        && leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
+    return leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
         && outputSchema->equals(other.outputSchema) && windowType->equal(other.windowType)
-        && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft && numberOfInputEdgesRight == other.numberOfInputEdgesRight
-        && joinType == other.joinType && originId == other.originId;
+        && joinExpression->equal(other.joinExpression) && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft
+        && numberOfInputEdgesRight == other.numberOfInputEdgesRight && joinType == other.joinType && originId == other.originId;
 }
 
 };// namespace NES::Join

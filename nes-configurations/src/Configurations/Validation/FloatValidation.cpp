@@ -13,6 +13,7 @@
 */
 
 #include <Configurations/Validation/FloatValidation.hpp>
+#include <regex>
 
 namespace NES::Configurations {
 

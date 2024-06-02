@@ -80,7 +80,6 @@ void StreamJoinProbe::createJoinedRecord(Record& joinedRecord,
     // Writing the window start, end, and key field
     joinedRecord.write(windowMetaData.windowStartFieldName, windowStart);
     joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd);
-    joinedRecord.write(windowMetaData.windowKeyFieldName, leftRecord.read(joinFieldNameLeft));
 
     /* Writing the leftSchema fields, expect the join schema to have the fields in the same order then the left schema */
     for (auto& field : joinSchema.leftSchema->fields) {
@@ -95,15 +94,13 @@ void StreamJoinProbe::createJoinedRecord(Record& joinedRecord,
 
 StreamJoinProbe::StreamJoinProbe(const uint64_t operatorHandlerIndex,
                                  const JoinSchema& joinSchema,
-                                 std::string joinFieldNameLeft,
-                                 std::string joinFieldNameRight,
+                                 Expressions::ExpressionPtr joinExpression,
                                  const WindowMetaData& windowMetaData,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy,
                                  bool withDeletion)
     : StreamJoinOperator(joinStrategy, windowingStrategy), operatorHandlerIndex(operatorHandlerIndex), joinSchema(joinSchema),
-      withDeletion(withDeletion), joinFieldNameLeft(std::move(joinFieldNameLeft)),
-      joinFieldNameRight(std::move(joinFieldNameRight)), windowMetaData(windowMetaData) {}
+      withDeletion(withDeletion), joinExpression(joinExpression), windowMetaData(windowMetaData) {}
 
 void StreamJoinProbe::terminate(ExecutionContext& ctx) const {
     // Delete all slices, as the query has ended

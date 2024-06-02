@@ -72,10 +72,11 @@ class HJSliceVarSized : public StreamSlice {
     /**
      * @brief Returns the local hash table of either the left or the right join side
      * @param joinBuildSide
-     * @param index
+     * @param workerThreadId
      * @return Reference to the hash table
      */
-    Operators::StreamJoinHashTableVarSized* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t index) const;
+    Operators::StreamJoinHashTableVarSized* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
+                                                         WorkerThreadId workerThreadId) const;
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
@@ -92,10 +93,10 @@ class HJSliceVarSized : public StreamSlice {
     /**
      * @brief Returns the number of tuples in this window
      * @param joinBuildSide
-     * @param workerIdx
+     * @param workerThreadId
      * @return uint64_t
      */
-    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx) const;
+    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId) const;
 
   private:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTableVarSized>> hashTableLeftSide;
@@ -107,4 +108,4 @@ class HJSliceVarSized : public StreamSlice {
 };
 }// namespace NES::Runtime::Execution
 
-#endif//NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICEVARSIZED_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICEVARSIZED_HPP_

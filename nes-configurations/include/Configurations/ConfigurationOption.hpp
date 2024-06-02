@@ -15,11 +15,11 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
-#include <Configurations/ConfigurationsNames.hpp>
-#include <Util/GatheringMode.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/magicenum/magic_enum.hpp>
-#include <Util/yaml/Yaml.hpp>
+#include "Configurations/ConfigurationsNames.hpp"
+#include "Util/GatheringMode.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/magicenum/magic_enum.hpp"
+#include "Util/yaml/Yaml.hpp"
 #include <any>
 #include <memory>
 #include <sstream>

@@ -156,9 +156,9 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     /**
      * @brief update the watermark for a particular worker
      * @param watermark
-     * @param workerId
+     * @param workerThreadId
      */
-    void updateWatermarkForWorker(uint64_t watermark, uint64_t workerId);
+    void updateWatermarkForWorker(uint64_t watermark, WorkerThreadId workerThreadId);
 
     /**
      * @brief Get the minimal watermark among all worker
@@ -189,7 +189,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windowToSlices;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
-    std::unordered_map<uint64_t, uint64_t> workerIdToWatermarkMap;
+    std::unordered_map<WorkerThreadId, uint64_t> workerThreadIdToWatermarkMap;
     const OriginId outputOriginId;
     std::atomic<uint64_t> sequenceNumber;
     std::atomic<bool> alreadySetup{false};

@@ -18,18 +18,17 @@
 namespace NES::Runtime::Execution {
 
 Operators::StreamJoinHashTableVarSized* HJSliceVarSized::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
-                                                                      uint64_t workerId) const {
+                                                                      WorkerThreadId workerThreadId) const {
     if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
-        workerId = workerId % hashTableLeftSide.size();
-        return hashTableLeftSide.at(workerId).get();
+        return hashTableLeftSide.at(workerThreadId % hashTableLeftSide.size()).get();
     } else {
-        workerId = workerId % hashTableRightSide.size();
-        return hashTableRightSide.at(workerId).get();
+        return hashTableRightSide.at(workerThreadId % hashTableRightSide.size()).get();
     }
 }
 
-uint64_t HJSliceVarSized::getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx) const {
-    return getHashTable(joinBuildSide, workerIdx)->getNumberOfTuples();
+uint64_t HJSliceVarSized::getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide,
+                                                    WorkerThreadId workerThreadId) const {
+    return getHashTable(joinBuildSide, workerThreadId)->getNumberOfTuples();
 }
 
 Operators::MergingHashTableVarSized& HJSliceVarSized::getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide) {

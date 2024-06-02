@@ -565,14 +565,12 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     Query query1 = Query::from("windTurbines")
                        .filter(Attribute("value") < 5)
                        .joinWith(Query::from("solarPanels1"))
-                       .where(Attribute("id1"))
-                       .equalsTo(Attribute("id"))
+                       .where(Attribute("id1") == Attribute("id"))
                        .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                        .sink(PrintSinkDescriptor::create());
     Query query2 = Query::from("windTurbines")
                        .joinWith(Query::from("solarPanels1"))
-                       .where(Attribute("id1"))
-                       .equalsTo(Attribute("id"))
+                       .where(Attribute("id1") == Attribute("id"))
                        .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20)))
                        .sink(PrintSinkDescriptor::create());
     const QueryPlanPtr queryPlan1 = query1.getQueryPlan();
@@ -697,14 +695,12 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     Query query1 = Query::from("windTurbines")
                        .filter(Attribute("value") < 5)
                        .joinWith(Query::from("solarPanels1"))
-                       .where(Attribute("id1"))
-                       .equalsTo(Attribute("id"))
+                       .where(Attribute("id1") == Attribute("id"))
                        .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                        .sink(PrintSinkDescriptor::create());
     Query query2 = Query::from("windTurbines")
                        .joinWith(Query::from("solarPanels1"))
-                       .where(Attribute("id1"))
-                       .equalsTo(Attribute("id"))
+                       .where(Attribute("id1") == Attribute("id"))
                        .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                        .sink(PrintSinkDescriptor::create());
     const QueryPlanPtr queryPlan1 = query1.getQueryPlan();
@@ -1203,15 +1199,13 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testProjectionCo
             .project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts"))
             .joinWith(
                 Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
-            .where(Attribute("windTurbines$id1"))
-            .equalsTo(Attribute("households$id"))
+            .where(Attribute("windTurbines$id1") == Attribute("households$id"))
             .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
             .sink(PrintSinkDescriptor::create());
     Query query2 = Query::from("windTurbines")
                        .unionWith(Query::from("solarPanels1"))
                        .joinWith(Query::from("households"))
-                       .where(Attribute("id1"))
-                       .equalsTo(Attribute("id"))
+                       .where(Attribute("id1") == Attribute("id"))
                        .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                        .filter(Attribute("value") > 4)
                        .project(Attribute("windTurbines$value"),

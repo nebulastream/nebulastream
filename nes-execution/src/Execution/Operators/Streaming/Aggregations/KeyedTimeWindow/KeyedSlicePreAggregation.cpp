@@ -26,9 +26,9 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getKeyedSliceStoreProxy(void* op, uint64_t workerId) {
+void* getKeyedSliceStoreProxy(void* op, WorkerThreadId workerThreadId) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(op);
-    return handler->getThreadLocalSliceStore(workerId);
+    return handler->getThreadLocalSliceStore(workerThreadId);
 }
 
 void* findKeyedSliceStateByTsProxy(void* ss, uint64_t ts) {
@@ -113,8 +113,10 @@ void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) con
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto sliceStore =
-        Nautilus::FunctionCall("getKeyedSliceStoreProxy", getKeyedSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
+    auto sliceStore = Nautilus::FunctionCall("getKeyedSliceStoreProxy",
+                                             getKeyedSliceStoreProxy,
+                                             globalOperatorHandler,
+                                             ctx.getWorkerThreadId());
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalKeyedSliceStoreState>(keyDataTypes, keySize, valueSize, sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_STATISTICOPERATORHANDLER_HPP_
-#define NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_STATISTICOPERATORHANDLER_HPP_
+#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_ABSTRACTSYNOPSESOPERATORHANDLER_HPP_
+#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_ABSTRACTSYNOPSESOPERATORHANDLER_HPP_
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -44,12 +44,13 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
     /**
      * @brief Returns the statistic for the statisticHash and the timestamp. If no statistic exists, we create one by
      * calling @see createInitStatistic
-     * @param workerId
+     * @param workerThreadId
      * @param statisticHash
      * @param timestamp
      * @return StatisticPtr
      */
-    Statistic::StatisticPtr getStatistic(uint64_t workerId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
+    Statistic::StatisticPtr
+    getStatistic(WorkerThreadId workerThreadId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
 
     /**
      * @brief Checks if we can/have to send/emit sketches to the sink
@@ -90,4 +91,4 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_STATISTICOPERATORHANDLER_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_ABSTRACTSYNOPSESOPERATORHANDLER_HPP_

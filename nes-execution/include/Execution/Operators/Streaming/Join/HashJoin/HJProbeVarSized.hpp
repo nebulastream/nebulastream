@@ -29,8 +29,7 @@ class HJProbeVarSized : public StreamJoinProbe {
      * @brief Constructor for a HJProbeVarSized join phase
      * @param operatorHandlerIndex
      * @param joinSchema
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
+     * @param joinExpression
      * @param windowMetaData
      * @param leftSchema
      * @param rightSchema
@@ -40,8 +39,7 @@ class HJProbeVarSized : public StreamJoinProbe {
      */
     HJProbeVarSized(const uint64_t operatorHandlerIndex,
                     const JoinSchema& joinSchema,
-                    const std::string& joinFieldNameLeft,
-                    const std::string& joinFieldNameRight,
+                    Expressions::ExpressionPtr joinExpression,
                     const WindowMetaData& windowMetaData,
                     const SchemaPtr& leftSchema,
                     const SchemaPtr& rightSchema,
@@ -57,4 +55,4 @@ class HJProbeVarSized : public StreamJoinProbe {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBEVARSIZED_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBEVARSIZED_HPP_

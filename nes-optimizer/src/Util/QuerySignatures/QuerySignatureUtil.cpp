@@ -46,6 +46,7 @@
 #include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
+#include <Util/UtilityFunction.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <z3++.h>
 
@@ -559,10 +560,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
 
     //Find the left and right join key
     auto joinDefinition = joinOperator->getJoinDefinition();
-    auto leftJoinKey = joinDefinition->getLeftJoinKey();
-    auto rightJoinKey = joinDefinition->getRightJoinKey();
-    auto leftKeyName = leftJoinKey->getFieldName();
-    auto rightKeyName = rightJoinKey->getFieldName();
+
+    // returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
+    auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinExpression());
 
     //merge columns from both children
     std::vector<std::string> columns = leftSignature->getColumns();
@@ -584,8 +584,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
             updatedFieldToZ3ExprMap.insert(leftSchemaMap.begin(), leftSchemaMap.end());
             updatedFieldToZ3ExprMap.insert(rightSchemaMap.begin(), rightSchemaMap.end());
             //
-            auto leftPredicate = updatedFieldToZ3ExprMap[leftKeyName];
-            auto rightPredicate = updatedFieldToZ3ExprMap[rightKeyName];
+            auto leftPredicate = updatedFieldToZ3ExprMap[equiJoinKeyNames.first];
+            auto rightPredicate = updatedFieldToZ3ExprMap[equiJoinKeyNames.second];
             auto joinPredicate = z3::to_expr(*context, Z3_mk_eq(*context, *leftPredicate, *rightPredicate));
             joinPredicates.push_back(joinPredicate);
             updatedSchemaFieldToExprMaps.emplace_back(updatedFieldToZ3ExprMap);
