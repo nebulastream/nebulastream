@@ -268,6 +268,28 @@ TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
+/**
+ * Test deploying cross-join with different sources
+ */
+TEST_P(JoinDeploymentTest, testTumblingWindowCrossJoin) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
+    const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("window1");
+    const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("window2");
+
+    TestUtils::JoinParams joinParams({windowSchema, window2Schema});
+    TestUtils::CsvFileParams csvFileParams({"window8.csv", "window8.csv"}, "cross_join_sink.csv");
+
+    const auto query = Query::from("window1")
+                           .crossJoinWith(Query::from("window2"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+}
+
 INSTANTIATE_TEST_CASE_P(testJoinQueries,
                         JoinDeploymentTest,
                         JOIN_STRATEGIES_WINDOW_STRATEGIES,

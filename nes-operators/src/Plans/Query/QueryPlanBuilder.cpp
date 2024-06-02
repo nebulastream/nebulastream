@@ -140,11 +140,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
                 continue;
             } else {
                 visitedExpressions.insert(visitingOp);
-                auto onLeftKey = (*itr)->as<BinaryExpressionNode>()->getLeft();
-                auto onRightKey = (*itr)->as<BinaryExpressionNode>()->getRight();
-                NES_DEBUG("QueryPlanBuilder: Check if Expressions are FieldExpressions.");
-                auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
-                auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "rightSide");
             }
         }
     }
@@ -235,12 +230,13 @@ QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr oper
 }
 
 std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(ExpressionNodePtr expression, std::string side) {
-    if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessExpression but it was a  {}",
-                  side,
-                  expression->toString());
-        NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: window key has to be an FieldAccessExpression");
-    }
+   if (!expression->instanceOf<FieldAccessExpressionNode>()) {
+       NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessExpression but it was a  {}",
+                 side,
+                 expression->toString());
+       NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: window key has to be an FieldAccessExpression");
+   }
+   //side.size();
     return expression->as<FieldAccessExpressionNode>();
 }
 }// namespace NES

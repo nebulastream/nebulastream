@@ -62,15 +62,17 @@ bool LogicalJoinOperator::inferSchema() {
     rightInputSchema->clear();
 
     // Finds the join schema that contains the joinKey and returns an iterator to the schema
-    auto findSchemaInDistinctSchemas = [&](FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema) {
+    auto findSchemaInDistinctSchemas = [&](ExpressionNode& joinKey, const SchemaPtr& inputSchema) {
         for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-            bool fieldExistsInSchema;
-            const auto joinKeyName = joinKey.getFieldName();
-            // If field name contains qualifier
-            if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
-                fieldExistsInSchema = (*itr)->contains(joinKeyName);
-            } else {
-                fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
+            bool fieldExistsInSchema = true;
+            if (joinKey.instanceOf<FieldAccessExpressionNode>()) { // nur wenn es ein FieldAccessExpression node ist, soll so weiter gemacht werden wie früher
+                const auto joinKeyName = joinKey.as<FieldAccessExpressionNode>()->getFieldName();
+                // If field name contains qualifier
+                if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+                    fieldExistsInSchema = (*itr)->contains(joinKeyName);
+                } else {
+                    fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
+                }
             }
 
             if (fieldExistsInSchema) {
@@ -96,27 +98,34 @@ bool LogicalJoinOperator::inferSchema() {
                 continue;
             } else {
                 visitedExpressions.insert(visitingOp);
-                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) {
+                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) { // TODO anpassen, nicht nur BinaryExpressionNodes
                     //Find the schema for left and right join key
-                    const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft()->as<FieldAccessExpressionNode>();
-                    const auto leftJoinKeyName = leftJoinKey->getFieldName();
+                    // nicht als FieldAccessExpression Node, um auch zB Attribute("id") > 0 zu erlauben
+                    const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft(); //->as<FieldAccessExpressionNode>();
+                    // demnach gibt es auch nicht unbedingt ein joinKeyName auf einer Seite
+                    // const auto leftJoinKeyName = leftJoinKey->getFieldName();
                     const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
                     NES_ASSERT_THROW_EXCEPTION(foundLeftKey,
                                                TypeInferenceException,
-                                               "LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName
-                                                   + " in schemas.");
-                    const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight()->as<FieldAccessExpressionNode>();
-                    const auto rightJoinKeyName = rightJoinKey->getFieldName();
+                                               "LogicalJoinOperator: Unable to find left join key "); //+ leftJoinKeyName
+                                               //    + " in schemas.");
+                    const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight(); //->as<FieldAccessExpressionNode>();
+                    // const auto rightJoinKeyName = rightJoinKey->getFieldName();
                     const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
                     NES_ASSERT_THROW_EXCEPTION(foundRightKey,
                                                TypeInferenceException,
-                                               "LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName
-                                                   + " in schemas.");
+                                               "LogicalJoinOperator: Unable to find right join key "); //+ rightJoinKeyName
+                                                //   + " in schemas.");
 
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedExpressions.insert(visitingOp);
                 }
             }
+        } else {
+            // wenn kein BinaryOperation (zb ExpressionNode(true), dann nehme alle Fields)
+            leftInputSchema->copyFields(*distinctSchemas.begin());
+            rightInputSchema->copyFields(*distinctSchemas.begin());
+            distinctSchemas.erase(distinctSchemas.begin());
         }
     }
     // Clearing now the distinct schemas

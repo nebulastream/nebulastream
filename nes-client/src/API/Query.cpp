@@ -269,13 +269,11 @@ Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpr
 
 Query& Query::crossJoinWith(const Query& subQueryRhs, const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to CrossJoin Operator");
-    auto onLeftKey = FieldAccessExpressionNode::create(DataTypeFactory::createBoolean(), "left");
-    auto onRightKey = FieldAccessExpressionNode::create(DataTypeFactory::createBoolean(), "right");
+    auto joinCondition = ExpressionItem(true);
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                 subQueryRhs.getQueryPlan(),
-                                                onLeftKey,
-                                                onRightKey,
+                                                joinCondition.getExpressionNode(),
                                                 windowType,
                                                 joinType);
     return *this;

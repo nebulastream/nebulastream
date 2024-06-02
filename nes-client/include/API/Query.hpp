@@ -328,13 +328,6 @@ class Query {
     CrossJoinOperatorBuilder::CrossJoin crossJoinWith(const Query& subQueryRhs);
 
     /**
-     * @brief can be called on the original query with the query to be cross joined with and sets this query in the class CrossJoinOperatorBuilder::Join.
-     * @param subQueryRhs
-     * @return object of type CrossJoin on which the window can be can be called.
-     */
-    CrossJoinOperatorBuilder::CrossJoin crossJoinWith(const Query& subQueryRhs);
-
-    /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
      * @param subQueryRhs
      * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
@@ -528,15 +521,6 @@ class Query {
      * @return the query
      */
     Query& batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression);
-
-    /**
-     * We call it only internal as a last step during the CrossJoin operation
-     * @note Internal crossJoinWith function.
-     * @param subQueryRhs subQuery to be joined.
-     * @param windowType the window type which should be used.
-     * @return the query
-     */
-    Query& crossJoinWith(const Query& subQueryRhs, Windowing::WindowTypePtr const& windowType);
 
     /**
      * We call it only internal as a last step during the CrossJoin operation
