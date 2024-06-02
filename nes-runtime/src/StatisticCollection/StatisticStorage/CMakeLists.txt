@@ -14,4 +14,5 @@ add_source_files(nes-runtime
         DefaultStatisticStore.cpp
         BuildStatisticStore.cpp
         SortedVectorStatisticStore.cpp
+        SortedStatisticStore.cpp
 )
