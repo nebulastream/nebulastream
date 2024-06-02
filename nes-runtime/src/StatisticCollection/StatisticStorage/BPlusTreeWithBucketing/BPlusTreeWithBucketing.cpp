@@ -4,11 +4,20 @@
 #include "StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/BPlusTreeWithBucketing.hpp"
 #include "StatisticCollection/StatisticStorage/BPlusTreeWithBucketing/Node.hpp"
 #include <deque>
+#include <cmath>
 
 #include "Measures/TimeMeasure.hpp"
 
 namespace NES::Statistic {
 
+BPlusTreeWithBucketing::BPlusTreeWithBucketing(uint64_t& Capacity, uint64_t& bucketsRangeSize) {
+    this->Capacity = Capacity;
+    this->bucketsRangeSize = bucketsRangeSize;
+    this->root = Node(Capacity, true);
+    this->allParents = {};
+
+}
+/**
 StatisticStorePtr BPlusTreeWithBucketing::create(uint64_t& nodeCapacity, uint64_t& rangeSize) {
     // create an instance of the tree
     StatisticStorePtr treePtr = std::make_shared<BPlusTreeWithBucketing>();
@@ -26,13 +35,30 @@ StatisticStorePtr BPlusTreeWithBucketing::create(uint64_t& nodeCapacity, uint64_
 
     return treePtr;
 }
-
+*/
 
 // Gets all statistics belonging to the statisticHash in the period of [startTs, endTs]
 std::vector<StatisticPtr> BPlusTreeWithBucketing::getStatistics(const StatisticHash& statisticHash,
                                                                 const Windowing::TimeMeasure& startTs,
                                                                 const Windowing::TimeMeasure& endTs) {
     std::vector<StatisticPtr> allStats;
+
+    if(allParents.empty()){
+        for(StatisticHash key : root.getKeys()){
+            if(key == statisticHash){
+                size_t index;
+                std::vector<Bucket> bucketsForKey = root.getValueOfKey(root,key,index);
+                for(Bucket bucket : bucketsForKey){
+                    if (bucket.getStartTs() <= startTs.getTime() && bucket.getEndTs() >= endTs.getTime()) {
+                        for(StatisticPtr stat : bucket.GetStatistics()){
+                            allStats.push_back(stat);
+                        }
+                    }
+                }
+
+            }
+        }
+    }
 
     for(Node parent : allParents) {
         for (Node child : parent.getChildren()) {
@@ -42,7 +68,7 @@ std::vector<StatisticPtr> BPlusTreeWithBucketing::getStatistics(const StatisticH
                         size_t index;
                         std::vector<Bucket> bucketsForKey = child.getValueOfKey(child,key,index);
                         for(Bucket bucket : bucketsForKey){
-                            if (bucket.getStartTs() >= startTs.getTime() && bucket.getEndTs() <= endTs.getTime()) {
+                            if (bucket.getStartTs() <= startTs.getTime() && bucket.getEndTs() >= endTs.getTime()) {
                                 for(StatisticPtr stat : bucket.GetStatistics()){
                                     allStats.push_back(stat);
                                 }
@@ -60,6 +86,24 @@ std::vector<StatisticPtr> BPlusTreeWithBucketing::getStatistics(const StatisticH
 std::optional<StatisticPtr> BPlusTreeWithBucketing::getSingleStatistic(const StatisticHash& statisticHash,
                                                                        const Windowing::TimeMeasure& startTs,
                                                                        const Windowing::TimeMeasure& endTs) {
+    if(allParents.empty()){
+        for(StatisticHash key : root.getKeys()){
+            if(key == statisticHash){
+                size_t index;
+                std::vector<Bucket> bucketsForKey = root.getValueOfKey(root,key,index);
+                for(Bucket bucket : bucketsForKey){
+                    if (startTs.getTime() >= bucket.getStartTs() && endTs.getTime() <= bucket.getEndTs()) {
+                        for(StatisticPtr stat : bucket.GetStatistics()){
+                            if(stat->getStartTs() == startTs && stat->getEndTs() == endTs){
+                                return stat;
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
     for(Node parent : allParents) {
         for (Node child : parent.getChildren()) {
             if (child.isLeafnode()) {
@@ -89,7 +133,7 @@ std::optional<StatisticPtr> BPlusTreeWithBucketing::getSingleStatistic(const Sta
 bool BPlusTreeWithBucketing::insertStatistic(const StatisticHash& statisticHash, StatisticPtr statistic) {
 
 
-    Node leaf = searchNode(const_cast<StatisticHash&>(statisticHash),root);
+    Node& leaf = searchNode(const_cast<StatisticHash&>(statisticHash),root);
 
 
 
@@ -201,39 +245,41 @@ bool BPlusTreeWithBucketing::deleteStatistics(const StatisticHash& statisticHash
                                              const Windowing::TimeMeasure& startTs,
                                              const Windowing::TimeMeasure& endTs) {
     // find the node holding this key
-    bool statFoundAndDeleted = false;
-    Node leaf = searchNode(const_cast<StatisticHash&>(statisticHash),root);
-    std::vector<std::vector<Bucket>> leafValues = leaf.getValues();
+   // bool statFoundAndDeleted = false;
+    Node& leaf = searchNode(const_cast<StatisticHash&>(statisticHash),root);
+    //std::vector<std::vector<Bucket>> leafValues = leaf.getValues();
 
     for(size_t i = 0; i < leaf.getKeys().size(); i++){
         if(leaf.getKeys()[i] == statisticHash){
-            for(Bucket bucket : leafValues[i]){
-                if(bucket.getStartTs() >= startTs.getTime() && bucket.getEndTs() <= endTs.getTime())
-                    for(StatisticPtr stat : bucket.GetStatistics()){
-                        if(startTs <= stat->getStartTs() && stat->getEndTs() <= endTs){
+            std::vector<Bucket>& buckets = leaf.getValues()[i];
+            for(Bucket& bucket : buckets){
+                if(bucket.getStartTs() <= startTs.getTime() && bucket.getEndTs() >= endTs.getTime())
+                    for(StatisticPtr& stat : bucket.GetStatistics()){
+                        if(startTs == stat->getStartTs() && stat->getEndTs() == endTs){
                             bucket.deleteStatistic(stat);
-                            statFoundAndDeleted = true;
+                            //statFoundAndDeleted = true;
+                            return true;
                         }
                     }
             }
 
         }
     }
-    return statFoundAndDeleted;
+    return false;
 }
 
 std::vector<HashStatisticPair> BPlusTreeWithBucketing::getAllStatistics() {
     //using HashStatisticPair = std::pair<StatisticHash, StatisticPtr>;
     std::vector<HashStatisticPair> returnStatisticsVector;
 
-    for(Node parent : allParents){
-        for(Node child : parent.getChildren()){
+    for(Node& parent : allParents){
+        for(Node& child : parent.getChildren()){
             if(child.isLeafnode()){
                 for(size_t i = 0; i < child.getKeys().size(); i++){
                     StatisticHash key = child.getKeys()[i];
                     std::vector<Bucket> bucketsForKey = child.getValues()[i];
-                    for(Bucket bucket : bucketsForKey){
-                        for(StatisticPtr stat : bucket.GetStatistics()){
+                    for(Bucket& bucket : bucketsForKey){
+                        for(StatisticPtr& stat : bucket.GetStatistics()){
                             returnStatisticsVector.emplace_back(key, stat);
                         }
                     }
@@ -248,43 +294,43 @@ std::vector<HashStatisticPair> BPlusTreeWithBucketing::getAllStatistics() {
 // other methods that are not in abstract store
 
 // This function finds the leaf node holding the key
-Node BPlusTreeWithBucketing::searchNode(StatisticHash& statisticHash, Node& node){
+Node& BPlusTreeWithBucketing::searchNode(StatisticHash& statisticHash, Node& node) {
 
-    if(node.isLeafnode()){
+    if (node.isLeafnode()) {
         return node;
     }
 
-    if(!allParents.empty()){
+    if (!allParents.empty()) {
         allParents.push_back(node);
     }
-    std::vector<Node> Children = node.getChildren();
-    for (size_t i = 0; i < Children.size(); ++i) {
-        Node child =Children[i];
+    std::vector<Node>& children = node.getChildren(); // Ensure getChildren() returns a reference to the vector
+    for (size_t i = 0; i < children.size(); ++i) {
+        Node& child = children[i];
         Node* rightSibling = nullptr;
-        if(i+1 < Children.size()){
-            rightSibling = &Children[i + 1];
+        if (i + 1 < children.size()) {
+            rightSibling = &children[i + 1];
         }
-        if(rightSibling != nullptr && rightSibling->getKeys()[0] > statisticHash && child.getKeys()[0] <= statisticHash){
-            if(child.isLeafnode()){
+        if (rightSibling != nullptr && rightSibling->getKeys()[0] > statisticHash && child.getKeys()[0] <= statisticHash) {
+            if (child.isLeafnode()) {
                 return child;
             }
-            searchNode(statisticHash,child);
-        }else if(rightSibling == nullptr){
-            if(child.isLeafnode()){
+            return searchNode(statisticHash, child);
+        } else if (rightSibling == nullptr) {
+            if (child.isLeafnode()) {
                 return child;
             }
-            searchNode(statisticHash,child);
+            return searchNode(statisticHash, child);
         }
-
     }
-    std::cout <<  "Can not find leaf. Something is wrong.";
-    Node emptyNode = Node(Capacity,false);
-    return emptyNode;
+
+    std::cout << "Cannot find leaf. Something is wrong.";
+    throw std::runtime_error("Cannot find leaf node."); // Consider throwing an exception instead of returning an empty node
 }
 
-Node BPlusTreeWithBucketing::getParent(Node& node) {
-    for(Node parent : allParents){
-        for(Node child : parent.getChildren()){
+
+Node& BPlusTreeWithBucketing::getParent(Node& node) {
+    for(Node& parent : allParents){
+        for(Node& child : parent.getChildren()){
             if(child.getKeys()[0] == node.getKeys()[0]){
                 return parent;
             }
@@ -295,7 +341,7 @@ Node BPlusTreeWithBucketing::getParent(Node& node) {
 // find the right bucket and insert statistics
 bool BPlusTreeWithBucketing::findOrCreateBucket(Node& leaf, const StatisticPtr& statistic, const StatisticHash& statisticHash) const{
 
-    if((statistic->getEndTs().getTime() - statistic->getStartTs().getTime() + 1) > bucketsRangeSize){
+    if((statistic->getEndTs().getTime() - statistic->getStartTs().getTime() + 1) > bucketsRangeSize - 1){
         std::cout << "Error: The statistic start and end times exceed the bucket size. Increase the bucket size.";
         return false;
     }
@@ -304,23 +350,33 @@ bool BPlusTreeWithBucketing::findOrCreateBucket(Node& leaf, const StatisticPtr& 
     std::vector<Bucket> bucketVector = leaf.getValueOfKey(leaf, statisticHash, index);
 
     // insert the stat in the bucket if it already exists
-    for(Bucket& bucket : bucketVector) {
-        if (statistic->getStartTs().getTime() >= bucket.getStartTs() && statistic->getEndTs().getTime() <= bucket.getEndTs()) {
-            bucket.insertStatistic(statistic);
-            return true;
+    if(bucketVector.size() != 0){
+        for(Bucket& bucket : bucketVector) {
+            if (statistic->getStartTs().getTime() >= bucket.getStartTs() && statistic->getEndTs().getTime() <= bucket.getEndTs()) {
+                bucket.insertStatistic(statistic);
+                return true;
+            }
         }
     }
+
     // or create a new one and insert the stat to it
-    unsigned long start = (statistic->getStartTs().getTime() / bucketsRangeSize) * bucketsRangeSize;
-    unsigned long end  = (statistic->getEndTs().getTime() / bucketsRangeSize) * bucketsRangeSize + (bucketsRangeSize -1);
+    unsigned long start = floor(statistic->getStartTs().getTime() / bucketsRangeSize) * bucketsRangeSize;
+    unsigned long end  = floor(statistic->getEndTs().getTime() / bucketsRangeSize) * bucketsRangeSize + (bucketsRangeSize -1);
+
     // Create bucket
     Bucket bucket = Bucket(start,end,bucketsRangeSize);
     // insert stat
     bucket.insertStatistic(statistic);
     bucketVector.push_back(bucket);
+    // set values
+    auto& values = leaf.getValues();
+    values.emplace(values.begin() + index, bucketVector);
+    leaf.setValues(values);
+
     return true;
 
 }
+
 
 BPlusTreeWithBucketing::~BPlusTreeWithBucketing() = default;
 

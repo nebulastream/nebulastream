@@ -11,7 +11,7 @@
 #include <Measures/TimeMeasure.hpp>
 
 class Statistic;
-using StatisticPtr = std::shared_ptr<Statistic>;
+//using StatisticPtr = std::shared_ptr<Statistic>;
 
 
 namespace NES::Statistic {
@@ -30,7 +30,7 @@ class Bucket{
     Bucket(uint64_t startTs,uint64_t  endTs, uint64_t  bucketsRangeSize,std::vector<StatisticPtr>& statisticsPtr);
 
     // Getter for statistics
-    std::vector<StatisticPtr> GetStatistics();
+    std::vector<StatisticPtr>& GetStatistics();
     // Setter for statistics
     void SetStatistics(std::vector<StatisticPtr>& NewStatistics);
 

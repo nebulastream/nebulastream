@@ -31,13 +31,13 @@ class Node{
         Node(std::vector<StatisticHash>& Keys, std::vector<std::vector<Bucket>>& Values, std::vector<Node>& Children, uint64_t Capacity, bool leafnode);
         Node(uint64_t Capacity, bool leafnode);
 
-        std::vector<StatisticHash> getKeys();
+        std::vector<StatisticHash>& getKeys();
         void setKeys(std::vector<StatisticHash>& NewKeys);
 
-        std::vector<std::vector<Bucket>> getValues();
+        std::vector<std::vector<Bucket>>& getValues();
         void setValues(std::vector<std::vector<Bucket>>& NewValues);
 
-        std::vector<Node> getChildren();
+        std::vector<Node>& getChildren();
         void setChildren(std::vector<Node>& NewChildren);
 
         bool isLeafnode();

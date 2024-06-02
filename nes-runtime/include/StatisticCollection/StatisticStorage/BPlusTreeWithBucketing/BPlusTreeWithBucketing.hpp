@@ -17,15 +17,17 @@ namespace NES::Statistic {
 class BPlusTreeWithBucketing : public AbstractStatisticStore {
   protected:
 
-    uint64_t Capacity{};
+    uint64_t Capacity;
     Node root = Node(0, true);
     uint64_t bucketsRangeSize;
     std::vector<Node> allParents = {};
 
   public:
 
-    static StatisticStorePtr create(uint64_t& Capacity, uint64_t& bucketsRangeSize);
+    BPlusTreeWithBucketing(uint64_t& Capacity, uint64_t& bucketsRangeSize);
     /**
+    static StatisticStorePtr create(uint64_t& Capacity, uint64_t& bucketsRangeSize);
+
      * @brief Gets all statistics belonging to the statisticHash in the period of [startTs, endTs]
      * @param statisticHash
      * @param startTs
@@ -75,9 +77,9 @@ class BPlusTreeWithBucketing : public AbstractStatisticStore {
 
     //other help methods
 
-    Node getParent(Node& node);
+    Node& getParent(Node& node);
 
-    Node searchNode(StatisticHash& key, Node& node);
+    Node& searchNode(StatisticHash& key, Node& node);
 
     bool findOrCreateBucket(Node& leaf, const StatisticPtr& statistic, const StatisticHash& statisticHash) const;
     virtual ~BPlusTreeWithBucketing();

@@ -28,13 +28,13 @@ Node::Node(const uint64_t Capacity, bool leafnode)
 
 // Setters and Getters
 
-std::vector<StatisticHash> Node::getKeys() { return Keys; }
+std::vector<StatisticHash>& Node::getKeys() { return Keys; }
 void Node::setKeys(std::vector<StatisticHash>& NewKeys) { Keys = NewKeys; }
 
-std::vector<Node> Node::getChildren() { return Children; }
+std::vector<Node>& Node::getChildren() { return Children; }
 void Node::setChildren(std::vector<Node>& NewChildren) { this->Children = NewChildren; }
 
-std::vector<std::vector<Bucket>> Node::getValues() { return Values; }
+std::vector<std::vector<Bucket>>& Node::getValues() { return Values; }
 
 void Node::setValues(std::vector<std::vector<Bucket>>& newValues) {
     this->Values = newValues;
@@ -49,7 +49,10 @@ std::vector<Bucket> Node::getValueOfKey(Node& node, const StatisticHash& key, si
     for(size_t i = 0; i < node.getKeys().size(); ++i){
         if(node.getKeys()[i] == key){
             index = i;
-            return node.getValues()[i];
+            if(node.getValues().size() != 0){
+                return node.getValues()[i];
+            }
+
         }
     }
     return {};

@@ -22,7 +22,7 @@ namespace NES::Statistic {
         this->statisticsPtr = statisticsPtr;
     }
 
-    std::vector<StatisticPtr> Bucket::GetStatistics(){
+    std::vector<StatisticPtr>& Bucket::GetStatistics(){
         return statisticsPtr;
     }
     void Bucket::SetStatistics(std::vector<StatisticPtr>& NewStatistics){

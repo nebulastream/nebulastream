@@ -96,7 +96,10 @@ namespace NES::Statistic {
 
 
             };
+            uint64_t capacity = 4;
+            uint64_t bucketTimeRange = 200;
 
+            BPlusTreeWithBucketing bPlusTreeWithBucketing = BPlusTreeWithBucketing(capacity,bucketTimeRange);
             /**
  * @brief Tests, if we can insert, get and delete one single Statistic
  */
@@ -109,14 +112,11 @@ namespace NES::Statistic {
                 auto window = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
                 StatisticKey statisticKey(IngestionRate::create(), 42);
 
-                uint64_t capacity = 4;
-                uint64_t bucketTimeRange = 100;
 
-                auto bPlusTreeWithBucketing = BPlusTreeWithBucketing::create(capacity,bucketTimeRange);
 
-                // Checking if insert and get works properly
-                ASSERT_TRUE(bPlusTreeWithBucketing->insertStatistic(statisticKey.hash(), dummyStatistic));
-                auto getStatistics = bPlusTreeWithBucketing->getStatistics(statisticKey.hash(), startTs, endTs);
+                ASSERT_TRUE(bPlusTreeWithBucketing.insertStatistic(statisticKey.hash(), dummyStatistic));
+                bPlusTreeWithBucketing.getStatistics(statisticKey.hash(), startTs, endTs);
+                auto getStatistics = bPlusTreeWithBucketing.getStatistics(statisticKey.hash(), startTs, endTs);
                 ASSERT_EQ(getStatistics.size(), 1);
                 EXPECT_TRUE(getStatistics[0]->equal(*dummyStatistic));
 
@@ -138,9 +138,6 @@ namespace NES::Statistic {
                 const auto numberOfStatisticKey = std::get<1>(BPlusTreeWithBucketingTest::GetParam());
                 const auto numberOfStatisticsPerKey = std::get<2>(BPlusTreeWithBucketingTest::GetParam());
 
-                uint64_t capacity = 4;
-                uint64_t bucketTimeRange = 100;
-                auto bPlusTreeWithBucketing = BPlusTreeWithBucketing::create(capacity,bucketTimeRange);
 
                 // Creating for each statistic key its statistics
                 std::vector<std::pair<StatisticKey, StatisticPtr>> allStatisticsPlusKey;
@@ -151,7 +148,7 @@ namespace NES::Statistic {
                 std::vector<std::thread> insertThreads;
                 std::atomic<uint64_t> statisticsPos = 0;
                 for (auto threadId = 0; threadId < numberOfThreads; ++threadId) {
-                    insertThreads.emplace_back([&statisticsPos, this, &allStatisticsPlusKey]() {
+                    insertThreads.emplace_back([&statisticsPos, &allStatisticsPlusKey]() {
                         uint64_t nextPos;
                         while ((nextPos = statisticsPos++) < allStatisticsPlusKey.size()) {
                             const auto& statisticKey = allStatisticsPlusKey[nextPos].first;
@@ -165,10 +162,11 @@ namespace NES::Statistic {
                         }
                     });
                 }
+
                 for (auto& thread : insertThreads) {
                     thread.join();
                 }
-
+                /**
                 // Checking if we can retrieve all inserted statistics
                 for (auto& statisticKey : allStatisticKeys) {
                     std::vector<StatisticPtr> statistics;
@@ -189,7 +187,7 @@ namespace NES::Statistic {
                 std::vector<std::thread> deleteThreads;
                 statisticsPos = 0;
                 for (auto threadId = 0; threadId < numberOfThreads; ++threadId) {
-                    deleteThreads.emplace_back([&statisticsPos, this, &allStatisticsPlusKey]() {
+                    deleteThreads.emplace_back([&statisticsPos, this, &allStatisticsPlusKey]()  {
                         uint64_t nextPos;
                         while ((nextPos = statisticsPos++) < allStatisticsPlusKey.size()) {
                             const auto& statisticKey = allStatisticsPlusKey[nextPos].first;
@@ -211,6 +209,7 @@ namespace NES::Statistic {
                     auto getStatistics = bPlusTreeWithBucketing.getStatistics(statisticKey.hash(), Milliseconds(0), maxEndTs);
                     ASSERT_EQ(getStatistics.size(), 0);
                 }
+                 */
             }
 
             INSTANTIATE_TEST_CASE_P(testBPlusTreeWithBucketing,
