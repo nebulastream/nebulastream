@@ -15,11 +15,11 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #include <Exceptions/RuntimeException.hpp>
+#include <Runtime/Execution/MigratableStateInterface.hpp>
+#include <Runtime/Execution/StreamSliceInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/Execution/StreamSliceInterface.hpp>
-#include <Runtime/Execution/MigratableStateInterface.hpp>
 #include <list>
 
 namespace NES::Runtime::Execution {

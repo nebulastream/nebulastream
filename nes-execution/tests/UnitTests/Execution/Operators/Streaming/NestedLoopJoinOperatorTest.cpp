@@ -270,7 +270,18 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      * @param numberOfRecordsLeft
      * @param numberOfRecordsRight
      */
-    void insertRecordsIntoBuild(uint64_t numberOfRecordsLeft, uint64_t numberOfRecordsRight) {
+    void insertRecordsIntoBuildAndCheck(uint64_t numberOfRecordsLeft, uint64_t numberOfRecordsRight) {
+        auto [leftRecords, rightRecords, maxTimestamp] = insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+        checkWindowsInBuild(maxTimestamp, leftRecords, rightRecords);
+    }
+
+    /**
+     * @brief sets up and opens NLJBuild for left and right side and executes it for every record
+     * @param numberOfRecordsLeft
+     * @param numberOfRecordsRight
+     */
+    std::tuple<std::vector<Record>, std::vector<Record>, uint64_t> insertRecordsIntoBuild(uint64_t numberOfRecordsLeft,
+                                                                                          uint64_t numberOfRecordsRight) {
         auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameLeft);
         auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameRight);
 
@@ -324,7 +335,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             nljBuildRight->execute(executionContext, rightRecord);
         }
 
-        checkWindowsInBuild(maxTimestamp, allLeftRecords, allRightRecords);
+        return std::make_tuple(std::move(allLeftRecords), std::move(allRightRecords), maxTimestamp);
     }
 
     /**
@@ -494,21 +505,21 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
     auto numberOfRecordsLeft = 1;
     auto numberOfRecordsRight = 1;
 
-    insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
     auto numberOfRecordsLeft = 250;
     auto numberOfRecordsRight = 250;
 
-    insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     auto numberOfRecordsLeft = 2000;
     auto numberOfRecordsRight = 2000;
 
-    insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
@@ -516,6 +527,48 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
     const auto numberOfRecordsRight = 250;
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
+}
+
+TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTest) {
+    const auto numberOfRecordsLeft = 5000;
+    const auto numberOfRecordsRight = 5000;
+
+    insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+    // Checking corner case when stopTS is equal to end timestamp of slice.
+    auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
+    ASSERT_EQ(slices.size(), 2);
+    ASSERT_EQ(slices.front()->getSliceStart(), 2000);
+    ASSERT_EQ(slices.back()->getSliceEnd(), 4000);
+}
+
+TEST_F(NestedLoopJoinOperatorTest, gettingSlicesMiddleBordersTest) {
+    const auto numberOfRecordsLeft = 5000;
+    const auto numberOfRecordsRight = 5000;
+
+    insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+    // Checking corner case when stopTS is equal to end timestamp of slice.
+    auto slices = nljOperatorHandler->getStateToMigrate(1500, 3500);
+    ASSERT_EQ(slices.size(), 3);
+    ASSERT_EQ(slices.front()->getSliceStart(), 1000);
+    ASSERT_EQ(slices.back()->getSliceEnd(), 4000);
+}
+
+TEST_F(NestedLoopJoinOperatorTest, recreatingSlicesTest) {
+    const auto numberOfRecordsLeft = 10;
+    const auto numberOfRecordsRight = 10;
+
+    insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+    // Checking corner case when stopTS is equal to end timestamp of slice.
+    auto slices = nljOperatorHandler->getStateToMigrate(0, 1000);
+    std::list<std::shared_ptr<StreamSliceInterface>> newSlices = {
+        dynamic_pointer_cast<StreamSliceInterface>(
+            std::make_shared<NLJSlice>(1000, 2000, 1, bm, leftSchema, leftPageSize, rightSchema, rightPageSize)),
+        dynamic_pointer_cast<StreamSliceInterface>(
+            std::make_shared<NLJSlice>(2000, 3000, 1, bm, leftSchema, leftPageSize, rightSchema, rightPageSize))};
+
+    nljOperatorHandler->restoreState(newSlices);
+
+    ASSERT_EQ(nljOperatorHandler->getNumberOfSlices(), 3);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {

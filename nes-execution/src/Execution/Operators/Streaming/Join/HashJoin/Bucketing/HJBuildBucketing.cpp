@@ -71,16 +71,15 @@ HJBuildBucketing::HJBuildBucketing(const uint64_t operatorHandlerIndex,
                                    QueryCompilation::WindowingStrategy windowingStrategy,
                                    const uint64_t windowSize,
                                    const uint64_t windowSlide)
-    : StreamJoinOperator(joinStrategy, windowingStrategy),
-      StreamJoinBuildBucketing(operatorHandlerIndex,
-                               schema,
-                               joinFieldName,
-                               joinBuildSide,
-                               entrySize,
-                               std::move(timeFunction),
-                               joinStrategy,
-                               windowingStrategy,
-                               windowSize,
-                               windowSlide) {}
+    : StreamJoinOperator(joinStrategy, windowingStrategy), StreamJoinBuildBucketing(operatorHandlerIndex,
+                                                                                    schema,
+                                                                                    joinFieldName,
+                                                                                    joinBuildSide,
+                                                                                    entrySize,
+                                                                                    std::move(timeFunction),
+                                                                                    joinStrategy,
+                                                                                    windowingStrategy,
+                                                                                    windowSize,
+                                                                                    windowSlide) {}
 
 }// namespace NES::Runtime::Execution::Operators

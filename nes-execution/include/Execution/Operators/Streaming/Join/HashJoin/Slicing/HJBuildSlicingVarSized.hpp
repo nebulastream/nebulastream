@@ -27,7 +27,7 @@ using HJBuildSlicingVarSizedPtr = std::shared_ptr<HJBuildSlicingVarSized>;
  * from the operator handler. The insertion is done via a Nautilus::FunctionCall that proxies to the hashTable->insert() and
  * returns a pointer to the appropriate underlying pagedVector.
  */
-class HJBuildSlicingVarSized : virtual public StreamJoinBuild {
+class HJBuildSlicingVarSized : public virtual StreamJoinBuild {
   public:
     /**
      * @brief Constructor for a HJBuildSlicingVarSized join phase

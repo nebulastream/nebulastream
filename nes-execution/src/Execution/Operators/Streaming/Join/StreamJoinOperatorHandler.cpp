@@ -34,14 +34,16 @@ std::list<std::shared_ptr<StreamSliceInterface>> StreamJoinOperatorHandler::getS
     auto slicesLocked = slices.rlock();
 
     std::list<std::shared_ptr<StreamSliceInterface>> fliteredSlices;
+    // filtering slices, which start is in [startTS, stopTS) or end is in (startTS, stopTS]
+    // (records are in range [start, end) in slice)
     std::copy_if(slicesLocked->begin(),
                  slicesLocked->end(),
                  std::back_inserter(fliteredSlices),
                  [&startTS, &stopTS](StreamSlicePtr slice) {
-        uint64_t sliceStartTS = slice->getSliceStart();
-        uint64_t sliceEndTS = slice->getSliceEnd();
-        return (sliceStartTS >= startTS && sliceStartTS <= stopTS) || (sliceEndTS >= startTS && sliceEndTS <= stopTS);
-    });
+                     uint64_t sliceStartTS = slice->getSliceStart();
+                     uint64_t sliceEndTS = slice->getSliceEnd();
+                     return (sliceStartTS >= startTS && sliceStartTS < stopTS) || (sliceEndTS > startTS && sliceEndTS < stopTS);
+                 });
     return fliteredSlices;
 }
 
@@ -49,10 +51,15 @@ void StreamJoinOperatorHandler::restoreState(std::list<std::shared_ptr<StreamSli
     auto slicesLocked = this->slices.wlock();
 
     std::list<StreamSlicePtr> castedSlices;
-    std::transform(slices.begin(), slices.end(), castedSlices.begin(), [](const std::shared_ptr<StreamSliceInterface>& element)-> StreamSlicePtr {
-        return std::dynamic_pointer_cast<StreamSlice>(element);
-    });
+    // casting slices to derived class StreamSlice
+    std::transform(slices.begin(),
+                   slices.end(),
+                   std::back_inserter(castedSlices),
+                   [](const std::shared_ptr<StreamSliceInterface>& element) -> StreamSlicePtr {
+                       return std::dynamic_pointer_cast<StreamSlice>(element);
+                   });
 
+    // merging restored slices with existing
     slicesLocked->merge(castedSlices, [](StreamSlicePtr first, StreamSlicePtr second) {
         return first->getSliceEnd() < second->getSliceStart();
     });

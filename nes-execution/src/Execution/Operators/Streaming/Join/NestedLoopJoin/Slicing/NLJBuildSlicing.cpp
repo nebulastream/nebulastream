@@ -39,7 +39,7 @@ uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
     return nljSlice->getSliceEnd();
 }
 
-void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt ) {
+void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
     return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getCurrentSliceOrCreate();
@@ -80,7 +80,10 @@ void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinSt
 
     // Retrieving the slice of the current watermark, as we expect that more tuples will be inserted into this slice
     localJoinState->sliceReference =
-        Nautilus::FunctionCall("getNLJSliceRefProxy", getNLJSliceRefProxy, operatorHandlerMemRef, timestamp,
+        Nautilus::FunctionCall("getNLJSliceRefProxy",
+                               getNLJSliceRefProxy,
+                               operatorHandlerMemRef,
+                               timestamp,
                                Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                                Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     localJoinState->sliceStart =
@@ -92,9 +95,12 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     auto workerThreadId = ctx.getWorkerThreadId();
-    auto sliceReference = Nautilus::FunctionCall("getCurrentWindowProxy", getCurrentWindowProxy, opHandlerMemRef,
-                                                 Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                                                 Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    auto sliceReference =
+        Nautilus::FunctionCall("getCurrentWindowProxy",
+                               getCurrentWindowProxy,
+                               opHandlerMemRef,
+                               Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                               Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                        getNLJPagedVectorProxy,
                                                        sliceReference,
@@ -120,13 +126,12 @@ NLJBuildSlicing::NLJBuildSlicing(const uint64_t operatorHandlerIndex,
                                  TimeFunctionPtr timeFunction,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinOperator(joinStrategy, windowingStrategy),
-      StreamJoinBuild(operatorHandlerIndex,
-                      schema,
-                      joinFieldName,
-                      joinBuildSide,
-                      entrySize,
-                      std::move(timeFunction),
-                      joinStrategy,
-                      windowingStrategy) {}
+    : StreamJoinOperator(joinStrategy, windowingStrategy), StreamJoinBuild(operatorHandlerIndex,
+                                                                           schema,
+                                                                           joinFieldName,
+                                                                           joinBuildSide,
+                                                                           entrySize,
+                                                                           std::move(timeFunction),
+                                                                           joinStrategy,
+                                                                           windowingStrategy) {}
 }// namespace NES::Runtime::Execution::Operators

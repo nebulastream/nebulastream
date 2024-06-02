@@ -87,15 +87,14 @@ HJBuildSlicing::HJBuildSlicing(const uint64_t operatorHandlerIndex,
                                TimeFunctionPtr timeFunction,
                                QueryCompilation::StreamJoinStrategy joinStrategy,
                                QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinOperator(joinStrategy, windowingStrategy),
-      StreamJoinBuild(operatorHandlerIndex,
-                      schema,
-                      joinFieldName,
-                      joinBuildSide,
-                      entrySize,
-                      std::move(timeFunction),
-                      joinStrategy,
-                      windowingStrategy) {}
+    : StreamJoinOperator(joinStrategy, windowingStrategy), StreamJoinBuild(operatorHandlerIndex,
+                                                                           schema,
+                                                                           joinFieldName,
+                                                                           joinBuildSide,
+                                                                           entrySize,
+                                                                           std::move(timeFunction),
+                                                                           joinStrategy,
+                                                                           windowingStrategy) {}
 
 void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalJoinState*>(ctx.getLocalState(this));
@@ -106,7 +105,10 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
         //we need a new slice
         joinState->sliceReference =
-            Nautilus::FunctionCall("getHJSliceProxy", getHJSliceProxy, operatorHandlerMemRef, Value<UInt64>(tsValue),
+            Nautilus::FunctionCall("getHJSliceProxy",
+                                   getHJSliceProxy,
+                                   operatorHandlerMemRef,
+                                   Value<UInt64>(tsValue),
                                    Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                                    Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 

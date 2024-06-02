@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_STREAMSLICEINTERFACE_HPP
-#define NES_STREAMSLICEINTERFACE_HPP
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
 
 namespace NES::Runtime::Execution {
 /**
@@ -25,15 +25,15 @@ class StreamSliceInterface {
      * @brief Getter for the start ts of the slice
      * @return uint64_t
      */
-     [[nodiscard]] virtual uint64_t getSliceStart() const = 0;
+    [[nodiscard]] virtual uint64_t getSliceStart() const = 0;
 
     /**
      * @brief Getter for the end ts of the slice
      * @return uint64_t
      */
-     [[nodiscard]] virtual uint64_t getSliceEnd() const = 0;
+    [[nodiscard]] virtual uint64_t getSliceEnd() const = 0;
 
-     virtual ~StreamSliceInterface() = default;
+    virtual ~StreamSliceInterface() = default;
 };
 }// namespace NES::Runtime::Execution
-#endif //NES_STREAMSLICEINTERFACE_HPP
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_

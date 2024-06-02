@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_MIGRATABLESTATEINTERFACE_HPP
-#define NES_MIGRATABLESTATEINTERFACE_HPP
-#include <list>
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
 #include <Runtime/Execution/StreamSliceInterface.hpp>
+#include <list>
 
 namespace NES::Runtime::Execution {
 /**
@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution {
  */
 class MigratableStateInterface {
 
-        /**
+    /**
      * @brief Gets the state
      * @param startTS
      * @param stopTS
@@ -37,5 +37,5 @@ class MigratableStateInterface {
      */
     virtual void restoreState(std::list<std::shared_ptr<StreamSliceInterface>>) = 0;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif //NES_MIGRATABLESTATEINTERFACE_HPP
+}// namespace NES::Runtime::Execution
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_

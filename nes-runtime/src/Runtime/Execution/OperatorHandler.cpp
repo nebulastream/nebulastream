@@ -15,12 +15,13 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution {
-    std::list<std::shared_ptr<StreamSliceInterface>> OperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
-        NES_DEBUG("Get state to migrate from:", startTS, " to: ", stopTS);
-        return {};
-    };
+std::list<std::shared_ptr<StreamSliceInterface>> OperatorHandler::getStateToMigrate([[maybe_unused]] uint64_t startTS,
+                                                                                    [[maybe_unused]] uint64_t stopTS) {
+    NES_DEBUG("No state inside default implementation");
+    return {};
+};
 
-    void OperatorHandler::restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) {
-        NES_DEBUG("Restore state for: ", slices.size(), " slices.");
-    };
-}
+void OperatorHandler::restoreState([[maybe_unused]] std::list<std::shared_ptr<StreamSliceInterface>> slices) {
+    NES_DEBUG("Not possible to restore state in default implementation");
+};
+}// namespace NES::Runtime::Execution
