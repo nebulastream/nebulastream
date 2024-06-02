@@ -44,6 +44,12 @@ std::string LogicalJoinOperator::toString() const {
 
 Join::LogicalJoinDescriptorPtr LogicalJoinOperator::getJoinDefinition() const { return joinDefinition; }
 
+void LogicalJoinOperator::copyFieldToSchema(ExpressionNode& joinKey, const SchemaPtr& inputSchema, std::vector<NES::SchemaPtr>::iterator& itr) {
+    inputSchema->copyFields(*itr);
+    joinKey.inferStamp(inputSchema);
+    this->distinctSchemas.erase(itr);
+}
+
 bool LogicalJoinOperator::inferSchema() {
 
     if (!LogicalBinaryOperator::inferSchema()) {
@@ -65,7 +71,7 @@ bool LogicalJoinOperator::inferSchema() {
     auto findSchemaInDistinctSchemas = [&](ExpressionNode& joinKey, const SchemaPtr& inputSchema) {
         for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
             bool fieldExistsInSchema = true;
-            if (joinKey.instanceOf<FieldAccessExpressionNode>()) { // nur wenn es ein FieldAccessExpression node ist, soll so weiter gemacht werden wie früher
+            if (joinKey.instanceOf<FieldAccessExpressionNode>()) {
                 const auto joinKeyName = joinKey.as<FieldAccessExpressionNode>()->getFieldName();
                 // If field name contains qualifier
                 if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
@@ -74,11 +80,8 @@ bool LogicalJoinOperator::inferSchema() {
                     fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
                 }
             }
-
             if (fieldExistsInSchema) {
-                inputSchema->copyFields(*itr);
-                joinKey.inferStamp(inputSchema);
-                distinctSchemas.erase(itr);
+                copyFieldToSchema(joinKey, inputSchema, itr);
                 return true;
             }
             ++itr;
@@ -90,6 +93,7 @@ bool LogicalJoinOperator::inferSchema() {
     // Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
     auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinExpression());
+
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
         if ((*itr)->instanceOf<BinaryExpressionNode>()) {
             auto visitingOp = (*itr)->as<BinaryExpressionNode>();
@@ -98,7 +102,8 @@ bool LogicalJoinOperator::inferSchema() {
                 continue;
             } else {
                 visitedExpressions.insert(visitingOp);
-                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) { // TODO anpassen, nicht nur BinaryExpressionNodes
+                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) {
+                    // TODO kommentare entfernen
                     //Find the schema for left and right join key
                     // nicht als FieldAccessExpression Node, um auch zB Attribute("id") > 0 zu erlauben
                     const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft(); //->as<FieldAccessExpressionNode>();
@@ -121,11 +126,13 @@ bool LogicalJoinOperator::inferSchema() {
                     visitedExpressions.insert(visitingOp);
                 }
             }
-        } else {
-            // wenn kein BinaryOperation (zb ExpressionNode(true), dann nehme alle Fields)
-            leftInputSchema->copyFields(*distinctSchemas.begin());
-            rightInputSchema->copyFields(*distinctSchemas.begin());
-            distinctSchemas.erase(distinctSchemas.begin());
+        } else if (joinDefinition->getJoinType() == NES::Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT) {
+            // TODO this is not implemented correctly. Maybe this if-condition should not be Cartesian-Product but the ExpressionNode type that allows ExpressionItem(true)
+            auto constantValue = itr.operator*()->as<ConstantValueExpressionNode>()->getConstantValue();
+            findSchemaInDistinctSchemas(*(*itr)->as<ExpressionNode>(), leftInputSchema);
+            findSchemaInDistinctSchemas(*(*itr)->as<ExpressionNode>(), rightInputSchema);
+
+            // copyFieldToSchema()
         }
     }
     // Clearing now the distinct schemas
@@ -245,5 +252,4 @@ void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowS
     this->windowStartFieldName = windowStartFieldName;
     this->windowEndFieldName = windowEndFieldName;
 }
-
 }// namespace NES

@@ -76,6 +76,7 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
     const Join::LogicalJoinDescriptorPtr joinDefinition;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
+    void copyFieldToSchema(ExpressionNode& joinKey, const SchemaPtr& inputSchema, std::vector<NES::SchemaPtr>::iterator& itr);
 };
 }// namespace NES
 #endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_
