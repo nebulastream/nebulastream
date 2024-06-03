@@ -266,7 +266,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
     }
 
     /**
-     * @brief sets up and opens NLJBuild for left and right side, executes it for every record and calls checkWindowsInBuild()
+     * @brief calls insertRecordsIntoBuild() to set up, open and execute NLJBuild, then calls checkWindowsInBuild()
      * @param numberOfRecordsLeft
      * @param numberOfRecordsRight
      */
@@ -279,6 +279,9 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      * @brief sets up and opens NLJBuild for left and right side and executes it for every record
      * @param numberOfRecordsLeft
      * @param numberOfRecordsRight
+     * @return generated left records
+     * @return generated right records
+     * @return max timestamp
      */
     std::tuple<std::vector<Record>, std::vector<Record>, uint64_t> insertRecordsIntoBuild(uint64_t numberOfRecordsLeft,
                                                                                           uint64_t numberOfRecordsRight) {

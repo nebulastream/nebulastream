@@ -50,6 +50,7 @@ std::list<std::shared_ptr<StreamSliceInterface>> StreamJoinOperatorHandler::getS
 void StreamJoinOperatorHandler::restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) {
     auto slicesLocked = this->slices.wlock();
 
+    // restored slices
     std::list<StreamSlicePtr> castedSlices;
     // casting slices to derived class StreamSlice
     std::transform(slices.begin(),

@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
 #include <Runtime/Execution/StreamSliceInterface.hpp>
 #include <list>
+#include <memory>
 
 namespace NES::Runtime::Execution {
 /**
