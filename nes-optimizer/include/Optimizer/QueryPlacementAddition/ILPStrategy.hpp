@@ -34,8 +34,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace NES::Optimizer {
 
 /**
- * @brief This class implements Integer Linear Programming strategy to perform the operator placement
- */
+* @brief This class implements Integer Linear Programming strategy to perform the operator placement
+*/
 class ILPStrategy : public BasePlacementAdditionStrategy {
   public:
     ~ILPStrategy() override = default;
@@ -60,7 +60,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      * @brief get the relative weight for the overutilization cost
      * @return the relative weight for the overutilization cost
      */
-    double getOverUtilizationCostWeight();
+    double getOverUtilizationCostWeight() const;
 
     /**
      * @brief set the relative weight for the network cost to be used when computing weighted sum in the final cost
@@ -72,7 +72,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      * @brief get the relative weight for the network cost
      * @return the relative weight for the network cost
      */
-    double getNetworkCostWeight();
+    double getNetworkCostWeight() const;
 
   private:
     // default weights for over utilization and network cost
@@ -99,7 +99,6 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     /**
      * @brief is called from addConstraints and calling itself recursivly with parents of operator Node to identify their location on topologyPath
      * @param logicalOperator the current logical operator
-     * @param topologyNodePath the selected sequence of topology node to add
      * @param opt an instance of the Z3 optimize class
      * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
      * @param pinnedDownStreamOperators
@@ -108,8 +107,8 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
      */
     void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
-                                 std::vector<TopologyNodeWLock>& topologyNodePath,
                                  z3::optimize& opt,
+                                 std::unordered_map<OperatorId, std::vector<WorkerId>> potentialOperatorPinningLocation,
                                  std::map<std::string, z3::expr>& placementVariable,
                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                  std::map<OperatorId, z3::expr>& operatorDistanceMap,
@@ -117,44 +116,42 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
                                  std::map<WorkerId, double>& nodeMileageMap);
 
     /**
-    * @brief Populate the placement variables and adds constraints to the optimizer
-    * @param opt an instance of the Z3 optimize class
-    * @param pinnedUpStreamOperators
-    * @param pinnedDownStreamOperators
-    * @param topologyNodePath the selected sequence of topology node to add
-    * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
-    * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
-    * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
-    * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
-    */
+     * @brief Populate the placement variables and adds constraints to the optimizer
+     * @param opt an instance of the Z3 optimize class
+     * @param pinnedUpStreamOperators
+     * @param pinnedDownStreamOperators
+     * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
+     * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
+     * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
+     * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
+     */
     void addConstraints(z3::optimize& opt,
                         const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                         const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                        std::vector<TopologyNodeWLock>& topologyNodePath,
                         std::map<std::string, z3::expr>& placementVariable,
                         std::map<OperatorId, z3::expr>& operatorDistanceMap,
                         std::map<WorkerId, z3::expr>& nodeUtilizationMap,
                         std::map<WorkerId, double>& nodeMileageMap);
 
     /**
-    * @brief computes heuristics for distance
-    * @param pinnedDownStreamOperators: pinned downstream operators
-    * @return a mapping of topology node (represented by string id) and their distance to the root node
-    */
+     * @brief computes heuristics for distance
+     * @param pinnedDownStreamOperators: pinned downstream operators
+     * @return a mapping of topology node (represented by string id) and their distance to the root node
+     */
     std::map<WorkerId, double> computeMileage(const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
-    * @brief calculates the mileage property for a node
-    * @param node topology node for which mileage is calculated
-    * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
-    */
+     * @brief calculates the mileage property for a node
+     * @param node topology node for which mileage is calculated
+     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
+     */
     void computeDistance(const TopologyNodePtr& node, std::map<WorkerId, double>& mileages);
 
     /**
      * Assign default cost values
-     * @param operatorNode : the last operator to strat with
+     * @param operatorNode : the last operator to start with
      */
-    void assignOperatorDefaultProperties(const LogicalOperatorPtr operatorNode);
+    void assignOperatorDefaultProperties(const LogicalOperatorPtr& operatorNode);
 };
 }// namespace NES::Optimizer
 

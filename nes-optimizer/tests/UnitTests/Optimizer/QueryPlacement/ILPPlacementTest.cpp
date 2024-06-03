@@ -46,10 +46,6 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
-#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
-#include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
@@ -93,38 +89,51 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        auto rootNodeId = WorkerId(1);
+        WorkerId rootNodeId = WorkerId{1};
         topologyForILP->registerWorker(rootNodeId, "localhost", 123, 124, 100, properties, 0, 0);
         topologyForILP->addAsRootWorkerId(rootNodeId);
 
-        auto middleNodeId = WorkerId(2);
+        WorkerId middleNodeId = WorkerId{2};
         topologyForILP->registerWorker(middleNodeId, "localhost", 123, 124, 10, properties, 0, 0);
         topologyForILP->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
-        auto srcNodeId = WorkerId(3);
-        topologyForILP->registerWorker(srcNodeId, "localhost", 123, 124, 3, properties, 0, 0);
-        topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
-        topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+        WorkerId srcNodeId1 = WorkerId{3};
+        topologyForILP->registerWorker(srcNodeId1, "localhost", 123, 124, 3, properties, 0, 0);
+        topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId1);
+        topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
 
-        topologyForILP->addLinkProperty(middleNodeId, srcNodeId, 512, 100);
+        WorkerId srcNodeId2 = WorkerId{4};
+        topologyForILP->registerWorker(srcNodeId2, "localhost", 123, 124, 3, properties, 0, 0);
+        topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId2);
+        topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
+
+        topologyForILP->addLinkProperty(middleNodeId, srcNodeId1, 512, 100);
+        topologyForILP->addLinkProperty(middleNodeId, srcNodeId2, 512, 100);
         topologyForILP->addLinkProperty(rootNodeId, middleNodeId, 512, 100);
 
-        auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-        const std::string sourceName = "car";
-
         sourceCatalogForILP = std::make_shared<Catalogs::Source::SourceCatalog>();
-        sourceCatalogForILP->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalogForILP->getLogicalSource(sourceName);
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
-        csvSourceType->setGatheringInterval(0);
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(csvSourceType);
-        auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId);
-        sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                         Statistic::DefaultStatisticCache::create(),
-                                                                         Topology::create());
+
+        auto schema1 = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        const std::string sourceName1 = "car";
+        sourceCatalogForILP->addLogicalSource(sourceName1, schema1);
+        auto logicalSource1 = sourceCatalogForILP->getLogicalSource(sourceName1);
+        CSVSourceTypePtr csvSourceType1 = CSVSourceType::create(sourceName1, "test2");
+        csvSourceType1->setGatheringInterval(0);
+        csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource1 = PhysicalSource::create(csvSourceType1);
+        auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, srcNodeId1);
+        sourceCatalogForILP->addPhysicalSource(sourceName1, sourceCatalogEntry1);
+
+        auto schema2 = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        const std::string sourceName2 = "truck";
+        sourceCatalogForILP->addLogicalSource(sourceName2, schema2);
+        auto logicalSource2 = sourceCatalogForILP->getLogicalSource(sourceName2);
+        CSVSourceTypePtr csvSourceType2 = CSVSourceType::create(sourceName2, "test2");
+        csvSourceType2->setGatheringInterval(0);
+        csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource2 = PhysicalSource::create(csvSourceType2);
+        auto sourceCatalogEntry2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, srcNodeId2);
+        sourceCatalogForILP->addPhysicalSource(sourceName2, sourceCatalogEntry2);
     }
 
     void assignOperatorPropertiesRecursive(LogicalOperatorPtr operatorNode) {
@@ -391,7 +400,6 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
         }
     }
 }
-
 /* Test query placement with ILP strategy with a window query with default parameters*/
 TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategyWithDefaultParameters) {
     setupTopologyAndSourceCatalogForILP();
@@ -1247,7 +1255,10 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     //Prepare query plan
-    Query query = Query::from("car").unionWith(Query::from("car")).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car")
+                      .filter(Attribute("id") == 1)
+                      .unionWith(Query::from("truck").filter(Attribute("id") == 1))
+                      .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
@@ -1271,18 +1282,28 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
     auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
 
     //Assertion
-    ASSERT_EQ(lockedExecutionNodes.size(), 3U);
+    ASSERT_EQ(lockedExecutionNodes.size(), 4U);
     for (const auto& executionNode : lockedExecutionNodes) {
         if (executionNode->operator*()->getId() == WorkerId(3)) {
             // place filter on source node
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 2U);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
             std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+        } else if (executionNode->operator*()->getId() == WorkerId(4)) {
+            // place filter on source node
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
         } else if (executionNode->operator*()->getId() == WorkerId(2)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
