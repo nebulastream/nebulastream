@@ -13,12 +13,9 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <TestUtils/BasicTraceFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>

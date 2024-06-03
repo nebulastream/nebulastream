@@ -19,6 +19,9 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus {
+
+constexpr int SECONDS_TO_MILLISECONDS = 1000;
+
 /**
 * @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
 */

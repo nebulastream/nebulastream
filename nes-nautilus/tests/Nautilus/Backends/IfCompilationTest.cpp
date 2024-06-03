@@ -14,7 +14,6 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
-#include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>

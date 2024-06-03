@@ -182,34 +182,34 @@ class IntInvocationPlugin : public InvocationPlugin {
             && (targetType->isType<Int16>() || targetType->isType<Int32>() || targetType->isType<Int64>()
                 || targetType->isType<UInt8>() || targetType->isType<UInt16>() || targetType->isType<UInt32>()
                 || targetType->isType<UInt64>())) {
-            // int8 can be casted to Int16-Int64 and UInt8-UInt64
+            // int8 can be cast to Int16-Int64 and UInt8-UInt64
             return true;
         } else if (isa<Int16>(value.getValue())
                    && (targetType->isType<Int32>() || targetType->isType<Int64>() || targetType->isType<UInt16>()
                        || targetType->isType<UInt32>() || targetType->isType<UInt64>())) {
-            // int16 can be casted to Int32-Int64 and UInt16-UInt64
+            // int16 can be cast to Int32-Int64 and UInt16-UInt64
             return true;
         } else if (isa<Int32>(value.getValue())
                    && (targetType->isType<Int64>() || targetType->isType<UInt32>() || targetType->isType<UInt64>())) {
-            // int32 can be casted to Int64 and UInt32-UInt64
+            // int32 can be cast to Int64 and UInt32-UInt64
             return true;
         } else if (isa<Int64>(value.getValue()) && targetType->isType<UInt64>()) {
-            // int32 can be casted to Int64 and UInt32-UInt64
+            // int32 can be cast to Int64 and UInt32-UInt64
             return true;
         }
         // unsigned conversions
         if (isa<UInt8>(value.getValue())
             && (targetType->isType<Int16>() || targetType->isType<Int32>() || targetType->isType<Int64>()
                 || targetType->isType<UInt16>() || targetType->isType<UInt32>() || targetType->isType<UInt64>())) {
-            // uint8 can be casted to Int16-Int64 and UInt16-UInt64
+            // uint8 can be cast to Int16-Int64 and UInt16-UInt64
             return true;
         } else if (isa<UInt16>(value.getValue())
                    && (targetType->isType<Int32>() || targetType->isType<Int64>() || targetType->isType<UInt32>()
                        || targetType->isType<UInt64>())) {
-            // uint16 can be casted to Int32-Int64 and UInt32-UInt64
+            // uint16 can be cast to Int32-Int64 and UInt32-UInt64
             return true;
         } else if (isa<UInt32>(value.getValue()) && (targetType->isType<Int64>() || targetType->isType<UInt64>())) {
-            // uint32 can be casted to Int64 and UInt64
+            // uint32 can be cast to Int64 and UInt64
             return true;
         }
         return false;

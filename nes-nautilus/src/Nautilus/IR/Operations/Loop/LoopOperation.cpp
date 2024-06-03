@@ -15,7 +15,6 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-#include <utility>
 namespace NES::Nautilus::IR::Operations {
 LoopOperation::LoopOperation(LoopType loopType)
     : Operation(Operation::OperationType::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}

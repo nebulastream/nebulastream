@@ -889,7 +889,7 @@ short BCLoweringProvider::LoweringContext::getResultRegister(const std::shared_p
                                                              RegisterFrame& frame) {
     auto optResultIdentifier = opt->getIdentifier();
 
-    // if the result value of opt is directly passed to an block argument, then we can directly write the value to the correct target register.
+    // if the result value of opt is directly passed to a block argument, then we can directly write the value to the correct target register.
     if (opt->getUsages().size() == 1) {
         auto* usage = opt->getUsages()[0];
         if (usage->getOperationType() == IR::Operations::Operation::OperationType::BlockInvocation) {

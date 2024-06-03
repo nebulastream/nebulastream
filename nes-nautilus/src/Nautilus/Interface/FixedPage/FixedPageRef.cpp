@@ -16,7 +16,6 @@
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
 FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef) : fixedPageRef(fixedPageRef) {}

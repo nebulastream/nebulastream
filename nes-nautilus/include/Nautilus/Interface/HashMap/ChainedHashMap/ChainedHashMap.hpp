@@ -56,7 +56,6 @@ class ChainedHashMap {
         hash_t hash;
         // payload data follows this header
         explicit Entry(hash_t hash) : next(nullptr), hash(hash){};
-        constexpr int8_t* dataOffset() { return ((int8_t*) this) + sizeof(Entry); }
     };
 
     /**

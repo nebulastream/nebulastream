@@ -63,8 +63,4 @@ StampPtr StampFactory::createFloatStamp() { return std::make_shared<FloatStamp>(
 
 StampPtr StampFactory::createDoubleStamp() { return std::make_shared<FloatStamp>(FloatStamp::BitWidth::F64); }
 
-StampPtr StampFactory::createArrayStamp(uint64_t size, StampPtr component) {
-    return std::make_shared<ArrayStamp>(size, component);
-}
-
 }// namespace NES::Nautilus::IR::Types
