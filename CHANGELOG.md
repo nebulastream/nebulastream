@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.145](https://github.com/nebulastream/nebulastream/tree/v0.6.145) (2024-06-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.144...v0.6.145)
+
+**Implemented enhancements:**
+
+- \[TASK\] Code quality improvement for nes-compiler [\#4757](https://github.com/nebulastream/nebulastream/issues/4757)
+
 ## [v0.6.144](https://github.com/nebulastream/nebulastream/tree/v0.6.144) (2024-06-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.143...v0.6.144)
