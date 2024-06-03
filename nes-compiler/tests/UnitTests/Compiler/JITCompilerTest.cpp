@@ -15,7 +15,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationRequest.hpp>
-#include <Compiler/CompilationResult.hpp>
 #include <Compiler/DynamicObject.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
