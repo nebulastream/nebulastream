@@ -26,8 +26,8 @@ JITCompilerBuilder& JITCompilerBuilder::registerLanguageCompiler(const std::shar
     return *this;
 }
 
-JITCompilerBuilder& JITCompilerBuilder::setUseCompilationCache(bool useCompilationCache) {
-    this->useCompilationCache = useCompilationCache;
+JITCompilerBuilder& JITCompilerBuilder::setUseCompilationCache(bool pUseCompilationCache) {
+    this->useCompilationCache = pUseCompilationCache;
     return *this;
 }
 

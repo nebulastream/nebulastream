@@ -23,12 +23,10 @@
 #include <Compiler/Util/SharedLibrary.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
-#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <unistd.h>
 
 using namespace std::string_literals;
 namespace NES::Compiler {
@@ -122,7 +120,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     NES_DEBUG("Compiler: compile with: '{}'", compilerCall.str());
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
-    FILE* fp = nullptr;
+    FILE* fp;
     char buffer[8192];
 
     // Redirecting stderr to stdout, to be able to read error messages
