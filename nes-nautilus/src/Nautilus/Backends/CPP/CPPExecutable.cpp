@@ -13,7 +13,6 @@
 */
 
 #include <Nautilus/Backends/CPP/CPPExecutable.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 namespace NES::Nautilus::Backends::CPP {

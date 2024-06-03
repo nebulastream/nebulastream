@@ -22,7 +22,6 @@
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
-#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
@@ -112,7 +111,7 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
         // Check blocks (DFS) until an open merge-block was found. Push encountered if-operations to stack.
         // In a nutshell, we identify open merge-blocks by checking the number of incoming edges vs mergeBlockNumVisits
         // and numLoopBackEdges. For example, a block that has 2 incoming edges, 2 numMergeBlockVisits, and 0
-        // numLoopBackEdges is an closed merge-block that merges two control-flow-branches. In contrast, a block that has
+        // numLoopBackEdges is a closed merge-block that merges two control-flow-branches. In contrast, a block that has
         // 5 incoming edges, 2 numMergeBlockVisits, and 1 numLoopBackEdges is an open merge-block with still 2 open
         // control-flow-merge-edges. Also, it is a loop-header-block with 1 numLoopBackEdge. (5-2-1 => 2 still open)
         while (!(mergeBlockFound =
@@ -143,7 +142,7 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
         }
         // If no merge-block was found, we traversed the entire graph and are done (return block is current block).
         if (mergeBlockFound) {
-            // If a merge-block was found, depending on whether the we are in the current if-operations' true
+            // If a merge-block was found, depending on whether we are in the current if-operations' true
             // or false branch, we either set it as the current if-operation's true-branch-block,
             // or set it as current if-operation's false-branch-block.
             if (ifOperations.top()->isTrueBranch) {
@@ -165,7 +164,7 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
                 } while (!ifOperations.empty() && !ifOperations.top()->isTrueBranch && !mergeBlocks.empty()
                          && mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
                 // In this case, we do not visit a block via a new edge, so newVisit is false.
-                // This is important in case the the current top-most if-operation on the stack is in its true-branch
+                // This is important in case the current top-most if-operation on the stack is in its true-branch
                 // and the currentBlock is its merge-block.
                 newVisit = false;
             }

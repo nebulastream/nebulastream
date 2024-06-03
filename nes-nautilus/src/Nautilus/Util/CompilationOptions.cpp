@@ -36,7 +36,7 @@ bool CompilationOptions::isDebug() const { return debug; }
 void CompilationOptions::setDebug(bool debug) { CompilationOptions::debug = debug; }
 bool CompilationOptions::isProxyInlining() const { return proxyInlining; }
 void CompilationOptions::setProxyInlining(const bool proxyInlining) {
-    // For now we statically write proxy functions to /tmp/proxiesReduced.ll (see ExtractFunctionFromLLVMIR.cpp)
+    // For now, we statically write proxy functions to /tmp/proxiesReduced.ll (see ExtractFunctionFromLLVMIR.cpp)
     CompilationOptions::proxyInliningInputPath = std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll";
     if (proxyInlining && !std::filesystem::exists(proxyInliningInputPath)) {
         NES_THROW_RUNTIME_ERROR("We require a proxy functions file under: " << proxyInliningInputPath

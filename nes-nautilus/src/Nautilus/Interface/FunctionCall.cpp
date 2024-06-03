@@ -14,7 +14,6 @@
 
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <regex>
 
 namespace NES::Nautilus {
 

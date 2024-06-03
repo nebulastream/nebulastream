@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus {
 

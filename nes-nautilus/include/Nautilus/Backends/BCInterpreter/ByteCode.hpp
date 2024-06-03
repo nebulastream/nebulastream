@@ -276,7 +276,7 @@ void call(const OpCode& c, RegisterFile& regs) {
     auto ptr = (ReturnType(*)(Args...)) fcall->functionPtr;
 
     if constexpr (std::is_void_v<ReturnType>) {
-        // if ReturnType is void we dont return a result.
+        // if ReturnType is void we don't return a result.
         if constexpr (sizeof...(Args) == 0) {
             ptr();
         } else if constexpr (sizeof...(Args) == 1) {

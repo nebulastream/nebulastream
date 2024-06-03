@@ -21,7 +21,6 @@
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <cstdint>
 #include <memory>
 #include <stack>
 #include <unordered_map>

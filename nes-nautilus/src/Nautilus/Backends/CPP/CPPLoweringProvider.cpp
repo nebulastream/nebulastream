@@ -24,7 +24,6 @@
 #include <Nautilus/IR/Operations/LogicalOperations/BitWiseXorOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -151,7 +150,7 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blockArguments << getType(cmpOp->getStamp()) << " " << resultVar << ";\n";
     frame.setValue(cmpOp->getIdentifier(), resultVar);
 
-    // we have to handle the special case that we want to do a null check. Currently, Nautilus IR just contains a x == 0, thus we check if x is a ptr type.
+    // we have to handle the special case that we want to do a null check. Currently, Nautilus IR just contains an x == 0, thus we check if x is a ptr type.
     if (cmpOp->isEquals() && cmpOp->getLeftInput()->getStamp()->isAddress() && cmpOp->getRightInput()->getStamp()->isInteger()) {
         blocks[blockIndex] << resultVar << " = " << leftInput << " == nullptr;\n";
         return;

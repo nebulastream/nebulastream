@@ -33,7 +33,6 @@ class StampFactory {
     static StampPtr createFloatStamp();
     static StampPtr createDoubleStamp();
     static StampPtr createAddressStamp();
-    static StampPtr createArrayStamp(uint64_t size, StampPtr component);
 };
 
 }// namespace NES::Nautilus::IR::Types
