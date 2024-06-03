@@ -1,12 +1,13 @@
 # Changelog
 
-## [v0.6.143](https://github.com/nebulastream/nebulastream/tree/v0.6.143) (2024-06-03)
+## [v0.6.144](https://github.com/nebulastream/nebulastream/tree/v0.6.144) (2024-06-03)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.143...v0.6.143)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.143...v0.6.144)
 
 **Implemented enhancements:**
 
 - \[TASK\] Support binary operator placement on an hierarchical topology using ILP [\#4878](https://github.com/nebulastream/nebulastream/issues/4878)
+- \[TASK\] Code quality improvement for nes-nautilus [\#4828](https://github.com/nebulastream/nebulastream/issues/4828)
 
 ## [v0.6.143](https://github.com/nebulastream/nebulastream/tree/v0.6.143) (2024-05-31)
 
