@@ -20,3 +20,11 @@
 # Contributor Covenant Code of Conduct
 
 NebulaStream project follows the [Apache Software Foundation code of conduct](https://www.apache.org/foundation/policies/conduct.html).
+
+# Additional NebulaStream Specific 
+1. We shy away from doing things quick and dirty. We prefer to do things right and clean. This means that we prefer to take the time to do things right and not rush things. We prefer to have a clean codebase and a clean architecture over a quick solution.
+2. The task of the maintainers is to give **direction**, enforce **code quality** and take **responsibility** for the project. This means that if a problem arises it is the highest priority job of the maintainers to solve it or delegate it.
+3. The maintainers are responsible for **merging** pull requests and are the only ones who can merge a pull request.
+4. Each maintainer is equal and has equal voting rights.
+5. The group of maintainers is dynamic and can change over time. Each maintainer must contribute to the project and be active. If a maintainer does not contribute, the other maintainers can decide to remove him/her from the group.
+6. Meetings must be prepared and there should exist action items (who, what until when) at the end of a meeting. Further, an agenda has to be presented and sent around before the meeting starts.
