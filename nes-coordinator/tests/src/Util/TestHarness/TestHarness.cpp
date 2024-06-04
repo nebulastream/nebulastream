@@ -62,13 +62,14 @@ TestHarness& TestHarness::setWindowingStrategy(QueryCompilation::WindowingStrate
 }
 
 void TestHarness::checkAndAddLogicalSources() {
-    auto sourceCatalog = nesCoordinator->getSourceCatalog();
 
     for (const auto& logicalSource : logicalSources) {
+
         auto logicalSourceName = logicalSource->getLogicalSourceName();
         auto schema = logicalSource->getSchema();
 
         // Check if logical source already exists
+        auto sourceCatalog = nesCoordinator->getSourceCatalog();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
             NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
                       logicalSourceName);
@@ -264,20 +265,13 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
     }
 
-    auto requestHandlerService = nesCoordinator->getRequestHandlerService();
     auto queryCatalog = nesCoordinator->getQueryCatalog();
 
-    // local fs
-    remove(filePath.c_str());
+    // Add a file sink to the query and enqueue it.
+    addFileSink();
+    validateAndQueueAddQueryRequest(magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value());
 
-    //register query
-    auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
-    queryId = INVALID_QUERY_ID;
-
-    auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), placementStrategy);
-
-    // Now run the query
+    // Wait for query completion
     if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
         NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
     }
@@ -306,9 +300,22 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     return *this;
 }
 
+TestHarness& TestHarness::addFileSink() {
+    queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", appendMode));
+    return *this;
+}
+
+TestHarness& TestHarness::validateAndQueueAddQueryRequest(const Optimizer::PlacementStrategy& placementStrategy) {
+    auto requestHandlerService = nesCoordinator->getRequestHandlerService();
+    queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryWithoutSink->getQueryPlan(), placementStrategy);
+    return *this;
+}
+
+bool TestHarness::checkFailedOrTimeout() const {
+    return TestUtils::checkFailedOrTimeout(queryId, nesCoordinator->getQueryCatalog());
+}
+
 std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
-    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> receivedBuffers;
-    const auto queryCatalog = nesCoordinator->getQueryCatalog();
     const auto schema = queryPlan->getSinkOperators()[0]->getOutputSchema();
     auto tupleBuffers = TestUtils::createExpectedBuffersFromCsv(filePath, schema, bufferManager, true);
     return TestUtils::createTestTupleBuffers(tupleBuffers, schema);
@@ -442,5 +449,23 @@ WorkerId TestHarness::getNextTopologyId() {
     return topologyId;
 }
 Runtime::BufferManagerPtr TestHarness::getBufferManager() const { return bufferManager; }
+
+TestHarness& TestHarness::setOutputFilePath(const std::string& newOutputFilePath) {
+    this->filePath = newOutputFilePath;
+    return *this;
+}
+
+TestHarness& TestHarness::setAppendMode(const std::string_view newAppendMode) {
+    this->appendMode = newAppendMode;
+    return *this;
+}
+
+TestHarness& TestHarness::stopCoordinatorAndWorkers() {
+    for (const auto& worker : testHarnessWorkerConfigurations) {
+        worker->getNesWorker()->stop(false);
+    }
+    nesCoordinator->stopCoordinator(false);
+    return *this;
+}
 
 }// namespace NES

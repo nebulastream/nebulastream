@@ -113,6 +113,11 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
                 completedWork(task, workerContext);
                 return ExecutionResult::Finished;
             }
+            case ExecutionResult::Error: {
+                NES_ERROR("Task execution failed");
+                notifyTaskFailure(task.getExecutable(), "Task execution failed");
+                return ExecutionResult::Error;
+            }
             default: {
                 return result;
             }
