@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.146](https://github.com/nebulastream/nebulastream/tree/v0.6.146) (2024-06-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.145...v0.6.146)
+
+**Implemented enhancements:**
+
+- Adding state migrating interface with implementation for NestedLoopJoin  [\#4886](https://github.com/nebulastream/nebulastream/issues/4886)
+
 ## [v0.6.145](https://github.com/nebulastream/nebulastream/tree/v0.6.145) (2024-06-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.144...v0.6.145)
