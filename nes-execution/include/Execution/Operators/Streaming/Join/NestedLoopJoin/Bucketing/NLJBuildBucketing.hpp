@@ -34,7 +34,6 @@ class NLJBuildBucketing : public StreamJoinBuildBucketing {
      * @param entrySize
      * @param timeFunction
      * @param joinStrategy
-     * @param windowingStrategy
      * @param windowSize
      * @param windowSlide
      */
@@ -45,7 +44,6 @@ class NLJBuildBucketing : public StreamJoinBuildBucketing {
                       const uint64_t entrySize,
                       TimeFunctionPtr timeFunction,
                       QueryCompilation::StreamJoinStrategy joinStrategy,
-                      QueryCompilation::WindowingStrategy windowingStrategy,
                       const uint64_t windowSize,
                       const uint64_t windowSlide);
 

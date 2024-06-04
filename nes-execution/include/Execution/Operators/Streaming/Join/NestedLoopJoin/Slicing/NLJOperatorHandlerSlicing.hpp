@@ -42,7 +42,7 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
                               const uint64_t pageSizeRight);
 
     /**
-     * @brief Creats a NLJOperatorHandlerSlicing
+     * @brief Creates a NLJOperatorHandlerSlicing
      * @param inputOrigins
      * @param outputOriginId
      * @param windowSize

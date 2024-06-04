@@ -37,7 +37,6 @@ class HJBuildSlicing : public StreamJoinBuild {
      * @param entrySize
      * @param timeFunction
      * @param joinStrategy
-     * @param windowingStrategy
      */
     HJBuildSlicing(const uint64_t operatorHandlerIndex,
                    const SchemaPtr& schema,
@@ -45,8 +44,7 @@ class HJBuildSlicing : public StreamJoinBuild {
                    const QueryCompilation::JoinBuildSideType joinBuildSide,
                    const uint64_t entrySize,
                    TimeFunctionPtr timeFunction,
-                   QueryCompilation::StreamJoinStrategy joinStrategy,
-                   QueryCompilation::WindowingStrategy windowingStrategy);
+                   QueryCompilation::StreamJoinStrategy joinStrategy);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
