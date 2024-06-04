@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.147](https://github.com/nebulastream/nebulastream/tree/v0.6.147) (2024-06-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.146...v0.6.147)
+
+### Bug Fixes 🐛
+
+- \[BUG\] The coordinator crashes if it cannot write to the output file of a FileSink [\#4806](https://github.com/nebulastream/nebulastream/issues/4806)
+
 ## [v0.6.146](https://github.com/nebulastream/nebulastream/tree/v0.6.146) (2024-06-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.145...v0.6.146)
