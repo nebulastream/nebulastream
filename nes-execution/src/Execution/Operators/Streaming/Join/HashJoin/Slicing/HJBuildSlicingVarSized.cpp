@@ -37,8 +37,11 @@ class LocalHashJoinState : public OperatorState {
 
 void* getHJSliceVarSizedProxy(void* ptrOpHandler, uint64_t timeStamp) {
     NES_DEBUG("getHJSliceVarSizedProxy with ts={}", timeStamp);
-    auto* opHandler = static_cast<HJOperatorHandlerSlicing*>(ptrOpHandler);
-    auto currentSlice = opHandler->getSliceByTimestampOrCreateIt(timeStamp);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(
+        ptrOpHandler,
+        magic_enum::enum_integer(QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED),
+        magic_enum::enum_integer(QueryCompilation::WindowingStrategy::SLICING));
+    auto currentSlice = dynamic_cast<HJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timeStamp);
     NES_ASSERT2_FMT(currentSlice != nullptr, "invalid window");
     return currentSlice.get();
 }
@@ -74,16 +77,15 @@ HJBuildSlicingVarSized::HJBuildSlicingVarSized(const uint64_t operatorHandlerInd
                                                const QueryCompilation::JoinBuildSideType joinBuildSide,
                                                const uint64_t entrySize,
                                                TimeFunctionPtr timeFunction,
-                                               QueryCompilation::StreamJoinStrategy joinStrategy,
-                                               QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinBuild(operatorHandlerIndex,
-                      schema,
-                      joinFieldName,
-                      joinBuildSide,
-                      entrySize,
-                      std::move(timeFunction),
-                      joinStrategy,
-                      windowingStrategy) {}
+                                               QueryCompilation::StreamJoinStrategy joinStrategy)
+    : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::SLICING), StreamJoinBuild(operatorHandlerIndex,
+                                                                                                      schema,
+                                                                                                      joinFieldName,
+                                                                                                      joinBuildSide,
+                                                                                                      entrySize,
+                                                                                                      std::move(timeFunction),
+                                                                                                      joinStrategy,
+                                                                                                      windowingStrategy) {}
 
 void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalHashJoinState*>(ctx.getLocalState(this));
@@ -94,7 +96,6 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
         joinState->sliceReference =
             FunctionCall("getHJSliceVarSizedProxy", getHJSliceVarSizedProxy, operatorHandlerMemRef, Value<UInt64>(tsValue));
-
         joinState->sliceStart = FunctionCall("getSliceStartVarSizedProxy", getSliceStartVarSizedProxy, joinState->sliceReference);
         joinState->sliceEnd = FunctionCall("getSliceEndVarSizedProxy", getSliceEndVarSizedProxy, joinState->sliceReference);
 

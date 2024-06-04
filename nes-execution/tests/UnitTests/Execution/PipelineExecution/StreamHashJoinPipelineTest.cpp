@@ -153,8 +153,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             leftSchema->getSchemaSizeInBytes(),
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
                                                                                Windowing::TimeUnit::Milliseconds()),
-            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-            QueryCompilation::WindowingStrategy::SLICING);
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
         auto joinBuildRight = std::make_shared<Operators::HJBuildSlicing>(
             handlerIndex,
             rightSchema,
@@ -163,8 +162,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             rightSchema->getSchemaSizeInBytes(),
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
                                                                                Windowing::TimeUnit::Milliseconds()),
-            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-            QueryCompilation::WindowingStrategy::SLICING);
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
 
         Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);

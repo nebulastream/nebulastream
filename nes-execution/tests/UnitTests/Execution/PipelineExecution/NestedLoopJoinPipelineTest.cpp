@@ -150,8 +150,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             leftEntrySize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
                                                                                Windowing::TimeUnit::Milliseconds()),
-            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-            QueryCompilation::WindowingStrategy::SLICING);
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
         auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
@@ -161,8 +160,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             rightEntrySize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
                                                                                Windowing::TimeUnit::Milliseconds()),
-            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-            QueryCompilation::WindowingStrategy::SLICING);
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
         Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);

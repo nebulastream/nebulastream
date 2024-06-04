@@ -15,16 +15,19 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #include <Exceptions/RuntimeException.hpp>
+#include <Runtime/Execution/MigratableStateInterface.hpp>
+#include <Runtime/Execution/StreamSliceInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <list>
 
 namespace NES::Runtime::Execution {
 
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public Reconfigurable {
+class OperatorHandler : public virtual Reconfigurable, public virtual MigratableStateInterface {
   public:
     /**
      * @brief Default constructor
@@ -46,9 +49,23 @@ class OperatorHandler : public Reconfigurable {
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
     /**
+     * @brief Gets the state
+     * @param startTS
+     * @param stopTS
+     * @return list of StreamSlices
+     */
+    std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t, uint64_t) override;
+
+    /**
+     * @brief Merges migrated slices
+     * @param slices
+     */
+    void restoreState(std::list<std::shared_ptr<StreamSliceInterface>>) override;
+
+    /**
      * @brief Default deconstructor
      */
-    ~OperatorHandler() override = default;
+    virtual ~OperatorHandler() override = default;
 
     /**
      * @brief Checks if the current operator handler is of type OperatorHandlerType

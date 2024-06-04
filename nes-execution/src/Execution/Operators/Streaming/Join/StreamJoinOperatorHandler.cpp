@@ -30,6 +30,42 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
     }
 }
 
+std::list<std::shared_ptr<StreamSliceInterface>> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
+    auto slicesLocked = slices.rlock();
+
+    std::list<std::shared_ptr<StreamSliceInterface>> fliteredSlices;
+    // filtering slices, which start is in [startTS, stopTS) or end is in (startTS, stopTS]
+    // (records are in range [start, end) in slice)
+    std::copy_if(slicesLocked->begin(),
+                 slicesLocked->end(),
+                 std::back_inserter(fliteredSlices),
+                 [&startTS, &stopTS](StreamSlicePtr slice) {
+                     uint64_t sliceStartTS = slice->getSliceStart();
+                     uint64_t sliceEndTS = slice->getSliceEnd();
+                     return (sliceStartTS >= startTS && sliceStartTS < stopTS) || (sliceEndTS > startTS && sliceEndTS < stopTS);
+                 });
+    return fliteredSlices;
+}
+
+void StreamJoinOperatorHandler::restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) {
+    auto slicesLocked = this->slices.wlock();
+
+    // restored slices
+    std::list<StreamSlicePtr> castedSlices;
+    // casting slices to derived class StreamSlice
+    std::transform(slices.begin(),
+                   slices.end(),
+                   std::back_inserter(castedSlices),
+                   [](const std::shared_ptr<StreamSliceInterface>& element) -> StreamSlicePtr {
+                       return std::dynamic_pointer_cast<StreamSlice>(element);
+                   });
+
+    // merging restored slices with existing
+    slicesLocked->merge(castedSlices, [](StreamSlicePtr first, StreamSlicePtr second) {
+        return first->getSliceEnd() < second->getSliceStart();
+    });
+}
+
 std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(uint64_t sliceIdentifier) {
     auto slicesLocked = slices.rlock();
     return getSliceBySliceIdentifier(slicesLocked, sliceIdentifier);

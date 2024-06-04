@@ -561,8 +561,7 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
         buildOperator->getBuildSide(),
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
-        buildOperator->getJoinStrategy(),
-        buildOperator->getWindowingStrategy());
+        buildOperator->getJoinStrategy());
 }
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJBucketing(
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
@@ -578,7 +577,6 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
         buildOperator->getJoinStrategy(),
-        buildOperator->getWindowingStrategy(),
         windowSize,
         windowSlide);
 }
@@ -594,8 +592,7 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
         buildOperator->getBuildSide(),
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
-        buildOperator->getJoinStrategy(),
-        buildOperator->getWindowingStrategy());
+        buildOperator->getJoinStrategy());
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJSlicingVarSized(
@@ -609,8 +606,7 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
         buildOperator->getBuildSide(),
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
-        buildOperator->getJoinStrategy(),
-        buildOperator->getWindowingStrategy());
+        buildOperator->getJoinStrategy());
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJBucketing(
@@ -627,7 +623,6 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
         buildOperator->getJoinStrategy(),
-        buildOperator->getWindowingStrategy(),
         windowSize,
         windowSlide);
 }
