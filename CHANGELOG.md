@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.148](https://github.com/nebulastream/nebulastream/tree/v0.6.148) (2024-06-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.147...v0.6.148)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Concurrent cmake configure with empty cache causes crash [\#4962](https://github.com/nebulastream/nebulastream/issues/4962)
+- \[BUG\] Compiling NebulaStream without Flags does not work [\#4835](https://github.com/nebulastream/nebulastream/issues/4835)
+
 ## [v0.6.147](https://github.com/nebulastream/nebulastream/tree/v0.6.147) (2024-06-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.146...v0.6.147)
