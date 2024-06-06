@@ -203,6 +203,10 @@ function(cached_fetch_and_extract url dest)
     string(REPLACE ":" "_"  filename ${filename})  # filename to filename
     string(REPLACE ".com" "_"  filename ${filename})  # filename to filename
     string(REGEX REPLACE "^(.*)(.tar)?\\.[A-Za-z0-9]+$" "\\1" extracted ${filename})  # remove last suffix and maybe .tar, i.e. foo.7z -> foo, bar.tar.gz -> bar
+
+    # prevent concurrent downloads to fix concurrent configures
+    file(LOCK "${CMAKE_DEPS_CACHE_DIR}/${filename}.lock" GUARD FUNCTION)
+
     message(STATUS "Cache filename zipped: ${filename}")
     message(STATUS "Cache filename extracted: ${extracted}")
     set(FRESH_DOWNLOAD FALSE)
