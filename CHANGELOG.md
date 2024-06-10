@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.149](https://github.com/nebulastream/nebulastream/tree/v0.6.149) (2024-06-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.148...v0.6.149)
+
+**Implemented enhancements:**
+
+- \[TASK\] ZMQ Binding Address is not a DNS Name [\#4917](https://github.com/nebulastream/nebulastream/issues/4917)
+
 ## [v0.6.148](https://github.com/nebulastream/nebulastream/tree/v0.6.148) (2024-06-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.147...v0.6.148)
