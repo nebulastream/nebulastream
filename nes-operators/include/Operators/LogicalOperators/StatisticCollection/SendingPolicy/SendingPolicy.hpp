@@ -15,11 +15,12 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICY_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICY_HPP_
 
-#include <StatisticIdentifiers.hpp>
 #include <memory>
 #include <string>
+#include <StatisticIdentifiers.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class SendingPolicy;
 using SendingPolicyPtr = std::shared_ptr<SendingPolicy>;
@@ -27,23 +28,24 @@ using SendingPolicyPtr = std::shared_ptr<SendingPolicy>;
 /**
  * @brief This class acts as an abstract class for all possible SendingPolicies
  */
-class SendingPolicy {
-  public:
-    explicit SendingPolicy(StatisticDataCodec sinkDataCodec) : sinkDataCodec(sinkDataCodec) {}
+class SendingPolicy
+{
+public:
+    explicit SendingPolicy(StatisticDataCodec sinkDataCodec) : sinkDataCodec(sinkDataCodec) { }
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if equal otherwise false
      */
-    virtual bool operator==(const SendingPolicy& rhs) const = 0;
+    virtual bool operator==(const SendingPolicy & rhs) const = 0;
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if NOT equal otherwise false
      */
-    virtual bool operator!=(const SendingPolicy& rhs) const { return !(*this == rhs); };
+    virtual bool operator!=(const SendingPolicy & rhs) const { return !(*this == rhs); };
 
     /**
      * @brief Returns the data type of the statistic sink.
@@ -56,9 +58,11 @@ class SendingPolicy {
      * @tparam SendingPolicyType
      * @return bool true if node is of SendingPolicyType
      */
-    template<class SendingPolicyType>
-    bool instanceOf() const {
-        if (dynamic_cast<SendingPolicyType*>(this)) {
+    template <class SendingPolicyType>
+    bool instanceOf() const
+    {
+        if (dynamic_cast<SendingPolicyType *>(this))
+        {
             return true;
         }
         return false;
@@ -75,9 +79,9 @@ class SendingPolicy {
      */
     virtual ~SendingPolicy() = default;
 
-  protected:
+protected:
     StatisticDataCodec sinkDataCodec;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICY_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICY_HPP_

@@ -18,24 +18,26 @@
 #include <API/TimeUnit.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class EventTimeWatermarkStrategyDescriptor;
 using EventTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<EventTimeWatermarkStrategyDescriptor>;
 
-class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
-  public:
-    static WatermarkStrategyDescriptorPtr create(const ExpressionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
+class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor
+{
+public:
+    static WatermarkStrategyDescriptorPtr create(const ExpressionNodePtr & onField, TimeMeasure allowedLateness, TimeUnit unit);
 
     ExpressionNodePtr getOnField() const;
 
-    void setOnField(const ExpressionNodePtr& newField);
+    void setOnField(const ExpressionNodePtr & newField);
 
     TimeMeasure getAllowedLateness() const;
 
     TimeUnit getTimeUnit() const;
 
-    void setTimeUnit(const TimeUnit& newUnit);
+    void setTimeUnit(const TimeUnit & newUnit);
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
 
@@ -43,15 +45,15 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
     bool inferStamp(SchemaPtr schema) override;
 
-  private:
+private:
     // Field where the watermark should be retrieved
     ExpressionNodePtr onField;
     TimeUnit unit;
     TimeMeasure allowedLateness;
 
-    explicit EventTimeWatermarkStrategyDescriptor(const ExpressionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
+    explicit EventTimeWatermarkStrategyDescriptor(const ExpressionNodePtr & onField, TimeMeasure allowedLateness, TimeUnit unit);
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_

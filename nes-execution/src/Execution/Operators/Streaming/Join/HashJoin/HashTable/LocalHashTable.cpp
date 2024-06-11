@@ -17,19 +17,20 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-LocalHashTable::LocalHashTable(size_t sizeOfRecord,
-                               size_t numPartitions,
-                               FixedPagesAllocator& fixedPagesAllocator,
-                               size_t pageSize,
-                               size_t preAllocPageSizeCnt)
-    : StreamJoinHashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt) {}
+LocalHashTable::LocalHashTable(
+    size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator & fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt)
+    : StreamJoinHashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt)
+{
+}
 
-uint8_t* LocalHashTable::insert(uint64_t key) const {
+uint8_t * LocalHashTable::insert(uint64_t key) const
+{
     auto hashedKey = NES::Util::murmurHash(key);
     NES_TRACE("into key={} bucket={}", key, getBucketPos(hashedKey));
     return buckets[getBucketPos(hashedKey)]->appendLocal(hashedKey);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

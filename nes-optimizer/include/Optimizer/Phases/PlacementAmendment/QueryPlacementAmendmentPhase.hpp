@@ -15,19 +15,21 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_
 
-#include <Configurations/Enums/PlacementAmendmentMode.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
 #include <set>
 #include <vector>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -41,18 +43,21 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
-}// namespace NES
+} // namespace Catalogs::Source
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -73,8 +78,9 @@ using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
  * @brief This class is responsible for placing and removing operators (depending on their status) from the
  * global execution.
  */
-class QueryPlacementAmendmentPhase {
-  public:
+class QueryPlacementAmendmentPhase
+{
+public:
     /**
      * This method creates an instance of query placement phase
      * @param globalExecutionPlan : an instance of global execution plan
@@ -83,10 +89,11 @@ class QueryPlacementAmendmentPhase {
      * @param coordinatorConfiguration: coordinator configuration
      * @return pointer to query placement phase
      */
-    static QueryPlacementAmendmentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                  TopologyPtr topology,
-                                                  TypeInferencePhasePtr typeInferencePhase,
-                                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+    static QueryPlacementAmendmentPhasePtr create(
+        GlobalExecutionPlanPtr globalExecutionPlan,
+        TopologyPtr topology,
+        TypeInferencePhasePtr typeInferencePhase,
+        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief Method takes input a shared query plan and performs first query operator placement
@@ -95,33 +102,34 @@ class QueryPlacementAmendmentPhase {
      * @return true is placement amendment successful.
      * @throws QueryPlacementException
      */
-    std::set<DeploymentContextPtr> execute(const SharedQueryPlanPtr& sharedQueryPlan);
+    std::set<DeploymentContextPtr> execute(const SharedQueryPlanPtr & sharedQueryPlan);
 
-  private:
-    explicit QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                          TopologyPtr topology,
-                                          TypeInferencePhasePtr typeInferencePhase,
-                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+private:
+    explicit QueryPlacementAmendmentPhase(
+        GlobalExecutionPlanPtr globalExecutionPlan,
+        TopologyPtr topology,
+        TypeInferencePhasePtr typeInferencePhase,
+        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief: analyze the set and pin all unpinned sink operators
      * @param operators: set of operators to check
      */
-    void pinAllSinkOperators(const std::set<LogicalOperatorPtr>& operators);
+    void pinAllSinkOperators(const std::set<LogicalOperatorPtr> & operators);
 
     /**
      * This method checks if the operators in the set are pinned or not
      * @param pinnedOperators: operators to check
      * @return false if one of the operator is not pinned else true
      */
-    bool containsOnlyPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedOperators);
+    bool containsOnlyPinnedOperators(const std::set<LogicalOperatorPtr> & pinnedOperators);
 
     /**
      * @brief Check if in the provided set at least one operator is in the state To_Be_Placed or Placed
      * @param operatorsToCheck the logical operator nodes
      * @return true if at least one operator passes the condition
      */
-    bool containsOperatorsForPlacement(const std::set<LogicalOperatorPtr>& operatorsToCheck);
+    bool containsOperatorsForPlacement(const std::set<LogicalOperatorPtr> & operatorsToCheck);
 
     /**
      * @brief Check if in the provided set at least one operator is in the state To_Be_RePlaced, Placed, or To_Be_Removed
@@ -129,7 +137,7 @@ class QueryPlacementAmendmentPhase {
      * @param operatorsToCheck the logical operator nodes
      * @return true if at least one operator passes the condition
      */
-    bool containsOperatorsForRemoval(const std::set<LogicalOperatorPtr>& operatorsToCheck);
+    bool containsOperatorsForRemoval(const std::set<LogicalOperatorPtr> & operatorsToCheck);
 
     /**
      * @brief method returns different kind of placement strategies.
@@ -145,5 +153,5 @@ class QueryPlacementAmendmentPhase {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     PlacementAmendmentMode placementAmendmentMode;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_

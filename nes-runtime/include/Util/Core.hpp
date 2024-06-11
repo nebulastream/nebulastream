@@ -15,22 +15,23 @@
 #ifndef NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
 #define NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
 
-#include <API/Schema.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <any>
 #include <functional>
 #include <map>
 #include <set>
 #include <string>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 /**
  * @brief a collection of shared utility functions
  */
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -47,28 +48,32 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-namespace Catalogs {
+namespace Catalogs
+{
 
-namespace Source {
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace Query {
+namespace Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
+} // namespace Query
 
-}// namespace Catalogs
+} // namespace Catalogs
 
-namespace Util {
+namespace Util
+{
 
 /**
 * @brief Outputs a tuple buffer in text format
 * @param buffer the tuple buffer
 * @return string of tuple buffer
 */
-std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
+std::string printTupleBufferAsText(Runtime::TupleBuffer & buffer);
 
 /**
  * @brief create CSV lines from the tuples
@@ -76,7 +81,7 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr & schema);
 
 /**
 * @brief Returns the physical types of all fields of the schema
@@ -90,7 +95,7 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
  * @param schema
  * @return schema as csv string
  */
-std::string toCSVString(const SchemaPtr& schema);
+std::string toCSVString(const SchemaPtr & schema);
 
 /**
  * @brief Creates a memory layout from the schema and the buffer Size
@@ -106,7 +111,7 @@ Runtime::MemoryLayouts::MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uin
  * @param properties properties to assign
  * @return true if the assignment success, and false otherwise
  */
-bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
+bool assignPropertiesToQueryOperators(const QueryPlanPtr & queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
 /**
  * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
@@ -117,12 +122,13 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  * @param bufferManager
  * @return Vector of TupleBuffers
  */
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
-                                                                            const SchemaPtr& schema,
-                                                                            Runtime::BufferManagerPtr bufferManager,
-                                                                            const std::string& timeStampFieldName,
-                                                                            uint64_t lastTimeStamp);
-}// namespace Util
-}// namespace NES
+[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
+    const std::string & csvFile,
+    const SchemaPtr & schema,
+    Runtime::BufferManagerPtr bufferManager,
+    const std::string & timeStampFieldName,
+    uint64_t lastTimeStamp);
+} // namespace Util
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_

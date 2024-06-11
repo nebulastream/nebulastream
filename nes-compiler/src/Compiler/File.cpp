@@ -11,19 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/Util/File.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <utility>
-namespace NES::Compiler {
+#include <Compiler/Util/File.hpp>
+#include <Util/Logger/Logger.hpp>
+namespace NES::Compiler
+{
 
-File::File(std::string path) : path(std::move(path)) {}
+File::File(std::string path) : path(std::move(path))
+{
+}
 
-std::string File::getPath() const { return path; }
+std::string File::getPath() const
+{
+    return path;
+}
 
-std::shared_ptr<File> File::createFile(const std::string& absoluteFilePath, const std::string& content) {
+std::shared_ptr<File> File::createFile(const std::string & absoluteFilePath, const std::string & content)
+{
     NES_DEBUG("Create File to file://{}", absoluteFilePath);
     std::ofstream resultFile(absoluteFilePath, std::ios::trunc | std::ios::out);
     resultFile << content;
@@ -31,7 +38,8 @@ std::shared_ptr<File> File::createFile(const std::string& absoluteFilePath, cons
     return std::make_shared<File>(absoluteFilePath);
 }
 
-std::string File::read() const {
+std::string File::read() const
+{
     const std::lock_guard<std::mutex> fileLock(fileMutex);
     // read source file in
     std::ifstream file(path);
@@ -40,11 +48,15 @@ std::string File::read() const {
     return sourceCode;
 }
 
-void File::print() const {
+void File::print() const
+{
     auto sourceCode = read();
     NES_DEBUG("Compiler: code \n{}", sourceCode);
 }
 
-std::mutex& File::getFileMutex() { return fileMutex; }
+std::mutex & File::getFileMutex()
+{
+    return fileMutex;
+}
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

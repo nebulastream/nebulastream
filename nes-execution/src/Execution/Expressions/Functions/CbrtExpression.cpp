@@ -11,15 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/CbrtExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-CbrtExpression::CbrtExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
-    : subExpression(subExpression) {}
+CbrtExpression::CbrtExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr & subExpression) : subExpression(subExpression)
+{
+}
 
 /**
  * @brief This method calculates the cubic root of x.
@@ -27,9 +29,13 @@ CbrtExpression::CbrtExpression(const NES::Runtime::Execution::Expressions::Expre
  * @param x double
  * @return double
  */
-double calculateCbrt(double x) { return std::cbrt(x); }
+double calculateCbrt(double x)
+{
+    return std::cbrt(x);
+}
 
-Value<> CbrtExpression::execute(NES::Nautilus::Record& record) const {
+Value<> CbrtExpression::execute(NES::Nautilus::Record & record) const
+{
     // Evaluate the sub expression and retrieve the value.
     Value value = subExpression->execute(record);
 
@@ -38,24 +44,37 @@ Value<> CbrtExpression::execute(NES::Nautilus::Record& record) const {
     // In all cases we can call the same calculateCbrt function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (value->isType<Int8>()) {
+    if (value->isType<Int8>())
+    {
         // call the calculateCbrt function with the correct type
         return FunctionCall<>("calculateCbrt", calculateCbrt, value.as<Int8>());
-    } else if (value->isType<Int16>()) {
+    }
+    else if (value->isType<Int16>())
+    {
         return FunctionCall<>("calculateCbrt", calculateCbrt, value.as<Int16>());
-    } else if (value->isType<Int32>()) {
+    }
+    else if (value->isType<Int32>())
+    {
         return FunctionCall<>("calculateCbrt", calculateCbrt, value.as<Int32>());
-    } else if (value->isType<Int64>()) {
+    }
+    else if (value->isType<Int64>())
+    {
         return FunctionCall<>("calculateCbrt", calculateCbrt, value.as<Int64>());
-    } else if (value->isType<Float>()) {
+    }
+    else if (value->isType<Float>())
+    {
         return FunctionCall<>("calculateCbrt", calculateCbrt, value.as<Float>());
-    } else if (value->isType<Double>()) {
+    }
+    else if (value->isType<Double>())
+    {
         return FunctionCall<>("calculateCbrt", calculateCbrt, value.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CbrtExpression>> cbrtFunction("cbtr");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

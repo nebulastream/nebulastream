@@ -14,13 +14,14 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 
-#include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <atomic>
 #include <deque>
 #include <future>
 #include <vector>
+#include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 struct StorageDataStructures;
 using TicketId = uint16_t;
 
@@ -29,8 +30,10 @@ static constexpr TicketId MAX_TICKET = std::numeric_limits<TicketId>::max();
  * @brief Resource handles created by this class ensure that the resource has been locked in the growing phase and stay locked
  * until the handle goes out of scope.
  */
-class TwoPhaseLockingStorageHandler : public StorageHandler {
-    struct ResourceHolderData {
+class TwoPhaseLockingStorageHandler : public StorageHandler
+{
+    struct ResourceHolderData
+    {
         RequestId holderId{INVALID_REQUEST_ID};
         TicketId nextAvailableTicket = 0;
         TicketId currentTicket = 0;
@@ -38,7 +41,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
         std::mutex mutex;
     };
 
-  public:
+public:
     /**
      * @brief constructor
      * @param storageDataStructures a struct containing pointers to the following data structures:
@@ -158,7 +161,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      */
     TicketId getNextAvailableTicket(ResourceType resource);
 
-  private:
+private:
     /**
      * @brief Locks the resource for the calling request and maintains the lock until resources are released on request of the request
      * @param requestId: The id of the request instance which is trying to lock the resource
@@ -172,7 +175,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param resourceType type of the resource for which the lock info is requested
      * @return an atomic containing the id of the lock holding request or INVALID_REQUEST_ID if the resource is not currently locked
      */
-    ResourceHolderData& getHolder(ResourceType resourceType);
+    ResourceHolderData & getHolder(ResourceType resourceType);
 
     /**
      * @brief indicates if a request holds a lock on any resource
@@ -202,6 +205,6 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     ResourceHolderData amendmentQueueHolder;
     ResourceHolderData statisticProbeHandlerHolder;
 };
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_

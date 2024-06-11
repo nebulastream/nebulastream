@@ -11,16 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/Functions/PiExpression.hpp>
 #include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+#include <Execution/Expressions/Functions/PiExpression.hpp>
+namespace NES::Runtime::Execution::Expressions
+{
 
-PiExpression::PiExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
-    : SubExpression(SubExpression) {}
+PiExpression::PiExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr & SubExpression) : SubExpression(SubExpression)
+{
+}
 
-Value<> PiExpression::execute(NES::Nautilus::Record& record) const {
+Value<> PiExpression::execute(NES::Nautilus::Record & record) const
+{
     //Evaluate the sub expression and retrieve the value.
     Value subValue = SubExpression->execute(record);
     return M_PI;
 }
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

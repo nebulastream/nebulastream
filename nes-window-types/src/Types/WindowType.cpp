@@ -16,8 +16,9 @@
 #include <API/Schema.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 WindowType::WindowType() = default;
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing

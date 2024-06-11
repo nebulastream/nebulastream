@@ -16,41 +16,45 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
 #include <Expressions/ExpressionNode.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class TriggerCondition;
 using TriggerConditionPtr = std::shared_ptr<TriggerCondition>;
-class TriggerCondition {
-  public:
+class TriggerCondition
+{
+public:
     /**
      * @brief Checks if the corresponding callback should be called
      * @param triggerExpression
      * @return True or false
      */
-    [[maybe_unused]] virtual bool shallTrigger(const ExpressionNode& triggerExpression) = 0;
+    [[maybe_unused]] virtual bool shallTrigger(const ExpressionNode & triggerExpression) = 0;
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if equal otherwise false
      */
-    virtual bool operator==(const TriggerCondition& rhs) const = 0;
+    virtual bool operator==(const TriggerCondition & rhs) const = 0;
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if NOT equal otherwise false
      */
-    virtual bool operator!=(const TriggerCondition& rhs) const;
+    virtual bool operator!=(const TriggerCondition & rhs) const;
 
     /**
      * @brief Checks if the current TriggerCondition is of type TriggerConditionType
      * @tparam TriggerCondition
      * @return bool true if node is of TriggerCondition
      */
-    template<class TriggerCondition>
-    bool instanceOf() {
-        if (dynamic_cast<TriggerCondition*>(this)) {
+    template <class TriggerCondition>
+    bool instanceOf()
+    {
+        if (dynamic_cast<TriggerCondition *>(this))
+        {
             return true;
         }
         return false;
@@ -61,9 +65,11 @@ class TriggerCondition {
      * @tparam TriggerCondition
      * @return bool true if node is of TriggerCondition
      */
-    template<class TriggerCondition>
-    bool instanceOf() const {
-        if (dynamic_cast<const TriggerCondition*>(this)) {
+    template <class TriggerCondition>
+    bool instanceOf() const
+    {
+        if (dynamic_cast<const TriggerCondition *>(this))
+        {
             return true;
         }
         return false;
@@ -80,6 +86,6 @@ class TriggerCondition {
      */
     virtual ~TriggerCondition() = default;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_TRIGGERCONDITION_HPP_

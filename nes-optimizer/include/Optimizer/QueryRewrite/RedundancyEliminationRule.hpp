@@ -19,16 +19,18 @@
 #include <Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class RedundancyEliminationRule;
 using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
@@ -45,15 +47,15 @@ using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
  *  3) Conjunction/Disjunction simplification
  *  Example: filter(Attribute("id") > 0 && TRUE) -> filter(Attribute("id") > 0)
  */
-class RedundancyEliminationRule : public BaseRewriteRule {
-
-  public:
+class RedundancyEliminationRule : public BaseRewriteRule
+{
+public:
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
     static RedundancyEliminationRulePtr create();
     virtual ~RedundancyEliminationRule() = default;
 
-  private:
+private:
     explicit RedundancyEliminationRule();
 
     /**
@@ -62,7 +64,7 @@ class RedundancyEliminationRule : public BaseRewriteRule {
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr eliminatePredicateRedundancy(const ExpressionNodePtr& predicate);
+    static NES::ExpressionNodePtr eliminatePredicateRedundancy(const ExpressionNodePtr & predicate);
 
     /**
      * @note Currently not implemented
@@ -70,7 +72,7 @@ class RedundancyEliminationRule : public BaseRewriteRule {
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr constantMoving(const ExpressionNodePtr& predicate);
+    static NES::ExpressionNodePtr constantMoving(const ExpressionNodePtr & predicate);
 
     /**
      * @note Already done by the compiler
@@ -78,7 +80,7 @@ class RedundancyEliminationRule : public BaseRewriteRule {
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr constantFolding(const ExpressionNodePtr& predicate);
+    static NES::ExpressionNodePtr constantFolding(const ExpressionNodePtr & predicate);
 
     /**
      * @note Already done by the compiler
@@ -86,7 +88,7 @@ class RedundancyEliminationRule : public BaseRewriteRule {
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr arithmeticSimplification(const ExpressionNodePtr& predicate);
+    static NES::ExpressionNodePtr arithmeticSimplification(const ExpressionNodePtr & predicate);
 
     /**
      * @note Currently not implemented, since boolean values in the queries are not supported
@@ -97,9 +99,9 @@ class RedundancyEliminationRule : public BaseRewriteRule {
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr conjunctionDisjunctionSimplification(const ExpressionNodePtr& predicate);
+    static NES::ExpressionNodePtr conjunctionDisjunctionSimplification(const ExpressionNodePtr & predicate);
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_

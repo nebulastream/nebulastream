@@ -19,20 +19,24 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
  * @brief MemoryMetrics class, that is responsible for collecting and managing memory metrics.
  */
-class MemoryMetrics {
-  public:
+class MemoryMetrics
+{
+public:
     MemoryMetrics();
 
     /**
@@ -40,28 +44,28 @@ class MemoryMetrics {
      * @param prefix
      * @return the schema
      */
-    static Configurations::SchemaTypePtr getSchemaType(const std::string& prefix = "");
+    static Configurations::SchemaTypePtr getSchemaType(const std::string & prefix = "");
 
     /**
      * @brief Returns the schema of the class with a given prefix.
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix);
+    static SchemaPtr getSchema(const std::string & prefix);
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
      * @param buf the tuple buffer
      * @param tupleIndex the index indication its location in the buffer
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
+    void writeToBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a TupleBuffer..
      * @param buf the tuple buffer
      * @param the tuple index indicating the location of the tuple
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+    void readFromBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the metrics as json
@@ -70,8 +74,8 @@ class MemoryMetrics {
     [[nodiscard]] nlohmann::json toJson() const;
 
     //equality operators
-    bool operator==(const MemoryMetrics& rhs) const;
-    bool operator!=(const MemoryMetrics& rhs) const;
+    bool operator==(const MemoryMetrics & rhs) const;
+    bool operator!=(const MemoryMetrics & rhs) const;
 
     WorkerId nodeId;
     uint64_t timestamp;
@@ -97,7 +101,7 @@ using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
  * @param the TupleBuffer
  * @param the tuple index indicating the location of the tuple
 */
-void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void writeToBuffer(const MemoryMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses metrics objects from a given Schema and TupleBuffer.
@@ -105,15 +109,15 @@ void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint
  * @param the TupleBuffer
  * @param the tuple index indicating the location of the tuple
 */
-void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void readFromBuffer(MemoryMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses the metric to JSON
  * @param metrics
  * @return the metrics as JSON
  */
-nlohmann::json asJson(const MemoryMetrics& metrics);
+nlohmann::json asJson(const MemoryMetrics & metrics);
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_MEMORYMETRICS_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_MEMORYMETRICS_HPP_

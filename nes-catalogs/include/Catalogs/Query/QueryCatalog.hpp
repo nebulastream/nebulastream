@@ -15,26 +15,28 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
-#include <Util/QueryState.hpp>
 #include <condition_variable>
-#include <folly/Synchronized.h>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <nlohmann/json.hpp>
 #include <queue>
 #include <set>
 #include <string>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/QueryState.hpp>
+#include <folly/Synchronized.h>
+#include <nlohmann/json.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 
 class QueryCatalogEntry;
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
@@ -46,8 +48,9 @@ using SharedQueryCatalogEntryPtr = std::shared_ptr<SharedQueryCatalogEntry>;
  * @brief catalog class to handle the queryIdAndCatalogEntryMapping in the system
  * @note: This class is not thread safe. Please use QueryCatalogService to access this object.
  */
-class QueryCatalog {
-  public:
+class QueryCatalog
+{
+public:
     QueryCatalog() = default;
 
     /**
@@ -57,10 +60,11 @@ class QueryCatalog {
      * @param placementStrategyName: the placement strategy (e.g. bottomUp, topDown, etc)
      * @param queryState: the state of the query
      */
-    void createQueryCatalogEntry(const std::string& queryString,
-                                 const QueryPlanPtr& queryPlan,
-                                 const Optimizer::PlacementStrategy placementStrategyName,
-                                 QueryState queryState);
+    void createQueryCatalogEntry(
+        const std::string & queryString,
+        const QueryPlanPtr & queryPlan,
+        const Optimizer::PlacementStrategy placementStrategyName,
+        QueryState queryState);
 
     /**
      * @brief Get state of the input query id
@@ -76,7 +80,7 @@ class QueryCatalog {
      * @param terminationReason : additional meta information
      * @return true if updated successfully
      */
-    void updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason);
+    void updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string & terminationReason);
 
     /**
      * @brief link query catalog entry to the shared query catalog entry
@@ -106,7 +110,7 @@ class QueryCatalog {
      * @param terminationReason : additional meta information
      * @return true if updated successfully
      */
-    void updateSharedQueryStatus(SharedQueryId sharedQueryId, QueryState queryState, const std::string& terminationReason);
+    void updateSharedQueryStatus(SharedQueryId sharedQueryId, QueryState queryState, const std::string & terminationReason);
 
     /**
      * @brief check and mark the shared query for soft stop
@@ -155,11 +159,12 @@ class QueryCatalog {
      * @param decomposedQueryState : the new decomposed query plan status
      * @param workerId: the worker id
      */
-    bool updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
-                                         DecomposedQueryPlanId decomposedQueryPlanId,
-                                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                         QueryState decomposedQueryState,
-                                         WorkerId workerId);
+    bool updateDecomposedQueryPlanStatus(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+        QueryState decomposedQueryState,
+        WorkerId workerId);
 
     /**
      * @brief Get a copy of executed query plan
@@ -173,7 +178,7 @@ class QueryCatalog {
      * @param queryId
      * @return the copy of the query plan ptr
      */
-    QueryPlanPtr getCopyOfLogicalInputQueryPlan(const QueryId& queryId) const;
+    QueryPlanPtr getCopyOfLogicalInputQueryPlan(const QueryId & queryId) const;
 
     /**
      * @brief Get query with given id
@@ -187,7 +192,7 @@ class QueryCatalog {
      * @param queryState : the input query state
      * @return json representing queries in the given state
      */
-    nlohmann::json getQueryEntriesWithStatus(const std::string& queryState);
+    nlohmann::json getQueryEntriesWithStatus(const std::string & queryState);
 
     /**
      * @brief Get all queryIdAndCatalogEntryMapping registered in the system
@@ -200,7 +205,7 @@ class QueryCatalog {
      */
     void reset();
 
-  private:
+private:
     /**
      * @brief check and mark the query for hard stop
      * @param queryId: the query which need to be stopped
@@ -208,12 +213,12 @@ class QueryCatalog {
      */
     bool checkAndMarkQueryForHardStop(QueryId queryId);
 
-  private:
+private:
     folly::Synchronized<std::map<QueryId, QueryCatalogEntryPtr>> queryCatalogEntryMapping;
     folly::Synchronized<std::map<SharedQueryId, SharedQueryCatalogEntryPtr>> sharedQueryCatalogEntryMapping;
 };
 
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+} // namespace Catalogs::Query
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_

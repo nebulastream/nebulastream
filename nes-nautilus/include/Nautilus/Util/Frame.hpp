@@ -13,21 +13,25 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
-#include <Exceptions/RuntimeException.hpp>
 #include <unordered_map>
-namespace NES::Nautilus {
+#include <Exceptions/RuntimeException.hpp>
+namespace NES::Nautilus
+{
 
 /**
  * @brief A simple frame abstraction for code generation.
  * @tparam K key type
  * @tparam V value type
  */
-template<class K, class V>
-class Frame {
-  public:
-    V getValue(K key) {
+template <class K, class V>
+class Frame
+{
+public:
+    V getValue(K key)
+    {
         auto value = frameMap.find(key);
-        if (value == frameMap.end()) {
+        if (value == frameMap.end())
+        {
             throw Exceptions::RuntimeException("Key " + key + " does not exists in frame.");
         }
         return value->second;
@@ -36,12 +40,12 @@ class Frame {
     bool contains(K key) { return frameMap.contains(key); }
 
     void setValue(K key, V value) { frameMap.emplace(std::make_pair(key, value)); }
-    std::unordered_map<K, V>& getContent() { return frameMap; }
+    std::unordered_map<K, V> & getContent() { return frameMap; }
 
-  private:
+private:
     std::unordered_map<K, V> frameMap;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_

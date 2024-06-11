@@ -16,21 +16,23 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expression returns true if leftSubExpression is less or equals then rightSubExpression.
  */
-class LessEqualsExpression : public Expression {
-  public:
+class LessEqualsExpression : public Expression
+{
+public:
     LessEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr leftSubExpression;
     const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_

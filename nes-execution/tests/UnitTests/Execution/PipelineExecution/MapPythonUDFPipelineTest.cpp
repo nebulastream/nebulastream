@@ -13,42 +13,46 @@
 */
 
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
-#include <API/Schema.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
-#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
-#include <Execution/Operators/Scan.hpp>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <TestUtils/AbstractPipelineExecutionTest.hpp>
-#include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
-#include <gtest/gtest.h>
-#include <memory>
+#    include <memory>
+#    include <API/Schema.hpp>
+#    include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#    include <Execution/Operators/Emit.hpp>
+#    include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
+#    include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#    include <Execution/Operators/Scan.hpp>
+#    include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#    include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#    include <Execution/RecordBuffer.hpp>
+#    include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#    include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#    include <Runtime/BufferManager.hpp>
+#    include <Runtime/MemoryLayout/RowLayout.hpp>
+#    include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#    include <TestUtils/MockedPipelineExecutionContext.hpp>
+#    include <Util/Logger/Logger.hpp>
+#    include <Util/TestTupleBuffer.hpp>
+#    include <gtest/gtest.h>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
-  public:
-    ExecutablePipelineProvider* provider;
+class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineExecutionTest
+{
+public:
+    ExecutablePipelineProvider * provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MapPythonUDFPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MapPythonUDFPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         NES_INFO("Setup MapPythonUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
@@ -64,7 +68,8 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
  * @param memoryLayout memory layout
  * @return
  */
-auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
+auto initPipelineOperator(SchemaPtr schema, auto memoryLayout)
+{
     auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, schema, schema);
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -88,12 +93,14 @@ auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
  * @param memoryLayout memory layout
  * @return input buffer
  */
-template<typename T>
-auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
+template <typename T>
+auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout)
+{
     auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 10; i++) {
-        testBuffer[i][variableName].write((T) i);
+    for (uint64_t i = 0; i < 10; i++)
+    {
+        testBuffer[i][variableName].write((T)i);
         testBuffer.setNumberOfTuples(i + 1);
     }
     return buffer;
@@ -109,7 +116,8 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
  * @param testDataPath path to the test data containing the udf jar
  * @return operator handler
  */
-auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema) {
+auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema)
+{
     return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, schema, schema);
 }
 
@@ -120,14 +128,16 @@ auto initMapHandler(std::string function, std::string functionName, SchemaPtr sc
  * @param pipelineContext pipeline context
  * @param memoryLayout memory layout
  */
-template<typename T>
-void checkBufferResult(std::string variableName, auto pipelineContext, auto memoryLayout) {
+template <typename T>
+void checkBufferResult(std::string variableName, auto pipelineContext, auto memoryLayout)
+{
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
         ASSERT_EQ(resulttestBuffer[i][variableName].read<T>(), i + 10);
     }
 }
@@ -135,7 +145,8 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
 /**
  * @brief Test a pipeline containing a scan, a python map with integers, and a emit operator
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap)
+{
     auto variableName = "intVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT32);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -159,7 +170,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
 /**
  * @brief Test a pipeline containing a scan, a python map with shorts, and a emit operator
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap)
+{
     auto variableName = "shortVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT16);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -182,7 +194,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
 /**
  * @brief Test a pipeline containing a scan, a python map with byte, and a emit operator
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap)
+{
     auto variableName = "byteVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT8);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -205,7 +218,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
 /**
  * @brief Test a pipeline containing a scan, a python map with long, and a emit operator
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap)
+{
     auto variableName = "longVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -228,7 +242,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
 /**
  * @brief Test a pipeline containing a scan, a python map with shorts, and a emit operator
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap)
+{
     auto variableName = "DoubleVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::FLOAT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -251,7 +266,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
 /**
  * @brief Test a pipeline containing a scan, a python map with booleans, and a emit operator
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap)
+{
     auto variableName = "BooleanVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::BOOLEAN);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -259,8 +275,9 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 10; i++) {
-        testBuffer[i][variableName].write((bool) true);
+    for (uint64_t i = 0; i < 10; i++)
+    {
+        testBuffer[i][variableName].write((bool)true);
         testBuffer.setNumberOfTuples(i + 1);
     }
     auto executablePipeline = provider->create(pipeline, options);
@@ -278,7 +295,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
         ASSERT_EQ(resulttestBuffer[i][variableName].read<bool>(), false);
     }
 }
@@ -287,7 +305,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
  * @brief Test a pipeline containing a scan, a python map with strings, and a emit operator
  *
  */
-TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
+TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap)
+{
     auto variableName = "stringVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -296,7 +315,8 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
 
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
         std::string value = "X";
         auto varLengthBuffer = bm->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
@@ -321,7 +341,8 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
         auto index = resulttestBuffer[i]["stringVariable"].read<uint32_t>();
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
@@ -333,7 +354,8 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
 /**
  * @brief Test a pipeline containing a scan, a python map with multiple types, and a emit operator
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
+{
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("byteVariable", BasicType::INT8);
     schema->addField("shortVariable", BasicType::INT16);
@@ -350,19 +372,20 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
 
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
         std::string value = "X";
         auto varLengthBuffer = bm->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
         auto strIndex = buffer.storeChildBuffer(varLengthBuffer);
 
-        testBuffer[i]["byteVariable"].write((int8_t) i);
-        testBuffer[i]["shortVariable"].write((int16_t) i);
-        testBuffer[i]["intVariable"].write((int32_t) i);
-        testBuffer[i]["longVariable"].write((int64_t) i);
-        testBuffer[i]["floatVariable"].write((float) i);
-        testBuffer[i]["doubleVariable"].write((double) i);
+        testBuffer[i]["byteVariable"].write((int8_t)i);
+        testBuffer[i]["shortVariable"].write((int16_t)i);
+        testBuffer[i]["intVariable"].write((int32_t)i);
+        testBuffer[i]["longVariable"].write((int64_t)i);
+        testBuffer[i]["floatVariable"].write((float)i);
+        testBuffer[i]["doubleVariable"].write((double)i);
         testBuffer[i]["booleanVariable"].write(true);
         // testBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
         testBuffer.setNumberOfTuples(i + 1);
@@ -392,7 +415,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
         EXPECT_EQ(resulttestBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
         EXPECT_EQ(resulttestBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
         EXPECT_EQ(resulttestBuffer[i]["intVariable"].read<int32_t>(), i + 10);
@@ -409,12 +433,11 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        MapPythonUDFPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
-                        [](const testing::TestParamInfo<MapPythonUDFPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    MapPythonUDFPipelineTest,
+    ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+    [](const testing::TestParamInfo<MapPythonUDFPipelineTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+} // namespace NES::Runtime::Execution
+#endif // NAUTILUS_PYTHON_UDF_ENABLED

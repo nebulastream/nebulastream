@@ -12,21 +12,23 @@
     limitations under the License.
 */
 
+#include <filesystem>
+#include <fstream>
+#include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <Health.grpc.pb.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TopologyLinkInformation.hpp>
-#include <filesystem>
-#include <fstream>
-#include <string>
+#include <CoordinatorRPCService.pb.h>
+#include <Health.grpc.pb.h>
 
-namespace NES {
-namespace detail {
+namespace NES
+{
+namespace detail
+{
 
 /**
  * @brief Listener to process an Rpc Execution
@@ -34,28 +36,29 @@ namespace detail {
  * @tparam RequestType type of the object sent as request
  * @tparam ReplyType type of the object expected as reply
  */
-template<typename ReturnType, typename RequestType, typename ReplyType>
-class RpcExecutionListener {
-  public:
+template <typename ReturnType, typename RequestType, typename ReplyType>
+class RpcExecutionListener
+{
+public:
     virtual ~RpcExecutionListener() = default;
 
     /**
      * @brief Executes the rpc call calling the right grpc method
      * @return grpc invocation status code
      */
-    virtual grpc::Status rpcCall(const RequestType&, ReplyType*) = 0;
+    virtual grpc::Status rpcCall(const RequestType &, ReplyType *) = 0;
 
     /**
      * @brief called upon the successful completion of the rpc with a reply
      * @return value to be returned on success
      */
-    virtual ReturnType onSuccess(const ReplyType&) = 0;
+    virtual ReturnType onSuccess(const ReplyType &) = 0;
 
     /**
      * @brief called upon an error during the rpc
      * @return true if a retry must be attempted
      */
-    virtual bool onPartialFailure(const grpc::Status&) = 0;
+    virtual bool onPartialFailure(const grpc::Status &) = 0;
 
     /**
      * @brief called upon the unsuccessful completion of the rpc with a reply
@@ -76,21 +79,28 @@ class RpcExecutionListener {
  * @param listener the object that manages the rpc invocation
  * @return a return object in the case of success or failure
  */
-template<typename ReturnType, typename RequestType, typename ReplyType>
-[[nodiscard]] ReturnType processRpc(const RequestType& request,
-                                    uint32_t retryAttempts,
-                                    std::chrono::milliseconds backOffTime,
-                                    RpcExecutionListener<ReturnType, RequestType, ReplyType>& listener) {
-
-    for (uint32_t i = 0; i <= retryAttempts; ++i, backOffTime *= 2) {
+template <typename ReturnType, typename RequestType, typename ReplyType>
+[[nodiscard]] ReturnType processRpc(
+    const RequestType & request,
+    uint32_t retryAttempts,
+    std::chrono::milliseconds backOffTime,
+    RpcExecutionListener<ReturnType, RequestType, ReplyType> & listener)
+{
+    for (uint32_t i = 0; i <= retryAttempts; ++i, backOffTime *= 2)
+    {
         ReplyType reply;
         Status status = listener.rpcCall(request, &reply);
 
-        if (status.ok()) {
+        if (status.ok())
+        {
             return listener.onSuccess(reply);
-        } else if (listener.onPartialFailure(status)) {
+        }
+        else if (listener.onPartialFailure(status))
+        {
             usleep(std::chrono::duration_cast<std::chrono::microseconds>(backOffTime).count());
-        } else {
+        }
+        else
+        {
             break;
         }
     }
@@ -109,133 +119,158 @@ template<typename ReturnType, typename RequestType, typename ReplyType>
  * @param func the call to the selected rpc
  * @return a return object in the case of success or failure
  */
-template<typename ReturnType, typename RequestType, typename ReplyType>
-[[nodiscard]] ReturnType processGenericRpc(const RequestType& request,
-                                           uint32_t retryAttempts,
-                                           std::chrono::milliseconds backOffTime,
-                                           std::function<grpc::Status(ClientContext*, const RequestType&, ReplyType*)>&& func) {
-    class GenericRpcListener : public detail::RpcExecutionListener<bool, RequestType, ReplyType> {
-      public:
-        explicit GenericRpcListener(std::function<grpc::Status(ClientContext*, const RequestType&, ReplyType*)>&& func)
-            : func(std::move(func)) {}
+template <typename ReturnType, typename RequestType, typename ReplyType>
+[[nodiscard]] ReturnType processGenericRpc(
+    const RequestType & request,
+    uint32_t retryAttempts,
+    std::chrono::milliseconds backOffTime,
+    std::function<grpc::Status(ClientContext *, const RequestType &, ReplyType *)> && func)
+{
+    class GenericRpcListener : public detail::RpcExecutionListener<bool, RequestType, ReplyType>
+    {
+    public:
+        explicit GenericRpcListener(std::function<grpc::Status(ClientContext *, const RequestType &, ReplyType *)> && func)
+            : func(std::move(func))
+        {
+        }
         virtual ~GenericRpcListener() = default;
 
-        grpc::Status rpcCall(const RequestType& request, ReplyType* reply) override {
+        grpc::Status rpcCall(const RequestType & request, ReplyType * reply) override
+        {
             ClientContext context;
 
             return func(&context, request, reply);
         }
-        bool onSuccess(const ReplyType& reply) override {
+        bool onSuccess(const ReplyType & reply) override
+        {
             NES_DEBUG("CoordinatorRPCClient::: status ok return success={}", reply.success());
             return reply.success();
         }
-        bool onPartialFailure(const Status& status) override {
+        bool onPartialFailure(const Status & status) override
+        {
             NES_DEBUG(" CoordinatorRPCClient:: error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }
 
-      private:
-        std::function<grpc::Status(ClientContext*, const RequestType&, ReplyType*)> func;
+    private:
+        std::function<grpc::Status(ClientContext *, const RequestType &, ReplyType *)> func;
     };
 
     auto listener = GenericRpcListener(std::move(func));
     return detail::processRpc(request, retryAttempts, backOffTime, listener);
 }
 
-}// namespace detail
+} // namespace detail
 
 std::shared_ptr<CoordinatorRPCClient>
-CoordinatorRPCClient::create(const std::string& address, uint32_t rpcRetryAttempts, std::chrono::milliseconds rpcBackoff) {
-
+CoordinatorRPCClient::create(const std::string & address, uint32_t rpcRetryAttempts, std::chrono::milliseconds rpcBackoff)
+{
     NES_DEBUG("CoordinatorRPCClient(): creating channels to address ={}", address);
     auto rpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
-    if (rpcChannel) {
+    if (rpcChannel)
+    {
         NES_DEBUG("CoordinatorRPCClient::connecting: channel successfully created");
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("CoordinatorRPCClient::connecting error while creating channel");
     }
 
-    return std::make_shared<CoordinatorRPCClient>(CoordinatorRPCService::NewStub(rpcChannel),
-                                                  address,
-                                                  rpcRetryAttempts,
-                                                  rpcBackoff);
+    return std::make_shared<CoordinatorRPCClient>(CoordinatorRPCService::NewStub(rpcChannel), address, rpcRetryAttempts, rpcBackoff);
 }
 
-CoordinatorRPCClient::CoordinatorRPCClient(std::unique_ptr<CoordinatorRPCService::StubInterface>&& coordinatorStub,
-                                           const std::string& address,
-                                           uint32_t rpcRetryAttempts,
-                                           std::chrono::milliseconds rpcBackoff)
-    : address(address), coordinatorStub(std::move(coordinatorStub)), rpcRetryAttempts(rpcRetryAttempts), rpcBackoff(rpcBackoff) {}
+CoordinatorRPCClient::CoordinatorRPCClient(
+    std::unique_ptr<CoordinatorRPCService::StubInterface> && coordinatorStub,
+    const std::string & address,
+    uint32_t rpcRetryAttempts,
+    std::chrono::milliseconds rpcBackoff)
+    : address(address), coordinatorStub(std::move(coordinatorStub)), rpcRetryAttempts(rpcRetryAttempts), rpcBackoff(rpcBackoff)
+{
+}
 
-bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
-    NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: got {}"
-              " physical sources to register for worker with id {}",
-              physicalSourceTypes.size(),
-              workerId);
+bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr> & physicalSourceTypes)
+{
+    NES_DEBUG(
+        "CoordinatorRPCClient::registerPhysicalSources: got {}"
+        " physical sources to register for worker with id {}",
+        physicalSourceTypes.size(),
+        workerId);
 
     RegisterPhysicalSourcesRequest request;
     request.set_workerid(workerId.getRawValue());
 
-    for (const auto& physicalSourceType : physicalSourceTypes) {
-        PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsourcetypes();
+    for (const auto & physicalSourceType : physicalSourceTypes)
+    {
+        PhysicalSourceDefinition * physicalSourceDefinition = request.add_physicalsourcetypes();
         physicalSourceDefinition->set_sourcetype(physicalSourceType->getSourceTypeAsString());
         physicalSourceDefinition->set_physicalsourcename(physicalSourceType->getPhysicalSourceName());
         physicalSourceDefinition->set_logicalsourcename(physicalSourceType->getLogicalSourceName());
     }
 
     class PhysicalSourceRegistrationRequestListener
-        : public detail::RpcExecutionListener<bool, RegisterPhysicalSourcesRequest, RegisterPhysicalSourcesReply> {
-      public:
-        explicit PhysicalSourceRegistrationRequestListener(CoordinatorRPCService::StubInterface& coordinatorStub)
-            : coordinatorStub(coordinatorStub) {}
+        : public detail::RpcExecutionListener<bool, RegisterPhysicalSourcesRequest, RegisterPhysicalSourcesReply>
+    {
+    public:
+        explicit PhysicalSourceRegistrationRequestListener(CoordinatorRPCService::StubInterface & coordinatorStub)
+            : coordinatorStub(coordinatorStub)
+        {
+        }
         virtual ~PhysicalSourceRegistrationRequestListener() = default;
 
-        grpc::Status rpcCall(const RegisterPhysicalSourcesRequest& request, RegisterPhysicalSourcesReply* reply) override {
+        grpc::Status rpcCall(const RegisterPhysicalSourcesRequest & request, RegisterPhysicalSourcesReply * reply) override
+        {
             ClientContext context;
             return coordinatorStub.RegisterPhysicalSource(&context, request, reply);
         }
 
-        bool onSuccess(const RegisterPhysicalSourcesReply& reply) override {
-            if (!reply.success()) {
-                for (const auto& result : reply.results()) {
-                    if (result.success()) {
+        bool onSuccess(const RegisterPhysicalSourcesReply & reply) override
+        {
+            if (!reply.success())
+            {
+                for (const auto & result : reply.results())
+                {
+                    if (result.success())
+                    {
                         continue;
                     }
-                    NES_ERROR("Could not register physical source {} at the coordinator! Reason: {}",
-                              result.physicalsourcename(),
-                              result.reason());
+                    NES_ERROR(
+                        "Could not register physical source {} at the coordinator! Reason: {}",
+                        result.physicalsourcename(),
+                        result.reason());
                 }
             }
             return reply.success();
         }
 
-        bool onPartialFailure(const Status& status) override {
-            NES_WARNING(" CoordinatorRPCClient::registerPhysicalSources error={}: {}",
-                        status.error_code(),
-                        status.error_message());
+        bool onPartialFailure(const Status & status) override
+        {
+            NES_WARNING(" CoordinatorRPCClient::registerPhysicalSources error={}: {}", status.error_code(), status.error_message());
             // Currently the Server always returns Ok. Thus any other error might be solved by a retry.
             return true;
         }
 
-        bool onFailure() override {
+        bool onFailure() override
+        {
             NES_ERROR("CoordinatorRPCClient::registerPhysicalSources Failed");
             return false;
         }
-        CoordinatorRPCService::StubInterface& coordinatorStub;
+        CoordinatorRPCService::StubInterface & coordinatorStub;
     };
 
     auto listener = PhysicalSourceRegistrationRequestListener(*coordinatorStub);
     return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath) {
+bool CoordinatorRPCClient::registerLogicalSource(const std::string & logicalSourceName, const std::string & filePath)
+{
     NES_DEBUG("CoordinatorRPCClient: registerLogicalSource {} with path{}", logicalSourceName, filePath);
 
     // Check if file can be found on system and read.
     std::filesystem::path path{filePath.c_str()};
-    if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path)) {
+    if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path))
+    {
         NES_ERROR("CoordinatorRPCClient: file does not exits");
         throw Exceptions::RuntimeException("files does not exist");
     }
@@ -254,23 +289,21 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
         request,
         rpcRetryAttempts,
         rpcBackoff,
-        [this](ClientContext* context, const RegisterLogicalSourceRequest& innerRequest, RegisterLogicalSourceReply* reply) {
-            return coordinatorStub->RegisterLogicalSource(context, innerRequest, reply);
-        });
+        [this](ClientContext * context, const RegisterLogicalSourceRequest & innerRequest, RegisterLogicalSourceReply * reply)
+        { return coordinatorStub->RegisterLogicalSource(context, innerRequest, reply); });
 }
 
-bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
-
-    for (const auto& physicalSourceType : physicalSourceTypes) {
-
-        NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source {} from logical source",
-                  physicalSourceType->toString());
+bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr> & physicalSourceTypes)
+{
+    for (const auto & physicalSourceType : physicalSourceTypes)
+    {
+        NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source {} from logical source", physicalSourceType->toString());
 
         UnregisterPhysicalSourceRequest request;
         request.set_workerid(workerId.getRawValue());
-        const std::string& physicalSourceName = physicalSourceType->getPhysicalSourceName();
+        const std::string & physicalSourceName = physicalSourceType->getPhysicalSourceName();
         request.set_physicalsourcename(physicalSourceName);
-        const std::string& logicalSourceName = physicalSourceType->getLogicalSourceName();
+        const std::string & logicalSourceName = physicalSourceType->getLogicalSourceName();
         request.set_logicalsourcename(logicalSourceName);
         NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request={}", request.DebugString());
 
@@ -278,13 +311,11 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSo
             request,
             rpcRetryAttempts,
             rpcBackoff,
-            [this](ClientContext* context,
-                   const UnregisterPhysicalSourceRequest& innerRequest,
-                   UnregisterPhysicalSourceReply* reply) {
-                return coordinatorStub->UnregisterPhysicalSource(context, innerRequest, reply);
-            });
+            [this](ClientContext * context, const UnregisterPhysicalSourceRequest & innerRequest, UnregisterPhysicalSourceReply * reply)
+            { return coordinatorStub->UnregisterPhysicalSource(context, innerRequest, reply); });
 
-        if (!success) {
+        if (!success)
+        {
             NES_ERROR("Unable to unregister physical source {} for the logical source {}.", physicalSourceName, logicalSourceName)
             return success;
         }
@@ -292,7 +323,8 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSo
     return true;
 }
 
-bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSourceName) {
+bool CoordinatorRPCClient::unregisterLogicalSource(const std::string & logicalSourceName)
+{
     NES_DEBUG("CoordinatorRPCClient: unregisterLogicalSource source{}", logicalSourceName);
 
     UnregisterLogicalSourceRequest request;
@@ -304,12 +336,12 @@ bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSou
         request,
         rpcRetryAttempts,
         rpcBackoff,
-        [this](ClientContext* context, const UnregisterLogicalSourceRequest& innerRequest, UnregisterLogicalSourceReply* reply) {
-            return coordinatorStub->UnregisterLogicalSource(context, innerRequest, reply);
-        });
+        [this](ClientContext * context, const UnregisterLogicalSourceRequest & innerRequest, UnregisterLogicalSourceReply * reply)
+        { return coordinatorStub->UnregisterLogicalSource(context, innerRequest, reply); });
 }
 
-bool CoordinatorRPCClient::addParent(WorkerId parentId) {
+bool CoordinatorRPCClient::addParent(WorkerId parentId)
+{
     NES_DEBUG("CoordinatorRPCClient: addParent parentId={} workerId={}", parentId, workerId);
 
     AddParentRequest request;
@@ -321,16 +353,13 @@ bool CoordinatorRPCClient::addParent(WorkerId parentId) {
         request,
         rpcRetryAttempts,
         rpcBackoff,
-        [this](ClientContext* context, const AddParentRequest& innerRequest, AddParentReply* reply) {
-            return coordinatorStub->AddParent(context, innerRequest, reply);
-        });
+        [this](ClientContext * context, const AddParentRequest & innerRequest, AddParentReply * reply)
+        { return coordinatorStub->AddParent(context, innerRequest, reply); });
 }
 
-bool CoordinatorRPCClient::replaceParent(WorkerId oldParentId, WorkerId newParentId) {
-    NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId={} newParentId={} workerId={}",
-              oldParentId,
-              newParentId,
-              workerId);
+bool CoordinatorRPCClient::replaceParent(WorkerId oldParentId, WorkerId newParentId)
+{
+    NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId={} newParentId={} workerId={}", oldParentId, newParentId, workerId);
 
     ReplaceParentRequest request;
     request.set_childid(workerId.getRawValue());
@@ -338,25 +367,31 @@ bool CoordinatorRPCClient::replaceParent(WorkerId oldParentId, WorkerId newParen
     request.set_newparent(newParentId.getRawValue());
     NES_DEBUG("CoordinatorRPCClient::replaceParent request={}", request.DebugString());
 
-    class ReplaceParentListener : public detail::RpcExecutionListener<bool, ReplaceParentRequest, ReplaceParentReply> {
-      public:
-        std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub;
+    class ReplaceParentListener : public detail::RpcExecutionListener<bool, ReplaceParentRequest, ReplaceParentReply>
+    {
+    public:
+        std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub;
 
-        explicit ReplaceParentListener(std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub)
-            : coordinatorStub(coordinatorStub) {}
+        explicit ReplaceParentListener(std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub)
+            : coordinatorStub(coordinatorStub)
+        {
+        }
 
         virtual ~ReplaceParentListener() = default;
 
-        Status rpcCall(const ReplaceParentRequest& request, ReplaceParentReply* reply) override {
+        Status rpcCall(const ReplaceParentRequest & request, ReplaceParentReply * reply) override
+        {
             ClientContext context;
 
             return coordinatorStub->ReplaceParent(&context, request, reply);
         }
-        bool onSuccess(const ReplaceParentReply& reply) override {
+        bool onSuccess(const ReplaceParentReply & reply) override
+        {
             NES_DEBUG("CoordinatorRPCClient::removeAsParent: status ok return success={}", reply.success());
             return reply.success();
         }
-        bool onPartialFailure(const Status& status) override {
+        bool onPartialFailure(const Status & status) override
+        {
             NES_DEBUG(" CoordinatorRPCClient::removeAsParent error={}: {}", status.error_code(), status.error_message());
             return false;
         }
@@ -368,9 +403,13 @@ bool CoordinatorRPCClient::replaceParent(WorkerId oldParentId, WorkerId newParen
     return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-WorkerId CoordinatorRPCClient::getId() const { return workerId; }
+WorkerId CoordinatorRPCClient::getId() const
+{
+    return workerId;
+}
 
-bool CoordinatorRPCClient::removeParent(WorkerId parentId) {
+bool CoordinatorRPCClient::removeParent(WorkerId parentId)
+{
     NES_DEBUG("CoordinatorRPCClient: removeAsParent parentId{} workerId={}", parentId, workerId);
 
     RemoveParentRequest request;
@@ -378,25 +417,31 @@ bool CoordinatorRPCClient::removeParent(WorkerId parentId) {
     request.set_childid(workerId.getRawValue());
     NES_DEBUG("CoordinatorRPCClient::RemoveParentRequest request={}", request.DebugString());
 
-    class RemoveParentListener : public detail::RpcExecutionListener<bool, RemoveParentRequest, RemoveParentReply> {
-      public:
-        std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub;
+    class RemoveParentListener : public detail::RpcExecutionListener<bool, RemoveParentRequest, RemoveParentReply>
+    {
+    public:
+        std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub;
 
-        explicit RemoveParentListener(std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub)
-            : coordinatorStub(coordinatorStub) {}
+        explicit RemoveParentListener(std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub)
+            : coordinatorStub(coordinatorStub)
+        {
+        }
 
         virtual ~RemoveParentListener() = default;
 
-        Status rpcCall(const RemoveParentRequest& request, RemoveParentReply* reply) override {
+        Status rpcCall(const RemoveParentRequest & request, RemoveParentReply * reply) override
+        {
             ClientContext context;
 
             return coordinatorStub->RemoveParent(&context, request, reply);
         }
-        bool onSuccess(const RemoveParentReply& reply) override {
+        bool onSuccess(const RemoveParentReply & reply) override
+        {
             NES_DEBUG("CoordinatorRPCClient::removeAsParent: status ok return success={}", reply.success());
             return reply.success();
         }
-        bool onPartialFailure(const Status& status) override {
+        bool onPartialFailure(const Status & status) override
+        {
             NES_DEBUG(" CoordinatorRPCClient::removeAsParent error={}: {}", status.error_code(), status.error_message());
             return false;
         }
@@ -408,32 +453,39 @@ bool CoordinatorRPCClient::removeParent(WorkerId parentId) {
     return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::unregisterNode() {
+bool CoordinatorRPCClient::unregisterNode()
+{
     NES_DEBUG("CoordinatorRPCClient::unregisterNode workerId={}", workerId);
 
     UnregisterWorkerRequest request;
     request.set_workerid(workerId.getRawValue());
     NES_DEBUG("CoordinatorRPCClient::unregisterNode request={}", request.DebugString());
 
-    class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterWorkerRequest, UnregisterWorkerReply> {
-      public:
-        std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub;
+    class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterWorkerRequest, UnregisterWorkerReply>
+    {
+    public:
+        std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub;
 
-        explicit UnRegisterNodeListener(std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub)
-            : coordinatorStub(coordinatorStub) {}
+        explicit UnRegisterNodeListener(std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub)
+            : coordinatorStub(coordinatorStub)
+        {
+        }
 
         virtual ~UnRegisterNodeListener() = default;
 
-        Status rpcCall(const UnregisterWorkerRequest& request, UnregisterWorkerReply* reply) override {
+        Status rpcCall(const UnregisterWorkerRequest & request, UnregisterWorkerReply * reply) override
+        {
             ClientContext context;
 
             return coordinatorStub->UnregisterWorker(&context, request, reply);
         }
-        bool onSuccess(const UnregisterWorkerReply& reply) override {
+        bool onSuccess(const UnregisterWorkerReply & reply) override
+        {
             NES_DEBUG("CoordinatorRPCClient::unregisterNode: status ok return success={}", reply.success());
             return reply.success();
         }
-        bool onPartialFailure(const Status& status) override {
+        bool onPartialFailure(const Status & status) override
+        {
             NES_DEBUG(" CoordinatorRPCClient::unregisterNode error={}: {}", status.error_code(), status.error_message());
             return false;
         }
@@ -445,39 +497,45 @@ bool CoordinatorRPCClient::unregisterNode() {
     return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrationRequest) {
-
+bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest & registrationRequest)
+{
     NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request={}", registrationRequest.DebugString());
 
-    class RegisterWorkerListener : public detail::RpcExecutionListener<bool, RegisterWorkerRequest, RegisterWorkerReply> {
-      public:
-        WorkerId& workerId;
-        std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub;
+    class RegisterWorkerListener : public detail::RpcExecutionListener<bool, RegisterWorkerRequest, RegisterWorkerReply>
+    {
+    public:
+        WorkerId & workerId;
+        std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub;
 
-        explicit RegisterWorkerListener(WorkerId& workerId,
-                                        std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub)
-            : workerId(workerId), coordinatorStub(coordinatorStub) {}
+        explicit RegisterWorkerListener(WorkerId & workerId, std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub)
+            : workerId(workerId), coordinatorStub(coordinatorStub)
+        {
+        }
 
         virtual ~RegisterWorkerListener() = default;
 
-        Status rpcCall(const RegisterWorkerRequest& request, RegisterWorkerReply* reply) override {
+        Status rpcCall(const RegisterWorkerRequest & request, RegisterWorkerReply * reply) override
+        {
             ClientContext context;
 
             return coordinatorStub->RegisterWorker(&context, request, reply);
         }
-        bool onSuccess(const RegisterWorkerReply& reply) override {
+        bool onSuccess(const RegisterWorkerReply & reply) override
+        {
             workerId = WorkerId(reply.workerid());
             return true;
         }
-        bool onPartialFailure(const Status& status) override {
+        bool onPartialFailure(const Status & status) override
+        {
             NES_ERROR(" CoordinatorRPCClient::registerWorker error={}:{}", status.error_code(), status.error_message());
-            switch (status.error_code()) {
+            switch (status.error_code())
+            {
                 case grpc::UNIMPLEMENTED:
                 case grpc::UNAVAILABLE: {
-                    return true;// partial failure ok to continue
+                    return true; // partial failure ok to continue
                 }
                 default: {
-                    return false;// partial failure not ok to continue
+                    return false; // partial failure not ok to continue
                 }
             }
         }
@@ -488,12 +546,9 @@ bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrat
     return detail::processRpc(registrationRequest, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::notifyQueryFailure(SharedQueryId sharedQueryId,
-                                              DecomposedQueryPlanId subQueryId,
-                                              WorkerId pWorkerId,
-                                              OperatorId operatorId,
-                                              std::string errorMsg) {
-
+bool CoordinatorRPCClient::notifyQueryFailure(
+    SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, WorkerId pWorkerId, OperatorId operatorId, std::string errorMsg)
+{
     // create & fill the protobuf
     QueryFailureNotification request;
     request.set_queryid(sharedQueryId.getRawValue());
@@ -502,26 +557,30 @@ bool CoordinatorRPCClient::notifyQueryFailure(SharedQueryId sharedQueryId,
     request.set_operatorid(operatorId.getRawValue());
     request.set_errormsg(errorMsg);
 
-    class NotifyQueryFailureListener
-        : public detail::RpcExecutionListener<bool, QueryFailureNotification, QueryFailureNotificationReply> {
-      public:
-        std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub;
+    class NotifyQueryFailureListener : public detail::RpcExecutionListener<bool, QueryFailureNotification, QueryFailureNotificationReply>
+    {
+    public:
+        std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub;
 
-        explicit NotifyQueryFailureListener(std::unique_ptr<CoordinatorRPCService::StubInterface>& coordinatorStub)
-            : coordinatorStub(coordinatorStub) {}
+        explicit NotifyQueryFailureListener(std::unique_ptr<CoordinatorRPCService::StubInterface> & coordinatorStub)
+            : coordinatorStub(coordinatorStub)
+        {
+        }
 
         virtual ~NotifyQueryFailureListener() = default;
 
-        Status rpcCall(const QueryFailureNotification& request, QueryFailureNotificationReply* reply) override {
+        Status rpcCall(const QueryFailureNotification & request, QueryFailureNotificationReply * reply) override
+        {
             ClientContext context;
 
             return coordinatorStub->NotifyQueryFailure(&context, request, reply);
         }
-        bool onSuccess(const QueryFailureNotificationReply&) override {
+        bool onSuccess(const QueryFailureNotificationReply &) override
+        {
             NES_DEBUG("WorkerRPCClient::NotifyQueryFailure: status ok");
             return true;
         }
-        bool onPartialFailure(const Status&) override { return true; }
+        bool onPartialFailure(const Status &) override { return true; }
         bool onFailure() override { return false; }
     };
 
@@ -531,12 +590,14 @@ bool CoordinatorRPCClient::notifyQueryFailure(SharedQueryId sharedQueryId,
 }
 
 std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
-CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius) {
-    if (!geoLocation.isValid()) {
+CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLocation & geoLocation, double radius)
+{
+    if (!geoLocation.isValid())
+    {
         return {};
     }
     GetNodesInRangeRequest request;
-    NES::Spatial::Protobuf::GeoLocation* pCoordinates = request.mutable_geolocation();
+    NES::Spatial::Protobuf::GeoLocation * pCoordinates = request.mutable_geolocation();
     pCoordinates->set_lat(geoLocation.getLatitude());
     pCoordinates->set_lng(geoLocation.getLongitude());
     request.set_radius(radius);
@@ -546,13 +607,15 @@ CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
     std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> nodesInRange;
-    for (const auto& workerLocation : *reply.mutable_nodes()) {
+    for (const auto & workerLocation : *reply.mutable_nodes())
+    {
         nodesInRange.emplace_back(workerLocation.id(), workerLocation.geolocation());
     }
     return nodesInRange;
 }
 
-bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName) const {
+bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName) const
+{
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<grpc::health::v1::Health::StubInterface> workerStub = grpc::health::v1::Health::NewStub(chan);
 
@@ -562,31 +625,36 @@ bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName)
     ClientContext context;
     Status status = workerStub->Check(&context, request, &response);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_TRACE("CoordinatorRPCClient::checkHealth: status ok return success={}", response.status());
         return response.status();
-    } else {
+    }
+    else
+    {
         NES_ERROR("CoordinatorRPCClient::checkHealth error={}:{}", status.error_code(), status.error_message());
         return response.status();
     }
 }
 
-bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
+bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId)
+{
     EpochBarrierPropagationNotification request;
     request.set_timestamp(timestamp);
     request.set_queryid(querySubPlanId);
     EpochBarrierPropagationReply reply;
     ClientContext context;
     Status status = coordinatorStub->NotifyEpochTermination(&context, request, &reply);
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
         return true;
     }
     return false;
 }
 
-bool CoordinatorRPCClient::sendErrors(WorkerId pWorkerId, std::string errorMsg) {
-
+bool CoordinatorRPCClient::sendErrors(WorkerId pWorkerId, std::string errorMsg)
+{
     // create & fill the protobuf
     SendErrorsMessage request;
     request.set_workerid(pWorkerId.getRawValue());
@@ -598,17 +666,17 @@ bool CoordinatorRPCClient::sendErrors(WorkerId pWorkerId, std::string errorMsg) 
 
     Status status = coordinatorStub->SendErrors(&context, request, &reply);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::SendErrors: status ok");
         return true;
     }
     return false;
 }
 
-bool CoordinatorRPCClient::checkAndMarkForSoftStop(SharedQueryId sharedQueryId,
-                                                   DecomposedQueryPlanId decomposedQueryPlanId,
-                                                   OperatorId sourceId) {
-
+bool CoordinatorRPCClient::checkAndMarkForSoftStop(
+    SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OperatorId sourceId)
+{
     //Build request
     RequestSoftStopMessage requestSoftStopMessage;
     requestSoftStopMessage.set_queryid(sharedQueryId.getRawValue());
@@ -625,10 +693,12 @@ bool CoordinatorRPCClient::checkAndMarkForSoftStop(SharedQueryId sharedQueryId,
     return stopRequestReply.success();
 }
 
-bool CoordinatorRPCClient::notifySourceStopTriggered(SharedQueryId sharedQueryId,
-                                                     DecomposedQueryPlanId decomposedQueryPlanId,
-                                                     OperatorId sourceId,
-                                                     Runtime::QueryTerminationType queryTermination) {
+bool CoordinatorRPCClient::notifySourceStopTriggered(
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    OperatorId sourceId,
+    Runtime::QueryTerminationType queryTermination)
+{
     NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful, "Wrong termination requested");
 
     //Build request
@@ -647,7 +717,8 @@ bool CoordinatorRPCClient::notifySourceStopTriggered(SharedQueryId sharedQueryId
     return softStopTriggeredReply.success();
 }
 
-bool CoordinatorRPCClient::notifySoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
+bool CoordinatorRPCClient::notifySoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId)
+{
     //Build request
     SoftStopCompletionMessage softStopCompletionMessage;
     softStopCompletionMessage.set_queryid(sharedQueryId.getRawValue());
@@ -664,15 +735,17 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(SharedQueryId sharedQueryId, 
 }
 
 bool CoordinatorRPCClient::sendReconnectPrediction(
-    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
-    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions) {
+    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint> & addPredictions,
+    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint> & removePredictions)
+{
     ClientContext context;
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;
 
     request.set_deviceid(workerId.getRawValue());
     auto pointsToAdd = request.mutable_addreconnects();
-    for (const auto addedPrediction : addPredictions) {
+    for (const auto addedPrediction : addPredictions)
+    {
         auto addedPoint = pointsToAdd->Add();
         addedPoint->set_id(addedPrediction.newParentId.getRawValue());
         addedPoint->set_time(addedPrediction.expectedTime);
@@ -680,7 +753,8 @@ bool CoordinatorRPCClient::sendReconnectPrediction(
         pointLocation->set_lat(addedPrediction.pointGeoLocation.getLatitude());
         pointLocation->set_lat(addedPrediction.pointGeoLocation.getLongitude());
     }
-    for (const auto removedPrediction : removePredictions) {
+    for (const auto removedPrediction : removePredictions)
+    {
         auto addedPoint = pointsToAdd->Add();
         addedPoint->set_id(removedPrediction.newParentId.getRawValue());
         addedPoint->set_time(removedPrediction.expectedTime);
@@ -693,26 +767,29 @@ bool CoordinatorRPCClient::sendReconnectPrediction(
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experimental::Waypoint& locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experimental::Waypoint & locationUpdate)
+{
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;
 
     request.set_workerid(workerId.getRawValue());
 
-    NES::Spatial::Protobuf::Waypoint* waypoint = request.mutable_waypoint();
-    NES::Spatial::Protobuf::GeoLocation* geoLocation = waypoint->mutable_geolocation();
+    NES::Spatial::Protobuf::Waypoint * waypoint = request.mutable_waypoint();
+    NES::Spatial::Protobuf::GeoLocation * geoLocation = waypoint->mutable_geolocation();
     geoLocation->set_lat(locationUpdate.getLocation().getLatitude());
     geoLocation->set_lng(locationUpdate.getLocation().getLongitude());
 
-    if (locationUpdate.getTimestamp()) {
+    if (locationUpdate.getTimestamp())
+    {
         waypoint->set_timestamp(locationUpdate.getTimestamp().value());
     }
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
     return reply.success();
 }
 
-std::vector<WorkerId> CoordinatorRPCClient::getParents(WorkerId pWorkerId) {
+std::vector<WorkerId> CoordinatorRPCClient::getParents(WorkerId pWorkerId)
+{
     ClientContext context;
     GetParentsRequest request;
     GetParentsReply reply;
@@ -721,24 +798,28 @@ std::vector<WorkerId> CoordinatorRPCClient::getParents(WorkerId pWorkerId) {
 
     coordinatorStub->GetParents(&context, request, &reply);
     std::vector<WorkerId> parentWorkerIds;
-    for (auto parentId : reply.parentids()) {
+    for (auto parentId : reply.parentids())
+    {
         parentWorkerIds.push_back(WorkerId(parentId));
     }
     return parentWorkerIds;
 }
 
-bool CoordinatorRPCClient::relocateTopologyNode(const std::vector<TopologyLinkInformation>& removedTopologyLinks,
-                                                const std::vector<TopologyLinkInformation>& addedTopologyLinks) {
+bool CoordinatorRPCClient::relocateTopologyNode(
+    const std::vector<TopologyLinkInformation> & removedTopologyLinks, const std::vector<TopologyLinkInformation> & addedTopologyLinks)
+{
     ClientContext context;
     NodeRelocationRequest request;
     NodeRelocationReply reply;
 
-    for (const auto& removedLink : removedTopologyLinks) {
+    for (const auto & removedLink : removedTopologyLinks)
+    {
         auto removed = request.add_removedlinks();
         removed->set_upstream(removedLink.upstreamTopologyNode.getRawValue());
         removed->set_downstream(removedLink.downstreamTopologyNode.getRawValue());
     }
-    for (const auto& addedLink : addedTopologyLinks) {
+    for (const auto & addedLink : addedTopologyLinks)
+    {
         auto added = request.add_addedlinks();
         added->set_upstream(addedLink.upstreamTopologyNode.getRawValue());
         added->set_downstream(addedLink.downstreamTopologyNode.getRawValue());
@@ -746,4 +827,4 @@ bool CoordinatorRPCClient::relocateTopologyNode(const std::vector<TopologyLinkIn
     coordinatorStub->RelocateTopologyNode(&context, request, &reply);
     return reply.success();
 }
-}// namespace NES
+} // namespace NES

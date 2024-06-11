@@ -17,21 +17,22 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical zmq source
  */
-class ZmqSourceDescriptor : public SourceDescriptor {
-
-  public:
+class ZmqSourceDescriptor : public SourceDescriptor
+{
+public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port);
     static SourceDescriptorPtr create(SchemaPtr schema, std::string sourceName, std::string host, uint16_t port);
 
     /**
      * @brief Get zmq address name
      */
-    const std::string& getHost() const;
+    const std::string & getHost() const;
 
     /**
      * @brief Get zmq port number
@@ -44,11 +45,11 @@ class ZmqSourceDescriptor : public SourceDescriptor {
      */
     void setPort(uint16_t port);
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const & other) const override;
     std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     explicit ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port);
     explicit ZmqSourceDescriptor(SchemaPtr schema, std::string sourceName, std::string host, uint16_t port);
 
@@ -58,6 +59,6 @@ class ZmqSourceDescriptor : public SourceDescriptor {
 
 using ZmqSourceDescriptorPtr = std::shared_ptr<ZmqSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_

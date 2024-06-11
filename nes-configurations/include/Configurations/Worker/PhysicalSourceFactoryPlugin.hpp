@@ -16,7 +16,8 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORYPLUGIN_HPP_
 
 #include "Util/PluginRegistry.hpp"
-namespace NES {
+namespace NES
+{
 
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
@@ -24,19 +25,22 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-namespace Configurations {
+namespace Configurations
+{
 
-class PhysicalSourceFactoryPlugin {
-  public:
+class PhysicalSourceFactoryPlugin
+{
+public:
     PhysicalSourceFactoryPlugin() = default;
-    virtual PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType,
-                                                           const std::map<std::string, std::string>& commandLineParams) = 0;
-    virtual PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig) = 0;
+    virtual PhysicalSourceTypePtr
+    createPhysicalSourceType(std::string sourceType, const std::map<std::string, std::string> & commandLineParams)
+        = 0;
+    virtual PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType, Yaml::Node & yamlConfig) = 0;
     virtual ~PhysicalSourceFactoryPlugin() = default;
 };
 
 using PhysicalSourceFactoryPluginRegistry = Util::PluginRegistry<PhysicalSourceFactoryPlugin>;
 
-}// namespace Configurations
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORYPLUGIN_HPP_
+} // namespace Configurations
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORYPLUGIN_HPP_

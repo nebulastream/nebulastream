@@ -23,7 +23,8 @@
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 /**
  * @brief The UDF catalog stores all the data required to execute a Java UDF inside an embedded JVM.
@@ -32,8 +33,9 @@ namespace NES::Catalogs::UDF {
  * to retrieve the implementation data during query rewrite,
  * and to retrieve a list of registered UDFs for visualization.
  */
-class UDFCatalog {
-  public:
+class UDFCatalog
+{
+public:
     /**
      * @brief Create a UDFCatalog instance.
      * @return UDFCatalog instance.
@@ -47,14 +49,14 @@ class UDFCatalog {
      * @param descriptor The implementation data of the UDF.
      * @throws UdfException If descriptor is a nullptr or if a UDF under the name is already registered.
      */
-    void registerUDF(const std::string& name, UDFDescriptorPtr descriptor);
+    void registerUDF(const std::string & name, UDFDescriptorPtr descriptor);
 
     /**
      * @brief Retrieve the implementation data for a UDF.
      * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @return The implementation data of the UDF, or nullptr if the UDF is not registered.
      */
-    UDFDescriptorPtr getUDFDescriptor(const std::string& name);
+    UDFDescriptorPtr getUDFDescriptor(const std::string & name);
 
     /**
      * @brief Remove the UDF from the catalog.
@@ -64,7 +66,7 @@ class UDFCatalog {
      * Removing an unregistered UDF is not an error condition because it could have been removed by another user.
      * In this case, the user should just be notified.
      */
-    bool removeUDF(const std::string& name);
+    bool removeUDF(const std::string & name);
 
     /**
      * @brief Retrieve a list of registered UDFs.
@@ -77,9 +79,9 @@ class UDFCatalog {
     // but that's not needed right now.
     std::vector<std::string> listUDFs() const;
 
-  private:
+private:
     std::unordered_map<std::string, UDFDescriptorPtr> udfStore;
 };
 
-}// namespace NES::Catalogs::UDF
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_UDF_UDFCATALOG_HPP_
+} // namespace NES::Catalogs::UDF
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_UDF_UDFCATALOG_HPP_

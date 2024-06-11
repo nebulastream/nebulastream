@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Catalogs/Topology/Prediction/TopologyTimeline.hpp>
@@ -18,41 +19,53 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES::Experimental::TopologyPrediction {
-TopologyTimeline::TopologyTimeline(TopologyPtr originalTopology) : originalTopology(std::move(originalTopology)) {}
+namespace NES::Experimental::TopologyPrediction
+{
+TopologyTimeline::TopologyTimeline(TopologyPtr originalTopology) : originalTopology(std::move(originalTopology))
+{
+}
 
-TopologyTimelinePtr TopologyTimeline::create(TopologyPtr originalTopology) {
+TopologyTimelinePtr TopologyTimeline::create(TopologyPtr originalTopology)
+{
     return std::make_shared<TopologyTimeline>(originalTopology);
 }
 
-TopologyPtr TopologyTimeline::getTopologyVersion(Timestamp time) {
+TopologyPtr TopologyTimeline::getTopologyVersion(Timestamp time)
+{
     //to get the node changes with timestamp equal or less than time
     auto nodeChanges = createAggregatedChangeLog(time);
     return createTopologyVersion(nodeChanges);
 }
 
-void TopologyTimeline::removeTopologyChangeLogAt(Timestamp time) { changeMap.erase(time); }
+void TopologyTimeline::removeTopologyChangeLogAt(Timestamp time)
+{
+    changeMap.erase(time);
+}
 
-void TopologyTimeline::addTopologyDelta(Timestamp predictedTime, const TopologyDelta& delta) {
-    auto& change = changeMap[predictedTime];
+void TopologyTimeline::addTopologyDelta(Timestamp predictedTime, const TopologyDelta & delta)
+{
+    auto & change = changeMap[predictedTime];
     change.update(delta);
 }
 
-bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const TopologyDelta& delta) {
-    if (!changeMap.contains(predictedTime)) {
+bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const TopologyDelta & delta)
+{
+    if (!changeMap.contains(predictedTime))
+    {
         return false;
     }
-    auto& changeLog = changeMap[predictedTime];
+    auto & changeLog = changeMap[predictedTime];
     changeLog.erase(delta);
-    if (changeLog.empty()) {
+    if (changeLog.empty())
+    {
         removeTopologyChangeLogAt(predictedTime);
     }
     return true;
 }
 
-TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
+TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog &)
+{
     /*auto copiedTopology = Topology::create();
     copiedTopology->addAsRootWorkerId(originalTopology->getRoot()->copy());
 
@@ -121,13 +134,15 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
     return nullptr;
 }
 
-TopologyChangeLog TopologyTimeline::createAggregatedChangeLog(Timestamp time) {
+TopologyChangeLog TopologyTimeline::createAggregatedChangeLog(Timestamp time)
+{
     TopologyChangeLog aggregatedTopologyChangeLog;
     //todo #3937: garbage collect
     //todo: create issue for caching
-    for (auto changeLog = changeMap.begin(); changeLog != changeMap.end() && changeLog->first <= time; ++changeLog) {
+    for (auto changeLog = changeMap.begin(); changeLog != changeMap.end() && changeLog->first <= time; ++changeLog)
+    {
         aggregatedTopologyChangeLog.add(changeLog->second);
     }
     return aggregatedTopologyChangeLog;
 }
-}// namespace NES::Experimental::TopologyPrediction
+} // namespace NES::Experimental::TopologyPrediction

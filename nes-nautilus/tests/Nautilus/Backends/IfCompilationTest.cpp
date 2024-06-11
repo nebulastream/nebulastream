@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -21,13 +21,16 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-namespace NES::Nautilus {
+#include <BaseIntegrationTest.hpp>
+namespace NES::Nautilus
+{
 
-class IfCompilationTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
-  public:
+class IfCompilationTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup IfCompilationTest test class.");
     }
@@ -36,146 +39,166 @@ class IfCompilationTest : public Testing::BaseUnitTest, public AbstractCompilati
     static void TearDownTestCase() { NES_INFO("Tear down IfCompilationTest test class."); }
 };
 
-Value<> ifThenCondition() {
+Value<> ifThenCondition()
+{
     Value value = 1;
     Value iw = 1;
-    if (value == 42) {
+    if (value == 42)
+    {
         iw = iw + 1;
     }
     return iw + 42;
 }
 
-TEST_P(IfCompilationTest, ifConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return ifThenCondition();
-    });
+TEST_P(IfCompilationTest, ifConditionTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return ifThenCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 43);
 }
 
-Value<> ifThenElseCondition() {
+Value<> ifThenElseCondition()
+{
     Value value = Value(1);
     Value iw = Value(1);
-    if (value == 42) {
+    if (value == 42)
+    {
         iw = iw + 1;
-    } else {
+    }
+    else
+    {
         iw = iw + 42;
     }
     return iw + 42;
 }
 
-TEST_P(IfCompilationTest, ifThenElseConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return ifThenElseCondition();
-    });
+TEST_P(IfCompilationTest, ifThenElseConditionTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return ifThenElseCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 85);
 }
 
-Value<> nestedIfThenElseCondition() {
+Value<> nestedIfThenElseCondition()
+{
     Value value = Value(1);
     Value iw = Value(1);
-    if (value == 42) {
-    } else {
-        if (iw == 8) {
-        } else {
+    if (value == 42)
+    {
+    }
+    else
+    {
+        if (iw == 8)
+        {
+        }
+        else
+        {
             iw = iw + 2;
         }
     }
     return iw = iw + 2;
 }
 
-TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return nestedIfThenElseCondition();
-    });
+TEST_P(IfCompilationTest, nestedIFThenElseConditionTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return nestedIfThenElseCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
-Value<> nestedIfNoElseCondition() {
+Value<> nestedIfNoElseCondition()
+{
     Value value = Value(1);
     Value iw = Value(1);
-    if (value == 42) {
+    if (value == 42)
+    {
         iw = iw + 4;
-    } else {
+    }
+    else
+    {
         iw = iw + 9;
-        if (iw == 8) {
+        if (iw == 8)
+        {
             iw + 14;
         }
     }
     return iw = iw + 2;
 }
 
-TEST_P(IfCompilationTest, nestedIFThenNoElse) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return nestedIfNoElseCondition();
-    });
+TEST_P(IfCompilationTest, nestedIFThenNoElse)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return nestedIfNoElseCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 12);
 }
 
 // Todo leads to redundant if that can be replaced with br
-Value<> doubleIfCondition() {
+Value<> doubleIfCondition()
+{
     Value value = Value(1);
     Value iw = Value(1);
-    if (iw == 8) {
+    if (iw == 8)
+    {
         // iw = iw + 14;
     }
-    if (iw == 1) {
+    if (iw == 1)
+    {
         iw = iw + 20;
     }
     return iw = iw + 2;
 }
 
-TEST_P(IfCompilationTest, doubleIfCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return doubleIfCondition();
-    });
+TEST_P(IfCompilationTest, doubleIfCondition)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return doubleIfCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 23);
 }
 
-Value<> ifElseIfCondition() {
+Value<> ifElseIfCondition()
+{
     Value value = Value(1);
     Value iw = Value(1);
-    if (iw == 8) {
+    if (iw == 8)
+    {
         iw = iw + 14;
-    } else if (iw == 1) {
+    }
+    else if (iw == 1)
+    {
         iw = iw + 20;
     }
     return iw = iw + 2;
 }
 
-TEST_P(IfCompilationTest, ifElseIfCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return ifElseIfCondition();
-    });
+TEST_P(IfCompilationTest, ifElseIfCondition)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return ifElseIfCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 23);
 }
 
-Value<> orCondition(Value<> value) {
+Value<> orCondition(Value<> value)
+{
     Value iw = Value(1);
-    if (value == 8 || value == 1) {
+    if (value == 8 || value == 1)
+    {
         iw = iw + 14;
     }
     return iw;
 }
 
-TEST_P(IfCompilationTest, orConditionTest) {
+TEST_P(IfCompilationTest, orConditionTest)
+{
     Value<Int32> value = +1_s32;
     value.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() {
-        return orCondition(value);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() { return orCondition(value); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t, int32_t>("execute");
     ASSERT_EQ(function(42), 1);
@@ -183,26 +206,31 @@ TEST_P(IfCompilationTest, orConditionTest) {
     ASSERT_EQ(function(1), 15);
 }
 
-Value<> andCondition(Value<> x, Value<> y) {
+Value<> andCondition(Value<> x, Value<> y)
+{
     Value iw = Value(1);
-    if (x == 8 && y == 1) {
+    if (x == 8 && y == 1)
+    {
         iw = iw + 14;
     }
     return iw;
 }
 
-TEST_P(IfCompilationTest, andConditionTest) {
+TEST_P(IfCompilationTest, andConditionTest)
+{
     Value<Int32> x = +1_s32;
     x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
 
     Value<Int32> y = +1_s32;
     y.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([x, y]() {
-        Tracing::TraceContext::get()->addTraceArgument(x.ref);
-        Tracing::TraceContext::get()->addTraceArgument(y.ref);
-        return andCondition(x, y);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn(
+        [x, y]()
+        {
+            Tracing::TraceContext::get()->addTraceArgument(x.ref);
+            Tracing::TraceContext::get()->addTraceArgument(y.ref);
+            return andCondition(x, y);
+        });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t, int32_t, int32_t>("execute");
     ASSERT_EQ(function(42, 42), 1);
@@ -211,59 +239,74 @@ TEST_P(IfCompilationTest, andConditionTest) {
     ASSERT_EQ(function(8, 1), 15);
 }
 
-Value<> deeplyNestedIfElseCondition() {
+Value<> deeplyNestedIfElseCondition()
+{
     Value value = Value(1);
     Value iw = Value(5);
-    if (iw < 8) {
-        if (iw > 6) {
+    if (iw < 8)
+    {
+        if (iw > 6)
+        {
             iw = iw + 10;
-        } else {
-            if (iw < 6) {
-                if (iw == 5) {
+        }
+        else
+        {
+            if (iw < 6)
+            {
+                if (iw == 5)
+                {
                     iw = iw + 5;
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         iw = iw + 20;
     }
     return iw = iw + 2;
 }
 
-TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return deeplyNestedIfElseCondition();
-    });
+TEST_P(IfCompilationTest, deeplyNestedIfElseCondition)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return deeplyNestedIfElseCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 12);
 }
 
-Value<> deeplyNestedIfElseIfCondition() {
+Value<> deeplyNestedIfElseIfCondition()
+{
     Value value = Value(1);
     Value iw = Value(5);
-    if (iw < 8) {
+    if (iw < 8)
+    {
         iw = iw + 10;
-    } else {
-        if (iw == 5) {
+    }
+    else
+    {
+        if (iw == 5)
+        {
             iw = iw + 5;
-        } else if (iw == 4) {
+        }
+        else if (iw == 4)
+        {
             iw = iw + 4;
         }
     }
     return iw = iw + 2;
 }
 
-TEST_P(IfCompilationTest, deeplyNestedIfElseIfCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return deeplyNestedIfElseIfCondition();
-    });
+TEST_P(IfCompilationTest, deeplyNestedIfElseIfCondition)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return deeplyNestedIfElseIfCondition(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 17);
 }
 
-Value<Boolean> andFunction(const Value<Int64>& value) {
+Value<Boolean> andFunction(const Value<Int64> & value)
+{
     Value<Boolean> equals = true;
     equals = equals && (value == 42_s64);
     equals = equals && (value == 42_s64);
@@ -271,16 +314,20 @@ Value<Boolean> andFunction(const Value<Int64>& value) {
     return equals;
 }
 
-TEST_P(IfCompilationTest, nestedBooleanFunction) {
+TEST_P(IfCompilationTest, nestedBooleanFunction)
+{
     Value<Int64> value = +42_s64;
     value.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() {
-        Value<Int64> res = +42_s64;
-        if (andFunction(value)) {
-            res = res + 1;
-        }
-        return res;
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn(
+        [value]()
+        {
+            Value<Int64> res = +42_s64;
+            if (andFunction(value))
+            {
+                res = res + 1;
+            }
+            return res;
+        });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(42), 43);
@@ -289,12 +336,11 @@ TEST_P(IfCompilationTest, nestedBooleanFunction) {
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        IfCompilationTest,
-                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
-                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
-                        [](const testing::TestParamInfo<IfCompilationTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    IfCompilationTest,
+    ::testing::ValuesIn(
+        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    [](const testing::TestParamInfo<IfCompilationTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

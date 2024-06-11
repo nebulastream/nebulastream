@@ -14,20 +14,33 @@
 
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 OrOperation::OrOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::OrOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {
+    : Operation(OperationType::OrOp, identifier, Types::StampFactory::createBooleanStamp())
+    , leftInput(std::move(leftInput))
+    , rightInput(std::move(rightInput))
+{
     leftInput->addUsage(this);
     rightInput->addUsage(this);
 }
 
-std::string OrOperation::toString() {
+std::string OrOperation::toString()
+{
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " or " + getRightInput()->getIdentifier();
     ;
 }
-bool OrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
-OperationPtr OrOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr OrOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::Nautilus::IR::Operations
+bool OrOperation::classof(const Operation * Op)
+{
+    return Op->getOperationType() == OperationType::AddOp;
+}
+OperationPtr OrOperation::getLeftInput()
+{
+    return leftInput.lock();
+}
+OperationPtr OrOperation::getRightInput()
+{
+    return rightInput.lock();
+}
+} // namespace NES::Nautilus::IR::Operations

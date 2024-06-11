@@ -16,12 +16,14 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALBINARYEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents a arithmetical expression.
  */
-class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public ArithmeticalExpressionNode {
-  public:
+class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public ArithmeticalExpressionNode
+{
+public:
     /**
      * @brief Infers the stamp of this arithmetical expression node.
      * Currently the type inference is equal for all arithmetical expression and expects numerical data types as operands.
@@ -30,15 +32,15 @@ class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public Ari
      */
     void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
-  protected:
+protected:
     explicit ArithmeticalBinaryExpressionNode(DataTypePtr stamp);
-    explicit ArithmeticalBinaryExpressionNode(ArithmeticalBinaryExpressionNode* other);
+    explicit ArithmeticalBinaryExpressionNode(ArithmeticalBinaryExpressionNode * other);
     ~ArithmeticalBinaryExpressionNode() noexcept override = default;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALBINARYEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALBINARYEXPRESSIONNODE_HPP_

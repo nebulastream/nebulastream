@@ -15,20 +15,22 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 
-#include <Monitoring/Metrics/MetricType.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <cstdint>
 #include <memory>
-#include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <Monitoring/Metrics/MetricType.hpp>
+#include <Util/MetricCollectorType.hpp>
+#include <nlohmann/json_fwd.hpp>
 
-namespace NES {
+namespace NES
+{
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-namespace Monitoring {
+namespace Monitoring
+{
 class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
@@ -52,7 +54,7 @@ using StoredNodeMetricsPtr = std::shared_ptr<std::unordered_map<MetricType, std:
 
 class MetricCollector;
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
-}//namespace Monitoring
-}// namespace NES
+} //namespace Monitoring
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

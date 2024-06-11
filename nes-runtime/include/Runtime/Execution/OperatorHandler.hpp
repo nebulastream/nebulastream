@@ -19,13 +19,15 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public Reconfigurable {
-  public:
+class OperatorHandler : public Reconfigurable
+{
+public:
     /**
      * @brief Default constructor
      */
@@ -55,9 +57,11 @@ class OperatorHandler : public Reconfigurable {
      * @tparam OperatorHandlerType
      * @return bool true if node is of OperatorHandlerType
      */
-    template<class OperatorHandlerType>
-    bool instanceOf() {
-        if (dynamic_cast<OperatorHandlerType*>(this)) {
+    template <class OperatorHandlerType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<OperatorHandlerType *>(this))
+        {
             return true;
         };
         return false;
@@ -68,16 +72,18 @@ class OperatorHandler : public Reconfigurable {
     * @tparam OperatorHandlerType
     * @return returns a shared pointer of the OperatorHandlerType
     */
-    template<class OperatorHandlerType>
-    std::shared_ptr<OperatorHandlerType> as() {
-        if (instanceOf<OperatorHandlerType>()) {
+    template <class OperatorHandlerType>
+    std::shared_ptr<OperatorHandlerType> as()
+    {
+        if (instanceOf<OperatorHandlerType>())
+        {
             return std::dynamic_pointer_cast<OperatorHandlerType>(this->shared_from_this());
         }
-        throw Exceptions::RuntimeException("OperatorHandler:: we performed an invalid cast of operator to type "
-                                           + std::string(typeid(OperatorHandlerType).name()));
+        throw Exceptions::RuntimeException(
+            "OperatorHandler:: we performed an invalid cast of operator to type " + std::string(typeid(OperatorHandlerType).name()));
     }
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_

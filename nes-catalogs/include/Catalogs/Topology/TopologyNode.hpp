@@ -15,51 +15,56 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
 
+#include <any>
+#include <atomic>
+#include <map>
+#include <optional>
 #include <Catalogs/Topology/LinkProperty.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <any>
-#include <atomic>
 #include <fmt/core.h>
-#include <map>
-#include <optional>
 
-namespace NES {
+namespace NES
+{
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-namespace Spatial::DataTypes::Experimental {
+namespace Spatial::DataTypes::Experimental
+{
 class GeoLocation;
 class Waypoint;
-}// namespace Spatial::DataTypes::Experimental
+} // namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
-}// namespace Spatial::Mobility::Experimental
+} // namespace Spatial::Mobility::Experimental
 
 /**
  * @brief This class represents information about a physical node participating in the NES infrastructure
  */
-class TopologyNode : public Node {
+class TopologyNode : public Node
+{
+public:
+    static TopologyNodePtr create(
+        WorkerId workerId,
+        const std::string & ipAddress,
+        uint32_t grpcPort,
+        uint32_t dataPort,
+        uint16_t resources,
+        const std::map<std::string, std::any> & properties);
 
-  public:
-    static TopologyNodePtr create(WorkerId workerId,
-                                  const std::string& ipAddress,
-                                  uint32_t grpcPort,
-                                  uint32_t dataPort,
-                                  uint16_t resources,
-                                  const std::map<std::string, std::any>& properties);
-
-    explicit TopologyNode(WorkerId workerId,
-                          const std::string& ipAddress,
-                          uint32_t grpcPort,
-                          uint32_t dataPort,
-                          uint16_t totalSlots,
-                          const std::map<std::string, std::any>& properties);
+    explicit TopologyNode(
+        WorkerId workerId,
+        const std::string & ipAddress,
+        uint32_t grpcPort,
+        uint32_t dataPort,
+        uint16_t totalSlots,
+        const std::map<std::string, std::any> & properties);
 
     ~TopologyNode() override = default;
 
@@ -161,35 +166,35 @@ class TopologyNode : public Node {
      * @param key key of the new property
      * @param value value of the new property
      */
-    void addNodeProperty(const std::string& key, const std::any& value);
+    void addNodeProperty(const std::string & key, const std::any & value);
 
     /**
      * @brief Check if a Node property exists
      * @param key key of the property
      * @return true if the property with the given key exists
      */
-    bool hasNodeProperty(const std::string& key);
+    bool hasNodeProperty(const std::string & key);
 
     /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key
      */
-    std::any getNodeProperty(const std::string& key);
+    std::any getNodeProperty(const std::string & key);
 
     /**
      * @brief Remove a property from the stored properties map
      * @param key key of the property to remove
      * @return true if the removal is successful
      */
-    bool removeNodeProperty(const std::string& key);
+    bool removeNodeProperty(const std::string & key);
 
     /**
      * @brief add a new link property to the stored properties map
      * @param linkedTopologyNodeId topology node to which the property will be associated
      * @param linkProperty the link property
      */
-    void addLinkProperty(WorkerId linkedTopologyNodeId, const LinkPropertyPtr& linkProperty);
+    void addLinkProperty(WorkerId linkedTopologyNodeId, const LinkPropertyPtr & linkProperty);
 
     /**
      * @brief get a the value of a link property
@@ -220,7 +225,7 @@ class TopologyNode : public Node {
      */
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
-  private:
+private:
     WorkerId workerId;
     std::string ipAddress;
     uint32_t grpcPort;
@@ -238,21 +243,25 @@ class TopologyNode : public Node {
      */
     std::map<WorkerId, LinkPropertyPtr> linkProperties;
 };
-}// namespace NES
+} // namespace NES
 
-namespace fmt {
-template<>
-struct formatter<NES::TopologyNode> : formatter<std::string> {
-    auto format(const NES::TopologyNode& topology_node, format_context& ctx) -> decltype(ctx.out()) {
-        return fmt::format_to(ctx.out(),
-                              "{} {} {} {} {}",
-                              topology_node.getId(),
-                              topology_node.getIpAddress(),
-                              topology_node.getGrpcPort(),
-                              topology_node.getDataPort(),
-                              topology_node.getAvailableResources());
+namespace fmt
+{
+template <>
+struct formatter<NES::TopologyNode> : formatter<std::string>
+{
+    auto format(const NES::TopologyNode & topology_node, format_context & ctx) -> decltype(ctx.out())
+    {
+        return fmt::format_to(
+            ctx.out(),
+            "{} {} {} {} {}",
+            topology_node.getId(),
+            topology_node.getIpAddress(),
+            topology_node.getGrpcPort(),
+            topology_node.getDataPort(),
+            topology_node.getAvailableResources());
     }
 };
-}//namespace fmt
+} //namespace fmt
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_

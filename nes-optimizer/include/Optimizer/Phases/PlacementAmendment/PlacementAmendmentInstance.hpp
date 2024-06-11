@@ -18,7 +18,8 @@
 #include <future>
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -26,20 +27,23 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -53,21 +57,24 @@ using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance
 /**
  * @brief class representing the placement amendment instance
  */
-class PlacementAmendmentInstance {
-  public:
-    static PlacementAmendmentInstancePtr create(SharedQueryPlanPtr sharedQueryPlan,
-                                                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                TopologyPtr topology,
-                                                TypeInferencePhasePtr typeInferencePhase,
-                                                Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                Catalogs::Query::QueryCatalogPtr queryCatalog);
+class PlacementAmendmentInstance
+{
+public:
+    static PlacementAmendmentInstancePtr create(
+        SharedQueryPlanPtr sharedQueryPlan,
+        Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+        TopologyPtr topology,
+        TypeInferencePhasePtr typeInferencePhase,
+        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+        Catalogs::Query::QueryCatalogPtr queryCatalog);
 
-    PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
-                               Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                               TopologyPtr topology,
-                               TypeInferencePhasePtr typeInferencePhase,
-                               Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                               Catalogs::Query::QueryCatalogPtr queryCatalog);
+    PlacementAmendmentInstance(
+        SharedQueryPlanPtr sharedQueryPlan,
+        Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+        TopologyPtr topology,
+        TypeInferencePhasePtr typeInferencePhase,
+        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+        Catalogs::Query::QueryCatalogPtr queryCatalog);
 
     /**
      * @brief Get promise to check if the amendment instance was processed
@@ -81,7 +88,7 @@ class PlacementAmendmentInstance {
      */
     void execute();
 
-  private:
+private:
     SharedQueryPlanPtr sharedQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -90,6 +97,6 @@ class PlacementAmendmentInstance {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     std::promise<bool> completionPromise;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_

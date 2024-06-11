@@ -15,20 +15,20 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_
 
+#include <memory>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Join operator, which contains an expression as a predicate.
  */
-class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator {
-  public:
-    explicit LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefinition,
-                                 OperatorId id,
-                                 OriginId originId = INVALID_ORIGIN_ID);
+class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator
+{
+public:
+    explicit LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     ~LogicalJoinOperator() override = default;
 
     /**
@@ -37,12 +37,12 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
     */
     Join::LogicalJoinDescriptorPtr getJoinDefinition() const;
 
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
     //infer schema of two child operators
     bool inferSchema() override;
     OperatorPtr copy() override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     void inferStringSignature() override;
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
@@ -51,13 +51,13 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
      * @brief Getter for the window start field name
      * @return std::string
      */
-    const std::string& getWindowStartFieldName() const;
+    const std::string & getWindowStartFieldName() const;
 
     /**
      * @brief Getter for the window end field name
      * @return std::string
      */
-    const std::string& getWindowEndFieldName() const;
+    const std::string & getWindowEndFieldName() const;
 
     /**
      * @brief Getter for join expression, i.e. a set of binary expressions
@@ -72,10 +72,10 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
      */
     void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
 
-  private:
+private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_

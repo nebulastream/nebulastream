@@ -15,13 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
 
+#include <map>
+#include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 class MQTTSourceType;
 using MQTTSourceTypePtr = std::shared_ptr<MQTTSourceType>;
@@ -30,35 +31,33 @@ using MQTTSourceTypePtr = std::shared_ptr<MQTTSourceType>;
  * @brief Configuration object for MQTT source config
  * Connect to an MQTT broker and read data from there
  */
-class MQTTSourceType : public PhysicalSourceType {
-
-  public:
+class MQTTSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief create an MQTTSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create(const std::string& logicalSourceName,
-                                    const std::string& physicalSourceName,
-                                    std::map<std::string, std::string> sourceConfigMap);
+    static MQTTSourceTypePtr create(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create an MQTTSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static MQTTSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create an MQTTSourceTypePtr object with default values
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static MQTTSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     std::string toString() override;
 
-    bool equal(const PhysicalSourceTypePtr& other) override;
+    bool equal(const PhysicalSourceTypePtr & other) override;
 
     void reset() override;
 
@@ -148,25 +147,24 @@ class MQTTSourceType : public PhysicalSourceType {
      */
     void setInputFormat(Configurations::InputFormat inputFormatValue);
 
-  private:
+private:
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
      * @param sourceConfigMap inputted config options
      */
-    explicit MQTTSourceType(const std::string& logicalSourceName,
-                            const std::string& physicalSourceName,
-                            std::map<std::string, std::string> sourceConfigMap);
+    explicit MQTTSourceType(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from yamlConfig
      * @param yamlConfig inputted config options
      */
-    explicit MQTTSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    explicit MQTTSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with default values as set below
      */
-    MQTTSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    MQTTSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     Configurations::StringConfigOption url;
     Configurations::StringConfigOption clientId;
@@ -177,5 +175,5 @@ class MQTTSourceType : public PhysicalSourceType {
     Configurations::FloatConfigOption flushIntervalMS;
     Configurations::InputFormatConfigOption inputFormat;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_

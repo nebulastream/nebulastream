@@ -17,12 +17,15 @@
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 
-namespace NES::Testing {
+namespace NES::Testing
+{
 
-TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpMode,
-                                         const uint64_t numWorkerThreads,
-                                         const QueryCompilation::StreamJoinStrategy& joinStrategy,
-                                         const QueryCompilation::WindowingStrategy& windowingStrategy) {
+TestExecutionEngine::TestExecutionEngine(
+    const QueryCompilation::DumpMode & dumpMode,
+    const uint64_t numWorkerThreads,
+    const QueryCompilation::StreamJoinStrategy & joinStrategy,
+    const QueryCompilation::WindowingStrategy & windowingStrategy)
+{
     auto workerConfiguration = WorkerConfiguration::create();
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
@@ -56,11 +59,13 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
     statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
 }
 
-std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& outputSchema, uint32_t expectedTuples) {
+std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr & outputSchema, uint32_t expectedTuples)
+{
     return std::make_shared<TestSink>(expectedTuples, outputSchema, nodeEngine);
 }
 
-std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema) {
+std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema)
+{
     return std::make_shared<TestUtils::TestSourceDescriptor>(
         inputSchema,
         // We require inputSchema as a lambda function arg since capturing it can lead to using a corrupted schema.
@@ -68,61 +73,76 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
             OperatorId id,
             OriginId originId,
             StatisticId statisticId,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr& nodeEngine,
+            const SourceDescriptorPtr &,
+            const Runtime::NodeEnginePtr & nodeEngine,
             size_t numSourceLocalBuffers,
-            const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
-            return createNonRunnableSource(inputSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           originId,
-                                           statisticId,
-                                           numSourceLocalBuffers,
-                                           successors,
-                                           Runtime::QueryTerminationType::Graceful);
+            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> & successors) -> DataSourcePtr
+        {
+            return createNonRunnableSource(
+                inputSchema,
+                nodeEngine->getBufferManager(),
+                nodeEngine->getQueryManager(),
+                id,
+                originId,
+                statisticId,
+                numSourceLocalBuffers,
+                successors,
+                Runtime::QueryTerminationType::Graceful);
         });
 }
 
-std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>
-TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
+std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan)
+{
     // pre submission optimization
     decomposedQueryPlan = typeInferencePhase->execute(decomposedQueryPlan);
     decomposedQueryPlan = originIdInferencePhase->execute(decomposedQueryPlan);
     decomposedQueryPlan = statisticIdInferencePhase->execute(decomposedQueryPlan);
     NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
-    NES_ASSERT(nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId()),
-               "query plan could not be started.");
+    NES_ASSERT(
+        nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId()),
+        "query plan could not be started.");
     return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getDecomposedQueryPlanId());
 }
 
 std::shared_ptr<NonRunnableDataSource>
-TestExecutionEngine::getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, uint32_t source) {
+TestExecutionEngine::getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, uint32_t source)
+{
     NES_ASSERT(!plan->getSources().empty(), "Query plan has no sources ");
     return std::dynamic_pointer_cast<NonRunnableDataSource>(plan->getSources()[source]);
 }
 
-void TestExecutionEngine::emitBuffer(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, Runtime::TupleBuffer buffer) {
+void TestExecutionEngine::emitBuffer(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, Runtime::TupleBuffer buffer)
+{
     // todo add support for multiple sources.
     nodeEngine->getQueryManager()->addWorkForNextPipeline(buffer, plan->getPipelines()[0]);
 }
 
-bool TestExecutionEngine::stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
-                                    Runtime::QueryTerminationType type) {
+bool TestExecutionEngine::stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, Runtime::QueryTerminationType type)
+{
     return nodeEngine->getQueryManager()->stopQuery(plan, type);
 }
 
-Runtime::MemoryLayouts::TestTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr& schema) {
+Runtime::MemoryLayouts::TestTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr & schema)
+{
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     // add support for columnar layout
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
     return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
-bool TestExecutionEngine::stop() { return nodeEngine->stop(); }
+bool TestExecutionEngine::stop()
+{
+    return nodeEngine->stop();
+}
 
-Runtime::BufferManagerPtr TestExecutionEngine::getBufferManager() const { return nodeEngine->getBufferManager(); }
+Runtime::BufferManagerPtr TestExecutionEngine::getBufferManager() const
+{
+    return nodeEngine->getBufferManager();
+}
 
-Runtime::NodeEnginePtr TestExecutionEngine::getNodeEngine() const { return nodeEngine; }
+Runtime::NodeEnginePtr TestExecutionEngine::getNodeEngine() const
+{
+    return nodeEngine;
+}
 
-}// namespace NES::Testing
+} // namespace NES::Testing

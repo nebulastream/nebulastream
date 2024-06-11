@@ -18,18 +18,20 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 /**
  * @brief This expression cos the Expression
  */
-class CosExpression : public Expression {
-  public:
-    explicit CosExpression(const ExpressionPtr& leftSubExpression);
-    Value<> execute(Record& record) const override;
+class CosExpression : public Expression
+{
+public:
+    explicit CosExpression(const ExpressionPtr & leftSubExpression);
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr leftSubExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COSEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COSEXPRESSION_HPP_

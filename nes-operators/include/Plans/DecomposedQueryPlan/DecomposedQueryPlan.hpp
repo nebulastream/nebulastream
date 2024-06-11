@@ -15,16 +15,17 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Operators/Operator.hpp>
-#include <Util/QueryState.hpp>
 #include <memory>
 #include <set>
 #include <unordered_set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/Operator.hpp>
+#include <Util/QueryState.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -44,9 +45,9 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 /**
  * @brief This represents the plan that need to be executed on the worker node
  */
-class DecomposedQueryPlan {
-
-  public:
+class DecomposedQueryPlan
+{
+public:
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
      * @param decomposedQueryPlanId: the decomposed query plan id
@@ -54,8 +55,7 @@ class DecomposedQueryPlan {
      * @param workerId: the worker id
      * @return instance of Decomposed query plan
      */
-    static DecomposedQueryPlanPtr
-    create(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId);
+    static DecomposedQueryPlanPtr create(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -65,10 +65,11 @@ class DecomposedQueryPlan {
      * @param rootOperators: the root operators
      * @return instance of Decomposed query plan
      */
-    static DecomposedQueryPlanPtr create(DecomposedQueryPlanId decomposedQueryPlanId,
-                                         SharedQueryId sharedQueryId,
-                                         WorkerId workerId,
-                                         std::vector<OperatorPtr> rootOperators);
+    static DecomposedQueryPlanPtr create(
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        SharedQueryId sharedQueryId,
+        WorkerId workerId,
+        std::vector<OperatorPtr> rootOperators);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -85,10 +86,11 @@ class DecomposedQueryPlan {
      * @param workerId: the worker id
      * @param rootOperators: the root operators
      */
-    explicit DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId,
-                                 SharedQueryId sharedQueryId,
-                                 WorkerId workerId,
-                                 std::vector<OperatorPtr> rootOperators);
+    explicit DecomposedQueryPlan(
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        SharedQueryId sharedQueryId,
+        WorkerId workerId,
+        std::vector<OperatorPtr> rootOperators);
 
     /**
      * @brief Add the operator as new root operator
@@ -108,13 +110,13 @@ class DecomposedQueryPlan {
      * @param root
      * @return true if operator was replaced.
      */
-    bool replaceRootOperator(const OperatorPtr& oldRoot, const OperatorPtr& newRoot);
+    bool replaceRootOperator(const OperatorPtr & oldRoot, const OperatorPtr & newRoot);
 
     /**
      * @brief Appends an operator to the query plan and make the new operator as root.
      * @param operatorNode : new operator
      */
-    void appendOperatorAsNewRoot(const OperatorPtr& operatorNode);
+    void appendOperatorAsNewRoot(const OperatorPtr & operatorNode);
 
     /**
      * @brief Get all root operators
@@ -225,22 +227,27 @@ class DecomposedQueryPlan {
      * @brief Get all the operators of a specific type
      * @return returns a vector of operators
      */
-    template<class T>
-    std::vector<std::shared_ptr<T>> getOperatorByType() {
+    template <class T>
+    std::vector<std::shared_ptr<T>> getOperatorByType()
+    {
         // Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
         std::set<OperatorId> visitedOpIds;
-        for (const auto& rootOperator : rootOperators) {
+        for (const auto & rootOperator : rootOperators)
+        {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
+            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr)
+            {
                 auto visitingOp = (*itr)->as<Operator>();
-                if (visitedOpIds.contains(visitingOp->getId())) {
+                if (visitedOpIds.contains(visitingOp->getId()))
+                {
                     // skip rest of the steps as the node found in already visited node list
                     continue;
                 }
                 visitedOpIds.insert(visitingOp->getId());
-                if (visitingOp->instanceOf<T>()) {
+                if (visitingOp->instanceOf<T>())
+                {
                     operators.push_back(visitingOp->as<T>());
                 }
             }
@@ -248,7 +255,7 @@ class DecomposedQueryPlan {
         return operators;
     }
 
-  private:
+private:
     SharedQueryId sharedQueryId;
     DecomposedQueryPlanId decomposedQueryPlanId;
     DecomposedQueryPlanVersion decomposedQueryPlanVersion;
@@ -256,6 +263,6 @@ class DecomposedQueryPlan {
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
+#endif // NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_

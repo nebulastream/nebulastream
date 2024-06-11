@@ -23,14 +23,15 @@
 #include <Util/Timer.hpp>
 #include <mlir/IR/MLIRContext.h>
 
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
 //Singleton
 [[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");
 
-std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir,
-                                                            const CompilationOptions& options,
-                                                            const DumpHelper& dumpHelper) {
+std::unique_ptr<Executable>
+MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions & options, const DumpHelper & dumpHelper)
+{
     auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
     timer.start();
 
@@ -40,7 +41,8 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     auto mlirModule = loweringProvider->generateModuleFromIR(ir);
 
     // 2.a dump MLIR to console or a file
-    if (options.isDumpToConsole() || options.isDumpToFile()) {
+    if (options.isDumpToConsole() || options.isDumpToFile())
+    {
         mlir::OpPrintingFlags flags;
         std::string result;
         auto output = llvm::raw_string_ostream(result);
@@ -49,7 +51,8 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     }
 
     // 2.b Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
-    if (MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, {})) {
+    if (MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, {}))
+    {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
@@ -57,16 +60,17 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(options, dumpHelper);
 
     // 4. JIT compile LLVM IR module and return engine that provides access compiled execute function.
-    auto engine = MLIR::JITCompiler::jitCompileModule(mlirModule,
-                                                      optPipeline,
-                                                      loweringProvider->getJitProxyFunctionSymbols(),
-                                                      loweringProvider->getJitProxyTargetAddresses(),
-                                                      options,
-                                                      dumpHelper);
+    auto engine = MLIR::JITCompiler::jitCompileModule(
+        mlirModule,
+        optPipeline,
+        loweringProvider->getJitProxyFunctionSymbols(),
+        loweringProvider->getJitProxyTargetAddresses(),
+        options,
+        dumpHelper);
 
     // 5. Get execution function from engine. Create and return execution context.
     timer.snapshot("MLIRGeneration");
     return std::make_unique<MLIRExecutable>(std::move(engine));
 }
 
-}// namespace NES::Nautilus::Backends::MLIR
+} // namespace NES::Nautilus::Backends::MLIR

@@ -12,33 +12,42 @@
     limitations under the License.
 */
 
-#include <Runtime/QueryManager.hpp>
-#include <Sinks/Mediums/PrintSink.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <string>
 #include <utility>
+#include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/PrintSink.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES {
-PrintSink::PrintSink(SinkFormatPtr format,
-                     Runtime::NodeEnginePtr nodeEngine,
-                     uint32_t numOfProducers,
-                     SharedQueryId sharedQueryId,
-                     DecomposedQueryPlanId decomposedQueryPlanId,
-                     std::ostream& pOutputStream,
-                     uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
-      outputStream(pOutputStream) {}
+namespace NES
+{
+PrintSink::PrintSink(
+    SinkFormatPtr format,
+    Runtime::NodeEnginePtr nodeEngine,
+    uint32_t numOfProducers,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    std::ostream & pOutputStream,
+    uint64_t numberOfOrigins)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins)
+    , outputStream(pOutputStream)
+{
+}
 
 PrintSink::~PrintSink() = default;
 
-SinkMediumTypes PrintSink::getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
+SinkMediumTypes PrintSink::getSinkMediumType()
+{
+    return SinkMediumTypes::PRINT_SINK;
+}
 
-bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool PrintSink::writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContextRef)
+{
     std::unique_lock lock(writeMutex);
     NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());
 
-    if (!inputBuffer) {
+    if (!inputBuffer)
+    {
         throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
     }
 
@@ -49,7 +58,8 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     return true;
 }
 
-std::string PrintSink::toString() const {
+std::string PrintSink::toString() const
+{
     std::stringstream ss;
     ss << "PRINT_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
@@ -57,11 +67,13 @@ std::string PrintSink::toString() const {
     return ss.str();
 }
 
-void PrintSink::setup() {
+void PrintSink::setup()
+{
     // currently not required
 }
-void PrintSink::shutdown() {
+void PrintSink::shutdown()
+{
     // currently not required
 }
 
-}// namespace NES
+} // namespace NES

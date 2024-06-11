@@ -22,7 +22,8 @@
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Types/WindowType.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class AbstractStatisticQueryGenerator;
 using StatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
@@ -30,8 +31,9 @@ using StatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerat
 /**
  * @brief Interface for creating a statistic query
  */
-class AbstractStatisticQueryGenerator {
-  public:
+class AbstractStatisticQueryGenerator
+{
+public:
     /**
      * @brief Creates a query that is used for creating the statistics
      * @param characteristic
@@ -41,11 +43,13 @@ class AbstractStatisticQueryGenerator {
      * @param queryCatalog
      * @return Query
      */
-    virtual Query createStatisticQuery(const Characteristic& characteristic,
-                                       const Windowing::WindowTypePtr& window,
-                                       const SendingPolicyPtr& sendingPolicy,
-                                       const TriggerConditionPtr& triggerCondition,
-                                       const Catalogs::Query::QueryCatalog& queryCatalog) = 0;
+    virtual Query createStatisticQuery(
+        const Characteristic & characteristic,
+        const Windowing::WindowTypePtr & window,
+        const SendingPolicyPtr & sendingPolicy,
+        const TriggerConditionPtr & triggerCondition,
+        const Catalogs::Query::QueryCatalog & queryCatalog)
+        = 0;
 
     /**
      * @brief Virtual destructor
@@ -53,6 +57,6 @@ class AbstractStatisticQueryGenerator {
     virtual ~AbstractStatisticQueryGenerator() = default;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_
+#endif // NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_

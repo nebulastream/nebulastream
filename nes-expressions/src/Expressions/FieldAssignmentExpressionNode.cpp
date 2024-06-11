@@ -11,51 +11,59 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <memory>
 #include <sstream>
 #include <utility>
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES {
+namespace NES
+{
 FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
 
-FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other)
-    : BinaryExpressionNode(other){};
+FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode * other) : BinaryExpressionNode(other){};
 
-FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(const FieldAccessExpressionNodePtr& fieldAccess,
-                                                                       const ExpressionNodePtr& expressionNodePtr) {
+FieldAssignmentExpressionNodePtr
+FieldAssignmentExpressionNode::create(const FieldAccessExpressionNodePtr & fieldAccess, const ExpressionNodePtr & expressionNodePtr)
+{
     auto fieldAssignment = std::make_shared<FieldAssignmentExpressionNode>(expressionNodePtr->getStamp());
     fieldAssignment->setChildren(fieldAccess, expressionNodePtr);
     return fieldAssignment;
 }
 
-bool FieldAssignmentExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<FieldAssignmentExpressionNode>()) {
+bool FieldAssignmentExpressionNode::equal(NodePtr const & rhs) const
+{
+    if (rhs->instanceOf<FieldAssignmentExpressionNode>())
+    {
         auto otherFieldAssignment = rhs->as<FieldAssignmentExpressionNode>();
         // a field assignment expression has always two children.
-        return getField()->equal(otherFieldAssignment->getField())
-            && getAssignment()->equal(otherFieldAssignment->getAssignment());
+        return getField()->equal(otherFieldAssignment->getField()) && getAssignment()->equal(otherFieldAssignment->getAssignment());
     }
     return false;
 }
 
-std::string FieldAssignmentExpressionNode::toString() const {
+std::string FieldAssignmentExpressionNode::toString() const
+{
     std::stringstream ss;
     ss << children[0]->toString() << "=" << children[1]->toString();
     return ss.str();
 }
 
-FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const {
+FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const
+{
     return getLeft()->as<FieldAccessExpressionNode>();
 }
 
-ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const { return getRight(); }
+ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const
+{
+    return getRight();
+}
 
-void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
+void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema)
+{
     // infer stamp of assignment expression
     getAssignment()->inferStamp(schema);
 
@@ -65,29 +73,39 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     //Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
     auto existingField = schema->getField(fieldName);
-    if (existingField) {
+    if (existingField)
+    {
         field->updateFieldName(existingField->getName());
         field->setStamp(existingField->getDataType());
-    } else {
+    }
+    else
+    {
         //Since this is a new field add the source name from schema
         //Check if field name is already fully qualified
-        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+        {
             field->updateFieldName(fieldName);
-        } else {
+        }
+        else
+        {
             field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
         }
     }
 
-    if (field->getStamp()->isUndefined()) {
+    if (field->getStamp()->isUndefined())
+    {
         // if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());
-    } else {
+    }
+    else
+    {
         // the field already has a type, check if it is compatible with the assignment
         field->getStamp()->equals(getAssignment()->getStamp());
     }
 }
-ExpressionNodePtr FieldAssignmentExpressionNode::copy() {
+ExpressionNodePtr FieldAssignmentExpressionNode::copy()
+{
     return FieldAssignmentExpressionNode::create(getField()->copy()->as<FieldAccessExpressionNode>(), getAssignment()->copy());
 }
 
-}// namespace NES
+} // namespace NES

@@ -15,22 +15,25 @@
 #ifndef NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_QUERYSIGNATURE_HPP_
 #define NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_QUERYSIGNATURE_HPP_
 
-#include <Util/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 #include <map>
 #include <memory>
 #include <vector>
+#include <Util/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 
-namespace z3 {
+namespace z3
+{
 class expr;
 using ExprPtr = std::shared_ptr<expr>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
@@ -62,8 +65,9 @@ using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
  *      The query plan signature (QPSig) is given by : (conditions:(source="cars"); columns:(end, start, cars.Color, Count()); windows:("type": window-key = 'type' and
  *      window-time-key = 'ts' and window-time-size = 10000 and window-time-slide = 10000))
  */
-class QuerySignature {
-  public:
+class QuerySignature
+{
+public:
     /**
      * @brief Create instance of Query plan signature
      * @param conditions: the predicates involved in the query
@@ -74,11 +78,12 @@ class QuerySignature {
      * operation was applied to the attribute otherwise it is false
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr&& conditions,
-                                    std::vector<std::string>&& columns,
-                                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                    std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions,
-                                    std::map<std::string, z3::ExprPtr>&& unionExpressions);
+    static QuerySignaturePtr create(
+        z3::ExprPtr && conditions,
+        std::vector<std::string> && columns,
+        std::vector<std::map<std::string, z3::ExprPtr>> && schemaFieldToExprMaps,
+        std::vector<std::map<std::string, z3::ExprPtr>> && windowsExpressions,
+        std::map<std::string, z3::ExprPtr> && unionExpressions);
 
     /**
      * @brief Get the conditions
@@ -90,27 +95,27 @@ class QuerySignature {
      * @brief Get the column predicates
      * @return map of column name to list of predicates
      */
-    const std::vector<std::string>& getColumns();
+    const std::vector<std::string> & getColumns();
 
     /**
      * @brief Get vector of schemas for the operator
      * @return pointer to Operator schemas
      */
-    const std::vector<std::map<std::string, z3::ExprPtr>>& getSchemaFieldToExprMaps();
+    const std::vector<std::map<std::string, z3::ExprPtr>> & getSchemaFieldToExprMaps();
 
     /**
      * @brief Get the window definitions
      * @return map of window definitions
      */
-    const std::vector<std::map<std::string, z3::ExprPtr>>& getWindowsExpressions();
+    const std::vector<std::map<std::string, z3::ExprPtr>> & getWindowsExpressions();
 
     /**
      * @brief Get the union definitions
      * @return map of union definitions
      */
-    const std::map<std::string, z3::ExprPtr>& getUnionExpressions();
+    const std::map<std::string, z3::ExprPtr> & getUnionExpressions();
 
-  private:
+private:
     /**
      * @brief a query signature instance
      * @param conditions First order logic for the involved predicates
@@ -120,11 +125,12 @@ class QuerySignature {
      * @param unionExpressions: Keeps track of predicates applied to a stream before a union operation happens
      * operation was applied to the attribute otherwise it is false
      */
-    QuerySignature(z3::ExprPtr&& conditions,
-                   std::vector<std::string>&& columns,
-                   std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                   std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions,
-                   std::map<std::string, z3::ExprPtr>&& unionExpressions);
+    QuerySignature(
+        z3::ExprPtr && conditions,
+        std::vector<std::string> && columns,
+        std::vector<std::map<std::string, z3::ExprPtr>> && schemaFieldToExprMaps,
+        std::vector<std::map<std::string, z3::ExprPtr>> && windowsExpressions,
+        std::map<std::string, z3::ExprPtr> && unionExpressions);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
@@ -140,6 +146,6 @@ class QuerySignature {
     std::vector<std::map<std::string, z3::ExprPtr>> windowsExpressions;
     std::map<std::string, z3::ExprPtr> unionExpressions;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_QUERYSIGNATURE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_QUERYSIGNATURE_HPP_

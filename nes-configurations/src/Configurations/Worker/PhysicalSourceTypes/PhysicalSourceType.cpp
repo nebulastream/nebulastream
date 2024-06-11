@@ -12,21 +12,35 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
 PhysicalSourceType::PhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, SourceType sourceType)
-    : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)), sourceType(sourceType) {
+    : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)), sourceType(sourceType)
+{
 }
 
-const std::string& PhysicalSourceType::getLogicalSourceName() const { return logicalSourceName; }
+const std::string & PhysicalSourceType::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
 
-const std::string& PhysicalSourceType::getPhysicalSourceName() const { return physicalSourceName; }
+const std::string & PhysicalSourceType::getPhysicalSourceName() const
+{
+    return physicalSourceName;
+}
 
-SourceType PhysicalSourceType::getSourceType() { return sourceType; }
+SourceType PhysicalSourceType::getSourceType()
+{
+    return sourceType;
+}
 
-std::string PhysicalSourceType::getSourceTypeAsString() { return std::string(magic_enum::enum_name(getSourceType())); }
-}// namespace NES
+std::string PhysicalSourceType::getSourceTypeAsString()
+{
+    return std::string(magic_enum::enum_name(getSourceType()));
+}
+} // namespace NES

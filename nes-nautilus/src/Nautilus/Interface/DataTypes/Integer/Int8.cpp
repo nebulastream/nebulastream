@@ -15,68 +15,97 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 Int8::Int8(int8_t value) : Int(&type), value(value){};
-Nautilus::IR::Types::StampPtr Int8::getType() const { return Nautilus::IR::Types::StampFactory::createInt8Stamp(); }
-std::shared_ptr<Any> Int8::copy() { return create<Int8>(value); }
-const std::shared_ptr<Int> Int8::add(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+Nautilus::IR::Types::StampPtr Int8::getType() const
+{
+    return Nautilus::IR::Types::StampFactory::createInt8Stamp();
+}
+std::shared_ptr<Any> Int8::copy()
+{
+    return create<Int8>(value);
+}
+const std::shared_ptr<Int> Int8::add(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value + otherValue.value);
 }
 
-const std::shared_ptr<Int> Int8::sub(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::sub(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value - otherValue.value);
 }
-const std::shared_ptr<Int> Int8::div(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::div(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value / otherValue.value);
 }
-const std::shared_ptr<Int> Int8::mod(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::mod(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value % otherValue.value);
 }
-const std::shared_ptr<Int> Int8::mul(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::mul(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value * otherValue.value);
 }
-const std::shared_ptr<Boolean> Int8::equals(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Boolean> Int8::equals(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Boolean>(value == otherValue.value);
 }
-const std::shared_ptr<Boolean> Int8::lessThan(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Boolean> Int8::lessThan(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Boolean>(value < otherValue.value);
 }
-const std::shared_ptr<Boolean> Int8::greaterThan(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Boolean> Int8::greaterThan(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Boolean>(value > otherValue.value);
 }
-const std::shared_ptr<Int> Int8::bitWiseAnd(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::bitWiseAnd(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value & otherValue.value);
 }
-const std::shared_ptr<Int> Int8::bitWiseOr(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::bitWiseOr(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value | otherValue.value);
 }
-const std::shared_ptr<Int> Int8::bitWiseXor(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::bitWiseXor(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value ^ otherValue.value);
 }
-const std::shared_ptr<Int> Int8::bitWiseLeftShift(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::bitWiseLeftShift(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value << otherValue.value);
 }
-const std::shared_ptr<Int> Int8::bitWiseRightShift(const Int& other) const {
-    auto& otherValue = other.staticCast<Int8>();
+const std::shared_ptr<Int> Int8::bitWiseRightShift(const Int & other) const
+{
+    auto & otherValue = other.staticCast<Int8>();
     return create<Int8>(value >> otherValue.value);
 }
 
-int8_t Int8::getValue() const { return value; }
-int64_t Int8::getRawInt() const { return value; }
+int8_t Int8::getValue() const
+{
+    return value;
+}
+int64_t Int8::getRawInt() const
+{
+    return value;
+}
 
-std::string Int8::toString() { return std::to_string(value); }
+std::string Int8::toString()
+{
+    return std::to_string(value);
+}
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

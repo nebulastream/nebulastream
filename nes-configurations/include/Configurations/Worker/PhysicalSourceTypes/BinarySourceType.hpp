@@ -15,13 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_
 
+#include <map>
+#include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 class BinarySourceType;
 using BinarySourceTypePtr = std::shared_ptr<BinarySourceType>;
@@ -30,37 +31,35 @@ using BinarySourceTypePtr = std::shared_ptr<BinarySourceType>;
  * @brief Configuration object for binary source
  * A binary source reads data from a binary file
  */
-class BinarySourceType : public PhysicalSourceType {
-
-  public:
+class BinarySourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief create a BinarySourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(const std::string& logicalSourceName,
-                                      const std::string& physicalSourceName,
-                                      std::map<std::string, std::string> sourceConfigMap);
+    static BinarySourceTypePtr create(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a BinarySourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static BinarySourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a BinarySourceTypePtr object with default values
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static BinarySourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     ~BinarySourceType() = default;
 
     std::string toString() override;
 
-    bool equal(PhysicalSourceTypePtr const& other) override;
+    bool equal(PhysicalSourceTypePtr const & other) override;
 
     void reset() override;
 
@@ -74,25 +73,24 @@ class BinarySourceType : public PhysicalSourceType {
      */
     void setFilePath(std::string filePath);
 
-  private:
+private:
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceType(const std::string& logicalSourceName,
-                              const std::string& physicalSourceName,
-                              std::map<std::string, std::string> sourceConfigMap);
+    explicit BinarySourceType(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    explicit BinarySourceType(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
-    BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    BinarySourceType(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     Configurations::StringConfigOption filePath;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_

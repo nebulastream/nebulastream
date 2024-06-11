@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Execution/Operators/Arrow/ArrowFieldReader.hpp>
 #include <Execution/Operators/Arrow/ArrowRecordBatchScan.hpp>
 #include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
@@ -23,22 +24,27 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <arrow/api.h>
-#include <utility>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-uint64_t getBatchSize(void* ptr) {
-    auto wrapper = (RecordBufferWrapper*) ptr;
+uint64_t getBatchSize(void * ptr)
+{
+    auto wrapper = (RecordBufferWrapper *)ptr;
     return wrapper->batch->num_rows();
 }
 
-ArrowRecordBatchScan::ArrowRecordBatchScan(const std::vector<std::shared_ptr<AbstractArrowFieldReader>>& readers)
-    : readers(std::move(readers)) {}
+ArrowRecordBatchScan::ArrowRecordBatchScan(const std::vector<std::shared_ptr<AbstractArrowFieldReader>> & readers)
+    : readers(std::move(readers))
+{
+}
 
-ArrowRecordBatchScan::ArrowRecordBatchScan(const NES::SchemaPtr& schema)
-    : ArrowRecordBatchScan(createArrowFieldReaderFromSchema(schema)) {}
+ArrowRecordBatchScan::ArrowRecordBatchScan(const NES::SchemaPtr & schema) : ArrowRecordBatchScan(createArrowFieldReaderFromSchema(schema))
+{
+}
 
-void ArrowRecordBatchScan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void ArrowRecordBatchScan::open(ExecutionContext & ctx, RecordBuffer & recordBuffer) const
+{
     // initialize global state variables to keep track of the watermark ts and the origin id
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setOrigin(recordBuffer.getOriginId());
@@ -50,13 +56,16 @@ void ArrowRecordBatchScan::open(ExecutionContext& ctx, RecordBuffer& recordBuffe
     auto recordBatch = recordBuffer.getBuffer();
 
     std::vector<Value<>> columns;
-    for (const auto& reader : readers) {
+    for (const auto & reader : readers)
+    {
         columns.emplace_back(reader->getColumn(recordBatch));
     }
     auto numberOfRecords = FunctionCall("getBatchSize", getBatchSize, recordBatch);
-    for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
+    for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
+    {
         Record record;
-        for (auto index = 0_u64; index < readers.size(); index++) {
+        for (auto index = 0_u64; index < readers.size(); index++)
+        {
             auto value = readers[index]->getValue(columns[index].as<MemRef>(), i);
             record.write(readers[index]->fieldName, value);
         }
@@ -64,4 +73,4 @@ void ArrowRecordBatchScan::open(ExecutionContext& ctx, RecordBuffer& recordBuffe
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

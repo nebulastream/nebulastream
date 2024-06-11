@@ -15,17 +15,19 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_COUNTMINDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_COUNTMINDESCRIPTOR_HPP_
 
+#include <cstdint>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
-#include <cstdint>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Descriptor for a CountMin sketch
  */
-class CountMinDescriptor : public WindowStatisticDescriptor {
-  public:
+class CountMinDescriptor : public WindowStatisticDescriptor
+{
+public:
     static constexpr auto DEFAULT_RELATIVE_ERROR = 0.05;
     static constexpr auto DEFAULT_ERROR_PROBABILITY = 0.05;
 
@@ -59,14 +61,14 @@ class CountMinDescriptor : public WindowStatisticDescriptor {
      * @param rhs
      * @return True, if equal, otherwise false
      */
-    bool equal(const WindowStatisticDescriptorPtr& rhs) const override;
+    bool equal(const WindowStatisticDescriptorPtr & rhs) const override;
 
     /**
      * @brief Adds the fields special to a CountMin descriptor
      * @param outputSchema
      * @param qualifierNameWithSeparator
      */
-    void addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) override;
+    void addDescriptorFields(Schema & outputSchema, const std::string & qualifierNameWithSeparator) override;
 
     /**
      * @brief Getter for the depth
@@ -85,18 +87,18 @@ class CountMinDescriptor : public WindowStatisticDescriptor {
      */
     ~CountMinDescriptor() override;
 
-  private:
+private:
     /**
      * @brief Private constructor for creating a CountMinDescriptor
      * @param field: Over which field to create the synopsis
      * @param width: Number of columns for the CountMin sketch
      * @param depth: Number of rows for the CountMin sketch
      */
-    CountMinDescriptor(const FieldAccessExpressionNodePtr& field, uint64_t width, uint64_t depth);
+    CountMinDescriptor(const FieldAccessExpressionNodePtr & field, uint64_t width, uint64_t depth);
 
     uint64_t depth;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_COUNTMINDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_COUNTMINDESCRIPTOR_HPP_

@@ -18,13 +18,15 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
  * The metric collector class for CPU metrics. Metric collectors are required for the integration with data sources.
  */
-class CpuCollector : public MetricCollector {
-  public:
+class CpuCollector : public MetricCollector
+{
+public:
     explicit CpuCollector();
 
     /**
@@ -32,7 +34,7 @@ class CpuCollector : public MetricCollector {
      * @param tupleBuffer The tuple buffer
      * @return True if successful, else false
      */
-    bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
+    bool fillBuffer(Runtime::TupleBuffer & tupleBuffer) override;
 
     /**
      * @brief Returns the type of metric collector
@@ -52,13 +54,13 @@ class CpuCollector : public MetricCollector {
      */
     const MetricPtr readMetric() const override;
 
-  private:
+private:
     AbstractSystemResourcesReaderPtr resourceReader;
     SchemaPtr schema;
 };
 
 using CpuCollectorPtr = std::shared_ptr<CpuCollector>;
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_CPUCOLLECTOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_CPUCOLLECTOR_HPP_

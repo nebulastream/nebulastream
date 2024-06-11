@@ -21,9 +21,10 @@
 /**
  * @brief class to store link properties between two topology nodes
  */
-class LinkProperty {
-  public:
-    LinkProperty(uint64_t bandwidth, uint64_t latency) : bandwidth(bandwidth), latency(latency) {}
+class LinkProperty
+{
+public:
+    LinkProperty(uint64_t bandwidth, uint64_t latency) : bandwidth(bandwidth), latency(latency) { }
 
     /**
      * @brief bandwidth in Megabits per seconds
@@ -38,4 +39,4 @@ class LinkProperty {
 
 using LinkPropertyPtr = std::shared_ptr<LinkProperty>;
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_LINKPROPERTY_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_LINKPROPERTY_HPP_

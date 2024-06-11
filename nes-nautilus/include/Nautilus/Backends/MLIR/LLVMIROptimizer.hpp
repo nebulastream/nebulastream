@@ -15,31 +15,35 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 
-namespace NES {
+namespace NES
+{
 class DumpHelper;
-namespace Nautilus {
+namespace Nautilus
+{
 class CompilationOptions;
 }
-}// namespace NES
+} // namespace NES
 
+#include <vector>
 #include <llvm/IR/Module.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
-#include <vector>
 
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
 /**
  * @brief The LLVMIROptimizer takes a generated MLIR module, 
  * and applies configured lowering & optimization passes to it.
  */
-class LLVMIROptimizer {
-  public:
+class LLVMIROptimizer
+{
+public:
     LLVMIROptimizer(); // Disable default constructor
-    ~LLVMIROptimizer();// Disable default destructor
+    ~LLVMIROptimizer(); // Disable default destructor
 
-    static std::function<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(const CompilationOptions& options,
-                                                                              const DumpHelper& dumpHelper);
+    static std::function<llvm::Error(llvm::Module *)>
+    getLLVMOptimizerPipeline(const CompilationOptions & options, const DumpHelper & dumpHelper);
 };
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_

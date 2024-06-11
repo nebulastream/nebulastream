@@ -16,10 +16,12 @@
 #define NES_RUNTIME_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
-namespace NES {
+namespace NES
+{
 
-class JsonFormat : public SinkFormat {
-  public:
+class JsonFormat : public SinkFormat
+{
+public:
     JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
 
     /**
@@ -33,7 +35,7 @@ class JsonFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
+    std::string getFormattedBuffer(Runtime::TupleBuffer & inputBuffer) override;
 
     //TODO implement this function with an SinkFormatIterator
     /**
@@ -41,7 +43,7 @@ class JsonFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
+    FormatIterator getTupleIterator(Runtime::TupleBuffer & inputBuffer) override;
 
     /**
      * @brief method to return the format as a string
@@ -55,5 +57,5 @@ class JsonFormat : public SinkFormat {
      */
     FormatTypes getSinkFormat() override;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

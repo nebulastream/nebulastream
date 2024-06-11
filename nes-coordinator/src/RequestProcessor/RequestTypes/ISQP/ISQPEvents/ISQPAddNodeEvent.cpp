@@ -14,39 +14,72 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddNodeEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-ISQPAddNodeEvent::ISQPAddNodeEvent(WorkerType workerType,
-                                   WorkerId workerId,
-                                   const std::string& ipAddress,
-                                   uint32_t grpcPort,
-                                   uint32_t dataPort,
-                                   uint16_t resources,
-                                   const std::map<std::string, std::any>& properties)
-    : ISQPEvent(ISQP_ADD_NODE_EVENT_PRIORITY), workerType(workerType), workerId(workerId), ipAddress(ipAddress),
-      grpcPort(grpcPort), dataPort(dataPort), resources(resources), properties(properties) {}
+ISQPAddNodeEvent::ISQPAddNodeEvent(
+    WorkerType workerType,
+    WorkerId workerId,
+    const std::string & ipAddress,
+    uint32_t grpcPort,
+    uint32_t dataPort,
+    uint16_t resources,
+    const std::map<std::string, std::any> & properties)
+    : ISQPEvent(ISQP_ADD_NODE_EVENT_PRIORITY)
+    , workerType(workerType)
+    , workerId(workerId)
+    , ipAddress(ipAddress)
+    , grpcPort(grpcPort)
+    , dataPort(dataPort)
+    , resources(resources)
+    , properties(properties)
+{
+}
 
-ISQPEventPtr ISQPAddNodeEvent::create(WorkerType workerType,
-                                      WorkerId workerId,
-                                      const std::string& ipAddress,
-                                      uint32_t grpcPort,
-                                      uint32_t dataPort,
-                                      uint16_t resources,
-                                      const std::map<std::string, std::any>& properties) {
+ISQPEventPtr ISQPAddNodeEvent::create(
+    WorkerType workerType,
+    WorkerId workerId,
+    const std::string & ipAddress,
+    uint32_t grpcPort,
+    uint32_t dataPort,
+    uint16_t resources,
+    const std::map<std::string, std::any> & properties)
+{
     return std::make_shared<ISQPAddNodeEvent>(workerType, workerId, ipAddress, grpcPort, dataPort, resources, properties);
 }
 
-WorkerType ISQPAddNodeEvent::getWorkerType() const { return workerType; }
+WorkerType ISQPAddNodeEvent::getWorkerType() const
+{
+    return workerType;
+}
 
-WorkerId ISQPAddNodeEvent::getWorkerId() const { return workerId; }
+WorkerId ISQPAddNodeEvent::getWorkerId() const
+{
+    return workerId;
+}
 
-const std::string& ISQPAddNodeEvent::getIpAddress() const { return ipAddress; }
+const std::string & ISQPAddNodeEvent::getIpAddress() const
+{
+    return ipAddress;
+}
 
-uint32_t ISQPAddNodeEvent::getGrpcPort() const { return grpcPort; }
+uint32_t ISQPAddNodeEvent::getGrpcPort() const
+{
+    return grpcPort;
+}
 
-uint32_t ISQPAddNodeEvent::getDataPort() const { return dataPort; }
+uint32_t ISQPAddNodeEvent::getDataPort() const
+{
+    return dataPort;
+}
 
-uint16_t ISQPAddNodeEvent::getResources() const { return resources; }
-const std::map<std::string, std::any>& ISQPAddNodeEvent::getProperties() const { return properties; }
+uint16_t ISQPAddNodeEvent::getResources() const
+{
+    return resources;
+}
+const std::map<std::string, std::any> & ISQPAddNodeEvent::getProperties() const
+{
+    return properties;
+}
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

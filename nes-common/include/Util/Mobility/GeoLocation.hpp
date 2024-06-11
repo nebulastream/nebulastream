@@ -16,21 +16,24 @@
 
 #include <string>
 
-namespace NES::Spatial {
+namespace NES::Spatial
+{
 
-namespace Protobuf {
+namespace Protobuf
+{
 class GeoLocation;
 }
 
-namespace DataTypes::Experimental {
+namespace DataTypes::Experimental
+{
 
 /**
 * @brief a representation of geographical location used to specify the fixed location of field nodes
 * and the changing location of mobile devices
 */
-class GeoLocation {
-
-  public:
+class GeoLocation
+{
+public:
     /**
      * @brief the default constructor which constructs an object with lat=200 and lng=200 which represents an invalid location
      */
@@ -49,14 +52,14 @@ class GeoLocation {
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param geoLocation: the coordinate object
      */
-    explicit GeoLocation(const NES::Spatial::Protobuf::GeoLocation& geoLocation);
+    explicit GeoLocation(const NES::Spatial::Protobuf::GeoLocation & geoLocation);
 
     /**
      * @brief compares two GeographicalLocations and checks if they represent the same point on the map
      * @param other: the object to compare to
      * @return true both objects have the same latitude and longitude. false otherwise
      */
-    bool operator==(const GeoLocation& other) const;
+    bool operator==(const GeoLocation & other) const;
 
     /**
      * @brief getter for the latitude
@@ -89,7 +92,7 @@ class GeoLocation {
      * @param coordinates: string of the format "<latitude>, <longitude>"
      * @return a Location object
      */
-    static GeoLocation fromString(const std::string& coordinates);
+    static GeoLocation fromString(const std::string & coordinates);
 
     /**
      * @brief checks if the a pair of doubles represents valid coordinates (abs(lat) < 90 and abs(lng) < 180)
@@ -99,11 +102,11 @@ class GeoLocation {
      */
     static bool checkValidityOfCoordinates(double latitude, double longitude);
 
-  private:
+private:
     double latitude;
     double longitude;
 };
-}// namespace DataTypes::Experimental
-}// namespace NES::Spatial
+} // namespace DataTypes::Experimental
+} // namespace NES::Spatial
 
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_

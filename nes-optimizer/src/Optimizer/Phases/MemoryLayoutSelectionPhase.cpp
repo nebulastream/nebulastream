@@ -20,12 +20,14 @@
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) {
-
+QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr & queryPlan)
+{
     Schema::MemoryLayoutType layoutType;
-    switch (policy) {
+    switch (policy)
+    {
         case MemoryLayoutPolicy::FORCE_ROW_LAYOUT: {
             NES_DEBUG("Select Row Layout");
             layoutType = Schema::MemoryLayoutType::ROW_LAYOUT;
@@ -40,15 +42,19 @@ QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) 
 
     // iterate over all operators and set the output schema
     auto iterator = PlanIterator(queryPlan);
-    for (auto node : iterator) {
-        if (auto op = node->as_if<SourceLogicalOperator>()) {
+    for (auto node : iterator)
+    {
+        if (auto op = node->as_if<SourceLogicalOperator>())
+        {
             op->getSourceDescriptor()->getSchema()->setLayoutType(layoutType);
         }
-        if (auto op = node->as_if<LogicalUnaryOperator>()) {
+        if (auto op = node->as_if<LogicalUnaryOperator>())
+        {
             op->getInputSchema()->setLayoutType(layoutType);
             op->getOutputSchema()->setLayoutType(layoutType);
         }
-        if (auto op = node->as_if<LogicalBinaryOperator>()) {
+        if (auto op = node->as_if<LogicalBinaryOperator>())
+        {
             op->getLeftInputSchema()->setLayoutType(layoutType);
             op->getRightInputSchema()->setLayoutType(layoutType);
             op->getOutputSchema()->setLayoutType(layoutType);
@@ -57,10 +63,13 @@ QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) 
     return queryPlan;
 }
 
-MemoryLayoutSelectionPhase::MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy) : policy(policy) {}
+MemoryLayoutSelectionPhase::MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy) : policy(policy)
+{
+}
 
-MemoryLayoutSelectionPhasePtr MemoryLayoutSelectionPhase::create(MemoryLayoutPolicy policy) {
+MemoryLayoutSelectionPhasePtr MemoryLayoutSelectionPhase::create(MemoryLayoutPolicy policy)
+{
     return std::make_shared<MemoryLayoutSelectionPhase>(MemoryLayoutSelectionPhase(policy));
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

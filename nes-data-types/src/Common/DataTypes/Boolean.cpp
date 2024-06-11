@@ -15,17 +15,26 @@
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-bool Boolean::equals(DataTypePtr otherDataType) { return otherDataType->isBoolean(); }
+bool Boolean::equals(DataTypePtr otherDataType)
+{
+    return otherDataType->isBoolean();
+}
 
-DataTypePtr Boolean::join(DataTypePtr otherDataType) {
-    if (otherDataType->isBoolean()) {
+DataTypePtr Boolean::join(DataTypePtr otherDataType)
+{
+    if (otherDataType->isBoolean())
+    {
         return DataTypeFactory::createBoolean();
     }
     return DataTypeFactory::createUndefined();
 }
 
-std::string Boolean::toString() { return "Boolean"; }
+std::string Boolean::toString()
+{
+    return "Boolean";
+}
 
-}// namespace NES
+} // namespace NES

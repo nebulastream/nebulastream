@@ -16,7 +16,8 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_
 
 #include <Util/PluginRegistry.hpp>
-namespace NES {
+namespace NES
+{
 
 class DataType;
 class LogicalFunction;
@@ -30,29 +31,32 @@ using LogicalFunctionRegistry = Util::PluginFactory<LogicalFunction>;
 /**
  * @brief Base class for all logical functions.
  */
-class LogicalFunction {
-  public:
+class LogicalFunction
+{
+public:
     LogicalFunction() = default;
     /**
      * @brief infers the stamp for the logical function
      * @param inputStamps of the arguments
      * @return DataTypePtr
      */
-    [[nodiscard]] virtual DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const = 0;
+    [[nodiscard]] virtual DataTypePtr inferStamp(const std::vector<DataTypePtr> & inputStamps) const = 0;
     virtual ~LogicalFunction() = default;
 };
 
-class UnaryLogicalFunction : public LogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const final;
-    [[nodiscard]] virtual DataTypePtr inferUnary(const DataTypePtr& input) const = 0;
+class UnaryLogicalFunction : public LogicalFunction
+{
+public:
+    [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr> & inputStamps) const final;
+    [[nodiscard]] virtual DataTypePtr inferUnary(const DataTypePtr & input) const = 0;
 };
 
-class BinaryLogicalFunction : public LogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const final;
-    [[nodiscard]] virtual DataTypePtr inferBinary(const DataTypePtr& left, const DataTypePtr& right) const = 0;
+class BinaryLogicalFunction : public LogicalFunction
+{
+public:
+    [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr> & inputStamps) const final;
+    [[nodiscard]] virtual DataTypePtr inferBinary(const DataTypePtr & left, const DataTypePtr & right) const = 0;
 };
 
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_
+} // namespace NES
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_

@@ -14,6 +14,7 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
+#include <list>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
@@ -22,9 +23,9 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
-#include <list>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class StreamJoinOperatorHandler;
 using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
@@ -36,8 +37,9 @@ using RLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::RLockedPtr
  * @brief This operator is the general join operator handler and implements the JoinOperatorHandlerInterface. It is expected that
  * all StreamJoinOperatorHandlers inherit from this
  */
-class StreamJoinOperatorHandler : public virtual OperatorHandler {
-  public:
+class StreamJoinOperatorHandler : public virtual OperatorHandler
+{
+public:
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
      * @param inputOrigins
@@ -47,12 +49,13 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param sizeOfRecordLeft
      * @param sizeOfRecordRight
      */
-    StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                              const OriginId outputOriginId,
-                              const uint64_t windowSize,
-                              const uint64_t windowSlide,
-                              const SchemaPtr& leftSchema,
-                              const SchemaPtr& rightSchema);
+    StreamJoinOperatorHandler(
+        const std::vector<OriginId> & inputOrigins,
+        const OriginId outputOriginId,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr & leftSchema,
+        const SchemaPtr & rightSchema);
 
     ~StreamJoinOperatorHandler() override = default;
 
@@ -66,13 +69,13 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @return Optional
      */
     std::optional<StreamSlicePtr> getSliceBySliceIdentifier(uint64_t sliceIdentifier);
-    std::optional<StreamSlicePtr> getSliceBySliceIdentifier(const RLockedSlices& slicesLocked, uint64_t sliceIdentifier);
-    std::optional<StreamSlicePtr> getSliceBySliceIdentifier(const WLockedSlices& slicesLocked, uint64_t sliceIdentifier);
+    std::optional<StreamSlicePtr> getSliceBySliceIdentifier(const RLockedSlices & slicesLocked, uint64_t sliceIdentifier);
+    std::optional<StreamSlicePtr> getSliceBySliceIdentifier(const WLockedSlices & slicesLocked, uint64_t sliceIdentifier);
 
     /**
      * @brief Triggers all slices/windows that have not been already emitted to the probe
      */
-    void triggerAllSlices(PipelineExecutionContext* pipelineCtx);
+    void triggerAllSlices(PipelineExecutionContext * pipelineCtx);
 
     /**
      * @brief Deletes all slices/windows
@@ -83,20 +86,20 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @brief Triggers windows that are ready. This method updates the watermarkProcessor and should be thread-safe
      * @param bufferMetaData
      */
-    void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
+    void checkAndTriggerWindows(const BufferMetaData & bufferMetaData, PipelineExecutionContext * pipelineCtx);
 
     /**
      * @brief Updates the corresponding watermark processor and then deletes all slices/windows that are not valid anymore.
      * @param bufferMetaData
      */
-    void deleteSlices(const BufferMetaData& bufferMetaData);
+    void deleteSlices(const BufferMetaData & bufferMetaData);
 
     /**
      * @brief Retrieves all window identifiers that correspond to this slice. For bucketing, this will just return one item
      * @param slice
      * @return Vector<WindowInfo>
      */
-    virtual std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) = 0;
+    virtual std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice & slice) = 0;
 
     /**
      * @brief Get the number of current active slices/windows
@@ -127,10 +130,9 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param windowInfo
      * @param pipelineCtx
      */
-    virtual void emitSliceIdsToProbe(StreamSlice& sliceLeft,
-                                     StreamSlice& sliceRight,
-                                     const WindowInfo& windowInfo,
-                                     PipelineExecutionContext* pipelineCtx) = 0;
+    virtual void emitSliceIdsToProbe(
+        StreamSlice & sliceLeft, StreamSlice & sliceRight, const WindowInfo & windowInfo, PipelineExecutionContext * pipelineCtx)
+        = 0;
 
     /**
      * @brief Returns the output origin id that this handler is responsible for
@@ -175,9 +177,9 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      */
     uint64_t getWindowSize() const;
 
-    void setBufferManager(const BufferManagerPtr& bufManager);
+    void setBufferManager(const BufferManagerPtr & bufManager);
 
-  protected:
+protected:
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
     SliceAssigner sliceAssigner;
@@ -197,6 +199,6 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     SchemaPtr rightSchema;
     BufferManagerPtr bufferManager;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_

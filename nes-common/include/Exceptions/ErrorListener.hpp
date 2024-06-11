@@ -14,16 +14,18 @@
 #ifndef NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_
 #define NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_
 
-#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <memory>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief This is an error interceptor suitable for signals and exceptions
  */
-class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListener> {
-  public:
+class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListener>
+{
+public:
     /**
      * @brief onFatalError shall be called when a signal is caught
      * @param signalNumber the caught signal
@@ -39,6 +41,6 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
     virtual void onFatalException(std::shared_ptr<std::exception>, std::string) = 0;
 };
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_

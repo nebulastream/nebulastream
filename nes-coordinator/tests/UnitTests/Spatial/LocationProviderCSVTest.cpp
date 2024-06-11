@@ -12,26 +12,29 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <Exceptions/LocationProviderException.hpp>
 #include <Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class LocationProviderCSVTest : public Testing::BaseUnitTest {
-
-  public:
-    static void SetUpTestCase() {
+class LocationProviderCSVTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("GeoSourceCSV.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LocationProviderCSV test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         NES::Testing::BaseUnitTest::SetUp();
         std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints;
         waypoints.push_back({{52.55227464714949, 13.351743136322877}, 0});
@@ -43,14 +46,16 @@ class LocationProviderCSVTest : public Testing::BaseUnitTest {
         writeWaypointsToCsv(csvPath, waypoints);
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         NES_INFO("Tear down LocationProviderCSV test class.");
         auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
         remove(csvPath.c_str());
     }
 };
 
-TEST_F(LocationProviderCSVTest, testInvalidCsv) {
+TEST_F(LocationProviderCSVTest, testInvalidCsv)
+{
     //test nonexistent file
     auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "non_existent_file.csv";
     remove(csvPath.c_str());
@@ -105,7 +110,8 @@ TEST_F(LocationProviderCSVTest, testInvalidCsv) {
     ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), NES::Spatial::Exception::LocationProviderException);
 }
 
-TEST_F(LocationProviderCSVTest, testCsvMovement) {
+TEST_F(LocationProviderCSVTest, testCsvMovement)
+{
     auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
 
@@ -119,9 +125,11 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     auto endTime = maxTimeStamp + (maxTimeStamp - currentTimeStamp) / 2;
 
     std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> actualWayPoints;
-    while (currentTimeStamp <= endTime) {
+    while (currentTimeStamp <= endTime)
+    {
         auto currentWayPoint = locationProvider->getCurrentWaypoint();
-        if (actualWayPoints.empty() || currentWayPoint.getLocation() != actualWayPoints.back().getLocation()) {
+        if (actualWayPoints.empty() || currentWayPoint.getLocation() != actualWayPoints.back().getLocation())
+        {
             actualWayPoints.emplace_back(currentWayPoint);
         }
         currentTimeStamp = getTimestamp();
@@ -131,14 +139,16 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
 
     //check the ordering of the existing waypoints
     auto expectedItr = expectedWayPoints.cbegin();
-    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
-        while (expectedItr != expectedWayPoints.cend()
-               && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
+    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt)
+    {
+        while (expectedItr != expectedWayPoints.cend() && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value())
+        {
             expectedItr++;
         }
-        NES_DEBUG("comparing actual waypoint {} to expected waypoint {}",
-                  std::distance(actualWayPoints.cbegin(), actualIt),
-                  std::distance(expectedWayPoints.cbegin(), expectedItr));
+        NES_DEBUG(
+            "comparing actual waypoint {} to expected waypoint {}",
+            std::distance(actualWayPoints.cbegin(), actualIt),
+            std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
@@ -147,13 +157,13 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     }
 }
 
-TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
+TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture)
+{
     Timestamp offset = 400000000;
     auto currentTimeStamp = getTimestamp();
     auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
     Timestamp simulatedStartTime = currentTimeStamp + offset;
-    auto locationProvider =
-        std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
+    auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
     auto startTime = locationProvider->getStartTime();
     ASSERT_EQ(startTime, simulatedStartTime);
 
@@ -166,14 +176,17 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
 
     std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> actualWayPoints;
     auto initialExpectedWaypoint = expectedWayPoints.front();
-    while (currentTimeStamp <= endTime) {
+    while (currentTimeStamp <= endTime)
+    {
         auto currentWayPoint = locationProvider->getCurrentWaypoint();
-        if (actualWayPoints.empty() || currentWayPoint.getLocation() != actualWayPoints.back().getLocation()) {
+        if (actualWayPoints.empty() || currentWayPoint.getLocation() != actualWayPoints.back().getLocation())
+        {
             actualWayPoints.emplace_back(currentWayPoint);
         }
 
         //if the movement has not started yet, expect initial location
-        if (currentWayPoint.getTimestamp().value() <= initialExpectedWaypoint.getTimestamp().value()) {
+        if (currentWayPoint.getTimestamp().value() <= initialExpectedWaypoint.getTimestamp().value())
+        {
             NES_DEBUG("comparing initial location");
             EXPECT_EQ(initialExpectedWaypoint.getLocation(), currentWayPoint.getLocation());
         }
@@ -184,20 +197,22 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
 
     //check the ordering of the existing waypoints
     auto expectedItr = expectedWayPoints.cbegin();
-    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
-
+    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt)
+    {
         //skip comparing initial location as it might have differing timestamp
-        if (actualIt->getLocation() == expectedWayPoints.front().getLocation()) {
+        if (actualIt->getLocation() == expectedWayPoints.front().getLocation())
+        {
             continue;
         }
 
-        while (expectedItr != expectedWayPoints.cend()
-               && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
+        while (expectedItr != expectedWayPoints.cend() && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value())
+        {
             expectedItr++;
         }
-        NES_DEBUG("comparing actual waypoint {} to expected waypoint {}",
-                  std::distance(actualWayPoints.cbegin(), actualIt),
-                  std::distance(expectedWayPoints.cbegin(), expectedItr));
+        NES_DEBUG(
+            "comparing actual waypoint {} to expected waypoint {}",
+            std::distance(actualWayPoints.cbegin(), actualIt),
+            std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
@@ -206,13 +221,13 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     }
 }
 
-TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
+TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast)
+{
     Timestamp offset = -100000000;
     auto currentTimeStamp = getTimestamp();
     auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
     Timestamp simulatedStartTime = currentTimeStamp + offset;
-    auto locationProvider =
-        std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
+    auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
     auto startTime = locationProvider->getStartTime();
     ASSERT_EQ(startTime, simulatedStartTime);
 
@@ -225,9 +240,11 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     auto endTime = maxTimeStamp + (maxTimeStamp - currentTimeStamp) / 2;
 
     std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> actualWayPoints;
-    while (currentTimeStamp <= endTime) {
+    while (currentTimeStamp <= endTime)
+    {
         auto currentWayPoint = locationProvider->getCurrentWaypoint();
-        if (actualWayPoints.empty() || currentWayPoint.getLocation() != actualWayPoints.back().getLocation()) {
+        if (actualWayPoints.empty() || currentWayPoint.getLocation() != actualWayPoints.back().getLocation())
+        {
             actualWayPoints.emplace_back(currentWayPoint);
         }
         currentTimeStamp = getTimestamp();
@@ -237,14 +254,16 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
 
     //check the ordering of the existing waypoints
     auto expectedItr = expectedWayPoints.cbegin();
-    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
-        while (expectedItr != expectedWayPoints.cend()
-               && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
+    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt)
+    {
+        while (expectedItr != expectedWayPoints.cend() && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value())
+        {
             expectedItr++;
         }
-        NES_DEBUG("comparing actual waypoint {} to expected waypoint {}",
-                  std::distance(actualWayPoints.cbegin(), actualIt),
-                  std::distance(expectedWayPoints.cbegin(), expectedItr));
+        NES_DEBUG(
+            "comparing actual waypoint {} to expected waypoint {}",
+            std::distance(actualWayPoints.cbegin(), actualIt),
+            std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
@@ -252,4 +271,4 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
         EXPECT_EQ(expectedItr->getLocation(), actualIt->getLocation());
     }
 }
-}// namespace NES
+} // namespace NES

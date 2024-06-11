@@ -15,43 +15,46 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
 #ifdef NES_ENABLE_NUMA_SUPPORT
-#include <Util/Logger/Logger.hpp>
-#include <memory>
-#ifdef __linux__
-#include <memory_resource>
-#elif defined(__APPLE__)
+#    include <memory>
+#    include <Util/Logger/Logger.hpp>
+#    ifdef __linux__
+#        include <memory_resource>
+#    elif defined(__APPLE__)
 // TODO move non experimental when upgrading clang dep
-#include <experimental/memory_resource>
-namespace std::pmr {
+#        include <experimental/memory_resource>
+namespace std::pmr
+{
 using memory_resource = std::experimental::pmr::memory_resource;
-}// namespace std::pmr
-#endif
+} // namespace std::pmr
+#    endif
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 /**
  * @brief A numa aware memory resource
  */
-class NumaRegionMemoryAllocator : public std::pmr::memory_resource {
-  public:
+class NumaRegionMemoryAllocator : public std::pmr::memory_resource
+{
+public:
     /**
      * @brief creates an allocator for a given numa region
      * @param numaNodeIndex
      */
     explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex) : numaNodeIndex(numaNodeIndex){};
 
-    ~NumaRegionMemoryAllocator() override {}
+    ~NumaRegionMemoryAllocator() override { }
 
-  private:
-    void* do_allocate(size_t sizeInBytes, size_t) override;
+private:
+    void * do_allocate(size_t sizeInBytes, size_t) override;
 
-    void do_deallocate(void* pointer, size_t sizeInBytes, size_t) override;
+    void do_deallocate(void * pointer, size_t sizeInBytes, size_t) override;
 
-    bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
+    bool do_is_equal(const memory_resource & other) const noexcept override { return this == &other; }
 
-  private:
+private:
     const uint32_t numaNodeIndex;
 };
 using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 #endif
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_

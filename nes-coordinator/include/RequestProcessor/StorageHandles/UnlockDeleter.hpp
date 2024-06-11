@@ -16,7 +16,8 @@
 
 #include <mutex>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 /**
  * @brief This class holds a lock on the supplied mutex on only releases it when it is destructed. It can be supplied as a
@@ -25,8 +26,9 @@ namespace NES::RequestProcessor {
  * idea taken from:
  * https://stackoverflow.com/questions/23610561/return-locked-resource-from-class-with-automatic-unlocking#comment36245473_23610561
  */
-class UnlockDeleter {
-  public:
+class UnlockDeleter
+{
+public:
     /**
      * @brief In case of serial access to the resource no mutex is needed and the destructor of the class will have no effect
      */
@@ -36,7 +38,7 @@ class UnlockDeleter {
      * @brief Blocks until a lock on the mutex is acquired, then keeps the lock until the object is destructed
      * @param mutex
      */
-    explicit UnlockDeleter(std::mutex& mutex);
+    explicit UnlockDeleter(std::mutex & mutex);
 
     /**
      * @brief Tries to acquire a lock on the mutex. On success, the lock lives until the object is destroyed.
@@ -44,7 +46,7 @@ class UnlockDeleter {
      * @param mutex
      * @param tryToLock
      */
-    explicit UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock);
+    explicit UnlockDeleter(std::mutex & mutex, std::try_to_lock_t tryToLock);
 
     /**
      * @brief Keeps the supplied lock in a locked state until the unlock deleter is destructed.
@@ -57,13 +59,14 @@ class UnlockDeleter {
      * @brief The action called when the unique pointer is destroyed. We use a no op be cause we do NOT want to free the resource.
      * @tparam T: The type of the resource
      */
-    template<typename T>
-    void operator()(T*) const noexcept {
+    template <typename T>
+    void operator()(T *) const noexcept
+    {
         // no-op
     }
 
-  private:
+private:
     std::unique_lock<std::mutex> lock;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_UNLOCKDELETER_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_UNLOCKDELETER_HPP_

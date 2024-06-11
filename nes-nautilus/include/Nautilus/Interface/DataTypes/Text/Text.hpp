@@ -21,14 +21,16 @@
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Nautilus value type for variable length text values.
  * The value type is physically represented by a TextValue.
  */
-class Text final : public Nautilus::Any {
-  public:
+class Text final : public Nautilus::Any
+{
+public:
     static const inline auto type = TypeIdentifier::create<Text>();
 
     /**
@@ -42,14 +44,14 @@ class Text final : public Nautilus::Any {
      * @param other text object.
      * @return true if this and other text object are equal.
      */
-    Value<Boolean> equals(const Value<Text>& other) const;
+    Value<Boolean> equals(const Value<Text> & other) const;
 
     /**
      * @brief  checks if the first Text starts with another.
      * @param other text object.
      * @return true if text objects starts with another.
      */
-    Value<Boolean> prefix(const Value<Text>& other) const;
+    Value<Boolean> prefix(const Value<Text> & other) const;
 
     /**
      * @brief repeats the TextObject repeatNumber times.
@@ -69,21 +71,21 @@ class Text final : public Nautilus::Any {
      * @param other text object(search_text).
      * @return location of first occurrence of search_text in Text, return 0 if no match found.
      */
-    Value<UInt32> position(Value<Text>& other) const;
+    Value<UInt32> position(Value<Text> & other) const;
 
     /**
      * @brief Replace all occurrences of source in text with target
      * @param sourcetext, targettext.
      * @return Text Object
      */
-    Value<Text> replace(Value<Text>& source, Value<Text>& target) const;
+    Value<Text> replace(Value<Text> & source, Value<Text> & target) const;
 
     /**
      * @brief concat two text object
      * @param other text object
      * @return combination of two text object
      */
-    Value<Text> concat(const Value<Text>& other) const;
+    Value<Text> concat(const Value<Text> & other) const;
 
     /**
      * @brief  Extract a subText of length len from the startIndex.Note that the start value of 1 refers to the first character of the Text
@@ -164,14 +166,14 @@ class Text final : public Nautilus::Any {
      * @param
      * @return Value<Text>
      */
-    const Value<Text> ltrim(Value<Text>& other) const;
+    const Value<Text> ltrim(Value<Text> & other) const;
 
     /**
      * @brief Removes any spaces from the left side of the string
      * @param
      * @return Value<Text>
      */
-    const Value<Text> rtrim(Value<Text>& other) const;
+    const Value<Text> rtrim(Value<Text> & other) const;
 
     /**
      * @brief Removes any spaces from the left and right side of the string
@@ -185,7 +187,7 @@ class Text final : public Nautilus::Any {
      * @param compareText as Value<Text>
      * @return Value<Boolean>
      */
-    const Value<Boolean> similarTo(Value<Text>& compareText) const;
+    const Value<Boolean> similarTo(Value<Text> & compareText) const;
 
     /**
      * @brief Returns true or false whether the string matches the supplied pattern
@@ -193,7 +195,7 @@ class Text final : public Nautilus::Any {
      * @param caseSensitive as Value<Boolean> true for case sensitive and false for insensitive pattern matching
      * @return Value<Boolean> returns true if the string matches the supplied pattern
      */
-    const Value<Boolean> like(Value<Text>& compareText, Value<Boolean> caseSensitive) const;
+    const Value<Boolean> like(Value<Text> & compareText, Value<Boolean> caseSensitive) const;
 
     /**
      * @brief Returns the stamp of this type
@@ -205,23 +207,24 @@ class Text final : public Nautilus::Any {
      * @brief Returns the underling reference
      * @return TypedRef<TextValue>&
      */
-    [[maybe_unused]] const TypedRef<TextValue>& getReference() const;
+    [[maybe_unused]] const TypedRef<TextValue> & getReference() const;
 
     AnyPtr copy() override;
 
-  private:
+private:
     const TypedRef<TextValue> rawReference;
 };
 
-template<typename T>
-    requires std::is_same_v<TextValue*, T>
-auto createDefault() {
+template <typename T>
+requires std::is_same_v<TextValue *, T>
+auto createDefault()
+{
     auto textRef = TypedRef<TextValue>();
     auto text = Value<Text>(std::make_unique<Text>(textRef));
     return text;
 }
 
-Value<Text> transformReturnValues(TextValue* value);
+Value<Text> transformReturnValues(TextValue * value);
 
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_

@@ -16,58 +16,70 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/internal/apex_memmove.hpp>
 #ifdef HAS_AVX
-#include <Runtime/internal/rte_memory.h>
+#    include <Runtime/internal/rte_memory.h>
 #endif
+#include <cmath>
 #include <Sources/BenchmarkSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-#if defined(__linux__)
-#include <numa.h>
-#include <numaif.h>
+#    if defined(__linux__)
+#        include <numa.h>
+#        include <numaif.h>
+#    endif
 #endif
-#endif
-#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
-namespace NES {
+namespace NES
+{
 
-BenchmarkSource::BenchmarkSource(SchemaPtr schema,
-                                 const std::shared_ptr<uint8_t>& memoryArea,
-                                 size_t memoryAreaSize,
-                                 Runtime::BufferManagerPtr bufferManager,
-                                 Runtime::QueryManagerPtr queryManager,
-                                 uint64_t numberOfBuffersToProcess,
-                                 uint64_t gatheringValue,
-                                 OperatorId operatorId,
-                                 OriginId originId,
-                                 StatisticId statisticId,
-                                 size_t numSourceLocalBuffers,
-                                 GatheringMode gatheringMode,
-                                 SourceMode sourceMode,
-                                 uint64_t sourceAffinity,
-                                 uint64_t taskQueueId,
-                                 const std::string& physicalSourceName,
-                                 std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : GeneratorSource(std::move(schema),
-                      std::move(bufferManager),
-                      std::move(queryManager),
-                      numberOfBuffersToProcess,
-                      operatorId,
-                      originId,
-                      statisticId,
-                      numSourceLocalBuffers,
-                      gatheringMode,
-                      std::move(successors),
-                      physicalSourceName),
-      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
+BenchmarkSource::BenchmarkSource(
+    SchemaPtr schema,
+    const std::shared_ptr<uint8_t> & memoryArea,
+    size_t memoryAreaSize,
+    Runtime::BufferManagerPtr bufferManager,
+    Runtime::QueryManagerPtr queryManager,
+    uint64_t numberOfBuffersToProcess,
+    uint64_t gatheringValue,
+    OperatorId operatorId,
+    OriginId originId,
+    StatisticId statisticId,
+    size_t numSourceLocalBuffers,
+    GatheringMode gatheringMode,
+    SourceMode sourceMode,
+    uint64_t sourceAffinity,
+    uint64_t taskQueueId,
+    const std::string & physicalSourceName,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+    : GeneratorSource(
+        std::move(schema),
+        std::move(bufferManager),
+        std::move(queryManager),
+        numberOfBuffersToProcess,
+        operatorId,
+        originId,
+        statisticId,
+        numSourceLocalBuffers,
+        gatheringMode,
+        std::move(successors),
+        physicalSourceName)
+    , memoryArea(memoryArea)
+    , memoryAreaSize(memoryAreaSize)
+    , currentPositionInBytes(0)
+    , sourceMode(sourceMode)
+{
     NES_ASSERT(this->memoryArea && this->memoryAreaSize > 0, "invalid memory area");
     this->numberOfBuffersToProduce = numberOfBuffersToProcess;
-    if (gatheringMode == GatheringMode::INTERVAL_MODE) {
+    if (gatheringMode == GatheringMode::INTERVAL_MODE)
+    {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
-    } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
+    }
+    else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE)
+    {
         this->gatheringIngestionRate = gatheringValue;
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));
     }
     this->sourceAffinity = sourceAffinity;
@@ -77,15 +89,21 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
     bufferSize = localBufferManager->getBufferSize();
 
     //if the memory area is smaller than a buffer
-    if (memoryAreaSize <= bufferSize) {
+    if (memoryAreaSize <= bufferSize)
+    {
         numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schemaSize));
-    } else {
+    }
+    else
+    {
         //if the memory area spans multiple buffers
         auto restTuples = memoryAreaSize / this->schemaSize;
         auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->schemaSize));
-        if (restTuples > numberOfTuplesPerBuffer) {
+        if (restTuples > numberOfTuplesPerBuffer)
+        {
             numberOfTuplesToProduce = numberOfTuplesPerBuffer;
-        } else {
+        }
+        else
+        {
             numberOfTuplesToProduce = restTuples;
         }
     }
@@ -93,9 +111,13 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
     NES_DEBUG("BenchmarkSource() numberOfBuffersToProcess={} memoryAreaSize={}", numberOfBuffersToProcess, memoryAreaSize);
 }
 
-BenchmarkSource::~BenchmarkSource() { numaLocalMemoryArea.release(); }
+BenchmarkSource::~BenchmarkSource()
+{
+    numaLocalMemoryArea.release();
+}
 
-void BenchmarkSource::open() {
+void BenchmarkSource::open()
+{
     DataSource::open();
     numaLocalMemoryArea = *localBufferManager->getUnpooledBuffer(memoryAreaSize);
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
@@ -103,27 +125,35 @@ void BenchmarkSource::open() {
     memoryAreaRefCnt = 1;
 }
 
-void BenchmarkSource::recyclePooledBuffer(Runtime::detail::MemorySegment*) {
-    if (memoryAreaRefCnt.fetch_sub(1) == 1) {
+void BenchmarkSource::recyclePooledBuffer(Runtime::detail::MemorySegment *)
+{
+    if (memoryAreaRefCnt.fetch_sub(1) == 1)
+    {
         numaLocalMemoryArea.release();
     }
 }
 
-void BenchmarkSource::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {
-    if (memoryAreaRefCnt.fetch_sub(1) == 1) {
+void BenchmarkSource::recycleUnpooledBuffer(Runtime::detail::MemorySegment *)
+{
+    if (memoryAreaRefCnt.fetch_sub(1) == 1)
+    {
         numaLocalMemoryArea.release();
     }
 }
 
-void BenchmarkSource::runningRoutine() {
-    try {
+void BenchmarkSource::runningRoutine()
+{
+    try
+    {
         open();
 
         NES_INFO("Going to produce {}", numberOfTuplesToProduce);
 
-        for (uint64_t i = 0; i < numberOfBuffersToProduce && running; ++i) {
+        for (uint64_t i = 0; i < numberOfBuffersToProduce && running; ++i)
+        {
             Runtime::TupleBuffer buffer;
-            switch (sourceMode) {
+            switch (sourceMode)
+            {
                 case SourceMode::EMPTY_BUFFER: {
                     buffer = bufferManager->getBufferBlocking();
                     break;
@@ -131,9 +161,7 @@ void BenchmarkSource::runningRoutine() {
                 case SourceMode::COPY_BUFFER_SIMD_RTE: {
 #ifdef HAS_AVX
                     buffer = bufferManager->getBufferBlocking();
-                    rte_memcpy(buffer.getBuffer(),
-                               numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
-                               buffer.getBufferSize());
+                    rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
 #else
                     NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
 #endif
@@ -141,9 +169,7 @@ void BenchmarkSource::runningRoutine() {
                 }
                 case SourceMode::COPY_BUFFER_SIMD_APEX: {
                     buffer = bufferManager->getBufferBlocking();
-                    apex_memcpy(buffer.getBuffer(),
-                                numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
-                                buffer.getBufferSize());
+                    apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
                     break;
                 }
                 case SourceMode::CACHE_COPY: {
@@ -157,9 +183,7 @@ void BenchmarkSource::runningRoutine() {
                     break;
                 }
                 case SourceMode::WRAP_BUFFER: {
-                    buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
-                                                              bufferSize,
-                                                              this);
+                    buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
                     memoryAreaRefCnt.fetch_add(1);
                     break;
                 }
@@ -170,7 +194,8 @@ void BenchmarkSource::runningRoutine() {
             generatedBuffers++;
             currentPositionInBytes += bufferSize;
 
-            for (const auto& successor : executableSuccessors) {
+            for (const auto & successor : executableSuccessors)
+            {
                 queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
             }
         }
@@ -178,27 +203,38 @@ void BenchmarkSource::runningRoutine() {
         close();
         completedPromise.set_value(true);
         NES_DEBUG("DataSource {} end running", operatorId);
-    } catch (std::exception const& error) {
+    }
+    catch (std::exception const & error)
+    {
         queryManager->notifySourceFailure(shared_from_base<DataSource>(), error.what());
         completedPromise.set_exception(std::make_exception_ptr(error));
     }
 }
 
-void BenchmarkSource::close() {
+void BenchmarkSource::close()
+{
     DataSource::close();
-    if (memoryAreaRefCnt.fetch_sub(1) == 1) {
+    if (memoryAreaRefCnt.fetch_sub(1) == 1)
+    {
         numaLocalMemoryArea.release();
     }
 }
 
-std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData() {
+std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData()
+{
     //the benchmark source does not follow the receive pattern and overwrites the running routine
     NES_NOT_IMPLEMENTED();
     Runtime::TupleBuffer buffer;
     return buffer;
 }
 
-std::string BenchmarkSource::toString() const { return "BenchmarkSource"; }
+std::string BenchmarkSource::toString() const
+{
+    return "BenchmarkSource";
+}
 
-NES::SourceType BenchmarkSource::getType() const { return SourceType::MEMORY_SOURCE; }
-}// namespace NES
+NES::SourceType BenchmarkSource::getType() const
+{
+    return SourceType::MEMORY_SOURCE;
+}
+} // namespace NES

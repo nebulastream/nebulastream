@@ -19,18 +19,17 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES::InferModel {
+namespace NES::InferModel
+{
 
 /**
  * @brief Infer model operator
  */
-class LogicalInferModelOperator : public LogicalUnaryOperator {
-
-  public:
-    LogicalInferModelOperator(std::string model,
-                              std::vector<ExpressionNodePtr> inputFields,
-                              std::vector<ExpressionNodePtr> outputFields,
-                              OperatorId id);
+class LogicalInferModelOperator : public LogicalUnaryOperator
+{
+public:
+    LogicalInferModelOperator(
+        std::string model, std::vector<ExpressionNodePtr> inputFields, std::vector<ExpressionNodePtr> outputFields, OperatorId id);
 
     /**
      * @brief creates a string representation of this node
@@ -49,14 +48,14 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
      * @param rhs the other operator node
      * @return true if both are equal or false if both are not equal
      */
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
 
     /**
      * @brief checks if the operator node is equal and also has the same id, so it is the identical node
      * @param rhs the other operator node
      * @return true if identical, false otherwise
      */
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const & rhs) const override;
 
     /**
      * @brief infers the schema of the this operator node
@@ -74,7 +73,7 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
      * @brief getter for the model
      * @return model
      */
-    const std::string& getModel() const;
+    const std::string & getModel() const;
 
     /**
      * @brief getter for the path to the deployed model
@@ -86,15 +85,15 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
      * @brief getter for inputFieldsPtr
      * @return inputFieldsPtr
      */
-    const std::vector<ExpressionNodePtr>& getInputFields() const;
+    const std::vector<ExpressionNodePtr> & getInputFields() const;
 
     /**
      * @brief getter for outputFieldsPtr
      * @return outputFieldsPtr
      */
-    const std::vector<ExpressionNodePtr>& getOutputFields() const;
+    const std::vector<ExpressionNodePtr> & getOutputFields() const;
 
-  private:
+private:
     /**
      * @brief updates the field to a fully qualified one.
      * @param field
@@ -106,6 +105,6 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
     std::vector<ExpressionNodePtr> outputFields;
 };
 
-}// namespace NES::InferModel
+} // namespace NES::InferModel
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_

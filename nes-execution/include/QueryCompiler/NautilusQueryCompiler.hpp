@@ -15,7 +15,8 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
 #include <QueryCompiler/QueryCompiler.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 class LowerPhysicalToNautilusOperators;
 using LowerPhysicalToNautilusOperatorsPtr = std::shared_ptr<LowerPhysicalToNautilusOperators>;
@@ -25,8 +26,9 @@ using NautilusCompilationPhasePtr = std::shared_ptr<NautilusCompilationPhase>;
 /**
  * @brief A QueryCompiler which uses the nautilus operators for code generations.
  */
-class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
-  public:
+class NautilusQueryCompiler : public QueryCompilation::QueryCompiler
+{
+public:
     QueryCompilation::QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override;
     /**
      * @brief Creates a new instance of the NautilusQueryCompiler, with a set of options and phases.
@@ -36,12 +38,11 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
      * @return QueryCompilerPtr
      */
     static QueryCompilerPtr
-    create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing = false);
+    create(QueryCompilerOptionsPtr const & options, Phases::PhaseFactoryPtr const & phaseFactory, bool sourceSharing = false);
 
-  protected:
-    NautilusQueryCompiler(QueryCompilation::QueryCompilerOptionsPtr const& options,
-                          Phases::PhaseFactoryPtr const& phaseFactory,
-                          bool sourceSharing);
+protected:
+    NautilusQueryCompiler(
+        QueryCompilation::QueryCompilerOptionsPtr const & options, Phases::PhaseFactoryPtr const & phaseFactory, bool sourceSharing);
     QueryCompilation::LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     QueryCompilation::LowerPhysicalToNautilusOperatorsPtr lowerPhysicalToNautilusOperatorsPhase;
     QueryCompilation::NautilusCompilationPhasePtr compileNautilusPlanPhase;
@@ -51,6 +52,6 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
     bool sourceSharing;
 };
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_

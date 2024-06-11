@@ -15,27 +15,28 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Project operator that maps the field names of a record from input field names to output field names.
  */
-class Project : public ExecutableOperator {
-  public:
+class Project : public ExecutableOperator
+{
+public:
     /**
      * @brief Constructs a project operator (maps field names of a record(input) to new field names(output))
      * @param inputFields: The input field names that must be reflected in the record during execute()
      * @param inputFields: The output field names that the input field names of the record are mapped to during execute()
      */
-    Project(const std::vector<Record::RecordFieldIdentifier>& inputFields,
-            const std::vector<Record::RecordFieldIdentifier>& outputFields)
+    Project(const std::vector<Record::RecordFieldIdentifier> & inputFields, const std::vector<Record::RecordFieldIdentifier> & outputFields)
         : inputFields(inputFields), outputFields(outputFields){};
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void execute(ExecutionContext & ctx, Record & record) const override;
 
-  private:
+private:
     const std::vector<Record::RecordFieldIdentifier> inputFields;
     const std::vector<Record::RecordFieldIdentifier> outputFields;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_

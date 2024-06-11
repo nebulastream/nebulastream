@@ -20,12 +20,14 @@
 #include <string>
 #include <vector>
 
-namespace NES::Benchmark::Measurements {
+namespace NES::Benchmark::Measurements
+{
 /**
  * @brief stores all measurements and provides some helper functions
  */
-class Measurements {
-  public:
+class Measurements
+{
+public:
     /**
      * @brief adds a new measurement
      * @param processedTasks
@@ -36,14 +38,16 @@ class Measurements {
      * @param availGlobalBufferSum
      * @param availFixedBufferSum
      */
-    void addNewMeasurement(size_t processedTasks,
-                           size_t processedBuffers,
-                           size_t processedTuples,
-                           size_t latencySum,
-                           size_t queueSizeSum,
-                           size_t availGlobalBufferSum,
-                           size_t availFixedBufferSum,
-                           uint64_t timeStamp) {
+    void addNewMeasurement(
+        size_t processedTasks,
+        size_t processedBuffers,
+        size_t processedTuples,
+        size_t latencySum,
+        size_t queueSizeSum,
+        size_t availGlobalBufferSum,
+        size_t availFixedBufferSum,
+        uint64_t timeStamp)
+    {
         addNewProcessedTasks(timeStamp, processedTasks);
         addNewProcessedBuffers(timeStamp, processedBuffers);
         addNewProcessedTuples(timeStamp, processedTuples);
@@ -74,7 +78,7 @@ class Measurements {
      */
     std::string getThroughputAsString();
 
-  private:
+private:
     /**
      * @brief adds processedTasks
      * @param timestamp
@@ -115,7 +119,8 @@ class Measurements {
      * @param timestamp
      * @param availGlobalBufferSum
      */
-    void addNewAvailGlobalBufferSum(size_t timestamp, size_t availGlobalBufferSum) {
+    void addNewAvailGlobalBufferSum(size_t timestamp, size_t availGlobalBufferSum)
+    {
         allAvailGlobalBufferSum[timestamp] += availGlobalBufferSum;
     }
 
@@ -124,11 +129,12 @@ class Measurements {
      * @param timestamp
      * @param availFixedBufferSum
      */
-    void addNewAvailFixedBufferSum(size_t timestamp, size_t availFixedBufferSum) {
+    void addNewAvailFixedBufferSum(size_t timestamp, size_t availFixedBufferSum)
+    {
         allAvailFixedBufferSum[timestamp] += availFixedBufferSum;
     }
 
-  private:
+private:
     std::vector<size_t> timestamps;
     std::map<size_t, size_t> allProcessedTasks;
     std::map<size_t, size_t> allProcessedBuffers;
@@ -138,5 +144,5 @@ class Measurements {
     std::map<size_t, size_t> allAvailGlobalBufferSum;
     std::map<size_t, size_t> allAvailFixedBufferSum;
 };
-}// namespace NES::Benchmark::Measurements
-#endif// NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_
+} // namespace NES::Benchmark::Measurements
+#endif // NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_

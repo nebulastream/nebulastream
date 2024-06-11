@@ -17,7 +17,8 @@
 
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * Logical operator node for a map operation which uses a UDF.
@@ -25,14 +26,15 @@ namespace NES {
  * The operation completely replaces the stream tuple based on the result of the UDF method. Therefore, the output schema is
  * determined by the UDF method signature.
  */
-class MapUDFLogicalOperator : public UDFLogicalOperator {
-  public:
+class MapUDFLogicalOperator : public UDFLogicalOperator
+{
+public:
     /**
      * Construct a MapUdfLogicalOperator.
      * @param udfDescriptor The descriptor of the UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    MapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id);
+    MapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr & udfDescriptor, OperatorId id);
 
     /**
      * @see Node#toString
@@ -49,12 +51,12 @@ class MapUDFLogicalOperator : public UDFLogicalOperator {
      *
      * Two MapUdfLogicalOperator are equal when the wrapped UDFDescriptor are equal.
      */
-    [[nodiscard]] bool equal(const NodePtr& other) const override;
+    [[nodiscard]] bool equal(const NodePtr & other) const override;
 
     /**
      * @see Node#isIdentical
      */
-    [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
+    [[nodiscard]] bool isIdentical(const NodePtr & other) const override;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_MAPUDF_MAPUDFLOGICALOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_MAPUDF_MAPUDFLOGICALOPERATOR_HPP_

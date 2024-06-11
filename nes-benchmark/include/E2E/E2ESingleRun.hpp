@@ -15,6 +15,7 @@
 #ifndef NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_
 #define NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_
 
+#include <vector>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -26,20 +27,20 @@
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Measurements.hpp>
-#include <vector>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark
+{
 
 /**
  * @brief this class encapsulates a single benchmark run
  */
-class E2ESingleRun {
-
+class E2ESingleRun
+{
     static constexpr auto defaultStopQueryTimeout = std::chrono::seconds(30);
     static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);
     static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 
-  public:
+public:
     /**
      * @brief generates a E2ESingleRun object
      * @param configPerRun
@@ -47,10 +48,8 @@ class E2ESingleRun {
      * @param portOffSet
      * @param restPort
      */
-    explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,
-                          E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                          uint16_t rpcPort,
-                          uint16_t restPort);
+    explicit E2ESingleRun(
+        E2EBenchmarkConfigPerRun & configPerRun, E2EBenchmarkConfigOverAllRuns & configOverAllRuns, uint16_t rpcPort, uint16_t restPort);
 
     /**
      * @brief destructs this object and clears all buffer managers and data providers, as well as the coordinator
@@ -67,7 +66,7 @@ class E2ESingleRun {
      * @brief Getter for the coordinator config
      * @return Returns the coordinatorConfiguration
      */
-    [[nodiscard]] const CoordinatorConfigurationPtr& getCoordinatorConf() const;
+    [[nodiscard]] const CoordinatorConfigurationPtr & getCoordinatorConf() const;
 
     /**
     * @brief sets up the coordinator config and worker config
@@ -104,9 +103,9 @@ class E2ESingleRun {
      * @brief Getter for the measurements of this run
      * @return Reference to the measurements
      */
-    Measurements::Measurements& getMeasurements();
+    Measurements::Measurements & getMeasurements();
 
-  private:
+private:
     /**
      * @brief Creates either KafkaSourceType or LambdaSourceType depending on the data generator.
      * Also creates a data provider for LambdaSourceType.
@@ -118,12 +117,13 @@ class E2ESingleRun {
      * @param generator
      * @return KafkaSourceType or LambdaSourceType
      */
-    PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName,
-                                                   std::string physicalSourceName,
-                                                   std::vector<Runtime::TupleBuffer>& createdBuffers,
-                                                   size_t sourceCnt,
-                                                   uint64_t groupId,
-                                                   std::string& generator);
+    PhysicalSourceTypePtr createPhysicalSourceType(
+        std::string logicalSourceName,
+        std::string physicalSourceName,
+        std::vector<Runtime::TupleBuffer> & createdBuffers,
+        size_t sourceCnt,
+        uint64_t groupId,
+        std::string & generator);
 
     /**
      * @brief Collects the measurements for every query. It stops after numMeasurementsToCollect iterations.
@@ -137,9 +137,10 @@ class E2ESingleRun {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId,
-                                    const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                    std::chrono::seconds timeoutInSec = defaultStartQueryTimeout);
+    static bool waitForQueryToStart(
+        QueryId queryId,
+        const Catalogs::Query::QueryCatalogPtr & queryCatalog,
+        std::chrono::seconds timeoutInSec = defaultStartQueryTimeout);
 
     /**
      * @brief This method is used for waiting until the query gets into stopped status or a timeout occurs
@@ -148,9 +149,10 @@ class E2ESingleRun {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into stopped status else false
      */
-    static bool waitForQueryToStop(QueryId queryId,
-                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                   std::chrono::seconds timeoutInSec = defaultStopQueryTimeout);
+    static bool waitForQueryToStop(
+        QueryId queryId,
+        const Catalogs::Query::QueryCatalogPtr & queryCatalog,
+        std::chrono::seconds timeoutInSec = defaultStopQueryTimeout);
 
     /**
      * @brief Prints query subplan statistics to std::cout
@@ -159,13 +161,14 @@ class E2ESingleRun {
      * @param processedTasks
      * @param outStream
      */
-    static void printQuerySubplanStatistics(uint64_t timestamp,
-                                            const Runtime::QueryStatisticsPtr& subPlanStatistics,
-                                            size_t processedTasks,
-                                            std::ostream& outStream = std::cout);
+    static void printQuerySubplanStatistics(
+        uint64_t timestamp,
+        const Runtime::QueryStatisticsPtr & subPlanStatistics,
+        size_t processedTasks,
+        std::ostream & outStream = std::cout);
 
-    E2EBenchmarkConfigPerRun& configPerRun;
-    E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
+    E2EBenchmarkConfigPerRun & configPerRun;
+    E2EBenchmarkConfigOverAllRuns & configOverAllRuns;
     int rpcPortSingleRun;
     int restPortSingleRun;
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
@@ -175,6 +178,6 @@ class E2ESingleRun {
     Measurements::Measurements measurements;
     std::vector<QueryId> submittedIds;
 };
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark
 
-#endif// NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_
+#endif // NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_

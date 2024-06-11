@@ -19,7 +19,8 @@
 #include <Util/GatheringMode.hpp>
 #include <Util/SourceMode.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental
+{
 
 class StaticDataSourceType;
 using StaticDataSourceTypePtr = std::shared_ptr<StaticDataSourceType>;
@@ -27,9 +28,9 @@ using StaticDataSourceTypePtr = std::shared_ptr<StaticDataSourceType>;
 /**
  * @brief A source config for a static data source
  */
-class StaticDataSourceType : public PhysicalSourceType {
-
-  public:
+class StaticDataSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief Factory method of StaticDataSourceType
      * @param pathTableFile here, a file in pipe-seperated .tbl file format should exist in the local file system
@@ -37,13 +38,14 @@ class StaticDataSourceType : public PhysicalSourceType {
      * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      * @return a constructed StaticDataSourceType
      */
-    static StaticDataSourceTypePtr create(const std::string& logicalSourceName,
-                                          const std::string& physicalSourceName,
-                                          const std::string& pathTableFile,
-                                          uint64_t numBuffersToProcess,
-                                          const std::string& gatheringMode,
-                                          uint64_t taskQueueId,
-                                          bool lateStart);
+    static StaticDataSourceTypePtr create(
+        const std::string & logicalSourceName,
+        const std::string & physicalSourceName,
+        const std::string & pathTableFile,
+        uint64_t numBuffersToProcess,
+        const std::string & gatheringMode,
+        uint64_t taskQueueId,
+        bool lateStart);
 
     GatheringMode getGatheringMode() const;
 
@@ -53,7 +55,7 @@ class StaticDataSourceType : public PhysicalSourceType {
 
     std::string toString() override;
 
-    bool equal(const PhysicalSourceTypePtr& other) override;
+    bool equal(const PhysicalSourceTypePtr & other) override;
 
     void reset() override;
 
@@ -71,19 +73,20 @@ class StaticDataSourceType : public PhysicalSourceType {
      * @param numBuffersToProcess
      * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      */
-    explicit StaticDataSourceType(const std::string& logicalSourceName,
-                                  const std::string& physicalSourceName,
-                                  const std::string& pathTableFile,
-                                  uint64_t numBuffersToProcess,
-                                  SourceMode sourceMode,
-                                  uint64_t taskQueueId,
-                                  bool lateStart);
+    explicit StaticDataSourceType(
+        const std::string & logicalSourceName,
+        const std::string & physicalSourceName,
+        const std::string & pathTableFile,
+        uint64_t numBuffersToProcess,
+        SourceMode sourceMode,
+        uint64_t taskQueueId,
+        bool lateStart);
 
     std::string pathTableFile;
-    uint64_t numBuffersToProcess;// todo not used right now [#2493]
+    uint64_t numBuffersToProcess; // todo not used right now [#2493]
     SourceMode sourceMode;
-    uint64_t taskQueueId;// todo not used right now [#2493]
+    uint64_t taskQueueId; // todo not used right now [#2493]
     const bool lateStart;
 };
-}// namespace NES::Experimental
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_
+} // namespace NES::Experimental
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_

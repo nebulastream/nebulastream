@@ -15,28 +15,31 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
-#include "Configurations/ConfigurationsNames.hpp"
-#include "Util/GatheringMode.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "Util/magicenum/magic_enum.hpp"
-#include "Util/yaml/Yaml.hpp"
 #include <any>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <typeinfo>
 #include <utility>
+#include "Configurations/ConfigurationsNames.hpp"
+#include "Util/GatheringMode.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/magicenum/magic_enum.hpp"
+#include "Util/yaml/Yaml.hpp"
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 /**
  * @brief Template for a ConfigurationOption object
  * @tparam T template parameter, depends on ConfigOptions
  */
-template<class T>
-class ConfigurationOption {
-  public:
-    static std::shared_ptr<ConfigurationOption> create(std::string name, T value, std::string description) {
+template <class T>
+class ConfigurationOption
+{
+public:
+    static std::shared_ptr<ConfigurationOption> create(std::string name, T value, std::string description)
+    {
         return std::make_shared<ConfigurationOption>(ConfigurationOption(name, value, description));
     };
 
@@ -44,7 +47,8 @@ class ConfigurationOption {
      * @brief converts a ConfigurationOption Object into human readable format
      * @return string representation of the config
      */
-    std::string toString() {
+    std::string toString()
+    {
         std::stringstream ss;
         ss << "Name: " << name << "\n";
         ss << "Description: " << description << "\n";
@@ -57,7 +61,8 @@ class ConfigurationOption {
      * @brief converts config object to human readable form, only prints name and current value
      * @return Name: current Value of config object
      */
-    std::string toStringNameCurrentValue() {
+    std::string toStringNameCurrentValue()
+    {
         std::stringstream ss;
         ss << name << ": " << value << "\n";
         return ss.str();
@@ -67,7 +72,8 @@ class ConfigurationOption {
      * @brief converts config object to human readable form, only prints name and current value
      * @return Name: current Value of config object
      */
-    std::string toStringNameCurrentValueEnum() {
+    std::string toStringNameCurrentValueEnum()
+    {
         std::stringstream ss;
         ss << name << ": " << magic_enum::enum_name(value) << "\n";
         return ss.str();
@@ -101,8 +107,10 @@ class ConfigurationOption {
      * @brief sets the value if it is defined
      * @param yamlNode: the yaml field name to be used
      */
-    void setValueIfDefined(Yaml::Node yamlNode) {
-        if (!yamlNode.IsNone()) {
+    void setValueIfDefined(Yaml::Node yamlNode)
+    {
+        if (!yamlNode.IsNone())
+        {
             this->value = yamlNode.As<T>();
         }
     }
@@ -124,12 +132,15 @@ class ConfigurationOption {
      * @param other: other config option
      * @return true if equal else return false
      */
-    bool equals(const std::any& other) {
-        if (this == other) {
+    bool equals(const std::any & other)
+    {
+        if (this == other)
+        {
             return true;
         }
-        if (other.has_value() && other.type() == typeid(ConfigurationOption)) {
-            auto that = (ConfigurationOption<T>) other;
+        if (other.has_value() && other.type() == typeid(ConfigurationOption))
+        {
+            auto that = (ConfigurationOption<T>)other;
             return this->name == that.name && this->description == that.description && this->value == that.value
                 && this->defaultValue == that.defaultValue;
         }
@@ -140,14 +151,22 @@ class ConfigurationOption {
      * @brief converts a string to the appropriate InputFormat enum value and sets it
      * @param inputFormat
      */
-    void setInputFormatEnum(std::string inputFormat) {
-        if (inputFormat == "CSV") {
+    void setInputFormatEnum(std::string inputFormat)
+    {
+        if (inputFormat == "CSV")
+        {
             this->value = InputFormat::CSV;
-        } else if (inputFormat == "JSON") {
+        }
+        else if (inputFormat == "JSON")
+        {
             this->value = InputFormat::JSON;
-        } else if (inputFormat == "NES_BINARY") {
+        }
+        else if (inputFormat == "NES_BINARY")
+        {
             this->value = InputFormat::NES_BINARY;
-        } else {
+        }
+        else
+        {
             NES_ERROR("InputFormatEnum: value unknown.");
         }
     }
@@ -156,19 +175,27 @@ class ConfigurationOption {
      * @brief converts a string to the appropriate TCPDecideMessageSize enum value and sets it
      * @param decideMessageSize
      */
-    void setTCPDecideMessageSizeEnum(std::string decideMessageSize) {
-        if (decideMessageSize == "TUPLE_SEPARATOR") {
+    void setTCPDecideMessageSizeEnum(std::string decideMessageSize)
+    {
+        if (decideMessageSize == "TUPLE_SEPARATOR")
+        {
             this->value = TCPDecideMessageSize::TUPLE_SEPARATOR;
-        } else if (decideMessageSize == "USER_SPECIFIED_BUFFER_SIZE") {
+        }
+        else if (decideMessageSize == "USER_SPECIFIED_BUFFER_SIZE")
+        {
             this->value = TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE;
-        } else if (decideMessageSize == "BUFFER_SIZE_FROM_SOCKET") {
+        }
+        else if (decideMessageSize == "BUFFER_SIZE_FROM_SOCKET")
+        {
             this->value = TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET;
-        } else {
+        }
+        else
+        {
             NES_ERROR("TCPDecideMessageSizeEnum: value unknown.");
         }
     }
 
-  private:
+private:
     /**
      * @brief Constructs a ConfigurationOption<T> object
      * @param name the name of the object
@@ -176,10 +203,14 @@ class ConfigurationOption {
      * @param description default value of the object
      */
     explicit ConfigurationOption(std::string name, T value, std::string description)
-        : name(std::move(name)), description(std::move(description)), value(value), defaultValue(value) {}
+        : name(std::move(name)), description(std::move(description)), value(value), defaultValue(value)
+    {
+    }
 
     ConfigurationOption(std::string name, T value, T defaultValue, std::string description)
-        : name(std::move(name)), description(std::move(description)), value(value), defaultValue(defaultValue) {}
+        : name(std::move(name)), description(std::move(description)), value(value), defaultValue(defaultValue)
+    {
+    }
 
     std::string name;
     std::string description;
@@ -197,6 +228,6 @@ using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>
 using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode>>;
 using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_

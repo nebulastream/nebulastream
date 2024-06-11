@@ -12,40 +12,51 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
-RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema) {
+RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+{
     uint64_t offsetCounter = 0;
-    for (auto& fieldSize : physicalFieldSizes) {
+    for (auto & fieldSize : physicalFieldSizes)
+    {
         fieldOffSets.emplace_back(offsetCounter);
         offsetCounter += fieldSize;
     }
 }
 
-std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize) {
+std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize)
+{
     return std::make_shared<RowLayout>(schema, bufferSize);
 }
 
-const std::vector<FIELD_SIZE>& RowLayout::getFieldOffSets() const { return fieldOffSets; }
+const std::vector<FIELD_SIZE> & RowLayout::getFieldOffSets() const
+{
+    return fieldOffSets;
+}
 
-uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const {
-    if (fieldIndex >= fieldOffSets.size()) {
-        throw BufferAccessException("field index: " + std::to_string(fieldIndex)
-                                    + " is larger the number of field in the memory layout "
-                                    + std::to_string(physicalFieldSizes.size()));
+uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const
+{
+    if (fieldIndex >= fieldOffSets.size())
+    {
+        throw BufferAccessException(
+            "field index: " + std::to_string(fieldIndex) + " is larger the number of field in the memory layout "
+            + std::to_string(physicalFieldSizes.size()));
     }
-    if (tupleIndex >= getCapacity()) {
-        throw BufferAccessException("tuple index: " + std::to_string(tupleIndex)
-                                    + " is larger the maximal capacity in the memory layout " + std::to_string(getCapacity()));
+    if (tupleIndex >= getCapacity())
+    {
+        throw BufferAccessException(
+            "tuple index: " + std::to_string(tupleIndex) + " is larger the maximal capacity in the memory layout "
+            + std::to_string(getCapacity()));
     }
     auto offSet = (tupleIndex * recordSize) + fieldOffSets[fieldIndex];
     NES_TRACE("DynamicRowLayoutBuffer.calcOffset: offSet = {}", offSet);
     return offSet;
 }
 
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts

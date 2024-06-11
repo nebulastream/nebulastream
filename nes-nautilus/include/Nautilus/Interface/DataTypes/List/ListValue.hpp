@@ -14,11 +14,14 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <string>
-namespace NES::Nautilus {
+#include <Runtime/TupleBuffer.hpp>
+namespace NES::Nautilus
+{
 
-class BaseListValue {};
+class BaseListValue
+{
+};
 
 /**
  * @brief Physical data type that represents a ListValue.
@@ -26,9 +29,10 @@ class BaseListValue {};
  * Physical layout:
  * | ----- size 4 byte ----- | ----- variable length data
  */
-template<class T>
-class ListValue final : public BaseListValue {
-  public:
+template <class T>
+class ListValue final : public BaseListValue
+{
+public:
     using RawType = T;
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
     static constexpr size_t FIELD_SIZE = sizeof(T);
@@ -38,20 +42,20 @@ class ListValue final : public BaseListValue {
      * @param size number of elements
      * @return ListValue*
      */
-    static ListValue* create(uint32_t size);
+    static ListValue * create(uint32_t size);
 
     /**
      * @brief Creates a ListValue from a T* and a specific size.
      * @param size number of elements
      * @return ListValue*
      */
-    static ListValue* create(const T* data, uint32_t size);
+    static ListValue * create(const T * data, uint32_t size);
 
     /**
      * @brief Loads a ListValue from a TupleBuffer.
      * @return ListValue*
      */
-    static ListValue* load(Runtime::TupleBuffer& tupleBuffer);
+    static ListValue * load(Runtime::TupleBuffer & tupleBuffer);
 
     /**
      * @brief Returns the length in the number of characters of the text value
@@ -63,28 +67,28 @@ class ListValue final : public BaseListValue {
      * @brief compares this and another list.
      * @return boolean
      */
-    bool equals(const ListValue<T>* other) const;
+    bool equals(const ListValue<T> * other) const;
 
     /**
      * @brief Concatenates two lists.
      * @param other
      * @return
      */
-    ListValue<T>* concat(const ListValue<T>* other) const;
+    ListValue<T> * concat(const ListValue<T> * other) const;
 
     /**
      * @brief Appends element to list.
      * @param element
      * @return
      */
-    ListValue<T>* append(T element) const;
+    ListValue<T> * append(T element) const;
 
     /**
      * @brief Prepends element to list.
      * @param element
      * @return
      */
-    ListValue<T>* prepend(T element) const;
+    ListValue<T> * prepend(T element) const;
 
     /**
      * @brief Returns true if the list contains the element.
@@ -104,32 +108,32 @@ class ListValue final : public BaseListValue {
      * @brief Sorts the elements of the list.
      * @return
      */
-    ListValue<T>* sort() const;
+    ListValue<T> * sort() const;
 
     /**
      * @brief Reverse the elements of the list.
      * @return
      */
-    ListValue<T>* revers() const;
+    ListValue<T> * revers() const;
 
     /**
      * @brief Returns pointer to the underling array of values.
      * @return T*
      */
-    T* data();
+    T * data();
 
     /**
      * @brief Returns const pointer to the underling array of values.
      * @return T*
      */
-    const T* c_data() const;
+    const T * c_data() const;
 
     /**
      * @brief Destructor for the text value that also releases the underling tuple buffer.
      */
     ~ListValue();
 
-  private:
+private:
     /**
      * @brief Private constructor to initialize a new text
      * @param size
@@ -138,15 +142,17 @@ class ListValue final : public BaseListValue {
     const uint32_t size;
 };
 
-template<class T>
-uint32_t getLength(const ListValue<T>* list) {
+template <class T>
+uint32_t getLength(const ListValue<T> * list)
+{
     return list->length();
 }
 
-template<class T>
-bool listEquals(const ListValue<T>* left, const ListValue<T>* right) {
+template <class T>
+bool listEquals(const ListValue<T> * left, const ListValue<T> * right)
+{
     return left->equals(right);
 }
 
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_

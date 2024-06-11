@@ -14,19 +14,21 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
 
-#include "Util/yaml/Yaml.hpp"
 #include <map>
 #include <string>
+#include "Util/yaml/Yaml.hpp"
 
-namespace NES::Spatial::DataTypes::Experimental {
+namespace NES::Spatial::DataTypes::Experimental
+{
 class GeoLocation;
-}// namespace NES::Spatial::DataTypes::Experimental
+} // namespace NES::Spatial::DataTypes::Experimental
 
-namespace NES::Configurations::Spatial::Index::Experimental {
+namespace NES::Configurations::Spatial::Index::Experimental
+{
 
-class GeoLocationFactory {
-
-  public:
+class GeoLocationFactory
+{
+public:
     /**
      * @brief obtains a Geographical location objects by parsing string coordinates
      * @param str: Coordinate string in the format "<lat, lng>"
@@ -34,7 +36,7 @@ class GeoLocationFactory {
      * if the string was empty
      */
     static NES::Spatial::DataTypes::Experimental::GeoLocation
-    createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
+    createFromString(std::string, std::map<std::string, std::string> & commandLineParams);
 
     /**
      * @brief obtains a Geographical location objects from yaml config
@@ -42,7 +44,7 @@ class GeoLocationFactory {
      * @return A geographical location with the coordinates from the config entry, or <200, 200> (representing invalid coordinates)
      * if the string was empty
      */
-    static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node& yamlConfig);
+    static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node & yamlConfig);
 };
-}// namespace NES::Configurations::Spatial::Index::Experimental
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
+} // namespace NES::Configurations::Spatial::Index::Experimental
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_

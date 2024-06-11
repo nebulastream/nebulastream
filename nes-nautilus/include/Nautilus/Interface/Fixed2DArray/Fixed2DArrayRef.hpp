@@ -18,31 +18,32 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 #include <cstdint>
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 class Fixed2DArrayRowRef;
 
 /**
  * @brief This is a nautilus wrapper for Fixed2DArray. It wraps a memref to the underlying fixed array and provides access methods
  */
-class Fixed2DArrayRef {
-
-  public:
+class Fixed2DArrayRef
+{
+public:
     /**
      * @brief Constructor for a Fixed2DArrayRef object
      * @param fixed2DArrayRef
      * @param entrySize
      */
-    explicit Fixed2DArrayRef(const Value<MemRef>& fixed2DArrayRef, const uint64_t& entrySize, const uint64_t& numCols);
+    explicit Fixed2DArrayRef(const Value<MemRef> & fixed2DArrayRef, const uint64_t & entrySize, const uint64_t & numCols);
 
     /**
      * @brief Creates a row reference for the given rowIndex
      * @param rowIndex
      * @return Fixed2DArrayRowRef
      */
-    Fixed2DArrayRowRef operator[](const Value<>& rowIndex) const;
+    Fixed2DArrayRowRef operator[](const Value<> & rowIndex) const;
 
-  private:
+private:
     Value<MemRef> fixed2DArrayRef;
     const uint64_t entrySize;
     const uint64_t sizeOfOneRow;
@@ -51,26 +52,27 @@ class Fixed2DArrayRef {
 /**
  * @brief This class represents a single row of the Fixed2DArray
  */
-class Fixed2DArrayRowRef {
-  public:
+class Fixed2DArrayRowRef
+{
+public:
     /**
      * @brief Constructor for a Fixed2DArrayRowRef object
      * @param baseAddress
      * @param entrySize
      */
-    Fixed2DArrayRowRef(Value<MemRef>& baseAddress, uint64_t entrySize);
+    Fixed2DArrayRowRef(Value<MemRef> & baseAddress, uint64_t entrySize);
 
     /**
      * @brief Accesses the given column in this row.
      * @param colIndex
      * @return MemRef to the start of the cell
      */
-    Value<MemRef> operator[](const Value<>& colIndex) const;
+    Value<MemRef> operator[](const Value<> & colIndex) const;
 
-  private:
+private:
     Value<MemRef> baseAddress;
     const uint64_t entrySize;
 };
 
-}// namespace NES::Nautilus::Interface
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAYREF_HPP_
+} // namespace NES::Nautilus::Interface
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAYREF_HPP_

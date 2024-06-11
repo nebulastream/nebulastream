@@ -15,23 +15,25 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
 
-#include "Configurations/Validation/ConfigurationValidation.hpp"
 #include <string>
+#include "Configurations/Validation/ConfigurationValidation.hpp"
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 /**
     * @brief This class implements validation for parameters that should represent booleans
     */
-class BooleanValidation : public ConfigurationValidation {
-  public:
+class BooleanValidation : public ConfigurationValidation
+{
+public:
     /**
          * @brief Method to check the validity of a parameter as a bool
          * @param boolean number to validate
          * @return true if the parameter is a valid bool, false otherwise
          */
-    bool isValid(const std::string& boolean) const override;
+    bool isValid(const std::string & boolean) const override;
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_

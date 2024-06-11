@@ -12,40 +12,53 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES::Experimental {
+namespace NES::Experimental
+{
 
 StaticDataSourceDescriptor::StaticDataSourceDescriptor(SchemaPtr schema, std::string pathTableFile, bool lateStart)
-    : SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)), lateStart(lateStart) {}
+    : SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)), lateStart(lateStart)
+{
+}
 
 std::shared_ptr<StaticDataSourceDescriptor>
-StaticDataSourceDescriptor::create(const SchemaPtr& schema, std::string pathTableFile, bool lateStart) {
+StaticDataSourceDescriptor::create(const SchemaPtr & schema, std::string pathTableFile, bool lateStart)
+{
     NES_ASSERT(schema, "StaticDataSourceDescriptor: Invalid schema passed.");
     return std::make_shared<StaticDataSourceDescriptor>(schema, pathTableFile, lateStart);
 }
-std::string StaticDataSourceDescriptor::toString() const {
+std::string StaticDataSourceDescriptor::toString() const
+{
     return "StaticDataSourceDescriptor. pathTableFile: " + pathTableFile + " lateStart: " + (lateStart ? "On" : "Off");
 }
 
-bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-    if (!other->instanceOf<StaticDataSourceDescriptor>()) {
+bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const & other) const
+{
+    if (!other->instanceOf<StaticDataSourceDescriptor>())
+    {
         return false;
     }
     auto otherTableDescr = other->as<StaticDataSourceDescriptor>();
-    return schema == otherTableDescr->schema && pathTableFile == otherTableDescr->pathTableFile
-        && lateStart == otherTableDescr->lateStart;
+    return schema == otherTableDescr->schema && pathTableFile == otherTableDescr->pathTableFile && lateStart == otherTableDescr->lateStart;
 }
 
-SourceDescriptorPtr StaticDataSourceDescriptor::copy() {
+SourceDescriptorPtr StaticDataSourceDescriptor::copy()
+{
     return StaticDataSourceDescriptor::create(schema->copy(), pathTableFile, lateStart);
 }
 
-std::string StaticDataSourceDescriptor::getPathTableFile() const { return pathTableFile; }
+std::string StaticDataSourceDescriptor::getPathTableFile() const
+{
+    return pathTableFile;
+}
 
-bool StaticDataSourceDescriptor::getLateStart() const { return lateStart; };
+bool StaticDataSourceDescriptor::getLateStart() const
+{
+    return lateStart;
+};
 
-}// namespace NES::Experimental
+} // namespace NES::Experimental

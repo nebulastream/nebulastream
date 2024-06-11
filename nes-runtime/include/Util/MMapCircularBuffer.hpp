@@ -17,11 +17,11 @@
 
 #include <cstdint>
 #if __has_include(<span> )
-#include <span>
-#define SPAN_TYPE std::span
+#    include <span>
+#    define SPAN_TYPE std::span
 #else
-#include <absl/types/span.h>
-#define SPAN_TYPE absl::Span
+#    include <absl/types/span.h>
+#    define SPAN_TYPE absl::Span
 #endif
 
 /**
@@ -33,47 +33,55 @@
  *
  * This buffer is not thread safe! More over it is not allowed to have a reader and a writer at the same time.
  */
-class MMapCircularBuffer {
+class MMapCircularBuffer
+{
     void confirmWrite(SPAN_TYPE<char> reserved, size_t used_bytes);
     void confirmRead(SPAN_TYPE<const char> reserved, size_t used_bytes);
 
-    class writer {
+    class writer
+    {
         const SPAN_TYPE<char> data_;
-        MMapCircularBuffer& ref;
+        MMapCircularBuffer & ref;
         size_t bytes_written = 0;
-        writer(const SPAN_TYPE<char>& data, MMapCircularBuffer& ref) : data_(data), ref(ref) {}
+        writer(const SPAN_TYPE<char> & data, MMapCircularBuffer & ref) : data_(data), ref(ref) { }
 
-      public:
-        ~writer() {
+    public:
+        ~writer()
+        {
             NES_ASSERT(bytes_written <= data_.size(), "Overflow Write");
             ref.confirmWrite(data_, bytes_written);
         }
-        void consume(size_t bytes_consumed) {
+        void consume(size_t bytes_consumed)
+        {
             NES_ASSERT(bytes_consumed + bytes_written <= data_.size(), "Overflow Write");
             bytes_written += bytes_consumed;
         };
-        [[nodiscard]] char* data() const { return data_.data() + bytes_written; }
+        [[nodiscard]] char * data() const { return data_.data() + bytes_written; }
         [[nodiscard]] size_t size() const { return data_.size() - bytes_written; }
         operator const SPAN_TYPE<char>() const { return data_.subspan(bytes_written); }
         friend MMapCircularBuffer;
     };
 
-    class reader {
+    class reader
+    {
         const SPAN_TYPE<const char> data;
-        MMapCircularBuffer& ref;
+        MMapCircularBuffer & ref;
         size_t bytes_consumed = 0;
-        reader(const SPAN_TYPE<const char>& data, MMapCircularBuffer& ref) : data(data), ref(ref) {}
+        reader(const SPAN_TYPE<const char> & data, MMapCircularBuffer & ref) : data(data), ref(ref) { }
 
-      public:
-        ~reader() {
+    public:
+        ~reader()
+        {
             NES_ASSERT(bytes_consumed <= data.size(), "Overflow Read");
             ref.confirmRead(data, bytes_consumed);
         }
-        void consume(SPAN_TYPE<const char> subspan) {
+        void consume(SPAN_TYPE<const char> subspan)
+        {
             NES_ASSERT(bytes_consumed + subspan.size() <= data.size(), "Overflow Read");
             bytes_consumed += subspan.size();
         }
-        SPAN_TYPE<const char> consume(size_t consumed) {
+        SPAN_TYPE<const char> consume(size_t consumed)
+        {
             NES_ASSERT(bytes_consumed + consumed <= data.size(), "Overflow Read");
             const auto span = data.subspan(bytes_consumed, consumed);
             bytes_consumed += consumed;
@@ -84,7 +92,7 @@ class MMapCircularBuffer {
         friend MMapCircularBuffer;
     };
 
-  public:
+public:
     explicit MMapCircularBuffer(size_t capacity);
 
     ~MMapCircularBuffer();
@@ -116,13 +124,13 @@ class MMapCircularBuffer {
     [[nodiscard]] bool full() const;
     [[nodiscard]] bool empty() const;
 
-  private:
+private:
     size_t capacity_ = 0;
     size_t read_idx = 0;
     size_t write_idx = 0;
-    char* data;
+    char * data;
     int fd;
     bool acive_read = false;
     bool acive_write = false;
 };
-#endif// NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_

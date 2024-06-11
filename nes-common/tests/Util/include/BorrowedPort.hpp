@@ -14,33 +14,36 @@
 #ifndef NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_
 #define NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_
 #include <cstdint>
-namespace NES::Testing {
+namespace NES::Testing
+{
 
-namespace detail {
+namespace detail
+{
 class PortDispatcher;
 }
 /**
  * @brief A borrowed port from the port pool of nes test base class.
  * It manages garbage collection internally when dtor is called.
  */
-class BorrowedPort {
-  private:
+class BorrowedPort
+{
+private:
     uint16_t port;
     uint32_t portIndex;
-    detail::PortDispatcher* parent;
+    detail::PortDispatcher * parent;
 
-  public:
+public:
     /**
      * @brief Creates a new port wrapper object
      * @param port the port value
      * @param portIndex the index of the port in the pool
      * @param parent the pool object
      */
-    explicit BorrowedPort(uint16_t port, uint32_t portIndex, detail::PortDispatcher* parent);
+    explicit BorrowedPort(uint16_t port, uint32_t portIndex, detail::PortDispatcher * parent);
 
     ~BorrowedPort() noexcept;
 
     [[nodiscard]] operator uint16_t() const;
 };
-}// namespace NES::Testing
-#endif// NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_
+} // namespace NES::Testing
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_

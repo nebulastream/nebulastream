@@ -15,12 +15,14 @@
 #ifndef NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_
 #define NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <memory>
+#include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Benchmark::DataProvision {
-class TupleBufferHolder {
-  public:
+namespace NES::Benchmark::DataProvision
+{
+class TupleBufferHolder
+{
+public:
     /**
          * @brief default constructor
     */
@@ -30,20 +32,21 @@ class TupleBufferHolder {
          * @brief constructor via an reference to the buffer to be hold
          * @param ref
     */
-    TupleBufferHolder(const Runtime::TupleBuffer& ref) : bufferToHold(ref) {}
+    TupleBufferHolder(const Runtime::TupleBuffer & ref) : bufferToHold(ref) { }
 
     /**
      * @brief constructor via && reference to the buffer to be hold
      * @param ref
      */
-    TupleBufferHolder(TupleBufferHolder&& rhs) noexcept : bufferToHold(std::move(rhs.bufferToHold)) {}
+    TupleBufferHolder(TupleBufferHolder && rhs) noexcept : bufferToHold(std::move(rhs.bufferToHold)) { }
 
     /**
      * @brief equal sign operator via a reference
      * @param other
      * @return
      */
-    TupleBufferHolder& operator=(const TupleBufferHolder& other) {
+    TupleBufferHolder & operator=(const TupleBufferHolder & other)
+    {
         bufferToHold = other.bufferToHold;
         return *this;
     }
@@ -53,13 +56,14 @@ class TupleBufferHolder {
      * @param other
      * @return
      */
-    TupleBufferHolder& operator=(TupleBufferHolder&& other) {
+    TupleBufferHolder & operator=(TupleBufferHolder && other)
+    {
         bufferToHold = std::move(other.bufferToHold);
         return *this;
     }
 
     Runtime::TupleBuffer bufferToHold;
 };
-}// namespace NES::Benchmark::DataProvision
+} // namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_

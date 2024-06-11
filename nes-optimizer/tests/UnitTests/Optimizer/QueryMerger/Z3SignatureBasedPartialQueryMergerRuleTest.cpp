@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -48,28 +49,29 @@
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <iostream>
 #include <z3++.h>
 
 using namespace NES;
 using namespace Configurations;
 
-class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("Z3SignatureBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
@@ -91,47 +93,42 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest 
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create(DefaultSourceType::create("car", "testCar"));
-        auto sourceCatalogEntry1 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
-        auto sourceCatalogEntry2 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode2->getId());
+        auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
+        auto sourceCatalogEntry2 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode2->getId());
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry2);
 
         auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create(DefaultSourceType::create("bike", "testBike"));
-        auto sourceCatalogEntry3 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceBike, logicalSourceBike, sourceNode1->getId());
-        auto sourceCatalogEntry4 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceBike, logicalSourceBike, sourceNode2->getId());
+        auto sourceCatalogEntry3
+            = Catalogs::Source::SourceCatalogEntry::create(physicalSourceBike, logicalSourceBike, sourceNode1->getId());
+        auto sourceCatalogEntry4
+            = Catalogs::Source::SourceCatalogEntry::create(physicalSourceBike, logicalSourceBike, sourceNode2->getId());
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry3);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry4);
 
         auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create(DefaultSourceType::create("truck", "testTruck"));
-        auto sourceCatalogEntry5 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
-        auto sourceCatalogEntry6 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode2->getId());
+        auto sourceCatalogEntry5 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
+        auto sourceCatalogEntry6 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode2->getId());
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry5);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                         Statistic::DefaultStatisticCache::create(),
-                                                                         Topology::create());
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+            Statistic::StatisticRegistry::create(),
+            Statistic::DefaultStatisticProbeGenerator::create(),
+            Statistic::DefaultStatisticCache::create(),
+            Topology::create());
     }
 };
 
 /**
  * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with same queryIdAndCatalogEntryMapping
  */
-TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
-
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
-                                                                                        sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration(),
-                                                                                        statisticProbeHandler);
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries)
+{
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(
+        Topology::create(), sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -164,8 +161,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -192,10 +189,13 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
     // assert children equality
-    for (const auto& sink1Child : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1Child : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2Child : updatedRootOperators1[1]->getChildren()) {
-            if (sink1Child->equal(sink2Child)) {
+        for (const auto & sink2Child : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1Child->equal(sink2Child))
+            {
                 found = true;
                 break;
             }
@@ -207,12 +207,10 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 /**
  * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with partially same queryIdAndCatalogEntryMapping
  */
-TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries) {
-
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
-                                                                                        sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration(),
-                                                                                        statisticProbeHandler);
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries)
+{
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(
+        Topology::create(), sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -248,8 +246,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -274,15 +272,18 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Child : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1Child : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2Child : updatedRootOperators1[1]->getChildren()) {
+        for (const auto & sink2Child : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_NE(sink1Child, sink2Child);
             auto sink1ChildGrandChild = sink1Child->getChildren();
             auto sink2ChildGrandChild = sink2Child->getChildren();
             EXPECT_TRUE(sink1ChildGrandChild.size() == 1);
             EXPECT_TRUE(sink2ChildGrandChild.size() == 1);
-            if (sink1ChildGrandChild[0]->equal(sink2ChildGrandChild[0])) {
+            if (sink1ChildGrandChild[0]->equal(sink2ChildGrandChild[0]))
+            {
                 found = true;
                 break;
             }
@@ -294,13 +295,11 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
-TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
-
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources)
+{
     // Prepare
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
-                                                                                        sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration(),
-                                                                                        statisticProbeHandler);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(
+        Topology::create(), sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -323,8 +322,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -350,19 +349,19 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
 
-TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesMoreThanTwoQueries) {
-
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
-                                                                                        sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration(),
-                                                                                        statisticProbeHandler);
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesMoreThanTwoQueries)
+{
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(
+        Topology::create(), sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -394,8 +393,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     typeInferencePhase->execute(queryPlan3);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
     z3InferencePhase->execute(queryPlan3);
@@ -439,27 +438,28 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     EXPECT_EQ(changeLogEntries.size(), 1U);
 
-    for (const auto& upstreamOperator : changeLogEntries.at(0).second->upstreamOperators) {
+    for (const auto & upstreamOperator : changeLogEntries.at(0).second->upstreamOperators)
+    {
         EXPECT_TRUE(upstreamOperator->instanceOf<LogicalFilterOperator>());
         // Three different map operators are added
         EXPECT_TRUE(upstreamOperator->getParents().size() == 3U);
-        for (const auto& parent : upstreamOperator->getParents()) {
+        for (const auto & parent : upstreamOperator->getParents())
+        {
             EXPECT_TRUE(parent->instanceOf<LogicalMapOperator>());
         }
         // There are one physical sources
         EXPECT_TRUE(upstreamOperator->getChildren().size() == 1U);
-        for (const auto& child : upstreamOperator->getChildren()) {
+        for (const auto & child : upstreamOperator->getChildren())
+        {
             EXPECT_TRUE(child->instanceOf<SourceLogicalOperator>());
         }
     }
 }
 
-TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStopChangeLog) {
-
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
-                                                                                        sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration(),
-                                                                                        statisticProbeHandler);
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStopChangeLog)
+{
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(
+        Topology::create(), sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -483,8 +483,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -531,17 +531,17 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
     //assert that the at least one sink operator is in the state TO_BE_REMOVED
-    EXPECT_TRUE(std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
-        return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
-    }));
+    EXPECT_TRUE(std::any_of(
+        rootOperatorsAfterStop.begin(),
+        rootOperatorsAfterStop.end(),
+        [](const OperatorPtr operatorToCheck)
+        { return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED; }));
 }
 
-TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
-
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
-                                                                                        sourceCatalog,
-                                                                                        Configurations::OptimizerConfiguration(),
-                                                                                        statisticProbeHandler);
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStop)
+{
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(
+        Topology::create(), sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -577,8 +577,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -603,15 +603,18 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Child : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1Child : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2Child : updatedRootOperators1[1]->getChildren()) {
+        for (const auto & sink2Child : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_NE(sink1Child, sink2Child);
             auto sink1ChildGrandChild = sink1Child->getChildren();
             auto sink2ChildGrandChild = sink2Child->getChildren();
             EXPECT_TRUE(sink1ChildGrandChild.size() == 1);
             EXPECT_TRUE(sink2ChildGrandChild.size() == 1);
-            if (sink1ChildGrandChild[0]->equal(sink2ChildGrandChild[0])) {
+            if (sink1ChildGrandChild[0]->equal(sink2ChildGrandChild[0]))
+            {
                 found = true;
                 break;
             }
@@ -637,7 +640,9 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
     //assert that the at least one sink operator is in the state TO_BE_REMOVED
-    EXPECT_TRUE(std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
-        return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
-    }));
+    EXPECT_TRUE(std::any_of(
+        rootOperatorsAfterStop.begin(),
+        rootOperatorsAfterStop.end(),
+        [](const OperatorPtr operatorToCheck)
+        { return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED; }));
 }

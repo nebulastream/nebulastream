@@ -15,30 +15,34 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOWOPERATORHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOWOPERATORHANDLER_HPP_
 
-#include <Execution/Aggregation/AggregationValue.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
 #include <utility>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 /**
  * @brief This handler stores states of an unkeyed threshold window during its execution
  */
-class NonKeyedThresholdWindowOperatorHandler : public OperatorHandler {
-  public:
+class NonKeyedThresholdWindowOperatorHandler : public OperatorHandler
+{
+public:
     explicit NonKeyedThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
-        : AggregationValues(std::move(AggregationValues)) {}
+        : AggregationValues(std::move(AggregationValues))
+    {
+    }
 
-    void start(PipelineExecutionContextPtr, uint32_t) override {}
+    void start(PipelineExecutionContextPtr, uint32_t) override { }
 
-    void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
+    void stop(QueryTerminationType, PipelineExecutionContextPtr) override { }
 
-    uint64_t recordCount = 0;// counts the records contributing to the aggregate,
+    uint64_t recordCount = 0; // counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues;
     uint8_t aggregationType;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOWOPERATORHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOWOPERATORHANDLER_HPP_

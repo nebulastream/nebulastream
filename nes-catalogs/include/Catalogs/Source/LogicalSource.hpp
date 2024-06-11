@@ -19,7 +19,8 @@
 #include <memory>
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -30,9 +31,10 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 /**
  * @brief The LogicalSource wraps the source name and the schema.
  */
-class LogicalSource {
-  public:
-    static LogicalSourcePtr create(const std::string& logicalSourceName, const SchemaPtr& schema);
+class LogicalSource
+{
+public:
+    static LogicalSourcePtr create(const std::string & logicalSourceName, const SchemaPtr & schema);
 
     /**
      * @brief Gets the logical source name
@@ -44,11 +46,11 @@ class LogicalSource {
      */
     SchemaPtr getSchema();
 
-  private:
-    LogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema);
+private:
+    LogicalSource(const std::string & logicalSourceName, const SchemaPtr & schema);
 
     std::string logicalSourceName;
     SchemaPtr schema;
 };
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_

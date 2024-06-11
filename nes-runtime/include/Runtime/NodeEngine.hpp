@@ -15,6 +15,14 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <string>
+#include <unordered_set>
+#include <vector>
+#include <pthread.h>
+#include <unistd.h>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
@@ -22,16 +30,9 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-#include <iostream>
-#include <map>
-#include <mutex>
-#include <pthread.h>
-#include <string>
-#include <unistd.h>
-#include <unordered_set>
-#include <vector>
 
-namespace NES {
+namespace NES
+{
 
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
@@ -42,12 +43,14 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
-namespace Monitoring {
+namespace Monitoring
+{
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
-}//namespace Monitoring
+} //namespace Monitoring
 
-namespace Runtime {
+namespace Runtime
+{
 
 /**
  * @brief this class represents the interface and entrance point into the
@@ -57,7 +60,8 @@ namespace Runtime {
  */
 class NodeEngine : public Network::ExchangeProtocolListener,
                    public NES::detail::virtual_enable_shared_from_this<NodeEngine>,
-                   public Exceptions::ErrorListener {
+                   public Exceptions::ErrorListener
+{
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     using inherited0 = Network::ExchangeProtocolListener;
     using inherited1 = virtual_enable_shared_from_this<NodeEngine>;
@@ -65,14 +69,19 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     friend class NodeEngineBuilder;
 
-  public:
-    enum class NodeEngineQueryStatus : uint8_t { started, stopped, registered };
+public:
+    enum class NodeEngineQueryStatus : uint8_t
+    {
+        started,
+        stopped,
+        registered
+    };
 
     virtual ~NodeEngine() override;
 
     NodeEngine() = delete;
-    NodeEngine(const NodeEngine&) = delete;
-    NodeEngine& operator=(const NodeEngine&) = delete;
+    NodeEngine(const NodeEngine &) = delete;
+    NodeEngine & operator=(const NodeEngine &) = delete;
 
     /**
      * @brief signal handler: behaviour not clear yet!
@@ -93,7 +102,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param new query plan
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] bool deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr & queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -108,14 +117,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr & queryExecutionPlan);
 
     /**
      * @brief registers a decomposed query plan
      * @param decomposedQueryPlan: the decomposed query plan to be registered
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    [[nodiscard]] bool registerDecomposableQueryPlan(const DecomposedQueryPlanPtr & decomposedQueryPlan);
 
     /**
      * @brief ungregisters a query
@@ -140,9 +149,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
-    [[nodiscard]] bool stopQuery(SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId,
-                                 Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
+    [[nodiscard]] bool stopQuery(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id
@@ -161,11 +171,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink to reconfigure.
      * @return bool indicating success
      */
-    bool updateNetworkSink(WorkerId newNodeId,
-                           const std::string& newHostname,
-                           uint32_t newPort,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
-                           OperatorId uniqueNetworkSinkDescriptorId);
+    bool updateNetworkSink(
+        WorkerId newNodeId,
+        const std::string & newHostname,
+        uint32_t newPort,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        OperatorId uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief release all resource of the node engine
@@ -230,13 +241,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief this callback is called once a tuple buffer arrives on the network manager
      * for a given nes partition
      */
-    void onDataBuffer(Network::NesPartition, TupleBuffer&) override;
+    void onDataBuffer(Network::NesPartition, TupleBuffer &) override;
 
     /**
      * @brief this callback is called once a tuple buffer arrives on the network manager
      * for a given nes partition
      */
-    void onEvent(Network::NesPartition, Runtime::BaseEvent&) override;
+    void onEvent(Network::NesPartition, Runtime::BaseEvent &) override;
 
     /**
      * @brief this callback is called once an end of stream message arrives
@@ -263,15 +274,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Get physical sources configured
      * @return list of physical sources
      */
-    const std::vector<PhysicalSourceTypePtr>& getPhysicalSourceTypes() const;
+    const std::vector<PhysicalSourceTypePtr> & getPhysicalSourceTypes() const;
 
     /**
      * @brief finds executable query plan for a given sub query id
      * @param decomposedQueryPlanId query sub plan id
      * @return executable query plan
      */
-    std::shared_ptr<const Execution::ExecutableQueryPlan>
-    getExecutableQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId) const;
+    std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId) const;
 
     /**
      * @brief finds sub query ids for a given query id
@@ -308,7 +318,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Updates the physical sources on the node engine
      * @param physicalSources
      */
-    void updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources);
+    void updatePhysicalSources(const std::vector<PhysicalSourceTypePtr> & physicalSources);
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
@@ -323,29 +333,30 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true if a running sub query with a matching id was found and reconfigured. False if the id of the supplied
      * plan did not match any running sub query
      */
-    bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
+    bool reconfigureSubPlan(DecomposedQueryPlanPtr & reconfiguredDecomposedQueryPlan);
 
-  public:
+public:
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
-                        HardwareManagerPtr&&,
-                        std::vector<BufferManagerPtr>&&,
-                        QueryManagerPtr&&,
-                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
-                        Network::PartitionManagerPtr&&,
-                        QueryCompilation::QueryCompilerPtr&&,
-                        std::weak_ptr<AbstractQueryStatusListener>&&,
-                        OpenCLManagerPtr&&,
-                        WorkerId nodeEngineId,
-                        uint64_t numberOfBuffersInGlobalBufferManager,
-                        uint64_t numberOfBuffersInSourceLocalBufferPool,
-                        uint64_t numberOfBuffersPerWorker,
-                        bool sourceSharing);
+    explicit NodeEngine(
+        std::vector<PhysicalSourceTypePtr> physicalSources,
+        HardwareManagerPtr &&,
+        std::vector<BufferManagerPtr> &&,
+        QueryManagerPtr &&,
+        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)> &&,
+        Network::PartitionManagerPtr &&,
+        QueryCompilation::QueryCompilerPtr &&,
+        std::weak_ptr<AbstractQueryStatusListener> &&,
+        OpenCLManagerPtr &&,
+        WorkerId nodeEngineId,
+        uint64_t numberOfBuffersInGlobalBufferManager,
+        uint64_t numberOfBuffersInSourceLocalBufferPool,
+        uint64_t numberOfBuffersPerWorker,
+        bool sourceSharing);
 
-  private:
+private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
     std::map<SharedQueryId, std::vector<DecomposedQueryPlanId>> sharedQueryIdToDecomposedQueryPlanIds;
@@ -372,6 +383,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-}// namespace Runtime
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
+} // namespace Runtime
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_

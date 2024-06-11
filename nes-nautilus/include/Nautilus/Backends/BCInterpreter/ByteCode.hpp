@@ -21,7 +21,8 @@
 #include <variant>
 #include <vector>
 
-namespace NES::Nautilus::Backends::BC {
+namespace NES::Nautilus::Backends::BC
+{
 
 /**
  * @brief This defines the central register file for the byte-code interpreter.
@@ -33,7 +34,8 @@ using RegisterFile = std::array<int64_t, REGISTERS>;
 /**
  * @brief Defines an enum of all byte codes.
  */
-enum class ByteCode : short {
+enum class ByteCode : short
+{
     REG_MOV,
     // ADD
     ADD_i8,
@@ -222,43 +224,62 @@ enum class ByteCode : short {
     DYNCALL_call_ptr
 };
 
-enum class Type : uint8_t { v, i8, i16, i32, i64, ui8, ui16, ui32, ui64, d, f, b, ptr };
+enum class Type : uint8_t
+{
+    v,
+    i8,
+    i16,
+    i32,
+    i64,
+    ui8,
+    ui16,
+    ui32,
+    ui64,
+    d,
+    f,
+    b,
+    ptr
+};
 
 /**
  * @brief Defines a function call target, that contains all information's necessary to call a function
  */
-class FunctionCallTarget {
-  public:
-    FunctionCallTarget(std::vector<std::pair<short, Type>> arguments, void* functionPtr);
+class FunctionCallTarget
+{
+public:
+    FunctionCallTarget(std::vector<std::pair<short, Type>> arguments, void * functionPtr);
     std::vector<std::pair<short, Type>> arguments;
-    void* functionPtr;
+    void * functionPtr;
 };
 
 /**
  * @brief The general definition of opcode, that contains a bytecode, at max two input registers and a result register.
  */
-struct OpCode {
+struct OpCode
+{
     OpCode(ByteCode op, short reg1, short reg2, short output) : op(op), reg1(reg1), reg2(reg2), output(output){};
     ByteCode op;
     short reg1;
     short reg2;
     short output;
-    friend std::ostream& operator<<(std::ostream& os, const OpCode& code);
+    friend std::ostream & operator<<(std::ostream & os, const OpCode & code);
 };
 
-typedef void Operation(const OpCode&, RegisterFile& regs);
+typedef void Operation(const OpCode &, RegisterFile & regs);
 
-template<class RegisterType>
-auto inline readReg(RegisterFile& regs, short reg) {
-    return *reinterpret_cast<RegisterType*>(&regs[reg]);
+template <class RegisterType>
+auto inline readReg(RegisterFile & regs, short reg)
+{
+    return *reinterpret_cast<RegisterType *>(&regs[reg]);
 }
 
-template<class RegisterType>
-void inline writeReg(RegisterFile& regs, short reg, RegisterType value) {
-    *reinterpret_cast<RegisterType*>(&regs[reg]) = value;
+template <class RegisterType>
+void inline writeReg(RegisterFile & regs, short reg, RegisterType value)
+{
+    *reinterpret_cast<RegisterType *>(&regs[reg]) = value;
 }
 
-void regMov(const OpCode& c, RegisterFile& regs);
+void regMov(const OpCode & c, RegisterFile & regs);
 
 /**
  * @brief Defines a call operation for our bytecode interpreter.
@@ -269,29 +290,40 @@ void regMov(const OpCode& c, RegisterFile& regs);
  * @param c
  * @param regs
  */
-template<typename ReturnType, typename... Args>
-void call(const OpCode& c, RegisterFile& regs) {
+template <typename ReturnType, typename... Args>
+void call(const OpCode & c, RegisterFile & regs)
+{
     auto address = readReg<int64_t>(regs, c.reg1);
-    auto fcall = reinterpret_cast<FunctionCallTarget*>(address);
-    auto ptr = (ReturnType(*)(Args...)) fcall->functionPtr;
+    auto fcall = reinterpret_cast<FunctionCallTarget *>(address);
+    auto ptr = (ReturnType(*)(Args...))fcall->functionPtr;
 
-    if constexpr (std::is_void_v<ReturnType>) {
+    if constexpr (std::is_void_v<ReturnType>)
+    {
         // if ReturnType is void we dont return a result.
-        if constexpr (sizeof...(Args) == 0) {
+        if constexpr (sizeof...(Args) == 0)
+        {
             ptr();
-        } else if constexpr (sizeof...(Args) == 1) {
+        }
+        else if constexpr (sizeof...(Args) == 1)
+        {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             ptr(value0);
-        } else if constexpr (sizeof...(Args) == 2) {
+        }
+        else if constexpr (sizeof...(Args) == 2)
+        {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
             ptr(value0, value1);
-        } else if constexpr (sizeof...(Args) == 3) {
+        }
+        else if constexpr (sizeof...(Args) == 3)
+        {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
             auto value2 = readReg<__type_pack_element<2, Args...>>(regs, fcall->arguments[2].first);
             ptr(value0, value1, value2);
-        } else if constexpr (sizeof...(Args) == 7) {
+        }
+        else if constexpr (sizeof...(Args) == 7)
+        {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
             auto value2 = readReg<__type_pack_element<2, Args...>>(regs, fcall->arguments[2].first);
@@ -301,19 +333,28 @@ void call(const OpCode& c, RegisterFile& regs) {
             auto value6 = readReg<__type_pack_element<6, Args...>>(regs, fcall->arguments[6].first);
             ptr(value0, value1, value2, value3, value4, value5, value6);
         }
-    } else {
+    }
+    else
+    {
         // the function has a return type. So we return a result.
         ReturnType returnValue;
-        if constexpr (sizeof...(Args) == 0) {
+        if constexpr (sizeof...(Args) == 0)
+        {
             returnValue = ptr();
-        } else if constexpr (sizeof...(Args) == 1) {
+        }
+        else if constexpr (sizeof...(Args) == 1)
+        {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             returnValue = ptr(value0);
-        } else if constexpr (sizeof...(Args) == 2) {
+        }
+        else if constexpr (sizeof...(Args) == 2)
+        {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
             returnValue = ptr(value0, value1);
-        } else if constexpr (sizeof...(Args) == 3) {
+        }
+        else if constexpr (sizeof...(Args) == 3)
+        {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
             auto value2 = readReg<__type_pack_element<2, Args...>>(regs, fcall->arguments[2].first);
@@ -328,8 +369,9 @@ void call(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void andOp(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void andOp(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l && r);
@@ -341,8 +383,9 @@ void andOp(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void orOp(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void orOp(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l || r);
@@ -354,8 +397,9 @@ void orOp(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void notOp(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void notOp(const OpCode & c, RegisterFile & regs)
+{
     auto value = readReg<RegisterType>(regs, c.reg1);
     writeReg(regs, c.output, !value);
 }
@@ -366,8 +410,9 @@ void notOp(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void add(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void add(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l + r);
@@ -379,8 +424,9 @@ void add(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void sub(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void sub(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l - r);
@@ -392,8 +438,9 @@ void sub(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void mul(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void mul(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l * r);
@@ -405,8 +452,9 @@ void mul(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void div(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void div(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l / r);
@@ -418,8 +466,9 @@ void div(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void equals(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void equals(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l == r);
@@ -431,8 +480,9 @@ void equals(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void lessThan(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void lessThan(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l < r);
@@ -444,8 +494,9 @@ void lessThan(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void greaterThan(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void greaterThan(const OpCode & c, RegisterFile & regs)
+{
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l > r);
@@ -457,10 +508,11 @@ void greaterThan(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void load(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void load(const OpCode & c, RegisterFile & regs)
+{
     auto address = readReg<int64_t>(regs, c.reg1);
-    auto ptr = reinterpret_cast<RegisterType*>(address);
+    auto ptr = reinterpret_cast<RegisterType *>(address);
     writeReg(regs, c.output, *ptr);
 }
 
@@ -470,11 +522,12 @@ void load(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class RegisterType>
-void store(const OpCode& c, RegisterFile& regs) {
+template <class RegisterType>
+void store(const OpCode & c, RegisterFile & regs)
+{
     auto address = readReg<int64_t>(regs, c.reg1);
     auto value = readReg<RegisterType>(regs, c.reg2);
-    *reinterpret_cast<RegisterType*>(address) = value;
+    *reinterpret_cast<RegisterType *>(address) = value;
 }
 
 /**
@@ -483,8 +536,9 @@ void store(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
-template<class SrcRegisterType, class TargetRegisterType>
-void cast(const OpCode& c, RegisterFile& regs) {
+template <class SrcRegisterType, class TargetRegisterType>
+void cast(const OpCode & c, RegisterFile & regs)
+{
     auto src = readReg<SrcRegisterType>(regs, c.reg1);
     TargetRegisterType value = src;
     writeReg<TargetRegisterType>(regs, c.output, value);
@@ -493,14 +547,16 @@ void cast(const OpCode& c, RegisterFile& regs) {
 /**
  * @brief Defines a final branch terminator operation
  */
-struct BranchOp {
+struct BranchOp
+{
     short nextBlock;
 };
 
 /**
  * @brief Defines a condition jump
  */
-struct ConditionalJumpOp {
+struct ConditionalJumpOp
+{
     short conditionalReg;
     short trueBlock;
     short falseBlock;
@@ -509,28 +565,31 @@ struct ConditionalJumpOp {
 /**
  * @brief Defines a return
  */
-struct ReturnOp {
+struct ReturnOp
+{
     short resultReg;
 };
 
-class CodeBlock {
-  public:
+class CodeBlock
+{
+public:
     CodeBlock() = default;
     std::vector<OpCode> code = std::vector<OpCode>();
     std::variant<BranchOp, ConditionalJumpOp, ReturnOp> terminatorOp = ReturnOp{0};
-    friend std::ostream& operator<<(std::ostream& os, const CodeBlock& block);
+    friend std::ostream & operator<<(std::ostream & os, const CodeBlock & block);
 };
 
-class Code {
-  public:
+class Code
+{
+public:
     Code() = default;
     std::vector<short> arguments = std::vector<short>();
     std::vector<CodeBlock> blocks = std::vector<CodeBlock>();
     Type returnType = Type::v;
-    friend std::ostream& operator<<(std::ostream& os, const Code& code);
+    friend std::ostream & operator<<(std::ostream & os, const Code & code);
     std::string toString();
 };
 
-}// namespace NES::Nautilus::Backends::BC
+} // namespace NES::Nautilus::Backends::BC
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BYTECODE_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BYTECODE_HPP_

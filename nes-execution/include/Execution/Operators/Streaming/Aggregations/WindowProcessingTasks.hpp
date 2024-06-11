@@ -13,18 +13,20 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <cinttypes>
 #include <memory>
 #include <vector>
-namespace NES::Runtime::Execution::Operators {
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This task models the merge task of an a specific slice, with a start and a end.
  */
-template<typename SliceType>
-struct SliceMergeTask {
+template <typename SliceType>
+struct SliceMergeTask
+{
     uint64_t sequenceNumber;
     uint64_t chunkNumber;
     bool lastChunk;
@@ -34,6 +36,6 @@ struct SliceMergeTask {
     ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber, chunkNumber, lastChunk); }
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_

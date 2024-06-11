@@ -15,20 +15,22 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSIONNODE_HPP_
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This node represents an AND combination between the two children.
  */
-class AndExpressionNode : public LogicalBinaryExpressionNode {
-  public:
+class AndExpressionNode : public LogicalBinaryExpressionNode
+{
+public:
     AndExpressionNode();
     ~AndExpressionNode() override = default;
     /**
     * @brief Create a new AND expression
     */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
     /**
      * @brief Infers the stamp of this logical AND expression node.
@@ -44,9 +46,9 @@ class AndExpressionNode : public LogicalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  private:
-    explicit AndExpressionNode(AndExpressionNode* other);
+private:
+    explicit AndExpressionNode(AndExpressionNode * other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSIONNODE_HPP_

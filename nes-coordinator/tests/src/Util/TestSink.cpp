@@ -16,66 +16,76 @@
 #include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
 
-namespace NES {
+namespace NES
+{
 
-TestSink::TestSink(uint64_t expectedTuples,
-                   const SchemaPtr& schema,
-                   const Runtime::NodeEnginePtr& nodeEngine,
-                   uint32_t numOfProducers)
-    : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)),
-                 nodeEngine,
-                 numOfProducers,
-                 INVALID_SHARED_QUERY_ID,
-                 INVALID_DECOMPOSED_QUERY_PLAN_ID),
-      numOfExpectedTuples(expectedTuples) {
+TestSink::TestSink(uint64_t expectedTuples, const SchemaPtr & schema, const Runtime::NodeEnginePtr & nodeEngine, uint32_t numOfProducers)
+    : SinkMedium(
+        std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)),
+        nodeEngine,
+        numOfProducers,
+        INVALID_SHARED_QUERY_ID,
+        INVALID_DECOMPOSED_QUERY_PLAN_ID)
+    , numOfExpectedTuples(expectedTuples)
+{
     auto bufferManager = nodeEngine->getBufferManager(0);
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    }
+    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
     }
 };
 
-std::shared_ptr<TestSink> TestSink::create(uint64_t expectedTuples,
-                                           const SchemaPtr& schema,
-                                           const Runtime::NodeEnginePtr& engine,
-                                           uint32_t numOfProducers) {
+std::shared_ptr<TestSink>
+TestSink::create(uint64_t expectedTuples, const SchemaPtr & schema, const Runtime::NodeEnginePtr & engine, uint32_t numOfProducers)
+{
     return std::make_shared<TestSink>(expectedTuples, schema, engine, numOfProducers);
 }
 
-bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
+bool TestSink::writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContext &)
+{
     std::unique_lock lock(m);
 
     resultBuffers.emplace_back(inputBuffer);
     const auto receivedTuples = TestUtils::countTuples(resultBuffers);
 
     // Check whether the required amount of expected result buffers has been reached.
-    if (receivedTuples < numOfExpectedTuples) {
+    if (receivedTuples < numOfExpectedTuples)
+    {
         NES_DEBUG("Already saw {} tuples and expects a total of {}", receivedTuples, numOfExpectedTuples);
-    } else if (receivedTuples == numOfExpectedTuples) {
+    }
+    else if (receivedTuples == numOfExpectedTuples)
+    {
         completed.set_value(numOfExpectedTuples);
-    } else if (receivedTuples > numOfExpectedTuples) {
-        NES_ERROR("result number of tuples {} and expected number of tuples={} do not match",
-                  receivedTuples,
-                  numOfExpectedTuples);
+    }
+    else if (receivedTuples > numOfExpectedTuples)
+    {
+        NES_ERROR("result number of tuples {} and expected number of tuples={} do not match", receivedTuples, numOfExpectedTuples);
         EXPECT_TRUE(false);
     }
     return true;
 }
 
-Runtime::TupleBuffer TestSink::get(uint64_t index) {
+Runtime::TupleBuffer TestSink::get(uint64_t index)
+{
     std::unique_lock lock(m);
     return resultBuffers[index];
 }
 
-Runtime::MemoryLayouts::TestTupleBuffer TestSink::getResultBuffer(uint64_t index) {
+Runtime::MemoryLayouts::TestTupleBuffer TestSink::getResultBuffer(uint64_t index)
+{
     auto buffer = get(index);
     return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
-std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestSink::getResultBuffers() {
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestSink::getResultBuffers()
+{
     std::vector<Runtime::MemoryLayouts::TestTupleBuffer> allBuffers;
-    for (auto bufIdx = 0_u64; bufIdx < getNumberOfResultBuffers(); ++bufIdx) {
+    for (auto bufIdx = 0_u64; bufIdx < getNumberOfResultBuffers(); ++bufIdx)
+    {
         allBuffers.emplace_back(getResultBuffer(bufIdx));
     }
     return allBuffers;
@@ -83,27 +93,42 @@ std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestSink::getResultBuffers(
 
 void TestSink::setup(){};
 
-std::string TestSink::toString() const { return "Test_Sink"; }
+std::string TestSink::toString() const
+{
+    return "Test_Sink";
+}
 
-uint32_t TestSink::getNumberOfResultBuffers() {
+uint32_t TestSink::getNumberOfResultBuffers()
+{
     std::unique_lock lock(m);
     return resultBuffers.size();
 }
 
-SinkMediumTypes TestSink::getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
+SinkMediumTypes TestSink::getSinkMediumType()
+{
+    return SinkMediumTypes::PRINT_SINK;
+}
 
-void TestSink::cleanupBuffers() {
+void TestSink::cleanupBuffers()
+{
     NES_DEBUG("TestSink: cleanupBuffers()");
     std::unique_lock lock(m);
     resultBuffers.clear();
 }
 
-void TestSink::waitTillCompleted() { completed.get_future().wait(); }
+void TestSink::waitTillCompleted()
+{
+    completed.get_future().wait();
+}
 
-void TestSink::waitTillCompletedOrTimeout(uint64_t timeoutInMilliseconds) {
+void TestSink::waitTillCompletedOrTimeout(uint64_t timeoutInMilliseconds)
+{
     completed.get_future().wait_for(std::chrono::milliseconds(timeoutInMilliseconds));
 }
 
-void TestSink::shutdown() { cleanupBuffers(); }
+void TestSink::shutdown()
+{
+    cleanupBuffers();
+}
 
-}// namespace NES
+} // namespace NES

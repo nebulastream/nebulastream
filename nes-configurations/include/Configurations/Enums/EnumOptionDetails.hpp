@@ -19,24 +19,28 @@
 #include "Util/yaml/Yaml.hpp"
 
 using namespace magic_enum::ostream_operators;
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-template<IsEnum T>
-EnumOption<T>::EnumOption(const std::string& name, T defaultValue, const std::string& description)
+template <IsEnum T>
+EnumOption<T>::EnumOption(const std::string & name, T defaultValue, const std::string & description)
     : TypedBaseOption<T>(name, defaultValue, description){};
 
-template<IsEnum T>
-EnumOption<T>& EnumOption<T>::operator=(const T& value) {
+template <IsEnum T>
+EnumOption<T> & EnumOption<T>::operator=(const T & value)
+{
     this->value = value;
     return *this;
 }
 
-template<IsEnum T>
-void EnumOption<T>::parseFromYAMLNode(Yaml::Node node) {
-
-    if (!magic_enum::enum_contains<T>(node.As<std::string>())) {
+template <IsEnum T>
+void EnumOption<T>::parseFromYAMLNode(Yaml::Node node)
+{
+    if (!magic_enum::enum_contains<T>(node.As<std::string>()))
+    {
         std::stringstream ss;
-        for (const auto& name : magic_enum::enum_names<T>()) {
+        for (const auto & name : magic_enum::enum_names<T>())
+        {
             ss << name;
         }
         throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + ss.str());
@@ -44,13 +48,16 @@ void EnumOption<T>::parseFromYAMLNode(Yaml::Node node) {
     this->value = magic_enum::enum_cast<T>(node.As<std::string>()).value();
 }
 
-template<IsEnum T>
-void EnumOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+template <IsEnum T>
+void EnumOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string> & inputParams)
+{
     auto value = inputParams[identifier];
     // Check if the value is a member of this enum type.
-    if (!magic_enum::enum_contains<T>(value)) {
+    if (!magic_enum::enum_contains<T>(value))
+    {
         std::stringstream ss;
-        for (const auto& name : magic_enum::enum_names<T>()) {
+        for (const auto & name : magic_enum::enum_names<T>())
+        {
             ss << name;
         }
         throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + ss.str());
@@ -58,8 +65,9 @@ void EnumOption<T>::parseFromString(std::string identifier, std::map<std::string
     this->value = magic_enum::enum_cast<T>(value).value();
 }
 
-template<IsEnum T>
-std::string EnumOption<T>::toString() {
+template <IsEnum T>
+std::string EnumOption<T>::toString()
+{
     std::stringstream os;
     os << "Name: " << this->name << "\n";
     os << "Description: " << this->description << "\n";
@@ -68,6 +76,6 @@ std::string EnumOption<T>::toString() {
     return os.str();
 }
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_

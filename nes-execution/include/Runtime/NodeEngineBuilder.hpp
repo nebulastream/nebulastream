@@ -19,29 +19,34 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
-namespace Compiler {
+namespace NES
+{
+namespace Compiler
+{
 class LanguageCompiler;
 
 class JITCompiler;
 using JITCompilerPtr = std::shared_ptr<JITCompiler>;
-}// namespace Compiler
-namespace Experimental::MaterializedView {
+} // namespace Compiler
+namespace Experimental::MaterializedView
+{
 class MaterializedViewManager;
 using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
-}// namespace Experimental::MaterializedView
+} // namespace Experimental::MaterializedView
 
-namespace Configurations {
+namespace Configurations
+{
 class QueryCompilerConfiguration;
 }
 
-namespace Runtime {
+namespace Runtime
+{
 /**
  * This class is used to create instances of NodeEngine using the builder pattern.
  */
-class NodeEngineBuilder {
-
-  public:
+class NodeEngineBuilder
+{
+public:
     NodeEngineBuilder() = delete;
     /**
      * Creates a default NodeEngineBuilder
@@ -55,68 +60,68 @@ class NodeEngineBuilder {
      * @param nesWorker
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setQueryStatusListener(AbstractQueryStatusListenerPtr nesWorker);
+    NodeEngineBuilder & setQueryStatusListener(AbstractQueryStatusListenerPtr nesWorker);
 
     /**
      * setter used to pass a WorkerId to NodeEngineBuilder. Optional
      * @param nodeEngineId
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setWorkerId(WorkerId nodeEngineId);
+    NodeEngineBuilder & setWorkerId(WorkerId nodeEngineId);
 
     /**
      * setter used to pass a partition manager to NodeEngineBuilder. Optional
      * @param partitionManager
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setPartitionManager(Network::PartitionManagerPtr partitionManager);
+    NodeEngineBuilder & setPartitionManager(Network::PartitionManagerPtr partitionManager);
 
     /**
      * setter used to pass a hardware manager to NodeEngineBuilder. Optional
      * @param hardwareManager
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setHardwareManager(HardwareManagerPtr hardwareManager);
+    NodeEngineBuilder & setHardwareManager(HardwareManagerPtr hardwareManager);
 
     /**
      * setter used to pass a vector of buffer managers to NodeEngineBuilder. Optional
      * @param std::vector<BufferManagerPtr>
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setBufferManagers(std::vector<BufferManagerPtr> bufferManagers);
+    NodeEngineBuilder & setBufferManagers(std::vector<BufferManagerPtr> bufferManagers);
 
     /**
      * setter used to pass a query manager to NodeEngineBuilder. Optional
      * @param queryManager
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setQueryManager(QueryManagerPtr queryManager);
+    NodeEngineBuilder & setQueryManager(QueryManagerPtr queryManager);
 
     /**
      * setter used to pass a language compiler to NodeEngineBuilder. Optional
      * @param languageCompiler
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler);
+    NodeEngineBuilder & setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler);
 
     /**
      * setter used to pass a language a jit compiler to NodeEngineBuilder. Optional
      * @param jitCompiler
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setJITCompiler(Compiler::JITCompilerPtr jitCompiler);
+    NodeEngineBuilder & setJITCompiler(Compiler::JITCompilerPtr jitCompiler);
 
     /**
      * setter used to pass a language a phase factory to NodeEngineBuilder. Optional
      * @param phaseFactory
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory);
+    NodeEngineBuilder & setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory);
 
     /**
      * setter used to pass an OpenCL manager to NodeEngineBuilder. Optional.
      */
-    NodeEngineBuilder& setOpenCLManager(OpenCLManagerPtr openCLManager);
+    NodeEngineBuilder & setOpenCLManager(OpenCLManagerPtr openCLManager);
 
     /**
      * performs safety checks and returns a NodeEngine
@@ -124,7 +129,7 @@ class NodeEngineBuilder {
      */
     NodeEnginePtr build();
 
-  private:
+private:
     explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
 
     std::shared_ptr<AbstractQueryStatusListener> nesWorker;
@@ -147,7 +152,7 @@ class NodeEngineBuilder {
      * @return QueryCompilerOptionsPtr
      */
     static QueryCompilation::QueryCompilerOptionsPtr
-    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration);
+    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration & queryCompilerConfiguration);
 
     /**
      * @brief Returns the next free node id
@@ -155,6 +160,6 @@ class NodeEngineBuilder {
      */
     static WorkerId getNextWorkerId();
 };
-}// namespace Runtime
-}// namespace NES
-#endif// NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+} // namespace Runtime
+} // namespace NES
+#endif // NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <unistd.h>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Client/ClientException.hpp>
 #include <Client/QueryConfig.hpp>
@@ -30,19 +30,22 @@
 #include <Util/QueryState.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <unistd.h>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 using namespace Configurations;
 
-class RemoteClientTest : public Testing::BaseIntegrationTest {
-  protected:
+class RemoteClientTest : public Testing::BaseIntegrationTest
+{
+protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("RemoteClientTest.log", NES::LogLevel::LOG_DEBUG); }
     static void TearDownTestCase() { NES_INFO("Tear down RemoteClientTest test class."); }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
 
         auto crdConf = CoordinatorConfiguration::createDefault();
@@ -70,47 +73,57 @@ class RemoteClientTest : public Testing::BaseIntegrationTest {
         client = std::make_shared<Client::RemoteClient>("localhost", *restPort, std::chrono::seconds(20), true);
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_DEBUG("Tear down RemoteClientTest class.");
         wrk->stop(true);
         crd->stopCoordinator(true);
         Testing::BaseIntegrationTest::TearDown();
     }
 
-    bool stopQuery(QueryId queryId) {
+    bool stopQuery(QueryId queryId)
+    {
         auto res = client->stopQuery(queryId);
-        if (!!res) {
-            while (true) {
+        if (!!res)
+        {
+            while (true)
+            {
                 auto statusStr = client->getQueryStatus(queryId);
                 auto status = magic_enum::enum_cast<QueryState>(statusStr);
-                if (status == QueryState::STOPPED) {
+                if (status == QueryState::STOPPED)
+                {
                     break;
                 }
                 NES_DEBUG("Query {} not stopped yet but {}", queryId, statusStr);
-                usleep(500 * 1000);// 500ms
+                usleep(500 * 1000); // 500ms
             }
             return true;
         }
         return false;
     }
 
-    void checkForQueryStart(QueryId queryId) {
+    void checkForQueryStart(QueryId queryId)
+    {
         auto defaultTimeout = std::chrono::seconds(10);
         auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto startTs = std::chrono::system_clock::now();
-        while (std::chrono::system_clock::now() < startTs + timeoutInSec) {
+        while (std::chrono::system_clock::now() < startTs + timeoutInSec)
+        {
             auto status = magic_enum::enum_cast<QueryState>(client->getQueryStatus(queryId));
-            if (status == QueryState::REGISTERED || status == QueryState::OPTIMIZING || status == QueryState::DEPLOYED) {
+            if (status == QueryState::REGISTERED || status == QueryState::OPTIMIZING || status == QueryState::DEPLOYED)
+            {
                 NES_DEBUG("Query {} not started yet", queryId);
                 sleep(1);
-            } else {
+            }
+            else
+            {
                 return;
             }
         }
         throw Exceptions::RuntimeException("Test checkForQueryStart timeout exceeds.");
     }
 
-  public:
+public:
     NesCoordinatorPtr crd;
     NesWorkerPtr wrk;
     Client::RemoteClientPtr client;
@@ -119,7 +132,8 @@ class RemoteClientTest : public Testing::BaseIntegrationTest {
 /**
  * @brief Test if the testConnection call works properly
  */
-TEST_F(RemoteClientTest, TestConnectionTest) {
+TEST_F(RemoteClientTest, TestConnectionTest)
+{
     bool connect = client->testConnection();
     ASSERT_TRUE(connect);
 }
@@ -128,7 +142,8 @@ TEST_F(RemoteClientTest, TestConnectionTest) {
  * @brief Test if deploying a query over the REST api works properly
  * @result deployed query ID is valid
  */
-TEST_F(RemoteClientTest, DeployQueryTest) {
+TEST_F(RemoteClientTest, DeployQueryTest)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -139,7 +154,8 @@ TEST_F(RemoteClientTest, DeployQueryTest) {
  * @brief Test if deploying a query works properly
  * @result deployed query ID is valid
  */
-TEST_F(RemoteClientTest, SubmitQueryTest) {
+TEST_F(RemoteClientTest, SubmitQueryTest)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
     auto queryId = client->submitQuery(queryPlan);
@@ -147,16 +163,22 @@ TEST_F(RemoteClientTest, SubmitQueryTest) {
     ASSERT_TRUE(stopQuery(queryId));
 }
 
-TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest) {
+TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest)
+{
     Query query = Query::from("default_l").sink(NullOutputSinkDescriptor::create());
-    try {
+    try
+    {
         client->submitQuery(query);
         FAIL();
-    } catch (Client::ClientException const& e) {
+    }
+    catch (Client::ClientException const & e)
+    {
         std::string errorMessage = e.what();
         constexpr auto expected = "The logical source 'default_l' can not be found in the SourceCatalog";
         EXPECT_NE(errorMessage.find(expected), std::string::npos);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // wrong exception
         FAIL();
     }
@@ -166,7 +188,8 @@ TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest) {
  * @brief Test if retrieving the topology works properly
  * @result topology is as expected
  */
-TEST_F(RemoteClientTest, GetTopologyTest) {
+TEST_F(RemoteClientTest, GetTopologyTest)
+{
     std::string topology = client->getTopology();
     std::string expect = "{\"edges\":";
     ASSERT_TRUE(topology.compare(0, expect.size() - 1, expect));
@@ -176,7 +199,8 @@ TEST_F(RemoteClientTest, GetTopologyTest) {
  * @brief Test if retrieving the query plan works properly
  * @result query plan is as expected
  */
-TEST_F(RemoteClientTest, GetQueryPlanTest) {
+TEST_F(RemoteClientTest, GetQueryPlanTest)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -192,7 +216,8 @@ TEST_F(RemoteClientTest, GetQueryPlanTest) {
  * @brief Test if correct error message is thrown for query plan retrieval with invalid query id
  * @result the information that query id does not exist
  */
-TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
+TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -210,7 +235,8 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
  * @brief Test if stopping a query works properly
  * @result query is stopped as expected
  */
-TEST_F(RemoteClientTest, StopQueryTest) {
+TEST_F(RemoteClientTest, StopQueryTest)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -223,7 +249,8 @@ TEST_F(RemoteClientTest, StopQueryTest) {
  * @brief Test if retrieving the execution plan works properly
  * @result execution plan is as expected
  */
-TEST_F(RemoteClientTest, GetExecutionPlanTest) {
+TEST_F(RemoteClientTest, GetExecutionPlanTest)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -238,7 +265,8 @@ TEST_F(RemoteClientTest, GetExecutionPlanTest) {
 /**
  * @brief Test if adding and getting logical sources properly
  */
-TEST_F(RemoteClientTest, AddAndGetLogicalSourceTest) {
+TEST_F(RemoteClientTest, AddAndGetLogicalSourceTest)
+{
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32);
     bool success = client->addLogicalSource(schema, "test");
 
@@ -251,7 +279,8 @@ TEST_F(RemoteClientTest, AddAndGetLogicalSourceTest) {
  * @brief Test if retrieving the logical source work properly
  * @note we assume that default_logical is predefined
  */
-TEST_F(RemoteClientTest, GetLogicalSourceTest) {
+TEST_F(RemoteClientTest, GetLogicalSourceTest)
+{
     std::string logical_source = client->getLogicalSources();
     NES_DEBUG("GetLogicalSourceTest: {}", logical_source);
     // Check only for default source
@@ -263,7 +292,8 @@ TEST_F(RemoteClientTest, GetLogicalSourceTest) {
  * @brief Test if getting physical sources works properly
  * @note we assume that default_logical is predefined
  */
-TEST_F(RemoteClientTest, GetPhysicalSourceTest) {
+TEST_F(RemoteClientTest, GetPhysicalSourceTest)
+{
     std::string physicaSources = client->getPhysicalSources("default_logical");
     NES_DEBUG("GetPhysicalSourceTest {}", physicaSources);
     // Check only for default source
@@ -274,7 +304,8 @@ TEST_F(RemoteClientTest, GetPhysicalSourceTest) {
 /**
  * @brief Test getting queryIdAndCatalogEntryMapping works properly
  */
-TEST_F(RemoteClientTest, GetQueriesTest) {
+TEST_F(RemoteClientTest, GetQueriesTest)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -287,7 +318,8 @@ TEST_F(RemoteClientTest, GetQueriesTest) {
 /**
  * @brief Test getting queryIdAndCatalogEntryMapping by status works properly
  */
-TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
+TEST_F(RemoteClientTest, GetQueriesWithStatusTest)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -302,7 +334,8 @@ TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
  * @brief Test if retrieving the execution plan works properly
  * @result execution plan is as expected
  */
-TEST_F(RemoteClientTest, StopAStoppedQuery) {
+TEST_F(RemoteClientTest, StopAStoppedQuery)
+{
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
@@ -315,25 +348,34 @@ TEST_F(RemoteClientTest, StopAStoppedQuery) {
   * @brief Test if retrieving the execution plan works properly
   * @result execution plan is as expected
   */
-TEST_F(RemoteClientTest, StopInvalidQueryId) { ASSERT_FALSE(stopQuery(QueryId(21))); }
+TEST_F(RemoteClientTest, StopInvalidQueryId)
+{
+    ASSERT_FALSE(stopQuery(QueryId(21)));
+}
 
 /**
  * @brief Test if retrieving the execution plan works properly
  * @result execution plan is as expected
  */
-TEST_F(RemoteClientTest, DeployInvalidQuery) {
+TEST_F(RemoteClientTest, DeployInvalidQuery)
+{
     Query query = Query::from("default_logical");
-    try {
+    try
+    {
         client->submitQuery(query);
         FAIL();
-    } catch (Client::ClientException const& e) {
+    }
+    catch (Client::ClientException const & e)
+    {
         std::string errorMessage = e.what();
         constexpr auto expected = "does not contain a valid sink operator as root";
         EXPECT_NE(errorMessage.find(expected), std::string::npos);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // wrong exception
         FAIL();
     }
 }
 
-}// namespace NES
+} // namespace NES

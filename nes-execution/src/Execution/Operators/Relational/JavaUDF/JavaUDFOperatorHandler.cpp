@@ -12,40 +12,55 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <string>
+#include <jni.h>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Util/JNI/JNI.hpp>
 #include <Util/JNI/JNIUtils.hpp>
-#include <algorithm>
-#include <jni.h>
-#include <string>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-JavaUDFOperatorHandler::JavaUDFOperatorHandler(const std::string& className,
-                                               const std::string& methodName,
-                                               const std::string& inputClassName,
-                                               const std::string& outputClassName,
-                                               const jni::JavaUDFByteCodeList& byteCodeList,
-                                               const jni::JavaSerializedInstance& serializedInstance,
-                                               NES::SchemaPtr udfInputSchema,
-                                               NES::SchemaPtr udfOutputSchema,
-                                               const std::optional<std::string>& javaPath)
-    : className(className), classJNIName(convertToJNIName(className)), methodName(methodName), inputClassName(inputClassName),
-      inputClassJNIName(convertToJNIName(inputClassName)), outputClassName(outputClassName),
-      outputClassJNIName(convertToJNIName(outputClassName)), byteCodeList(byteCodeList), serializedInstance(serializedInstance),
-      udfInputSchema(std::move(udfInputSchema)), udfOutputSchema(std::move(udfOutputSchema)), javaPath(javaPath),
-      udfMethodId(nullptr), udfInstance(nullptr) {
-    auto& jvm = jni::JVM::get();
-    if (!jvm.isInitialized()) {
+JavaUDFOperatorHandler::JavaUDFOperatorHandler(
+    const std::string & className,
+    const std::string & methodName,
+    const std::string & inputClassName,
+    const std::string & outputClassName,
+    const jni::JavaUDFByteCodeList & byteCodeList,
+    const jni::JavaSerializedInstance & serializedInstance,
+    NES::SchemaPtr udfInputSchema,
+    NES::SchemaPtr udfOutputSchema,
+    const std::optional<std::string> & javaPath)
+    : className(className)
+    , classJNIName(convertToJNIName(className))
+    , methodName(methodName)
+    , inputClassName(inputClassName)
+    , inputClassJNIName(convertToJNIName(inputClassName))
+    , outputClassName(outputClassName)
+    , outputClassJNIName(convertToJNIName(outputClassName))
+    , byteCodeList(byteCodeList)
+    , serializedInstance(serializedInstance)
+    , udfInputSchema(std::move(udfInputSchema))
+    , udfOutputSchema(std::move(udfOutputSchema))
+    , javaPath(javaPath)
+    , udfMethodId(nullptr)
+    , udfInstance(nullptr)
+{
+    auto & jvm = jni::JVM::get();
+    if (!jvm.isInitialized())
+    {
         jvm.addClasspath(JAVA_UDF_UTILS_JAR);
-        if (javaPath.has_value()) {
+        if (javaPath.has_value())
+        {
             jvm.addClasspath(javaPath.value());
         }
         jvm.init();
     }
 }
 
-void JavaUDFOperatorHandler::setup() {
+void JavaUDFOperatorHandler::setup()
+{
     auto env = jni::getEnv();
     setupClassLoader();
     injectClassesIntoClassLoader();
@@ -57,9 +72,12 @@ void JavaUDFOperatorHandler::setup() {
     this->udfMethodId = jni::getMethod(clazz, getMethodName().c_str(), sig.c_str());
 
     // The map udf class will be either loaded from a serialized instance or allocated using class information
-    if (!getSerializedInstance().empty()) {
+    if (!getSerializedInstance().empty())
+    {
         deserializeInstance();
-    } else {
+    }
+    else
+    {
         // Create instance using default constructor
         auto constr = jni::getMethod(clazz, "<init>", "()V");
         auto instance = env->NewObject(clazz, constr);
@@ -68,44 +86,84 @@ void JavaUDFOperatorHandler::setup() {
     }
 }
 
-const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& javaClassName) {
+const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string & javaClassName)
+{
     std::string copy = javaClassName;
     std::replace(copy.begin(), copy.end(), '.', '/');
     return copy;
 }
 
-const std::string& JavaUDFOperatorHandler::getClassName() const { return className; }
+const std::string & JavaUDFOperatorHandler::getClassName() const
+{
+    return className;
+}
 
-const std::string& JavaUDFOperatorHandler::getMethodName() const { return methodName; }
-const std::string& JavaUDFOperatorHandler::getInputClassName() const { return inputClassName; }
+const std::string & JavaUDFOperatorHandler::getMethodName() const
+{
+    return methodName;
+}
+const std::string & JavaUDFOperatorHandler::getInputClassName() const
+{
+    return inputClassName;
+}
 
-const std::string& JavaUDFOperatorHandler::getInputClassJNIName() const { return inputClassJNIName; }
+const std::string & JavaUDFOperatorHandler::getInputClassJNIName() const
+{
+    return inputClassJNIName;
+}
 
-const std::string& JavaUDFOperatorHandler::getOutputClassJNIName() const { return outputClassJNIName; }
+const std::string & JavaUDFOperatorHandler::getOutputClassJNIName() const
+{
+    return outputClassJNIName;
+}
 
-const jni::JavaUDFByteCodeList& JavaUDFOperatorHandler::getByteCodeList() const { return byteCodeList; }
+const jni::JavaUDFByteCodeList & JavaUDFOperatorHandler::getByteCodeList() const
+{
+    return byteCodeList;
+}
 
-const jni::JavaSerializedInstance& JavaUDFOperatorHandler::getSerializedInstance() const { return serializedInstance; }
+const jni::JavaSerializedInstance & JavaUDFOperatorHandler::getSerializedInstance() const
+{
+    return serializedInstance;
+}
 
-const SchemaPtr& JavaUDFOperatorHandler::getUdfInputSchema() const { return udfInputSchema; }
+const SchemaPtr & JavaUDFOperatorHandler::getUdfInputSchema() const
+{
+    return udfInputSchema;
+}
 
-const SchemaPtr& JavaUDFOperatorHandler::getUdfOutputSchema() const { return udfOutputSchema; }
+const SchemaPtr & JavaUDFOperatorHandler::getUdfOutputSchema() const
+{
+    return udfOutputSchema;
+}
 
-jmethodID JavaUDFOperatorHandler::getUDFMethodId() const { return udfMethodId; }
+jmethodID JavaUDFOperatorHandler::getUDFMethodId() const
+{
+    return udfMethodId;
+}
 
-void JavaUDFOperatorHandler::start(NES::Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {}
-void JavaUDFOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {}
-JavaUDFOperatorHandler::~JavaUDFOperatorHandler() {
-    if (udfInstance) {
+void JavaUDFOperatorHandler::start(NES::Runtime::Execution::PipelineExecutionContextPtr, uint32_t)
+{
+}
+void JavaUDFOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr)
+{
+}
+JavaUDFOperatorHandler::~JavaUDFOperatorHandler()
+{
+    if (udfInstance)
+    {
         jni::freeObject(udfInstance);
     }
-    if (classLoader) {
+    if (classLoader)
+    {
         jni::freeObject(classLoader);
     }
 }
 
-jni::jclass JavaUDFOperatorHandler::loadClass(const std::string_view& className) const {
-    if (!classLoader) {
+jni::jclass JavaUDFOperatorHandler::loadClass(const std::string_view & className) const
+{
+    if (!classLoader)
+    {
         return jni::findClass(convertToJNIName(std::string(className)));
     }
     auto javaString = jni::createString(className);
@@ -116,12 +174,13 @@ jni::jclass JavaUDFOperatorHandler::loadClass(const std::string_view& className)
     return static_cast<jclass>(clazz);
 }
 
-void JavaUDFOperatorHandler::deserializeInstance() {
+void JavaUDFOperatorHandler::deserializeInstance()
+{
     auto env = jni::getEnv();
 
     // Load instance into Java array.
     const auto length = serializedInstance.size();
-    const auto data = reinterpret_cast<const jbyte*>(serializedInstance.data());
+    const auto data = reinterpret_cast<const jbyte *>(serializedInstance.data());
     const auto byteArray = env->NewByteArray(length);
     jni::jniErrorCheck();
     env->SetByteArrayRegion(byteArray, 0, length, data);
@@ -139,7 +198,8 @@ void JavaUDFOperatorHandler::deserializeInstance() {
     jni::jniErrorCheck();
 }
 
-void JavaUDFOperatorHandler::setupClassLoader() {
+void JavaUDFOperatorHandler::setupClassLoader()
+{
     auto env = jni::getEnv();
     auto loaderClazz = jni::findClass("stream/nebula/UDFClassLoader");
     auto constructor = jni::getMethod(loaderClazz, "<init>", "()V");
@@ -149,12 +209,14 @@ void JavaUDFOperatorHandler::setupClassLoader() {
     jni::jniErrorCheck();
 }
 
-void JavaUDFOperatorHandler::injectClassesIntoClassLoader() const {
+void JavaUDFOperatorHandler::injectClassesIntoClassLoader() const
+{
     auto env = jni::getEnv();
-    for (const auto& [className, byteCode] : byteCodeList) {
+    for (const auto & [className, byteCode] : byteCodeList)
+    {
         jbyteArray jData = env->NewByteArray(byteCode.size());
         jni::jniErrorCheck();
-        env->SetByteArrayRegion(jData, 0, byteCode.size(), (jbyte*) byteCode.data());
+        env->SetByteArrayRegion(jData, 0, byteCode.size(), (jbyte *)byteCode.data());
         jni::jniErrorCheck();
         auto jClassName = jni::createString(className);
         NES_DEBUG("Injecting Java class into JVM: {}", className);
@@ -165,4 +227,4 @@ void JavaUDFOperatorHandler::injectClassesIntoClassLoader() const {
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

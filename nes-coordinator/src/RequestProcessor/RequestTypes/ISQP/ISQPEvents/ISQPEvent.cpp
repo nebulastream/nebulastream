@@ -14,11 +14,20 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-ISQPEvent::ISQPEvent(uint8_t priority) : priority(priority) {}
+ISQPEvent::ISQPEvent(uint8_t priority) : priority(priority)
+{
+}
 
-std::future<ISQPResponsePtr> ISQPEvent::getResponse() { return response.get_future(); }
+std::future<ISQPResponsePtr> ISQPEvent::getResponse()
+{
+    return response.get_future();
+}
 
-uint8_t ISQPEvent::getPriority() const { return priority; }
-}// namespace NES::RequestProcessor
+uint8_t ISQPEvent::getPriority() const
+{
+    return priority;
+}
+} // namespace NES::RequestProcessor

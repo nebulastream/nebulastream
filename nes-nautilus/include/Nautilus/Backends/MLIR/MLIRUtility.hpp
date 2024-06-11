@@ -15,20 +15,22 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
 
+#include <string>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/IR/OwningOpRef.h>
-#include <string>
 
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
 /**
  * @brief Provides utility functions for the MLIR backend.
  */
-class MLIRUtility {
-  public:
+class MLIRUtility
+{
+public:
     MLIRUtility();
     ~MLIRUtility();
 
@@ -37,7 +39,7 @@ class MLIRUtility {
      * @param mlirModule: The module to write.
      * @param mlirFilepath: Target write path.
      */
-    static void writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, std::string mlirFilepath);
+    static void writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp> & mlirModule, std::string mlirFilepath);
 
     /**
      * @brief Takes an MLIR module in string representation,  and lowers, compiles, and executes it.
@@ -45,7 +47,7 @@ class MLIRUtility {
      * @param rootFunctionName: Name of the function that is called to initiate execution.
      * @return int: 0 if success, 1 otherwise.
      */
-    static int loadAndExecuteModuleFromString(const std::string& moduleString, const std::string& rootFunctionName);
+    static int loadAndExecuteModuleFromString(const std::string & moduleString, const std::string & rootFunctionName);
 
     /**
      * @brief Takes NESIR, lowers it to MLIR, optimizes it, and returns an MLIR ExecutionEngine.
@@ -55,5 +57,5 @@ class MLIRUtility {
     static std::unique_ptr<mlir::ExecutionEngine> compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
 };
 
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_

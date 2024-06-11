@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <utility>
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -48,21 +51,20 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <iostream>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
 
 #define NUMBER_OF_TUPLE 10
 
-class GPUQueryExecutionTest : public Testing::BaseUnitTest {
-  public:
+class GPUQueryExecutionTest : public Testing::BaseUnitTest
+{
+public:
     static void SetUpTestCase() { NES::Logger::setupLogging("GPUQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         testSchemaSimple = Schema::create()->addField("test$value", BasicType::INT32);
         testSchemaMultipleFields = Schema::create()
@@ -86,14 +88,15 @@ class GPUQueryExecutionTest : public Testing::BaseUnitTest {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_DEBUG("QueryExecutionTest: Tear down GPUQueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
         Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {}
+    static void TearDownTestCase() { }
 
     SchemaPtr testSchemaSimple;
     SchemaPtr testSchemaMultipleFields;
@@ -103,36 +106,42 @@ class GPUQueryExecutionTest : public Testing::BaseUnitTest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 
-void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
-    std::for_each(plan->getSources().begin(), plan->getSources().end(), [plan](auto source) {
-        plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful);
-    });
-    std::for_each(plan->getPipelines().begin(), plan->getPipelines().end(), [plan](auto pipeline) {
-        plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful);
-    });
-    std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
-        plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
-    });
+void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan)
+{
+    std::for_each(
+        plan->getSources().begin(),
+        plan->getSources().end(),
+        [plan](auto source) { plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful); });
+    std::for_each(
+        plan->getPipelines().begin(),
+        plan->getPipelines().end(),
+        [plan](auto pipeline) { plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful); });
+    std::for_each(
+        plan->getSinks().begin(),
+        plan->getSinks().end(),
+        [plan](auto sink) { plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful); });
     ASSERT_TRUE(plan->stop());
 }
 
-void fillBufferToSimpleSchema(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
-
+void fillBufferToSimpleSchema(TupleBuffer & buf, const Runtime::MemoryLayouts::RowLayoutPtr & memoryLayout)
+{
     auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
 
-    for (int recordIndex = 0; recordIndex < NUMBER_OF_TUPLE; recordIndex++) {
+    for (int recordIndex = 0; recordIndex < NUMBER_OF_TUPLE; recordIndex++)
+    {
         valueField[recordIndex] = recordIndex;
     }
     buf.setNumberOfTuples(NUMBER_OF_TUPLE);
 }
 
-void fillBufferToMultiFieldSchema(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
-
+void fillBufferToMultiFieldSchema(TupleBuffer & buf, const Runtime::MemoryLayouts::RowLayoutPtr & memoryLayout)
+{
     auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
     auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
     auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++)
+    {
         recordIndexFields[recordIndex] = recordIndex;
         fields01[recordIndex] = 1;
         fields02[recordIndex] = recordIndex % 2;
@@ -140,15 +149,14 @@ void fillBufferToMultiFieldSchema(TupleBuffer& buf, const Runtime::MemoryLayouts
     buf.setNumberOfTuples(NUMBER_OF_TUPLE);
 }
 
-void fillBufferToWindowSchema(TupleBuffer& buf,
-                              const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout,
-                              const size_t numTuples) {
-
+void fillBufferToWindowSchema(TupleBuffer & buf, const Runtime::MemoryLayouts::RowLayoutPtr & memoryLayout, const size_t numTuples)
+{
     auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
     auto fields0 = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, memoryLayout, buf);
     auto fields1 = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, memoryLayout, buf);
 
-    for (uint64_t recordIndex = 0; recordIndex < numTuples; recordIndex++) {
+    for (uint64_t recordIndex = 0; recordIndex < numTuples; recordIndex++)
+    {
         recordIndexFields[recordIndex] = recordIndex;
         fields0[recordIndex] = 1;
         fields1[recordIndex] = recordIndex;
@@ -156,13 +164,14 @@ void fillBufferToWindowSchema(TupleBuffer& buf,
     buf.setNumberOfTuples(numTuples);
 }
 
-void fillBufferColumnLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::ColumnLayoutPtr& memoryLayout) {
-
+void fillBufferColumnLayout(TupleBuffer & buf, const Runtime::MemoryLayouts::ColumnLayoutPtr & memoryLayout)
+{
     auto recordIndexFields = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(0, memoryLayout, buf);
     auto fields01 = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(1, memoryLayout, buf);
     auto fields02 = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
-    for (int recordIndex = 0; recordIndex < NUMBER_OF_TUPLE; recordIndex++) {
+    for (int recordIndex = 0; recordIndex < NUMBER_OF_TUPLE; recordIndex++)
+    {
         recordIndexFields[recordIndex] = recordIndex;
         fields01[recordIndex] = 1;
         fields02[recordIndex] = recordIndex % 2;
@@ -171,18 +180,20 @@ void fillBufferColumnLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::Colu
 }
 
 using TupleDataType = int;
-class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
-    uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage
+{
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
         // Prepare a simple CUDA kernel which adds 42 to the recordValue and then write it to the result
-        const char* const SimpleKernel_cu =
-            "SimpleKernel.cu\n"
-            "__global__ void simpleAdditionKernel(const int* recordValue, const int count, int* result) {\n"
-            "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
-            "\n"
-            "    if (i < count) {\n"
-            "        result[i] = recordValue[i] + 42;\n"
-            "    }\n"
-            "}\n";
+        const char * const SimpleKernel_cu
+            = "SimpleKernel.cu\n"
+              "__global__ void simpleAdditionKernel(const int* recordValue, const int count, int* result) {\n"
+              "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
+              "\n"
+              "    if (i < count) {\n"
+              "        result[i] = recordValue[i] + 42;\n"
+              "    }\n"
+              "}\n";
 
         // setup the kernel program and allocate gpu buffer
         cudaKernelWrapper.setup(SimpleKernel_cu, NUMBER_OF_TUPLE * sizeof(TupleDataType));
@@ -190,9 +201,9 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
 
-    ExecutionResult execute(Runtime::TupleBuffer& buffer,
-                            Runtime::Execution::PipelineExecutionContext& ctx,
-                            Runtime::WorkerContext& wc) override {
+    ExecutionResult
+    execute(Runtime::TupleBuffer & buffer, Runtime::Execution::PipelineExecutionContext & ctx, Runtime::WorkerContext & wc) override
+    {
         auto inputRecords = buffer.getBuffer<TupleDataType>();
 
         // obtain an output buffer
@@ -211,7 +222,8 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         return ExecutionResult::Ok;
     }
 
-    uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
         // deallocate GPU memory
         cudaKernelWrapper.clean();
 
@@ -221,51 +233,55 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
     CUDAKernelWrapper<TupleDataType, TupleDataType> cudaKernelWrapper;
 };
 
-class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
-    class InputRecord {
-      public:
+class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage
+{
+    class InputRecord
+    {
+    public:
         [[maybe_unused]] int64_t id;
         [[maybe_unused]] int64_t one;
         [[maybe_unused]] int64_t value;
     };
 
-    class OutputRecord {
-      public:
+    class OutputRecord
+    {
+    public:
         [[maybe_unused]] int64_t id;
         [[maybe_unused]] int64_t one;
         [[maybe_unused]] int64_t value;
     };
 
-  public:
-    uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+public:
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
         // Prepare a simple CUDA kernel which adds 42 to the record.value and then write it to the result
-        const char* const MultifieldKernel_cu = "MultifieldKernel_cu.cu\n"
-                                                "#include \"nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\"\n"
-                                                "__global__ void additionKernelMultipleFields(const InputRecord* recordValue, "
-                                                "const int count, InputRecord* result) {\n"
-                                                "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
-                                                "\n"
-                                                "    if (i < count) {\n"
-                                                "        result[i].id = recordValue[i].id;\n"
-                                                "        result[i].one = recordValue[i].one;\n"
-                                                "        result[i].value = recordValue[i].value + 42;\n"
-                                                "    }\n"
-                                                "}\n";
+        const char * const MultifieldKernel_cu = "MultifieldKernel_cu.cu\n"
+                                                 "#include \"nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\"\n"
+                                                 "__global__ void additionKernelMultipleFields(const InputRecord* recordValue, "
+                                                 "const int count, InputRecord* result) {\n"
+                                                 "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
+                                                 "\n"
+                                                 "    if (i < count) {\n"
+                                                 "        result[i].id = recordValue[i].id;\n"
+                                                 "        result[i].one = recordValue[i].one;\n"
+                                                 "        result[i].value = recordValue[i].value + 42;\n"
+                                                 "    }\n"
+                                                 "}\n";
 
-        const char* const header = "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\n"
-                                   "#ifndef NES_GPUINPUTRECORD_CUH\n"
-                                   "#define NES_GPUINPUTRECORD_CUH\n"
-                                   "\n"
-                                   "#include <cstdint>"
-                                   "\n"
-                                   "class InputRecord {\n"
-                                   "    public:\n"
-                                   "        int64_t id;\n"
-                                   "        int64_t one;\n"
-                                   "        int64_t value;\n"
-                                   "};\n"
-                                   "\n"
-                                   "#endif//NES_GPUINPUTRECORD_CUH\n";
+        const char * const header = "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\n"
+                                    "#ifndef NES_GPUINPUTRECORD_CUH\n"
+                                    "#define NES_GPUINPUTRECORD_CUH\n"
+                                    "\n"
+                                    "#include <cstdint>"
+                                    "\n"
+                                    "class InputRecord {\n"
+                                    "    public:\n"
+                                    "        int64_t id;\n"
+                                    "        int64_t one;\n"
+                                    "        int64_t value;\n"
+                                    "};\n"
+                                    "\n"
+                                    "#endif//NES_GPUINPUTRECORD_CUH\n";
 
         // setup the kernel program and allocate gpu buffer
         cudaKernelWrapper.setup(MultifieldKernel_cu, NUMBER_OF_TUPLE * sizeof(InputRecord), {header});
@@ -273,9 +289,9 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
 
-    ExecutionResult execute(Runtime::TupleBuffer& buffer,
-                            Runtime::Execution::PipelineExecutionContext& ctx,
-                            Runtime::WorkerContext& wc) override {
+    ExecutionResult
+    execute(Runtime::TupleBuffer & buffer, Runtime::Execution::PipelineExecutionContext & ctx, Runtime::WorkerContext & wc) override
+    {
         auto record = buffer.getBuffer<InputRecord>();
 
         // obtain an output buffer
@@ -294,7 +310,8 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
         return ExecutionResult::Ok;
     }
 
-    uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
         // deallocate GPU memory
         cudaKernelWrapper.clean();
 
@@ -305,42 +322,45 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
 };
 
 // Test offloading only the column to be offloaded to the gpu
-class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
-    class InputRecord {
-      public:
+class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage
+{
+    class InputRecord
+    {
+    public:
         [[maybe_unused]] int64_t id;
         [[maybe_unused]] int64_t one;
         [[maybe_unused]] int64_t value;
     };
 
-  public:
-    uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+public:
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
         // Prepare a simple CUDA kernel which adds 42 to the record and then write it to the result
-        const char* const ColumnLayoutKernel_cu = "ColumnLayoutKernel_cu.cu\n"
-                                                  "#include \"nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\"\n"
-                                                  "__global__ void additionKernelColumnLayout(const int64_t* recordValue, "
-                                                  "const int count, int64_t* result) {\n"
-                                                  "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
-                                                  "\n"
-                                                  "    if (i < count) {\n"
-                                                  "        result[i] = recordValue[i] + 42;\n"
-                                                  "    }\n"
-                                                  "}\n";
+        const char * const ColumnLayoutKernel_cu = "ColumnLayoutKernel_cu.cu\n"
+                                                   "#include \"nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\"\n"
+                                                   "__global__ void additionKernelColumnLayout(const int64_t* recordValue, "
+                                                   "const int count, int64_t* result) {\n"
+                                                   "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
+                                                   "\n"
+                                                   "    if (i < count) {\n"
+                                                   "        result[i] = recordValue[i] + 42;\n"
+                                                   "    }\n"
+                                                   "}\n";
 
-        const char* const header = "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\n"
-                                   "#ifndef NES_GPUINPUTRECORD_CUH\n"
-                                   "#define NES_GPUINPUTRECORD_CUH\n"
-                                   "\n"
-                                   "#include <cstdint>"
-                                   "\n"
-                                   "class InputRecord {\n"
-                                   "    public:\n"
-                                   "        int64_t id;\n"
-                                   "        int64_t one;\n"
-                                   "        int64_t value;\n"
-                                   "};\n"
-                                   "\n"
-                                   "#endif//NES_GPUINPUTRECORD_CUH\n";
+        const char * const header = "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\n"
+                                    "#ifndef NES_GPUINPUTRECORD_CUH\n"
+                                    "#define NES_GPUINPUTRECORD_CUH\n"
+                                    "\n"
+                                    "#include <cstdint>"
+                                    "\n"
+                                    "class InputRecord {\n"
+                                    "    public:\n"
+                                    "        int64_t id;\n"
+                                    "        int64_t one;\n"
+                                    "        int64_t value;\n"
+                                    "};\n"
+                                    "\n"
+                                    "#endif//NES_GPUINPUTRECORD_CUH\n";
         // setup the kernel program and allocate gpu buffer
         // setup the kernel program and allocate gpu buffer
         cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(InputRecord), {header});
@@ -355,16 +375,15 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
 
-    ExecutionResult execute(Runtime::TupleBuffer& buffer,
-                            Runtime::Execution::PipelineExecutionContext& ctx,
-                            Runtime::WorkerContext& wc) override {
-
+    ExecutionResult
+    execute(Runtime::TupleBuffer & buffer, Runtime::Execution::PipelineExecutionContext & ctx, Runtime::WorkerContext & wc) override
+    {
         // obtain the column offset
         auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(testSchemaColumnLayout, buffer.getBufferSize());
-        auto valColOffset = columnLayout->getColumnOffsets()[2];// test$value is column 2
+        auto valColOffset = columnLayout->getColumnOffsets()[2]; // test$value is column 2
 
         // take the part of buffer in the specified offset
-        auto valueBuffer = reinterpret_cast<int64_t*>(buffer.getBuffer() + valColOffset);
+        auto valueBuffer = reinterpret_cast<int64_t *>(buffer.getBuffer() + valColOffset);
 
         // obtain an output buffer
         auto outputBuffer = wc.allocateTupleBuffer();
@@ -382,7 +401,8 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
         return ExecutionResult::Ok;
     }
 
-    uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
         // deallocate GPU memory
         cudaKernelWrapper.clean();
 
@@ -394,24 +414,27 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
 };
 
 // Test the execution of an external operator using a simple GPU Kernel from a source of simple integer
-TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
+TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery)
+{
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaSimple,
         [&](SchemaPtr testSchemaSimple,
             OperatorId id,
             OriginId origin,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
+            const SourceDescriptorPtr &,
+            const Runtime::NodeEnginePtr &,
             size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaSimple,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 origin,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr
+        {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchemaSimple,
+                nodeEngine->getBufferManager(),
+                nodeEngine->getQueryManager(),
+                id,
+                origin,
+                numSourceLocalBuffers,
+                std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("value", BasicType::INT32);
@@ -427,8 +450,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     auto filterOperator = queryPlan->getOperatorByType<LogicalFilterOperator>()[0];
 
     auto customPipelineStage = std::make_shared<SimpleGPUPipelineStage>();
-    auto externalOperator =
-        NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+    auto externalOperator
+        = NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
     filterOperator->insertBetweenThisAndParentNodes(externalOperator);
 
@@ -440,9 +463,9 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 2u);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
-    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
-        auto memoryLayout =
-            Runtime::MemoryLayouts::RowLayout::create(testSchemaSimple, nodeEngine->getBufferManager()->getBufferSize());
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer)
+    {
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchemaSimple, nodeEngine->getBufferManager()->getBufferSize());
         fillBufferToSimpleSchema(buffer, memoryLayout);
         plan->setup();
         ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -458,11 +481,14 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
         auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, resultBuffer);
-        for (int recordIndex = 0; recordIndex < 5; ++recordIndex) {
+        for (int recordIndex = 0; recordIndex < 5; ++recordIndex)
+        {
             // id
             EXPECT_EQ(valueField[recordIndex], recordIndex + 42);
         }
-    } else {
+    }
+    else
+    {
         FAIL();
     }
 
@@ -472,24 +498,27 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
 }
 
 // Test the execution of an external operator on a source with a custom structure
-TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
+TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields)
+{
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaMultipleFields,
         [&](SchemaPtr testSchemaMultipleFields,
             OperatorId id,
             OriginId origin,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
+            const SourceDescriptorPtr &,
+            const Runtime::NodeEnginePtr &,
             size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaMultipleFields,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 origin,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr
+        {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchemaMultipleFields,
+                nodeEngine->getBufferManager(),
+                nodeEngine->getQueryManager(),
+                id,
+                origin,
+                numSourceLocalBuffers,
+                std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -505,8 +534,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     auto filterOperator = queryPlan->getOperatorByType<LogicalFilterOperator>()[0];
 
     auto customPipelineStage = std::make_shared<MultifieldGPUPipelineStage>();
-    auto externalOperator =
-        NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+    auto externalOperator
+        = NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
     filterOperator->insertBetweenThisAndParentNodes(externalOperator);
 
@@ -518,9 +547,10 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 2u);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
-    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
-        auto memoryLayout =
-            Runtime::MemoryLayouts::RowLayout::create(testSchemaMultipleFields, nodeEngine->getBufferManager()->getBufferSize());
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer)
+    {
+        auto memoryLayout
+            = Runtime::MemoryLayouts::RowLayout::create(testSchemaMultipleFields, nodeEngine->getBufferManager()->getBufferSize());
         fillBufferToMultiFieldSchema(buffer, memoryLayout);
         plan->setup();
         ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -535,16 +565,17 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
         // The output buffer should contain 5 tuple;
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
-        auto resultRecordIndexFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
-        auto resultRecordValueFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
-        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
+        auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
+        auto resultRecordValueFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
+        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex)
+        {
             // id
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
         }
-    } else {
+    }
+    else
+    {
         FAIL();
     }
 
@@ -554,24 +585,27 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
 }
 
 // Test the execution of an external operator on a source with column layout
-TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
+TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout)
+{
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaColumnLayout,
         [&](SchemaPtr testSchemaColumnLayout,
             OperatorId id,
             OriginId origin,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
+            const SourceDescriptorPtr &,
+            const Runtime::NodeEnginePtr &,
             size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaColumnLayout,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 origin,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr
+        {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchemaColumnLayout,
+                nodeEngine->getBufferManager(),
+                nodeEngine->getQueryManager(),
+                id,
+                origin,
+                numSourceLocalBuffers,
+                std::move(successors));
         });
 
     auto outputSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("value", BasicType::INT64);
@@ -587,8 +621,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     auto filterOperator = queryPlan->getOperatorByType<LogicalFilterOperator>()[0];
 
     auto customPipelineStage = std::make_shared<ColumnLayoutGPUPipelineStage>();
-    auto externalOperator =
-        NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+    auto externalOperator
+        = NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
     filterOperator->insertBetweenThisAndParentNodes(externalOperator);
 
@@ -600,9 +634,10 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 2u);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
-    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
-        auto memoryLayout =
-            Runtime::MemoryLayouts::ColumnLayout::create(testSchemaColumnLayout, nodeEngine->getBufferManager()->getBufferSize());
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer)
+    {
+        auto memoryLayout
+            = Runtime::MemoryLayouts::ColumnLayout::create(testSchemaColumnLayout, nodeEngine->getBufferManager()->getBufferSize());
         fillBufferColumnLayout(buffer, memoryLayout);
         plan->setup();
         ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -618,14 +653,16 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
         // The result only contains a single column
-        auto resultRecordValueFields =
-            Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
-        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
+        auto resultRecordValueFields = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
+        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex)
+        {
             // id
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
             NES_DEBUG("expected: {} actual: {}", (recordIndex % 2) + 42, resultRecordValueFields[recordIndex]);
         }
-    } else {
+    }
+    else
+    {
         FAIL();
     }
 
@@ -634,26 +671,30 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-class WindowedAggregationGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
-  public:
+class WindowedAggregationGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage
+{
+public:
     static constexpr uint32_t WINDOW_LENGTH = 8;
     static constexpr uint32_t WINDOW_SLIDE = 8;
     static constexpr size_t NUMBER_OF_INPUT_TUPLES = 32;
     static constexpr size_t NUMBER_OF_OUTPUT_TUPLES = 4;
 
-    struct InputRecord {
+    struct InputRecord
+    {
         [[maybe_unused]] int32_t id;
         [[maybe_unused]] uint32_t value;
         [[maybe_unused]] uint64_t timestamp;
     };
 
-    struct OutputRecord {
+    struct OutputRecord
+    {
         [[maybe_unused]] int32_t id;
         [[maybe_unused]] uint32_t value;
     };
 
-    uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
-        const char* const header = R"(nes-core/tests/UnitTests/Query/GPUInputRecord.cuh
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
+        const char * const header = R"(nes-core/tests/UnitTests/Query/GPUInputRecord.cuh
             #ifndef NES_GPUINPUTRECORD_CUH
             #define NES_GPUINPUTRECORD_CUH
 
@@ -673,7 +714,7 @@ class WindowedAggregationGPUPipelineStage : public Runtime::Execution::Executabl
             #endif // NES_GPUINPUTRECORD_CUH
         )";
 
-        const char* const slidingWindowKernel_cu = R"(SlidingWindow.cu
+        const char * const slidingWindowKernel_cu = R"(SlidingWindow.cu
             #include "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh"
             __global__ void slidingWindowKernel(
                 const InputRecord* records,
@@ -705,9 +746,9 @@ class WindowedAggregationGPUPipelineStage : public Runtime::Execution::Executabl
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
 
-    ExecutionResult execute(Runtime::TupleBuffer& buffer,
-                            Runtime::Execution::PipelineExecutionContext& ctx,
-                            Runtime::WorkerContext& wc) override {
+    ExecutionResult
+    execute(Runtime::TupleBuffer & buffer, Runtime::Execution::PipelineExecutionContext & ctx, Runtime::WorkerContext & wc) override
+    {
         auto inputRecords = buffer.getBuffer<InputRecord>();
         auto numberOfInputTuples = buffer.getNumberOfTuples();
 
@@ -727,21 +768,15 @@ class WindowedAggregationGPUPipelineStage : public Runtime::Execution::Executabl
         dim3 numBlocks((numberOfInputTuples + threadsPerBlock.x - 1) / threadsPerBlock.x);
         KernelDescriptor kernel = {"slidingWindowKernel", numBlocks, threadsPerBlock};
         // execute the kernel
-        cudaKernelWrapper.execute(inputRecords,
-                                  numberOfInputTuples,
-                                  outputRecords,
-                                  numberOfOutputTuples,
-                                  kernel,
-                                  WINDOW_LENGTH,
-                                  WINDOW_SLIDE,
-                                  t_start,
-                                  t_end);
+        cudaKernelWrapper.execute(
+            inputRecords, numberOfInputTuples, outputRecords, numberOfOutputTuples, kernel, WINDOW_LENGTH, WINDOW_SLIDE, t_start, t_end);
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
     }
 
-    uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext & pipelineExecutionContext) override
+    {
         // deallocate GPU memory
         cudaKernelWrapper.clean();
 
@@ -751,7 +786,8 @@ class WindowedAggregationGPUPipelineStage : public Runtime::Execution::Executabl
     CUDAKernelWrapper<InputRecord, OutputRecord> cudaKernelWrapper;
 };
 
-TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
+TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation)
+{
     // creating query plan
     SchemaPtr testSchemaWindowedAggregation = Schema::create()
                                                   ->addField("test$id", BasicType::INT32)
@@ -763,17 +799,19 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
         [&](SchemaPtr testSchemaWindowedAggregation,
             OperatorId id,
             OriginId origin,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
+            const SourceDescriptorPtr &,
+            const Runtime::NodeEnginePtr &,
             size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaWindowedAggregation,
-                                                                 nodeEngine->getBufferManager(),
-                                                                 nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 origin,
-                                                                 numSourceLocalBuffers,
-                                                                 std::move(successors));
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr
+        {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchemaWindowedAggregation,
+                nodeEngine->getBufferManager(),
+                nodeEngine->getQueryManager(),
+                id,
+                origin,
+                numSourceLocalBuffers,
+                std::move(successors));
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT32)->addField("value", BasicType::UINT32);
@@ -787,8 +825,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto customPipelineStage = std::make_shared<WindowedAggregationGPUPipelineStage>();
-    auto externalOperator =
-        NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+    auto externalOperator
+        = NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
     auto sourceOperator = queryPlan->getOperatorByType<SourceLogicalOperator>()[0];
     sourceOperator->insertBetweenThisAndParentNodes(externalOperator);
@@ -807,8 +845,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     ASSERT_FALSE(!buffer);
 
-    auto memoryLayout =
-        Runtime::MemoryLayouts::RowLayout::create(testSchemaWindowedAggregation, nodeEngine->getBufferManager()->getBufferSize());
+    auto memoryLayout
+        = Runtime::MemoryLayouts::RowLayout::create(testSchemaWindowedAggregation, nodeEngine->getBufferManager()->getBufferSize());
     fillBufferToWindowSchema(buffer, memoryLayout, WindowedAggregationGPUPipelineStage::NUMBER_OF_INPUT_TUPLES);
 
     plan->setup();
@@ -825,11 +863,11 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), numOutputTuples);
 
-    auto resultMemoryLayout =
-        Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto indexField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, resultMemoryLayout, resultBuffer);
     auto valueField = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, resultMemoryLayout, resultBuffer);
-    for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples(); recordIndex++) {
+    for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples(); recordIndex++)
+    {
         EXPECT_EQ(indexField[recordIndex], 0x1);
         EXPECT_EQ(valueField[recordIndex], 8);
     }

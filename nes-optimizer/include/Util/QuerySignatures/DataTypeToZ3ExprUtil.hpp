@@ -17,15 +17,17 @@
 
 #include <memory>
 
-namespace z3 {
+namespace z3
+{
 class expr;
 using ExprPtr = std::shared_ptr<expr>;
 
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -33,9 +35,10 @@ using DataTypePtr = std::shared_ptr<DataType>;
 class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class Z3ExprAndFieldMap;
 using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
@@ -43,8 +46,9 @@ using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
 /**
  * @brief This class is used for converting a data field or value into Z3 expression.
  */
-class DataTypeToZ3ExprUtil {
-  public:
+class DataTypeToZ3ExprUtil
+{
+public:
     /**
      * @brief Create Z3 expression for field of specific datatype
      * @param fieldName: name of the filed
@@ -52,8 +56,7 @@ class DataTypeToZ3ExprUtil {
      * @param context: the z3 context
      * @return expression and field map for the field
      */
-    static Z3ExprAndFieldMapPtr
-    createForField(const std::string& fieldName, const DataTypePtr& dataType, const z3::ContextPtr& context);
+    static Z3ExprAndFieldMapPtr createForField(const std::string & fieldName, const DataTypePtr & dataType, const z3::ContextPtr & context);
 
     /**
      * @brief Create Z3 expression for data value of specific type
@@ -61,8 +64,8 @@ class DataTypeToZ3ExprUtil {
      * @param context: Z3 context
      * @return expression and field map for the data value
      */
-    static Z3ExprAndFieldMapPtr createForDataValue(const ValueTypePtr& valueType, const z3::ContextPtr& context);
+    static Z3ExprAndFieldMapPtr createForDataValue(const ValueTypePtr & valueType, const z3::ContextPtr & context);
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_DATATYPETOZ3EXPRUTIL_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_DATATYPETOZ3EXPRUTIL_HPP_

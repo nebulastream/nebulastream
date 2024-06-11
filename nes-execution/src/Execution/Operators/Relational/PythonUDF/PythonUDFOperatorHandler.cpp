@@ -14,18 +14,22 @@
 
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
-#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
-#include <string>
+#    include <string>
+#    include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void PythonUDFOperatorHandler::initPython() {
+void PythonUDFOperatorHandler::initPython()
+{
     this->moduleName = this->functionName + "Module";
     // initialize python interpreter
     Py_Initialize();
-    PyObject* pythonCode = Py_CompileString(this->function.c_str(), "", Py_file_input);
-    if (pythonCode == NULL) {
-        if (PyErr_Occurred()) {
+    PyObject * pythonCode = Py_CompileString(this->function.c_str(), "", Py_file_input);
+    if (pythonCode == NULL)
+    {
+        if (PyErr_Occurred())
+        {
             PyErr_Print();
             PyErr_Clear();
             NES_THROW_RUNTIME_ERROR("Could not compile String.");
@@ -33,8 +37,10 @@ void PythonUDFOperatorHandler::initPython() {
     }
     // add python code into our module
     this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), pythonCode);
-    if (this->pythonModule == NULL) {
-        if (PyErr_Occurred()) {
+    if (this->pythonModule == NULL)
+    {
+        if (PyErr_Occurred())
+        {
             PyErr_Print();
             PyErr_Clear();
         }
@@ -42,13 +48,16 @@ void PythonUDFOperatorHandler::initPython() {
     }
 }
 
-void PythonUDFOperatorHandler::finalize() {
+void PythonUDFOperatorHandler::finalize()
+{
     Py_DecRef(this->pythonVariable);
     Py_DecRef(this->pythonModule);
     Py_DecRef(this->pythonArguments);
 
-    if (Py_IsInitialized()) {
-        if (Py_FinalizeEx() == -1) {
+    if (Py_IsInitialized())
+    {
+        if (Py_FinalizeEx() == -1)
+        {
             PyErr_Print();
             PyErr_Clear();
             NES_THROW_RUNTIME_ERROR("Something went wrong with finalizing Python");
@@ -56,6 +65,6 @@ void PythonUDFOperatorHandler::finalize() {
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+#endif // NAUTILUS_PYTHON_UDF_ENABLED

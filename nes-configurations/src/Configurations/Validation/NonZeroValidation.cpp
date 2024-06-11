@@ -12,16 +12,19 @@
     limitations under the License.
 */
 
-#include <Configurations/Validation/NonZeroValidation.hpp>
 #include <regex>
+#include <Configurations/Validation/NonZeroValidation.hpp>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-bool NonZeroValidation::isValid(const std::string& parameter) const {
+bool NonZeroValidation::isValid(const std::string & parameter) const
+{
     std::regex numberRegex("^0.?0?$");
-    if (std::regex_match(parameter, numberRegex)) {
+    if (std::regex_match(parameter, numberRegex))
+    {
         return false;
     }
     return true;
 }
-}// namespace NES::Configurations
+} // namespace NES::Configurations

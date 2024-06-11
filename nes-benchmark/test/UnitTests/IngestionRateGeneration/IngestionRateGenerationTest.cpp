@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <typeinfo>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <IngestionRateGeneration/CustomIngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
@@ -24,26 +24,31 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <typeinfo>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark {
-class IngestionRateGenerationTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark
+{
+class IngestionRateGenerationTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("IngestionRateGenerationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup IngestionRateGenerationTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         NES_INFO("Setup IngestionRateGenerationTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down IngestionRateGenerationTest test case.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -58,14 +63,14 @@ class IngestionRateGenerationTest : public Testing::BaseIntegrationTest {
      * @brief Testing if IngestionRateGenerator::createIngestionRateGenerator() is correct by making sure that as a default
      * the UniformIngestionRateGenerator is created
      */
-TEST_F(IngestionRateGenerationTest, createIngestionRateGeneratorTest) {
+TEST_F(IngestionRateGenerationTest, createIngestionRateGeneratorTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
 
-    auto defaultIngestionRateGenerator =
-        IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
-    auto expectedIngestionRateGenerator =
-        dynamic_cast<IngestionRateGeneration::UniformIngestionRateGenerator*>(defaultIngestionRateGenerator.get());
+    auto defaultIngestionRateGenerator = IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
+    auto expectedIngestionRateGenerator
+        = dynamic_cast<IngestionRateGeneration::UniformIngestionRateGenerator *>(defaultIngestionRateGenerator.get());
     ASSERT_TRUE(expectedIngestionRateGenerator != nullptr);
 }
 
@@ -73,20 +78,23 @@ TEST_F(IngestionRateGenerationTest, createIngestionRateGeneratorTest) {
      * @brief Testing if IngestionRateGenerator::createIngestionRateGenerator() throws an exception if the user does not provide a
      * valid ingestionRateDistribution
      */
-TEST_F(IngestionRateGenerationTest, undefinedIngestionRateTest) {
+TEST_F(IngestionRateGenerationTest, undefinedIngestionRateTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     configOverAllRuns.ingestionRateDistribution->setValue("SomeRandomType");
 
-    ASSERT_THROW({ IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns); },
-                 Exceptions::RuntimeException);
+    ASSERT_THROW(
+        { IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns); },
+        Exceptions::RuntimeException);
 }
 
 /**
      * @brief Testing if IngestionRateGenerator::generateIngestionRates() is correct for UniformIngestionRateGenerator by
      * creating ingestion rates and then checking versus a hardcoded truth
      */
-TEST_F(IngestionRateGenerationTest, uniformIngestionRateTest) {
+TEST_F(IngestionRateGenerationTest, uniformIngestionRateTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     configOverAllRuns.ingestionRateCount->setValue(1);
@@ -94,8 +102,8 @@ TEST_F(IngestionRateGenerationTest, uniformIngestionRateTest) {
     auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
     auto ingestionRateCount = configOverAllRuns.ingestionRateCount->getValue();
 
-    auto ingestionRateGenerator =
-        std::make_unique<IngestionRateGeneration::UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCount);
+    auto ingestionRateGenerator
+        = std::make_unique<IngestionRateGeneration::UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCount);
     auto defaultPredefinedIngestionRates = ingestionRateGenerator->generateIngestionRates();
 
     std::vector<uint64_t> expectedPredefinedIngestionRates = {50000};
@@ -108,7 +116,8 @@ TEST_F(IngestionRateGenerationTest, uniformIngestionRateTest) {
      * @brief Testing if IngestionRateGenerator::generateIngestionRates() is correct for TrigonometricIngestionRateGenerator by
      * creating predefinedIngestionRates and then checking versus a hardcoded truth
      */
-TEST_F(IngestionRateGenerationTest, trigonometricIngestionRateTest) {
+TEST_F(IngestionRateGenerationTest, trigonometricIngestionRateTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     configOverAllRuns.ingestionRateCount->setValue(8);
@@ -119,11 +128,8 @@ TEST_F(IngestionRateGenerationTest, trigonometricIngestionRateTest) {
     auto ingestionRateCount = configOverAllRuns.ingestionRateCount->getValue();
     auto numberOfPeriods = configOverAllRuns.numberOfPeriods->getValue();
 
-    auto ingestionRateGenerator =
-        std::make_unique<IngestionRateGeneration::TrigonometricIngestionRateGenerator>(ingestionRateDistribution,
-                                                                                       ingestionRateInBuffers,
-                                                                                       ingestionRateCount,
-                                                                                       numberOfPeriods);
+    auto ingestionRateGenerator = std::make_unique<IngestionRateGeneration::TrigonometricIngestionRateGenerator>(
+        ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCount, numberOfPeriods);
     auto defaultPredefinedIngestionRates = ingestionRateGenerator->generateIngestionRates();
 
     std::vector<uint64_t> expectedPredefinedIngestionRates = {25000, 50000, 25000, 0, 25000, 50000, 25000, 0};
@@ -136,7 +142,8 @@ TEST_F(IngestionRateGenerationTest, trigonometricIngestionRateTest) {
      * @brief Testing if IngestionRateGenerator::generateIngestionRates() is correct for CustomIngestionRateGenerator by
      * creating predefinedIngestionRates and then checking versus a hardcoded truth
      */
-TEST_F(IngestionRateGenerationTest, customIngestionRateTest) {
+TEST_F(IngestionRateGenerationTest, customIngestionRateTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     configOverAllRuns.ingestionRateCount->setValue(5);
@@ -146,8 +153,7 @@ TEST_F(IngestionRateGenerationTest, customIngestionRateTest) {
     auto ingestionRateCount = configOverAllRuns.ingestionRateCount->getValue();
     auto customValues = NES::Util::splitWithStringDelimiter<uint64_t>(configOverAllRuns.customValues->getValue(), ",");
 
-    auto ingestionRateGenerator =
-        std::make_unique<IngestionRateGeneration::CustomIngestionRateGenerator>(ingestionRateCount, customValues);
+    auto ingestionRateGenerator = std::make_unique<IngestionRateGeneration::CustomIngestionRateGenerator>(ingestionRateCount, customValues);
     auto defaultPredefinedIngestionRates = ingestionRateGenerator->generateIngestionRates();
 
     std::vector<uint64_t> expectedPredefinedIngestionRates = {1000, 2000, 3000, 1000, 2000};
@@ -155,4 +161,4 @@ TEST_F(IngestionRateGenerationTest, customIngestionRateTest) {
     ASSERT_EQ(defaultPredefinedIngestionRates.size(), expectedPredefinedIngestionRates.size());
     ASSERT_EQ(defaultPredefinedIngestionRates, expectedPredefinedIngestionRates);
 }
-}//namespace NES::Benchmark
+} //namespace NES::Benchmark

@@ -15,8 +15,11 @@
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-WindowProcessingException::WindowProcessingException(const std::string& message, const std::source_location location)
-    : RuntimeException(message, NES::collectStacktrace(), location) {}
-}// namespace NES::Runtime::Execution::Operators
+WindowProcessingException::WindowProcessingException(const std::string & message, const std::source_location location)
+    : RuntimeException(message, NES::collectStacktrace(), location)
+{
+}
+} // namespace NES::Runtime::Execution::Operators

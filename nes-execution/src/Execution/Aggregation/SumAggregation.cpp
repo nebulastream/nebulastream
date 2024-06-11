@@ -14,15 +14,20 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/Record.hpp>
-namespace NES::Runtime::Execution::Aggregation {
+namespace NES::Runtime::Execution::Aggregation
+{
 
-SumAggregationFunction::SumAggregationFunction(const PhysicalTypePtr& inputType,
-                                               const PhysicalTypePtr& resultType,
-                                               const Expressions::ExpressionPtr& inputExpression,
-                                               const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
-    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
+SumAggregationFunction::SumAggregationFunction(
+    const PhysicalTypePtr & inputType,
+    const PhysicalTypePtr & resultType,
+    const Expressions::ExpressionPtr & inputExpression,
+    const Nautilus::Record::RecordFieldIdentifier & resultFieldIdentifier)
+    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier)
+{
+}
 
-void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) {
+void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record & inputRecord)
+{
     // load memref
     auto oldValue = AggregationFunction::loadFromMemref(state, inputType);
     // add the value
@@ -32,23 +37,28 @@ void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nauti
     state.store(newValue);
 }
 
-void SumAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
+void SumAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2)
+{
     auto left = AggregationFunction::loadFromMemref(state1, inputType);
     auto right = AggregationFunction::loadFromMemref(state2, inputType);
     auto combinedSum = left + right;
     state1.store(combinedSum);
 }
 
-void SumAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRecord) {
-
+void SumAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record & resultRecord)
+{
     auto finalVal = AggregationFunction::loadFromMemref(state, resultType);
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
-void SumAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> state) {
+void SumAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> state)
+{
     auto zero = createConstValue(0L, inputType);
     state.store(zero);
 }
-uint64_t SumAggregationFunction::getSize() { return inputType->size(); }
+uint64_t SumAggregationFunction::getSize()
+{
+    return inputType->size();
+}
 
-}// namespace NES::Runtime::Execution::Aggregation
+} // namespace NES::Runtime::Execution::Aggregation

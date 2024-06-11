@@ -14,17 +14,18 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_STRUCTUREDCONTROLFLOWPHASE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_STRUCTUREDCONTROLFLOWPHASE_HPP_
 
+#include <memory>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <memory>
-#include <stack>
-#include <unordered_map>
-#include <unordered_set>
 
-namespace NES::Nautilus::IR {
+namespace NES::Nautilus::IR
+{
 
 /**
  * @brief This phase takes an IR graph with blocks that either have branch- or if-operations as terminator-operations.
@@ -32,24 +33,27 @@ namespace NES::Nautilus::IR {
  *        Also, if-operations are enriched with information on which blocks branch to the merge-blocks. 
  *        This is required to correctly create MLIR YieldOps.
  */
-class StructuredControlFlowPhase {
-  public:
+class StructuredControlFlowPhase
+{
+public:
     /**
      * @brief Applies the StructuredControlFlowPhase to the supplied IR graph.
      * @param IR graph that the StructuredControlFlowPhase is applied to.
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);
 
-  private:
+private:
     /**
      * @brief Internal context object contains phase logic and state.
      */
-    class StructuredControlFlowPhaseContext {
-      public:
+    class StructuredControlFlowPhaseContext
+    {
+    public:
         /**
          * @brief Helper struct used to keep track of the currently active branch of an if-operation.
          */
-        struct IfOpCandidate {
+        struct IfOpCandidate
+        {
             std::shared_ptr<IR::Operations::IfOperation> ifOp;
             bool isTrueBranch;
         };
@@ -65,7 +69,7 @@ class StructuredControlFlowPhase {
          */
         void process();
 
-      private:
+    private:
         /**
          * @brief Iterates over IR graph, and connects all if-operations with their corresponding merge-blocks.
          * 
@@ -83,17 +87,18 @@ class StructuredControlFlowPhase {
          * @param newVisit: Signals whether we reached the currentBlock via a new edge.
          * @return true, if the currentBlock is a merge-block with open edges, and false if not.
          */
-        bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock,
-                                    std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
-                                    std::unordered_map<std::string, uint32_t>& candidateEdgeCounter,
-                                    bool newVisit,
-                                    const std::unordered_set<IR::BasicBlockPtr>& loopBlockWithVisitedBody);
+        bool inline mergeBlockCheck(
+            IR::BasicBlockPtr & currentBlock,
+            std::stack<std::unique_ptr<IfOpCandidate>> & ifOperations,
+            std::unordered_map<std::string, uint32_t> & candidateEdgeCounter,
+            bool newVisit,
+            const std::unordered_set<IR::BasicBlockPtr> & loopBlockWithVisitedBody);
 
-      private:
+    private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;
     };
 };
 
-}// namespace NES::Nautilus::IR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_STRUCTUREDCONTROLFLOWPHASE_HPP_
+} // namespace NES::Nautilus::IR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_STRUCTUREDCONTROLFLOWPHASE_HPP_

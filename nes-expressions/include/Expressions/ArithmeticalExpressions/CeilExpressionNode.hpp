@@ -15,19 +15,21 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CEILEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CEILEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an CEIL (ceiling of) expression.
  */
-class CeilExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
+class CeilExpressionNode final : public ArithmeticalUnaryExpressionNode
+{
+public:
     explicit CeilExpressionNode(DataTypePtr stamp);
     ~CeilExpressionNode() noexcept override = default;
     /**
      * @brief Create a new CEIL expression
      */
-    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const & child);
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
@@ -43,10 +45,10 @@ class CeilExpressionNode final : public ArithmeticalUnaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  private:
-    explicit CeilExpressionNode(CeilExpressionNode* other);
+private:
+    explicit CeilExpressionNode(CeilExpressionNode * other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CEILEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CEILEXPRESSIONNODE_HPP_

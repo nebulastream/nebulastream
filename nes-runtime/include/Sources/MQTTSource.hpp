@@ -16,28 +16,30 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_MQTTSOURCE_HPP_
 #ifdef ENABLE_MQTT_BUILD
 
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
-#include <Sources/Parsers/Parser.hpp>
-#include <cstdint>
-#include <memory>
-#include <string>
+#    include <cstdint>
+#    include <memory>
+#    include <string>
+#    include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#    include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#    include <Sources/DataSource.hpp>
+#    include <Sources/Parsers/Parser.hpp>
 
-namespace mqtt {
+namespace mqtt
+{
 class async_client;
 using async_clientPtr = std::shared_ptr<async_client>;
-}// namespace mqtt
+} // namespace mqtt
 
-namespace NES {
+namespace NES
+{
 
 class TupleBuffer;
 /**
  * @brief this class provides an MQTT as data source
  */
-class MQTTSource : public DataSource {
-
-  public:
+class MQTTSource : public DataSource
+{
+public:
     /**
      * @brief constructor for the MQTT data source
      * @param schema of the data
@@ -52,17 +54,18 @@ class MQTTSource : public DataSource {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors the subsequent operators in the pipeline to which the data is pushed
      */
-    explicit MQTTSource(SchemaPtr schema,
-                        Runtime::BufferManagerPtr bufferManager,
-                        Runtime::QueryManagerPtr queryManager,
-                        const MQTTSourceTypePtr& mqttSourceType,
-                        OperatorId operatorId,
-                        OriginId originId,
-                        StatisticId statisticId,
-                        size_t numSourceLocalBuffers,
-                        GatheringMode gatheringMode,
-                        const std::string& physicalSourceName,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
+    explicit MQTTSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        const MQTTSourceTypePtr & mqttSourceType,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string & physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -80,7 +83,7 @@ class MQTTSource : public DataSource {
      * @brief fill buffer tuple by tuple using the appropriate parser
      * @param tupleBuffer buffer to be filled
      */
-    bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer);
+    bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer & tupleBuffer);
 
     /**
      * @brief override the toString method for the mqtt source
@@ -92,22 +95,22 @@ class MQTTSource : public DataSource {
      * @brief getter for ServerAddress
      * @return serverAddress
      */
-    std::string const& getServerAddress() const;
+    std::string const & getServerAddress() const;
     /**
      * @brief getter for clientId
      * @return clientId
      */
-    std::string const& getClientId() const;
+    std::string const & getClientId() const;
     /**
      * @brief getter for user
      * @return user
      */
-    std::string const& getUser() const;
+    std::string const & getUser() const;
     /**
      * @brief getter for topic
      * @return topic
      */
-    std::string const& getTopic() const;
+    std::string const & getTopic() const;
 
     /**
      * @brief getter for tupleSize
@@ -144,9 +147,9 @@ class MQTTSource : public DataSource {
      * @brief getter for source config
      * @return mqttSourceType
      */
-    const MQTTSourceTypePtr& getSourceConfigPtr() const;
+    const MQTTSourceTypePtr & getSourceConfigPtr() const;
 
-  private:
+private:
     /**
      * @brief default constructor required for boost serialization
      */
@@ -190,6 +193,6 @@ class MQTTSource : public DataSource {
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
-}// namespace NES
-#endif//NES_MQTTSOURCE_HPP
-#endif// NES_RUNTIME_INCLUDE_SOURCES_MQTTSOURCE_HPP_
+} // namespace NES
+#endif //NES_MQTTSOURCE_HPP
+#endif // NES_RUNTIME_INCLUDE_SOURCES_MQTTSOURCE_HPP_

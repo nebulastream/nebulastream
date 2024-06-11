@@ -15,13 +15,15 @@
 #define NES_COMPILER_INCLUDE_COMPILER_DYNAMICOBJECT_HPP_
 #include <string>
 #include <utility>
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief Represents a dynamic object, which enables the invocation of dynamically defined methods.
  */
-class DynamicObject {
-  public:
+class DynamicObject
+{
+public:
     /**
      * @brief Returns an invocable member of the shared object and cast its to the provided template.
      * @tparam Function
@@ -29,8 +31,9 @@ class DynamicObject {
      * #TODO #2073 look up mangled name dynamically.
      * @return Function
      */
-    template<typename Function>
-    Function getInvocableMember(const std::string& member) {
+    template <typename Function>
+    Function getInvocableMember(const std::string & member)
+    {
         return reinterpret_cast<Function>(getInvocableFunctionPtr(member));
     }
     /**
@@ -38,15 +41,15 @@ class DynamicObject {
      */
     virtual ~DynamicObject() = default;
 
-  protected:
+protected:
     /**
      * @brief Returns a untyped function pointer to a specific symbol.
      * @param member on the dynamic object, currently provided as a MangledName.
      * @return function ptr
      */
-    [[nodiscard]] virtual void* getInvocableFunctionPtr(const std::string& member) = 0;
+    [[nodiscard]] virtual void * getInvocableFunctionPtr(const std::string & member) = 0;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_DYNAMICOBJECT_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_DYNAMICOBJECT_HPP_

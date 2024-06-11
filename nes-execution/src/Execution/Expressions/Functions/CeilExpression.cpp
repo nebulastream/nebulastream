@@ -12,15 +12,17 @@
     limitations under the License.
 */
 
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/CeilExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-CeilExpression::CeilExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
-    : subExpression(subExpression) {}
+CeilExpression::CeilExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr & subExpression) : subExpression(subExpression)
+{
+}
 
 /**
 * @brief This method calculates the modulus ceil of x .
@@ -28,9 +30,13 @@ CeilExpression::CeilExpression(const NES::Runtime::Execution::Expressions::Expre
 * @param x double
 * @return double
 */
-double calculateCeil(double x) { return std::ceil(x); }
+double calculateCeil(double x)
+{
+    return std::ceil(x);
+}
 
-Value<> CeilExpression::execute(NES::Nautilus::Record& record) const {
+Value<> CeilExpression::execute(NES::Nautilus::Record & record) const
+{
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = subExpression->execute(record);
 
@@ -39,14 +45,19 @@ Value<> CeilExpression::execute(NES::Nautilus::Record& record) const {
     // In all cases we can call the same calculateCeil function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Float>()) {
+    if (leftValue->isType<Float>())
+    {
         return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
+    }
+    else if (leftValue->isType<Double>())
+    {
         return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CeilExpression>> ceilFunction("ceil");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

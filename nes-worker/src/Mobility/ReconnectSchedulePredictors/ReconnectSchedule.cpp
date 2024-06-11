@@ -11,23 +11,34 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <utility>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 
-namespace NES::Spatial::Mobility::Experimental {
+namespace NES::Spatial::Mobility::Experimental
+{
 
-ReconnectSchedule::ReconnectSchedule(std::vector<ReconnectPoint> reconnectVector) : reconnectVector(std::move(reconnectVector)) {}
+ReconnectSchedule::ReconnectSchedule(std::vector<ReconnectPoint> reconnectVector) : reconnectVector(std::move(reconnectVector))
+{
+}
 
-const std::vector<ReconnectPoint>& ReconnectSchedule::getReconnectVector() const { return reconnectVector; }
+const std::vector<ReconnectPoint> & ReconnectSchedule::getReconnectVector() const
+{
+    return reconnectVector;
+}
 
-ReconnectSchedule ReconnectSchedule::Empty() { return ReconnectSchedule({}); }
+ReconnectSchedule ReconnectSchedule::Empty()
+{
+    return ReconnectSchedule({});
+}
 
-bool ReconnectSchedule::removeNextReconnect() {
-    if (reconnectVector.empty()) {
+bool ReconnectSchedule::removeNextReconnect()
+{
+    if (reconnectVector.empty())
+    {
         return false;
     }
     reconnectVector.erase(reconnectVector.begin());
     return true;
 }
 
-}// namespace NES::Spatial::Mobility::Experimental
+} // namespace NES::Spatial::Mobility::Experimental

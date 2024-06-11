@@ -15,21 +15,24 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 
+#include <memory>
 #include <Configurations/Enums/QueryMergerRule.hpp>
 #include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
-#include <memory>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SignatureInferencePhase;
 using SignatureInferencePhasePtr = std::shared_ptr<SignatureInferencePhase>;
@@ -37,9 +40,9 @@ using SignatureInferencePhasePtr = std::shared_ptr<SignatureInferencePhase>;
 /**
  * @brief This class is responsible for computing the Z3 expression for all operators within a query
  */
-class SignatureInferencePhase {
-
-  public:
+class SignatureInferencePhase
+{
+public:
     /**
      * @brief Create instance of SignatureInferencePhase class
      * @param context : the z3 context
@@ -52,7 +55,7 @@ class SignatureInferencePhase {
      * @brief this method will compute the Z3 expression for all operators of the input query plan
      * @param queryPlan: the input query plan
      */
-    void execute(const QueryPlanPtr& queryPlan);
+    void execute(const QueryPlanPtr & queryPlan);
 
     /**
      * @brief Get shared instance of z3 context
@@ -60,7 +63,7 @@ class SignatureInferencePhase {
      */
     [[nodiscard]] z3::ContextPtr getContext() const;
 
-  private:
+private:
     /**
      * @brief Create instance of SignatureInferencePhase class
      * @param context : the z3 context
@@ -70,6 +73,6 @@ class SignatureInferencePhase {
     Z3QuerySignatureContext context;
     Optimizer::QueryMergerRule queryMergerRule;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_

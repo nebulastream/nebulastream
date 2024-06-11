@@ -15,18 +15,19 @@
 #ifndef NES_COORDINATOR_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 #define NES_COORDINATOR_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Monitoring/Metrics/MetricType.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <atomic>
 #include <chrono>
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <Identifiers/Identifiers.hpp>
+#include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/MetricCollectorType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
@@ -34,20 +35,23 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
-namespace Monitoring {
+namespace Monitoring
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
@@ -60,8 +64,9 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 /**
 * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
 */
-class MonitoringManager {
-  public:
+class MonitoringManager
+{
+public:
     /**
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param topology the topology
@@ -70,11 +75,12 @@ class MonitoringManager {
      * @param metricStore the metric store
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
-    MonitoringManager(TopologyPtr topology,
-                      RequestHandlerServicePtr requestHandlerService,
-                      Catalogs::Query::QueryCatalogPtr queryCatalog,
-                      MetricStorePtr metricStore,
-                      bool enableMonitoring);
+    MonitoringManager(
+        TopologyPtr topology,
+        RequestHandlerServicePtr requestHandlerService,
+        Catalogs::Query::QueryCatalogPtr queryCatalog,
+        MetricStorePtr metricStore,
+        bool enableMonitoring);
 
     /**
      * @brief Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
@@ -83,10 +89,11 @@ class MonitoringManager {
      * @param queryCatalog: the query catalog
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
-    MonitoringManager(TopologyPtr topology,
-                      RequestHandlerServicePtr requestHandlerService,
-                      Catalogs::Query::QueryCatalogPtr queryCatalog,
-                      bool enableMonitoring);
+    MonitoringManager(
+        TopologyPtr topology,
+        RequestHandlerServicePtr requestHandlerService,
+        Catalogs::Query::QueryCatalogPtr queryCatalog,
+        bool enableMonitoring);
 
     /**
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
@@ -94,15 +101,13 @@ class MonitoringManager {
      * @param requestHandlerService: the query service
      * @param queryCatalog: the query catalog
      */
-    MonitoringManager(TopologyPtr topology,
-                      RequestHandlerServicePtr requestHandlerService,
-                      Catalogs::Query::QueryCatalogPtr queryCatalog);
+    MonitoringManager(TopologyPtr topology, RequestHandlerServicePtr requestHandlerService, Catalogs::Query::QueryCatalogPtr queryCatalog);
 
-    MonitoringManager(const MonitoringManager&) = default;
-    MonitoringManager(MonitoringManager&&) = default;
+    MonitoringManager(const MonitoringManager &) = default;
+    MonitoringManager(MonitoringManager &&) = default;
     //  -- Assignment --
-    MonitoringManager& operator=(const MonitoringManager&) = default;
-    MonitoringManager& operator=(MonitoringManager&&) = default;
+    MonitoringManager & operator=(const MonitoringManager &) = default;
+    MonitoringManager & operator=(MonitoringManager &&) = default;
     //  -- dtor --
     ~MonitoringManager();
 
@@ -112,7 +117,7 @@ class MonitoringManager {
      * @param monitoringPlan
      * @return True, if successful, else false
     */
-    bool registerRemoteMonitoringPlans(const std::vector<WorkerId>& nodeIds, MonitoringPlanPtr monitoringPlan);
+    bool registerRemoteMonitoringPlans(const std::vector<WorkerId> & nodeIds, MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Get the monitoring data for a given node.
@@ -204,13 +209,13 @@ class MonitoringManager {
      * @brief Get the deployed monitoring queries
      * @return A map logicalStreamName -> QueryId
      */
-    const std::unordered_map<std::string, QueryId>& getDeployedMonitoringQueries() const;
+    const std::unordered_map<std::string, QueryId> & getDeployedMonitoringQueries() const;
 
-  private:
+private:
     bool waitForQueryToStart(QueryId queryId, std::chrono::seconds timeout);
     bool checkStoppedOrTimeout(QueryId queryId, std::chrono::seconds timeout);
 
-  private:
+private:
     MetricStorePtr metricStore;
     std::unordered_map<WorkerId, MonitoringPlanPtr> monitoringPlanMap;
     std::unordered_map<std::string, QueryId> deployedMonitoringQueries;
@@ -225,6 +230,6 @@ class MonitoringManager {
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_

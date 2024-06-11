@@ -14,22 +14,36 @@
 
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 MonitoringSinkDescriptor::MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins), collectorType(collectorType) {}
+    : SinkDescriptor(numberOfOrigins), collectorType(collectorType)
+{
+}
 
-SinkDescriptorPtr MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins) {
+SinkDescriptorPtr MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins)
+{
     return std::make_shared<MonitoringSinkDescriptor>(MonitoringSinkDescriptor(collectorType, numberOfOrigins));
 }
 
-std::string MonitoringSinkDescriptor::toString() const { return "MonitoringSinkDescriptor()"; }
-bool MonitoringSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<MonitoringSinkDescriptor>(); }
+std::string MonitoringSinkDescriptor::toString() const
+{
+    return "MonitoringSinkDescriptor()";
+}
+bool MonitoringSinkDescriptor::equal(SinkDescriptorPtr const & other)
+{
+    return other->instanceOf<MonitoringSinkDescriptor>();
+}
 
-Monitoring::MetricCollectorType MonitoringSinkDescriptor::getCollectorType() const { return collectorType; }
+Monitoring::MetricCollectorType MonitoringSinkDescriptor::getCollectorType() const
+{
+    return collectorType;
+}
 
-void MonitoringSinkDescriptor::setCollectorType(Monitoring::MetricCollectorType collectorType) {
+void MonitoringSinkDescriptor::setCollectorType(Monitoring::MetricCollectorType collectorType)
+{
     this->collectorType = collectorType;
 }
 
-}// namespace NES
+} // namespace NES

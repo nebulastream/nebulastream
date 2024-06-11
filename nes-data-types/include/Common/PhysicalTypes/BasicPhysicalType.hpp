@@ -16,14 +16,17 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_BASICPHYSICALTYPE_HPP_
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The BasicPhysicalType represents nes data types, which can be directly mapped to a native c++ type.
  */
-class BasicPhysicalType final : public PhysicalType {
-  public:
-    enum class NativeType : uint8_t {
+class BasicPhysicalType final : public PhysicalType
+{
+public:
+    enum class NativeType : uint8_t
+    {
         UINT_8,
         UINT_16,
         UINT_32,
@@ -55,7 +58,7 @@ class BasicPhysicalType final : public PhysicalType {
      * @param nativeType
      * @return PhysicalTypePtr
      */
-    static PhysicalTypePtr create(const DataTypePtr& type, NativeType nativeType);
+    static PhysicalTypePtr create(const DataTypePtr & type, NativeType nativeType);
 
     /**
      * @brief Indicates if this is a basic data type.
@@ -74,14 +77,14 @@ class BasicPhysicalType final : public PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
      */
-    std::string convertRawToString(void const* rawData) const noexcept override;
+    std::string convertRawToString(void const * rawData) const noexcept override;
 
     /**
      * @brief Converts the binary representation of this value to a string.
      * @param rawData a pointer to the raw value
      * @return string
     */
-    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
+    std::string convertRawToStringWithoutFill(void const * rawData) const noexcept override;
 
     /**
      * @brief Returns the string representation of this physical data type.
@@ -94,6 +97,6 @@ class BasicPhysicalType final : public PhysicalType {
 
 using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_BASICPHYSICALTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_BASICPHYSICALTYPE_HPP_

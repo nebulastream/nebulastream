@@ -12,6 +12,11 @@
     limitations under the License.
 */
 
+#include <filesystem>
+#include <iostream>
+#include <regex>
+#include <string>
+#include <utility>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Arrow/ArrowFileSink.hpp>
@@ -21,57 +26,59 @@
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
-#include <filesystem>
-#include <iostream>
-#include <regex>
-#include <string>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-SinkMediumTypes ArrowFileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
+SinkMediumTypes ArrowFileSink::getSinkMediumType()
+{
+    return SinkMediumTypes::FILE_SINK;
+}
 
-ArrowFileSink::ArrowFileSink(SinkFormatPtr format,
-                             Runtime::NodeEnginePtr nodeEngine,
-                             uint32_t numOfProducers,
-                             const std::string& filePath,
-                             bool append,
-                             SharedQueryId sharedQueryId,
-                             DecomposedQueryPlanId decomposedQueryPlanId,
-                             uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format),
-                 std::move(nodeEngine),
-                 numOfProducers,
-                 sharedQueryId,
-                 decomposedQueryPlanId,
-                 numberOfOrigins) {
+ArrowFileSink::ArrowFileSink(
+    SinkFormatPtr format,
+    Runtime::NodeEnginePtr nodeEngine,
+    uint32_t numOfProducers,
+    const std::string & filePath,
+    bool append,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    uint64_t numberOfOrigins)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins)
+{
     this->filePath = filePath;
     this->append = append;
-    if (!append) {
-        if (std::filesystem::exists(filePath.c_str())) {
+    if (!append)
+    {
+        if (std::filesystem::exists(filePath.c_str()))
+        {
             bool success = std::filesystem::remove(filePath.c_str());
             NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
         }
     }
     NES_DEBUG("ArrowFileSink: open file= {}", filePath);
 
-    if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
+    if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT)
+    {
         // raise a warning if the file path does not have the streaming "arrows" extension some other system might
         // thus interpret the file differently with different extension
         // the MIME types for arrow files are ".arrow" for file format, and ".arrows" for streaming file format
         // see https://arrow.apache.org/faq/
-        if (!(filePath.find(".arrows"))) {
+        if (!(filePath.find(".arrows")))
+        {
             NES_WARNING("ArrowFileSink: An arrow ipc file without '.arrows' extension created as a file sink.");
         }
     }
 }
 
-ArrowFileSink::~ArrowFileSink() {
+ArrowFileSink::~ArrowFileSink()
+{
     NES_DEBUG("~ArrowFileSink: close file={}", filePath);
     outputFile.close();
 }
 
-std::string ArrowFileSink::toString() const {
+std::string ArrowFileSink::toString() const
+{
     std::stringstream ss;
     ss << "ArrowFileSink(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
@@ -79,35 +86,47 @@ std::string ArrowFileSink::toString() const {
     return ss.str();
 }
 
-void ArrowFileSink::setup() {}
+void ArrowFileSink::setup()
+{
+}
 
-void ArrowFileSink::shutdown() {}
+void ArrowFileSink::shutdown()
+{
+}
 
-bool ArrowFileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool ArrowFileSink::writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContextRef)
+{
     return writeDataToArrowFile(inputBuffer);
 }
 
-std::string ArrowFileSink::getFilePath() const { return filePath; }
+std::string ArrowFileSink::getFilePath() const
+{
+    return filePath;
+}
 
-bool ArrowFileSink::getAppend() const { return append; }
+bool ArrowFileSink::getAppend() const
+{
+    return append;
+}
 
-std::string ArrowFileSink::getAppendAsString() const {
-    if (append) {
+std::string ArrowFileSink::getAppendAsString() const
+{
+    if (append)
+    {
         return "APPEND";
     }
     return "OVERWRITE";
 }
 
-bool ArrowFileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
+bool ArrowFileSink::writeDataToArrowFile(Runtime::TupleBuffer & inputBuffer)
+{
     std::unique_lock lock(writeMutex);
 
     // preliminary checks
-    NES_TRACE("ArrowFileSink: getSchema medium {} format {} and mode {}",
-              toString(),
-              sinkFormat->toString(),
-              this->getAppendAsString());
+    NES_TRACE("ArrowFileSink: getSchema medium {} format {} and mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
 
-    if (!inputBuffer) {
+    if (!inputBuffer)
+    {
         NES_ERROR("ArrowFileSink::writeDataToArrowFile input buffer invalid");
         return false;
     }
@@ -121,7 +140,8 @@ bool ArrowFileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
     std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter;
     arrow::Status openStatus = openArrowFile(outfileArrow, arrowSchema, arrowWriter);
 
-    if (!openStatus.ok()) {
+    if (!openStatus.ok())
+    {
         return false;
     }
 
@@ -129,8 +149,7 @@ bool ArrowFileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
     std::vector<std::shared_ptr<arrow::Array>> arrowArrays = arrowFormat->getArrowArrays(inputBuffer);
 
     // make a record batch
-    std::shared_ptr<arrow::RecordBatch> recordBatch =
-        arrow::RecordBatch::Make(arrowSchema, arrowArrays[0]->length(), arrowArrays);
+    std::shared_ptr<arrow::RecordBatch> recordBatch = arrow::RecordBatch::Make(arrowSchema, arrowArrays[0]->length(), arrowArrays);
 
     // write the record batch
     auto write = arrowWriter->WriteRecordBatch(*recordBatch);
@@ -141,9 +160,11 @@ bool ArrowFileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
     return true;
 }
 
-arrow::Status ArrowFileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
-                                           std::shared_ptr<arrow::Schema> arrowSchema,
-                                           std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowRecordBatchWriter) {
+arrow::Status ArrowFileSink::openArrowFile(
+    std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
+    std::shared_ptr<arrow::Schema> arrowSchema,
+    std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowRecordBatchWriter)
+{
     // the macros initialize the arrowFileOutputStream and arrowRecordBatchWriter
     // if everything goes well return status OK
     // else the macros return failure
@@ -152,4 +173,4 @@ arrow::Status ArrowFileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutput
     return arrow::Status::OK();
 }
 
-}// namespace NES
+} // namespace NES

@@ -18,20 +18,22 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expression calculates the factorial of the subExpression.
  */
-class FactorialExpression : public Expression {
-  public:
-    FactorialExpression(const ExpressionPtr& SubExpression);
-    Value<> execute(Record& record) const override;
+class FactorialExpression : public Expression
+{
+public:
+    FactorialExpression(const ExpressionPtr & SubExpression);
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr SubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_FACTORIALEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_FACTORIALEXPRESSION_HPP_

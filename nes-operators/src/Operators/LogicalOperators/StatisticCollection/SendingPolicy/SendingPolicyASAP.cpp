@@ -14,16 +14,26 @@
 
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-std::string SendingPolicyASAP::toString() const { return "ASAP"; }
+std::string SendingPolicyASAP::toString() const
+{
+    return "ASAP";
+}
 
-SendingPolicyPtr SendingPolicyASAP::create(StatisticDataCodec sinkDataCodec) {
+SendingPolicyPtr SendingPolicyASAP::create(StatisticDataCodec sinkDataCodec)
+{
     return std::make_shared<SendingPolicyASAP>(SendingPolicyASAP(sinkDataCodec));
 }
 
-bool SendingPolicyASAP::operator==(const SendingPolicy& rhs) const { return rhs.instanceOf<const SendingPolicyASAP>(); }
+bool SendingPolicyASAP::operator==(const SendingPolicy & rhs) const
+{
+    return rhs.instanceOf<const SendingPolicyASAP>();
+}
 
-SendingPolicyASAP::SendingPolicyASAP(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec) {}
+SendingPolicyASAP::SendingPolicyASAP(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec)
+{
+}
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

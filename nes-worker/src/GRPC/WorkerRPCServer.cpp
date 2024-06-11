@@ -27,41 +27,55 @@
 
 #include <utility>
 
-namespace NES {
+namespace NES
+{
 
-WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
-                                 Monitoring::MonitoringAgentPtr monitoringAgent,
-                                 NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                                 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
-    : nodeEngine(std::move(nodeEngine)), statisticManager(this->nodeEngine->getStatisticManager()),
-      monitoringAgent(std::move(monitoringAgent)), locationProvider(std::move(locationProvider)),
-      trajectoryPredictor(std::move(trajectoryPredictor)) {
+WorkerRPCServer::WorkerRPCServer(
+    Runtime::NodeEnginePtr nodeEngine,
+    Monitoring::MonitoringAgentPtr monitoringAgent,
+    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
+    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
+    : nodeEngine(std::move(nodeEngine))
+    , statisticManager(this->nodeEngine->getStatisticManager())
+    , monitoringAgent(std::move(monitoringAgent))
+    , locationProvider(std::move(locationProvider))
+    , trajectoryPredictor(std::move(trajectoryPredictor))
+{
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
-Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
+Status WorkerRPCServer::RegisterQuery(ServerContext *, const RegisterQueryRequest * request, RegisterQueryReply * reply)
+{
     //TODO: This removes the const qualifier please check this @Ankit #4769
     auto decomposedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
-        (SerializableDecomposedQueryPlan*) &request->decomposedqueryplan());
+        (SerializableDecomposedQueryPlan *)&request->decomposedqueryplan());
 
-    NES_DEBUG("WorkerRPCServer::RegisterQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
-              "{} plan={}",
-              decomposedQueryPlan->getSharedQueryId(),
-              decomposedQueryPlan->getDecomposedQueryPlanId(),
-              decomposedQueryPlan->toString());
+    NES_DEBUG(
+        "WorkerRPCServer::RegisterQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
+        "{} plan={}",
+        decomposedQueryPlan->getSharedQueryId(),
+        decomposedQueryPlan->getDecomposedQueryPlanId(),
+        decomposedQueryPlan->toString());
     bool success = false;
-    try {
+    try
+    {
         //check if the plan is reconfigured
-        if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_REDEPLOYMENT) {
+        if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_REDEPLOYMENT)
+        {
             success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
-        } else {
+        }
+        else
+        {
             success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
         }
-    } catch (std::exception& error) {
+    }
+    catch (std::exception & error)
+    {
         NES_ERROR("Register query crashed: {}", error.what());
         success = false;
     }
-    if (success) {
+    if (success)
+    {
         NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
         return Status::OK;
@@ -71,10 +85,12 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) {
+Status WorkerRPCServer::UnregisterQuery(ServerContext *, const UnregisterQueryRequest * request, UnregisterQueryReply * reply)
+{
     NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for {}", request->queryid());
     bool success = nodeEngine->unregisterQuery(UNSURE_CONVERSION_TODO_4761(QueryId(request->queryid()), SharedQueryId));
-    if (success) {
+    if (success)
+    {
         NES_DEBUG("WorkerRPCServer::UnregisterQuery: success");
         reply->set_success(true);
         return Status::OK;
@@ -84,11 +100,12 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* request, StartQueryReply* reply) {
+Status WorkerRPCServer::StartQuery(ServerContext *, const StartQueryRequest * request, StartQueryReply * reply)
+{
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->sharedqueryid());
-    bool success =
-        nodeEngine->startQuery(SharedQueryId(request->sharedqueryid()), DecomposedQueryPlanId(request->decomposedqueryid()));
-    if (success) {
+    bool success = nodeEngine->startQuery(SharedQueryId(request->sharedqueryid()), DecomposedQueryPlanId(request->decomposedqueryid()));
+    if (success)
+    {
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
         reply->set_success(true);
         return Status::OK;
@@ -98,16 +115,17 @@ Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* requ
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request, StopQueryReply* reply) {
+Status WorkerRPCServer::StopQuery(ServerContext *, const StopQueryRequest * request, StopQueryReply * reply)
+{
     NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->sharedqueryid());
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
-    NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Graceful
-                        && terminationType != Runtime::QueryTerminationType::Invalid,
-                    "Invalid termination type requested");
-    bool success = nodeEngine->stopQuery(SharedQueryId(request->sharedqueryid()),
-                                         DecomposedQueryPlanId(request->decomposedqueryid()),
-                                         terminationType);
-    if (success) {
+    NES_ASSERT2_FMT(
+        terminationType != Runtime::QueryTerminationType::Graceful && terminationType != Runtime::QueryTerminationType::Invalid,
+        "Invalid termination type requested");
+    bool success = nodeEngine->stopQuery(
+        SharedQueryId(request->sharedqueryid()), DecomposedQueryPlanId(request->decomposedqueryid()), terminationType);
+    if (success)
+    {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
         return Status::OK;
@@ -117,55 +135,67 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
-                                               const MonitoringRegistrationRequest* request,
-                                               MonitoringRegistrationReply*) {
-    try {
+Status
+WorkerRPCServer::RegisterMonitoringPlan(ServerContext *, const MonitoringRegistrationRequest * request, MonitoringRegistrationReply *)
+{
+    try
+    {
         NES_DEBUG("WorkerRPCServer::RegisterMonitoringPlan: Got request");
         std::set<Monitoring::MetricType> types;
-        for (auto type : request->metrictypes()) {
-            types.insert((Monitoring::MetricType) type);
+        for (auto type : request->metrictypes())
+        {
+            types.insert((Monitoring::MetricType)type);
         }
         Monitoring::MonitoringPlanPtr plan = Monitoring::MonitoringPlan::create(types);
         monitoringAgent->setMonitoringPlan(plan);
         return Status::OK;
-    } catch (std::exception& ex) {
+    }
+    catch (std::exception & ex)
+    {
         NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: {}", ex.what());
     }
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
-    try {
+Status WorkerRPCServer::GetMonitoringData(ServerContext *, const MonitoringDataRequest *, MonitoringDataReply * reply)
+{
+    try
+    {
         NES_DEBUG("WorkerRPCServer: GetMonitoringData request received");
         auto metrics = monitoringAgent->getMetricsAsJson().dump();
         NES_DEBUG("WorkerRPCServer: Transmitting monitoring data: {}", metrics);
         reply->set_metricsasjson(metrics);
         return Status::OK;
-    } catch (std::exception& ex) {
+    }
+    catch (std::exception & ex)
+    {
         NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: {}", ex.what());
     }
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
+Status WorkerRPCServer::BeginBuffer(ServerContext *, const BufferRequest * request, BufferReply * reply)
+{
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 
     auto querySubPlanId = DecomposedQueryPlanId(request->querysubplanid());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
     bool success = nodeEngine->bufferData(querySubPlanId, uniqueNetworkSinkDescriptorId);
-    if (success) {
+    if (success)
+    {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
         return Status::OK;
-    } else {
+    }
+    else
+    {
         NES_ERROR("WorkerRPCServer::StopQuery: failed");
         reply->set_success(false);
         return Status::CANCELLED;
     }
 }
-Status
-WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
+Status WorkerRPCServer::UpdateNetworkSink(ServerContext *, const UpdateNetworkSinkRequest * request, UpdateNetworkSinkReply * reply)
+{
     NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
     auto querySubPlanId = DecomposedQueryPlanId(request->querysubplanid());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
@@ -174,21 +204,26 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
     uint32_t newPort = request->newport();
 
     bool success = nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, querySubPlanId, uniqueNetworkSinkDescriptorId);
-    if (success) {
+    if (success)
+    {
         NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);
         return Status::OK;
-    } else {
+    }
+    else
+    {
         NES_ERROR("WorkerRPCServer::UpdateNetworkSinks: failed");
         reply->set_success(false);
         return Status::CANCELLED;
     }
 }
 
-Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) {
-    (void) request;
+Status WorkerRPCServer::GetLocation(ServerContext *, const GetLocationRequest * request, GetLocationReply * reply)
+{
+    (void)request;
     NES_DEBUG("WorkerRPCServer received location request")
-    if (!locationProvider) {
+    if (!locationProvider)
+    {
         NES_DEBUG("WorkerRPCServer: locationProvider not set, node doesn't have known location")
         //return an empty reply
         return Status::OK;
@@ -196,30 +231,34 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     auto waypoint = locationProvider->getCurrentWaypoint();
     auto loc = waypoint.getLocation();
     auto protoWaypoint = reply->mutable_waypoint();
-    if (loc.isValid()) {
+    if (loc.isValid())
+    {
         auto coord = protoWaypoint->mutable_geolocation();
         coord->set_lat(loc.getLatitude());
         coord->set_lng(loc.getLongitude());
     }
-    if (waypoint.getTimestamp()) {
+    if (waypoint.getTimestamp())
+    {
         protoWaypoint->set_timestamp(waypoint.getTimestamp().value());
     }
     return Status::OK;
 }
 
-Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) {
-
+Status WorkerRPCServer::ProbeStatistics(ServerContext *, const ProbeStatisticsRequest * request, ProbeStatisticsReply * reply)
+{
     // Building a C++ StatisticProbeRequest object
     auto probeExpression = ExpressionSerializationUtil::deserializeExpression(request->expression());
-    Statistic::StatisticProbeRequest probeRequest(request->statistichash(),
-                                                  Windowing::TimeMeasure(request->startts()),
-                                                  Windowing::TimeMeasure(request->endts()),
-                                                  Windowing::TimeMeasure(request->granularity()),
-                                                  Statistic::ProbeExpression(probeExpression));
+    Statistic::StatisticProbeRequest probeRequest(
+        request->statistichash(),
+        Windowing::TimeMeasure(request->startts()),
+        Windowing::TimeMeasure(request->endts()),
+        Windowing::TimeMeasure(request->granularity()),
+        Statistic::ProbeExpression(probeExpression));
 
     // Getting all statistics that match the probe request
     auto allProbedStatisticValues = statisticManager->getStatistics(probeRequest);
-    for (const auto& stat : allProbedStatisticValues) {
+    for (const auto & stat : allProbedStatisticValues)
+    {
         auto protoStat = reply->add_statistics();
         protoStat->set_startts(stat.getStartTs().getTime());
         protoStat->set_endts(stat.getEndTs().getTime());
@@ -229,4 +268,4 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
     return Status::OK;
 }
 
-}// namespace NES
+} // namespace NES

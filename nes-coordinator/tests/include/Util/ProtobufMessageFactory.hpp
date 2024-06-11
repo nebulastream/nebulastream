@@ -18,39 +18,44 @@
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <UdfCatalogService.pb.h>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
+#include <UdfCatalogService.pb.h>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Factory for Protobuf messages used in test code.
  */
-class ProtobufMessageFactory {
-  public:
+class ProtobufMessageFactory
+{
+public:
     /**
      * @brief Construct a RegisterJavaUdfRequest protobuf message.
      * @see UDFCatalog::registerJavaUdf
      */
-    static RegisterJavaUdfRequest createRegisterJavaUdfRequest(const std::string& udfName,
-                                                               const std::string& udfClassName,
-                                                               const std::string& methodName,
-                                                               const jni::JavaSerializedInstance& serializedInstance,
-                                                               const jni::JavaUDFByteCodeList& byteCodeList,
-                                                               const SchemaPtr& outputSchema,
-                                                               const std::string& inputClassName,
-                                                               const std::string& outputClassName) {
+    static RegisterJavaUdfRequest createRegisterJavaUdfRequest(
+        const std::string & udfName,
+        const std::string & udfClassName,
+        const std::string & methodName,
+        const jni::JavaSerializedInstance & serializedInstance,
+        const jni::JavaUDFByteCodeList & byteCodeList,
+        const SchemaPtr & outputSchema,
+        const std::string & inputClassName,
+        const std::string & outputClassName)
+    {
         auto request = RegisterJavaUdfRequest{};
         // Set udfName
         request.set_udf_name(udfName);
-        auto* udfDescriptor = request.mutable_java_udf_descriptor();
+        auto * udfDescriptor = request.mutable_java_udf_descriptor();
         // Set udfClassName, methodName, and serializedInstance
         udfDescriptor->set_udf_class_name(udfClassName);
         udfDescriptor->set_udf_method_name(methodName);
         udfDescriptor->set_serialized_instance(serializedInstance.data(), serializedInstance.size());
         // Set byteCodeList
-        for (const auto& [className, byteCode] : byteCodeList) {
-            auto* javaClass = udfDescriptor->add_classes();
+        for (const auto & [className, byteCode] : byteCodeList)
+        {
+            auto * javaClass = udfDescriptor->add_classes();
             javaClass->set_class_name(className);
             javaClass->set_byte_code(std::string{byteCode.begin(), byteCode.end()});
         }
@@ -62,18 +67,20 @@ class ProtobufMessageFactory {
         return request;
     }
 
-    static RegisterJavaUdfRequest createDefaultRegisterJavaUdfRequest() {
+    static RegisterJavaUdfRequest createDefaultRegisterJavaUdfRequest()
+    {
         auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-        return createRegisterJavaUdfRequest("my_udf",
-                                            javaUdfDescriptor->getClassName(),
-                                            javaUdfDescriptor->getMethodName(),
-                                            javaUdfDescriptor->getSerializedInstance(),
-                                            javaUdfDescriptor->getByteCodeList(),
-                                            javaUdfDescriptor->getOutputSchema(),
-                                            javaUdfDescriptor->getInputClassName(),
-                                            javaUdfDescriptor->getOutputClassName());
+        return createRegisterJavaUdfRequest(
+            "my_udf",
+            javaUdfDescriptor->getClassName(),
+            javaUdfDescriptor->getMethodName(),
+            javaUdfDescriptor->getSerializedInstance(),
+            javaUdfDescriptor->getByteCodeList(),
+            javaUdfDescriptor->getOutputSchema(),
+            javaUdfDescriptor->getInputClassName(),
+            javaUdfDescriptor->getOutputClassName());
     }
 };
 
-}// namespace NES
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_PROTOBUFMESSAGEFACTORY_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_PROTOBUFMESSAGEFACTORY_HPP_

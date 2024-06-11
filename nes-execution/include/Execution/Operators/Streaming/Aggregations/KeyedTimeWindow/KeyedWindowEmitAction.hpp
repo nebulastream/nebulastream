@@ -13,37 +13,41 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Identifiers/Identifiers.hpp>
-namespace NES::Runtime::Execution::Operators {
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief The KeyedWindowEmitAction emits keyed slices as individual windows.
  * Each key will result in an independent tuple in the result data stream.
  */
-class KeyedWindowEmitAction : public SliceMergingAction {
-  public:
-    KeyedWindowEmitAction(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
-                          const std::string startTsFieldName,
-                          const std::string endTsFieldName,
-                          const uint64_t keySize,
-                          const uint64_t valueSize,
-                          const std::vector<std::string> resultKeyFields,
-                          const std::vector<PhysicalTypePtr> keyDataTypes,
-                          const OriginId resultOriginId);
+class KeyedWindowEmitAction : public SliceMergingAction
+{
+public:
+    KeyedWindowEmitAction(
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+        const std::string startTsFieldName,
+        const std::string endTsFieldName,
+        const uint64_t keySize,
+        const uint64_t valueSize,
+        const std::vector<std::string> resultKeyFields,
+        const std::vector<PhysicalTypePtr> keyDataTypes,
+        const OriginId resultOriginId);
 
-    void emitSlice(ExecutionContext& ctx,
-                   ExecuteOperatorPtr& child,
-                   Value<UInt64>& windowStart,
-                   Value<UInt64>& windowEnd,
-                   Value<UInt64>& sequenceNumber,
-                   Value<UInt64>& chunkNumber,
-                   Value<Boolean>& lastChunk,
-                   Value<MemRef>& globalSlice) const override;
+    void emitSlice(
+        ExecutionContext & ctx,
+        ExecuteOperatorPtr & child,
+        Value<UInt64> & windowStart,
+        Value<UInt64> & windowEnd,
+        Value<UInt64> & sequenceNumber,
+        Value<UInt64> & chunkNumber,
+        Value<Boolean> & lastChunk,
+        Value<MemRef> & globalSlice) const override;
 
-  private:
+private:
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::string startTsFieldName;
     const std::string endTsFieldName;
@@ -53,6 +57,6 @@ class KeyedWindowEmitAction : public SliceMergingAction {
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const OriginId resultOriginId;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_

@@ -22,17 +22,19 @@
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class BaseEvent;
 }
-namespace NES::Network {
+namespace NES::Network
+{
 
 /**
  * @brief this class provide a zmq as data source
  */
-class NetworkSource : public DataSource {
-
-  public:
+class NetworkSource : public DataSource
+{
+public:
     /**
      * @param SchemaPtr
      * @param bufferManager
@@ -48,19 +50,20 @@ class NetworkSource : public DataSource {
      * @param uniqueNetworkSourceIdentifier system wide unique id that persists even if the partition of this source is changed
      * @param physicalSourceName
      */
-    NetworkSource(SchemaPtr schema,
-                  Runtime::BufferManagerPtr bufferManager,
-                  Runtime::QueryManagerPtr queryManager,
-                  NetworkManagerPtr networkManager,
-                  NesPartition nesPartition,
-                  NodeLocation sinkLocation,
-                  size_t numSourceLocalBuffers,
-                  std::chrono::milliseconds waitTime,
-                  uint8_t retryTimes,
-                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                  DecomposedQueryPlanVersion version,
-                  OperatorId uniqueNetworkSourceIdentifier,
-                  const std::string& physicalSourceName = "defaultPhysicalSourceName");
+    NetworkSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        NetworkManagerPtr networkManager,
+        NesPartition nesPartition,
+        NodeLocation sinkLocation,
+        size_t numSourceLocalBuffers,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+        DecomposedQueryPlanVersion version,
+        OperatorId uniqueNetworkSourceIdentifier,
+        const std::string & physicalSourceName = "defaultPhysicalSourceName");
 
     /**
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
@@ -78,7 +81,7 @@ class NetworkSource : public DataSource {
       * @brief This method is called once an event is triggered for the current source.
       * @param event
       */
-    void onEvent(Runtime::BaseEvent& event) override;
+    void onEvent(Runtime::BaseEvent & event) override;
 
     /**
      * @brief Get source type
@@ -111,27 +114,27 @@ class NetworkSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    static void runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&);
+    static void runningRoutine(const Runtime::BufferManagerPtr &, const Runtime::QueryManagerPtr &);
 
     /**
      * @brief This method is invoked when the source receives a reconfiguration message.
      * @param message the reconfiguration message
      * @param context thread context
      */
-    void reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) override;
+    void reconfigure(Runtime::ReconfigurationMessage & message, Runtime::WorkerContext & context) override;
 
     /**
      * @brief This method is invoked when the source receives a reconfiguration message.
      * @param message the reconfiguration message
      */
-    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage & message) override;
 
     /**
      * @brief API method called upon receiving an event, send event further upstream via Network Channel.
      * @param event
      * @param workerContext
      */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) override;
+    void onEvent(Runtime::BaseEvent & event, Runtime::WorkerContextRef workerContext) override;
 
     /**
      * @brief
@@ -163,13 +166,13 @@ class NetworkSource : public DataSource {
      * @param networkSourceDescriptor the new descriptor
      * @return true if the partition to be scheduled if different from the current one and the descriptor was scheduled.
      */
-    bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
+    bool scheduleNewDescriptor(const NetworkSourceDescriptor & networkSourceDescriptor);
 
     bool bind();
 
-    friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
+    friend bool operator<(const NetworkSource & lhs, const NetworkSource & rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
-  private:
+private:
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;
     NodeLocation sinkLocation;
@@ -181,6 +184,6 @@ class NetworkSource : public DataSource {
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
 };
 
-}// namespace NES::Network
+} // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSOURCE_HPP_

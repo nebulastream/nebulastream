@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -29,14 +29,17 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class EmitOperatorTest : public Testing::BaseUnitTest {
-  public:
+class EmitOperatorTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("EmitOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup EmitOperatorTest test class.");
     }
@@ -48,7 +51,8 @@ class EmitOperatorTest : public Testing::BaseUnitTest {
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
  */
-TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
+TEST_F(EmitOperatorTest, emitRecordsToRowBuffer)
+{
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -59,10 +63,11 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
     auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>((int8_t *)wc.get()), Value<MemRef>((int8_t *)&pipelineContext));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
     emitOperator.open(ctx, recordBuffer);
-    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
+    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++)
+    {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
     }
@@ -73,7 +78,8 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
     EXPECT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
 
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowMemoryLayout, buffer);
-    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
+    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++)
+    {
         EXPECT_EQ(testBuffer[i]["f1"].read<int64_t>(), i);
     }
 }
@@ -81,7 +87,8 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
 /**
  * @brief Emit operator that outputs multiple tuple buffer in row layout.
  */
-TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
+TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow)
+{
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -94,16 +101,18 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
     auto emitOperator = Emit(std::move(memoryProviderPtr));
 
     Value<UInt64> seqNumber(1_u64);
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>((int8_t *)wc.get()), Value<MemRef>((int8_t *)&pipelineContext));
     ctx.setSequenceNumber(seqNumber);
 
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
     emitOperator.open(ctx, recordBuffer);
-    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity() * 2; i++) {
+    for (uint64_t i = 0; i < rowMemoryLayout->getCapacity() * 2; i++)
+    {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
         // If we have filled a buffer, we have to increase the sequence number for now. This should be fixed with issue #4343
-        if (i == rowMemoryLayout->getCapacity()) {
+        if (i == rowMemoryLayout->getCapacity())
+        {
             seqNumber = seqNumber + 1;
             ctx.setSequenceNumber(seqNumber);
         }
@@ -118,7 +127,8 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
 /**
  * @brief Emit operator that emits a column oriented tuple buffer.
  */
-TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
+TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer)
+{
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
@@ -129,10 +139,11 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     auto pipelineContext = MockedPipelineExecutionContext();
     auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>((int8_t *)wc.get()), Value<MemRef>((int8_t *)&pipelineContext));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
     emitOperator.open(ctx, recordBuffer);
-    for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
+    for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++)
+    {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
     }
@@ -143,9 +154,10 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     EXPECT_EQ(buffer.getNumberOfTuples(), columnMemoryLayout->getCapacity());
 
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
-    for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
+    for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++)
+    {
         EXPECT_EQ(testBuffer[i]["f1"].read<int64_t>(), i);
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

@@ -15,22 +15,21 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
 
+#include <chrono>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <chrono>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical CSV source
  */
-class CsvSourceDescriptor : public SourceDescriptor {
-
-  public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      CSVSourceTypePtr csvSourceType,
-                                      const std::string& logicalSourceName,
-                                      const std::string& physicalSourceName);
+class CsvSourceDescriptor : public SourceDescriptor
+{
+public:
+    static SourceDescriptorPtr
+    create(SchemaPtr schema, CSVSourceTypePtr csvSourceType, const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     static SourceDescriptorPtr create(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
@@ -39,21 +38,19 @@ class CsvSourceDescriptor : public SourceDescriptor {
      */
     CSVSourceTypePtr getSourceConfig() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const & other) const override;
     std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
-  private:
-    explicit CsvSourceDescriptor(SchemaPtr schema,
-                                 CSVSourceTypePtr sourceConfig,
-                                 const std::string& logicalSourceName,
-                                 const std::string& physicalSourceName);
+private:
+    explicit CsvSourceDescriptor(
+        SchemaPtr schema, CSVSourceTypePtr sourceConfig, const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     CSVSourceTypePtr csvSourceType;
 };
 
 using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_

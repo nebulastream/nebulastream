@@ -15,63 +15,63 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
 
+#include <vector>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
-#include <vector>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class implements a LinkedList consisting of FixedPages
  */
-class FixedPagesLinkedList {
-  public:
+class FixedPagesLinkedList
+{
+public:
     /**
      * @brief Constructor for a FixedPagesLinkedList
      * @param fixedPagesAllocator
      * @param sizeOfRecord
      * @param pageSize
      */
-    explicit FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
-                                  size_t sizeOfRecord,
-                                  size_t pageSize,
-                                  size_t preAllocPageSizeCnt);
+    explicit FixedPagesLinkedList(
+        FixedPagesAllocator & fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is NOT thread safe
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendLocal(const uint64_t hash);
+    uint8_t * appendLocal(const uint64_t hash);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and uses a mutex
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendConcurrentUsingLocking(const uint64_t hash);
+    uint8_t * appendConcurrentUsingLocking(const uint64_t hash);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and is lockfree
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendConcurrentLockFree(const uint64_t hash);
+    uint8_t * appendConcurrentLockFree(const uint64_t hash);
 
     /**
      * @brief Returns all pages belonging to this list
      * @return Vector containing pointer to the FixedPages
      */
-    const std::vector<Nautilus::Interface::FixedPagePtr>& getPages() const;
+    const std::vector<Nautilus::Interface::FixedPagePtr> & getPages() const;
 
     /**
      * @brief debug method to print the statistics of the Linked list
      */
     std::string getStatistics();
 
-  private:
+private:
     std::atomic<uint64_t> pos;
-    FixedPagesAllocator& fixedPagesAllocator;
+    FixedPagesAllocator & fixedPagesAllocator;
     std::vector<Nautilus::Interface::FixedPagePtr> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
@@ -82,8 +82,8 @@ class FixedPagesLinkedList {
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
     std::atomic<bool> insertInProgress;
-    std::atomic<Nautilus::Interface::FixedPage*> currentPage;
+    std::atomic<Nautilus::Interface::FixedPage *> currentPage;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_

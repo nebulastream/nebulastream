@@ -15,24 +15,26 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_
 
-#include <Runtime/AbstractBufferStorage.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <mutex>
 #include <optional>
 #include <queue>
 #include <unordered_map>
-namespace NES::Runtime {
+#include <Runtime/AbstractBufferStorage.hpp>
+#include <Runtime/TupleBuffer.hpp>
+namespace NES::Runtime
+{
 
-struct BufferSorter : public std::greater<TupleBuffer> {
-    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
+struct BufferSorter : public std::greater<TupleBuffer>
+{
+    bool operator()(const TupleBuffer & lhs, const TupleBuffer & rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
 };
 
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
  */
-class BufferStorage : public AbstractBufferStorage {
-
-  public:
+class BufferStorage : public AbstractBufferStorage
+{
+public:
     /**
      * @brief Constructor, which creates a buffer storage
      */
@@ -69,12 +71,12 @@ class BufferStorage : public AbstractBufferStorage {
      */
     void removeTopElementFromQueue();
 
-  private:
+private:
     std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter> storage;
 };
 
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_

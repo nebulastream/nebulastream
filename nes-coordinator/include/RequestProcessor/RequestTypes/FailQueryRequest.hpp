@@ -14,35 +14,40 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_
 
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
-}// namespace Optimizer
+} // namespace Optimizer
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 class FailQueryRequest;
 using FailQueryRequestPtr = std::shared_ptr<FailQueryRequest>;
 
 //a response to the creator of the request
-struct FailQueryResponse : public AbstractRequestResponse {
+struct FailQueryResponse : public AbstractRequestResponse
+{
     explicit FailQueryResponse(SharedQueryId sharedQueryId) : sharedQueryId(sharedQueryId){};
     SharedQueryId sharedQueryId;
 };
 
-class FailQueryRequest : public AbstractUniRequest {
-  public:
+class FailQueryRequest : public AbstractUniRequest
+{
+public:
     /**
      * @brief Constructor
      * @param sharedQueryId: The id of the shared query that failed
@@ -50,10 +55,8 @@ class FailQueryRequest : public AbstractUniRequest {
      * @param failureReason: the failure reason
      * @param maxRetries: Maximum number of retry attempts for the request
      */
-    FailQueryRequest(SharedQueryId sharedQueryId,
-                     DecomposedQueryPlanId failedDecomposedPlanId,
-                     const std::string& failureReason,
-                     uint8_t maxRetries);
+    FailQueryRequest(
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId failedDecomposedPlanId, const std::string & failureReason, uint8_t maxRetries);
 
     /**
     * @brief creates a new FailQueryRequest object
@@ -63,18 +66,16 @@ class FailQueryRequest : public AbstractUniRequest {
     * @param maxRetries: Maximum number of retry attempts for the request
     * @return a smart pointer to the newly created object
     */
-    static FailQueryRequestPtr create(SharedQueryId sharedQueryId,
-                                      DecomposedQueryPlanId failedDecomposedQueryId,
-                                      const std::string& failureReason,
-                                      uint8_t maxRetries);
+    static FailQueryRequestPtr create(
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId failedDecomposedQueryId, const std::string & failureReason, uint8_t maxRetries);
 
-  protected:
+protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
+    void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr & storageHandler) override;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
@@ -82,21 +83,21 @@ class FailQueryRequest : public AbstractUniRequest {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr & storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
+    void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr & storageHandler) override;
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
      * @param storageHandle: The storage access handle used by the request
      * @param requiredResources: The resources required during the execution phase
      */
-    void postExecution(const StorageHandlerPtr& storageHandler) override;
+    void postExecution(const StorageHandlerPtr & storageHandler) override;
 
     /**
      * @brief Executes the request logic.
@@ -104,9 +105,9 @@ class FailQueryRequest : public AbstractUniRequest {
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr & storageHandler) override;
 
-  private:
+private:
     SharedQueryId sharedQueryId;
     DecomposedQueryPlanId decomposedQueryPlanId;
     std::string failureReason;
@@ -117,6 +118,6 @@ class FailQueryRequest : public AbstractUniRequest {
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_

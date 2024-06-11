@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <map>
 #include <string>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 // The evaluation order is as follows:
 // 1. A worker option inside coordinator.yml.
@@ -25,10 +26,12 @@ namespace NES::Configurations {
 // 4. A worker option on the command line.
 // This evaluation follows the expectation that options on the command line (including workerConfigPath)
 // overwrite options in the configuration file.
-CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, const char** argv) {
+CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, const char ** argv)
+{
     // Convert the POSIX command line arguments to a map of strings.
     std::map<std::string, std::string> commandLineParams;
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i)
+    {
         const int pos = std::string(argv[i]).find('=');
         const std::string arg{argv[i]};
         commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
@@ -39,18 +42,21 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, con
 
     // Read options from the YAML file.
     auto configPath = commandLineParams.find("--" + CONFIG_PATH);
-    if (configPath != commandLineParams.end()) {
+    if (configPath != commandLineParams.end())
+    {
         config->overwriteConfigWithYAMLFileInput(configPath->second);
     }
 
     // Load any worker configuration file that was specified in the coordinator configuration file.
-    if (config->workerConfigPath.getValue() != config->workerConfigPath.getDefaultValue()) {
+    if (config->workerConfigPath.getValue() != config->workerConfigPath.getDefaultValue())
+    {
         config->worker.overwriteConfigWithYAMLFileInput(config->workerConfigPath);
     }
 
     // Load any worker configuration file that was specified on the command line.
     auto workerConfigPath = commandLineParams.find("--" + WORKER_CONFIG_PATH);
-    if (workerConfigPath != commandLineParams.end()) {
+    if (workerConfigPath != commandLineParams.end())
+    {
         config->worker.overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
 
@@ -60,4 +66,4 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, con
     return config;
 }
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations

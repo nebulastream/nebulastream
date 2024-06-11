@@ -12,19 +12,23 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES::Join::Experimental {
+namespace NES::Join::Experimental
+{
 
-LogicalBatchJoinDescriptor::LogicalBatchJoinDescriptor(FieldAccessExpressionNodePtr keyTypeBuild,
-                                                       FieldAccessExpressionNodePtr keyTypeProbe,
-                                                       uint64_t numberOfInputEdgesLeft,
-                                                       uint64_t numberOfInputEdgesRight)
-    : keyTypeBuild(std::move(keyTypeBuild)), keyTypeProbe(std::move(keyTypeProbe)),
-      numberOfInputEdgesBuild(numberOfInputEdgesLeft), numberOfInputEdgesProbe(numberOfInputEdgesRight) {
-
+LogicalBatchJoinDescriptor::LogicalBatchJoinDescriptor(
+    FieldAccessExpressionNodePtr keyTypeBuild,
+    FieldAccessExpressionNodePtr keyTypeProbe,
+    uint64_t numberOfInputEdgesLeft,
+    uint64_t numberOfInputEdgesRight)
+    : keyTypeBuild(std::move(keyTypeBuild))
+    , keyTypeProbe(std::move(keyTypeProbe))
+    , numberOfInputEdgesBuild(numberOfInputEdgesLeft)
+    , numberOfInputEdgesProbe(numberOfInputEdgesRight)
+{
     NES_ASSERT(this->keyTypeBuild, "Invalid left join key type");
     NES_ASSERT(this->keyTypeProbe, "Invalid right join key type");
 
@@ -32,41 +36,68 @@ LogicalBatchJoinDescriptor::LogicalBatchJoinDescriptor(FieldAccessExpressionNode
     NES_ASSERT(this->numberOfInputEdgesProbe > 0, "Invalid number of right edges");
 }
 
-LogicalBatchJoinDescriptorPtr LogicalBatchJoinDescriptor::create(const FieldAccessExpressionNodePtr& keyTypeBuild,
-                                                                 const FieldAccessExpressionNodePtr& keyTypeProbe,
-                                                                 uint64_t numberOfInputEdgesLeft,
-                                                                 uint64_t numberOfInputEdgesRight) {
-    return std::make_shared<Join::Experimental::LogicalBatchJoinDescriptor>(keyTypeBuild,
-                                                                            keyTypeProbe,
-                                                                            numberOfInputEdgesLeft,
-                                                                            numberOfInputEdgesRight);
+LogicalBatchJoinDescriptorPtr LogicalBatchJoinDescriptor::create(
+    const FieldAccessExpressionNodePtr & keyTypeBuild,
+    const FieldAccessExpressionNodePtr & keyTypeProbe,
+    uint64_t numberOfInputEdgesLeft,
+    uint64_t numberOfInputEdgesRight)
+{
+    return std::make_shared<Join::Experimental::LogicalBatchJoinDescriptor>(
+        keyTypeBuild, keyTypeProbe, numberOfInputEdgesLeft, numberOfInputEdgesRight);
 }
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getBuildJoinKey() const { return keyTypeBuild; }
+FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getBuildJoinKey() const
+{
+    return keyTypeBuild;
+}
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getProbeJoinKey() const { return keyTypeProbe; }
+FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getProbeJoinKey() const
+{
+    return keyTypeProbe;
+}
 
-SchemaPtr LogicalBatchJoinDescriptor::getBuildSchema() const { return buildSchema; }
+SchemaPtr LogicalBatchJoinDescriptor::getBuildSchema() const
+{
+    return buildSchema;
+}
 
-SchemaPtr LogicalBatchJoinDescriptor::getProbeSchema() const { return probeSchema; }
+SchemaPtr LogicalBatchJoinDescriptor::getProbeSchema() const
+{
+    return probeSchema;
+}
 
-uint64_t LogicalBatchJoinDescriptor::getNumberOfInputEdgesBuild() const { return numberOfInputEdgesBuild; }
+uint64_t LogicalBatchJoinDescriptor::getNumberOfInputEdgesBuild() const
+{
+    return numberOfInputEdgesBuild;
+}
 
-uint64_t LogicalBatchJoinDescriptor::getNumberOfInputEdgesProbe() const { return numberOfInputEdgesProbe; }
+uint64_t LogicalBatchJoinDescriptor::getNumberOfInputEdgesProbe() const
+{
+    return numberOfInputEdgesProbe;
+}
 
-void LogicalBatchJoinDescriptor::updateInputSchemas(SchemaPtr buildSchema, SchemaPtr probeSchema) {
+void LogicalBatchJoinDescriptor::updateInputSchemas(SchemaPtr buildSchema, SchemaPtr probeSchema)
+{
     this->buildSchema = std::move(buildSchema);
     this->probeSchema = std::move(probeSchema);
 }
 
-void LogicalBatchJoinDescriptor::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
+void LogicalBatchJoinDescriptor::updateOutputDefinition(SchemaPtr outputSchema)
+{
+    this->outputSchema = std::move(outputSchema);
+}
 
-SchemaPtr LogicalBatchJoinDescriptor::getOutputSchema() const { return outputSchema; }
-void LogicalBatchJoinDescriptor::setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft) {
+SchemaPtr LogicalBatchJoinDescriptor::getOutputSchema() const
+{
+    return outputSchema;
+}
+void LogicalBatchJoinDescriptor::setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft)
+{
     LogicalBatchJoinDescriptor::numberOfInputEdgesBuild = numberOfInputEdgesLeft;
 }
-void LogicalBatchJoinDescriptor::setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight) {
+void LogicalBatchJoinDescriptor::setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight)
+{
     LogicalBatchJoinDescriptor::numberOfInputEdgesProbe = numberOfInputEdgesRight;
 }
 
-};// namespace NES::Join::Experimental
+}; // namespace NES::Join::Experimental

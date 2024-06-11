@@ -19,7 +19,8 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
 * @brief This expression matches a given pattern in a given String and returns true in case of a full match. For partial matches please use SearchingRegex.
@@ -28,16 +29,17 @@ namespace NES::Runtime::Execution::Expressions {
 * @param regexpPattern as TextValue the pattern to extract
 * @param caseSensitive as Boolean indicates if matching should be done case sensitive
 */
-class MatchingRegex : public Expression {
-  public:
-    MatchingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern, const ExpressionPtr& caseSensitive);
-    Value<> execute(Record& record) const override;
+class MatchingRegex : public Expression
+{
+public:
+    MatchingRegex(const ExpressionPtr & textValue, const ExpressionPtr & regexpPattern, const ExpressionPtr & caseSensitive);
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr textValue;
     const ExpressionPtr regexpPattern;
     const ExpressionPtr caseSensitive;
 };
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_MATCHINGREGEX_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_MATCHINGREGEX_HPP_

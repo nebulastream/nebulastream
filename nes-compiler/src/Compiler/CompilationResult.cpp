@@ -11,16 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/CompilationResult.hpp>
 #include <utility>
+#include <Compiler/CompilationResult.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
-CompilationResult::CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>&& timer)
-    : dynamicObject(std::move(dynamicObject)), timer(std::move(timer)) {}
+CompilationResult::CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<> && timer)
+    : dynamicObject(std::move(dynamicObject)), timer(std::move(timer))
+{
+}
 
-std::shared_ptr<DynamicObject> CompilationResult::getDynamicObject() const { return dynamicObject; }
+std::shared_ptr<DynamicObject> CompilationResult::getDynamicObject() const
+{
+    return dynamicObject;
+}
 
-uint64_t CompilationResult::getCompilationTime() const { return timer.getRuntime(); }
+uint64_t CompilationResult::getCompilationTime() const
+{
+    return timer.getRuntime();
+}
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

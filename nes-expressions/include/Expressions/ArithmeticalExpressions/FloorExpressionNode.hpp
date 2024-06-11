@@ -15,19 +15,21 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_FLOOREXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_FLOOREXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an FLOOR (floor of) expression.
  */
-class FloorExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
+class FloorExpressionNode final : public ArithmeticalUnaryExpressionNode
+{
+public:
     explicit FloorExpressionNode(DataTypePtr stamp);
     ~FloorExpressionNode() noexcept override = default;
     /**
      * @brief Create a new FLOOR expression
      */
-    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const & child);
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
@@ -43,10 +45,10 @@ class FloorExpressionNode final : public ArithmeticalUnaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  private:
-    explicit FloorExpressionNode(FloorExpressionNode* other);
+private:
+    explicit FloorExpressionNode(FloorExpressionNode * other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_FLOOREXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_FLOOREXPRESSIONNODE_HPP_

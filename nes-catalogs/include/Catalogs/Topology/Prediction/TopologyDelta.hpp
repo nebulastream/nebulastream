@@ -17,16 +17,19 @@
 #include <memory>
 #include <vector>
 
-namespace NES {
+namespace NES
+{
 class TopologyLinkInformation;
 
-namespace Experimental::TopologyPrediction {
+namespace Experimental::TopologyPrediction
+{
 /**
  * @brief this class represents a set of changes to be applied to the topology changelog for a certain point in time. It consists
  * of prediction from one or more nodes.
  */
-class TopologyDelta {
-  public:
+class TopologyDelta
+{
+public:
     /**
      * @brief constructor
      * @param added a list of edges to be added to the topology. It is the callers responsibility to ensure that this list does not
@@ -46,25 +49,25 @@ class TopologyDelta {
      * @brief return the list of added edges contained in this delta
      * @return a const reference to a vector of edges
      */
-    [[nodiscard]] const std::vector<TopologyLinkInformation>& getAdded() const;
+    [[nodiscard]] const std::vector<TopologyLinkInformation> & getAdded() const;
 
     /**
      * @brief return the list of removed edges contained in this delta
      * @return a const reference to a vector of edges
      */
-    [[nodiscard]] const std::vector<TopologyLinkInformation>& getRemoved() const;
+    [[nodiscard]] const std::vector<TopologyLinkInformation> & getRemoved() const;
 
-  private:
+private:
     /**
      * @brief obtain a string representation of a vector of edges
      * @param topologyLinks a vector of edges
      * @return a string in the format "CHILD->PARENT, CHILD->PARENT, ..."
      */
-    static std::string topologyLinkInformationListToString(const std::vector<TopologyLinkInformation>& topologyLinks);
+    static std::string topologyLinkInformationListToString(const std::vector<TopologyLinkInformation> & topologyLinks);
 
     std::vector<TopologyLinkInformation> added;
     std::vector<TopologyLinkInformation> removed;
 };
-}// namespace Experimental::TopologyPrediction
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYDELTA_HPP_
+} // namespace Experimental::TopologyPrediction
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYDELTA_HPP_

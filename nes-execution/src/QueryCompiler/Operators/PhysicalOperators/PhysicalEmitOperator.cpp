@@ -11,22 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <sstream>
 #include <utility>
-namespace NES::QueryCompilation::PhysicalOperators {
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
+PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, StatisticId statisticId, const SchemaPtr & inputSchema)
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema)
+{
+}
 
-PhysicalOperatorPtr PhysicalEmitOperator::create(StatisticId statisticId, SchemaPtr inputSchema) {
+PhysicalOperatorPtr PhysicalEmitOperator::create(StatisticId statisticId, SchemaPtr inputSchema)
+{
     return create(getNextOperatorId(), statisticId, std::move(inputSchema));
 }
-PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema) {
+PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr & inputSchema)
+{
     return std::make_shared<PhysicalEmitOperator>(id, statisticId, inputSchema);
 }
 
-std::string PhysicalEmitOperator::toString() const {
+std::string PhysicalEmitOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalEmitOperator:\n";
@@ -34,10 +40,11 @@ std::string PhysicalEmitOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalEmitOperator::copy() {
+OperatorPtr PhysicalEmitOperator::copy()
+{
     auto result = create(id, statisticId, inputSchema);
     result->addAllProperties(properties);
     return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

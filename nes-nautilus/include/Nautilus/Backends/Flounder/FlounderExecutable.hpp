@@ -17,28 +17,31 @@
 
 #include <Nautilus/Backends/Executable.hpp>
 
-namespace flounder {
+namespace flounder
+{
 class Executable;
 }
 
-namespace NES::Nautilus::Backends::Flounder {
+namespace NES::Nautilus::Backends::Flounder
+{
 
 /**
  * @brief Executable that calls into a code fragment that is compiled with Flounder.
  */
-class FlounderExecutable : public Executable {
-  public:
+class FlounderExecutable : public Executable
+{
+public:
     explicit FlounderExecutable(std::unique_ptr<flounder::Executable> engine);
     ~FlounderExecutable() noexcept override;
 
-  protected:
-    void* getInvocableFunctionPtr(const std::string& member) override;
+protected:
+    void * getInvocableFunctionPtr(const std::string & member) override;
 
-  public:
+public:
     bool hasInvocableFunctionPtr() override;
 
-  private:
+private:
     std::unique_ptr<flounder::Executable> engine;
 };
-}// namespace NES::Nautilus::Backends::Flounder
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_
+} // namespace NES::Nautilus::Backends::Flounder
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_

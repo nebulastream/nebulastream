@@ -15,32 +15,30 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
 
+#include <memory>
 #include "Configurations/BaseConfiguration.hpp"
 #include "Configurations/ConfigurationsNames.hpp"
 #include "Configurations/Validation/BooleanValidation.hpp"
 #include "Configurations/Validation/FloatValidation.hpp"
 #include "Configurations/Validation/NonZeroValidation.hpp"
-#include <memory>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 /**
  * Define all ELEGANT related configuration parameters
  */
-class ElegantConfigurations : public BaseConfiguration {
-
-  public:
+class ElegantConfigurations : public BaseConfiguration
+{
+public:
     ElegantConfigurations() : BaseConfiguration(){};
 
-    ElegantConfigurations(const std::string& name, const std::string& description) : BaseConfiguration(name, description){};
+    ElegantConfigurations(const std::string & name, const std::string & description) : BaseConfiguration(name, description){};
 
     /**
      * @brief Accelerate java UDFs.
      */
-    BoolOption accelerateJavaUDFs = {ACCELERATE_JAVA_UDFS,
-                                     "false",
-                                     "Accelerate java UDFs.",
-                                     {std::make_unique<BooleanValidation>()}};
+    BoolOption accelerateJavaUDFs = {ACCELERATE_JAVA_UDFS, "false", "Accelerate java UDFs.", {std::make_unique<BooleanValidation>()}};
 
     /**
      * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
@@ -55,15 +53,14 @@ class ElegantConfigurations : public BaseConfiguration {
     /**
      * @brief Network delay between two worker nodes in MBit/s.
      */
-    FloatOption transferRate = {TRANSFER_RATE,
-                                "100.0",
-                                "Network delay between two worker nodes in MBit/s",
-                                {std::make_unique<FloatValidation>(), std::make_unique<NonZeroValidation>()}};
+    FloatOption transferRate
+        = {TRANSFER_RATE,
+           "100.0",
+           "Network delay between two worker nodes in MBit/s",
+           {std::make_unique<FloatValidation>(), std::make_unique<NonZeroValidation>()}};
 
-  private:
-    std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&accelerateJavaUDFs, &plannerServiceURL, &transferRate};
-    }
+private:
+    std::vector<Configurations::BaseOption *> getOptions() override { return {&accelerateJavaUDFs, &plannerServiceURL, &transferRate}; }
 };
-}// namespace NES::Configurations
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
+} // namespace NES::Configurations
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_

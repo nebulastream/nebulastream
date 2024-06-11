@@ -16,7 +16,8 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 class FieldRenameExpressionNode;
 using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
@@ -24,8 +25,9 @@ using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
 /**
  * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .as in the query
  */
-class FieldRenameExpressionNode : public ExpressionNode {
-  public:
+class FieldRenameExpressionNode : public ExpressionNode
+{
+public:
     /**
      * @brief Create FieldRename Expression node
      * @param fieldName : name of the field
@@ -36,7 +38,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     static ExpressionNodePtr create(FieldAccessExpressionNodePtr originalField, std::string newFieldName);
 
     [[nodiscard]] std::string toString() const override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
 
     std::string getNewFieldName() const;
 
@@ -55,16 +57,16 @@ class FieldRenameExpressionNode : public ExpressionNode {
 
     FieldAccessExpressionNodePtr getOriginalField() const;
 
-  protected:
+protected:
     explicit FieldRenameExpressionNode(const FieldRenameExpressionNodePtr other);
 
-  private:
-    FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName);
+private:
+    FieldRenameExpressionNode(const FieldAccessExpressionNodePtr & originalField, std::string newFieldName);
 
     FieldAccessExpressionNodePtr originalField;
     std::string newFieldName;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_

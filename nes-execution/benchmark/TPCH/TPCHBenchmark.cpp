@@ -11,9 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -53,15 +52,17 @@
 #include <Util/Timer.hpp>
 #include <benchmark/benchmark.h>
 #include <gtest/gtest.h>
-#include <memory>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class BenchmarkRunner {
-  public:
-    BenchmarkRunner(TPCH_Scale_Factor targetScaleFactor, std::string compiler)
-        : targetScaleFactor(targetScaleFactor), compiler(compiler) {
-
+class BenchmarkRunner
+{
+public:
+    BenchmarkRunner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : targetScaleFactor(targetScaleFactor), compiler(compiler)
+    {
         NES::Logger::setupLogging("BenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
         provider = ExecutablePipelineProviderRegistry::getPlugin(compiler).get();
         table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
@@ -72,34 +73,35 @@ class BenchmarkRunner {
         options.setDumpToFile(false);
         options.setDumpToConsole(true);
     }
-    void run() {
+    void run()
+    {
         double sumCompilation = 0;
         double sumExecution = 0;
-        for (uint64_t i = 0; i < iterations; i++) {
+        for (uint64_t i = 0; i < iterations; i++)
+        {
             Timer compileTimeTimer("Compilation");
             Timer executionTimeTimer("Execution");
             runQuery(compileTimeTimer, executionTimeTimer);
             sumCompilation += compileTimeTimer.getPrintTime();
             sumExecution += executionTimeTimer.getPrintTime();
-            NES_INFO("Run {} compilation time {}, execution time {}",
-                     i,
-                     compileTimeTimer.getPrintTime(),
-                     executionTimeTimer.getPrintTime());
+            NES_INFO(
+                "Run {} compilation time {}, execution time {}", i, compileTimeTimer.getPrintTime(), executionTimeTimer.getPrintTime());
         }
 
-        NES_INFO("Final {} compilation time {}, execution time {} ",
-                 compiler,
-                 (sumCompilation / (double) iterations),
-                 (sumExecution / (double) iterations));
+        NES_INFO(
+            "Final {} compilation time {}, execution time {} ",
+            compiler,
+            (sumCompilation / (double)iterations),
+            (sumExecution / (double)iterations));
     };
     virtual ~BenchmarkRunner() = default;
-    virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) = 0;
+    virtual void runQuery(Timer<> & compileTimeTimer, Timer<> & executionTimeTimer) = 0;
 
-  protected:
+protected:
     uint64_t iterations = 10;
     TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F1;
     std::string compiler;
-    ExecutablePipelineProvider* provider;
+    ExecutablePipelineProvider * provider;
     Nautilus::CompilationOptions options;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
@@ -107,11 +109,13 @@ class BenchmarkRunner {
     std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 };
 
-class Query6Runner : public BenchmarkRunner {
-  public:
+class Query6Runner : public BenchmarkRunner
+{
+public:
     Query6Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
-        auto& lineitems = tables[TPCHTable::LineItem];
+    void runQuery(Timer<> & compileTimeTimer, Timer<> & executionTimeTimer) override
+    {
+        auto & lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query6::getPipelinePlan(tables, bm);
         compileTimeTimer.start();
         auto pipeline1 = plan.getPipeline(0);
@@ -123,7 +127,8 @@ class Query6Runner : public BenchmarkRunner {
         compileTimeTimer.snapshot("setup");
         compileTimeTimer.pause();
         executionTimeTimer.start();
-        for (auto& chunk : lineitems->getChunks()) {
+        for (auto & chunk : lineitems->getChunks())
+        {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
         executionTimeTimer.snapshot("execute agg");
@@ -136,12 +141,14 @@ class Query6Runner : public BenchmarkRunner {
     }
 };
 
-class Query1Runner : public BenchmarkRunner {
-  public:
+class Query1Runner : public BenchmarkRunner
+{
+public:
     Query1Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
-        auto& lineitems = tables[TPCHTable::LineItem];
+    void runQuery(Timer<> & compileTimeTimer, Timer<> & executionTimeTimer) override
+    {
+        auto & lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query1::getPipelinePlan(tables, bm);
         compileTimeTimer.start();
         auto pipeline1 = plan.getPipeline(0);
@@ -150,7 +157,8 @@ class Query1Runner : public BenchmarkRunner {
         compileTimeTimer.snapshot("setup");
         compileTimeTimer.pause();
         executionTimeTimer.start();
-        for (auto& chunk : lineitems->getChunks()) {
+        for (auto & chunk : lineitems->getChunks())
+        {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
         executionTimeTimer.snapshot("execute agg");
@@ -159,14 +167,16 @@ class Query1Runner : public BenchmarkRunner {
     }
 };
 
-class Query3Runner : public BenchmarkRunner {
-  public:
+class Query3Runner : public BenchmarkRunner
+{
+public:
     Query3Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
-        auto& customers = tables[TPCHTable::Customer];
-        auto& orders = tables[TPCHTable::Orders];
-        auto& lineitems = tables[TPCHTable::LineItem];
+    void runQuery(Timer<> & compileTimeTimer, Timer<> & executionTimeTimer) override
+    {
+        auto & customers = tables[TPCHTable::Customer];
+        auto & orders = tables[TPCHTable::Orders];
+        auto & lineitems = tables[TPCHTable::LineItem];
 
         auto plan = TPCH_Query3::getPipelinePlan(tables, bm);
 
@@ -185,21 +195,24 @@ class Query3Runner : public BenchmarkRunner {
         compileTimeTimer.pause();
 
         executionTimeTimer.start();
-        for (auto& chunk : customers->getChunks()) {
+        for (auto & chunk : customers->getChunks())
+        {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
         auto joinHandler = pipeline1.ctx->getOperatorHandler<BatchJoinHandler>(0);
         auto numberOfKeys = joinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
         joinHandler->mergeState();
 
-        for (auto& chunk : orders->getChunks()) {
+        for (auto & chunk : orders->getChunks())
+        {
             orderCustomersJoinBuildPipeline->execute(chunk, *pipeline2.ctx, *wc);
         }
         auto joinHandler2 = pipeline2.ctx->getOperatorHandler<BatchJoinHandler>(1);
         auto numberOfKeys2 = joinHandler2->getThreadLocalState(wc->getId())->getNumberOfEntries();
         joinHandler2->mergeState();
 
-        for (auto& chunk : lineitems->getChunks()) {
+        for (auto & chunk : lineitems->getChunks())
+        {
             lineitems_ordersJoinBuildPipeline->execute(chunk, *pipeline3.ctx, *wc);
         }
         executionTimeTimer.pause();
@@ -210,12 +223,14 @@ class Query3Runner : public BenchmarkRunner {
     }
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-int main(int, char**) {
+int main(int, char **)
+{
     NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F0_01;
     std::vector<std::string> compilers = {"PipelineCompiler", "CPPPipelineCompiler"};
-    for (const auto& c : compilers) {
+    for (const auto & c : compilers)
+    {
         NES::Runtime::Execution::Query6Runner(targetScaleFactor, c).run();
     }
 }

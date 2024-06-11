@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <string>
+#include <utility>
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/Parsers/NESBinaryParser.hpp>
@@ -20,29 +21,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <absl/numeric/bits.h>
 #include <absl/types/span.h>
-#include <string>
-#include <utility>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-NESBinaryParser::NESBinaryParser() : Parser({}) {}
+NESBinaryParser::NESBinaryParser() : Parser({})
+{
+}
 
 #ifdef NES_DEBUG_MODE
 /**
  * NES Binary Format is only implemented for schemas without any varsized fields
  */
-static void assertValidMemoryLayout(const Runtime::MemoryLayouts::MemoryLayout& layout) {
-    for (const auto& type : layout.getPhysicalTypes()) {
+static void assertValidMemoryLayout(const Runtime::MemoryLayouts::MemoryLayout & layout)
+{
+    for (const auto & type : layout.getPhysicalTypes())
+    {
         NES_ASSERT(!type->type->isText(), "NES Binary Parser is not implemented for Text Data");
     }
 }
 #endif
 
-bool NESBinaryParser::writeInputTupleToTupleBuffer(std::string_view binaryBuffer,
-                                                   uint64_t,
-                                                   Runtime::MemoryLayouts::TestTupleBuffer& dynamicBuffer,
-                                                   const SchemaPtr& schema,
-                                                   const Runtime::BufferManagerPtr&) {
+bool NESBinaryParser::writeInputTupleToTupleBuffer(
+    std::string_view binaryBuffer,
+    uint64_t,
+    Runtime::MemoryLayouts::TestTupleBuffer & dynamicBuffer,
+    const SchemaPtr & schema,
+    const Runtime::BufferManagerPtr &)
+{
 #ifdef NES_DEBUG_MODE
     NES_ASSERT(binaryBuffer.size() % schema->getSchemaSizeInBytes() == 0, "Buffer size does not match expected buffer size");
     NES_ASSERT(binaryBuffer.size() <= dynamicBuffer.getBuffer().getBufferSize(), "Buffer size missmatch");
@@ -52,4 +59,4 @@ bool NESBinaryParser::writeInputTupleToTupleBuffer(std::string_view binaryBuffer
     dynamicBuffer.getBuffer().setNumberOfTuples(binaryBuffer.size() / schema->getSchemaSizeInBytes());
     return true;
 }
-}// namespace NES
+} // namespace NES

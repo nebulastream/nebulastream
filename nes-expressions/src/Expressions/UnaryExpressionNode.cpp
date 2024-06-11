@@ -12,14 +12,25 @@
     limitations under the License.
 */
 
-#include <Expressions/UnaryExpressionNode.hpp>
 #include <utility>
+#include <Expressions/UnaryExpressionNode.hpp>
 
-namespace NES {
-UnaryExpressionNode::UnaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
+namespace NES
+{
+UnaryExpressionNode::UnaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp))
+{
+}
 
-UnaryExpressionNode::UnaryExpressionNode(UnaryExpressionNode* other) : ExpressionNode(other) {}
+UnaryExpressionNode::UnaryExpressionNode(UnaryExpressionNode * other) : ExpressionNode(other)
+{
+}
 
-void UnaryExpressionNode::setChild(const ExpressionNodePtr& child) { addChildWithEqual(child); }
-ExpressionNodePtr UnaryExpressionNode::child() const { return children[0]->as<ExpressionNode>(); }
-}// namespace NES
+void UnaryExpressionNode::setChild(const ExpressionNodePtr & child)
+{
+    addChildWithEqual(child);
+}
+ExpressionNodePtr UnaryExpressionNode::child() const
+{
+    return children[0]->as<ExpressionNode>();
+}
+} // namespace NES

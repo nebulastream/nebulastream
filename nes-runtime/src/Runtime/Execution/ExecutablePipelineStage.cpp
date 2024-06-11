@@ -12,20 +12,39 @@
     limitations under the License.
 */
 
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <string>
-namespace NES::Runtime::Execution {
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+namespace NES::Runtime::Execution
+{
 
-uint32_t ExecutablePipelineStage::setup(PipelineExecutionContext&) { return 0; }
+uint32_t ExecutablePipelineStage::setup(PipelineExecutionContext &)
+{
+    return 0;
+}
 
-uint32_t ExecutablePipelineStage::start(PipelineExecutionContext&) { return 0; }
+uint32_t ExecutablePipelineStage::start(PipelineExecutionContext &)
+{
+    return 0;
+}
 
-uint32_t ExecutablePipelineStage::open(PipelineExecutionContext&, WorkerContext&) { return 0; }
+uint32_t ExecutablePipelineStage::open(PipelineExecutionContext &, WorkerContext &)
+{
+    return 0;
+}
 
-uint32_t ExecutablePipelineStage::close(PipelineExecutionContext&, WorkerContext&) { return 0; }
+uint32_t ExecutablePipelineStage::close(PipelineExecutionContext &, WorkerContext &)
+{
+    return 0;
+}
 
-uint32_t ExecutablePipelineStage::stop(PipelineExecutionContext&) { return 0; }
+uint32_t ExecutablePipelineStage::stop(PipelineExecutionContext &)
+{
+    return 0;
+}
 
-std::string ExecutablePipelineStage::getCodeAsString() { return ""; };
+std::string ExecutablePipelineStage::getCodeAsString()
+{
+    return "";
+};
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

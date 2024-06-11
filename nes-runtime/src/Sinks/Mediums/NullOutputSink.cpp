@@ -12,38 +12,51 @@
     limitations under the License.
 */
 
+#include <sstream>
+#include <string>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sstream>
-#include <string>
 
-namespace NES {
-NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
-                               uint32_t numOfProducers,
-                               SharedQueryId sharedQueryId,
-                               DecomposedQueryPlanId decomposedQueryPlanId,
-                               uint64_t numberOfOrigins)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins) {}
+namespace NES
+{
+NullOutputSink::NullOutputSink(
+    Runtime::NodeEnginePtr nodeEngine,
+    uint32_t numOfProducers,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    uint64_t numberOfOrigins)
+    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins)
+{
+}
 
 NullOutputSink::~NullOutputSink() = default;
 
-SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
+SinkMediumTypes NullOutputSink::getSinkMediumType()
+{
+    return SinkMediumTypes::NULL_SINK;
+}
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) { return true; }
+bool NullOutputSink::writeData(Runtime::TupleBuffer &, Runtime::WorkerContextRef)
+{
+    return true;
+}
 
-std::string NullOutputSink::toString() const {
+std::string NullOutputSink::toString() const
+{
     std::stringstream ss;
     ss << "NULL_SINK(";
     ss << ")";
     return ss.str();
 }
 
-void NullOutputSink::setup() {
+void NullOutputSink::setup()
+{
     // currently not required
 }
-void NullOutputSink::shutdown() {
+void NullOutputSink::shutdown()
+{
     // currently not required
 }
 
-}// namespace NES
+} // namespace NES

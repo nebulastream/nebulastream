@@ -17,24 +17,26 @@
 
 #include <Statistics/Statistic.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief In the future, we might can/must/have some shared functionality between all Statistics that are a Synopsis.
  * For now, it is purely a placeholder
  */
-class SynopsesStatistic : public Statistic {
-  public:
+class SynopsesStatistic : public Statistic
+{
+public:
     /**
      * @brief Merges this Synopsis with other. The actual implementation heavily depends on the underlying synopsis
      * @param other
      */
-    virtual void merge(const SynopsesStatistic& other) = 0;
+    virtual void merge(const SynopsesStatistic & other) = 0;
 
-  protected:
-    SynopsesStatistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples);
+protected:
+    SynopsesStatistic(const Windowing::TimeMeasure & startTs, const Windowing::TimeMeasure & endTs, uint64_t observedTuples);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_SYNOPSESSTATISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_SYNOPSESSTATISTIC_HPP_

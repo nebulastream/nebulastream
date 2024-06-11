@@ -18,19 +18,25 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Nautilus::Interface {
-FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef) : fixedPageRef(fixedPageRef) {}
+namespace NES::Nautilus::Interface
+{
+FixedPageRef::FixedPageRef(const Value<MemRef> & fixedPageRef) : fixedPageRef(fixedPageRef)
+{
+}
 
-void addHashToBloomFilterProxy(void* fixedPagePtr, uint64_t hash) {
-    auto* fixedPage = (FixedPage*) fixedPagePtr;
+void addHashToBloomFilterProxy(void * fixedPagePtr, uint64_t hash)
+{
+    auto * fixedPage = (FixedPage *)fixedPagePtr;
     fixedPage->addHashToBloomFilter(hash);
 }
 
-Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64>& hash) {
+Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64> & hash)
+{
     auto currentPos = getCurrentPos();
 
     Value<MemRef> entry(nullptr);
-    if (currentPos < getCapacity()) {
+    if (currentPos < getCapacity())
+    {
         //TODO replace FunctionCall with Nautilus alternative, see #4176
         FunctionCall("addHashToBloomFilterProxy", addHashToBloomFilterProxy, fixedPageRef, hash);
 
@@ -42,40 +48,70 @@ Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64>& hash) {
     return entry;
 }
 
-Value<UInt64> FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord).load<UInt64>(); }
+Value<UInt64> FixedPageRef::getSizeOfRecord()
+{
+    return getMember(fixedPageRef, FixedPage, sizeOfRecord).load<UInt64>();
+}
 
-Value<MemRef> FixedPageRef::getDataPtr() { return getMember(fixedPageRef, FixedPage, data).load<MemRef>(); }
+Value<MemRef> FixedPageRef::getDataPtr()
+{
+    return getMember(fixedPageRef, FixedPage, data).load<MemRef>();
+}
 
-Value<UInt64> FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos).load<UInt64>(); }
+Value<UInt64> FixedPageRef::getCurrentPos()
+{
+    return getMember(fixedPageRef, FixedPage, currentPos).load<UInt64>();
+}
 
-Value<UInt64> FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity).load<UInt64>(); }
+Value<UInt64> FixedPageRef::getCapacity()
+{
+    return getMember(fixedPageRef, FixedPage, capacity).load<UInt64>();
+}
 
-void FixedPageRef::setCurrentPos(const Value<>& pos) { getMember(fixedPageRef, FixedPage, currentPos).store(pos); }
+void FixedPageRef::setCurrentPos(const Value<> & pos)
+{
+    getMember(fixedPageRef, FixedPage, currentPos).store(pos);
+}
 
-FixedPageRefIter FixedPageRef::begin() { return at(0_u64); }
+FixedPageRefIter FixedPageRef::begin()
+{
+    return at(0_u64);
+}
 
-FixedPageRefIter FixedPageRef::at(const Value<UInt64>& pos) {
+FixedPageRefIter FixedPageRef::at(const Value<UInt64> & pos)
+{
     FixedPageRefIter fixedPageRefIter(*this);
     fixedPageRefIter.addr = fixedPageRefIter.addr + pos * getSizeOfRecord();
     return fixedPageRefIter;
 }
 
-FixedPageRefIter FixedPageRef::end() { return at(this->getCurrentPos()); }
+FixedPageRefIter FixedPageRef::end()
+{
+    return at(this->getCurrentPos());
+}
 
-bool FixedPageRef::operator==(const FixedPageRef& other) const {
-    if (this == &other) {
+bool FixedPageRef::operator==(const FixedPageRef & other) const
+{
+    if (this == &other)
+    {
         return true;
     }
 
     return fixedPageRef == other.fixedPageRef;
 }
 
-FixedPageRefIter::FixedPageRefIter(FixedPageRef& fixedPageRef) : addr(fixedPageRef.getDataPtr()), fixedPageRef(fixedPageRef) {}
+FixedPageRefIter::FixedPageRefIter(FixedPageRef & fixedPageRef) : addr(fixedPageRef.getDataPtr()), fixedPageRef(fixedPageRef)
+{
+}
 
-FixedPageRefIter::FixedPageRefIter(const FixedPageRefIter& it) : addr(it.addr), fixedPageRef(it.fixedPageRef) {}
+FixedPageRefIter::FixedPageRefIter(const FixedPageRefIter & it) : addr(it.addr), fixedPageRef(it.fixedPageRef)
+{
+}
 
-FixedPageRefIter& FixedPageRefIter::operator=(const FixedPageRefIter& it) {
-    if (this == &it) {
+FixedPageRefIter & FixedPageRefIter::operator=(const FixedPageRefIter & it)
+{
+    if (this == &it)
+    {
         return *this;
     }
 
@@ -84,21 +120,28 @@ FixedPageRefIter& FixedPageRefIter::operator=(const FixedPageRefIter& it) {
     return *this;
 }
 
-Value<MemRef> FixedPageRefIter::operator*() { return addr; }
+Value<MemRef> FixedPageRefIter::operator*()
+{
+    return addr;
+}
 
-FixedPageRefIter& FixedPageRefIter::operator++() {
+FixedPageRefIter & FixedPageRefIter::operator++()
+{
     addr = addr + fixedPageRef.getSizeOfRecord();
     return *this;
 }
 
-FixedPageRefIter FixedPageRefIter::operator++(int) {
+FixedPageRefIter FixedPageRefIter::operator++(int)
+{
     FixedPageRefIter copy = *this;
     addr = addr + fixedPageRef.getSizeOfRecord();
     return copy;
 }
 
-bool FixedPageRefIter::operator==(const FixedPageRefIter& other) const {
-    if (this == &other) {
+bool FixedPageRefIter::operator==(const FixedPageRefIter & other) const
+{
+    if (this == &other)
+    {
         return true;
     }
 
@@ -107,5 +150,8 @@ bool FixedPageRefIter::operator==(const FixedPageRefIter& other) const {
     return sameAddress && sameFixedPageRef;
 }
 
-bool FixedPageRefIter::operator!=(const FixedPageRefIter& other) const { return !(*this == other); }
-}// namespace NES::Nautilus::Interface
+bool FixedPageRefIter::operator!=(const FixedPageRefIter & other) const
+{
+    return !(*this == other);
+}
+} // namespace NES::Nautilus::Interface

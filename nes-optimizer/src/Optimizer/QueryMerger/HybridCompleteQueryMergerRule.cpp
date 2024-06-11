@@ -25,20 +25,25 @@
 #include <Util/QuerySignatureContext.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-HybridCompleteQueryMergerRule::HybridCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule(), context(context) {
+HybridCompleteQueryMergerRule::HybridCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule(), context(context)
+{
     signatureEqualityUtil = SignatureEqualityUtil::create(context);
 }
 
-HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::ContextPtr context) {
+HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::ContextPtr context)
+{
     return std::make_shared<HybridCompleteQueryMergerRule>(HybridCompleteQueryMergerRule(std::move(context)));
 }
 
-bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan)
+{
     NES_INFO("HybridCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
-    if (queryPlansToAdd.empty()) {
+    if (queryPlansToAdd.empty())
+    {
         NES_WARNING("HybridCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
@@ -46,12 +51,13 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_DEBUG("HybridCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
-    for (const auto& targetQueryPlan : queryPlansToAdd) {
+    for (const auto & targetQueryPlan : queryPlansToAdd)
+    {
         bool matched = false;
-        auto hostSharedQueryPlans =
-            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
-                                                                                     targetQueryPlan->getPlacementStrategy());
-        for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
+        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(
+            targetQueryPlan->getSourceConsumed(), targetQueryPlan->getPlacementStrategy());
+        for (auto & hostSharedQueryPlan : hostSharedQueryPlans)
+        {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             auto hostHashSignature = hostSharedQueryPlan->getHashBasedSignature();
             // Prepare a map of matching address and target sink global query nodes
@@ -65,39 +71,43 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             auto targetSignatureStringValue = *targetHashSignature.begin()->second.begin();
 
             //Check if the host and target sink operator signatures match each other
-            if (hostHashSignature.find(targetSignatureHashValue) != hostHashSignature.end()) {
+            if (hostHashSignature.find(targetSignatureHashValue) != hostHashSignature.end())
+            {
                 auto hostSignatureStringValues = hostHashSignature[targetSignatureHashValue];
-                auto match = std::find_if(hostSignatureStringValues.begin(),
-                                          hostSignatureStringValues.end(),
-                                          [&](const std::string& hostSignatureStringValue) {
-                                              return hostSignatureStringValue == targetSignatureStringValue;
-                                          });
-                if (match != hostSignatureStringValues.end()) {
+                auto match = std::find_if(
+                    hostSignatureStringValues.begin(),
+                    hostSignatureStringValues.end(),
+                    [&](const std::string & hostSignatureStringValue) { return hostSignatureStringValue == targetSignatureStringValue; });
+                if (match != hostSignatureStringValues.end())
+                {
                     targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSharedQueryPlan->getSinkOperators()[0];
                     foundMatch = true;
                 }
             }
 
             //If matches are not found then use Z3 for equality check
-            if (!foundMatch) {
+            if (!foundMatch)
+            {
                 //Iterate over all sink operators and then infer Z3 signature
                 auto hostSinkOperators = hostQueryPlan->getSinkOperators();
-                for (auto& hostSinkOperator : hostSinkOperators) {
+                for (auto & hostSinkOperator : hostSinkOperators)
+                {
                     hostSinkOperator->inferZ3Signature(context);
                 }
 
                 targetSinkOperators[0]->inferZ3Signature(context);
                 //Fetch any sink operator from the host query plan and compare
                 // With the target sink operator's Z3 Signature
-                if (signatureEqualityUtil->checkEquality(targetSinkOperators[0]->getZ3Signature(),
-                                                         hostSinkOperators[0]->getZ3Signature())) {
+                if (signatureEqualityUtil->checkEquality(targetSinkOperators[0]->getZ3Signature(), hostSinkOperators[0]->getZ3Signature()))
+                {
                     targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSinkOperators[0];
                     foundMatch = true;
                 }
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata
-            if (foundMatch) {
+            if (foundMatch)
+            {
                 NES_TRACE("HybridCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 //Compute matched operator pairs
@@ -105,11 +115,13 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                 matchedOperatorPairs.reserve(targetToHostSinkOperatorMap.size());
 
                 //Iterate over all matched pairs of sink operators and merge the query plan
-                for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
+                for (auto & [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap)
+                {
                     //add to the matched pair
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperator>(),
-                                                                                  targetSinkOperator->as<LogicalOperator>(),
-                                                                                  ContainmentRelationship::EQUALITY));
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(
+                        hostSinkOperator->as<LogicalOperator>(),
+                        targetSinkOperator->as<LogicalOperator>(),
+                        ContainmentRelationship::EQUALITY));
                 }
 
                 //add matched operators to the host shared query plan
@@ -123,7 +135,8 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             }
         }
 
-        if (!matched) {
+        if (!matched)
+        {
             NES_DEBUG("HybridCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
@@ -132,4 +145,4 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

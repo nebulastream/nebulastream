@@ -12,23 +12,29 @@
     limitations under the License.
 */
 
+#include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 
-namespace NES {
-LogicalBinaryExpressionNode::LogicalBinaryExpressionNode()
-    : BinaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
+namespace NES
+{
+LogicalBinaryExpressionNode::LogicalBinaryExpressionNode() : BinaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode()
+{
+}
 
-LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other)
-    : BinaryExpressionNode(other), LogicalExpressionNode() {}
+LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(LogicalBinaryExpressionNode * other)
+    : BinaryExpressionNode(other), LogicalExpressionNode()
+{
+}
 
-bool LogicalBinaryExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalBinaryExpressionNode>()) {
+bool LogicalBinaryExpressionNode::equal(NodePtr const & rhs) const
+{
+    if (rhs->instanceOf<LogicalBinaryExpressionNode>())
+    {
         auto other = rhs->as<LogicalBinaryExpressionNode>();
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
     return false;
 }
 
-}// namespace NES
+} // namespace NES

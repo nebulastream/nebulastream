@@ -19,13 +19,14 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Benchmark::DataProvision {
+namespace NES::Benchmark::DataProvision
+{
 /**
  * @brief This class inherits from DataProvider. The internal provider ingests the generated data as quickly as possible.
  */
-class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
-
-  public:
+class InternalProvider : public DataProvider, public Runtime::BufferRecycler
+{
+public:
     /**
      * @brief creates an InternalProvider
      * @param id
@@ -43,7 +44,7 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
      * @brief returns a reference to preAllocatedBuffers
      * @return preAllocatedBuffers
      */
-    std::vector<Runtime::TupleBuffer>& getPreAllocatedBuffers();
+    std::vector<Runtime::TupleBuffer> & getPreAllocatedBuffers();
 
     /**
      * @brief overrides readNextBuffer by providing the next buffer to be added to the caller
@@ -56,13 +57,13 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
      * @brief overrides the recyclePooledBuffer interface. We have nothing to add in this class
      * @param buffer
      */
-    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) override;
+    void recyclePooledBuffer(Runtime::detail::MemorySegment * buffer) override;
 
     /**
      * @brief overrides the recycleUnpooledBuffer interface. We have nothing to add in this class
      * @param buffer
      */
-    void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(Runtime::detail::MemorySegment * buffer) override;
 
     /**
      * @brief overrides the start function. We have nothing to add in this class
@@ -74,11 +75,11 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void stop() override;
 
-  private:
+private:
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
     uint64_t currentlyEmittedBuffer = 0;
     bool started = false;
 };
-}// namespace NES::Benchmark::DataProvision
+} // namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_INTERNALPROVIDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_INTERNALPROVIDER_HPP_

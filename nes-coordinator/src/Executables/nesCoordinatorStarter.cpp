@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <vector>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
-#include <iostream>
-#include <vector>
 
 using namespace NES;
 using namespace std;
@@ -35,8 +35,10 @@ const string coordinator = "\n"
                            "▒█░░░ █░░█ █░░█ █▄▄▀ █░░█ ▀█▀ █░░█ █▄▄█ ░░█░░ █░░█ █▄▄▀ \n"
                            "▒█▄▄█ ▀▀▀▀ ▀▀▀▀ ▀░▀▀ ▀▀▀░ ▀▀▀ ▀░░▀ ▀░░▀ ░░▀░░ ▀▀▀▀ ▀░▀▀";
 
-int main(int argc, const char* argv[]) {
-    try {
+int main(int argc, const char * argv[])
+{
+    try
+    {
         std::cout << logo << std::endl;
         std::cout << coordinator << " v" << NES_VERSION << std::endl;
         NES::Logger::setupLogging("nesCoordinatorStarter.log", NES::LogLevel::LOG_DEBUG);
@@ -50,17 +52,24 @@ int main(int argc, const char* argv[]) {
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
 
         NES_INFO("Starting Coordinator");
-        crd->startCoordinator(/**blocking**/ true);//This is a blocking call
+        crd->startCoordinator(/**blocking**/ true); //This is a blocking call
         NES_INFO("Stopping Coordinator");
         crd->stopCoordinator(true);
-    } catch (std::exception& exp) {
+    }
+    catch (std::exception & exp)
+    {
         NES_ERROR("Problem with coordinator: {}", exp.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         NES_ERROR("Unknown exception was thrown");
-        try {
+        try
+        {
             std::rethrow_exception(std::current_exception());
-        } catch (std::exception& ex) {
+        }
+        catch (std::exception & ex)
+        {
             NES_ERROR("{}", ex.what());
         }
         return 1;

@@ -15,20 +15,22 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDERCSV_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDERCSV_HPP_
 
-#include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <vector>
+#include <Mobility/LocationProviders/LocationProvider.hpp>
 
-namespace NES::Spatial::Mobility::Experimental {
+namespace NES::Spatial::Mobility::Experimental
+{
 
 /**
  * @brief this class reads locations and timestamps from a csv file and simulates the behaviour of a geolocation interface
  * of a mobile device
  */
-class LocationProviderCSV : public LocationProvider {
-  public:
-    explicit LocationProviderCSV(const std::string& csvPath);
+class LocationProviderCSV : public LocationProvider
+{
+public:
+    explicit LocationProviderCSV(const std::string & csvPath);
 
-    explicit LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime);
+    explicit LocationProviderCSV(const std::string & csvPath, Timestamp simulatedStartTime);
 
     /**
      *
@@ -44,7 +46,7 @@ class LocationProviderCSV : public LocationProvider {
     //todo: #2951: change return type
     [[nodiscard]] DataTypes::Experimental::Waypoint getCurrentWaypoint() override;
 
-  private:
+private:
     /**
      * @brief reads waypoints representing simulated device locations from a csv in the format
      * "<latitude>, <longitued>; <offset from starttime in nanosec>".
@@ -64,6 +66,6 @@ class LocationProviderCSV : public LocationProvider {
     size_t nextWaypointIndex = 0;
     std::string csvPath;
 };
-}// namespace NES::Spatial::Mobility::Experimental
+} // namespace NES::Spatial::Mobility::Experimental
 
-#endif// NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDERCSV_HPP_
+#endif // NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDERCSV_HPP_

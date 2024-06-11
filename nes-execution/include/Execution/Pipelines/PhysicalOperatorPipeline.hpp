@@ -14,13 +14,15 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_PHYSICALOPERATORPIPELINE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_PHYSICALOPERATORPIPELINE_HPP_
 #include <Execution/Operators/Operator.hpp>
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
 /**
  * @brief The physical operator pipeline captures a set of operators within a pipeline.
  */
-class PhysicalOperatorPipeline {
-  public:
+class PhysicalOperatorPipeline
+{
+public:
     /**
      * @brief Sets the root operator of an pipeline.
      * @param rootOperator
@@ -33,10 +35,10 @@ class PhysicalOperatorPipeline {
      */
     Operators::OperatorPtr getRootOperator() const;
 
-  private:
+private:
     Operators::OperatorPtr rootOperator;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_PHYSICALOPERATORPIPELINE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_PHYSICALOPERATORPIPELINE_HPP_

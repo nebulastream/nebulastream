@@ -11,36 +11,37 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalLimitOperator::PhysicalLimitOperator(OperatorId id,
-                                             StatisticId statisticId,
-                                             SchemaPtr inputSchema,
-                                             SchemaPtr outputSchema,
-                                             uint64_t limit)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
-      limit(limit) {}
+PhysicalLimitOperator::PhysicalLimitOperator(
+    OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit)
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)), limit(limit)
+{
+}
 
-PhysicalOperatorPtr PhysicalLimitOperator::create(OperatorId id,
-                                                  StatisticId statisticId,
-                                                  const SchemaPtr& inputSchema,
-                                                  const SchemaPtr& outputSchema,
-                                                  uint64_t limit) {
+PhysicalOperatorPtr PhysicalLimitOperator::create(
+    OperatorId id, StatisticId statisticId, const SchemaPtr & inputSchema, const SchemaPtr & outputSchema, uint64_t limit)
+{
     return std::make_shared<PhysicalLimitOperator>(id, statisticId, inputSchema, outputSchema, limit);
 }
 
-uint64_t PhysicalLimitOperator::getLimit() { return limit; }
+uint64_t PhysicalLimitOperator::getLimit()
+{
+    return limit;
+}
 
-PhysicalOperatorPtr
-PhysicalLimitOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit) {
+PhysicalOperatorPtr PhysicalLimitOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit)
+{
     return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), limit);
 }
 
-std::string PhysicalLimitOperator::toString() const {
+std::string PhysicalLimitOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalLimitOperator:\n";
@@ -50,6 +51,9 @@ std::string PhysicalLimitOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalLimitOperator::copy() { return create(id, statisticId, inputSchema, outputSchema, limit); }
+OperatorPtr PhysicalLimitOperator::copy()
+{
+    return create(id, statisticId, inputSchema, outputSchema, limit);
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

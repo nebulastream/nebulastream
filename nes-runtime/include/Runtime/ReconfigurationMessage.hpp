@@ -15,15 +15,16 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 
+#include <any>
+#include <atomic>
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
-#include <any>
-#include <atomic>
-#include <memory>
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 class Reconfigurable;
 using ReconfigurablePtr = std::shared_ptr<Reconfigurable>;
@@ -32,10 +33,11 @@ using ReconfigurablePtr = std::shared_ptr<Reconfigurable>;
  * @brief this class contains the description of the reconfiguration that
  * must be carried out
  */
-class ReconfigurationMessage {
+class ReconfigurationMessage
+{
     using ThreadBarrierPtr = std::unique_ptr<ThreadBarrier>;
 
-  public:
+public:
     /**
      * @brief create a reconfiguration task that will be used to kickstart the reconfiguration process
      * @param parentPlanId the owning plan id
@@ -43,13 +45,20 @@ class ReconfigurationMessage {
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
-    explicit ReconfigurationMessage(const SharedQueryId sharedQueryId,
-                                    const DecomposedQueryPlanId parentPlanId,
-                                    ReconfigurationType type,
-                                    ReconfigurablePtr instance = nullptr,
-                                    std::any&& userdata = nullptr)
-        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), sharedQueryId(sharedQueryId),
-          parentPlanId(parentPlanId), userdata(std::move(userdata)) {
+    explicit ReconfigurationMessage(
+        const SharedQueryId sharedQueryId,
+        const DecomposedQueryPlanId parentPlanId,
+        ReconfigurationType type,
+        ReconfigurablePtr instance = nullptr,
+        std::any && userdata = nullptr)
+        : type(type)
+        , instance(std::move(instance))
+        , syncBarrier(nullptr)
+        , postSyncBarrier(nullptr)
+        , sharedQueryId(sharedQueryId)
+        , parentPlanId(parentPlanId)
+        , userdata(std::move(userdata))
+    {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
@@ -62,20 +71,27 @@ class ReconfigurationMessage {
      * @param userdata extra information to use in this reconfiguration
      * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationMessage(const SharedQueryId sharedQueryId,
-                                    const DecomposedQueryPlanId parentPlanId,
-                                    ReconfigurationType type,
-                                    uint64_t numThreads,
-                                    ReconfigurablePtr instance,
-                                    std::any&& userdata = nullptr,
-                                    bool blocking = false)
-        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), sharedQueryId(sharedQueryId),
-          parentPlanId(parentPlanId), userdata(std::move(userdata)) {
+    explicit ReconfigurationMessage(
+        const SharedQueryId sharedQueryId,
+        const DecomposedQueryPlanId parentPlanId,
+        ReconfigurationType type,
+        uint64_t numThreads,
+        ReconfigurablePtr instance,
+        std::any && userdata = nullptr,
+        bool blocking = false)
+        : type(type)
+        , instance(std::move(instance))
+        , postSyncBarrier(nullptr)
+        , sharedQueryId(sharedQueryId)
+        , parentPlanId(parentPlanId)
+        , userdata(std::move(userdata))
+    {
         NES_ASSERT(this->instance, "invalid instance");
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
         refCnt.store(numThreads + (blocking ? 1 : 0));
-        if (blocking) {
+        if (blocking)
+        {
             postSyncBarrier = std::make_unique<ThreadBarrier>(numThreads + 1);
         }
     }
@@ -86,12 +102,14 @@ class ReconfigurationMessage {
      * @param numThreads number of running threads
      * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationMessage(const ReconfigurationMessage& other, uint64_t numThreads, bool blocking = false)
-        : ReconfigurationMessage(other) {
+    explicit ReconfigurationMessage(const ReconfigurationMessage & other, uint64_t numThreads, bool blocking = false)
+        : ReconfigurationMessage(other)
+    {
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
         refCnt.store(numThreads + (blocking ? 1 : 0));
-        if (blocking) {
+        if (blocking)
+        {
             postSyncBarrier = std::make_unique<ThreadBarrier>(numThreads + 1);
         }
     }
@@ -100,9 +118,15 @@ class ReconfigurationMessage {
      * @brief copy constructor
      * @param that
      */
-    ReconfigurationMessage(const ReconfigurationMessage& that)
-        : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr),
-          sharedQueryId(that.sharedQueryId), parentPlanId(that.parentPlanId), userdata(that.userdata) {
+    ReconfigurationMessage(const ReconfigurationMessage & that)
+        : type(that.type)
+        , instance(that.instance)
+        , syncBarrier(nullptr)
+        , postSyncBarrier(nullptr)
+        , sharedQueryId(that.sharedQueryId)
+        , parentPlanId(that.parentPlanId)
+        , userdata(that.userdata)
+    {
         // nop
     }
 
@@ -155,13 +179,14 @@ class ReconfigurationMessage {
      * @tparam T the type of the reconfiguration's userdata
      * @return the user data value or error if that is not set
      */
-    template<typename T>
-    [[nodiscard]] T getUserData() const {
+    template <typename T>
+    [[nodiscard]] T getUserData() const
+    {
         NES_ASSERT2_FMT(userdata.has_value(), "invalid userdata");
         return std::any_cast<T>(userdata);
     }
 
-  private:
+private:
     /**
      * @brief resouce cleanup method
      */
@@ -191,5 +216,5 @@ class ReconfigurationMessage {
     /// custom data
     std::any userdata;
 };
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_

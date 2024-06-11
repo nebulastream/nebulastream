@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -38,24 +37,29 @@
 #include <Util/StdInt.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
-class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
-  public:
+namespace NES::Runtime::Execution
+{
+class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelineExecutionTest
+{
+public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    ExecutablePipelineProvider* provider{};
+    ExecutablePipelineProvider * provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("KeyedTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup KeyedTimeWindowPipelineTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         std::cout << "Setup GlobalTimeWindowPipelineTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
@@ -72,7 +76,8 @@ class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelin
 /**
  * @brief Test running a pipeline containing a threshold window with a sum aggregation
  */
-TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
+TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("k", BasicType::INT64);
     scanSchema->addField("v", BasicType::INT64);
@@ -88,8 +93,8 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     auto aggregationResultFieldName = "test$sum";
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<Expressions::ExpressionPtr> keyFields = {readKey};
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
+        = {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
     std::vector<PhysicalTypePtr> types = {integerType};
     auto slicePreAggregation = std::make_shared<Operators::KeyedSlicePreAggregation>(
         0 /*handler index*/,
@@ -102,20 +107,10 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
     std::vector<std::string> resultKeyFields = {"k1"};
-    auto sliceMergingAction = std::make_unique<Operators::KeyedWindowEmitAction>(aggregationFunctions,
-                                                                                 "start",
-                                                                                 "end",
-                                                                                 8,
-                                                                                 8,
-                                                                                 resultKeyFields,
-                                                                                 types,
-                                                                                 INVALID_ORIGIN_ID);
-    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/,
-                                                                       aggregationFunctions,
-                                                                       std::move(sliceMergingAction),
-                                                                       types,
-                                                                       8,
-                                                                       8);
+    auto sliceMergingAction = std::make_unique<Operators::KeyedWindowEmitAction>(
+        aggregationFunctions, "start", "end", 8, 8, resultKeyFields, types, INVALID_ORIGIN_ID);
+    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(
+        0 /*handler index*/, aggregationFunctions, std::move(sliceMergingAction), types, 8, 8);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
@@ -174,9 +169,10 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
+TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("k1", BasicType::INT64);
     scanSchema->addField("k2", BasicType::INT64);
@@ -195,8 +191,8 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     std::vector<Expressions::ExpressionPtr> keyFields = {readKey1, readKey2};
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
+        = {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
     PhysicalTypePtr physicalType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<PhysicalTypePtr> keyTypes = {integerType, integerType};
     auto slicePreAggregation = std::make_shared<Operators::KeyedSlicePreAggregation>(
@@ -210,20 +206,10 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
     std::vector<std::string> resultKeyFields = {"k1", "k2"};
-    auto sliceMergingAction = std::make_unique<Operators::KeyedWindowEmitAction>(aggregationFunctions,
-                                                                                 "start",
-                                                                                 "end",
-                                                                                 16,
-                                                                                 8,
-                                                                                 resultKeyFields,
-                                                                                 keyTypes,
-                                                                                 INVALID_ORIGIN_ID);
-    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/,
-                                                                       aggregationFunctions,
-                                                                       std::move(sliceMergingAction),
-                                                                       keyTypes,
-                                                                       16,
-                                                                       8);
+    auto sliceMergingAction = std::make_unique<Operators::KeyedWindowEmitAction>(
+        aggregationFunctions, "start", "end", 16, 8, resultKeyFields, keyTypes, INVALID_ORIGIN_ID);
+    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(
+        0 /*handler index*/, aggregationFunctions, std::move(sliceMergingAction), keyTypes, 16, 8);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("k1", BasicType::INT64);
     emitSchema->addField("k2", BasicType::INT64);
@@ -294,12 +280,11 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        KeyedTimeWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<KeyedTimeWindowPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
-}// namespace NES::Runtime::Execution
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    KeyedTimeWindowPipelineTest,
+    ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<KeyedTimeWindowPipelineTest::ParamType> & info) { return info.param; });
+} // namespace NES::Runtime::Execution

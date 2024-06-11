@@ -15,9 +15,10 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
-#include <Exceptions/RuntimeException.hpp>
 #include <memory>
-namespace NES {
+#include <Exceptions/RuntimeException.hpp>
+namespace NES
+{
 
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
@@ -25,9 +26,9 @@ using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
-
-  public:
+class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>
+{
+public:
     /**
      * @brief Creates a new source descriptor with a logicalSourceName.
      * @param schema the source schema
@@ -60,9 +61,11 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     * @tparam SourceType
     * @return bool true if source descriptor is of SourceType
     */
-    template<class SourceType>
-    bool instanceOf() const {
-        if (dynamic_cast<const SourceType*>(this)) {
+    template <class SourceType>
+    bool instanceOf() const
+    {
+        if (dynamic_cast<const SourceType *>(this))
+        {
             return true;
         }
         return false;
@@ -73,20 +76,24 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     * @tparam SourceType
     * @return returns a shared pointer of the SourceType
     */
-    template<class SourceType>
-    std::shared_ptr<SourceType> as() const {
-        if (instanceOf<SourceType>()) {
+    template <class SourceType>
+    std::shared_ptr<SourceType> as() const
+    {
+        if (instanceOf<SourceType>())
+        {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
         }
         throw Exceptions::RuntimeException("SourceDescriptor: We performed an invalid cast");
     }
-    template<class SourceType>
-    std::shared_ptr<SourceType> as() {
-        return std::const_pointer_cast<SourceType>(const_cast<const SourceDescriptor*>(this)->as<const SourceType>());
+    template <class SourceType>
+    std::shared_ptr<SourceType> as()
+    {
+        return std::const_pointer_cast<SourceType>(const_cast<const SourceDescriptor *>(this)->as<const SourceType>());
     }
 
-    template<class SourceType>
-    std::shared_ptr<SourceType> as_if() {
+    template <class SourceType>
+    std::shared_ptr<SourceType> as_if()
+    {
         return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
     }
 
@@ -112,7 +119,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Set schema of the source
      * @param schema the schema
      */
-    void setSchema(const SchemaPtr& schema);
+    void setSchema(const SchemaPtr & schema);
 
     /**
      * @brief Returns the string representation of the source descriptor.
@@ -125,7 +132,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @param other source descriptor.
      * @return true if both are the same.
      */
-    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) const = 0;
+    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const & other) const = 0;
 
     virtual SourceDescriptorPtr copy() = 0;
 
@@ -134,12 +141,12 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      */
     virtual ~SourceDescriptor() = default;
 
-  protected:
+protected:
     SchemaPtr schema;
     std::string logicalSourceName;
     std::string physicalSourceName;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_

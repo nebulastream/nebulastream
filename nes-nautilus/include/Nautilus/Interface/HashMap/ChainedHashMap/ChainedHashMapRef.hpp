@@ -13,14 +13,16 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <functional>
-namespace NES {
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+namespace NES
+{
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 /**
  * @brief A nautilus wrapper to operate on the chained hash map.
@@ -28,15 +30,17 @@ namespace NES::Nautilus::Interface {
  * Furthermore, it provides EntryRef as a wrapper for an individual Entry* and
  * an EntryIterator to iterate over all entries in the hash map.
  */
-class ChainedHashMapRef {
-  public:
+class ChainedHashMapRef
+{
+public:
     /**
      * @brief Nautilus reference to an individual entry in chained hash map.
      * This is basically a wrapper around an Entry*.
      */
-    class EntryRef {
-      public:
-        EntryRef(const Value<MemRef>& ref, uint64_t keyOffset, uint64_t valueOffset);
+    class EntryRef
+    {
+    public:
+        EntryRef(const Value<MemRef> & ref, uint64_t keyOffset, uint64_t valueOffset);
 
         /**
          * @brief Gets the hash value of this entry.
@@ -75,7 +79,7 @@ class ChainedHashMapRef {
          */
         bool operator==(std::nullptr_t rhs) const;
 
-      private:
+    private:
         mutable Value<MemRef> ref;
         mutable uint64_t keyOffset;
         mutable uint64_t valueOffset;
@@ -85,16 +89,17 @@ class ChainedHashMapRef {
      * @brief Iterator over all entries in the hash map.
      * The iterator extracts the individual pages and visits each entry.
      */
-    class EntryIterator {
-      public:
-        EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& entriesPerPage, const Value<UInt64>& currentIndex);
-        EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& currentIndex);
-        EntryIterator& operator++();
-        bool operator==(const EntryIterator& other) const;
+    class EntryIterator
+    {
+    public:
+        EntryIterator(ChainedHashMapRef & hashTableRef, const Value<UInt64> & entriesPerPage, const Value<UInt64> & currentIndex);
+        EntryIterator(ChainedHashMapRef & hashTableRef, const Value<UInt64> & currentIndex);
+        EntryIterator & operator++();
+        bool operator==(const EntryIterator & other) const;
         EntryRef operator*();
 
-      private:
-        ChainedHashMapRef& hashTableRef;
+    private:
+        ChainedHashMapRef & hashTableRef;
         Value<UInt64> entriesPerPage;
         Value<UInt64> inPageIndex;
         Value<MemRef> currentPage;
@@ -105,19 +110,21 @@ class ChainedHashMapRef {
     /**
      * @brief Iterator over all entries in the hash map with a specific key.
      */
-    class KeyEntryIterator {
-      public:
-        KeyEntryIterator(ChainedHashMapRef& hashTableRef,
-                         const Value<UInt64>& hash,
-                         const std::vector<Value<>>& keys,
-                         const Value<UInt64>& currentIndex);
-        KeyEntryIterator& operator++();
+    class KeyEntryIterator
+    {
+    public:
+        KeyEntryIterator(
+            ChainedHashMapRef & hashTableRef,
+            const Value<UInt64> & hash,
+            const std::vector<Value<>> & keys,
+            const Value<UInt64> & currentIndex);
+        KeyEntryIterator & operator++();
         bool operator==(KeyEntryIterator other) const;
         bool operator==(std::nullptr_t) const;
         EntryRef operator*() const;
 
-      private:
-        ChainedHashMapRef& hashTableRef;
+    private:
+        ChainedHashMapRef & hashTableRef;
         Value<UInt64> currentIndex;
         std::vector<Value<>> keys;
         EntryRef currentEntry;
@@ -130,10 +137,8 @@ class ChainedHashMapRef {
      * @param keySize size of the compound keys in bytes.
      * @param valueSize size of the compound value in bytes.
      */
-    ChainedHashMapRef(const Value<MemRef>& hashTableRef,
-                      const std::vector<PhysicalTypePtr>& keyDataTypes,
-                      uint64_t keySize,
-                      uint64_t valueSize);
+    ChainedHashMapRef(
+        const Value<MemRef> & hashTableRef, const std::vector<PhysicalTypePtr> & keyDataTypes, uint64_t keySize, uint64_t valueSize);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -143,7 +148,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef find(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
+    EntryRef find(const Value<UInt64> & hash, const std::vector<Value<>> & keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -153,7 +158,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return KeyEntryIterator
      */
-    KeyEntryIterator findAll(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
+    KeyEntryIterator findAll(const Value<UInt64> & hash, const std::vector<Value<>> & keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -165,7 +170,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
+    EntryRef findOrCreate(const Value<UInt64> & hash, const std::vector<Value<>> & keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -177,8 +182,7 @@ class ChainedHashMapRef {
      * @param onInsert function, which is called for each newly inserted entry.
      * @return EntryRef
      */
-    EntryRef
-    findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys, const std::function<void(EntryRef&)>& onInsert);
+    EntryRef findOrCreate(const Value<UInt64> & hash, const std::vector<Value<>> & keys, const std::function<void(EntryRef &)> & onInsert);
 
     /**
      * @brief This function inserts an already existing entry from another hash map to this hash map.
@@ -187,7 +191,7 @@ class ChainedHashMapRef {
      * @param otherEntry reference to the entry that should be inserted.
      * @param update function, which is called if an entry with the same key already exists.
      */
-    void insertEntryOrUpdate(const EntryRef& otherEntry, const std::function<void(EntryRef&)>& update);
+    void insertEntryOrUpdate(const EntryRef & otherEntry, const std::function<void(EntryRef &)> & update);
 
     /**
      * @brief Returns the size, in number of entries, of the underling hash map.
@@ -214,21 +218,21 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef insert(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
+    EntryRef insert(const Value<UInt64> & hash, const std::vector<Value<>> & keys);
 
-  private:
+private:
     Value<UInt64> getPageSize();
-    Value<MemRef> getPage(const Value<UInt64>& pageIndex);
+    Value<MemRef> getPage(const Value<UInt64> & pageIndex);
     Value<UInt64> getEntriesPerPage();
-    EntryRef findChain(const Value<UInt64>& hash);
-    EntryRef insert(const Value<UInt64>& hash);
-    Value<Boolean> compareKeys(EntryRef& entry, const std::vector<Value<>>& keys);
+    EntryRef findChain(const Value<UInt64> & hash);
+    EntryRef insert(const Value<UInt64> & hash);
+    Value<Boolean> compareKeys(EntryRef & entry, const std::vector<Value<>> & keys);
     Value<MemRef> hashTableRef;
     const std::vector<PhysicalTypePtr> keyDataTypes;
     uint64_t keySize;
     uint64_t valueSize;
 };
 
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_

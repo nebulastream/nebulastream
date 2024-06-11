@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
@@ -22,20 +21,25 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gmock/gmock-matchers.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class JoinDeploymentTest : public Testing::BaseIntegrationTest,
-                           public ::testing::WithParamInterface<
-                               std::tuple<QueryCompilation::StreamJoinStrategy, QueryCompilation::WindowingStrategy>> {
-  public:
-    static void SetUpTestCase() {
+class JoinDeploymentTest
+    : public Testing::BaseIntegrationTest,
+      public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy, QueryCompilation::WindowingStrategy>>
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("JoinDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
         BaseIntegrationTest::SetUp();
 
@@ -44,18 +48,15 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         bufferManager = std::make_shared<BufferManager>();
     }
 
-    void runJoinQueryTwoLogicalStreams(const Query& query,
-                                       const TestUtils::CsvFileParams& csvFileParams,
-                                       const TestUtils::JoinParams& joinParams) {
-
+    void runJoinQueryTwoLogicalStreams(
+        const Query & query, const TestUtils::CsvFileParams & csvFileParams, const TestUtils::JoinParams & joinParams)
+    {
         const auto logicalSourceNameOne = "test1";
         const auto logicalSourceNameTwo = "test2";
         const auto physicalSourceNameOne = "test1_physical";
         const auto physicalSourceNameTwo = "test2_physical";
-        auto sourceConfig1 =
-            TestUtils::createSourceTypeCSV({logicalSourceNameOne, physicalSourceNameOne, csvFileParams.inputCsvFiles[0]});
-        auto sourceConfig2 =
-            TestUtils::createSourceTypeCSV({logicalSourceNameTwo, physicalSourceNameTwo, csvFileParams.inputCsvFiles[1]});
+        auto sourceConfig1 = TestUtils::createSourceTypeCSV({logicalSourceNameOne, physicalSourceNameOne, csvFileParams.inputCsvFiles[0]});
+        auto sourceConfig2 = TestUtils::createSourceTypeCSV({logicalSourceNameTwo, physicalSourceNameTwo, csvFileParams.inputCsvFiles[1]});
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                       .setJoinStrategy(joinStrategy)
@@ -69,15 +70,14 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 
         // Run the query and get the actual dynamic buffers
         std::ifstream expectedFileStream(std::filesystem::path(TEST_DATA_DIRECTORY) / csvFileParams.expectedFile);
-        auto actualBuffers =
-            testHarness.validate().setupTopology().runQuery(NES::Util::countLines(expectedFileStream)).getOutput();
+        auto actualBuffers = testHarness.validate().setupTopology().runQuery(NES::Util::countLines(expectedFileStream)).getOutput();
 
         // Comparing equality
         const auto outputSchema = testHarness.getOutputSchema();
-        auto tmpBuffers =
-            TestUtils::createExpectedBufferFromStream(expectedFileStream, outputSchema, testHarness.getBufferManager());
+        auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedFileStream, outputSchema, testHarness.getBufferManager());
         auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-        for (auto& buf : actualBuffers) {
+        for (auto & buf : actualBuffers)
+        {
             NES_INFO("Buf:\n{}", NES::Util::printTupleBufferAsCSV(buf.getBuffer(), joinParams.outputSchema));
         }
         EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
@@ -91,9 +91,11 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 /**
 * Test deploying join with same data and same schema
  * */
-TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
+TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+    {
         GTEST_SKIP();
     }
 
@@ -111,9 +113,11 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
 /**
  * Test deploying join with same data but different names in the schema
  */
-TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+    {
         GTEST_SKIP();
     }
 
@@ -132,9 +136,11 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
 /**
  * Test deploying join with different sources
  */
-TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
+TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+    {
         GTEST_SKIP();
     }
 
@@ -153,9 +159,11 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
 /**
  * Test deploying join with different sources
  */
-TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+    {
         GTEST_SKIP();
     }
 
@@ -174,9 +182,11 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
 /**
  * Test deploying join with different sources
  */
-TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
+TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+    {
         GTEST_SKIP();
     }
 
@@ -185,11 +195,10 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
-    auto query =
-        Query::from("test1")
-            .joinWith(Query::from("test2"))
-            .where(Attribute("id") == Attribute("id"))
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id") == Attribute("id"))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
@@ -197,9 +206,11 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
 /**
  * Test deploying join with different sources
  */
-TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
+TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+    {
         GTEST_SKIP();
     }
 
@@ -209,11 +220,10 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
-    auto query =
-        Query::from("test1")
-            .joinWith(Query::from("test2"))
-            .where(Attribute("id") == Attribute("id2"))
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id") == Attribute("id2"))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
@@ -221,12 +231,14 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
 /**
  * @brief Test a join query that uses fixed-array as keys
  */
-TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
+TEST_P(JoinDeploymentTest, testJoinWithVarSizedData)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
         || (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-            && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)) {
+            && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING))
+    {
         GTEST_SKIP();
     }
 
@@ -250,9 +262,11 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
-TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
+TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer)
+{
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
-        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+    {
         GTEST_SKIP();
     }
 
@@ -268,11 +282,13 @@ TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
-INSTANTIATE_TEST_CASE_P(testJoinQueries,
-                        JoinDeploymentTest,
-                        JOIN_STRATEGIES_WINDOW_STRATEGIES,
-                        [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_"
-                                + std::string(magic_enum::enum_name(std::get<1>(info.param)));
-                        });
-}// namespace NES::Runtime::Execution
+INSTANTIATE_TEST_CASE_P(
+    testJoinQueries,
+    JoinDeploymentTest,
+    JOIN_STRATEGIES_WINDOW_STRATEGIES,
+    [](const testing::TestParamInfo<JoinDeploymentTest::ParamType> & info)
+    {
+        return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_"
+            + std::string(magic_enum::enum_name(std::get<1>(info.param)));
+    });
+} // namespace NES::Runtime::Execution

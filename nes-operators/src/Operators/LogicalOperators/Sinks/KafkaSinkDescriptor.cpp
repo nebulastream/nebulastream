@@ -13,38 +13,55 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-namespace NES {
+namespace NES
+{
 
-KafkaSinkDescriptor::KafkaSinkDescriptor(const std::string& sinkFormat,
-                                         const std::string& topic,
-                                         const std::string& brokers,
-                                         uint64_t timeout)
-    : sinkFormat(sinkFormat), topic(topic), brokers(brokers), timeout(timeout) {}
+KafkaSinkDescriptor::KafkaSinkDescriptor(
+    const std::string & sinkFormat, const std::string & topic, const std::string & brokers, uint64_t timeout)
+    : sinkFormat(sinkFormat), topic(topic), brokers(brokers), timeout(timeout)
+{
+}
 
-const std::string& KafkaSinkDescriptor::getTopic() const { return topic; }
+const std::string & KafkaSinkDescriptor::getTopic() const
+{
+    return topic;
+}
 
-const std::string& KafkaSinkDescriptor::getBrokers() const { return brokers; }
+const std::string & KafkaSinkDescriptor::getBrokers() const
+{
+    return brokers;
+}
 
-uint64_t KafkaSinkDescriptor::getTimeout() const { return timeout; }
+uint64_t KafkaSinkDescriptor::getTimeout() const
+{
+    return timeout;
+}
 
-SinkDescriptorPtr KafkaSinkDescriptor::create(const std::string& sinkFormat,
-                                              const std::string& topic,
-                                              const std::string& brokers,
-                                              uint64_t timeout) {
+SinkDescriptorPtr
+KafkaSinkDescriptor::create(const std::string & sinkFormat, const std::string & topic, const std::string & brokers, uint64_t timeout)
+{
     return std::make_shared<KafkaSinkDescriptor>(KafkaSinkDescriptor(sinkFormat, topic, brokers, timeout));
 }
 
-std::string KafkaSinkDescriptor::toString() const { return "KafkaSinkDescriptor()"; }
+std::string KafkaSinkDescriptor::toString() const
+{
+    return "KafkaSinkDescriptor()";
+}
 
-bool KafkaSinkDescriptor::equal(SinkDescriptorPtr const& other) {
-    if (!other->instanceOf<KafkaSinkDescriptor>()) {
+bool KafkaSinkDescriptor::equal(SinkDescriptorPtr const & other)
+{
+    if (!other->instanceOf<KafkaSinkDescriptor>())
+    {
         return false;
     }
     auto otherSinkDescriptor = other->as<KafkaSinkDescriptor>();
-    return topic == otherSinkDescriptor->topic && brokers == otherSinkDescriptor->brokers
-        && sinkFormat == otherSinkDescriptor->sinkFormat && timeout == otherSinkDescriptor->timeout;
+    return topic == otherSinkDescriptor->topic && brokers == otherSinkDescriptor->brokers && sinkFormat == otherSinkDescriptor->sinkFormat
+        && timeout == otherSinkDescriptor->timeout;
 }
 
-std::string KafkaSinkDescriptor::getSinkFormatAsString() const { return sinkFormat; }
+std::string KafkaSinkDescriptor::getSinkFormatAsString() const
+{
+    return sinkFormat;
+}
 
-}// namespace NES
+} // namespace NES

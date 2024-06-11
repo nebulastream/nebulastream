@@ -17,23 +17,25 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class ConstIntOperation : public Operation {
-  public:
+class ConstIntOperation : public Operation
+{
+public:
     explicit ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp);
     ~ConstIntOperation() override = default;
     int64_t getValue();
 
-    template<class T>
+    template <class T>
     T getIntegerViaType();
 
     std::string toString() override;
-    static bool classof(const Operation* Op);
+    static bool classof(const Operation * Op);
 
-  private:
-    int64_t constantValue;// Can also hold uInts
+private:
+    int64_t constantValue; // Can also hold uInts
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
@@ -21,20 +22,33 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <iostream>
 #include <nlohmann/json.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 CpuMetrics::CpuMetrics()
-    : nodeId(0), timestamp(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0),
-      guest(0), guestnice(0) {}
+    : nodeId(0)
+    , timestamp(0)
+    , coreNum(0)
+    , user(0)
+    , nice(0)
+    , system(0)
+    , idle(0)
+    , iowait(0)
+    , irq(0)
+    , softirq(0)
+    , steal(0)
+    , guest(0)
+    , guestnice(0)
+{
+}
 
-Configurations::SchemaTypePtr CpuMetrics::getSchemaType(const std::string& prefix) {
-
+Configurations::SchemaTypePtr CpuMetrics::getSchemaType(const std::string & prefix)
+{
     std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    const char* length = "0";
-    const char* dataType = "UINT64";
+    const char * length = "0";
+    const char * dataType = "UINT64";
     schemaFiledDetails.emplace_back(prefix + "node_id", dataType, length);
     schemaFiledDetails.emplace_back(prefix + "timestamp", dataType, length);
     schemaFiledDetails.emplace_back(prefix + "coreNum", dataType, length);
@@ -51,16 +65,21 @@ Configurations::SchemaTypePtr CpuMetrics::getSchemaType(const std::string& prefi
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
-SchemaPtr CpuMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
+SchemaPtr CpuMetrics::getSchema(const std::string & prefix)
+{
+    return Schema::createFromSchemaType(getSchemaType(prefix));
+}
 
-void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
+void CpuMetrics::writeToBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex) const
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     auto totalSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "CpuMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+    NES_ASSERT(
+        totalSize <= buf.getBufferSize(),
+        "CpuMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+            + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<WorkerId>(nodeId);
@@ -80,7 +99,8 @@ void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) c
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void CpuMetrics::readFromBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
@@ -100,15 +120,17 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
     guestnice = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
-std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
-    os << "nodeId: " << values.nodeId << "timestamp:" << values.timestamp << "coreNum: " << values.coreNum
-       << "user: " << values.user << " nice: " << values.nice << " system: " << values.system << " idle: " << values.idle
-       << " iowait: " << values.iowait << " irq: " << values.irq << " softirq: " << values.softirq << " steal: " << values.steal
-       << " guest: " << values.guest << " guestnice: " << values.guestnice;
+std::ostream & operator<<(std::ostream & os, const CpuMetrics & values)
+{
+    os << "nodeId: " << values.nodeId << "timestamp:" << values.timestamp << "coreNum: " << values.coreNum << "user: " << values.user
+       << " nice: " << values.nice << " system: " << values.system << " idle: " << values.idle << " iowait: " << values.iowait
+       << " irq: " << values.irq << " softirq: " << values.softirq << " steal: " << values.steal << " guest: " << values.guest
+       << " guestnice: " << values.guestnice;
     return os;
 }
 
-nlohmann::json CpuMetrics::toJson() const {
+nlohmann::json CpuMetrics::toJson() const
+{
     nlohmann::json metricsJson{};
     metricsJson["NODE_ID"] = nodeId;
     metricsJson["TIMESTAMP"] = timestamp;
@@ -127,22 +149,31 @@ nlohmann::json CpuMetrics::toJson() const {
     return metricsJson;
 }
 
-bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
+bool CpuMetrics::operator==(const CpuMetrics & rhs) const
+{
     return nodeId == rhs.nodeId && timestamp == rhs.timestamp && coreNum == rhs.coreNum && user == rhs.user && nice == rhs.nice
         && system == rhs.system && idle == rhs.idle && iowait == rhs.iowait && irq == rhs.irq && softirq == rhs.softirq
         && steal == rhs.steal && guest == rhs.guest && guestnice == rhs.guestnice;
 }
 
-bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }
+bool CpuMetrics::operator!=(const CpuMetrics & rhs) const
+{
+    return !(rhs == *this);
+}
 
-void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void writeToBuffer(const CpuMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void readFromBuffer(CpuMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-nlohmann::json asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const CpuMetrics & metrics)
+{
+    return metrics.toJson();
+}
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

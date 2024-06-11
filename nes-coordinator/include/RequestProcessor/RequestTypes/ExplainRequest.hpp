@@ -19,12 +19,14 @@
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <nlohmann/json.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -41,25 +43,30 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Catalogs {
-namespace Source {
+namespace Catalogs
+{
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace UDF {
+namespace UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
-}// namespace Catalogs
+} // namespace Catalogs
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
@@ -99,12 +106,14 @@ using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
+} // namespace Optimizer
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 
 //a response to the creator of the request
-struct ExplainResponse : public AbstractRequestResponse {
+struct ExplainResponse : public AbstractRequestResponse
+{
     explicit ExplainResponse(nlohmann::json jsonResponse) : jsonResponse(jsonResponse){};
     nlohmann::json jsonResponse;
 };
@@ -112,8 +121,9 @@ struct ExplainResponse : public AbstractRequestResponse {
 class ExplainRequest;
 using ExplainRequestPtr = std::shared_ptr<ExplainRequest>;
 
-class ExplainRequest : public AbstractUniRequest {
-  public:
+class ExplainRequest : public AbstractUniRequest
+{
+public:
     /**
      * @brief Constructor
      * @param queryPlan: the query plan
@@ -121,10 +131,11 @@ class ExplainRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
-    ExplainRequest(const QueryPlanPtr& queryPlan,
-                   const Optimizer::PlacementStrategy queryPlacementStrategy,
-                   const uint8_t maxRetries,
-                   const z3::ContextPtr& z3Context);
+    ExplainRequest(
+        const QueryPlanPtr & queryPlan,
+        const Optimizer::PlacementStrategy queryPlacementStrategy,
+        const uint8_t maxRetries,
+        const z3::ContextPtr & z3Context);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -133,18 +144,19 @@ class ExplainRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
-    static ExplainRequestPtr create(const QueryPlanPtr& queryPlan,
-                                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                    const uint8_t maxRetries,
-                                    const z3::ContextPtr& z3Context);
+    static ExplainRequestPtr create(
+        const QueryPlanPtr & queryPlan,
+        const Optimizer::PlacementStrategy queryPlacementStrategy,
+        const uint8_t maxRetries,
+        const z3::ContextPtr & z3Context);
 
-  protected:
+protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandler: The storage access handle used by the request
      */
-    void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
+    void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr & storageHandler) override;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
@@ -152,14 +164,14 @@ class ExplainRequest : public AbstractUniRequest {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr & storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandler: The storage access handle used by the request
      */
-    void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
+    void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr & storageHandler) override;
 
     /**
      * @brief Executes the request logic.
@@ -167,24 +179,25 @@ class ExplainRequest : public AbstractUniRequest {
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr & storageHandler) override;
 
     /**
      * @brief Assign new operator ids to the input query plan
      * @param queryPlan : the input query plan
      */
-    void assignOperatorIds(const QueryPlanPtr& queryPlan);
+    void assignOperatorIds(const QueryPlanPtr & queryPlan);
 
-  private:
+private:
     /**
      * @brief Add opencl acceleration code to the query plan
      * @param accelerationServiceURL: acceleration service url
      * @param decomposedQueryPlan : the query plan
      * @param topologyNode : the topology node
      */
-    void addOpenCLAccelerationCode(const std::string& accelerationServiceURL,
-                                   const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                   const TopologyNodePtr& topologyNode);
+    void addOpenCLAccelerationCode(
+        const std::string & accelerationServiceURL,
+        const DecomposedQueryPlanPtr & decomposedQueryPlan,
+        const TopologyNodePtr & topologyNode);
 
     /**
      * @brief create json from the execution plan
@@ -196,14 +209,15 @@ class ExplainRequest : public AbstractUniRequest {
      * @param sampleCodeGenerationPhase> phase used to generate sample code
      * @return json representing the global execution plan
      */
-    nlohmann::json getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
-                                                        const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                        const TopologyPtr& topology,
-                                                        bool accelerateJavaUDFs,
-                                                        const std::string& accelerationServiceURL,
-                                                        const Optimizer::SampleCodeGenerationPhasePtr& sampleCodeGenerationPhase);
+    nlohmann::json getExecutionPlanForSharedQueryAsJson(
+        SharedQueryId sharedQueryId,
+        const Optimizer::GlobalExecutionPlanPtr & globalExecutionPlan,
+        const TopologyPtr & topology,
+        bool accelerateJavaUDFs,
+        const std::string & accelerationServiceURL,
+        const Optimizer::SampleCodeGenerationPhasePtr & sampleCodeGenerationPhase);
 
-  private:
+private:
     QueryId queryId;
     std::string queryString;
     QueryPlanPtr queryPlan;
@@ -226,7 +240,7 @@ class ExplainRequest : public AbstractUniRequest {
     const std::string DEVICE_INFO_EXTENSIONS_KEY = "deviceExtensions";
     const std::string DEVICE_INFO_AVAILABLE_PROCESSORS_KEY = "availableProcessors";
 };
-}// namespace RequestProcessor
-}// namespace NES
+} // namespace RequestProcessor
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_

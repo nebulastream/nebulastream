@@ -14,15 +14,19 @@
 
 #include <Execution/Operators/Relational/Project.hpp>
 #include <Nautilus/Interface/Record.hpp>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void Project::execute(ExecutionContext& ctx, Record& record) const {
+void Project::execute(ExecutionContext & ctx, Record & record) const
+{
     // If the number of inputFields and outputFields match, map inputFields to outputFields.
     // Todo: 4068: We plan to use maps to support renaming, reordering and reducing the number of attributes
     //             using projections at the same time (Currently, we cannot e.g. reduce and rename at the same time).
-    if (inputFields.size() == outputFields.size()) {
+    if (inputFields.size() == outputFields.size())
+    {
         Record projectedRecord;
-        for (size_t index = 0; index < record.numberOfFields(); ++index) {
+        for (size_t index = 0; index < record.numberOfFields(); ++index)
+        {
             auto inputName = inputFields.at(index);
             auto value = record.read(inputName);
             auto newName = outputFields.at(index);
@@ -30,9 +34,11 @@ void Project::execute(ExecutionContext& ctx, Record& record) const {
         }
         // call next operator
         child->execute(ctx, projectedRecord);
-    } else {
+    }
+    else
+    {
         // If the number of input and output fields do not match, simply relay the record to the next operator.
         child->execute(ctx, record);
     }
 }
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

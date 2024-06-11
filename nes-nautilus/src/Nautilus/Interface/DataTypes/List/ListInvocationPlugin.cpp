@@ -13,10 +13,12 @@
 */
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-class ListInvocationPlugin final : public InvocationPlugin {
-  public:
+class ListInvocationPlugin final : public InvocationPlugin
+{
+public:
     ListInvocationPlugin() = default;
 
     /**
@@ -24,24 +26,30 @@ class ListInvocationPlugin final : public InvocationPlugin {
      * @param list
      * @return bool true if value is a list.
      */
-    bool isList(const Value<>& list) const { return dynamic_cast<List*>(&list.getValue()) != nullptr; }
+    bool isList(const Value<> & list) const { return dynamic_cast<List *>(&list.getValue()) != nullptr; }
 
-    std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
-        if (isList(left) && isList(right)) {
+    std::optional<Value<>> Equals(const Value<> & left, const Value<> & right) const override
+    {
+        if (isList(left) && isList(right))
+        {
             return left.as<List>()->equals(right.as<List>());
         }
         return std::nullopt;
     }
 
-    std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<UInt32> index) const override {
-        if (isList(array)) {
+    std::optional<Value<>> ReadArrayIndex(const Value<> & array, Value<UInt32> index) const override
+    {
+        if (isList(array))
+        {
             return array.as<List>()->read(index);
         }
         return std::nullopt;
     }
 
-    std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const override {
-        if (array->isType<List>()) {
+    std::optional<Value<>> WriteArrayIndex(const Value<> & array, Value<UInt32> index, const Value<> & value) const override
+    {
+        if (array->isType<List>())
+        {
             array.as<List>()->write(index, value);
             return array;
         }
@@ -50,4 +58,4 @@ class ListInvocationPlugin final : public InvocationPlugin {
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<ListInvocationPlugin> ListInvocationPlugin;
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

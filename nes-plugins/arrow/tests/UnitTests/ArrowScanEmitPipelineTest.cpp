@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Arrow/ArrowRecordBatchScan.hpp>
 #include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
@@ -32,28 +32,33 @@
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class ArrowScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class ArrowScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     Nautilus::CompilationOptions options;
-    ExecutablePipelineProvider* provider{};
+    ExecutablePipelineProvider * provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ArrowScanEmitPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ArrowScanEmitPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup ArrowScanEmitPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         options.setDumpToConsole(true);
@@ -70,8 +75,8 @@ class ArrowScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractP
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
  */
-TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
-
+TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline)
+{
     auto schema = Schema::create()
                       ->addField("field_boolean", BasicType::BOOLEAN)
                       ->addField("field_int8", BasicType::INT8)
@@ -100,10 +105,11 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
     executablePipeline->setup(pipelineContext);
 
     arrow::io::IOContext io_context = arrow::io::default_io_context();
-    std::shared_ptr<arrow::io::InputStream> input =
-        arrow::io::ReadableFile::Open(std::filesystem::path(TEST_DATA_DIRECTORY) / "arrow_test.arrow").ValueOrDie();
+    std::shared_ptr<arrow::io::InputStream> input
+        = arrow::io::ReadableFile::Open(std::filesystem::path(TEST_DATA_DIRECTORY) / "arrow_test.arrow").ValueOrDie();
     auto recordBatchStreamReader = arrow::ipc::RecordBatchStreamReader::Open(input).ValueUnsafe();
-    for (auto batch : MakeIteratorFromReader(recordBatchStreamReader)) {
+    for (auto batch : MakeIteratorFromReader(recordBatchStreamReader))
+    {
         auto wrapper = std::make_unique<Operators::RecordBufferWrapper>(batch.MoveValueUnsafe());
         auto tb = Runtime::TupleBuffer::wrapPtr(std::move(wrapper));
         executablePipeline->execute(tb, pipelineContext, *wc);
@@ -118,11 +124,10 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
     ASSERT_EQ(resulttestBuffer.getNumberOfTuples(), 8);
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        ArrowScanEmitPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<ArrowScanEmitPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    ArrowScanEmitPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<ArrowScanEmitPipelineTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

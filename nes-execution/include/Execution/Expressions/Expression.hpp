@@ -13,15 +13,17 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 class Record;
 using RecordPtr = std::shared_ptr<Record>;
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 using namespace Nautilus;
 class Any;
 class Expression;
@@ -30,17 +32,18 @@ using ExpressionPtr = std::shared_ptr<Expression>;
 /**
  * @brief Base class for all expressions.
  */
-class Expression {
-  public:
+class Expression
+{
+public:
     /**
      * @brief Evaluates the expressions on a record.
      * @param record
      * @return Value<>
      */
-    virtual Value<> execute(Record& record) const = 0;
+    virtual Value<> execute(Record & record) const = 0;
     virtual ~Expression() = default;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_

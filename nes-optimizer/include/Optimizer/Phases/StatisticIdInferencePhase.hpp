@@ -17,7 +17,8 @@
 
 #include <memory>
 #include <unordered_set>
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -28,7 +29,8 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class StatisticIdInferencePhase;
 using StatisticIdInferencePhasePtr = std::shared_ptr<StatisticIdInferencePhase>;
@@ -36,8 +38,9 @@ using StatisticIdInferencePhasePtr = std::shared_ptr<StatisticIdInferencePhase>;
 /**
  * @brief This phase iterates over all operators, except sources, and sets a unique statistic id for each logical operator
  */
-class StatisticIdInferencePhase {
-  public:
+class StatisticIdInferencePhase
+{
+public:
     /**
      * @brief Factory method to create a StatisticIdInferencePhase
      * @return StatisticIdInferencePhasePtr
@@ -58,7 +61,7 @@ class StatisticIdInferencePhase {
      */
     DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-  private:
+private:
     /**
      * @brief Private constructor for creating a StatisticIdInferencePhase
      */
@@ -73,7 +76,7 @@ class StatisticIdInferencePhase {
     void performInference(std::unordered_set<OperatorPtr> allOperators);
 };
 
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_STATISTICIDINFERENCEPHASE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_STATISTICIDINFERENCEPHASE_HPP_

@@ -14,18 +14,21 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
+#include <chrono>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <chrono>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class TupleBuffer;
 }
 
-namespace NES {
+namespace NES
+{
 
-class LambdaSource : public GeneratorSource {
-  public:
+class LambdaSource : public GeneratorSource
+{
+public:
     /**
      * @brief The constructor of a Lambda Source
      * @param schema the schema of the source
@@ -50,7 +53,7 @@ class LambdaSource : public GeneratorSource {
         Runtime::QueryManagerPtr queryManager,
         uint64_t numbersOfBufferToProduce,
         uint64_t gatheringValue,
-        std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)> && generationFunction,
         OperatorId operatorId,
         OriginId originId,
         StatisticId statisticId,
@@ -58,7 +61,7 @@ class LambdaSource : public GeneratorSource {
         GatheringMode gatheringMode,
         uint64_t sourceAffinity,
         uint64_t taskQueueId,
-        const std::string& physicalSourceName,
+        const std::string & physicalSourceName,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     SourceType getType() const override;
@@ -71,12 +74,12 @@ class LambdaSource : public GeneratorSource {
     */
     std::string toString() const override;
 
-  protected:
+protected:
     uint64_t numberOfTuplesToProduce;
-    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
+    std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };
 
 using LambdaSourcePtr = std::shared_ptr<LambdaSource>;
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_LAMBDASOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_LAMBDASOURCE_HPP_

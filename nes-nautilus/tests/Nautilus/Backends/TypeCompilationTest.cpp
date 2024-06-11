@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <cstdint>
+#include <memory>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -23,16 +24,18 @@
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstdint>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-class TypeCompilationTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
-  public:
+class TypeCompilationTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TypeCompilationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TypeCompilationTest test class.");
     }
@@ -40,37 +43,41 @@ class TypeCompilationTest : public Testing::BaseUnitTest, public AbstractCompila
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down TypeCompilationTest test class."); }
 
-    Value<> implicitCastFunction(const Value<>& left, const Value<>& right) const { return left + right; }
+    Value<> implicitCastFunction(const Value<> & left, const Value<> & right) const { return left + right; }
 
-    auto compileCast(const Value<>& left, const Value<>& right) {
+    auto compileCast(const Value<> & left, const Value<> & right)
+    {
         left.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, left->getType());
         right.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, right->getType());
-        auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
-            Nautilus::Tracing::TraceContext::get()->addTraceArgument(left.ref);
-            Nautilus::Tracing::TraceContext::get()->addTraceArgument(right.ref);
-            return implicitCastFunction(left, right);
-        });
+        auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn(
+            [&]()
+            {
+                Nautilus::Tracing::TraceContext::get()->addTraceArgument(left.ref);
+                Nautilus::Tracing::TraceContext::get()->addTraceArgument(right.ref);
+                return implicitCastFunction(left, right);
+            });
         return prepare(executionTrace);
     }
 };
 
-Value<> negativeIntegerTest() {
+Value<> negativeIntegerTest()
+{
     Value four = 4;
     Value five = 5;
     Value minusOne = four - five;
     return minusOne;
 }
 
-TEST_P(TypeCompilationTest, negativeIntegerTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return negativeIntegerTest();
-    });
+TEST_P(TypeCompilationTest, negativeIntegerTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return negativeIntegerTest(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), -1);
 }
 
-Value<> unsignedIntegerTest() {
+Value<> unsignedIntegerTest()
+{
     uint32_t four = 4;
     uint32_t five = 5;
     Value unsignedFour = four;
@@ -80,81 +87,83 @@ Value<> unsignedIntegerTest() {
 }
 
 // We should be able to create Values with unsigned ints, but currently we cannot.
-TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return unsignedIntegerTest();
-    });
+TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return unsignedIntegerTest(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<uint32_t>("execute");
     ASSERT_EQ(function(), UINT32_MAX);
 }
 
-Value<> boolCompareTest() {
+Value<> boolCompareTest()
+{
     Value value = 1;
     Value iw = true;
-    if (iw == false) {
+    if (iw == false)
+    {
         return value + 41;
-    } else {
+    }
+    else
+    {
         return value;
     }
 }
 
 // Should return 1, but returns 41 (Value(true) in interpreted as 0).
-TEST_P(TypeCompilationTest, DISABLED_boolCompareTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return boolCompareTest();
-    });
+TEST_P(TypeCompilationTest, DISABLED_boolCompareTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return boolCompareTest(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 1);
 }
 
-Value<> floatTest() {
+Value<> floatTest()
+{
     // Value iw  = 1.3;
     // return iw;
     return Value(1);
 }
 
 // Above approach, to return a float Value, does not work.
-TEST_P(TypeCompilationTest, DISABLED_floatTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return floatTest();
-    });
+TEST_P(TypeCompilationTest, DISABLED_floatTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return floatTest(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 1);
 }
 
-Value<> mixBoolAndIntTest() {
+Value<> mixBoolAndIntTest()
+{
     Value boolValue = true;
     Value intValue = 4;
     return boolValue + intValue;
 }
 
 // Should return 5, but returns 4. Could extend to check for bool-int edge cases
-TEST_P(TypeCompilationTest, DISABLED_mixBoolAndIntTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return mixBoolAndIntTest();
-    });
+TEST_P(TypeCompilationTest, DISABLED_mixBoolAndIntTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return mixBoolAndIntTest(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
-class CustomType : public Any {
-  public:
+class CustomType : public Any
+{
+public:
     static const inline auto type = TypeIdentifier::create<CustomType>();
     CustomType(Value<> x, Value<> y) : Any(&type), x(x), y(y){};
 
-    std::shared_ptr<CustomType> add(const CustomType& other) const {
-        return std::make_unique<CustomType>(x + other.x, y + other.y);
-    }
+    std::shared_ptr<CustomType> add(const CustomType & other) const { return std::make_unique<CustomType>(x + other.x, y + other.y); }
 
-    std::shared_ptr<CustomType> mulInt(const Int64& other) const {
+    std::shared_ptr<CustomType> mulInt(const Int64 & other) const
+    {
         return std::make_unique<CustomType>(x * other.getValue(), y * other.getValue());
     }
 
-    std::shared_ptr<Int64> power(const CustomType& other) const { return std::make_unique<Int64>(x * other.x - y); }
+    std::shared_ptr<Int64> power(const CustomType & other) const { return std::make_unique<Int64>(x * other.x - y); }
 
     std::shared_ptr<Any> copy() override { return std::make_shared<CustomType>(x, y); }
 
@@ -162,21 +171,26 @@ class CustomType : public Any {
     Value<> y;
 };
 
-class CustomTypeInvocationPlugin : public InvocationPlugin {
-  public:
-    std::optional<Value<>> Add(const Value<>& left, const Value<>& right) const override {
-        if (isa<CustomType>(left.value) && isa<CustomType>(right.value)) {
-            auto& ct1 = left.getValue().staticCast<CustomType>();
-            auto& ct2 = right.getValue().staticCast<CustomType>();
+class CustomTypeInvocationPlugin : public InvocationPlugin
+{
+public:
+    std::optional<Value<>> Add(const Value<> & left, const Value<> & right) const override
+    {
+        if (isa<CustomType>(left.value) && isa<CustomType>(right.value))
+        {
+            auto & ct1 = left.getValue().staticCast<CustomType>();
+            auto & ct2 = right.getValue().staticCast<CustomType>();
             return Value(ct1.add(ct2));
         }
         return std::nullopt;
     }
 
-    std::optional<Value<>> Mul(const Value<>& left, const Value<>& right) const override {
-        if (isa<CustomType>(left.value) && isa<Int64>(right.value)) {
-            auto& ct1 = left.getValue().staticCast<CustomType>();
-            auto& ct2 = right.getValue().staticCast<Int64>();
+    std::optional<Value<>> Mul(const Value<> & left, const Value<> & right) const override
+    {
+        if (isa<CustomType>(left.value) && isa<Int64>(right.value))
+        {
+            auto & ct1 = left.getValue().staticCast<CustomType>();
+            auto & ct2 = right.getValue().staticCast<Int64>();
             return Value<CustomType>(ct1.mulInt(ct2));
         }
         return std::nullopt;
@@ -185,7 +199,8 @@ class CustomTypeInvocationPlugin : public InvocationPlugin {
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
 
-Value<> customValueType() {
+Value<> customValueType()
+{
     auto c1 = Value<CustomType>(CustomType(Value<Int64>(32_s64), Value<Int64>(32_s64)));
     auto c2 = Value<CustomType>(CustomType(Value<Int64>(32_s64), Value<Int64>(32_s64)));
 
@@ -194,16 +209,18 @@ Value<> customValueType() {
     return c1.getValue().x;
 }
 
-TEST_P(TypeCompilationTest, customValueTypeTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return customValueType();
-    });
+TEST_P(TypeCompilationTest, customValueTypeTest)
+{
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return customValueType(); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 128);
 }
 
-Value<> listLengthTest(Value<List>& list) { return list->length() + 4; }
+Value<> listLengthTest(Value<List> & list)
+{
+    return list->length() + 4;
+}
 
 /*
 TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
@@ -231,16 +248,19 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
  * @param text
  * @return
  */
-Value<> textTestFunction(Value<Text>& text) {
+Value<> textTestFunction(Value<Text> & text)
+{
     auto length = text->length();
     auto list2 = text->upper();
-    for (Value<UInt32> i = 0_u32; i < text->length(); i = i + 1_u32) {
-        text[i] = (int8_t) 'o';
+    for (Value<UInt32> i = 0_u32; i < text->length(); i = i + 1_u32)
+    {
+        text[i] = (int8_t)'o';
     }
     return list2->length();
 }
 
-TEST_P(TypeCompilationTest, compileTextFunctionTest) {
+TEST_P(TypeCompilationTest, compileTextFunctionTest)
+{
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
@@ -249,17 +269,20 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
 
     listRef.value->ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
-        Nautilus::Tracing::TraceContext::get()->addTraceArgument(listRef.value->ref);
-        return textTestFunction(textA);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn(
+        [&]()
+        {
+            Nautilus::Tracing::TraceContext::get()->addTraceArgument(listRef.value->ref);
+            return textTestFunction(textA);
+        });
 
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<uint32_t, void*>("execute");
+    auto function = engine->getInvocableMember<uint32_t, void *>("execute");
     ASSERT_EQ(function(listRef.get()), 4);
 }
 
-TEST_P(TypeCompilationTest, castInteger) {
+TEST_P(TypeCompilationTest, castInteger)
+{
     Value<> i8 = +42_s8;
     Value<> i16 = +42_s16;
     Value<> i32 = +42_s32;
@@ -297,7 +320,8 @@ TEST_P(TypeCompilationTest, castInteger) {
     }
 }
 
-TEST_P(TypeCompilationTest, castUInteger) {
+TEST_P(TypeCompilationTest, castUInteger)
+{
     Value<> ui8 = 42_u8;
     Value<> ui16 = 42_u16;
     Value<> ui32 = 42_u32;
@@ -335,7 +359,8 @@ TEST_P(TypeCompilationTest, castUInteger) {
     }
 }
 
-TEST_P(TypeCompilationTest, castIntegerToUInteger) {
+TEST_P(TypeCompilationTest, castIntegerToUInteger)
+{
     Value<> i8 = +42_s8;
     Value<> i16 = +42_s16;
     Value<> i32 = +42_s32;
@@ -401,7 +426,8 @@ TEST_P(TypeCompilationTest, castIntegerToUInteger) {
     }
 }
 
-TEST_P(TypeCompilationTest, castFloat) {
+TEST_P(TypeCompilationTest, castFloat)
+{
     auto i16 = Value<Int16>(42_s16);
     auto i32 = Value<Int32>(42_s32);
     auto i64 = Value<Int64>(42_s64);
@@ -448,12 +474,11 @@ TEST_P(TypeCompilationTest, castFloat) {
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-INSTANTIATE_TEST_CASE_P(testTypeCompilation,
-                        TypeCompilationTest,
-                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
-                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
-                        [](const testing::TestParamInfo<TypeCompilationTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testTypeCompilation,
+    TypeCompilationTest,
+    ::testing::ValuesIn(
+        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    [](const testing::TestParamInfo<TypeCompilationTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

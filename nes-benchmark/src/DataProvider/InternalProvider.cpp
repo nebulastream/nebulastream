@@ -14,23 +14,31 @@
 
 #include <DataProvider/InternalProvider.hpp>
 
-namespace NES::Benchmark::DataProvision {
-InternalProvider::InternalProvider(uint64_t id,
-                                   DataProvider::DataProviderMode providerMode,
-                                   std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
-    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers) {}
+namespace NES::Benchmark::DataProvision
+{
+InternalProvider::InternalProvider(
+    uint64_t id, DataProvider::DataProviderMode providerMode, std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
+    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers)
+{
+}
 
-std::vector<Runtime::TupleBuffer>& InternalProvider::getPreAllocatedBuffers() { return preAllocatedBuffers; }
+std::vector<Runtime::TupleBuffer> & InternalProvider::getPreAllocatedBuffers()
+{
+    return preAllocatedBuffers;
+}
 
-std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t sourceId) {
+std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t sourceId)
+{
     // For now, we only have a single source
-    ((void) sourceId);
-    while (!started) {
+    ((void)sourceId);
+    while (!started)
+    {
         //wait with data production until the source is really started and also block if the source gets stopped
         usleep(std::chrono::microseconds(150).count());
     }
 
-    if (!preAllocatedBuffers.empty()) {
+    if (!preAllocatedBuffers.empty())
+    {
         auto buffer = preAllocatedBuffers[currentlyEmittedBuffer % preAllocatedBuffers.size()];
         ++currentlyEmittedBuffer;
 
@@ -46,17 +54,26 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
     return std::nullopt;
 }
 
-void InternalProvider::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
-void InternalProvider::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
+void InternalProvider::recyclePooledBuffer(Runtime::detail::MemorySegment *)
+{
+}
+void InternalProvider::recycleUnpooledBuffer(Runtime::detail::MemorySegment *)
+{
+}
 
-void InternalProvider::start() { started = true; }
-void InternalProvider::stop() {
+void InternalProvider::start()
+{
+    started = true;
+}
+void InternalProvider::stop()
+{
     started = false;
     preAllocatedBuffers.clear();
 }
-InternalProvider::~InternalProvider() {
+InternalProvider::~InternalProvider()
+{
     started = false;
     preAllocatedBuffers.clear();
 }
 
-}// namespace NES::Benchmark::DataProvision
+} // namespace NES::Benchmark::DataProvision

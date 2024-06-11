@@ -11,19 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
+#include <cmath>
 #include <Execution/Expressions/Functions/RadiansExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class RadiansExpressionTest : public Testing::BaseUnitTest {
-  public:
+class RadiansExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("RadiansExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RadiansExpressionTest test class.");
     }
@@ -32,7 +35,8 @@ class RadiansExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down RadiansExpressionTest test class."); }
 };
 
-TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger) {
+TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger)
+{
     auto expression = UnaryExpressionWrapper<RadiansExpression>();
     // Int8
     {
@@ -59,19 +63,20 @@ TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-TEST_F(RadiansExpressionTest, evaluateRadiansExpressionFloat) {
+TEST_F(RadiansExpressionTest, evaluateRadiansExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<RadiansExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 90));
+        auto resultValue = expression.eval(Value<Float>((float)90));
         ASSERT_EQ(resultValue, M_PI_2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 180));
+        auto resultValue = expression.eval(Value<Double>((double)180));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

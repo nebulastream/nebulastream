@@ -19,7 +19,8 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
 * @brief This method replaces the first occurrence of midSubExpression in leftSubExpression with the replacement rightSubExpression
@@ -27,17 +28,18 @@ namespace NES::Runtime::Execution::Expressions {
 * @param regexpPattern as TextValue the pattern to match
 * @param textReplacement as TextValue the text (string) to replacement a pattern match
 */
-class ReplacingRegex : public Expression {
-  public:
-    ReplacingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern, const ExpressionPtr& textReplacement);
-    Value<> execute(Record& record) const override;
+class ReplacingRegex : public Expression
+{
+public:
+    ReplacingRegex(const ExpressionPtr & textValue, const ExpressionPtr & regexpPattern, const ExpressionPtr & textReplacement);
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr textValue;
     const ExpressionPtr regexpPattern;
     const ExpressionPtr textReplacement;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_REPLACINGREGEX_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_REPLACINGREGEX_HPP_

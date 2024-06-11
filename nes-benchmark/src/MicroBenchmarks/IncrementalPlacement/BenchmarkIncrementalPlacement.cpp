@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <fstream>
+#include <iostream>
+#include <thread>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -39,9 +42,6 @@
 #include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <fstream>
-#include <iostream>
-#include <thread>
 #include <z3++.h>
 
 using namespace NES;
@@ -56,21 +56,29 @@ SourceCatalogServicePtr sourceCatalogService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
 Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
-class ErrorHandler : public Exceptions::ErrorListener {
-  public:
-    virtual void onFatalError(int signalNumber, std::string callstack) override {
-        if (callstack.empty()) {
+class ErrorHandler : public Exceptions::ErrorListener
+{
+public:
+    virtual void onFatalError(int signalNumber, std::string callstack) override
+    {
+        if (callstack.empty())
+        {
             std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] ";
-        } else {
-            std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
-                      << callstack;
+        }
+        else
+        {
+            std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack;
         }
     }
 
-    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
-        if (callstack.empty()) {
+    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override
+    {
+        if (callstack.empty())
+        {
             std::cout << "onFatalException: exception=[" << exception->what() << "] ";
-        } else {
+        }
+        else
+        {
             std::cout << "onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack;
         }
     }
@@ -81,8 +89,8 @@ class ErrorHandler : public Exceptions::ErrorListener {
  * @param nesCoordinator : the coordinator shared object
  * @param noOfPhysicalSource : number of physical sources
  */
-void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
-
+void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource)
+{
     //Create source catalog service
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
@@ -130,21 +138,30 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
 
     //Add the logical and physical stream to the stream catalog
     uint64_t counter = 1;
-    for (uint64_t j = 0; j < noOfLogicalSource; j++) {
-        if (counter == 1) {
+    for (uint64_t j = 0; j < noOfLogicalSource; j++)
+    {
+        if (counter == 1)
+        {
             sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema1);
-        } else if (counter == 2) {
+        }
+        else if (counter == 2)
+        {
             sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema2);
-        } else if (counter == 3) {
+        }
+        else if (counter == 3)
+        {
             sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema3);
-        } else if (counter == 4) {
+        }
+        else if (counter == 4)
+        {
             sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema4);
             counter = 0;
         }
         counter++;
 
         // Add Physical topology node and stream catalog entry
-        for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
+        for (uint64_t i = 1; i <= noOfPhysicalSource; i++)
+        {
             //Fetch the leaf node of the topology and add all sources to it
             auto logicalSourceName = "example" + std::to_string(j + 1);
             auto physicalSourceName = "example" + std::to_string(j + 1) + std::to_string(i);
@@ -158,8 +175,8 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
  * @brief Set up the topology for the benchmark
  * @param noOfTopologyNodes : number of topology nodes
  */
-void setupTopology(uint64_t noOfTopologyNodes = 5) {
-
+void setupTopology(uint64_t noOfTopologyNodes = 5)
+{
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -170,15 +187,9 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     //Register root worker
     topology->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties, bandwidthInMbps, latencyInMs);
     //register child workers
-    for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topology->registerWorker(INVALID_WORKER_NODE_ID,
-                                 std::to_string(i),
-                                 0,
-                                 0,
-                                 UINT16_MAX,
-                                 properties,
-                                 bandwidthInMbps,
-                                 latencyInMs);
+    for (uint64_t i = 2; i <= noOfTopologyNodes; i++)
+    {
+        topology->registerWorker(INVALID_WORKER_NODE_ID, std::to_string(i), 0, 0, UINT16_MAX, properties, bandwidthInMbps, latencyInMs);
     }
 
     topology->addLinkProperty(WorkerId(1), WorkerId(2), 512, 100);
@@ -201,7 +212,8 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
  * @param noOfPhysicalSources : total number of physical sources
  * @param batchSize : the batch size for query processing
  */
-void setUp(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSources) {
+void setUp(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSources)
+{
     setupTopology();
     setupSources(noOfLogicalSource, noOfPhysicalSources);
 }
@@ -212,11 +224,13 @@ void setUp(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSources) {
  * @param delim : delimiter
  * @return  vector of split string
  */
-std::vector<std::string> split(const std::string input, char delim) {
+std::vector<std::string> split(const std::string input, char delim)
+{
     std::vector<std::string> result;
     std::stringstream ss(input);
     std::string item;
-    while (getline(ss, item, delim)) {
+    while (getline(ss, item, delim))
+    {
         result.push_back(item);
     }
     return result;
@@ -226,17 +240,20 @@ std::vector<std::string> split(const std::string input, char delim) {
  * @brief Load provided configuration file
  * @param filePath : location of the configuration file
  */
-Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
-
+Yaml::Node loadConfigFromYAMLFile(const std::string & filePath)
+{
     NES_INFO("BenchmarkIncrementalPlacement: Using config file with path: {} .", filePath);
-    if (!filePath.empty() && std::filesystem::exists(filePath)) {
-        try {
+    if (!filePath.empty() && std::filesystem::exists(filePath))
+    {
+        try
+        {
             Yaml::Node config = *(new Yaml::Node());
             Yaml::Parse(config, filePath.c_str());
             return config;
-        } catch (std::exception& e) {
-            NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file. {}",
-                      e.what());
+        }
+        catch (std::exception & e)
+        {
+            NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file. {}", e.what());
             throw e;
         }
     }
@@ -244,10 +261,12 @@ Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
     NES_THROW_RUNTIME_ERROR("Unable to find benchmark run configuration.");
 }
 
-void compileQuery(const std::string& stringQuery,
-                  uint64_t id,
-                  const std::shared_ptr<QueryParsingService>& queryParsingService,
-                  std::promise<QueryPlanPtr> promise) {
+void compileQuery(
+    const std::string & stringQuery,
+    uint64_t id,
+    const std::shared_ptr<QueryParsingService> & queryParsingService,
+    std::promise<QueryPlanPtr> promise)
+{
     auto queryplan = queryParsingService->createQueryFromCodeString(stringQuery);
     queryplan->setQueryId(QueryId(id));
     promise.set_value(queryplan);
@@ -256,20 +275,20 @@ void compileQuery(const std::string& stringQuery,
 /**
  * @brief This benchmarks time taken in the preparation of Global Query Plan after merging @param{NO_OF_QUERIES_TO_SEND} number of queries.
  */
-int main(int argc, const char* argv[]) {
-
+int main(int argc, const char * argv[])
+{
     auto listener = std::make_shared<ErrorHandler>();
     Exceptions::installGlobalErrorListener(listener);
 
     NES::Logger::setupLogging("BenchmarkIncrementalPlacement.log", NES::LogLevel::LOG_INFO);
     std::cout << "Setup BenchmarkIncrementalPlacement test class." << std::endl;
     std::stringstream benchmarkOutput;
-    benchmarkOutput << "Time,BM_Name,PlacementRule,IncrementalPlacement,Run_Num,Query_Num,Start_Time,End_Time,Total_Run_Time"
-                    << std::endl;
+    benchmarkOutput << "Time,BM_Name,PlacementRule,IncrementalPlacement,Run_Num,Query_Num,Start_Time,End_Time,Total_Run_Time" << std::endl;
 
     //Load all command line arguments
     std::map<std::string, std::string> commandLineParams;
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i)
+    {
         commandLineParams.insert(std::pair<std::string, std::string>(
             std::string(argv[i]).substr(0, std::string(argv[i]).find("=")),
             std::string(argv[i]).substr(std::string(argv[i]).find("=") + 1, std::string(argv[i]).length() - 1)));
@@ -280,9 +299,12 @@ int main(int argc, const char* argv[]) {
 
     Yaml::Node configs;
     //Load the configuration file
-    if (configPath != commandLineParams.end()) {
+    if (configPath != commandLineParams.end())
+    {
         configs = loadConfigFromYAMLFile(configPath->second);
-    } else {
+    }
+    else
+    {
         NES_ERROR("Configuration file is not provided");
         return -1;
     }
@@ -299,12 +321,14 @@ int main(int argc, const char* argv[]) {
     //Read the input query set and load the query string in the queries vector
     std::ifstream infile(querySetLocation);
     std::string line;
-    while (std::getline(infile, line)) {
+    while (std::getline(infile, line))
+    {
         std::istringstream iss(line);
         queries.emplace_back(line);
     }
 
-    if (queries.empty()) {
+    if (queries.empty())
+    {
         NES_THROW_RUNTIME_ERROR("Unable to find any query");
     }
 
@@ -318,7 +342,8 @@ int main(int argc, const char* argv[]) {
 
     //If no available thread then set number of threads to 1
     uint64_t numThreads = std::thread::hardware_concurrency();
-    if (numThreads == 0) {
+    if (numThreads == 0)
+    {
         NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
         numThreads = 1;
     }
@@ -326,37 +351,42 @@ int main(int argc, const char* argv[]) {
 
     uint64_t queryNum = 0;
     //Work till all queries are not parsed
-    while (queryNum < numOfQueries) {
+    while (queryNum < numOfQueries)
+    {
         std::vector<std::future<QueryPlanPtr>> futures;
         std::vector<std::thread> threadPool(numThreads);
         uint64_t threadNum;
         //Schedule queries to be parsed with #numThreads parallelism
-        for (threadNum = 0; threadNum < numThreads; threadNum++) {
+        for (threadNum = 0; threadNum < numThreads; threadNum++)
+        {
             //If no more query to parse
-            if (queryNum >= numOfQueries) {
+            if (queryNum >= numOfQueries)
+            {
                 break;
             }
             //Schedule thread for execution and pass a promise
             std::promise<QueryPlanPtr> promise;
             //Store the future, schedule the thread, and increment the query count
             futures.emplace_back(promise.get_future());
-            threadPool.emplace_back(
-                std::thread(compileQuery, queries[queryNum], queryNum + 1, queryParsingService, std::move(promise)));
+            threadPool.emplace_back(std::thread(compileQuery, queries[queryNum], queryNum + 1, queryParsingService, std::move(promise)));
             queryNum++;
         }
 
         //Wait for all unfinished threads
-        for (auto& item : threadPool) {
-            if (item.joinable()) {// if thread is not finished yet
+        for (auto & item : threadPool)
+        {
+            if (item.joinable())
+            { // if thread is not finished yet
                 item.join();
             }
         }
 
         //Fetch the parsed query from all threads
-        for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
+        for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++)
+        {
             auto query = futures[futureNum].get();
             auto queryID = query->getQueryId();
-            queryObjects[queryID.getRawValue() - 1] = query;//Add the parsed query to the (queryID - 1)th index
+            queryObjects[queryID.getRawValue() - 1] = query; //Add the parsed query to the (queryID - 1)th index
         }
     }
 
@@ -370,13 +400,15 @@ int main(int argc, const char* argv[]) {
 
     //Perform benchmark for each run configuration
     auto runConfig = configs["RunConfig"];
-    for (auto entry = runConfig.Begin(); entry != runConfig.End(); entry++) {
+    for (auto entry = runConfig.Begin(); entry != runConfig.End(); entry++)
+    {
         auto node = (*entry).second;
         auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
         coordinatorConfiguration->optimizer.enableIncrementalPlacement = incrementalPlacement;
 
-        for (uint32_t run = 0; run < numberOfRun; run++) {
+        for (uint32_t run = 0; run < numberOfRun; run++)
+        {
             std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
 
             //Setup topology and source catalog
@@ -392,34 +424,27 @@ int main(int argc, const char* argv[]) {
             auto globalQueryPlan = GlobalQueryPlan::create();
             auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                                topology,
-                                                                                                typeInferencePhase,
-                                                                                                coordinatorConfiguration);
+            auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(
+                globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
 
             //Perform steps to optimize queries
-            for (uint64_t i = 0; i < numOfQueries; i++) {
-
+            for (uint64_t i = 0; i < numOfQueries; i++)
+            {
                 auto queryPlan = queryObjects[i];
                 queryCatalog->createQueryCatalogEntry(
-                    "",
-                    queryPlan,
-                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value(),
-                    QueryState::REGISTERED);
+                    "", queryPlan, magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value(), QueryState::REGISTERED);
 
                 auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
                 NES_ASSERT(sharedQueryPlansToDeploy.size() == 1, "Shared Query Plan to deploy has to be one");
-                auto startTime =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
+                auto startTime
+                    = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 auto deploymentcontexts = queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
-                auto endTime =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
+                auto endTime
+                    = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 NES_ASSERT(!deploymentcontexts.empty(), "Placement should be successful");
-                benchmarkOutput << startTime << ",BM_Name," << placementStrategy << "," << incrementalPlacement << "," << run
-                                << "," << queryPlan->getQueryId() << "," << startTime << "," << endTime << ","
-                                << (endTime - startTime) << std::endl;
+                benchmarkOutput << startTime << ",BM_Name," << placementStrategy << "," << incrementalPlacement << "," << run << ","
+                                << queryPlan->getQueryId() << "," << startTime << "," << endTime << "," << (endTime - startTime)
+                                << std::endl;
             }
             std::cout << "Finished Run " << run;
         }

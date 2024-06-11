@@ -18,15 +18,17 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Batch JoinBuild operator.
  * The join build operator, consumes input tuples and materializes them in an thread local paged vector.
  * If all input records are processed, we build an hash table on the thread local paged vector.
  */
-class BatchJoinBuild : public ExecutableOperator {
-  public:
+class BatchJoinBuild : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a batch join operator.
      * @param operatorHandlerIndex index of the operator handler.
@@ -36,17 +38,18 @@ class BatchJoinBuild : public ExecutableOperator {
      * @param valueDataTypes data types of the value fields.
      * @param hashFunction hash function.
      */
-    BatchJoinBuild(uint64_t operatorHandlerIndex,
-                   const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                   const std::vector<PhysicalTypePtr>& keyDataTypes,
-                   const std::vector<Expressions::ExpressionPtr>& valueExpressions,
-                   const std::vector<PhysicalTypePtr>& valueDataTypes,
-                   std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
-    void setup(ExecutionContext& executionCtx) const override;
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    BatchJoinBuild(
+        uint64_t operatorHandlerIndex,
+        const std::vector<Expressions::ExpressionPtr> & keyExpressions,
+        const std::vector<PhysicalTypePtr> & keyDataTypes,
+        const std::vector<Expressions::ExpressionPtr> & valueExpressions,
+        const std::vector<PhysicalTypePtr> & valueDataTypes,
+        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+    void setup(ExecutionContext & executionCtx) const override;
+    void open(ExecutionContext & ctx, RecordBuffer & recordBuffer) const override;
+    void execute(ExecutionContext & ctx, Record & record) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
@@ -59,5 +62,5 @@ class BatchJoinBuild : public ExecutableOperator {
     void storeKeys(std::vector<Value<>> keys, Value<MemRef> keyPtr) const;
     void storeValues(std::vector<Value<>> keys, Value<MemRef> valuePtr) const;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_

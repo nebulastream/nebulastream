@@ -12,16 +12,15 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <iostream> // For cout
+#include <unistd.h> // For read
 #include <gtest/gtest.h>
-#include <iostream>    // For cout
-#include <netinet/in.h>// For sockaddr_in
-#include <sys/socket.h>// For socket functions
-#include <unistd.h>    // For read
+#include <netinet/in.h> // For sockaddr_in
+#include <sys/socket.h> // For socket functions
+#include <BaseIntegrationTest.hpp>
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
@@ -31,30 +30,36 @@
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-#include <Util/TestUtils.hpp>
 #include <thread>
+#include <Util/TestUtils.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
+class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest
+{
+public:
     /**
      * @brief Set up test cases, starts a TCP server before all tests are run
      */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TCPSourceIntegrationTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_TRACE("TCPSourceIntegrationTest: Start TCPServer.");
         tcpServerPort = getAvailablePort();
         startServer();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         stopServer();
         NES_TRACE("TCPSourceIntegrationTest: Stop TCPServer.");
         Testing::BaseIntegrationTest::TearDown();
@@ -63,22 +68,26 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
     /**
      * @brief starts a TCP server on tcpServerPort
      */
-    void startServer() {
+    void startServer()
+    {
         // Create a socket (IPv4, TCP)
         // After one test was executed, the remaining test calls to create a socket initially return 0
         // The close method does not recognize 0 as a valid file descriptor and therefore will not close the socket properly, hence
         // we use a while loop to retrieve a valid file descriptor
         uint8_t counter = 0;
-        while (sockfd == 0 && counter < 10) {
+        while (sockfd == 0 && counter < 10)
+        {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
             NES_TRACE("Retrieved sockfd: {} on try: {}", sockfd, std::to_string(counter));
             counter++;
         }
-        if (sockfd == 0) {
+        if (sockfd == 0)
+        {
             NES_ERROR("Failed to grap a valid file descriptor. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
-        if (sockfd == -1) {
+        if (sockfd == -1)
+        {
             NES_ERROR("Failed to create socket. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
@@ -86,14 +95,16 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
         // Listen to port tcpServerPort on any address
         sockaddr.sin_family = AF_INET;
         sockaddr.sin_addr.s_addr = INADDR_ANY;
-        sockaddr.sin_port = htons(*tcpServerPort);// htons is necessary to convert a number to
-                                                  // network byte order
+        sockaddr.sin_port = htons(*tcpServerPort); // htons is necessary to convert a number to
+            // network byte order
         int opt = 1;
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+        {
             NES_ERROR("TCPSourceIntegrationTest: Failed to create socket. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
-        if (bind(sockfd, (struct sockaddr*) &sockaddr, sizeof(sockaddr)) < 0) {
+        if (bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) < 0)
+        {
             std::stringstream tcpServerPortAsString;
             tcpServerPortAsString << tcpServerPort;
             NES_ERROR("TCPSourceIntegrationTest: Failed to bind to port {}. errno: {}", tcpServerPortAsString.str(), errno);
@@ -101,7 +112,8 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
         }
 
         // Start listening. Hold at most 10 connections in the queue
-        if (listen(sockfd, 10) < 0) {
+        if (listen(sockfd, 10) < 0)
+        {
             NES_ERROR("TCPSourceIntegrationTest: Failed to listen on socket. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
@@ -111,11 +123,13 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
     /**
      * @brief stops the TCP server running on tcpServerPort
      */
-    void stopServer() {
+    void stopServer()
+    {
         // Close the connections
         auto closed = close(sockfd);
         NES_TRACE("Closing Server connection pls wait ...{}", closed);
-        if (closed == -1) {
+        if (closed == -1)
+        {
             NES_ERROR("TCPSourceIntegrationTest::stopServer: Could not close socket. {}", strerror(errno));
             exit(EXIT_FAILURE);
         }
@@ -126,15 +140,18 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
      * @param message message as string to be send
      * @param repeatSending how of the message should be send
      */
-    int sendMessages(std::string message, int repeatSending) {
+    int sendMessages(std::string message, int repeatSending)
+    {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
-        int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
-        if (connection < 0) {
+        int connection = accept(sockfd, (struct sockaddr *)&sockaddr, (socklen_t *)&addrlen);
+        if (connection < 0)
+        {
             NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: {}", strerror(errno));
             return -1;
         }
-        for (int i = 0; i < repeatSending; ++i) {
+        for (int i = 0; i < repeatSending; ++i)
+        {
             NES_TRACE("TCPSourceIntegrationTest: Sending message: {} iter={}", message, i);
             send(connection, message.c_str(), message.size(), 0);
         }
@@ -146,11 +163,13 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
      * @brief sending different comma seperated messages via TCP to test variable length read. Static because it is run in a
      * threat inside test cases
      */
-    int sendMessageCSVVariableLength() {
+    int sendMessageCSVVariableLength()
+    {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
-        int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
-        if (connection < 0) {
+        int connection = accept(sockfd, (struct sockaddr *)&sockaddr, (socklen_t *)&addrlen);
+        if (connection < 0)
+        {
             NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: {}", strerror(errno));
             return -1;
         }
@@ -192,11 +211,13 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
      * @brief sending different JSON messages via TCP to test variable length read. Static because it is run in a
      * threat inside test cases
      */
-    int sendMessageJSONVariableLength() {
+    int sendMessageJSONVariableLength()
+    {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
-        int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
-        if (connection < 0) {
+        int connection = accept(sockfd, (struct sockaddr *)&sockaddr, (socklen_t *)&addrlen);
+        if (connection < 0)
+        {
             NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: {}", strerror(errno));
             return -1;
         }
@@ -242,7 +263,8 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
 /**
  * @brief tests TCPSource read of csv data that is seperated by a given token. Here \n is used
  */
-TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -289,16 +311,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessages("42,5.893,true\n", 6);
-    });
+    std::thread serverThread([&connection, this] { connection = sendMessages("42,5.893,true\n", 6); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -335,7 +354,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
 /**
  * @brief tests TCPSource read of JSON data that is seperated by a given token. Here \n is used
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToken) {
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToken)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -382,16 +402,14 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessages("{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}\n", 6);
-    });
+    std::thread serverThread([&connection, this]
+                             { connection = sendMessages("{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}\n", 6); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -428,7 +446,8 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
 /**
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Constant length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) {
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -475,16 +494,13 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessages("1442,5.893,hello", 6);
-    });
+    std::thread serverThread([&connection, this] { connection = sendMessages("1442,5.893,hello", 6); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -521,7 +537,8 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
 /**
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -568,16 +585,13 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessageCSVVariableLength();
-    });
+    std::thread serverThread([&connection, this] { connection = sendMessageCSVVariableLength(); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -614,7 +628,8 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
 /**
  * @brief tests TCPSource read of JSON data when obtaining the size of the data from the socket. Constant length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket) {
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -661,16 +676,14 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessages("44{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}", 6);
-    });
+    std::thread serverThread([&connection, this]
+                             { connection = sendMessages("44{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}", 6); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -707,7 +720,8 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
 /**
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLength) {
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLength)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -754,16 +768,13 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessageJSONVariableLength();
-    });
+    std::thread serverThread([&connection, this] { connection = sendMessageJSONVariableLength(); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -800,7 +811,8 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
 /**
  * @brief tests TCPSource read of CSV data with fixed length inputted at source creation time
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -847,16 +859,13 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessages("42,5.893,hello", 6);
-    });
+    std::thread serverThread([&connection, this] { connection = sendMessages("42,5.893,hello", 6); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -893,7 +902,8 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
 /**
  * @brief tests TCPSource read of CSV data with fixed length inputted at source creation time
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -940,16 +950,14 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
-    std::thread serverThread([&connection, this] {
-        connection = sendMessages("{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}", 6);
-    });
+    std::thread serverThread([&connection, this]
+                             { connection = sendMessages("{\"id\":\"42\", \"value\":\"5.893\", \"name\":\"hello\"}", 6); });
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
@@ -983,4 +991,4 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
     ASSERT_TRUE(retStopCord);
 }
 
-}// namespace NES
+} // namespace NES

@@ -19,7 +19,8 @@
 #include <cstdint>
 
 typedef struct DCCallVM_ DCCallVM;
-namespace NES::Nautilus::Backends::BC {
+namespace NES::Nautilus::Backends::BC
+{
 
 /**
  * @class Dyncall
@@ -37,8 +38,9 @@ namespace NES::Nautilus::Backends::BC {
  * int32_t result = dyncall.callI32(someFunctionPointer);
  * @endcode
  */
-class Dyncall {
-  public:
+class Dyncall
+{
+public:
     /**
    * @brief Default stack size for the Dyncall virtual machine (VM).
    */
@@ -53,7 +55,7 @@ class Dyncall {
    * @brief Singleton instance access for the Dyncall VM.
    * @return A reference to the singleton Dyncall VM instance.
    */
-    static Dyncall& getVM();
+    static Dyncall & getVM();
 
     /**
    * @brief Resets the VM state, clearing all previously added arguments.
@@ -105,76 +107,76 @@ class Dyncall {
    * @brief Add a pointer argument to the VM.
    * @param value The pointer value to add.
    */
-    void addArgPtr(void* value);
+    void addArgPtr(void * value);
 
     /**
     * @brief Call a void function with the provided function pointer and the currently set arguments.
     * @param value Function pointer to the target void function.
     */
-    void callVoid(void* value);
+    void callVoid(void * value);
 
     /**
     * @brief Call a function returning a boolean value with the provided function pointer and the currently set arguments.
     * @param value Function pointer to the target function returning a boolean value.
     * @return The boolean result of the function call.
     */
-    bool callB(void* value);
+    bool callB(void * value);
 
     /**
    * @brief Call a function returning an int8_t value with the provided function pointer and the currently set arguments.
    * @param value Function pointer to the target function returning an int8_t value.
    * @return The int8_t result of the function call.
    */
-    int8_t callI8(void* value);
+    int8_t callI8(void * value);
 
     /**
    * @brief Call a function returning an int16_t value with the provided function pointer and the currently set arguments.
    * @param value Function pointer to the target function returning an int16_t value.
    * @return The int16_t result of the function call.
    */
-    int16_t callI16(void* value);
+    int16_t callI16(void * value);
 
     /**
    * @brief Call a function returning an int32_t value with the provided function pointer and the currently set arguments.
    * @param value Function pointer to the target function returning an int32_t value.
    * @return The int32_t result of the function call.
    */
-    int32_t callI32(void* value);
+    int32_t callI32(void * value);
 
     /**
    * @brief Call a function returning an int64_t value with the provided function pointer and the currently set arguments.
    * @param value Function pointer to the target function returning an int64_t value.
    * @return The int64_t result of the function call.
    */
-    int64_t callI64(void* value);
+    int64_t callI64(void * value);
 
     /**
    * @brief Call a function returning an double value with the provided function pointer and the currently set arguments.
    * @param value Function pointer to the target function returning an double value.
    * @return The double result of the function call.
    */
-    double callD(void* value);
+    double callD(void * value);
 
     /**
     @brief Call a function returning a float value with the provided function pointer and the currently set arguments.
     @param value Function pointer to the target function returning a float value.
     @return The float result of the function call.
     */
-    float callF(void* value);
+    float callF(void * value);
 
     /**
    * @brief Call a function returning an void* value with the provided function pointer and the currently set arguments.
    * @param value Function pointer to the target function returning an void* value.
    * @return The void* result of the function call.
    */
-    void* callPtr(void* value);
+    void * callPtr(void * value);
 
-  private:
+private:
     /**
    * @brief Pointer to the underlying dyncall VM instance.
    */
-    DCCallVM* vm;
+    DCCallVM * vm;
 };
-}// namespace NES::Nautilus::Backends::BC
+} // namespace NES::Nautilus::Backends::BC
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_

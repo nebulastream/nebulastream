@@ -13,8 +13,6 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
@@ -24,13 +22,16 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace NES;
 
-class GlobalQueryPlanTest : public Testing::BaseUnitTest {
-
-  public:
-    static void SetUpTestCase() {
+class GlobalQueryPlanTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         Logger::setupLogging("GlobalQueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalQueryPlanTest test case.");
     }
@@ -39,12 +40,16 @@ class GlobalQueryPlanTest : public Testing::BaseUnitTest {
 /**
  * @brief This test is for creation of a global query plan
  */
-TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlan) {
-    try {
+TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlan)
+{
+    try
+    {
         NES_DEBUG("GlobalQueryPlanTest: create an empty global query plan");
         GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
         SUCCEED();
-    } catch (std::exception& ex) {
+    }
+    catch (std::exception & ex)
+    {
         FAIL();
     }
 }
@@ -52,8 +57,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlan) {
 /**
  * @brief This test is for creation of a global query plan and adding a query plan with empty query id
  */
-TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddingQueryPlanWithEmptyId) {
-
+TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddingQueryPlanWithEmptyId)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without id to the global query plan");
@@ -66,8 +71,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddingQueryPlanWithEmptyId)
  * @brief This test is for creation of a global query plan and extracting a list of global query nodes with specific
  * type of operators
  */
-TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWithATypeOfLogicalOperator) {
-
+TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWithATypeOfLogicalOperator)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
@@ -86,8 +91,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
 /**
  * @brief This test is for creation of a global query plan and adding query plan twice
  */
-TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice) {
-
+TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding same query plan twice to the global query plan");
@@ -102,8 +107,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice) {
 /**
  * @brief This test is for creation of a global query plan and adding multiple query plans
  */
-TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
-
+TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the global query plan");
@@ -134,8 +139,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
 /**
  * @brief This test is for creation of a global query plan and adding and removing the query plan
  */
-TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
-
+TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the global query plan");
@@ -162,8 +167,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
 /**
  * @brief This test is for creation of a global query plan by adding multiple query plans and computing the Meta Data information
  */
-TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMultipleQueries) {
-
+TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMultipleQueries)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the global query plan");
@@ -199,8 +204,8 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 /**
  * @brief This test is for updating Meta Data information after applying syntax based query merging
  */
-TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMultipleQueriesAfterSyntaxBAsedQuaeryMerge) {
-
+TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMultipleQueriesAfterSyntaxBAsedQuaeryMerge)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the global query plan");
@@ -241,8 +246,8 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 /**
  * @brief This test is for updating Meta Data information after applying Syntax Based Equal Query Merger merging on 3 queryIdAndCatalogEntryMapping where 2 are identical
  */
-TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMixedQueriesAfterApplyingMergeRules) {
-
+TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMixedQueriesAfterApplyingMergeRules)
+{
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the global query plan");

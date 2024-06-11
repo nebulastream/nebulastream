@@ -12,34 +12,39 @@
     limitations under the License.
 */
 
+#include <random>
+#include <vector>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/ZipfianGenerator.hpp>
-#include <random>
-#include <vector>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark::DataGeneration {
-class ZipfianDataGeneratorTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark::DataGeneration
+{
+class ZipfianDataGeneratorTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ZipfianDataGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ZipfianDataGeneratorTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_INFO("Setup ZipfianDataGeneratorTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down ZipfianDataGeneratorTest test case.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -51,7 +56,8 @@ class ZipfianDataGeneratorTest : public Testing::BaseIntegrationTest {
 /**
      * @brief Testing if ZipfianDataGenerator::getSchema() works by comparing versus a hardcoded truth
      */
-TEST_F(ZipfianDataGeneratorTest, getSchemaTest) {
+TEST_F(ZipfianDataGeneratorTest, getSchemaTest)
+{
     auto alpha = 0.9;
     auto minValue = 0;
     auto maxValue = 1000;
@@ -71,7 +77,8 @@ TEST_F(ZipfianDataGeneratorTest, getSchemaTest) {
 /**
      * @brief Testing if ZipfianDataGenerator::getName() works by comparing versus a hardcoded truth
      */
-TEST_F(ZipfianDataGeneratorTest, getNameTest) {
+TEST_F(ZipfianDataGeneratorTest, getNameTest)
+{
     auto alpha = 0.9;
     auto minValue = 0;
     auto maxValue = 1000;
@@ -86,7 +93,8 @@ TEST_F(ZipfianDataGeneratorTest, getNameTest) {
 /**
      * @brief Testing if ZipfianDataGenerator::toString() works by comparing versus a hardcoded truth
      */
-TEST_F(ZipfianDataGeneratorTest, toStringTest) {
+TEST_F(ZipfianDataGeneratorTest, toStringTest)
+{
     auto alpha = 0.9;
     auto minValue = 0;
     auto maxValue = 1000;
@@ -105,7 +113,8 @@ TEST_F(ZipfianDataGeneratorTest, toStringTest) {
      * @brief Testing if ZipfianDataGenerator::createData() works by creating tuples and then comparing the expected tupleBuffers
      * with the created one's from the ZipfianDataGenerator
      */
-TEST_F(ZipfianDataGeneratorTest, createDataTest) {
+TEST_F(ZipfianDataGeneratorTest, createDataTest)
+{
     auto alpha = 0.9;
     auto minValue = 0;
     auto maxValue = 1000;
@@ -121,14 +130,16 @@ TEST_F(ZipfianDataGeneratorTest, createDataTest) {
 
     auto memoryLayout = zipfianDataGenerator->getMemoryLayout(bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
         std::mt19937 generator(GENERATOR_SEED_ZIPFIAN);
         ZipfianGenerator zipfianGenerator(minValue, maxValue, alpha);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             auto value = zipfianGenerator(generator);
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(value);
@@ -142,7 +153,8 @@ TEST_F(ZipfianDataGeneratorTest, createDataTest) {
 
     ASSERT_EQ(dataDefault.size(), expectedData.size());
 
-    for (uint64_t i = 0; i < dataDefault.size(); ++i) {
+    for (uint64_t i = 0; i < dataDefault.size(); ++i)
+    {
         auto dataBuffer = dataDefault[i];
         auto expectedBuffer = expectedData[i];
 
@@ -150,4 +162,4 @@ TEST_F(ZipfianDataGeneratorTest, createDataTest) {
         ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(), dataBuffer.getBufferSize()) == 0);
     }
 }
-}//namespace NES::Benchmark::DataGeneration
+} //namespace NES::Benchmark::DataGeneration

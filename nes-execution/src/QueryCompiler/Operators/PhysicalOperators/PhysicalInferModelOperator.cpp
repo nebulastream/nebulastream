@@ -11,47 +11,53 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <sstream>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalInferModelOperator::PhysicalInferModelOperator(OperatorId id,
-                                                       StatisticId statisticId,
-                                                       SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       std::string model,
-                                                       std::vector<ExpressionNodePtr> inputFields,
-                                                       std::vector<ExpressionNodePtr> outputFields)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), model(model),
-      inputFields(inputFields), outputFields(outputFields) {}
-
-PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
-                                                       StatisticId statisticId,
-                                                       SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       std::string model,
-                                                       std::vector<ExpressionNodePtr> inputFields,
-                                                       std::vector<ExpressionNodePtr> outputFields) {
-    return std::make_shared<PhysicalInferModelOperator>(id,
-                                                        statisticId,
-                                                        inputSchema,
-                                                        outputSchema,
-                                                        model,
-                                                        inputFields,
-                                                        outputFields);
+PhysicalInferModelOperator::PhysicalInferModelOperator(
+    OperatorId id,
+    StatisticId statisticId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    std::string model,
+    std::vector<ExpressionNodePtr> inputFields,
+    std::vector<ExpressionNodePtr> outputFields)
+    : Operator(id, statisticId)
+    , PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema)
+    , model(model)
+    , inputFields(inputFields)
+    , outputFields(outputFields)
+{
 }
 
-PhysicalOperatorPtr PhysicalInferModelOperator::create(StatisticId statisticId,
-                                                       SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       std::string model,
-                                                       std::vector<ExpressionNodePtr> inputFields,
-                                                       std::vector<ExpressionNodePtr> outputFields) {
+PhysicalOperatorPtr PhysicalInferModelOperator::create(
+    OperatorId id,
+    StatisticId statisticId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    std::string model,
+    std::vector<ExpressionNodePtr> inputFields,
+    std::vector<ExpressionNodePtr> outputFields)
+{
+    return std::make_shared<PhysicalInferModelOperator>(id, statisticId, inputSchema, outputSchema, model, inputFields, outputFields);
+}
+
+PhysicalOperatorPtr PhysicalInferModelOperator::create(
+    StatisticId statisticId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    std::string model,
+    std::vector<ExpressionNodePtr> inputFields,
+    std::vector<ExpressionNodePtr> outputFields)
+{
     return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, model, inputFields, outputFields);
 }
 
-std::string PhysicalInferModelOperator::toString() const {
+std::string PhysicalInferModelOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalInferModelOperator:\n";
@@ -61,14 +67,24 @@ std::string PhysicalInferModelOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalInferModelOperator::copy() {
+OperatorPtr PhysicalInferModelOperator::copy()
+{
     auto result = create(id, statisticId, inputSchema, outputSchema, model, inputFields, outputFields);
     result->addAllProperties(properties);
     return result;
 }
 
-const std::string& PhysicalInferModelOperator::getModel() const { return model; }
-const std::vector<ExpressionNodePtr>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
-const std::vector<ExpressionNodePtr>& PhysicalInferModelOperator::getOutputFields() const { return outputFields; }
+const std::string & PhysicalInferModelOperator::getModel() const
+{
+    return model;
+}
+const std::vector<ExpressionNodePtr> & PhysicalInferModelOperator::getInputFields() const
+{
+    return inputFields;
+}
+const std::vector<ExpressionNodePtr> & PhysicalInferModelOperator::getOutputFields() const
+{
+    return outputFields;
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

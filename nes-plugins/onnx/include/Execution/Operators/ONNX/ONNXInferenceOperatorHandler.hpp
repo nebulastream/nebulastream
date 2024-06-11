@@ -15,22 +15,24 @@
 #ifndef NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATORHANDLER_HPP_
 #define NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATORHANDLER_HPP_
 
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Reconfigurable.hpp>
-#include <absl/types/span.h>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <absl/types/span.h>
 
 //TODO: Change to BitCast once available
 #define ONNX_HANDLER_CAST reinterpret_cast
 
-namespace Ort {
+namespace Ort
+{
 class Session;
 }
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class ONNXInferenceOperatorHandler;
 using ONNXInferenceOperatorHandlerPtr = std::shared_ptr<ONNXInferenceOperatorHandler>;
 
@@ -39,8 +41,9 @@ using ONNXInferenceOperatorHandlerPtr = std::shared_ptr<ONNXInferenceOperatorHan
  * @details This class is responsible for loading and managing the model (which includes the ONNX Runtime Session)
  *          and loading the input and output tensors into the model
  */
-class ONNXInferenceOperatorHandler : public OperatorHandler {
-  public:
+class ONNXInferenceOperatorHandler : public OperatorHandler
+{
+public:
     static ONNXInferenceOperatorHandlerPtr create(std::string model);
 
     explicit ONNXInferenceOperatorHandler(std::string model);
@@ -49,24 +52,24 @@ class ONNXInferenceOperatorHandler : public OperatorHandler {
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext)
+        override;
 
-    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
+    void reconfigure(Runtime::ReconfigurationMessage & task, Runtime::WorkerContext & context) override;
 
-    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage & task) override;
 
     /**
      * @brief returns the model name
      * @return reference to the path of the Model as string
      */
-    const std::string& getModel() const;
+    const std::string & getModel() const;
 
     /**
      * @brief Initialize the Model
      * @param pathToModel file containing the serialized model
      */
-    void initializeModel(const std::string& pathToModel);
+    void initializeModel(const std::string & pathToModel);
 
     /**
      * @brief Runs inference on the Model for a single input tuple
@@ -84,7 +87,7 @@ class ONNXInferenceOperatorHandler : public OperatorHandler {
      * @brief loads base64 encoded data into the input tensor
      * @param string_view into the base64 encoded data. Data is copied!
      */
-    void appendBase64EncodedData(const std::string_view& base64_encoded_data);
+    void appendBase64EncodedData(const std::string_view & base64_encoded_data);
 
     /**
      * @brief copies the output of the inference model into a base64 encoded string
@@ -97,13 +100,13 @@ class ONNXInferenceOperatorHandler : public OperatorHandler {
      * @tparam T (float, uint*_t, int*_t)
      * @param data pointer to object
      */
-    template<typename T>
-    void appendToByteArray(const T& data);
+    template <typename T>
+    void appendToByteArray(const T & data);
 
-  private:
+private:
     void inferInternal(absl::Span<int8_t> input, absl::Span<int8_t> output);
 
-    void loadModel(const std::string& pathToModel);
+    void loadModel(const std::string & pathToModel);
 
     size_t getModelOutputSizeInBytes();
 
@@ -117,11 +120,12 @@ class ONNXInferenceOperatorHandler : public OperatorHandler {
     std::vector<int64_t> output_shape;
 };
 
-template<typename T>
-void ONNXInferenceOperatorHandler::appendToByteArray(const T& data) {
-    auto* ptr = ONNX_HANDLER_CAST<const int8_t*>(&data);
+template <typename T>
+void ONNXInferenceOperatorHandler::appendToByteArray(const T & data)
+{
+    auto * ptr = ONNX_HANDLER_CAST<const int8_t *>(&data);
     input_buffer.insert(input_buffer.end(), ptr, ptr + sizeof(T));
 }
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATORHANDLER_HPP_
+#endif // NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATORHANDLER_HPP_

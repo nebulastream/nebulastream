@@ -15,53 +15,57 @@
 #ifndef NES_WORKER_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 #define NES_WORKER_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
-#include <CoordinatorRPCService.grpc.pb.h>
+#include <optional>
+#include <string>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <grpcpp/grpcpp.h>
-#include <optional>
-#include <string>
+#include <CoordinatorRPCService.grpc.pb.h>
 
-namespace NES {
+namespace NES
+{
 class TopologyLinkInformation;
 }
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
-namespace NES {
+namespace NES
+{
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
-namespace Monitoring {
+namespace Monitoring
+{
 class RegistrationMetrics;
-}// namespace Monitoring
+} // namespace Monitoring
 
-namespace Spatial::DataTypes::Experimental {
+namespace Spatial::DataTypes::Experimental
+{
 class GeoLocation;
 class Waypoint;
-}// namespace Spatial::DataTypes::Experimental
+} // namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 struct ReconnectPoint;
 }
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
  */
-class CoordinatorRPCClient {
-
-  public:
+class CoordinatorRPCClient
+{
+public:
     /**
      * @brief Factory method, to create the coordinator RPCClient. Internally a GRPC stub is created.
      * @param address
      * @param retryAttempts: number of attempts for connecting
      * @param backOffTimeMs: backoff time to wait after a failed connection attempt
      */
-    static std::shared_ptr<CoordinatorRPCClient> create(const std::string& address,
-                                                        uint32_t rpcRetryAttempts = 10,
-                                                        std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
+    static std::shared_ptr<CoordinatorRPCClient> create(
+        const std::string & address, uint32_t rpcRetryAttempts = 10, std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
 
     /**
      * @brief Constructor accepting a GRPC Stub.
@@ -70,16 +74,17 @@ class CoordinatorRPCClient {
      * @param retryAttempts: number of attempts for connecting
      * @param backOffTimeMs: backoff time to wait after a failed connection attempt
      */
-    explicit CoordinatorRPCClient(std::unique_ptr<CoordinatorRPCService::StubInterface>&& coordinatorStub,
-                                  const std::string& address,
-                                  uint32_t rpcRetryAttempts = 10,
-                                  std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
+    explicit CoordinatorRPCClient(
+        std::unique_ptr<CoordinatorRPCService::StubInterface> && coordinatorStub,
+        const std::string & address,
+        uint32_t rpcRetryAttempts = 10,
+        std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
     /**
      * @brief this methods registers physical sources provided by the node at the coordinator
      * @param physicalSourceTypes list of physical sources to register
      * @return bool indicating success
      */
-    bool registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes);
+    bool registerPhysicalSources(const std::vector<PhysicalSourceTypePtr> & physicalSourceTypes);
 
     /**
      * @brief this method registers logical source via the coordinator
@@ -89,21 +94,21 @@ class CoordinatorRPCClient {
      * @note the logical source is not saved in the worker as it is maintained on the coordinator and all logical source can be
      * retrieved from the physical source map locally, if we later need the data we can add a map
      */
-    bool registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath);
+    bool registerLogicalSource(const std::string & logicalSourceName, const std::string & filePath);
 
     /**
      * @brief this method removes the logical source in the coordinator
      * @param logicalSourceName name of the logical source to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterLogicalSource(const std::string& logicalSourceName);
+    bool unregisterLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief this method removes a physical source from a logical source in the coordinator
      * @param physicalSourceTypes vector physical sources
      * @return bool indicating success of the removal
      */
-    bool unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes);
+    bool unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr> & physicalSourceTypes);
 
     /**
      * @brief method to add a new parent to an existing node
@@ -132,7 +137,7 @@ class CoordinatorRPCClient {
      * @param registrationRequest: request containing necessary input for worker registration
      * @return bool indicating success
      */
-    bool registerWorker(const RegisterWorkerRequest& registrationRequest);
+    bool registerWorker(const RegisterWorkerRequest & registrationRequest);
 
     /**
      * @brief method to check if the coordinator is alive
@@ -162,11 +167,8 @@ class CoordinatorRPCClient {
      * @param errorMsg: more information about failure of the Query
      * @return bool indicating success
      */
-    bool notifyQueryFailure(SharedQueryId sharedQueryId,
-                            DecomposedQueryPlanId subQueryId,
-                            WorkerId workerId,
-                            OperatorId operatorId,
-                            std::string errorMsg);
+    bool notifyQueryFailure(
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, WorkerId workerId, OperatorId operatorId, std::string errorMsg);
 
     /**
       * @brief method to propagate new epoch timestamp to coordinator
@@ -184,7 +186,7 @@ class CoordinatorRPCClient {
      * @return list of node IDs and their corresponding fixed coordinates as Location objects
      */
     std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
-    getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius);
+    getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation & geoLocation, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions
@@ -208,10 +210,11 @@ class CoordinatorRPCClient {
      * @param sourceId: the source id
      * @return true if coordinator successfully recorded the information else false
      */
-    bool notifySourceStopTriggered(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId decomposedQueryPlanId,
-                                   OperatorId sourceId,
-                                   Runtime::QueryTerminationType queryTermination);
+    bool notifySourceStopTriggered(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        OperatorId sourceId,
+        Runtime::QueryTerminationType queryTermination);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is completed or not
@@ -228,8 +231,9 @@ class CoordinatorRPCClient {
      * @param addPredictions new predictions to be added
      * @return true if the information was successfully received at coordinator side
      */
-    bool sendReconnectPrediction(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
-                                 const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions);
+    bool sendReconnectPrediction(
+        const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> & addPredictions,
+        const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> & removePredictions);
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed
@@ -237,7 +241,7 @@ class CoordinatorRPCClient {
      * at the transmitted position
      * @return true if the information has benn succesfully processed
      */
-    bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint& locationUpdate);
+    bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint & locationUpdate);
 
     /**
      * @brief the function queries for the ids of the parents of a node with a given id
@@ -253,10 +257,10 @@ class CoordinatorRPCClient {
      * @param addedTopologyLinks a list or topology links to add
      * @return true on success
      */
-    bool relocateTopologyNode(const std::vector<TopologyLinkInformation>& removedTopologyLinks,
-                              const std::vector<TopologyLinkInformation>& addedTopologyLinks);
+    bool relocateTopologyNode(
+        const std::vector<TopologyLinkInformation> & removedTopologyLinks, const std::vector<TopologyLinkInformation> & addedTopologyLinks);
 
-  private:
+private:
     WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::string address;
     std::shared_ptr<::grpc::Channel> rpcChannel;
@@ -266,5 +270,5 @@ class CoordinatorRPCClient {
 };
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
-}// namespace NES
-#endif// NES_WORKER_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
+} // namespace NES
+#endif // NES_WORKER_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_

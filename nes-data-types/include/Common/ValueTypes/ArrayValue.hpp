@@ -15,16 +15,17 @@
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
 
-#include <Common/ValueTypes/ValueType.hpp>
 #include <type_traits>
 #include <vector>
+#include <Common/ValueTypes/ValueType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class [[nodiscard]] ArrayValue final : public ValueType {
-  public:
-    inline ArrayValue(DataTypePtr type, std::vector<std::string>&& values) noexcept
-        : ValueType(type), values(std::move(values)) {}
+class [[nodiscard]] ArrayValue final : public ValueType
+{
+public:
+    inline ArrayValue(DataTypePtr type, std::vector<std::string> && values) noexcept : ValueType(type), values(std::move(values)) { }
 
     ~ArrayValue() override = default;
 
@@ -37,6 +38,6 @@ class [[nodiscard]] ArrayValue final : public ValueType {
     std::vector<std::string> const values;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_

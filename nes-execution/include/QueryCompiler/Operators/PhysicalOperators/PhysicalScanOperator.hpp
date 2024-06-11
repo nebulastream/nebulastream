@@ -17,20 +17,22 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical Scan operator.
  */
-class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
-  public:
+class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOperator
+{
+public:
     /**
      * @brief Constructor for the physical scan operator
      * @param id operator id
      * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param outputSchema output schema
      */
-    PhysicalScanOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema);
+    PhysicalScanOperator(OperatorId id, StatisticId statisticId, const SchemaPtr & outputSchema);
 
     /**
      * @brief Creates for the physical scan operator
@@ -38,7 +40,7 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
      * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param outputSchema output schema
      */
-    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr & outputSchema);
 
     /**
      * @brief Constructor for the physical scan operator
@@ -49,6 +51,6 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
     std::string toString() const override;
     OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_

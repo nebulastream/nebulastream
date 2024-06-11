@@ -15,13 +15,15 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
 #include <cstdint>
 #include <string>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Defines a set of compilation options for nautilus compilation backends.
  */
-class CompilationOptions {
-  public:
+class CompilationOptions
+{
+public:
     CompilationOptions() = default;
     /**
      * @brief Retrieves the identifier for this compilation options instance.
@@ -33,7 +35,7 @@ class CompilationOptions {
      * @brief Sets the identifier for this compilation options instance.
      * @param identifier The identifier string to set.
      */
-    void setIdentifier(const std::string& identifier);
+    void setIdentifier(const std::string & identifier);
 
     /**
     * @brief Retrieves the dump output path for this compilation options instance.
@@ -45,7 +47,7 @@ class CompilationOptions {
      * @brief Sets the dump output path for this compilation options instance.
      * @param dumpOutputPath The dump output path string to set.
      */
-    void setDumpOutputPath(const std::string& dumpOutputPath);
+    void setDumpOutputPath(const std::string & dumpOutputPath);
 
     /**
      * @brief Checks if the dump to file option is enabled.
@@ -136,14 +138,14 @@ class CompilationOptions {
      * @brief Set the path to the CUDA SDK
      * @param cudaSdkPath the CUDA SDK path
      */
-    void setCUDASdkPath(const std::string& cudaSdkPath);
+    void setCUDASdkPath(const std::string & cudaSdkPath);
 
     /**
      * @brief Get the path to the CUDA SDK
      */
     const std::string getCUDASdkPath() const;
 
-  private:
+private:
     std::string identifier;
     std::string dumpOutputPath;
     std::string proxyInliningInputPath;
@@ -157,6 +159,6 @@ class CompilationOptions {
     std::string cudaSdkPath;
     uint8_t optimizationLevel = 1;
 };
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_

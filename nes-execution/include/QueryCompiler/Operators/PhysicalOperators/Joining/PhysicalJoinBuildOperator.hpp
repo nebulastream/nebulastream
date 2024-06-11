@@ -19,30 +19,35 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 /**
  * @brief Physical operator for the join build.
  * This operator receives input records and adds them to its operator state.
  */
-class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
-  public:
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Join::JoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide);
-    static PhysicalOperatorPtr create(StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Join::JoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide);
-    PhysicalJoinBuildOperator(OperatorId id,
-                              StatisticId statisticId,
-                              SchemaPtr inputSchema,
-                              SchemaPtr outputSchema,
-                              Join::JoinOperatorHandlerPtr operatorHandler,
-                              JoinBuildSideType buildSide);
+class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator
+{
+public:
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        StatisticId statisticId,
+        const SchemaPtr & inputSchema,
+        const SchemaPtr & outputSchema,
+        const Join::JoinOperatorHandlerPtr & operatorHandler,
+        JoinBuildSideType buildSide);
+    static PhysicalOperatorPtr create(
+        StatisticId statisticId,
+        const SchemaPtr & inputSchema,
+        const SchemaPtr & outputSchema,
+        const Join::JoinOperatorHandlerPtr & operatorHandler,
+        JoinBuildSideType buildSide);
+    PhysicalJoinBuildOperator(
+        OperatorId id,
+        StatisticId statisticId,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Join::JoinOperatorHandlerPtr operatorHandler,
+        JoinBuildSideType buildSide);
 
     ~PhysicalJoinBuildOperator() noexcept override = default;
 
@@ -51,9 +56,9 @@ class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUn
 
     JoinBuildSideType getBuildSide();
 
-  private:
+private:
     JoinBuildSideType joinBuildSide;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINBUILDOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINBUILDOPERATOR_HPP_

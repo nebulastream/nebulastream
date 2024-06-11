@@ -16,14 +16,16 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 /**
  * @brief Interface for hash function on Nautilus values.
  * Sub classes can provide specific hash algorithms.
  */
-class HashFunction {
-  public:
+class HashFunction
+{
+public:
     using HashValue = Value<UInt64>;
 
     /**
@@ -46,10 +48,10 @@ class HashFunction {
      * @param values vector of nautilus values.
      * @return the hash
      */
-    HashValue calculate(std::vector<Value<>>& values);
+    HashValue calculate(std::vector<Value<>> & values);
     virtual ~HashFunction() = default;
 
-  protected:
+protected:
     /**
      * @brief Initializes a hash value, e.g. a specific seed.
      * @return HashValue
@@ -61,7 +63,7 @@ class HashFunction {
      * @param value
      * @return HashValue
      */
-    virtual HashValue calculate(HashValue& hash, Value<>& value) = 0;
+    virtual HashValue calculate(HashValue & hash, Value<> & value) = 0;
 
     /**
      * @brief This is only necessary as long as TODO #3648 is not merged
@@ -69,7 +71,7 @@ class HashFunction {
      * @param state
      * @return HashValue
      */
-    virtual HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) = 0;
+    virtual HashValue calculateWithState(HashValue & hash, Value<> & value, Value<MemRef> & state) = 0;
 };
-}// namespace NES::Nautilus::Interface
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
+} // namespace NES::Nautilus::Interface
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_

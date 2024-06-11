@@ -14,13 +14,15 @@
 
 #include <Execution/Expressions/LogicalExpressions/NegateExpression.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 NegateExpression::NegateExpression(ExpressionPtr subExpression) : subExpression(std::move(subExpression)){};
 
-Value<> NegateExpression::execute(Record& record) const {
+Value<> NegateExpression::execute(Record & record) const
+{
     Value<> leftValue = subExpression->execute(record);
     return !leftValue;
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

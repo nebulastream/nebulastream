@@ -16,13 +16,15 @@
 
 #include <Compiler/CompilerFlags.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief Represents compilation flags available to the C++ compiler.
  */
-class CPPCompilerFlags : public CompilerFlags {
-  public:
+class CPPCompilerFlags : public CompilerFlags
+{
+public:
     // sets the cpp language version for the code
 #if defined(__APPLE__)
     inline static const std::string CXX_VERSION = "-std=c++20 -stdlib=libc++";
@@ -72,6 +74,6 @@ class CPPCompilerFlags : public CompilerFlags {
     void enableProfilingFlags();
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_

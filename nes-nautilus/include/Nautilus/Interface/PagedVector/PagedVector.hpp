@@ -13,12 +13,13 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
-#include <API/Schema.hpp>
-#include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
-namespace NES::Nautilus::Interface {
+#include <API/Schema.hpp>
+#include <Runtime/Allocator/MemoryResource.hpp>
+namespace NES::Nautilus::Interface
+{
 class PagedVectorRef;
 
 /**
@@ -28,8 +29,9 @@ class PagedVectorRef;
  * Each page can contain page_size/entry_size entries.
  * TODO check if we should use FixedPage.cpp or introduce specific page class #3968
  */
-class PagedVector {
-  public:
+class PagedVector
+{
+public:
     static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
@@ -50,7 +52,7 @@ class PagedVector {
      * @brief Returns the set of pages
      * @return std::vector<int8_t*>
      */
-    std::vector<int8_t*> getPages();
+    std::vector<int8_t *> getPages();
 
     /**
      * @brief Clear the sequential data of pages
@@ -85,7 +87,7 @@ class PagedVector {
      * @brief Appends a new page and updates the current page and number of entries.
      * @return int8_t* page address
      */
-    int8_t* appendPage();
+    int8_t * appendPage();
 
     /**
      * @brief Moves the entry from the oldPos to the newPos. This will overwrite the data at the newPos
@@ -99,13 +101,13 @@ class PagedVector {
      * @param pos
      * @return Pointer to start of record
      */
-    int8_t* getEntry(uint64_t pos) const;
+    int8_t * getEntry(uint64_t pos) const;
 
     /**
      * @brief Combines this PagedVector with another one by adding the other.pages to these pages
      * @param other: PagedVector that contains pages, which should be added to this one
      */
-    void appendAllPages(PagedVector& other);
+    void appendAllPages(PagedVector & other);
 
     /**
      * @brief Getter for the page size
@@ -118,18 +120,18 @@ class PagedVector {
      */
     ~PagedVector();
 
-  private:
+private:
     friend PagedVectorRef;
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
     uint64_t pageSize;
     uint64_t capacityPerPage;
-    std::vector<int8_t*> pages;
-    int8_t* currentPage;
+    std::vector<int8_t *> pages;
+    int8_t * currentPage;
     uint64_t numberOfEntries;
     uint64_t totalNumberOfEntries;
 };
 
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_

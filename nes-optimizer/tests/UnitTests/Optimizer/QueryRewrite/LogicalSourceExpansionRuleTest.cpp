@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -39,29 +40,31 @@
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <iostream>
 
 using namespace NES;
 using namespace Configurations;
 
-class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr & sourceCatalog)
+    {
         NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -80,7 +83,8 @@ class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -102,7 +106,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2u);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     const std::string logicalSourceName = "default_logical";
@@ -136,7 +141,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     const std::string logicalSourceName = "default_logical";
@@ -173,15 +179,15 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFilterAndMap) {
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFilterAndMap)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     const std::string logicalSourceName = "default_logical";
-    Query query =
-        Query::from(logicalSourceName).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query = Query::from(logicalSourceName).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
@@ -196,7 +202,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithUnionOperator) {
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithUnionOperator)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -227,7 +234,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFlatMapOperator) {
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFlatMapOperator)
+{
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -235,18 +243,17 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     const std::string logicalSourceName = "default_logical";
     auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
-    auto javaUDFDescriptor =
-        Catalogs::UDF::JavaUDFDescriptorBuilder{}
-            .setClassName("stream.nebula.IntegerFlatMapFunction")
-            .setMethodName("flatMap")
-            .setInstance({})
-            .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.IntegerFlatMapFunction", {}}})
-            .setInputSchema(udfSchema)
-            .setOutputSchema(udfSchema)
-            .setInputClassName("java.lang.Integer")
-            .setOutputClassName("java.util.Collection")
-            .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-            .build();
+    auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
+                                 .setClassName("stream.nebula.IntegerFlatMapFunction")
+                                 .setMethodName("flatMap")
+                                 .setInstance({})
+                                 .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.IntegerFlatMapFunction", {}}})
+                                 .setInputSchema(udfSchema)
+                                 .setOutputSchema(udfSchema)
+                                 .setInputClassName("java.lang.Integer")
+                                 .setOutputClassName("java.util.Collection")
+                                 .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                                 .build();
 
     auto query = Query::from(logicalSourceName).mapUDF(javaUDFDescriptor).flatMapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
     auto queryPlan = query.getQueryPlan();
@@ -266,7 +273,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     EXPECT_EQ(flatMapOperators[0]->getChildren().size(), 2U);
 
     //Validate that FlatMap is connected to two map logical operators
-    for (const auto& childOperator : flatMapOperators[0]->getChildren()) {
+    for (const auto & childOperator : flatMapOperators[0]->getChildren())
+    {
         EXPECT_TRUE(childOperator->as_if<LogicalOperator>()->instanceOf<MapUDFLogicalOperator>());
     }
 }

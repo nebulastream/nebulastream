@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -28,7 +28,8 @@
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 /**
  * Due to a LACK OF BROKER in the most common MQTT-CPP libraries, the broker must be set up manually.
  * An easy way is to use the Mosquitto broker. On Ubuntu: 'sudo apt install mosquitto'.
@@ -37,17 +38,20 @@ namespace NES {
 
 //FIXME test right now relies on setting up a broker manually.
 // - find a way to fully automate test (e.time::WorkerContext workerContext(g. using redBoltz c++ MQTT library, which offers a broker
-class MQTTSinkDeploymentTest : public Testing::BaseIntegrationTest {
-  public:
+class MQTTSinkDeploymentTest : public Testing::BaseIntegrationTest
+{
+public:
     CoordinatorConfigurationPtr coConf;
     WorkerConfigurationPtr wrkConf;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MQTTSinkDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MQTTSinkDeploymentTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
         wrkConf = WorkerConfiguration::create();
@@ -61,7 +65,8 @@ class MQTTSinkDeploymentTest : public Testing::BaseIntegrationTest {
         wrkConf->coordinatorPort = *rpcCoordinatorPort;
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down MQTTSinkDeploymentTest class.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -72,7 +77,8 @@ class MQTTSinkDeploymentTest : public Testing::BaseIntegrationTest {
  * DISABLED for now, because it requires a manually set up MQTT broker -> fails otherwise
  */
 
-TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
+TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker)
+{
     NES_INFO("MQTTSinkDeploymentTest: Start coordinator");
     // Here the default schema (default_logical) is already initialized (NesCoordinator calls 'SourceCatalog'
     // it is later used in TypeInferencePhase.cpp via 'sourceCatalog->getSchemaForLogicalSource(logicalSourceName);' to set
@@ -126,4 +132,4 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Test finished");
 }
 
-}// namespace NES
+} // namespace NES

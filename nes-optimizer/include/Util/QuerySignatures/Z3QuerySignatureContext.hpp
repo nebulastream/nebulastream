@@ -17,18 +17,20 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/QuerySignatureContext.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-class Z3QuerySignatureContext : public QuerySignatureContext {
-  public:
-    explicit Z3QuerySignatureContext(const z3::ContextPtr& context);
-    QuerySignaturePtr createQuerySignatureForOperator(const OperatorPtr& operatorNode) const override;
+class Z3QuerySignatureContext : public QuerySignatureContext
+{
+public:
+    explicit Z3QuerySignatureContext(const z3::ContextPtr & context);
+    QuerySignaturePtr createQuerySignatureForOperator(const OperatorPtr & operatorNode) const override;
     z3::ContextPtr getContext() const;
 
-  private:
+private:
     const z3::ContextPtr context;
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_Z3QUERYSIGNATURECONTEXT_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_Z3QUERYSIGNATURECONTEXT_HPP_

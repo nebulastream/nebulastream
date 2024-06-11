@@ -18,24 +18,26 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Optimizer/QueryPlacementAddition/CostFunction/AbstractQueryPlacementCost.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 /**
  * Represent a network congestion (i.e., bandwidth over-utilization) as a result of a placement.
  */
-class NetworkCongestionCost : public AbstractQueryPlacementCost {
-  public:
+class NetworkCongestionCost : public AbstractQueryPlacementCost
+{
+public:
     NetworkCongestionCost(uint32_t samplingInterval);
 
     float getCost(PlacementMatrix candidate) override;
 
-  private:
+private:
     /**
      * @brief calculate the total output rate of event streams produced by all running pipelines on a single node.
      * @param candidate the placement matrix of the candidate
      * @param rowIdx the row representing the node to compute
      * @return bytes of event stream produced per second.
      */
-    float getNodeOutputRate(const PlacementMatrix& candidate, uint32_t rowIdx);
+    float getNodeOutputRate(const PlacementMatrix & candidate, uint32_t rowIdx);
 
     /**
      * @brief obtain the average ingestion rate in the last 'period' of second from the Statistic coordinator
@@ -71,11 +73,11 @@ class NetworkCongestionCost : public AbstractQueryPlacementCost {
      * @return an actual operatorId
      * // TODO #4664: implement actual method to obtain the operator Id from a given global query plan
      */
-    OperatorId stubGetOperatorIdFromCandidateEntry(const PlacementMatrix& candidate, uint32_t row, uint32_t col);
+    OperatorId stubGetOperatorIdFromCandidateEntry(const PlacementMatrix & candidate, uint32_t row, uint32_t col);
 
-    WorkerId stubGetExecutionNodeFromCandidateEnetry(const PlacementMatrix& candidate, uint32_t rowIdx);
+    WorkerId stubGetExecutionNodeFromCandidateEnetry(const PlacementMatrix & candidate, uint32_t rowIdx);
 
     uint32_t samplingInterval;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_NETWORKCONGESTIONCOST_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_NETWORKCONGESTIONCOST_HPP_

@@ -16,26 +16,28 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_MINVAL_HPP_
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Collects the min value for the fieldName
  */
-class MinVal : public StatisticMetric {
-  public:
+class MinVal : public StatisticMetric
+{
+public:
     /**
      * @brief Creates a MinVal wrapped in a MetricPtr
      * @param fieldName
      * @return MetricPtr
      */
-    static MetricPtr create(const FieldAccessExpressionNodePtr& field);
+    static MetricPtr create(const FieldAccessExpressionNodePtr & field);
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const StatisticMetric& rhs) const override;
+    bool operator==(const StatisticMetric & rhs) const override;
 
     /**
      * @brief Creates a string representation
@@ -43,14 +45,14 @@ class MinVal : public StatisticMetric {
      */
     std::string toString() const override;
 
-  private:
+private:
     /**
      * @brief Private constructor for a MinVal
      * @param fieldName
      */
-    explicit MinVal(const FieldAccessExpressionNodePtr& field);
+    explicit MinVal(const FieldAccessExpressionNodePtr & field);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_MINVAL_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_MINVAL_HPP_

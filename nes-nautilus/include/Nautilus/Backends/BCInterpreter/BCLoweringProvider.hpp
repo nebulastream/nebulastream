@@ -15,6 +15,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_
 
+#include <unordered_set>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
@@ -42,61 +43,63 @@
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/Util/Frame.hpp>
-#include <unordered_set>
 
-namespace NES::Nautilus::Backends::BC {
+namespace NES::Nautilus::Backends::BC
+{
 
 /**
  * @brief The lowering provider translates the IR to the bytecode.
  */
-class BCLoweringProvider {
-  public:
+class BCLoweringProvider
+{
+public:
     BCLoweringProvider();
     std::tuple<Code, RegisterFile> lower(std::shared_ptr<IR::IRGraph> ir);
 
-  private:
+private:
     using RegisterFrame = Frame<std::string, short>;
-    class RegisterProvider {
-      public:
+    class RegisterProvider
+    {
+    public:
         short allocRegister();
         void freeRegister();
 
-      private:
+    private:
         short currentRegister = 0;
     };
-    class LoweringContext {
-      public:
+    class LoweringContext
+    {
+    public:
         LoweringContext(std::shared_ptr<IR::IRGraph> ir);
         std::tuple<Code, RegisterFile> process();
-        short process(const std::shared_ptr<IR::BasicBlock>&, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::Operation>& operation, short block, RegisterFrame& frame);
+        short process(const std::shared_ptr<IR::BasicBlock> &, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::Operation> & operation, short block, RegisterFrame & frame);
 
-      private:
+    private:
         Code program;
         RegisterFile defaultRegisterFile;
         std::shared_ptr<IR::IRGraph> ir;
         RegisterProvider registerProvider;
         std::unordered_map<std::string, short> activeBlocks;
-        void process(const std::shared_ptr<IR::Operations::AddOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::MulOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::DivOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::SubOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::IfOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::CompareOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::BranchOperation>& opt, short block, RegisterFrame& frame);
-        void process(IR::Operations::BasicBlockInvocation& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::LoadOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::StoreOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::OrOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::AndOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::NegateOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::CastOperation>& opt, short block, RegisterFrame& frame);
-        bool processNativeCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
-        void
-        processDynamicCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
-        short getResultRegister(const std::shared_ptr<IR::Operations::Operation>& opt, RegisterFrame& frame);
+        void process(const std::shared_ptr<IR::Operations::AddOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::MulOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::DivOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::SubOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::IfOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::CompareOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::BranchOperation> & opt, short block, RegisterFrame & frame);
+        void process(IR::Operations::BasicBlockInvocation & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::LoadOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::StoreOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::ProxyCallOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::OrOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::AndOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::NegateOperation> & opt, short block, RegisterFrame & frame);
+        void process(const std::shared_ptr<IR::Operations::CastOperation> & opt, short block, RegisterFrame & frame);
+        bool processNativeCall(const std::shared_ptr<IR::Operations::ProxyCallOperation> & opt, short block, RegisterFrame & frame);
+        void processDynamicCall(const std::shared_ptr<IR::Operations::ProxyCallOperation> & opt, short block, RegisterFrame & frame);
+        short getResultRegister(const std::shared_ptr<IR::Operations::Operation> & opt, RegisterFrame & frame);
     };
 };
-}// namespace NES::Nautilus::Backends::BC
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_
+} // namespace NES::Nautilus::Backends::BC
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_

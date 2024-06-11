@@ -15,11 +15,13 @@
 #include <Util/TestSinkProvider.hpp>
 #include <Util/TestSourceProvider.hpp>
 
-namespace NES::TestUtils {
+namespace NES::TestUtils
+{
 QueryCompilation::LowerToExecutableQueryPlanPhasePtr
-TestPhaseProvider::createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool) {
+TestPhaseProvider::createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool)
+{
     auto sinkProvider = std::make_shared<TestUtils::TestSinkProvider>();
     auto sourceProvider = std::make_shared<TestUtils::TestSourceProvider>(options);
     return QueryCompilation::LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
-}// namespace NES::TestUtils
+} // namespace NES::TestUtils

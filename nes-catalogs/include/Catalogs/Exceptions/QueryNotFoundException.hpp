@@ -15,19 +15,21 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 /**
  * @brief This exception is raised when the query you are looking for is not found
  */
-class QueryNotFoundException : public RequestExecutionException {
-  public:
-    explicit QueryNotFoundException(const std::string& message);
+class QueryNotFoundException : public RequestExecutionException
+{
+public:
+    explicit QueryNotFoundException(const std::string & message);
 
-    const char* what() const noexcept override;
+    const char * what() const noexcept override;
 };
-}// namespace NES::Exceptions
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_

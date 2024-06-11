@@ -16,13 +16,15 @@
 #define NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
-namespace NES {
+namespace NES
+{
 
 class SerializableSchema;
 using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
 
-class NesFormat : public SinkFormat {
-  public:
+class NesFormat : public SinkFormat
+{
+public:
     NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
     virtual ~NesFormat() noexcept = default;
 
@@ -37,14 +39,14 @@ class NesFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
+    std::string getFormattedBuffer(Runtime::TupleBuffer & inputBuffer) override;
 
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
+    FormatIterator getTupleIterator(Runtime::TupleBuffer & inputBuffer) override;
 
     /**
    * @brief method to return the format as a string
@@ -58,9 +60,9 @@ class NesFormat : public SinkFormat {
      */
     FormatTypes getSinkFormat() override;
 
-  private:
+private:
     SerializableSchemaPtr serializedSchema;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_

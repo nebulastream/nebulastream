@@ -19,13 +19,15 @@
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief A binary operator with more the none input operator, thus it has a left and a right input schema.
  */
-class BinaryOperator : public virtual Operator {
-  public:
+class BinaryOperator : public virtual Operator
+{
+public:
     explicit BinaryOperator(OperatorId id);
 
     /**
@@ -68,7 +70,7 @@ class BinaryOperator : public virtual Operator {
      * @brief Set the input origin ids for the left input stream.
      * @param originIds
      */
-    void setLeftInputOriginIds(const std::vector<OriginId>& originIds);
+    void setLeftInputOriginIds(const std::vector<OriginId> & originIds);
 
     /**
      * @brief Gets the input origin ids for the left input stream
@@ -86,7 +88,7 @@ class BinaryOperator : public virtual Operator {
      * @brief Set the input origin ids for the right input stream.
      * @param originIds
      */
-    void setRightInputOriginIds(const std::vector<OriginId>& originIds);
+    void setRightInputOriginIds(const std::vector<OriginId> & originIds);
 
     /**
      * @brief Gets the input origin ids for the right input stream
@@ -106,7 +108,7 @@ class BinaryOperator : public virtual Operator {
      */
     std::string toString() const override;
 
-  protected:
+protected:
     SchemaPtr leftInputSchema = Schema::create();
     SchemaPtr rightInputSchema = Schema::create();
     SchemaPtr outputSchema = Schema::create();
@@ -115,6 +117,6 @@ class BinaryOperator : public virtual Operator {
     std::vector<OriginId> rightInputOriginIds;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_BINARYOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_BINARYOPERATOR_HPP_

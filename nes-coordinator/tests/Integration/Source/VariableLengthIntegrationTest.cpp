@@ -12,30 +12,34 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class VariableLengthIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class VariableLengthIntegrationTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("VariableLengthIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup VariableLengthIntegrationTest test class.");
     }
 };
 
 // This test reads from a csv sink which contains variable-length fields and applies a filter and a map
-TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilterOnMap) {
+TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilterOnMap)
+{
     const std::string inputFileName = "variable-length.csv";
     const std::string expectedCsvFile = "variable-length_3.csv";
     const std::string outputFileName = "testCsvSourceWithVariableLengthFields.csv";
@@ -50,17 +54,18 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
                           ->addField("rows", BasicType::UINT64)
                           ->addField("cols", BasicType::UINT64)
                           ->addField("type", BasicType::UINT64)
-                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
+                          ->addField("data", BasicType::TEXT); // TEXT is the variable length field
 
     auto query = Query::from("variable_length")
                      .map(Attribute("camera_id_2") = Attribute("camera_id") + 10)
                      .filter(Attribute("camera_id_2") < 55)
-                     .project(Attribute("camera_id"),
-                              Attribute("timestamp"),
-                              Attribute("rows"),
-                              Attribute("cols"),
-                              Attribute("type"),
-                              Attribute("data"));
+                     .project(
+                         Attribute("camera_id"),
+                         Attribute("timestamp"),
+                         Attribute("rows"),
+                         Attribute("cols"),
+                         Attribute("type"),
+                         Attribute("data"));
 
     // setup csv sources
     CSVSourceTypePtr csvSourceType = CSVSourceType::create("variable_length", "test_stream");
@@ -92,7 +97,8 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
 }
 
 // This test reads from a csv sink which contains variable-length fields and applies a filter
-TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilter) {
+TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilter)
+{
     const std::string inputFileName = "variable-length.csv";
     const std::string expectedCsvFile = "variable-length_2.csv";
     const std::string outputFileName = "testCsvSourceWithVariableLengthFields.csv";
@@ -107,16 +113,17 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
                           ->addField("rows", BasicType::UINT64)
                           ->addField("cols", BasicType::UINT64)
                           ->addField("type", BasicType::UINT64)
-                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
+                          ->addField("data", BasicType::TEXT); // TEXT is the variable length field
 
     auto query = Query::from("variable_length")
                      .filter(Attribute("camera_id") < 55)
-                     .project(Attribute("camera_id"),
-                              Attribute("timestamp"),
-                              Attribute("rows"),
-                              Attribute("cols"),
-                              Attribute("type"),
-                              Attribute("data"));
+                     .project(
+                         Attribute("camera_id"),
+                         Attribute("timestamp"),
+                         Attribute("rows"),
+                         Attribute("cols"),
+                         Attribute("type"),
+                         Attribute("data"));
 
     // setup csv sources
     CSVSourceTypePtr csvSourceType = CSVSourceType::create("variable_length", "test_stream");
@@ -133,9 +140,8 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
 
     // Creating expected output
     auto tmpBuffers = TestUtils::createExpectedBuffersFromCsv(expectedCsvFile, testSchema, testHarness.getBufferManager());
-    auto expectedTuples = std::accumulate(tmpBuffers.begin(), tmpBuffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
-        return sum + buf.getNumberOfTuples();
-    });
+    auto expectedTuples = std::accumulate(
+        tmpBuffers.begin(), tmpBuffers.end(), 0_u64, [](const uint64_t sum, const auto & buf) { return sum + buf.getNumberOfTuples(); });
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
@@ -150,7 +156,8 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
 }
 
 // This test reads from a csv sink which contains variable-length fields without any additional processing
-TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
+TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields)
+{
     const std::string inputFileName = "variable-length.csv";
     const std::string expectedCsvFile = "variable-length.csv";
     const std::string outputFileName = "testCsvSourceWithVariableLengthFields.csv";
@@ -165,7 +172,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
                           ->addField("rows", BasicType::UINT64)
                           ->addField("cols", BasicType::UINT64)
                           ->addField("type", BasicType::UINT64)
-                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
+                          ->addField("data", BasicType::TEXT); // TEXT is the variable length field
 
     auto query = Query::from("variable_length");
 
@@ -184,9 +191,8 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
 
     // Creating expected output
     auto tmpBuffers = TestUtils::createExpectedBuffersFromCsv(expectedCsvFile, testSchema, testHarness.getBufferManager());
-    auto expectedTuples = std::accumulate(tmpBuffers.begin(), tmpBuffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
-        return sum + buf.getNumberOfTuples();
-    });
+    auto expectedTuples = std::accumulate(
+        tmpBuffers.begin(), tmpBuffers.end(), 0_u64, [](const uint64_t sum, const auto & buf) { return sum + buf.getNumberOfTuples(); });
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
@@ -200,4 +206,4 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-}// namespace NES
+} // namespace NES

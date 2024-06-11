@@ -15,23 +15,25 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_FLOATVALIDATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_FLOATVALIDATION_HPP_
 
-#include "Configurations/Validation/ConfigurationValidation.hpp"
 #include <string>
+#include "Configurations/Validation/ConfigurationValidation.hpp"
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 /**
         * @brief This class implements validation for parameters that should represent non-negative floats
         */
-class FloatValidation : public ConfigurationValidation {
-  public:
+class FloatValidation : public ConfigurationValidation
+{
+public:
     /**
              * @brief Method to check the validity of a parameter as a non-negative float
              * @param number number to validate
              * @return true if the parameter is a valid non-negative float, false otherwise
              */
-    bool isValid(const std::string& number) const override;
+    bool isValid(const std::string & number) const override;
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_FLOATVALIDATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_FLOATVALIDATION_HPP_

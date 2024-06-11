@@ -14,10 +14,11 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_
+#include <vector>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <vector>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class MultiOriginWatermarkProcessor;
 class KeyedThreadLocalSliceStore;
@@ -27,35 +28,37 @@ class State;
  * This operator handler, maintains a hash-map for each worker thread and provides them for the aggregation.
  */
 class BatchKeyedAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                     public NES::detail::virtual_enable_shared_from_this<BatchKeyedAggregationHandler, false> {
-  public:
+                                     public NES::detail::virtual_enable_shared_from_this<BatchKeyedAggregationHandler, false>
+{
+public:
     /**
      * @brief Creates the operator handler.
      */
     BatchKeyedAggregationHandler();
 
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
+    void setup(Runtime::Execution::PipelineExecutionContext & ctx, uint64_t keySize, uint64_t valueSize);
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+    void start(
+        Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
 
-               uint32_t localStateVariableId) override;
+        uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext)
+        override;
 
     /**
      * @brief Returns the thread local slice store by a specific worker thread id
      * @param workerThreadId
      * @return GlobalThreadLocalSliceStore
      */
-    Nautilus::Interface::ChainedHashMap* getThreadLocalStore(WorkerThreadId workerThreadId);
+    Nautilus::Interface::ChainedHashMap * getThreadLocalStore(WorkerThreadId workerThreadId);
 
     ~BatchKeyedAggregationHandler() override;
 
-    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage & message) override;
 
-  private:
+private:
     std::vector<std::unique_ptr<Nautilus::Interface::ChainedHashMap>> threadLocalSliceStores;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_

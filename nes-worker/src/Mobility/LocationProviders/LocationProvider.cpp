@@ -21,18 +21,27 @@
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 
-namespace NES::Spatial::Mobility::Experimental {
+namespace NES::Spatial::Mobility::Experimental
+{
 
-LocationProvider::LocationProvider(Spatial::Experimental::SpatialType spatialType,
-                                   DataTypes::Experimental::GeoLocation geoLocation)
-    : workerGeoLocation(geoLocation), spatialType(spatialType) {}
+LocationProvider::LocationProvider(Spatial::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation geoLocation)
+    : workerGeoLocation(geoLocation), spatialType(spatialType)
+{
+}
 
-Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; }
+Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const
+{
+    return spatialType;
+}
 
-DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
-    switch (spatialType) {
-        case Spatial::Experimental::SpatialType::MOBILE_NODE: return getCurrentWaypoint();
-        case Spatial::Experimental::SpatialType::FIXED_LOCATION: return DataTypes::Experimental::Waypoint(workerGeoLocation);
+DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint()
+{
+    switch (spatialType)
+    {
+        case Spatial::Experimental::SpatialType::MOBILE_NODE:
+            return getCurrentWaypoint();
+        case Spatial::Experimental::SpatialType::FIXED_LOCATION:
+            return DataTypes::Experimental::Waypoint(workerGeoLocation);
         case Spatial::Experimental::SpatialType::NO_LOCATION:
         case Spatial::Experimental::SpatialType::INVALID:
             NES_WARNING("Location Provider has invalid spatial type")
@@ -40,18 +49,20 @@ DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
     }
 }
 
-LocationProviderPtr LocationProvider::create(Configurations::WorkerConfigurationPtr workerConfig) {
+LocationProviderPtr LocationProvider::create(Configurations::WorkerConfigurationPtr workerConfig)
+{
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
 
-    switch (workerConfig->mobilityConfiguration.locationProviderType.getValue()) {
+    switch (workerConfig->mobilityConfiguration.locationProviderType.getValue())
+    {
         case NES::Spatial::Mobility::Experimental::LocationProviderType::BASE:
-            locationProvider =
-                std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->nodeSpatialType,
-                                                                                         workerConfig->locationCoordinates);
+            locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(
+                workerConfig->nodeSpatialType, workerConfig->locationCoordinates);
             NES_INFO("creating base location provider")
             break;
         case NES::Spatial::Mobility::Experimental::LocationProviderType::CSV:
-            if (workerConfig->mobilityConfiguration.locationProviderConfig.getValue().empty()) {
+            if (workerConfig->mobilityConfiguration.locationProviderConfig.getValue().empty())
+            {
                 NES_FATAL_ERROR("cannot create csv location provider if no provider config is set");
                 exit(EXIT_FAILURE);
             }
@@ -66,4 +77,4 @@ LocationProviderPtr LocationProvider::create(Configurations::WorkerConfiguration
 
     return locationProvider;
 }
-}// namespace NES::Spatial::Mobility::Experimental
+} // namespace NES::Spatial::Mobility::Experimental

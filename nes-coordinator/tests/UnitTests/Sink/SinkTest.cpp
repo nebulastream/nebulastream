@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include "SerializableOperator.pb.h"
-#include <BaseIntegrationTest.hpp>
+#include <ostream>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -33,7 +31,9 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <ostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include "SerializableOperator.pb.h"
 
 #include <API/TestSchemas.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
@@ -50,10 +50,12 @@ using namespace std;
 /**
  * @brief tests for sinks
  */
-namespace NES {
+namespace NES
+{
 using Runtime::TupleBuffer;
-class SinkTest : public Testing::BaseIntegrationTest {
-  public:
+class SinkTest : public Testing::BaseIntegrationTest
+{
+public:
     SchemaPtr test_schema;
     std::array<uint32_t, 8> test_data{};
     bool write_result{};
@@ -63,13 +65,15 @@ class SinkTest : public Testing::BaseIntegrationTest {
     Testing::BorrowedPortPtr borrowedZmqPort;
     int zmqPort;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SinkTest class.");
     }
 
     /* Called before a single test. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
         write_result = false;
@@ -87,7 +91,8 @@ class SinkTest : public Testing::BaseIntegrationTest {
     }
 
     /* Called after a single test. */
-    void TearDown() override {
+    void TearDown() override
+    {
         ASSERT_TRUE(nodeEngine->stop());
         borrowedZmqPort.reset();
         Testing::BaseIntegrationTest::TearDown();
@@ -96,17 +101,20 @@ class SinkTest : public Testing::BaseIntegrationTest {
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 };
 
-TEST_F(SinkTest, testCSVFileSink) {
+TEST_F(SinkTest, testCSVFileSink)
+{
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    const DataSinkPtr csvSink =
-        createCSVFileSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, path_to_csv_file, true);
+    const DataSinkPtr csvSink
+        = createCSVFileSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, path_to_csv_file, true);
 
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 0; i < 2; ++i)
+    {
+        for (uint64_t j = 0; j < 2; ++j)
+        {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -135,13 +143,15 @@ TEST_F(SinkTest, testCSVFileSink) {
     NES::Util::findAndReplaceAll(contentWOHeader, "\n", ",");
     stringstream ss(contentWOHeader);
     string item;
-    while (getline(ss, item, ',')) {
+    while (getline(ss, item, ','))
+    {
         EXPECT_TRUE(bufferContentAfterWrite.find(item) != std::string::npos);
     }
     buffer.release();
 }
 
-TEST_F(SinkTest, testCSVPrintSink) {
+TEST_F(SinkTest, testCSVPrintSink)
+{
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
 
@@ -151,8 +161,10 @@ TEST_F(SinkTest, testCSVPrintSink) {
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto csvSink = createCSVPrintSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, os);
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 0; i < 2; ++i)
+    {
+        for (uint64_t j = 0; j < 2; ++j)
+        {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -179,11 +191,15 @@ TEST_F(SinkTest, testCSVPrintSink) {
 
     stringstream ss(contentWOHeader);
     string item;
-    while (getline(ss, item, ',')) {
+    while (getline(ss, item, ','))
+    {
         //cout << item << endl;
-        if (bufferContent.find(item) != std::string::npos) {
+        if (bufferContent.find(item) != std::string::npos)
+        {
             //cout << "found token=" << item << endl;
-        } else {
+        }
+        else
+        {
             //cout << "NOT found token=" << item << endl;
             EXPECT_TRUE(false);
         }
@@ -192,7 +208,8 @@ TEST_F(SinkTest, testCSVPrintSink) {
     buffer.release();
 }
 
-TEST_F(SinkTest, testNullOutSink) {
+TEST_F(SinkTest, testNullOutSink)
+{
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
 
@@ -202,8 +219,10 @@ TEST_F(SinkTest, testNullOutSink) {
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto nullSink = createNullOutputSink(SharedQueryId(1), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1);
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 0; i < 2; ++i)
+    {
+        for (uint64_t j = 0; j < 2; ++j)
+        {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -218,16 +237,19 @@ TEST_F(SinkTest, testNullOutSink) {
     //cout << "Buffer Content= " << bufferContent << endl;
 }
 
-TEST_F(SinkTest, testCSVZMQSink) {
+TEST_F(SinkTest, testCSVZMQSink)
+{
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
 
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink =
-        createCSVZmqSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, "localhost", zmqPort);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
+    const DataSinkPtr zmq_sink
+        = createCSVZmqSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, "localhost", zmqPort);
+    for (uint64_t i = 1; i < 3; ++i)
+    {
+        for (uint64_t j = 0; j < 2; ++j)
+        {
             buffer.getBuffer<uint64_t>()[j * i] = j;
         }
     }
@@ -235,41 +257,44 @@ TEST_F(SinkTest, testCSVZMQSink) {
     ////cout << "buffer before send=" << Util::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema,
-                                      nodeEngine->getBufferManager(),
-                                      nodeEngine->getQueryManager(),
-                                      "localhost",
-                                      zmqPort,
-                                      OperatorId(1),
-                                      INVALID_ORIGIN_ID,
-                                      INVALID_STATISTIC_ID,
-                                      12,
-                                      "defaultPhysicalSourceName",
-                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+    auto zmq_source = createZmqSource(
+        test_schema,
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(),
+        "localhost",
+        zmqPort,
+        OperatorId(1),
+        INVALID_ORIGIN_ID,
+        INVALID_STATISTIC_ID,
+        12,
+        "defaultPhysicalSourceName",
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     // Start thread for receivingh the data.
     bool receiving_finished = false;
-    auto receiving_thread = std::thread([&]() {
-        // Receive data.
-        zmq_source->open();
-        auto schemaData = zmq_source->receiveData();
-        TupleBuffer bufSchema = schemaData.value();
-        std::string schemaStr;
-        schemaStr.assign(bufSchema.getBuffer<char>(), bufSchema.getNumberOfTuples());
-        //cout << "Schema=" << schemaStr << endl;
-        EXPECT_EQ(Util::toCSVString(test_schema), schemaStr);
+    auto receiving_thread = std::thread(
+        [&]()
+        {
+            // Receive data.
+            zmq_source->open();
+            auto schemaData = zmq_source->receiveData();
+            TupleBuffer bufSchema = schemaData.value();
+            std::string schemaStr;
+            schemaStr.assign(bufSchema.getBuffer<char>(), bufSchema.getNumberOfTuples());
+            //cout << "Schema=" << schemaStr << endl;
+            EXPECT_EQ(Util::toCSVString(test_schema), schemaStr);
 
-        auto bufferData = zmq_source->receiveData();
-        TupleBuffer bufData = bufferData.value();
-        //cout << "Buffer=" << bufData.getBuffer<char>() << endl;
+            auto bufferData = zmq_source->receiveData();
+            TupleBuffer bufData = bufferData.value();
+            //cout << "Buffer=" << bufData.getBuffer<char>() << endl;
 
-        std::string bufferContent = Util::printTupleBufferAsCSV(buffer, test_schema);
-        std::string dataStr;
-        dataStr.assign(bufData.getBuffer<char>(), bufferContent.size());
-        //cout << "Buffer Content received= " << bufferContent << endl;
-        EXPECT_EQ(bufferContent, dataStr);
-        receiving_finished = true;
-    });
+            std::string bufferContent = Util::printTupleBufferAsCSV(buffer, test_schema);
+            std::string dataStr;
+            dataStr.assign(bufData.getBuffer<char>(), bufferContent.size());
+            //cout << "Buffer Content received= " << bufferContent << endl;
+            EXPECT_EQ(bufferContent, dataStr);
+            receiving_finished = true;
+        });
 
     // Wait until receiving is complete.
     zmq_sink->writeData(buffer, wctx);
@@ -277,51 +302,51 @@ TEST_F(SinkTest, testCSVZMQSink) {
     buffer.release();
 }
 
-TEST_F(SinkTest, testWatermarkForZMQ) {
+TEST_F(SinkTest, testWatermarkForZMQ)
+{
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema,
-                                                     SharedQueryId(0),
-                                                     INVALID_DECOMPOSED_QUERY_PLAN_ID,
-                                                     nodeEngine,
-                                                     1,
-                                                     "localhost",
-                                                     zmqPort,
-                                                     false);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
+    const DataSinkPtr zmq_sink
+        = createBinaryZmqSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, "localhost", zmqPort, false);
+    for (uint64_t i = 1; i < 3; ++i)
+    {
+        for (uint64_t j = 0; j < 2; ++j)
+        {
             buffer.getBuffer<uint64_t>()[j * i] = j;
         }
     }
     buffer.setNumberOfTuples(4);
 
     // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema,
-                                      nodeEngine->getBufferManager(),
-                                      nodeEngine->getQueryManager(),
-                                      "localhost",
-                                      zmqPort,
-                                      OperatorId(1),
-                                      INVALID_ORIGIN_ID,
-                                      INVALID_STATISTIC_ID,
-                                      12,
-                                      "defaultPhysicalSourceName",
-                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+    auto zmq_source = createZmqSource(
+        test_schema,
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(),
+        "localhost",
+        zmqPort,
+        OperatorId(1),
+        INVALID_ORIGIN_ID,
+        INVALID_STATISTIC_ID,
+        12,
+        "defaultPhysicalSourceName",
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     //std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
-    auto receiving_thread = std::thread([&]() {
-        zmq_source->open();
-        auto schemaData = zmq_source->receiveData();
+    auto receiving_thread = std::thread(
+        [&]()
+        {
+            zmq_source->open();
+            auto schemaData = zmq_source->receiveData();
 
-        auto bufferData = zmq_source->receiveData();
-        TupleBuffer bufData = bufferData.value();
-        EXPECT_EQ(bufData.getWatermark(), 1234567ull);
-    });
+            auto bufferData = zmq_source->receiveData();
+            TupleBuffer bufData = bufferData.value();
+            EXPECT_EQ(bufData.getWatermark(), 1234567ull);
+        });
 
     // Wait until receiving is complete.
     zmq_sink->writeData(buffer, wctx);
@@ -329,17 +354,20 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
     buffer.release();
 }
 
-TEST_F(SinkTest, testWatermarkCsvSource) {
+TEST_F(SinkTest, testWatermarkCsvSource)
+{
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);
 
-    const DataSinkPtr csvSink =
-        createCSVFileSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, path_to_csv_file, true);
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
+    const DataSinkPtr csvSink
+        = createCSVFileSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, path_to_csv_file, true);
+    for (uint64_t i = 0; i < 2; ++i)
+    {
+        for (uint64_t j = 0; j < 2; ++j)
+        {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -351,7 +379,8 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
     buffer.release();
 }
 
-TEST_F(SinkTest, testMonitoringSink) {
+TEST_F(SinkTest, testMonitoringSink)
+{
     auto nodeId1 = WorkerId(4711);
     auto nodeId2 = WorkerId(7356);
 
@@ -384,23 +413,25 @@ TEST_F(SinkTest, testMonitoringSink) {
     ASSERT_TRUE(tupleBufferCpu.getNumberOfTuples() >= 1);
 
     // write disk metrics
-    const DataSinkPtr monitoringSink = createMonitoringSink(metricStore,
-                                                            diskCollector.getType(),
-                                                            Monitoring::DiskMetrics::getSchema(""),
-                                                            nodeEngine,
-                                                            1,
-                                                            SharedQueryId(0),
-                                                            INVALID_DECOMPOSED_QUERY_PLAN_ID);
+    const DataSinkPtr monitoringSink = createMonitoringSink(
+        metricStore,
+        diskCollector.getType(),
+        Monitoring::DiskMetrics::getSchema(""),
+        nodeEngine,
+        1,
+        SharedQueryId(0),
+        INVALID_DECOMPOSED_QUERY_PLAN_ID);
     monitoringSink->writeData(tupleBuffer, wctx);
 
     // write cpu metrics
-    const DataSinkPtr monitoringSinkCpu = createMonitoringSink(metricStore,
-                                                               cpuCollector.getType(),
-                                                               Monitoring::CpuMetrics::getSchema(""),
-                                                               nodeEngine,
-                                                               1,
-                                                               SharedQueryId(0),
-                                                               INVALID_DECOMPOSED_QUERY_PLAN_ID);
+    const DataSinkPtr monitoringSinkCpu = createMonitoringSink(
+        metricStore,
+        cpuCollector.getType(),
+        Monitoring::CpuMetrics::getSchema(""),
+        nodeEngine,
+        1,
+        SharedQueryId(0),
+        INVALID_DECOMPOSED_QUERY_PLAN_ID);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics
@@ -428,4 +459,4 @@ TEST_F(SinkTest, testMonitoringSink) {
     tupleBuffer.release();
 }
 
-}// namespace NES
+} // namespace NES

@@ -14,31 +14,34 @@
 
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
-#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <memory>
+#include <Expressions/ConstantValueExpressionNode.hpp>
 
-namespace NES {
+namespace NES
+{
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FunctionExpression;
 
-namespace Runtime::Execution::Expressions {
+namespace Runtime::Execution::Expressions
+{
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
-}// namespace Runtime::Execution::Expressions
+} // namespace Runtime::Execution::Expressions
 
-namespace QueryCompilation {
-class ExpressionProvider {
-  public:
-    Runtime::Execution::Expressions::ExpressionPtr lowerExpression(const ExpressionNodePtr& expressionNode);
+namespace QueryCompilation
+{
+class ExpressionProvider
+{
+public:
+    Runtime::Execution::Expressions::ExpressionPtr lowerExpression(const ExpressionNodePtr & expressionNode);
 
-  private:
+private:
+    Runtime::Execution::Expressions::ExpressionPtr lowerFunctionExpression(const std::shared_ptr<FunctionExpression> & expressionNode);
     Runtime::Execution::Expressions::ExpressionPtr
-    lowerFunctionExpression(const std::shared_ptr<FunctionExpression>& expressionNode);
-    Runtime::Execution::Expressions::ExpressionPtr
-    lowerConstantExpression(const std::shared_ptr<ConstantValueExpressionNode>& expressionNode);
+    lowerConstantExpression(const std::shared_ptr<ConstantValueExpressionNode> & expressionNode);
 };
 
-}// namespace QueryCompilation
-}// namespace NES
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
+} // namespace QueryCompilation
+} // namespace NES
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_

@@ -15,18 +15,20 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_H3HASH_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_H3HASH_HPP_
 
+#include <random>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <random>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 /**
  * @brief H3 implementation taken from the paper Universal classes of hash functions by Carter, J., and Wegman, M. N.
  * Journal of Computer and System Sciences 18, 2 (apr 1979). This class only implements a single row. Thus, Count-Min
  * requires multiple objects to be able to have multiple objects of this class.
  */
-class H3Hash : public HashFunction {
-  public:
+class H3Hash : public HashFunction
+{
+public:
     H3Hash(uint64_t numberOfKeyBits);
 
     /**
@@ -42,7 +44,7 @@ class H3Hash : public HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculate(HashValue& hash, Value<>& value) override;
+    HashValue calculate(HashValue & hash, Value<> & value) override;
 
     /**
      * @brief Calculates the hash for a given value by hashing the value and then xor-ing with hash. This version
@@ -52,13 +54,13 @@ class H3Hash : public HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
+    HashValue calculateWithState(HashValue & hash, Value<> & value, Value<MemRef> & state) override;
 
-  private:
+private:
     uint64_t entrySizeH3HashSeed;
     uint64_t numberOfKeyBits;
 };
 
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_H3HASH_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_H3HASH_HPP_

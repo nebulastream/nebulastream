@@ -17,12 +17,14 @@
 
 #include <Execution/Operators/Operator.hpp>
 
-namespace NES {
+namespace NES
+{
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class AbstractArrowFieldReader;
 
@@ -31,25 +33,26 @@ class AbstractArrowFieldReader;
  * To this end, it assumes that it receives a RecordBuffer that points to a RecordBufferWrapper object.
  * Furthermore, it supports projection pushdown to eliminate unneeded reads.
  */
-class ArrowRecordBatchScan : public Operator {
-  public:
+class ArrowRecordBatchScan : public Operator
+{
+public:
     /**
      * @brief Constructor for the arrow scan operator that receives a list of AbstractArrowFieldReader
      * @param std::vector<std::shared_ptr<AbstractArrowFieldReader>>
      */
-    ArrowRecordBatchScan(const std::vector<std::shared_ptr<AbstractArrowFieldReader>>& readers);
+    ArrowRecordBatchScan(const std::vector<std::shared_ptr<AbstractArrowFieldReader>> & readers);
 
     /**
      * @brief Constructor for the arrow scan operator that creates a list of AbstractArrowFieldReader from a Schema
      * @param schema
      */
-    ArrowRecordBatchScan(const SchemaPtr& schema);
+    ArrowRecordBatchScan(const SchemaPtr & schema);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext & executionCtx, RecordBuffer & recordBuffer) const override;
 
-  private:
+private:
     const std::vector<std::shared_ptr<AbstractArrowFieldReader>> readers;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWRECORDBATCHSCAN_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWRECORDBATCHSCAN_HPP_

@@ -17,14 +17,16 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class probes the join for a triggered window. It receives a left and right window/slice (via an id) and
  * a hash bucket id. It then performs an equality check for each left and right tuple.
  */
-class HJProbeVarSized : public StreamJoinProbe {
-  public:
+class HJProbeVarSized : public StreamJoinProbe
+{
+public:
     /**
      * @brief Constructor for a HJProbeVarSized join phase
      * @param operatorHandlerIndex
@@ -37,22 +39,23 @@ class HJProbeVarSized : public StreamJoinProbe {
      * @param windowingStrategy
      * @param withDeletion
      */
-    HJProbeVarSized(const uint64_t operatorHandlerIndex,
-                    const JoinSchema& joinSchema,
-                    Expressions::ExpressionPtr joinExpression,
-                    const WindowMetaData& windowMetaData,
-                    const SchemaPtr& leftSchema,
-                    const SchemaPtr& rightSchema,
-                    QueryCompilation::StreamJoinStrategy joinStrategy,
-                    QueryCompilation::WindowingStrategy windowingStrategy,
-                    bool withDeletion = true);
+    HJProbeVarSized(
+        const uint64_t operatorHandlerIndex,
+        const JoinSchema & joinSchema,
+        Expressions::ExpressionPtr joinExpression,
+        const WindowMetaData & windowMetaData,
+        const SchemaPtr & leftSchema,
+        const SchemaPtr & rightSchema,
+        QueryCompilation::StreamJoinStrategy joinStrategy,
+        QueryCompilation::WindowingStrategy windowingStrategy,
+        bool withDeletion = true);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext & executionCtx, RecordBuffer & recordBuffer) const override;
 
-  private:
+private:
     const SchemaPtr leftSchema;
     const SchemaPtr rightSchema;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBEVARSIZED_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBEVARSIZED_HPP_

@@ -15,15 +15,16 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
-#include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
 #include <queue>
 #include <set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/SharedQueryPlanStatus.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -37,23 +38,26 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class MatchedOperatorPair;
 using MatchedOperatorPairPtr = std::unique_ptr<MatchedOperatorPair>;
 
-namespace Experimental {
+namespace Experimental
+{
 class ChangeLog;
 using ChangeLogPtr = std::unique_ptr<ChangeLog>;
 
 class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
-}// namespace Experimental
-}// namespace Optimizer
+} // namespace Experimental
+} // namespace Optimizer
 
 using Timestamp = uint64_t;
 
-struct RemovedEdge {
+struct RemovedEdge
+{
     WorkerId downstreamWorkerId;
     WorkerId upstreamWorkerId;
 };
@@ -113,17 +117,17 @@ using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimenta
  * - newMetaData : A boolean flag indicating if the meta data is a newly created one (i.e. it was never deployed before).
  *
  */
-class SharedQueryPlan {
-
-  public:
-    static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
+class SharedQueryPlan
+{
+public:
+    static SharedQueryPlanPtr create(const QueryPlanPtr & queryPlan);
 
     /**
      * @brief: Add all downstream operators of the query with input id starting from the matched operator
      * @param queryId : id of the input query
      * @param matchedOperatorPairs : the matched operator pairs
      */
-    void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs);
+    void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr> & matchedOperatorPairs);
 
     /**
      * @brief Remove a Query, the associated exclusive operators, and clear sink and query id vectors
@@ -137,14 +141,13 @@ class SharedQueryPlan {
      * @param upstreamOperatorIds: upstream operator ids
      * @param downstreamOperatorIds: downstream Operator ids
      */
-    void performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
-                                    const std::set<OperatorId>& downstreamOperatorIds);
+    void performReOperatorPlacement(const std::set<OperatorId> & upstreamOperatorIds, const std::set<OperatorId> & downstreamOperatorIds);
 
     /**
      * @brief Method to update the placement information and state of the shared query plan operators
      * @param updatedOperators: operators with new mappings
      */
-    void updateOperators(const std::set<LogicalOperatorPtr>& updatedOperators);
+    void updateOperators(const std::set<LogicalOperatorPtr> & updatedOperators);
 
     /**
      * @brief Clear all MetaData information
@@ -234,8 +237,8 @@ class SharedQueryPlan {
      */
     [[nodiscard]] Optimizer::PlacementStrategy getPlacementStrategy() const;
 
-  private:
-    explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
+private:
+    explicit SharedQueryPlan(const QueryPlanPtr & queryPlan);
 
     /**
      * @brief Recursively mark input and all its connected upstream operators for To-Be-Removed. The function terminates upon encountering
@@ -243,19 +246,19 @@ class SharedQueryPlan {
      * @param connectedDownStreamOperator : the operator to remove
      * @return last upstream operators that was marked for removal
      */
-    std::set<LogicalOperatorPtr> markOperatorsToBeRemoved(const LogicalOperatorPtr& connectedDownStreamOperator);
+    std::set<LogicalOperatorPtr> markOperatorsToBeRemoved(const LogicalOperatorPtr & connectedDownStreamOperator);
 
     /**
      * @brief Recursively remove the input and all its subsequent upstream operators that are marked as Removed.
      */
-    void removeOperator(const LogicalOperatorPtr& operatorToRemove);
+    void removeOperator(const LogicalOperatorPtr & operatorToRemove);
 
     /**
      * @brief Update the hash based signatures with new values
      * @param hashValue: The hash value
      * @param stringSignature: The string signature
      */
-    void updateHashBasedSignature(size_t hashValue, const std::string& stringSignature);
+    void updateHashBasedSignature(size_t hashValue, const std::string & stringSignature);
 
     SharedQueryId sharedQueryId;
     SharedQueryPlanStatus sharedQueryPlanStatus;
@@ -268,6 +271,6 @@ class SharedQueryPlan {
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_

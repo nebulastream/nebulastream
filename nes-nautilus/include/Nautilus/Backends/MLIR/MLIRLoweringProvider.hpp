@@ -15,6 +15,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
 
+#include <unordered_set>
 #include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -51,12 +52,13 @@
 #include <llvm/ADT/StringSet.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <mlir/IR/PatternMatch.h>
-#include <unordered_set>
 
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
-class MLIRLoweringProvider {
-  public:
+class MLIRLoweringProvider
+{
+public:
     // A ValueFrame is hashmap that binds operation names to MLIR values.
     // It is used to 'pass' values between mlir operations.
     // Control Flow can cause new ValueFrames to be created, to correctly model value access rights (scopes).
@@ -66,7 +68,7 @@ class MLIRLoweringProvider {
      * @brief Allows to lower Nautilus IR to MLIR.
      * @param MLIRContext: Used by MLIR to manage MLIR module creation.
      */
-    MLIRLoweringProvider(mlir::MLIRContext& context);
+    MLIRLoweringProvider(mlir::MLIRContext & context);
 
     ~MLIRLoweringProvider();
     /**
@@ -86,9 +88,9 @@ class MLIRLoweringProvider {
      */
     std::vector<llvm::JITTargetAddress> getJitProxyTargetAddresses();
 
-  private:
+private:
     // MLIR variables
-    mlir::MLIRContext* context;
+    mlir::MLIRContext * context;
     mlir::ModuleOp theModule;
     std::unique_ptr<mlir::OpBuilder> builder;
     NES::ProxyFunctions ProxyFunctions;
@@ -96,11 +98,11 @@ class MLIRLoweringProvider {
     std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
     std::unordered_set<std::string> inductionVars;
     // Utility
-    mlir::RewriterBase::InsertPoint* globalInsertPoint;
+    mlir::RewriterBase::InsertPoint * globalInsertPoint;
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;
     llvm::StringMap<mlir::Value> printfStrings;
-    std::unordered_map<std::string, mlir::Block*> blockMapping;//Keeps track of already created basic blocks.
+    std::unordered_map<std::string, mlir::Block *> blockMapping; //Keeps track of already created basic blocks.
 
     /**
      * @brief Generates MLIR from a  basic block. Iterates over basic block operations and calls generate.
@@ -108,41 +110,41 @@ class MLIRLoweringProvider {
      * @param basicBlock: The  basic block that MLIR code is generated for.
      * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
      */
-    void generateMLIR(IR::BasicBlockPtr basicBlock, ValueFrame& frame);
+    void generateMLIR(IR::BasicBlockPtr basicBlock, ValueFrame & frame);
 
     /**
      * @brief Calls the specific generate function based on currentNode's type.
      * @param Operation:  operation that the MLIRLoweringProvider generates MLIR code for.
      * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
      */
-    void generateMLIR(const IR::Operations::OperationPtr& operation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> funcOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addIntOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::SubOperation> subIntOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::DivOperation> divFloatOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::ModOperation> modIntOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseAndOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseOrOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseXorOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseLeftShiftOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseRightShiftOperation> yieldOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
+    void generateMLIR(const IR::Operations::OperationPtr & operation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> funcOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addIntOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::SubOperation> subIntOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::MulOperation> mulIntOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::DivOperation> divFloatOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ModOperation> modIntOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseAndOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseOrOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseXorOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseLeftShiftOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseRightShiftOperation> yieldOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation, ValueFrame & frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame & frame);
 
     /**
      * @brief Generates a basic block inside of the current MLIR module. Used for control flow (if,loop).
@@ -150,7 +152,7 @@ class MLIRLoweringProvider {
      * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
      * @return mlir::Block*: Returns a pointer to an MLIR basic block.
      */
-    mlir::Block* generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame& frame);
+    mlir::Block * generateBasicBlock(IR::Operations::BasicBlockInvocation & blockInvocation, ValueFrame & frame);
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.
@@ -160,17 +162,14 @@ class MLIRLoweringProvider {
      * @param varArgs: Include variable arguments.
      * @return FlatSymbolRefAttr: Reference to function used in CallOps.
      */
-    mlir::FlatSymbolRefAttr insertExternalFunction(const std::string& name,
-                                                   void* functionPtr,
-                                                   mlir::Type resultType,
-                                                   std::vector<mlir::Type> argTypes,
-                                                   bool varArgs);
+    mlir::FlatSymbolRefAttr insertExternalFunction(
+        const std::string & name, void * functionPtr, mlir::Type resultType, std::vector<mlir::Type> argTypes, bool varArgs);
 
     /**
      * @brief Generates a Name(d)Loc(ation) that is attached to the operation.
      * @param name: Name of the location. Used for debugging.
      */
-    mlir::Location getNameLoc(const std::string& name);
+    mlir::Location getNameLoc(const std::string & name);
 
     /**
      * @brief Get MLIR Type from a basic  type.
@@ -193,14 +192,14 @@ class MLIRLoweringProvider {
      * @param value: Value of the returned Integer.
      * @return mlir::Value: Constant MLIR Integer value.
      */
-    mlir::Value getConstInt(const std::string& location, IR::Types::StampPtr stamp, int64_t value);
+    mlir::Value getConstInt(const std::string & location, IR::Types::StampPtr stamp, int64_t value);
 
     /**
      * @brief Get a constant MLIR Integer.
      * @param location: NamedLocation for debugging purposes.
      * @param value: Value of the returned boolean.
      */
-    mlir::Value getConstBool(const std::string& location, bool value);
+    mlir::Value getConstBool(const std::string & location, bool value);
 
     /**
      * @brief Get the Bit Width from a basic NES type.
@@ -216,7 +215,7 @@ class MLIRLoweringProvider {
      * @param invocation: The parent basic block.
      * @return ValueFrame: An unordered map with identifiers and MLIR values in it.
      */
-    ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
+    ValueFrame createFrameFromParentBlock(ValueFrame & frame, IR::Operations::BasicBlockInvocation & invocation);
 };
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_

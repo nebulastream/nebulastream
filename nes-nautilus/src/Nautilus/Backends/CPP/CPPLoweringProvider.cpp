@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <sstream>
+#include <utility>
+#include <vector>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
@@ -28,60 +31,88 @@
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sstream>
-#include <utility>
-#include <vector>
 
-namespace NES::Nautilus::Backends::CPP {
+namespace NES::Nautilus::Backends::CPP
+{
 
-CPPLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::IRGraph> ir) : ir(std::move(ir)) {}
+CPPLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::IRGraph> ir) : ir(std::move(ir))
+{
+}
 
-std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
+std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir)
+{
     auto ctx = LoweringContext(std::move(ir));
     return ctx.process().str();
 }
 
-std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::StampPtr& stamp) {
-    if (stamp->isInteger()) {
+std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::StampPtr & stamp)
+{
+    if (stamp->isInteger())
+    {
         auto value = cast<IR::Types::IntegerStamp>(stamp);
-        if (value->isSigned()) {
-            switch (value->getBitWidth()) {
-                case IR::Types::IntegerStamp::BitWidth::I8: return "int8_t";
-                case IR::Types::IntegerStamp::BitWidth::I16: return "int16_t";
-                case IR::Types::IntegerStamp::BitWidth::I32: return "int32_t";
-                case IR::Types::IntegerStamp::BitWidth::I64: return "int64_t";
-            }
-        } else {
-            switch (value->getBitWidth()) {
-                case IR::Types::IntegerStamp::BitWidth::I8: return "uint8_t";
-                case IR::Types::IntegerStamp::BitWidth::I16: return "uint16_t";
-                case IR::Types::IntegerStamp::BitWidth::I32: return "uint32_t";
-                case IR::Types::IntegerStamp::BitWidth::I64: return "uint64_t";
+        if (value->isSigned())
+        {
+            switch (value->getBitWidth())
+            {
+                case IR::Types::IntegerStamp::BitWidth::I8:
+                    return "int8_t";
+                case IR::Types::IntegerStamp::BitWidth::I16:
+                    return "int16_t";
+                case IR::Types::IntegerStamp::BitWidth::I32:
+                    return "int32_t";
+                case IR::Types::IntegerStamp::BitWidth::I64:
+                    return "int64_t";
             }
         }
-    } else if (stamp->isFloat()) {
+        else
+        {
+            switch (value->getBitWidth())
+            {
+                case IR::Types::IntegerStamp::BitWidth::I8:
+                    return "uint8_t";
+                case IR::Types::IntegerStamp::BitWidth::I16:
+                    return "uint16_t";
+                case IR::Types::IntegerStamp::BitWidth::I32:
+                    return "uint32_t";
+                case IR::Types::IntegerStamp::BitWidth::I64:
+                    return "uint64_t";
+            }
+        }
+    }
+    else if (stamp->isFloat())
+    {
         auto value = cast<IR::Types::FloatStamp>(stamp);
-        switch (value->getBitWidth()) {
-            case IR::Types::FloatStamp::BitWidth::F32: return "float";
-            case IR::Types::FloatStamp::BitWidth::F64: return "double";
+        switch (value->getBitWidth())
+        {
+            case IR::Types::FloatStamp::BitWidth::F32:
+                return "float";
+            case IR::Types::FloatStamp::BitWidth::F64:
+                return "double";
         }
-    } else if (stamp->isAddress()) {
+    }
+    else if (stamp->isAddress())
+    {
         return "uint8_t*";
-    } else if (stamp->isVoid()) {
+    }
+    else if (stamp->isVoid())
+    {
         return "void";
-    } else if (stamp->isBoolean()) {
+    }
+    else if (stamp->isBoolean())
+    {
         return "bool";
     }
     NES_NOT_IMPLEMENTED();
 }
 
-std::stringstream CPPLoweringProvider::LoweringContext::process() {
-
+std::stringstream CPPLoweringProvider::LoweringContext::process()
+{
     auto functionOperation = ir->getRootOperation();
     RegisterFrame rootFrame;
     std::vector<std::string> arguments;
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
-    for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++) {
+    for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++)
+    {
         auto argument = functionBasicBlock->getArguments()[i];
         auto var = getVariable(argument->getIdentifier());
         rootFrame.setValue(argument->getIdentifier(), var);
@@ -94,8 +125,10 @@ std::stringstream CPPLoweringProvider::LoweringContext::process() {
     pipelineCode << "#include <cstdint>";
     pipelineCode << "\n";
     pipelineCode << "extern \"C\" auto execute(";
-    for (size_t i = 0; i < arguments.size(); i++) {
-        if (i != 0) {
+    for (size_t i = 0; i < arguments.size(); i++)
+    {
+        if (i != 0)
+        {
             pipelineCode << ",";
         }
         pipelineCode << arguments[i] << " ";
@@ -106,7 +139,8 @@ std::stringstream CPPLoweringProvider::LoweringContext::process() {
     pipelineCode << "//function definitions\n";
     pipelineCode << functions.str();
     pipelineCode << "//basic blocks\n";
-    for (auto& block : blocks) {
+    for (auto & block : blocks)
+    {
         pipelineCode << block.str();
         pipelineCode << "\n";
     }
@@ -115,13 +149,16 @@ std::stringstream CPPLoweringProvider::LoweringContext::process() {
     return pipelineCode;
 }
 
-std::string CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block, RegisterFrame& frame) {
+std::string CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock> & block, RegisterFrame & frame)
+{
     // assume that all argument registers are correctly set
     auto entry = activeBlocks.find(block->getIdentifier());
-    if (entry == activeBlocks.end()) {
-
-        for (auto arg : block->getArguments()) {
-            if (!frame.contains(arg->getIdentifier())) {
+    if (entry == activeBlocks.end())
+    {
+        for (auto arg : block->getArguments())
+        {
+            if (!frame.contains(arg->getIdentifier()))
+            {
                 auto var = getVariable(arg->getIdentifier());
                 blockArguments << getType(arg->getStamp()) << " " << var << ";\n";
                 frame.setValue(arg->getIdentifier(), var);
@@ -130,21 +167,24 @@ std::string CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<
         // create bytecode block;
         auto blockName = "Block_" + block->getIdentifier();
         short blockIndex = blocks.size();
-        auto& currentBlock = blocks.emplace_back();
+        auto & currentBlock = blocks.emplace_back();
         currentBlock << blockName << ":\n";
         activeBlocks.emplace(block->getIdentifier(), blockName);
-        for (auto& opt : block->getOperations()) {
+        for (auto & opt : block->getOperations())
+        {
             this->process(opt, blockIndex, frame);
         }
         return blockName;
-    } else {
+    }
+    else
+    {
         return entry->second;
     }
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::CompareOperation>& cmpOp,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::CompareOperation> & cmpOp, short blockIndex, RegisterFrame & frame)
+{
     auto leftInput = frame.getValue(cmpOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(cmpOp->getRightInput()->getIdentifier());
     auto resultVar = getVariable(cmpOp->getIdentifier());
@@ -152,32 +192,44 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     frame.setValue(cmpOp->getIdentifier(), resultVar);
 
     // we have to handle the special case that we want to do a null check. Currently, Nautilus IR just contains a x == 0, thus we check if x is a ptr type.
-    if (cmpOp->isEquals() && cmpOp->getLeftInput()->getStamp()->isAddress() && cmpOp->getRightInput()->getStamp()->isInteger()) {
+    if (cmpOp->isEquals() && cmpOp->getLeftInput()->getStamp()->isAddress() && cmpOp->getRightInput()->getStamp()->isInteger())
+    {
         blocks[blockIndex] << resultVar << " = " << leftInput << " == nullptr;\n";
         return;
     }
 
     std::string comperator;
-    if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::EQ) {
+    if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::EQ)
+    {
         comperator = " == ";
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LT) {
+    }
+    else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LT)
+    {
         comperator = " < ";
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::GT) {
+    }
+    else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::GT)
+    {
         comperator = " > ";
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::GE) {
+    }
+    else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::GE)
+    {
         comperator = " >= ";
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LE) {
+    }
+    else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LE)
+    {
         comperator = " <= ";
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 
     blocks[blockIndex] << resultVar << " = " << leftInput << comperator << rightInput << ";\n";
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::LoadOperation>& loadOp,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::LoadOperation> & loadOp, short blockIndex, RegisterFrame & frame)
+{
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
     auto resultVar = getVariable(loadOp->getIdentifier());
     blockArguments << getType(loadOp->getStamp()) << " " << resultVar << ";\n";
@@ -186,26 +238,27 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blocks[blockIndex] << resultVar << " = *reinterpret_cast<" << type << "*>(" << address << ");\n";
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::StoreOperation> & storeOp, short blockIndex, RegisterFrame & frame)
+{
     auto address = frame.getValue(storeOp->getAddress()->getIdentifier());
     auto value = frame.getValue(storeOp->getValue()->getIdentifier());
     auto type = getType(storeOp->getValue()->getStamp());
     blocks[blockIndex] << "*reinterpret_cast<" << type << "*>(" << address << ") = " << value << ";\n";
 }
 
-void CPPLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInvocation& bi,
-                                                   short blockIndex,
-                                                   RegisterFrame& parentFrame) {
+void CPPLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInvocation & bi, short blockIndex, RegisterFrame & parentFrame)
+{
     auto blockInputArguments = bi.getArguments();
     auto blockTargetArguments = bi.getBlock()->getArguments();
     blocks[blockIndex] << "// prepare block arguments\n";
-    for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
+    for (uint64_t i = 0; i < blockInputArguments.size(); i++)
+    {
         auto blockArgument = blockInputArguments[i]->getIdentifier();
         auto blockTargetArgument = blockTargetArguments[i]->getIdentifier();
 
-        if (!parentFrame.contains(blockTargetArgument)) {
+        if (!parentFrame.contains(blockTargetArgument))
+        {
             auto var = getVariable(blockTargetArgument);
             parentFrame.setValue(blockTargetArgument, var);
             blockArguments << getType(blockTargetArguments[i]->getStamp()) << " " << var << ";\n";
@@ -215,9 +268,9 @@ void CPPLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInv
     }
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::IfOperation>& ifOpt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::IfOperation> & ifOpt, short blockIndex, RegisterFrame & frame)
+{
     auto conditionalReg = frame.getValue(ifOpt->getValue()->getIdentifier());
     auto trueBlock = process(ifOpt->getTrueBlockInvocation().getBlock(), frame);
     auto falseBlock = process(ifOpt->getFalseBlockInvocation().getBlock(), frame);
@@ -229,18 +282,19 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blocks[blockIndex] << "goto " << falseBlock << ";}\n";
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::BranchOperation>& branchOp,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::BranchOperation> & branchOp, short blockIndex, RegisterFrame & frame)
+{
     process(branchOp->getNextBlockInvocation(), blockIndex, frame);
     auto nextBlock = process(branchOp->getNextBlockInvocation().getBlock(), frame);
     blocks[blockIndex] << "goto " << nextBlock << ";\n";
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::Operation>& opt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-    switch (opt->getOperationType()) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::Operation> & opt, short blockIndex, RegisterFrame & frame)
+{
+    switch (opt->getOperationType())
+    {
         case IR::Operations::Operation::OperationType::ConstBooleanOp: {
             processConst<IR::Operations::ConstBooleanOperation>(opt, blockIndex, frame);
             return;
@@ -275,10 +329,13 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         }
         case IR::Operations::Operation::OperationType::ReturnOp: {
             auto returnOpt = std::static_pointer_cast<IR::Operations::ReturnOperation>(opt);
-            if (returnOpt->hasReturnValue()) {
+            if (returnOpt->hasReturnValue())
+            {
                 auto returnFOp = frame.getValue(returnOpt->getReturnValue()->getIdentifier());
                 blocks[blockIndex] << "return " << returnFOp << ";\n";
-            } else {
+            }
+            else
+            {
                 blocks[blockIndex] << "return;\n";
             }
             return;
@@ -359,29 +416,32 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     }
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::ProxyCallOperation> & opt, short blockIndex, RegisterFrame & frame)
+{
     auto returnType = getType(opt->getStamp());
     std::stringstream argTypes;
     std::stringstream args;
-    for (size_t i = 0; i < opt->getInputArguments().size(); i++) {
+    for (size_t i = 0; i < opt->getInputArguments().size(); i++)
+    {
         auto arg = opt->getInputArguments()[i];
 
-        if (i != 0) {
+        if (i != 0)
+        {
             argTypes << ",";
             args << ",";
         }
         args << frame.getValue(arg->getIdentifier());
         argTypes << getType(arg->getStamp());
     }
-    if (!functionNames.contains(opt->getFunctionSymbol())) {
+    if (!functionNames.contains(opt->getFunctionSymbol()))
+    {
         functions << "auto " << opt->getFunctionSymbol() << " = "
                   << "(" << returnType << "(*)(" << argTypes.str() << "))" << opt->getFunctionPtr() << ";\n";
         functionNames.emplace(opt->getFunctionSymbol());
     }
-    if (!opt->getStamp()->isVoid()) {
+    if (!opt->getStamp()->isVoid())
+    {
         auto resultVar = getVariable(opt->getIdentifier());
         blockArguments << getType(opt->getStamp()) << " " << resultVar << ";\n";
         frame.setValue(opt->getIdentifier(), resultVar);
@@ -390,9 +450,9 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blocks[blockIndex] << opt->getFunctionSymbol() << "(" << args.str() << ");\n";
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::NegateOperation>& negateOperation,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::NegateOperation> & negateOperation, short blockIndex, RegisterFrame & frame)
+{
     auto input = frame.getValue(negateOperation->getInput()->getIdentifier());
     auto resultVar = getVariable(negateOperation->getIdentifier());
     blockArguments << getType(negateOperation->getStamp()) << " " << resultVar << ";\n";
@@ -400,9 +460,9 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blocks[blockIndex] << resultVar << "= !" << input << ";\n";
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::CastOperation>& castOp,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
+void CPPLoweringProvider::LoweringContext::process(
+    const std::shared_ptr<IR::Operations::CastOperation> & castOp, short blockIndex, RegisterFrame & frame)
+{
     auto input = frame.getValue(castOp->getInput()->getIdentifier());
     auto var = getVariable(castOp->getIdentifier());
     frame.setValue(castOp->getIdentifier(), var);
@@ -411,6 +471,9 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blocks[blockIndex] << var << " = (" << targetType << ")" << input << ";\n";
 }
 
-std::string CPPLoweringProvider::LoweringContext::getVariable(const std::string& id) { return "var_" + id; }
+std::string CPPLoweringProvider::LoweringContext::getVariable(const std::string & id)
+{
+    return "var_" + id;
+}
 
-}// namespace NES::Nautilus::Backends::CPP
+} // namespace NES::Nautilus::Backends::CPP

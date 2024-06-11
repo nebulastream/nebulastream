@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
+#include <unordered_map>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
@@ -25,24 +26,25 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-#include <unordered_map>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
-  public:
+class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TraceTest test class.");
     }
 
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
-    std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
-        auto execution = Nautilus::Tracing::traceFunctionWithReturn([nautilusFunction]() {
-            return nautilusFunction();
-        });
+    std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction)
+    {
+        auto execution = Nautilus::Tracing::traceFunctionWithReturn([nautilusFunction]() { return nautilusFunction(); });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
         auto ir = irCreationPhase.apply(executionTrace);
         removeBrOnlyBlocksPhase.apply(ir);
@@ -52,7 +54,8 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public Abs
     /**
      * @brief A helper struct that represents the correct state of a BasicBlock in the IR.
      */
-    struct CorrectBlockValues {
+    struct CorrectBlockValues
+    {
         std::unordered_set<std::string> correctPredecessors;
         std::unordered_set<std::string> correctNextBlocks;
     };
@@ -66,13 +69,14 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public Abs
      * @param correctPredecessors: A set of predecessor Ids that the checked block must contain.
      * @param correctNextBlocks: A set of IDs of basic blocks that the checked block must point to.
      */
-    void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks,
-                            std::string correctBlockId,
-                            std::unordered_set<std::string> correctPredecessors,
-                            std::unordered_set<std::string> correctNextBlocks) {
+    void createCorrectBlock(
+        std::unordered_map<std::string, CorrectBlockValuesPtr> & correctBlocks,
+        std::string correctBlockId,
+        std::unordered_set<std::string> correctPredecessors,
+        std::unordered_set<std::string> correctNextBlocks)
+    {
         correctBlocks.emplace(
-            std::pair{correctBlockId,
-                      std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctPredecessors, correctNextBlocks})});
+            std::pair{correctBlockId, std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctPredecessors, correctNextBlocks})});
     }
 
     /**
@@ -82,69 +86,86 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public Abs
      * @param correctBlocks: A HashMap that contains the correct state for all blocks in the IR.
      * @return true, if all blocks were in correct state, and false, if at least one block was in incorrect state.
      */
-    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock,
-                               const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
+    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock, const std::unordered_map<std::string, CorrectBlockValuesPtr> & correctBlocks)
+    {
         std::stack<IR::BasicBlockPtr> blocksToVisit;
         std::unordered_set<std::string> visitedBlocks;
         blocksToVisit.push(currentBlock);
         bool allRequiredBlocksAreVisited;
         bool predecessorsAreCorrect = true;
         bool nextBlocksAreCorrect = true;
-        do {
+        do
+        {
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = blocksToVisit.top();
             // The remove branch only phase should have removed all branch only blocks leaving only 'correct' blocks.
-            if (correctBlocks.contains(currentBlock->getIdentifier())) {
+            if (correctBlocks.contains(currentBlock->getIdentifier()))
+            {
                 // If the currentBlock has predecessors, check that the number of predecessors matches the correct
                 // number of predecessors and check that all existing predecessors are correct.
-                if (correctBlocks.at(currentBlock->getIdentifier())->correctPredecessors.size()
-                    == currentBlock->getPredecessors().size()) {
-                    for (auto predecessorBlock : currentBlock->getPredecessors()) {
+                if (correctBlocks.at(currentBlock->getIdentifier())->correctPredecessors.size() == currentBlock->getPredecessors().size())
+                {
+                    for (auto predecessorBlock : currentBlock->getPredecessors())
+                    {
                         if (!correctBlocks.at(currentBlock->getIdentifier())
-                                 ->correctPredecessors.contains(predecessorBlock.lock()->getIdentifier())) {
+                                 ->correctPredecessors.contains(predecessorBlock.lock()->getIdentifier()))
+                        {
                             predecessorsAreCorrect = false;
                             break;
                         }
                     }
-                } else {
+                }
+                else
+                {
                     predecessorsAreCorrect = false;
                 }
                 // Every Block MUST have a terminator operation. Check whether the terminator operation points to the correct next blocks.
-                if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
+                if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::BranchOp)
+                {
                     auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
-                    nextBlocksAreCorrect =
-                        correctBlocks.at(currentBlock->getIdentifier())
-                            ->correctNextBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType()
-                           == IR::Operations::Operation::OperationType::IfOp) {
+                    nextBlocksAreCorrect = correctBlocks.at(currentBlock->getIdentifier())
+                                               ->correctNextBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier());
+                }
+                else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::IfOp)
+                {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-                    nextBlocksAreCorrect =
-                        correctBlocks.at(currentBlock->getIdentifier())
-                            ->correctNextBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())
+                    nextBlocksAreCorrect = correctBlocks.at(currentBlock->getIdentifier())
+                                               ->correctNextBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())
                         && correctBlocks.at(currentBlock->getIdentifier())
                                ->correctNextBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType()
-                           == IR::Operations::Operation::OperationType::ReturnOp) {
+                }
+                else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::ReturnOp)
+                {
                     nextBlocksAreCorrect = correctBlocks.at(currentBlock->getIdentifier())->correctNextBlocks.empty();
-                } else {
+                }
+                else
+                {
                     NES_NOT_IMPLEMENTED();
                 }
-            } else {
+            }
+            else
+            {
                 allRequiredBlocksAreVisited = false;
             }
             blocksToVisit.pop();
             auto terminatorOp = currentBlock->getTerminatorOp();
-            if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
+            if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::BranchOp)
+            {
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-                if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
+                if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier()))
+                {
                     blocksToVisit.emplace(branchOp->getNextBlockInvocation().getBlock());
                 }
-            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
+            }
+            else if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::IfOp)
+            {
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-                if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
+                if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier()))
+                {
                     blocksToVisit.emplace(ifOp->getFalseBlockInvocation().getBlock());
                 }
-                if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
+                if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier()))
+                {
                     blocksToVisit.emplace(ifOp->getTrueBlockInvocation().getBlock());
                 }
             }
@@ -156,15 +177,20 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public Abs
 //==----------------------------------------------------------==//
 //==------------------ NAUTILUS Phase TESTS -------------------==//
 //==----------------------------------------------------------==//
-Value<> simpleIfOperationWithoutFalseBranch_0() {
+Value<> simpleIfOperationWithoutFalseBranch_0()
+{
     Value agg = Value(0);
-    if (agg < 40) {
+    if (agg < 40)
+    {
         agg = agg + 10;
-    } else {
+    }
+    else
+    {
     }
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch)
+{
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "3"});
@@ -174,26 +200,37 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch) {
     EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
-Value<> doubleVerticalDiamondInTrueBranch() {
+Value<> doubleVerticalDiamondInTrueBranch()
+{
     Value agg = Value(0);
-    if (agg < 50) {
-        if (agg < 40) {
+    if (agg < 50)
+    {
+        if (agg < 40)
+        {
             agg = agg + 10;
-        } else {
+        }
+        else
+        {
             agg = agg + 100;
         }
-        if (agg > 60) {
+        if (agg > 60)
+        {
             agg = agg + 1000;
-        } else {
+        }
+        else
+        {
             agg = agg + 10000;
         }
-    } else {
+    }
+    else
+    {
         agg = agg + 100000;
     }
     agg = agg + 1;
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch)
+{
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "2"});
@@ -209,19 +246,25 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
     EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
-Value<> loopMergeBlockBeforeCorrespondingIfOperation_3() {
+Value<> loopMergeBlockBeforeCorrespondingIfOperation_3()
+{
     Value agg = Value(0);
     Value limit = Value(1000);
-    while (agg < limit) {
-        if (agg < 350) {
+    while (agg < limit)
+    {
+        if (agg < 350)
+        {
             agg = agg + 1;
-        } else {
+        }
+        else
+        {
             agg = agg + 3;
         }
     }
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPhaseTest, 3_loopMergeBlockBeforeCorrespondingIfOperation) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 3_loopMergeBlockBeforeCorrespondingIfOperation)
+{
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"6"});
@@ -234,27 +277,37 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 3_loopMergeBlockBeforeCorrespondingIfOpe
     EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
-Value<> mergeLoopMergeBlockWithLoopFollowUp_4() {
+Value<> mergeLoopMergeBlockWithLoopFollowUp_4()
+{
     Value agg = Value(0);
     Value limit = Value(1000000);
-    if (agg < 350) {
+    if (agg < 350)
+    {
         agg = agg + 1;
-    } else {
+    }
+    else
+    {
         agg = agg + 3;
     }
-    while (agg < limit) {
-        if (agg < 350) {
+    while (agg < limit)
+    {
+        if (agg < 350)
+        {
             agg = agg + 1;
-        } else {
+        }
+        else
+        {
             agg = agg + 3;
         }
     }
-    while (agg < limit) {
+    while (agg < limit)
+    {
         agg = agg + 4;
     }
     return agg;
 }
-TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
+TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp)
+{
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "2"});
@@ -273,12 +326,11 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-INSTANTIATE_TEST_CASE_P(testLoopCompilation,
-                        RemoveBranchOnlyBlocksPhaseTest,
-                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
-                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
-                        [](const testing::TestParamInfo<RemoveBranchOnlyBlocksPhaseTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testLoopCompilation,
+    RemoveBranchOnlyBlocksPhaseTest,
+    ::testing::ValuesIn(
+        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    [](const testing::TestParamInfo<RemoveBranchOnlyBlocksPhaseTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

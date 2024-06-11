@@ -12,25 +12,30 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <cmath>
 #include <Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 ExpExpressionNode::ExpExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
 
-ExpExpressionNode::ExpExpressionNode(ExpExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
+ExpExpressionNode::ExpExpressionNode(ExpExpressionNode * other) : ArithmeticalUnaryExpressionNode(other)
+{
+}
 
-ExpressionNodePtr ExpExpressionNode::create(ExpressionNodePtr const& child) {
+ExpressionNodePtr ExpExpressionNode::create(ExpressionNodePtr const & child)
+{
     auto expNode = std::make_shared<ExpExpressionNode>(child->getStamp());
     expNode->setChild(child);
     return expNode;
 }
 
-void ExpExpressionNode::inferStamp(SchemaPtr schema) {
+void ExpExpressionNode::inferStamp(SchemaPtr schema)
+{
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
@@ -39,20 +44,26 @@ void ExpExpressionNode::inferStamp(SchemaPtr schema) {
     NES_TRACE("ExpExpressionNode: change stamp to float with bounds [0, DOUBLE_MAX]: {}", toString());
 }
 
-bool ExpExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<ExpExpressionNode>()) {
+bool ExpExpressionNode::equal(NodePtr const & rhs) const
+{
+    if (rhs->instanceOf<ExpExpressionNode>())
+    {
         auto otherExpNode = rhs->as<ExpExpressionNode>();
         return child()->equal(otherExpNode->child());
     }
     return false;
 }
 
-std::string ExpExpressionNode::toString() const {
+std::string ExpExpressionNode::toString() const
+{
     std::stringstream ss;
     ss << "EXP(" << children[0]->toString() << ")";
     return ss.str();
 }
 
-ExpressionNodePtr ExpExpressionNode::copy() { return ExpExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr ExpExpressionNode::copy()
+{
+    return ExpExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+} // namespace NES

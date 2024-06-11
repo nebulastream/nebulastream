@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <random>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
@@ -20,13 +21,15 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <random>
 
-namespace NES::Benchmark::DataGeneration {
-DefaultDataGenerator::DefaultDataGenerator(uint64_t minValue, uint64_t maxValue)
-    : DataGenerator(), minValue(minValue), maxValue(maxValue) {}
+namespace NES::Benchmark::DataGeneration
+{
+DefaultDataGenerator::DefaultDataGenerator(uint64_t minValue, uint64_t maxValue) : DataGenerator(), minValue(minValue), maxValue(maxValue)
+{
+}
 
-std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize)
+{
     std::vector<Runtime::TupleBuffer> createdBuffers;
     createdBuffers.reserve(numberOfBuffers);
 
@@ -35,8 +38,8 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
 
     // Prints every five percent the current progress
     uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
-
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
@@ -46,18 +49,21 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
 
         /* This branch is solely for performance reasons.
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
-        if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+        {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
             auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < testBuffer->getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < testBuffer->getCapacity(); ++curRecord)
+            {
                 uint64_t value = uniformIntDistribution(generator);
-                testBuffer->pushRecordToBuffer(
-                    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
+                testBuffer->pushRecordToBuffer(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
             }
-
-        } else {
-            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        }
+        else
+        {
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+            {
                 auto value = uniformIntDistribution(generator);
                 testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
                 testBuffer[curRecord]["value"].write<uint64_t>(value);
@@ -66,8 +72,9 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
             }
         }
 
-        if (curBuffer % noTuplesInFivePercent == 0) {
-            NES_INFO("DefaultDataGenerator: currently at {}%", (((double) curBuffer / numberOfBuffers) * 100));
+        if (curBuffer % noTuplesInFivePercent == 0)
+        {
+            NES_INFO("DefaultDataGenerator: currently at {}%", (((double)curBuffer / numberOfBuffers) * 100));
         }
 
         testBuffer.setNumberOfTuples(testBuffer.getCapacity());
@@ -78,7 +85,8 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
     return createdBuffers;
 }
 
-NES::SchemaPtr DefaultDataGenerator::getSchema() {
+NES::SchemaPtr DefaultDataGenerator::getSchema()
+{
     return Schema::create()
         ->addField(createField("id", BasicType::UINT64))
         ->addField(createField("value", BasicType::UINT64))
@@ -86,8 +94,9 @@ NES::SchemaPtr DefaultDataGenerator::getSchema() {
         ->addField(createField("timestamp", BasicType::UINT64));
 }
 
-Configurations::SchemaTypePtr DefaultDataGenerator::getSchemaType() {
-    const char* dataType = "UINT64";
+Configurations::SchemaTypePtr DefaultDataGenerator::getSchemaType()
+{
+    const char * dataType = "UINT64";
     std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
     schemaFieldDetails.emplace_back("id", dataType);
     schemaFieldDetails.emplace_back("value", dataType);
@@ -96,9 +105,13 @@ Configurations::SchemaTypePtr DefaultDataGenerator::getSchemaType() {
     return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
-std::string DefaultDataGenerator::getName() { return "Uniform"; }
+std::string DefaultDataGenerator::getName()
+{
+    return "Uniform";
+}
 
-std::string DefaultDataGenerator::toString() {
+std::string DefaultDataGenerator::toString()
+{
     std::ostringstream oss;
 
     oss << getName() << " (" << minValue << ", " << maxValue << ")";
@@ -106,4 +119,4 @@ std::string DefaultDataGenerator::toString() {
     return oss.str();
 }
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

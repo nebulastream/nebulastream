@@ -14,11 +14,12 @@
 #ifndef NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 #define NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
 
+#include <memory>
 #include <API/Expressions/Expressions.hpp>
 #include <Expressions/ExpressionNode.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class ExpressionItem;
 using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
@@ -26,8 +27,8 @@ using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
 /**
  * @brief Defines a UDF call operation.
 **/
-ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArgs);
+ExpressionNodePtr CALL(const NES::ExpressionItem & udfName, std::vector<ExpressionNodePtr> functionArgs);
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
+#endif // NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_

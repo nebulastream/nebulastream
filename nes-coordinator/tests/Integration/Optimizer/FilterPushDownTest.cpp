@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <chrono> //for timing execution
+#include <iostream>
+#include <regex>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -25,26 +26,29 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <chrono>//for timing execution
 #include <gtest/gtest.h>
-#include <iostream>
-#include <regex>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class FilterPushDownTest : public Testing::BaseIntegrationTest {
-  public:
+class FilterPushDownTest : public Testing::BaseIntegrationTest
+{
+public:
     CoordinatorConfigurationPtr coConf;
     SchemaPtr schema;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("AndOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AndOperatorTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
 
@@ -58,14 +62,15 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
                      ->addField(createField("quantity", BasicType::UINT32));
     }
 
-    struct Output {
+    struct Output
+    {
         uint64_t QnV1$timestamp;
         uint64_t QnV1$velocity;
         uint64_t QnV1$quantity;
 
-        bool operator==(Output const& rhs) const {
-            return (QnV1$timestamp == rhs.QnV1$timestamp && QnV1$velocity == rhs.QnV1$velocity
-                    && QnV1$quantity == rhs.QnV1$quantity);
+        bool operator==(Output const & rhs) const
+        {
+            return (QnV1$timestamp == rhs.QnV1$timestamp && QnV1$velocity == rhs.QnV1$velocity && QnV1$quantity == rhs.QnV1$quantity);
         }
     };
 };
@@ -74,8 +79,8 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
  * This test checks if the filter push down below map keeps the correct order of operations when we apply a map with a substractions
  * followed by a map with a multiplication
  */
-TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
-
+TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps)
+{
     NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
 
     auto srcConf1 = CSVSourceType::create("QnV1", "PQnV1");
@@ -110,8 +115,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
 
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers =
-        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
@@ -120,7 +124,8 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
  * This test checks if the filter push down below map keeps the correct order of operations when we apply a map with a subtraction
  * in parentheses and a multiplication
  */
-TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
+TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul)
+{
     NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
 
     auto srcConf1 = CSVSourceType::create("QnV1", "PQnV1");
@@ -156,8 +161,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
 
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers =
-        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
@@ -165,7 +169,8 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
 /* 2.Test
  * This test checks if the filter push down below a map with a new field name works correctly
  */
-TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
+TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField)
+{
     NES_INFO("FilterPushDownTest: Start testSameResultsForPushDownBelowMapWithNewField");
 
     auto srcConf1 = CSVSourceType::create("QnV1", "PQnV1");
@@ -201,10 +206,9 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
 
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers =
-        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-}// namespace NES
+} // namespace NES

@@ -15,21 +15,29 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <string>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief Descriptor defining properties used for creating a physical MQTT sink
  */
-class MQTTSinkDescriptor : public SinkDescriptor {
-  public:
-    enum class TimeUnits : uint8_t { nanoseconds, milliseconds, seconds };
-    enum class ServiceQualities : uint8_t {
+class MQTTSinkDescriptor : public SinkDescriptor
+{
+public:
+    enum class TimeUnits : uint8_t
+    {
+        nanoseconds,
+        milliseconds,
+        seconds
+    };
+    enum class ServiceQualities : uint8_t
+    {
         atMostOnce,
         atLeastOnce,
         exactlyOnce
-    };//cleanSession requires atLeastOnce or exactlyOnce
+    }; //cleanSession requires atLeastOnce or exactlyOnce
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker
@@ -44,16 +52,17 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for MQTT sink
      */
-    static SinkDescriptorPtr create(std::string&& address,
-                                    std::string&& topic,
-                                    std::string&& user,
-                                    uint64_t maxBufferedMSGs,
-                                    TimeUnits timeUnit,
-                                    uint64_t messageDelay,
-                                    ServiceQualities qualityOfService,
-                                    bool asynchronousClient,
-                                    std::string&& clientId = "",
-                                    uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(
+        std::string && address,
+        std::string && topic,
+        std::string && user,
+        uint64_t maxBufferedMSGs,
+        TimeUnits timeUnit,
+        uint64_t messageDelay,
+        ServiceQualities qualityOfService,
+        bool asynchronousClient,
+        std::string && clientId = "",
+        uint64_t numberOfOrigins = 1);
 
     /**
      * @brief get address information from a MQTT sink client
@@ -110,7 +119,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     bool getAsynchronousClient() const;
 
     [[nodiscard]] std::string toString() const override;
-    [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const & other) override;
 
     /**
      * @brief Creates the MQTT sink
@@ -126,18 +135,19 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return MQTT sink
      */
-    explicit MQTTSinkDescriptor(std::string&& address,
-                                std::string&& clientId,
-                                std::string&& topic,
-                                std::string&& user,
-                                uint64_t maxBufferedMSGs,
-                                TimeUnits timeUnit,
-                                uint64_t messageDelay,
-                                ServiceQualities qualityOfService,
-                                bool asynchronousClient,
-                                uint64_t numberOfOrigins);
+    explicit MQTTSinkDescriptor(
+        std::string && address,
+        std::string && clientId,
+        std::string && topic,
+        std::string && user,
+        uint64_t maxBufferedMSGs,
+        TimeUnits timeUnit,
+        uint64_t messageDelay,
+        ServiceQualities qualityOfService,
+        bool asynchronousClient,
+        uint64_t numberOfOrigins);
 
-  private:
+private:
     std::string address;
     std::string clientId;
     std::string topic;
@@ -151,6 +161,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
 
 using MQTTSinkDescriptorPtr = std::shared_ptr<MQTTSinkDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_

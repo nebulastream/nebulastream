@@ -16,15 +16,17 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 using namespace Nautilus;
 class ExecutableOperator;
 using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
 /**
  * @brief A slice merge action that is called if two slices are merged.
  */
-class SliceMergingAction {
-  public:
+class SliceMergingAction
+{
+public:
     /**
      * @brief Emits a slice after slice merging.
      * @param ctx ExecutionContext
@@ -34,18 +36,20 @@ class SliceMergingAction {
      * @param sequenceNumber
      * @param globalSlice
      */
-    virtual void emitSlice(ExecutionContext& ctx,
-                           ExecuteOperatorPtr& child,
-                           Value<UInt64>& windowStart,
-                           Value<UInt64>& windowEnd,
-                           Value<UInt64>& sequenceNumber,
-                           Value<UInt64>& chunkNumber,
-                           Value<Boolean>& lastChunk,
-                           Value<MemRef>& globalSlice) const = 0;
+    virtual void emitSlice(
+        ExecutionContext & ctx,
+        ExecuteOperatorPtr & child,
+        Value<UInt64> & windowStart,
+        Value<UInt64> & windowEnd,
+        Value<UInt64> & sequenceNumber,
+        Value<UInt64> & chunkNumber,
+        Value<Boolean> & lastChunk,
+        Value<MemRef> & globalSlice) const
+        = 0;
 
     virtual ~SliceMergingAction() = default;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_

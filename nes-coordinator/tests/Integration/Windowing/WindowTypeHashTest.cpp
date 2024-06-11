@@ -14,27 +14,30 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/TimeUnit.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-#include <BaseIntegrationTest.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES::Windowing;
 
-class WindowTypeHashTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class WindowTypeHashTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("WindowTypeHashTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup WindowTypeHashTest test class.");
     }
 };
-TEST_F(WindowTypeHashTest, SlidingWindowHashTest) {
+TEST_F(WindowTypeHashTest, SlidingWindowHashTest)
+{
     auto timeCharacteristic1 = EventTime(Attribute("time"));
     auto timeCharacteristic2 = EventTime(Attribute("timestamp"));
     auto slidingWindow0 = SlidingWindow::of(timeCharacteristic1, Seconds(10), Seconds(5));
@@ -50,16 +53,20 @@ TEST_F(WindowTypeHashTest, SlidingWindowHashTest) {
     EXPECT_EQ(slidingWindow1->hash(), slidingWindow3->hash());
 
     auto windows = {slidingWindow1, slidingWindow2, slidingWindow4, slidingWindow5};
-    for (const auto& w1 : windows) {
-        for (const auto& w2 : windows) {
-            if (w1 != w2) {
+    for (const auto & w1 : windows)
+    {
+        for (const auto & w2 : windows)
+        {
+            if (w1 != w2)
+            {
                 EXPECT_NE(w1->hash(), w2->hash());
             }
         }
     }
 }
 
-TEST_F(WindowTypeHashTest, TumblingWindowHashTest) {
+TEST_F(WindowTypeHashTest, TumblingWindowHashTest)
+{
     auto timeCharacteristic1 = EventTime(Attribute("time"));
     auto timeCharacteristic2 = EventTime(Attribute("timestamp"));
     auto tumblingWindow0 = TumblingWindow::of(timeCharacteristic1, Seconds(10));
@@ -74,16 +81,20 @@ TEST_F(WindowTypeHashTest, TumblingWindowHashTest) {
     EXPECT_EQ(tumblingWindow3->hash(), tumblingWindow4->hash());
 
     auto windows = {tumblingWindow1, tumblingWindow2, tumblingWindow3};
-    for (const auto& w1 : windows) {
-        for (const auto& w2 : windows) {
-            if (w1 != w2) {
+    for (const auto & w1 : windows)
+    {
+        for (const auto & w2 : windows)
+        {
+            if (w1 != w2)
+            {
                 EXPECT_NE(w1->hash(), w2->hash());
             }
         }
     }
 }
 
-TEST_F(WindowTypeHashTest, ThresholdWindowHashTest) {
+TEST_F(WindowTypeHashTest, ThresholdWindowHashTest)
+{
     auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "10"));
     auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "11"));
     auto expression1 = EqualsExpressionNode::create(left, right);
@@ -98,18 +109,22 @@ TEST_F(WindowTypeHashTest, ThresholdWindowHashTest) {
     EXPECT_EQ(thresholdWindow2->hash(), thresholdWindow3->hash());
 
     auto windows = {thresholdWindow1, thresholdWindow2, thresholdWindow0};
-    for (const auto& w1 : windows) {
-        for (const auto& w2 : windows) {
-            if (w1 != w2) {
+    for (const auto & w1 : windows)
+    {
+        for (const auto & w2 : windows)
+        {
+            if (w1 != w2)
+            {
                 EXPECT_NE(w1->hash(), w2->hash());
             }
         }
     }
 }
 
-TEST_F(WindowTypeHashTest, AllWindowTypesHashTest) {
+TEST_F(WindowTypeHashTest, AllWindowTypesHashTest)
+{
     auto timeCharacteristic1 = EventTime(Attribute("time"));
-    auto timeCharacteristic2 = EventTime(Attribute("timestamp"));//t2 makes no difference
+    auto timeCharacteristic2 = EventTime(Attribute("timestamp")); //t2 makes no difference
 
     auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "10"));
     auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "11"));
@@ -133,21 +148,25 @@ TEST_F(WindowTypeHashTest, AllWindowTypesHashTest) {
     auto thresholdWindow2 = ThresholdWindow::of(expression1, 5);
     auto thresholdWindow3 = ThresholdWindow::of(expression2, 10);
 
-    auto windows = {slidingWindow1,
-                    slidingWindow2,
-                    slidingWindow3,
-                    slidingWindow4,
-                    tumblingWindow1,
-                    tumblingWindow2,
-                    tumblingWindow3,
-                    tumblingWindow4,
-                    thresholdWindow1,
-                    thresholdWindow2,
-                    thresholdWindow3};
+    auto windows
+        = {slidingWindow1,
+           slidingWindow2,
+           slidingWindow3,
+           slidingWindow4,
+           tumblingWindow1,
+           tumblingWindow2,
+           tumblingWindow3,
+           tumblingWindow4,
+           thresholdWindow1,
+           thresholdWindow2,
+           thresholdWindow3};
 
-    for (const auto& w1 : windows) {
-        for (const auto& w2 : windows) {
-            if (w1 != w2) {
+    for (const auto & w1 : windows)
+    {
+        for (const auto & w2 : windows)
+        {
+            if (w1 != w2)
+            {
                 ASSERT_NE(w1->hash(), w2->hash());
             }
         }

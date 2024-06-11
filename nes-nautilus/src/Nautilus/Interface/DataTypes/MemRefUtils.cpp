@@ -12,18 +12,22 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <cstring>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstring>
-namespace NES::Nautilus::MemRefUtils {
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+namespace NES::Nautilus::MemRefUtils
+{
 
-Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType) {
-    if (dataType->isBasicType()) {
+Value<> loadValue(Value<MemRef> & fieldReference, const PhysicalTypePtr & dataType)
+{
+    if (dataType->isBasicType())
+    {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(dataType);
-        switch (basicType->nativeType) {
+        switch (basicType->nativeType)
+        {
             case BasicPhysicalType::NativeType::BOOLEAN: {
                 return fieldReference.load<Nautilus::Boolean>();
             };
@@ -68,12 +72,17 @@ Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType
     NES_NOT_IMPLEMENTED();
 }
 
-bool memeq(void* ptr1, void* ptr2, uint64_t size) { return memcmp(ptr1, ptr2, size) == 0; }
+bool memeq(void * ptr1, void * ptr2, uint64_t size)
+{
+    return memcmp(ptr1, ptr2, size) == 0;
+}
 
-bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size) {
+bool memEquals(Value<MemRef> && ptr1, Value<MemRef> && ptr2, Value<UInt64> && size)
+{
     return FunctionCall("memeq", memeq, ptr1, ptr2, size);
 }
-void memCopy(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size) {
+void memCopy(Value<MemRef> && ptr1, Value<MemRef> && ptr2, Value<UInt64> && size)
+{
     FunctionCall("memcpy", memcpy, ptr1, ptr2, size);
 }
-}// namespace NES::Nautilus::MemRefUtils
+} // namespace NES::Nautilus::MemRefUtils

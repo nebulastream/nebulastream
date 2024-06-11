@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
@@ -32,28 +30,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class BatchJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class BatchJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     Nautilus::CompilationOptions options;
-    ExecutablePipelineProvider* provider;
+    ExecutablePipelineProvider * provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("BatchJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BatchJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup BatchJoinPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -65,7 +70,8 @@ class BatchJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipel
     static void TearDownTestCase() { NES_INFO("Tear down BatchJoinPipelineTest test class."); }
 };
 
-TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
+TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
+{
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema = schema->addField("k1", BasicType::INT64)->addField("v1", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -85,12 +91,8 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     std::vector<Expressions::ExpressionPtr> keyFields = {readF1};
     std::vector<Expressions::ExpressionPtr> valueFields = {readF2};
     std::vector<PhysicalTypePtr> types = {integerType};
-    auto joinOp = std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
-                                                              keyFields,
-                                                              types,
-                                                              valueFields,
-                                                              types,
-                                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+    auto joinOp = std::make_shared<Operators::BatchJoinBuild>(
+        0 /*handler index*/, keyFields, types, valueFields, types, std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
     scanOperator->setChild(joinOp);
 
@@ -124,11 +126,10 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     ASSERT_EQ(entries, 4_u64);
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        BatchJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<BatchJoinPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    BatchJoinPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<BatchJoinPipelineTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

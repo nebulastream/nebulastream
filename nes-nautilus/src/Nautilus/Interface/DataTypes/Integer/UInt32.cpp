@@ -15,66 +15,95 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 UInt32::UInt32(uint32_t value) : Int(&type), value(value){};
-Nautilus::IR::Types::StampPtr UInt32::getType() const { return Nautilus::IR::Types::StampFactory::createUInt32Stamp(); }
-std::shared_ptr<Any> UInt32::copy() { return create<UInt32>(value); }
-const std::shared_ptr<Int> UInt32::add(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+Nautilus::IR::Types::StampPtr UInt32::getType() const
+{
+    return Nautilus::IR::Types::StampFactory::createUInt32Stamp();
+}
+std::shared_ptr<Any> UInt32::copy()
+{
+    return create<UInt32>(value);
+}
+const std::shared_ptr<Int> UInt32::add(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value + otherValue.value);
 }
 
-const std::shared_ptr<Int> UInt32::sub(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::sub(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value - otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::div(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::div(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value / otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::mod(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::mod(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value % otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::mul(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::mul(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value * otherValue.value);
 }
-const std::shared_ptr<Boolean> UInt32::equals(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Boolean> UInt32::equals(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<Boolean>(value == otherValue.value);
 }
-const std::shared_ptr<Boolean> UInt32::lessThan(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Boolean> UInt32::lessThan(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<Boolean>(value < otherValue.value);
 }
-const std::shared_ptr<Boolean> UInt32::greaterThan(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Boolean> UInt32::greaterThan(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<Boolean>(value > otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::bitWiseAnd(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::bitWiseAnd(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value & otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::bitWiseOr(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::bitWiseOr(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value | otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::bitWiseXor(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::bitWiseXor(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value ^ otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::bitWiseLeftShift(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::bitWiseLeftShift(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value << otherValue.value);
 }
-const std::shared_ptr<Int> UInt32::bitWiseRightShift(const Int& other) const {
-    auto& otherValue = other.staticCast<UInt32>();
+const std::shared_ptr<Int> UInt32::bitWiseRightShift(const Int & other) const
+{
+    auto & otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value >> otherValue.value);
 }
 
-uint32_t UInt32::getValue() const { return value; }
-int64_t UInt32::getRawInt() const { return value; }
-std::string UInt32::toString() { return std::to_string(value); }
-}// namespace NES::Nautilus
+uint32_t UInt32::getValue() const
+{
+    return value;
+}
+int64_t UInt32::getRawInt() const
+{
+    return value;
+}
+std::string UInt32::toString()
+{
+    return std::to_string(value);
+}
+} // namespace NES::Nautilus

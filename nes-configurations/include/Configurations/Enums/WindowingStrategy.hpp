@@ -16,8 +16,10 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_
 #include <cstdint>
 
-namespace NES::QueryCompilation {
-enum class WindowingStrategy : uint8_t {
+namespace NES::QueryCompilation
+{
+enum class WindowingStrategy : uint8_t
+{
     // This is the legacy window strategy from the old query compiler
     LEGACY,
     // Applies slicing window computations. This is the default on nautilus.
@@ -26,4 +28,4 @@ enum class WindowingStrategy : uint8_t {
     BUCKETING
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_

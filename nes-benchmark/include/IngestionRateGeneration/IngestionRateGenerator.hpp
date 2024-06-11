@@ -15,17 +15,25 @@
 #ifndef NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_INGESTIONRATEGENERATOR_HPP_
 #define NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_INGESTIONRATEGENERATOR_HPP_
 
-#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 
-namespace NES::Benchmark::IngestionRateGeneration {
+namespace NES::Benchmark::IngestionRateGeneration
+{
 
 /**
  * @brief This class defines the different types of supported ingestion rate generators.
  */
-enum class IngestionRateDistribution : uint8_t { UNIFORM, SINUS, COSINUS, CUSTOM, UNDEFINED };
+enum class IngestionRateDistribution : uint8_t
+{
+    UNIFORM,
+    SINUS,
+    COSINUS,
+    CUSTOM,
+    UNDEFINED
+};
 
 class IngestionRateGenerator;
 using IngestionRateGeneratorPtr = std::unique_ptr<IngestionRateGenerator>;
@@ -33,8 +41,9 @@ using IngestionRateGeneratorPtr = std::unique_ptr<IngestionRateGenerator>;
 /**
  * @brief This class is used by the ExternalProvider to create a vector of potentially different ingestion rates in order to support dynamic ingestion rates.
  */
-class IngestionRateGenerator {
-  public:
+class IngestionRateGenerator
+{
+public:
     /**
      * @brief constructor for an ingestion rate generator
      */
@@ -56,19 +65,19 @@ class IngestionRateGenerator {
       * @param configOverAllRuns
       * @return pointer to a type of ingestion rate generator
       */
-    static IngestionRateGeneratorPtr createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
+    static IngestionRateGeneratorPtr createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns & configOverAllRuns);
 
-  protected:
+protected:
     uint64_t ingestionRateCount = 0;
 
-  private:
+private:
     /**
      * @brief determines whether the given ingestion rate distribution is supported
      * @param ingestionRateDistribution
      * @return IngestionRateDistribution
      */
-    static IngestionRateDistribution getDistributionFromString(std::string& ingestionRateDistribution);
+    static IngestionRateDistribution getDistributionFromString(std::string & ingestionRateDistribution);
 };
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_INGESTIONRATEGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_INGESTIONRATEGENERATOR_HPP_

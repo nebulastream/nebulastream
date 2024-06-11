@@ -15,18 +15,20 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
 
+#include <chrono>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/MetricCollectorType.hpp>
-#include <chrono>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class provides a monitoring source to generate metrics based on a given metric collector.
  */
-class MonitoringSource : public DataSource {
-  public:
+class MonitoringSource : public DataSource
+{
+public:
     /**
      * @brief Constructor for the monitoring source
      * @param metricCollector the metric collector
@@ -40,16 +42,17 @@ class MonitoringSource : public DataSource {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
-    MonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
-                     std::chrono::milliseconds waitTime,
-                     Runtime::BufferManagerPtr bufferManager,
-                     Runtime::QueryManagerPtr queryManager,
-                     OperatorId operatorId,
-                     OriginId originId,
-                     StatisticId statisticId,
-                     size_t numSourceLocalBuffers,
-                     const std::string& physicalSourceName,
-                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});
+    MonitoringSource(
+        Monitoring::MetricCollectorPtr metricCollector,
+        std::chrono::milliseconds waitTime,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        const std::string & physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});
 
     SourceType getType() const override;
 
@@ -73,15 +76,15 @@ class MonitoringSource : public DataSource {
      */
     std::string toString() const override;
 
-  private:
+private:
     Monitoring::MetricCollectorPtr metricCollector;
     std::chrono::milliseconds waitTime;
 
-  public:
+public:
     static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);
 };
 
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;
-};// namespace NES
+}; // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_

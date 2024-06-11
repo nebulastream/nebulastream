@@ -15,19 +15,20 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_ZMQSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_ZMQSOURCE_HPP_
 
-#include <Sources/DataSource.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Sources/DataSource.hpp>
 #include <zmq.hpp>
-namespace NES {
+namespace NES
+{
 class TupleBuffer;
 /**
  * @brief this class provide a zmq as data source
  */
-class ZmqSource : public DataSource {
-
-  public:
+class ZmqSource : public DataSource
+{
+public:
     /**
      * @brief constructor for the zmq source
      * @param schema schema of the data
@@ -43,18 +44,19 @@ class ZmqSource : public DataSource {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
-    explicit ZmqSource(SchemaPtr schema,
-                       Runtime::BufferManagerPtr bufferManager,
-                       Runtime::QueryManagerPtr queryManager,
-                       const std::string& host,
-                       uint16_t port,
-                       OperatorId operatorId,
-                       OriginId originId,
-                       StatisticId statisticId,
-                       uint64_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
-                       const std::string& physicalSourceName,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    explicit ZmqSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        const std::string & host,
+        uint16_t port,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        uint64_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string & physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief destructor of zmq sink that disconnects the queue before deconstruction
@@ -78,7 +80,7 @@ class ZmqSource : public DataSource {
      * @brief The address address for the ZMQ
      * @return ZMQ address
      */
-    std::string const& getHost() const;
+    std::string const & getHost() const;
 
     /**
      * @brief The port of the ZMQ
@@ -91,12 +93,13 @@ class ZmqSource : public DataSource {
      */
     SourceType getType() const override;
 
-    bool stop(Runtime::QueryTerminationType graceful) override {
+    bool stop(Runtime::QueryTerminationType graceful) override
+    {
         disconnect();
         return DataSource::stop(graceful);
     }
 
-  private:
+private:
     /**
      * @brief default constructor required for boost serialization
      */
@@ -129,5 +132,5 @@ class ZmqSource : public DataSource {
 };
 
 using ZmqSourcePtr = std::shared_ptr<ZmqSource>;
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_ZMQSOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_ZMQSOURCE_HPP_

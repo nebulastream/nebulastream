@@ -12,25 +12,32 @@
     limitations under the License.
 */
 
+#include <sstream>
+#include <utility>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/Util/IRDumpHandler.hpp>
-#include <sstream>
-#include <utility>
 
-namespace NES::Nautilus::IR {
+namespace NES::Nautilus::IR
+{
 
-IRGraph::IRGraph(Flags flags) : flags(std::move(flags)) {}
+IRGraph::IRGraph(Flags flags) : flags(std::move(flags))
+{
+}
 
-std::shared_ptr<Operations::FunctionOperation>
-IRGraph::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation) {
+std::shared_ptr<Operations::FunctionOperation> IRGraph::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation)
+{
     this->rootOperation = std::move(rootOperation);
     return this->rootOperation;
 }
 
-std::shared_ptr<Operations::FunctionOperation> IRGraph::getRootOperation() { return rootOperation; }
+std::shared_ptr<Operations::FunctionOperation> IRGraph::getRootOperation()
+{
+    return rootOperation;
+}
 
-std::string IRGraph::toString() {
+std::string IRGraph::toString()
+{
     std::stringstream ss;
     ss << "NESIR {\n";
     auto dumpHandler = Nautilus::IR::NESIRDumpHandler::create(ss);
@@ -38,19 +45,55 @@ std::string IRGraph::toString() {
     ss << "} //NESIR";
     return ss.str();
 }
-const IRGraph::Flags& IRGraph::getFlags() const { return flags; }
-void IRGraph::setFlags(const IRGraph::Flags& flags) { IRGraph::flags = flags; }
+const IRGraph::Flags & IRGraph::getFlags() const
+{
+    return flags;
+}
+void IRGraph::setFlags(const IRGraph::Flags & flags)
+{
+    IRGraph::flags = flags;
+}
 
-const std::string& IRGraph::Flags::getDumpOutputPath() const { return dumpOutputPath; }
+const std::string & IRGraph::Flags::getDumpOutputPath() const
+{
+    return dumpOutputPath;
+}
 
 IRGraph::Flags::Flags() = default;
-void IRGraph::Flags::setDumpOutputPath(const std::string& dumpOutputPath) { Flags::dumpOutputPath = dumpOutputPath; }
-bool IRGraph::Flags::isDumpToFile() const { return dumpToFile; }
-void IRGraph::Flags::setDumpToFile(bool dumpToFile) { Flags::dumpToFile = dumpToFile; }
-bool IRGraph::Flags::isDumpToConsole() const { return dumpToConsole; }
-void IRGraph::Flags::setDumpToConsole(bool dumpToConsole) { Flags::dumpToConsole = dumpToConsole; }
-bool IRGraph::Flags::isOptimize() const { return optimize; }
-void IRGraph::Flags::setOptimize(bool optimize) { Flags::optimize = optimize; }
-bool IRGraph::Flags::isDebug() const { return debug; }
-void IRGraph::Flags::setDebug(bool debug) { Flags::debug = debug; }
-}// namespace NES::Nautilus::IR
+void IRGraph::Flags::setDumpOutputPath(const std::string & dumpOutputPath)
+{
+    Flags::dumpOutputPath = dumpOutputPath;
+}
+bool IRGraph::Flags::isDumpToFile() const
+{
+    return dumpToFile;
+}
+void IRGraph::Flags::setDumpToFile(bool dumpToFile)
+{
+    Flags::dumpToFile = dumpToFile;
+}
+bool IRGraph::Flags::isDumpToConsole() const
+{
+    return dumpToConsole;
+}
+void IRGraph::Flags::setDumpToConsole(bool dumpToConsole)
+{
+    Flags::dumpToConsole = dumpToConsole;
+}
+bool IRGraph::Flags::isOptimize() const
+{
+    return optimize;
+}
+void IRGraph::Flags::setOptimize(bool optimize)
+{
+    Flags::optimize = optimize;
+}
+bool IRGraph::Flags::isDebug() const
+{
+    return debug;
+}
+void IRGraph::Flags::setDebug(bool debug)
+{
+    Flags::debug = debug;
+}
+} // namespace NES::Nautilus::IR

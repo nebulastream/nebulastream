@@ -18,19 +18,21 @@
 #include <exception>
 #include <string>
 
-namespace NES::Spatial::Exception {
+namespace NES::Spatial::Exception
+{
 
 /**
  * @brief an exception indicating a failure in the location provider
  */
-class LocationProviderException : public std::exception {
-  public:
+class LocationProviderException : public std::exception
+{
+public:
     explicit LocationProviderException(std::string message);
 
-    const char* what() const noexcept override;
+    const char * what() const noexcept override;
 
-  private:
+private:
     std::string message;
 };
-}// namespace NES::Spatial::Exception
-#endif// NES_RUNTIME_INCLUDE_EXCEPTIONS_LOCATIONPROVIDEREXCEPTION_HPP_
+} // namespace NES::Spatial::Exception
+#endif // NES_RUNTIME_INCLUDE_EXCEPTIONS_LOCATIONPROVIDEREXCEPTION_HPP_

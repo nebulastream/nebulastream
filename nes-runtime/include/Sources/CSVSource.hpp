@@ -15,20 +15,22 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
 
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class CSVParser;
 using CSVParserPtr = std::shared_ptr<CSVParser>;
 /**
  * @brief this class implement the CSV as an input source
  */
-class CSVSource : public DataSource {
-  public:
+class CSVSource : public DataSource
+{
+public:
     /**
    * @brief constructor of the CSV source
    * @param schema of the source
@@ -44,17 +46,18 @@ class CSVSource : public DataSource {
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    * @return a DataSourcePtr pointing to the data source
    */
-    explicit CSVSource(SchemaPtr schema,
-                       Runtime::BufferManagerPtr bufferManager,
-                       Runtime::QueryManagerPtr queryManager,
-                       CSVSourceTypePtr csvSourceType,
-                       OperatorId operatorId,
-                       OriginId originId,
-                       StatisticId statisticId,
-                       size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
-                       const std::string& physicalSourceName,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    explicit CSVSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        CSVSourceTypePtr csvSourceType,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string & physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief override the receiveData method for the csv source
@@ -66,7 +69,7 @@ class CSVSource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer &);
 
     /**
      * @brief override the toString method for the csv source
@@ -89,13 +92,13 @@ class CSVSource : public DataSource {
      * @brief getter for source config
      * @return csvSourceType1
      */
-    const CSVSourceTypePtr& getSourceConfig() const;
+    const CSVSourceTypePtr & getSourceConfig() const;
 
-  protected:
+protected:
     std::ifstream input;
     bool fileEnded;
 
-  private:
+private:
     CSVSourceTypePtr csvSourceType;
     std::string filePath;
     uint64_t tupleSize;
@@ -109,6 +112,6 @@ class CSVSource : public DataSource {
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_

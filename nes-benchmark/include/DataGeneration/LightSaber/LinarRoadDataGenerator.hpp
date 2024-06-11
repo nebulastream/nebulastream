@@ -15,10 +15,12 @@
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_LINARROADDATAGENERATOR_HPP_
 #include <DataGeneration/DataGenerator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-class LinearRoadDataGenerator : public DataGenerator {
-  public:
+class LinearRoadDataGenerator : public DataGenerator
+{
+public:
     explicit LinearRoadDataGenerator();
 
     std::string getName() override;
@@ -28,6 +30,6 @@ class LinearRoadDataGenerator : public DataGenerator {
     std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_LINARROADDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_LINARROADDATAGENERATOR_HPP_

@@ -15,16 +15,17 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
-#include <Util/RequestType.hpp>
 #include <algorithm>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/RequestType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -52,8 +53,9 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
  * The QueryPlans included in the GlobalQueryPlan can be fused together and therefore each operator in GQP contains
  * information about the set of queryIdAndCatalogEntryMapping it belongs to. The QueryPlans are bound together by a dummy logical root operator.
  */
-class GlobalQueryPlan {
-  public:
+class GlobalQueryPlan
+{
+public:
     static GlobalQueryPlanPtr create();
 
     /**
@@ -62,14 +64,14 @@ class GlobalQueryPlan {
      * @throws: QueryNotFoundException if the given query plan's id was invalid; GlobalQueryPlanUpdateException if the given
      * query plan was already added
      */
-    void addQueryPlan(const QueryPlanPtr& queryPlan);
+    void addQueryPlan(const QueryPlanPtr & queryPlan);
 
     /**
      * @brief Create a new shared query plan using the input query plan
      * @param queryPlan : query plan to construct shared query plan.
      * @return: true if successful else false
      */
-    bool createNewSharedQueryPlan(const QueryPlanPtr& queryPlan);
+    bool createNewSharedQueryPlan(const QueryPlanPtr & queryPlan);
 
     /**
      * @brief remove the operators belonging to the query with input query Id from the global query plan
@@ -129,13 +131,13 @@ class GlobalQueryPlan {
      * @param sharedQueryPlan: the global query metadata to be updated
      * @return true if successful
      */
-    bool updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQueryPlan);
+    bool updateSharedQueryPlan(const SharedQueryPlanPtr & sharedQueryPlan);
 
     /**
      * Get query plans to add in the Global query plan
      * @return vector of query plans to add
      */
-    const std::vector<QueryPlanPtr>& getQueryPlansToAdd() const;
+    const std::vector<QueryPlanPtr> & getQueryPlansToAdd() const;
 
     /**
      * Clear all query plans that need to be added to the global query plan
@@ -149,11 +151,10 @@ class GlobalQueryPlan {
      * @param placementStrategy the placement strategy for the shared query plan
      * @return pointer to the Shared Query Plan or nullptr
      */
-    std::vector<SharedQueryPlanPtr>
-    getSharedQueryPlansConsumingSourcesAndPlacementStrategy(const std::string& sourceNames,
-                                                            NES::Optimizer::PlacementStrategy placementStrategy);
+    std::vector<SharedQueryPlanPtr> getSharedQueryPlansConsumingSourcesAndPlacementStrategy(
+        const std::string & sourceNames, NES::Optimizer::PlacementStrategy placementStrategy);
 
-  private:
+private:
     GlobalQueryPlan();
 
     std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesAndPlacementStrategyToSharedQueryPlanMap;
@@ -161,5 +162,5 @@ class GlobalQueryPlan {
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;
 };
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_

@@ -15,12 +15,13 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
 using FIELD_SIZE = uint64_t;
 class MemoryLayoutTupleBuffer;
@@ -31,7 +32,7 @@ class MemoryLayoutTupleBuffer;
  * @param childBufferIdx
  * @return Variable sized data as a string
  */
-std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx);
+std::string readVarSizedData(const TupleBuffer & buffer, uint64_t childBufferIdx);
 
 /**
  * @brief Writes the variable sized data to the buffer
@@ -40,15 +41,16 @@ std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx)
  * @param bufferManager
  * @return Index of the child buffer
  */
-std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, BufferManager& bufferManager);
+std::optional<uint32_t> writeVarSizedData(const TupleBuffer & buffer, const std::string_view value, BufferManager & bufferManager);
 
 /**
  * @brief A MemoryLayout defines a strategy in which a specific schema / a individual tuple is mapped to a tuple buffer.
  * To this end, it requires the definition of an schema and a specific buffer size.
  * Currently. we support a RowLayout and a ColumnLayout.
  */
-class MemoryLayout {
-  public:
+class MemoryLayout
+{
+public:
     /**
      * @brief Constructor for MemoryLayout.
      * @param bufferSize A memory layout is always created for a specific buffer size.
@@ -62,7 +64,7 @@ class MemoryLayout {
      * @param fieldName
      * @return either field index for fieldName or empty optional
      */
-    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;
+    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string & fieldName) const;
 
     /**
      * Gets the physical size of an tuple in bytes.
@@ -107,30 +109,30 @@ class MemoryLayout {
      * @brief Gets the underling schema of this memory layout.
      * @return SchemaPtr
      */
-    [[nodiscard]] const SchemaPtr& getSchema() const;
+    [[nodiscard]] const SchemaPtr & getSchema() const;
 
     /**
      * @brief Gets a vector of all physical fields for this memory layout.
      * @return Reference to vector physical fields.
      */
-    [[nodiscard]] const std::vector<PhysicalTypePtr>& getPhysicalTypes() const;
+    [[nodiscard]] const std::vector<PhysicalTypePtr> & getPhysicalTypes() const;
 
     /**
      * Gets a vector that contains the physical size of all tuple fields.
      * This is crucial to calculate the potion of specific fields.
      * @return Reference of field sizes vector.
      */
-    [[nodiscard]] const std::vector<uint64_t>& getFieldSizes() const;
+    [[nodiscard]] const std::vector<uint64_t> & getFieldSizes() const;
 
     /**
      * @brief Comparator methods
      * @param rhs
      * @return
      */
-    bool operator==(const MemoryLayout& rhs) const;
-    bool operator!=(const MemoryLayout& rhs) const;
+    bool operator==(const MemoryLayout & rhs) const;
+    bool operator!=(const MemoryLayout & rhs) const;
 
-  protected:
+protected:
     const uint64_t bufferSize;
     const SchemaPtr schema;
     uint64_t recordSize;
@@ -139,6 +141,6 @@ class MemoryLayout {
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_

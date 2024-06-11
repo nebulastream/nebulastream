@@ -20,15 +20,16 @@
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
 /**
  * @brief This class is a data container for all the necessary objects in a slice/window of the StreamJoin with variable
  * sized data.
  */
-class HJSliceVarSized : public StreamSlice {
-
-  public:
+class HJSliceVarSized : public StreamSlice
+{
+public:
     /**
       * @brief Constructor for a StreamJoinWindowVarSized
       * @param numberOfWorker
@@ -40,14 +41,15 @@ class HJSliceVarSized : public StreamSlice {
       * @param pageSize
       * @param numPartitions
       */
-    explicit HJSliceVarSized(size_t numberOfWorker,
-                             uint64_t sliceStart,
-                             uint64_t sliceEnd,
-                             SchemaPtr& leftSchema,
-                             SchemaPtr& rightSchema,
-                             BufferManagerPtr& bufferManager,
-                             size_t pageSize,
-                             size_t numPartitions);
+    explicit HJSliceVarSized(
+        size_t numberOfWorker,
+        uint64_t sliceStart,
+        uint64_t sliceEnd,
+        SchemaPtr & leftSchema,
+        SchemaPtr & rightSchema,
+        BufferManagerPtr & bufferManager,
+        size_t pageSize,
+        size_t numPartitions);
 
     ~HJSliceVarSized() override = default;
 
@@ -75,15 +77,15 @@ class HJSliceVarSized : public StreamSlice {
      * @param workerThreadId
      * @return Reference to the hash table
      */
-    Operators::StreamJoinHashTableVarSized* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
-                                                         WorkerThreadId workerThreadId) const;
+    Operators::StreamJoinHashTableVarSized *
+    getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId) const;
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
      * @param joinBuildSide
      * @return Reference to the shared hash table
      */
-    Operators::MergingHashTableVarSized& getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide);
+    Operators::MergingHashTableVarSized & getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide);
 
     /**
      * @brief Merges all local hash tables to the global one
@@ -98,7 +100,7 @@ class HJSliceVarSized : public StreamSlice {
      */
     uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId) const;
 
-  private:
+private:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTableVarSized>> hashTableLeftSide;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTableVarSized>> hashTableRightSide;
     Operators::MergingHashTableVarSized mergingHashTableLeftSide;
@@ -106,6 +108,6 @@ class HJSliceVarSized : public StreamSlice {
     bool alreadyMergedLocalToGlobalHashTable;
     std::mutex mutexMergeLocalToGlobalHashTable;
 };
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICEVARSIZED_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICEVARSIZED_HPP_

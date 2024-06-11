@@ -12,27 +12,49 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <sstream>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 
-namespace NES::Runtime::Execution {
-uint64_t StreamSlice::getSliceIdentifier() const { return getSliceIdentifier(getSliceStart(), getSliceEnd()); }
+namespace NES::Runtime::Execution
+{
+uint64_t StreamSlice::getSliceIdentifier() const
+{
+    return getSliceIdentifier(getSliceStart(), getSliceEnd());
+}
 
-uint64_t StreamSlice::getSliceIdentifier(uint64_t, uint64_t sliceEnd) { return sliceEnd; }
+uint64_t StreamSlice::getSliceIdentifier(uint64_t, uint64_t sliceEnd)
+{
+    return sliceEnd;
+}
 
-uint64_t StreamSlice::getSliceStart() const { return sliceStart; }
+uint64_t StreamSlice::getSliceStart() const
+{
+    return sliceStart;
+}
 
-uint64_t StreamSlice::getSliceEnd() const { return sliceEnd; }
+uint64_t StreamSlice::getSliceEnd() const
+{
+    return sliceEnd;
+}
 
-StreamSlice::StreamSlice(uint64_t sliceStart, uint64_t sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd) {}
+StreamSlice::StreamSlice(uint64_t sliceStart, uint64_t sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd)
+{
+}
 
-bool StreamSlice::operator==(const StreamSlice& rhs) const { return (sliceStart == rhs.sliceStart && sliceEnd == rhs.sliceEnd); }
+bool StreamSlice::operator==(const StreamSlice & rhs) const
+{
+    return (sliceStart == rhs.sliceStart && sliceEnd == rhs.sliceEnd);
+}
 
-bool StreamSlice::operator!=(const StreamSlice& rhs) const { return !(rhs == *this); }
+bool StreamSlice::operator!=(const StreamSlice & rhs) const
+{
+    return !(rhs == *this);
+}
 
-std::string StreamSlice::toString() {
+std::string StreamSlice::toString()
+{
     std::ostringstream basicOstringstream;
     basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
     return basicOstringstream.str();
 }
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

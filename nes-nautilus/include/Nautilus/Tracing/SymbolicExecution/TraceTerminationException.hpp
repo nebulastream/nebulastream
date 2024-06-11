@@ -15,15 +15,17 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief This exceptions indicates the termination of an symbolic execution.
  * This exception should never be used, to indicate errors to the runtime.
  */
-class TraceTerminationException final : public std::exception {
-  public:
+class TraceTerminationException final : public std::exception
+{
+public:
     explicit TraceTerminationException() : std::exception(){};
 };
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_

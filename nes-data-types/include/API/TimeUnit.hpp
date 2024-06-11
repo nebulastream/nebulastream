@@ -17,13 +17,15 @@
 #include <cstdint>
 #include <string>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 /**
  * A time based window measure.
  */
-class TimeUnit {
-  public:
+class TimeUnit
+{
+public:
     explicit TimeUnit(uint64_t offset);
 
     /**
@@ -43,7 +45,7 @@ class TimeUnit {
      * @param other
      * @return Boolean
      */
-    bool equals(const TimeUnit& other) const;
+    bool equals(const TimeUnit & other) const;
 
     /**
      * @brief A time unit in Milliseconds.
@@ -75,10 +77,10 @@ class TimeUnit {
      */
     static TimeUnit Days();
 
-  private:
+private:
     uint64_t multiplier;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_

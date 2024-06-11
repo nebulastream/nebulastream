@@ -15,17 +15,19 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_
 
-#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <memory>
 #include <vector>
+#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class MemoryLayoutSelectionPhase;
 using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
@@ -43,8 +45,9 @@ using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase
  * This would result in failed queryIdAndCatalogEntryMapping at the worker side.
  * Therefore the column layout is currently only experimental.
  */
-class MemoryLayoutSelectionPhase {
-  public:
+class MemoryLayoutSelectionPhase
+{
+public:
     /**
      * @brief Represents a particular MemoryLayoutPolicy to select different strategies.
      */
@@ -60,23 +63,22 @@ class MemoryLayoutSelectionPhase {
      * @brief Selects the memory layout for all operators within an query.
      * @param queryPlan : the input query plan
      */
-    QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
+    QueryPlanPtr execute(const QueryPlanPtr & queryPlan);
 
-  private:
+private:
     /**
      * @brief Constructor for MemoryLayoutSelectionPhase
      * @param policy to select the memory layout for a query
      */
     MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy);
 
-  private:
+private:
     MemoryLayoutPolicy policy;
 };
 
 static const std::map<std::string, MemoryLayoutPolicy> stringToMemoryLayoutPolicy{
-    {"FORCE_ROW_LAYOUT", MemoryLayoutPolicy::FORCE_ROW_LAYOUT},
-    {"FORCE_COLUMN_LAYOUT", MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}};
+    {"FORCE_ROW_LAYOUT", MemoryLayoutPolicy::FORCE_ROW_LAYOUT}, {"FORCE_COLUMN_LAYOUT", MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}};
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_

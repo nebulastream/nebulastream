@@ -18,15 +18,17 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Provider to transform a source descriptor to executable DataSource.
  */
-class SourceSharingDataSourceProvider : public DefaultDataSourceProvider {
-  public:
+class SourceSharingDataSourceProvider : public DefaultDataSourceProvider
+{
+public:
     explicit SourceSharingDataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
-    static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
+    static DataSourceProviderPtr create(const QueryCompilerOptionsPtr & compilerOptions);
     /**
      * @brief Lowers a source descriptor to a executable data source.
      * @param sourceId id of the data source
@@ -35,18 +37,19 @@ class SourceSharingDataSourceProvider : public DefaultDataSourceProvider {
      * @param successors
      * @return DataSourcePtr
      */
-    virtual DataSourcePtr lower(OperatorId operatorId,
-                                OriginId originId,
-                                StatisticId statisticId,
-                                SourceDescriptorPtr sourceDescriptor,
-                                Runtime::NodeEnginePtr nodeEngine,
-                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    virtual DataSourcePtr lower(
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        SourceDescriptorPtr sourceDescriptor,
+        Runtime::NodeEnginePtr nodeEngine,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     virtual ~SourceSharingDataSourceProvider() = default;
 
-  protected:
+protected:
     std::map<std::pair<std::string, std::string>, DataSourcePtr> sourceDescriptorToDataSourceMap;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_

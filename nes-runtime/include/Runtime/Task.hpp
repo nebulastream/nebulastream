@@ -15,20 +15,22 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_
 
+#include <limits>
+#include <memory>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <limits>
-#include <memory>
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers
  * @Limitations:
  *    -
  */
-class alignas(64) Task {
-  public:
+class alignas(64) Task
+{
+public:
     /**
      * @brief Task constructor
      * @param pointer to query execution plan that should be applied on the incoming buffer
@@ -42,7 +44,7 @@ class alignas(64) Task {
     /**
      * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
      */
-    ExecutionResult operator()(WorkerContext& workerContext);
+    ExecutionResult operator()(WorkerContext & workerContext);
 
     /**
      * @brief return the number of tuples in the working buffer
@@ -86,15 +88,15 @@ class alignas(64) Task {
      * This method returns the reference to the buffer of this task
      * @return
      */
-    TupleBuffer const& getBufferRef() const;
+    TupleBuffer const & getBufferRef() const;
 
-  private:
+private:
     Execution::SuccessorExecutablePipeline pipeline{};
     TupleBuffer buf{};
     uint64_t id{std::numeric_limits<decltype(id)>::max()};
     uint64_t inputTupleCount = 0;
 };
 static_assert(sizeof(Task) == 64);
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_

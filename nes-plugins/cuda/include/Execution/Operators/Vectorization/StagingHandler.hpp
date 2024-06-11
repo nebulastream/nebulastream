@@ -17,14 +17,16 @@
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This handler is designed to handle the materialization of tuples for operators.
  * The tuple is staged in a CPU-residence tuple buffer.
  */
-class StagingHandler : public OperatorHandler {
-  public:
+class StagingHandler : public OperatorHandler
+{
+public:
     /**
      * @brief Constructor.
      * @param stageBufferSize the size of the stage buffer in bytes
@@ -34,8 +36,8 @@ class StagingHandler : public OperatorHandler {
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext)
+        override;
 
     /**
      * @brief Set the current write position to zero.
@@ -51,7 +53,7 @@ class StagingHandler : public OperatorHandler {
     /**
      * @return Get a raw pointer to the tuple staging buffer.
      */
-    TupleBuffer* getTupleBuffer() const;
+    TupleBuffer * getTupleBuffer() const;
 
     /**
      * @brief Increment the current write offset of the staging buffer.
@@ -59,13 +61,13 @@ class StagingHandler : public OperatorHandler {
      */
     uint64_t getCurrentWritePositionAndIncrement();
 
-  private:
+private:
     uint64_t stageBufferSize;
     uint64_t stageBufferCapacity;
     std::unique_ptr<TupleBuffer> tupleBuffer;
     uint64_t currentWritePosition;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_STAGINGHANDLER_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_STAGINGHANDLER_HPP_

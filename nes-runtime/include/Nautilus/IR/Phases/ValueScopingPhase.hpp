@@ -14,24 +14,26 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_
 
+#include <memory>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <memory>
-#include <stack>
-#include <unordered_map>
-#include <unordered_set>
 
-namespace NES::Nautilus::IR {
+namespace NES::Nautilus::IR
+{
 
 /**
  * @brief This phase takes an IR graph that contains information on loop-headers, merge-blocks, and for all 
  *        BasicBlockArguments, it is known which n possible base operations the argument references.
  */
-class ValueScopingPhase {
-  public:
+class ValueScopingPhase
+{
+public:
     /**
      * @brief Applies the ValueScopingPhase to the supplied IR graph.
      * @requirements RemoveBrOnlyPhase, LoopDetectionPhase::applyLoopDetection, StructuredControlFlowPhase
@@ -39,16 +41,18 @@ class ValueScopingPhase {
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);
 
-  private:
-    struct IfOpCandidate {
+private:
+    struct IfOpCandidate
+    {
         std::shared_ptr<IR::Operations::IfOperation> ifOp;
         bool isTrueBranch;
     };
     /**
      * @brief Internal context object contains phase logic and state.
      */
-    class ValueScopingPhaseContext {
-      public:
+    class ValueScopingPhaseContext
+    {
+    public:
         /**
          * @brief Constructor for the context of the ValueScopingPhaseContext.
          * 
@@ -60,18 +64,18 @@ class ValueScopingPhase {
          */
         void process();
 
-      private:
+    private:
         /**
          * @brief Iterates over all operations of all blocks. Replaces references to arguments with base operations, if
          *        arguments are only referenced by a single unique base operation.
          */
         void replaceArguments();
 
-      private:
+    private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;
     };
 };
 
-}// namespace NES::Nautilus::IR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_
+} // namespace NES::Nautilus::IR
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_

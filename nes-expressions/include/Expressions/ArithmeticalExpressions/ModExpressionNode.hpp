@@ -15,19 +15,21 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an MODER expression.
  */
-class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
-  public:
+class ModExpressionNode final : public ArithmeticalBinaryExpressionNode
+{
+public:
     explicit ModExpressionNode(DataTypePtr stamp);
     ~ModExpressionNode() noexcept override = default;
     /**
          * @brief Create a new MODULO expression
          */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
@@ -45,10 +47,10 @@ class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
         */
     ExpressionNodePtr copy() override;
 
-  private:
-    explicit ModExpressionNode(ModExpressionNode* other);
+private:
+    explicit ModExpressionNode(ModExpressionNode * other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_

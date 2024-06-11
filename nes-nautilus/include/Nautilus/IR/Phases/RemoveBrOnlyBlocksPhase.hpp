@@ -14,34 +14,37 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_REMOVEBRONLYBLOCKSPHASE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_REMOVEBRONLYBLOCKSPHASE_HPP_
 
-#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR {
+namespace NES::Nautilus::IR
+{
 
 /**
  * @brief This phase removes branch-only-blocks from a given IR graph.
  */
-class RemoveBrOnlyBlocksPhase {
-  public:
+class RemoveBrOnlyBlocksPhase
+{
+public:
     /**
      * @brief Applies the RemoveBrOnlyBlocksPhase to the supplied IR graph.
      * @param IR graph that the RemoveBrOnlyBlocksPhase is applied to.
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);
 
-  private:
+private:
     /**
      * @brief Internal context object contains phase logic and state.
      */
-    class RemoveBrOnlyBlocksPhaseContext {
-      public:
+    class RemoveBrOnlyBlocksPhaseContext
+    {
+    public:
         /**
          * @brief Constructor for the context of the remove br-only-blocks phase.
          * 
@@ -54,7 +57,7 @@ class RemoveBrOnlyBlocksPhase {
          */
         void process();
 
-      private:
+    private:
         /**
          * @brief Adds predecessor information for all blocks in the IR.
          * 
@@ -76,15 +79,14 @@ class RemoveBrOnlyBlocksPhase {
          * @param candidates: Blocks that still need to be processed.
          * @param visitedBlocks: Blocks that have already been processed and can be disregarded.
          */
-        void inline processPotentialBrOnlyBlock(IR::BasicBlockPtr currentBlock,
-                                                std::stack<IR::BasicBlockPtr>& candidates,
-                                                std::unordered_set<std::string> visitedBlocks);
+        void inline processPotentialBrOnlyBlock(
+            IR::BasicBlockPtr currentBlock, std::stack<IR::BasicBlockPtr> & candidates, std::unordered_set<std::string> visitedBlocks);
 
-      private:
+    private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;
     };
 };
 
-}// namespace NES::Nautilus::IR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_REMOVEBRONLYBLOCKSPHASE_HPP_
+} // namespace NES::Nautilus::IR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_REMOVEBRONLYBLOCKSPHASE_HPP_

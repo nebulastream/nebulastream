@@ -14,24 +14,26 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <vector>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief This phase lowers a query plan of logical operators into a query plan of physical operators.
  * The lowering of individual operators is defined by the physical operator provider to improve extendability.
  */
-class LowerLogicalToPhysicalOperators {
-  public:
+class LowerLogicalToPhysicalOperators
+{
+public:
     explicit LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
-    static LowerLogicalToPhysicalOperatorsPtr create(const PhysicalOperatorProviderPtr& provider);
+    static LowerLogicalToPhysicalOperatorsPtr create(const PhysicalOperatorProviderPtr & provider);
     DecomposedQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-  private:
+private:
     PhysicalOperatorProviderPtr provider;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_

@@ -12,73 +12,97 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <fmt/format.h>
-#include <utility>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
-NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema,
-                                                 const NesPartition& nesPartition,
-                                                 const NodeLocation& nodeLocation,
-                                                 std::chrono::milliseconds waitTime,
-                                                 uint32_t retryTimes,
-                                                 DecomposedQueryPlanVersion version,
-                                                 OperatorId uniqueNetworkSourceId)
-    : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), nodeLocation(nodeLocation), waitTime(waitTime),
-      retryTimes(retryTimes), version(version), uniqueNetworkSourceId(uniqueNetworkSourceId) {}
-
-SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema,
-                                                    const NesPartition& nesPartition,
-                                                    const NodeLocation& nodeLocation,
-                                                    std::chrono::milliseconds waitTime,
-                                                    uint32_t retryTimes,
-                                                    DecomposedQueryPlanVersion version,
-                                                    OperatorId uniqueNetworkSourceId) {
-    return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema),
-                                                                             nesPartition,
-                                                                             nodeLocation,
-                                                                             waitTime,
-                                                                             retryTimes,
-                                                                             version,
-                                                                             uniqueNetworkSourceId));
+NetworkSourceDescriptor::NetworkSourceDescriptor(
+    SchemaPtr schema,
+    const NesPartition & nesPartition,
+    const NodeLocation & nodeLocation,
+    std::chrono::milliseconds waitTime,
+    uint32_t retryTimes,
+    DecomposedQueryPlanVersion version,
+    OperatorId uniqueNetworkSourceId)
+    : SourceDescriptor(std::move(schema))
+    , nesPartition(nesPartition)
+    , nodeLocation(nodeLocation)
+    , waitTime(waitTime)
+    , retryTimes(retryTimes)
+    , version(version)
+    , uniqueNetworkSourceId(uniqueNetworkSourceId)
+{
 }
 
-bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-    if (!other->instanceOf<NetworkSourceDescriptor>()) {
+SourceDescriptorPtr NetworkSourceDescriptor::create(
+    SchemaPtr schema,
+    const NesPartition & nesPartition,
+    const NodeLocation & nodeLocation,
+    std::chrono::milliseconds waitTime,
+    uint32_t retryTimes,
+    DecomposedQueryPlanVersion version,
+    OperatorId uniqueNetworkSourceId)
+{
+    return std::make_shared<NetworkSourceDescriptor>(
+        NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation, waitTime, retryTimes, version, uniqueNetworkSourceId));
+}
+
+bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const & other) const
+{
+    if (!other->instanceOf<NetworkSourceDescriptor>())
+    {
         return false;
     }
     auto otherNetworkSource = other->as<NetworkSourceDescriptor>();
     return schema->equals(otherNetworkSource->schema) && nesPartition == otherNetworkSource->nesPartition;
 }
 
-std::string NetworkSourceDescriptor::toString() const {
-    return fmt::format("NetworkSourceDescriptor{{Version={};Partition={};NetworkSinkNodeLocation={}}}",
-                       version,
-                       nesPartition.toString(),
-                       nodeLocation.createZmqURI());
+std::string NetworkSourceDescriptor::toString() const
+{
+    return fmt::format(
+        "NetworkSourceDescriptor{{Version={};Partition={};NetworkSinkNodeLocation={}}}",
+        version,
+        nesPartition.toString(),
+        nodeLocation.createZmqURI());
 }
 
-NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
+NesPartition NetworkSourceDescriptor::getNesPartition() const
+{
+    return nesPartition;
+}
 
-NodeLocation NetworkSourceDescriptor::getNodeLocation() const { return nodeLocation; }
+NodeLocation NetworkSourceDescriptor::getNodeLocation() const
+{
+    return nodeLocation;
+}
 
-std::chrono::milliseconds NetworkSourceDescriptor::getWaitTime() const { return waitTime; }
+std::chrono::milliseconds NetworkSourceDescriptor::getWaitTime() const
+{
+    return waitTime;
+}
 
-uint8_t NetworkSourceDescriptor::getRetryTimes() const { return retryTimes; }
+uint8_t NetworkSourceDescriptor::getRetryTimes() const
+{
+    return retryTimes;
+}
 
-uint16_t NetworkSourceDescriptor::getVersion() const { return version; }
+uint16_t NetworkSourceDescriptor::getVersion() const
+{
+    return version;
+}
 
-SourceDescriptorPtr NetworkSourceDescriptor::copy() {
-    auto copy = NetworkSourceDescriptor::create(schema->copy(),
-                                                nesPartition,
-                                                nodeLocation,
-                                                waitTime,
-                                                retryTimes,
-                                                version,
-                                                uniqueNetworkSourceId);
+SourceDescriptorPtr NetworkSourceDescriptor::copy()
+{
+    auto copy
+        = NetworkSourceDescriptor::create(schema->copy(), nesPartition, nodeLocation, waitTime, retryTimes, version, uniqueNetworkSourceId);
     return copy;
 }
-OperatorId NetworkSourceDescriptor::getUniqueId() const { return uniqueNetworkSourceId; }
-}// namespace NES::Network
+OperatorId NetworkSourceDescriptor::getUniqueId() const
+{
+    return uniqueNetworkSourceId;
+}
+} // namespace NES::Network

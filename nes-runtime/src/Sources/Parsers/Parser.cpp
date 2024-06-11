@@ -12,42 +12,51 @@
     limitations under the License.
 */
 
+#include <cstring>
+#include <string>
+#include <utility>
 #include <API/AttributeField.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <cstring>
-#include <string>
-#include <utility>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-Parser::Parser(std::vector<PhysicalTypePtr> physicalTypes) : physicalTypes(std::move(physicalTypes)) {}
+Parser::Parser(std::vector<PhysicalTypePtr> physicalTypes) : physicalTypes(std::move(physicalTypes))
+{
+}
 
-void Parser::writeFieldValueToTupleBuffer(std::string inputString,
-                                          uint64_t schemaFieldIndex,
-                                          Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                          const SchemaPtr& schema,
-                                          uint64_t tupleCount,
-                                          const Runtime::BufferManagerPtr& bufferManager) {
+void Parser::writeFieldValueToTupleBuffer(
+    std::string inputString,
+    uint64_t schemaFieldIndex,
+    Runtime::MemoryLayouts::TestTupleBuffer & tupleBuffer,
+    const SchemaPtr & schema,
+    uint64_t tupleCount,
+    const Runtime::BufferManagerPtr & bufferManager)
+{
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
-    if (inputString.empty()) {
+    if (inputString.empty())
+    {
         throw Exceptions::RuntimeException("Input string for parsing is empty");
     }
     // TODO replace with csv parsing library
-    try {
-        if (physicalType->isBasicType()) {
+    try
+    {
+        if (physicalType->isBasicType())
+        {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-            switch (basicPhysicalType->nativeType) {
+            switch (basicPhysicalType->nativeType)
+            {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
                     auto value = static_cast<int8_t>(std::stoi(inputString));
                     tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(value);
@@ -102,9 +111,10 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR: {
                     //verify that only a single char was transmitted
-                    if (inputString.size() > 1) {
-                        NES_FATAL_ERROR("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
-                                        inputString);
+                    if (inputString.size() > 1)
+                    {
+                        NES_FATAL_ERROR(
+                            "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}", inputString);
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);
@@ -112,17 +122,20 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
-                              "to tuple buffer",
-                              inputString);
+                    NES_TRACE(
+                        "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
+                        "to tuple buffer",
+                        inputString);
                     tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                     //verify that a valid bool was transmitted (valid{true,false,0,1})
                     bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
-                    if (!value) {
-                        if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0")) {
+                    if (!value)
+                    {
+                        if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0"))
+                        {
                             NES_FATAL_ERROR(
                                 "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
                                 inputString.c_str());
@@ -135,16 +148,20 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
-        } else {// char array(string) case
+        }
+        else
+        { // char array(string) case
             // obtain pointer from buffer to fill with content via strcpy
-            char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
+            char * value = tupleBuffer[tupleCount][schemaFieldIndex].read<char *>();
             // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
             // improve behavior with json library
             strcpy(value, inputString.c_str());
         }
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception & e)
+    {
         NES_ERROR("Failed to convert inputString to desired NES data type. Error: {} for inputString {}", e.what(), inputString);
     }
 }
 
-}//namespace NES
+} //namespace NES

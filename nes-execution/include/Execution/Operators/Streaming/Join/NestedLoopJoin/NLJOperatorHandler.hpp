@@ -18,12 +18,14 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This task models the information for a join window trigger, so what left and right slice identifier to join together
  */
-struct EmittedNLJWindowTriggerTask {
+struct EmittedNLJWindowTriggerTask
+{
     uint64_t leftSliceIdentifier;
     uint64_t rightSliceIdentifier;
     WindowInfo windowInfo;
@@ -32,27 +34,27 @@ struct EmittedNLJWindowTriggerTask {
 class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
 
-class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
-  public:
-    NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                       const OriginId outputOriginId,
-                       const uint64_t windowSize,
-                       const uint64_t windowSlide,
-                       const SchemaPtr& leftSchema,
-                       const SchemaPtr& rightSchema,
-                       const uint64_t pageSizeLeft,
-                       const uint64_t pageSizeRight);
+class NLJOperatorHandler : public virtual StreamJoinOperatorHandler
+{
+public:
+    NLJOperatorHandler(
+        const std::vector<OriginId> & inputOrigins,
+        const OriginId outputOriginId,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr & leftSchema,
+        const SchemaPtr & rightSchema,
+        const uint64_t pageSizeLeft,
+        const uint64_t pageSizeRight);
 
     ~NLJOperatorHandler() override = default;
 
     StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
 
-    void emitSliceIdsToProbe(StreamSlice& sliceLeft,
-                             StreamSlice& sliceRight,
-                             const WindowInfo& windowInfo,
-                             PipelineExecutionContext* pipelineCtx) override;
+    void emitSliceIdsToProbe(
+        StreamSlice & sliceLeft, StreamSlice & sliceRight, const WindowInfo & windowInfo, PipelineExecutionContext * pipelineCtx) override;
 
-  protected:
+protected:
     const uint64_t pageSizeLeft;
     const uint64_t pageSizeRight;
 };
@@ -64,7 +66,7 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
  * @param joinBuildSide
  * @return void* that will be translated to a MemRef
  */
-void* getNLJPagedVectorProxy(void* ptrNljWindow, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt);
+void * getNLJPagedVectorProxy(void * ptrNljWindow, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt);
 
-};    // namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
+}; // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

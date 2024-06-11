@@ -17,9 +17,11 @@
 
 #include <cstdint>
 
-namespace NES {
+namespace NES
+{
 
-enum class ExecutionResult : uint8_t {
+enum class ExecutionResult : uint8_t
+{
     /// Execution completed successfully
     Ok = 0,
     /// Execution completed unsuccessfully -> Must handle error
@@ -32,4 +34,4 @@ enum class ExecutionResult : uint8_t {
 
 }
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_

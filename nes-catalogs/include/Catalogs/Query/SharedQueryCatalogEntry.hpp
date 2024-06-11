@@ -15,25 +15,28 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/QueryState.hpp>
-#include <Util/QueryStateHistory.hpp>
 #include <map>
 #include <memory>
 #include <set>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/QueryState.hpp>
+#include <Util/QueryStateHistory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class DecomposedQueryPlanMetaData;
 using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaData>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 
 /**
  * @brief class to handle the shared query plan entry in the query catalog
  */
-class SharedQueryCatalogEntry {
-  public:
+class SharedQueryCatalogEntry
+{
+public:
     explicit SharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::set<QueryId> queryIds, QueryState queryState);
 
     /**
@@ -85,10 +88,11 @@ class SharedQueryCatalogEntry {
      * @param workerId : the worker node on which the query is running
      * @param queryState : the state of the decomposed plan
      */
-    void addDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
-                                        DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                        WorkerId workerId,
-                                        QueryState queryState);
+    void addDecomposedQueryPlanMetaData(
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+        WorkerId workerId,
+        QueryState queryState);
 
     /**
      * Get sub query plan meta data
@@ -105,9 +109,9 @@ class SharedQueryCatalogEntry {
     /**
      * @brief Retrieve a timestamped history of query status changes.
      */
-    const QueryStateHistory& getHistory() const;
+    const QueryStateHistory & getHistory() const;
 
-  private:
+private:
     SharedQueryId sharedQueryId;
     std::set<QueryId> containedQueryIds;
     QueryState queryState;
@@ -115,7 +119,7 @@ class SharedQueryCatalogEntry {
     std::string terminationReason;
     QueryStateHistory history;
 };
-}// namespace Catalogs::Query
-}// namespace NES
+} // namespace Catalogs::Query
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_

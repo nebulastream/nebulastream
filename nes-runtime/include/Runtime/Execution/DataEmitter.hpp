@@ -20,39 +20,44 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-namespace NES {
-namespace Network {
+namespace NES
+{
+namespace Network
+{
 class NodeLocation;
 }
-namespace Runtime {
+namespace Runtime
+{
 class TupleBuffer;
 }
 
 /**
  * @brief Interface that classes have to adhere to emit data as tasks
  */
-class DataEmitter : public Runtime::RuntimeEventListener {
-  public:
+class DataEmitter : public Runtime::RuntimeEventListener
+{
+public:
     /**
      * @brief create a task using the provided buffer and submit it to a task consumer, e.g., query manager
      * @param buffer
      * @param addBufferMetaData: If true, buffer meta data (e.g., sequence number, statistic id, origin id, ...) is added to the buffer
      */
-    virtual void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) = 0;
+    virtual void emitWork(Runtime::TupleBuffer & buffer, bool addBufferMetaData = true) = 0;
 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 
     /**
      * @brief
      */
-    virtual void onEndOfStream(Runtime::QueryTerminationType) {}
+    virtual void onEndOfStream(Runtime::QueryTerminationType) { }
 
     /**
      * @brief
      */
-    virtual void onEvent(Runtime::BaseEvent&) override {}
+    virtual void onEvent(Runtime::BaseEvent &) override { }
 
-    virtual DecomposedQueryPlanVersion getVersion() const {
+    virtual DecomposedQueryPlanVersion getVersion() const
+    {
         NES_WARNING("Trying to get version of a data emitter that does not carry version information, returning 0");
         return 0;
     };
@@ -62,5 +67,5 @@ class DataEmitter : public Runtime::RuntimeEventListener {
      */
     virtual bool startNewVersion() { return false; };
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

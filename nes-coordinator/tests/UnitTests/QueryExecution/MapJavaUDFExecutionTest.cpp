@@ -13,19 +13,19 @@
 */
 
 #ifdef ENABLE_JNI
-#include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Util/JNI/JNIUtils.hpp>
-#include <Util/JavaUDFDescriptorBuilder.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestExecutionEngine.hpp>
-#include <Util/TestSinkDescriptor.hpp>
-#include <Util/magicenum/magic_enum.hpp>
-#include <iostream>
-#include <jni.h>
-#include <utility>
+#    include <iostream>
+#    include <utility>
+#    include <jni.h>
+#    include <API/Schema.hpp>
+#    include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#    include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#    include <Util/JNI/JNIUtils.hpp>
+#    include <Util/JavaUDFDescriptorBuilder.hpp>
+#    include <Util/Logger/Logger.hpp>
+#    include <Util/TestExecutionEngine.hpp>
+#    include <Util/TestSinkDescriptor.hpp>
+#    include <Util/magicenum/magic_enum.hpp>
+#    include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -33,20 +33,24 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class MapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class MapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MapJavaUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup MapJavaUDFQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         Testing::BaseUnitTest::TearDown();
         NES_DEBUG("QueryExecutionTest: Tear down MapJavaUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
@@ -66,8 +70,10 @@ constexpr auto udfIncrement = 10;
 /**
  * This helper function fills a buffer with test data
  */
-void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer & buf)
+{
+    for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++)
+    {
         buf[recordIndex][0].write<int32_t>(recordIndex);
     }
     buf.setNumberOfTuples(numberOfRecords);
@@ -77,7 +83,8 @@ void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
  * @brief Test simple UDF with integer objects as input and output (IntegerMapFunction<Integer, Integer>)
  * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
+TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf)
+{
     auto fqSchema = Schema::create()->addField("s$id", BasicType::INT32);
     auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
     auto testSink = executionEngine->createDataSink(fqSchema, numberOfRecords);
@@ -96,10 +103,8 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);
@@ -111,11 +116,12 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), numberOfRecords);
-    for (uint32_t recordIndex = 0u; recordIndex < numberOfRecords; ++recordIndex) {
+    for (uint32_t recordIndex = 0u; recordIndex < numberOfRecords; ++recordIndex)
+    {
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), recordIndex + udfIncrement);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-#endif// ENABLE_JNI
+#endif // ENABLE_JNI

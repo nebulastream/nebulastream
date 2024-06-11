@@ -15,17 +15,19 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
 
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <string>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 class SinkMedium;
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical file sink
  */
-class FileSinkDescriptor : public SinkDescriptor {
-  public:
+class FileSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Factory method to create a new file sink descriptor
      * @param fileName the path to the output file
@@ -35,11 +37,8 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string_view fileName,
-                                    std::string_view sinkFormat,
-                                    std::string_view append,
-                                    bool addTimestamp,
-                                    uint64_t numberOfOrigins);
+    static SinkDescriptorPtr
+    create(std::string_view fileName, std::string_view sinkFormat, std::string_view append, bool addTimestamp, uint64_t numberOfOrigins);
 
     /**
      * @brief Factory method to create a new file sink descriptor
@@ -49,8 +48,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param addTimestamp flat to indicate if timestamp shall be add when writing to file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr
-    create(std::string_view fileName, std::string_view sinkFormat, std::string_view append, bool addTimestamp);
+    static SinkDescriptorPtr create(std::string_view fileName, std::string_view sinkFormat, std::string_view append, bool addTimestamp);
 
     /**
      * @brief Factory method to create a new file sink descriptor
@@ -59,7 +57,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param append flag to indicate if to append to file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(const std::string& fileName, const std::string& sinkFormat, const std::string& append);
+    static SinkDescriptorPtr create(const std::string & fileName, const std::string & sinkFormat, const std::string & append);
 
     /**
      * @brief Factory method to create a new file sink descriptor as default
@@ -79,27 +77,24 @@ class FileSinkDescriptor : public SinkDescriptor {
     /**
      * @brief Get the file name where the data is to be written
      */
-    const std::string& getFileName() const;
+    const std::string & getFileName() const;
 
     std::string toString() const override;
-    [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const & other) override;
 
     std::string getSinkFormatAsString() const;
 
     bool getAppend() const;
 
-  private:
-    explicit FileSinkDescriptor(std::string_view fileName,
-                                std::string_view sinkFormat,
-                                bool append,
-                                bool addTimestamp,
-                                uint64_t numberOfOrigins);
+private:
+    explicit FileSinkDescriptor(
+        std::string_view fileName, std::string_view sinkFormat, bool append, bool addTimestamp, uint64_t numberOfOrigins);
     std::string fileName;
     std::string sinkFormat;
     bool append;
 };
 
 using FileSinkDescriptorPtr = std::shared_ptr<FileSinkDescriptor>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_

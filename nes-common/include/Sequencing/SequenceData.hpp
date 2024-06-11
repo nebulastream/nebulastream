@@ -14,13 +14,15 @@
 
 #ifndef NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
 #define NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
-#include <Identifiers/Identifiers.hpp>
 #include <sstream>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class SequenceData {
-  public:
+class SequenceData
+{
+public:
     /**
      * @brief Constructs
      * @param sequenceNumber
@@ -32,39 +34,39 @@ class SequenceData {
 
     [[nodiscard]] std::string toString() const;
 
-    friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj) {
-        os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk
-           << "}";
+    friend std::ostream & operator<<(std::ostream & os, const SequenceData & obj)
+    {
+        os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk << "}";
         return os;
     }
 
-    bool operator<=(const SequenceData& other) const;
+    bool operator<=(const SequenceData & other) const;
 
     /**
      * @brief Overloading the < operator. Checks sequenceNumber, then chunkNumber, then lastChunk
      * @param other
      */
-    bool operator<(const SequenceData& other) const;
+    bool operator<(const SequenceData & other) const;
 
     /**
      * @brief Overloading the == operator
      * @param other
      * @return True if both structs are equal
      */
-    bool operator==(const SequenceData& other) const;
+    bool operator==(const SequenceData & other) const;
 
     /**
      * @brief Overloading the != operator
      * @param other
      * @return True if both structs are NOT equal
      */
-    bool operator!=(const SequenceData& other) const;
+    bool operator!=(const SequenceData & other) const;
 
     SequenceNumber sequenceNumber;
     ChunkNumber chunkNumber;
     bool lastChunk;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
+#endif // NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_

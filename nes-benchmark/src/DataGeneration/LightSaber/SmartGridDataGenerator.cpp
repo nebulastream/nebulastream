@@ -11,21 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <fstream>
+#include <iterator>
+#include <utility>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <fstream>
-#include <iterator>
-#include <utility>
 
-namespace NES::Benchmark::DataGeneration {
-SmartGridDataGenerator::SmartGridDataGenerator() : DataGenerator() {}
+namespace NES::Benchmark::DataGeneration
+{
+SmartGridDataGenerator::SmartGridDataGenerator() : DataGenerator()
+{
+}
 
-std::string SmartGridDataGenerator::getName() { return "SmartGrid"; }
+std::string SmartGridDataGenerator::getName()
+{
+    return "SmartGrid";
+}
 
-std::vector<Runtime::TupleBuffer> SmartGridDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> SmartGridDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize)
+{
     std::vector<Runtime::TupleBuffer> buffers;
     buffers.reserve(numberOfBuffers);
 
@@ -34,18 +41,22 @@ std::vector<Runtime::TupleBuffer> SmartGridDataGenerator::createData(size_t numb
     std::ifstream file(std::string(BENCHMARK_DATA_DIRECTORY) + "/smartgrid/smartgrid-data.txt");
     std::string line;
     std::vector<std::vector<std::string>> lines;
-    while (std::getline(file, line)) {
+    while (std::getline(file, line))
+    {
         std::istringstream iss(line);
         std::vector<std::string> words{std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
         lines.emplace_back(words);
     }
     uint64_t linecounter = 0;
-    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
+    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++)
+    {
         auto buffer = allocateBuffer();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++)
+        {
             // check if we reached the end of the file and start from the beginning
-            if (linecounter == lines.size()) {
+            if (linecounter == lines.size())
+            {
                 linecounter = 0;
             }
 
@@ -64,7 +75,8 @@ std::vector<Runtime::TupleBuffer> SmartGridDataGenerator::createData(size_t numb
     }
     return buffers;
 }
-SchemaPtr SmartGridDataGenerator::getSchema() {
+SchemaPtr SmartGridDataGenerator::getSchema()
+{
     return Schema::create()
         ->addField("creationTS", BasicType::INT64)
         ->addField("value", BasicType::FLOAT32)
@@ -74,10 +86,11 @@ SchemaPtr SmartGridDataGenerator::getSchema() {
         ->addField("house", BasicType::INT16);
 }
 
-Configurations::SchemaTypePtr SmartGridDataGenerator::getSchemaType() {
-    const char* dataTypeI64 = "INT64";
-    const char* dataTypeF32 = "FLOAT32";
-    const char* dataTypeI16 = "INT16";
+Configurations::SchemaTypePtr SmartGridDataGenerator::getSchemaType()
+{
+    const char * dataTypeI64 = "INT64";
+    const char * dataTypeF32 = "FLOAT32";
+    const char * dataTypeI16 = "INT16";
     std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
     schemaFieldDetails.emplace_back("creationTS", dataTypeI64);
     schemaFieldDetails.emplace_back("value", dataTypeF32);
@@ -88,9 +101,10 @@ Configurations::SchemaTypePtr SmartGridDataGenerator::getSchemaType() {
     return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
-std::string SmartGridDataGenerator::toString() {
+std::string SmartGridDataGenerator::toString()
+{
     std::ostringstream oss;
     oss << getName();
     return oss.str();
 }
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

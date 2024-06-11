@@ -17,21 +17,22 @@
 
 #include <Common/DataTypes/DataType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Arrays con be constructed of any built-in type.
  * Arrays always have a fixed sized and can not be extended.
  */
-class ArrayType : public DataType {
-
-  public:
+class ArrayType : public DataType
+{
+public:
     /**
      * @brief Constructs a new ArrayType.
      * @param length length of the array
      * @param component component type
      */
-    inline ArrayType(uint64_t length, DataTypePtr component) noexcept : length(length), component(std::move(component)) {}
+    inline ArrayType(uint64_t length, DataTypePtr component) noexcept : length(length), component(std::move(component)) { }
 
     ~ArrayType() override = default;
 
@@ -70,6 +71,6 @@ class ArrayType : public DataType {
     DataTypePtr const component;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_ARRAYTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_ARRAYTYPE_HPP_

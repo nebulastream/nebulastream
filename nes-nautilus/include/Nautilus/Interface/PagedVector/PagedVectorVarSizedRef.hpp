@@ -16,19 +16,21 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_HPP_
 
 #include <API/Schema.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 class PagedVectorVarSizedRefIter;
-class PagedVectorVarSizedRef {
-  public:
+class PagedVectorVarSizedRef
+{
+public:
     /**
      * @brief Constructor
      * @param pagedVectorVarSizedRef
      * @param schema
      */
-    PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema);
+    PagedVectorVarSizedRef(const Value<MemRef> & pagedVectorVarSizedRef, SchemaPtr schema);
 
     /**
      * @brief Writes a new record to the PagedVectorVarSizedRef
@@ -41,7 +43,7 @@ class PagedVectorVarSizedRef {
      * @param pos
      * @return Record
      */
-    Record readRecord(const Value<UInt64>& pos);
+    Record readRecord(const Value<UInt64> & pos);
 
     /**
      * @brief Returns the total number of entries in the PagedVectorVarSizedRef
@@ -73,9 +75,9 @@ class PagedVectorVarSizedRef {
      * @param other
      * @return Boolean
      */
-    bool operator==(const PagedVectorVarSizedRef& other) const;
+    bool operator==(const PagedVectorVarSizedRef & other) const;
 
-  private:
+private:
     /**
      * @brief Returns the capacity per page
      * @return UInt64
@@ -86,7 +88,7 @@ class PagedVectorVarSizedRef {
      * @brief Sets the total number of entries to the given value
      * @param val
      */
-    void setTotalNumberOfEntries(const Value<>& val);
+    void setTotalNumberOfEntries(const Value<> & val);
 
     /**
      * @brief Returns the number of entries on the current page
@@ -98,21 +100,22 @@ class PagedVectorVarSizedRef {
      * @brief Sets the number of entries on the current page
      * @param val
      */
-    void setNumberOfEntriesOnCurrPage(const Value<>& val);
+    void setNumberOfEntriesOnCurrPage(const Value<> & val);
 
     Value<MemRef> pagedVectorVarSizedRef;
     const SchemaPtr schema;
 };
 
-class PagedVectorVarSizedRefIter {
-  public:
+class PagedVectorVarSizedRefIter
+{
+public:
     friend class PagedVectorVarSizedRef;
 
     /**
      * @brief Constructor
      * @param pagedVectorVarSized
      */
-    explicit PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& pagedVectorVarSized);
+    explicit PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef & pagedVectorVarSized);
 
     /**
      * @brief Dereference operator that returns the record at a given entry in the ListRef
@@ -124,23 +127,23 @@ class PagedVectorVarSizedRefIter {
      * @brief Pre-increment operator that first increments and then returns the reference
      * @return Reference
      */
-    PagedVectorVarSizedRefIter& operator++();
+    PagedVectorVarSizedRefIter & operator++();
 
     /**
      * @brief Equality operator
      * @param other
      * @return Boolean
      */
-    bool operator==(const PagedVectorVarSizedRefIter& other) const;
+    bool operator==(const PagedVectorVarSizedRefIter & other) const;
 
     /**
      * @brief Inequality operator
      * @param other
      * @return Boolean
      */
-    bool operator!=(const PagedVectorVarSizedRefIter& other) const;
+    bool operator!=(const PagedVectorVarSizedRefIter & other) const;
 
-  private:
+private:
     /**
      * @brief Sets the position with the newValue
      * @param newValue
@@ -151,6 +154,6 @@ class PagedVectorVarSizedRefIter {
     PagedVectorVarSizedRef pagedVectorVarSized;
 };
 
-}//namespace NES::Nautilus::Interface
+} //namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_HPP_

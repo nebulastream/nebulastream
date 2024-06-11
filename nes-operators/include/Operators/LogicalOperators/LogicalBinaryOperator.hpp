@@ -17,12 +17,14 @@
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief Logical Binary operator, defines two output schemas
  */
-class LogicalBinaryOperator : public LogicalOperator, public BinaryOperator {
-  public:
+class LogicalBinaryOperator : public LogicalOperator, public BinaryOperator
+{
+public:
     explicit LogicalBinaryOperator(OperatorId id);
 
     /**
@@ -47,9 +49,9 @@ class LogicalBinaryOperator : public LogicalOperator, public BinaryOperator {
     */
     std::vector<OperatorPtr> getRightOperators() const;
 
-  private:
-    std::vector<OperatorPtr> getOperatorsBySchema(const SchemaPtr& schema) const;
+private:
+    std::vector<OperatorPtr> getOperatorsBySchema(const SchemaPtr & schema) const;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBINARYOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBINARYOPERATOR_HPP_

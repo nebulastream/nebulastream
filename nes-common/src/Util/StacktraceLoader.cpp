@@ -17,11 +17,13 @@
 #include <Util/StacktraceLoader.hpp>
 #define CALLSTACK_MAX_SIZE 32
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief This method collects the call stacks and prints it
  */
-std::string collectAndPrintStacktrace() {
+std::string collectAndPrintStacktrace()
+{
     backward::StackTrace stackTrace;
     backward::Printer printer;
     stackTrace.load_here(CALLSTACK_MAX_SIZE);
@@ -39,7 +41,8 @@ std::string collectAndPrintStacktrace() {
  * to construct and print an error message, i.e. 'OnFatalError()'
  * to avoid duplicate printing of the stack
  */
-std::string collectStacktrace() {
+std::string collectStacktrace()
+{
     backward::StackTrace stackTrace;
     backward::Printer printer;
     stackTrace.load_here(CALLSTACK_MAX_SIZE);
@@ -51,4 +54,4 @@ std::string collectStacktrace() {
     return buffer.str();
 }
 
-}// namespace NES
+} // namespace NES

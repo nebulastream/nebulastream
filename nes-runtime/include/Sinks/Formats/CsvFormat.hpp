@@ -16,10 +16,12 @@
 #define NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
-namespace NES {
+namespace NES
+{
 
-class CsvFormat : public SinkFormat {
-  public:
+class CsvFormat : public SinkFormat
+{
+public:
     /**
      * Ctor for CSV format.
      * @param schema Ptr to the schema
@@ -41,14 +43,14 @@ class CsvFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return formatted content of TupleBuffer, contains timestamp if specified
      */
-    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
+    std::string getFormattedBuffer(Runtime::TupleBuffer & inputBuffer) override;
 
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
+    FormatIterator getTupleIterator(Runtime::TupleBuffer & inputBuffer) override;
 
     /**
      * @brief method to return the format as a string
@@ -62,5 +64,5 @@ class CsvFormat : public SinkFormat {
      */
     FormatTypes getSinkFormat() override;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_

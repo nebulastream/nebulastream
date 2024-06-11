@@ -11,25 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 using Experimental::TopologyPrediction::TopologyChangeLog;
 using Experimental::TopologyPrediction::TopologyDelta;
 
-class TopologyChangeLogTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class TopologyChangeLogTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TopologyChangelogTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Set up TopologyChangelog test class");
     }
 };
 
-TEST_F(TopologyChangeLogTest, testEmptyChangeLog) {
+TEST_F(TopologyChangeLogTest, testEmptyChangeLog)
+{
     TopologyChangeLog emptyChangelog;
     ASSERT_TRUE(emptyChangelog.empty());
     TopologyDelta delta1({{1, 2}, {1, 3}, {5, 3}}, {{2, 3}, {1, 5}});
@@ -38,7 +42,8 @@ TEST_F(TopologyChangeLogTest, testEmptyChangeLog) {
     ASSERT_FALSE(nonEmptyChangeLog.empty());
 }
 
-TEST_F(TopologyChangeLogTest, testInsertingDelta) {
+TEST_F(TopologyChangeLogTest, testInsertingDelta)
+{
     TopologyDelta delta1({{1, 2}, {1, 3}, {5, 3}}, {{2, 3}, {1, 5}});
     TopologyChangeLog log1;
     log1.update(delta1);
@@ -67,7 +72,8 @@ TEST_F(TopologyChangeLogTest, testInsertingDelta) {
     EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(1)), removedChildren5.end());
 }
 
-TEST_F(TopologyChangeLogTest, testErasing) {
+TEST_F(TopologyChangeLogTest, testErasing)
+{
     TopologyDelta delta1({{1, 2}, {1, 3}, {5, 3}, {6, 3}, {7, 3}, {1, 4}}, {{2, 3}, {1, 5}, {2, 5}, {3, 5}, {8, 4}});
     TopologyDelta delta2({{6, 3}, {7, 3}, {1, 4}}, {{2, 5}, {3, 5}, {8, 4}});
     TopologyChangeLog log1;
@@ -98,7 +104,8 @@ TEST_F(TopologyChangeLogTest, testErasing) {
     EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(1)), removedChildren5.end());
 }
 
-TEST_F(TopologyChangeLogTest, testAddingChangeLog) {
+TEST_F(TopologyChangeLogTest, testAddingChangeLog)
+{
     TopologyDelta delta1({{1, 2}, {1, 3}, {5, 3}}, {{2, 3}, {1, 5}});
     TopologyDelta delta2({{2, 3}, {2, 4}}, {{1, 2}, {2, 5}, {7, 5}});
 
@@ -133,7 +140,8 @@ TEST_F(TopologyChangeLogTest, testAddingChangeLog) {
     EXPECT_NE(std::find(removedChildren5.begin(), removedChildren5.end(), WorkerId(7)), removedChildren5.end());
 }
 
-TEST_F(TopologyChangeLogTest, testRemovingInexistentEdge) {
+TEST_F(TopologyChangeLogTest, testRemovingInexistentEdge)
+{
     TopologyDelta delta1({{1, 2}, {1, 3}, {5, 3}, {6, 3}, {7, 3}, {1, 4}}, {{2, 3}, {1, 5}, {2, 5}, {3, 5}, {8, 4}});
     TopologyDelta delta2({{6, 4}}, {});
     TopologyChangeLog log1;
@@ -141,7 +149,8 @@ TEST_F(TopologyChangeLogTest, testRemovingInexistentEdge) {
     EXPECT_THROW(log1.erase(delta2), Exceptions::RuntimeException);
 }
 
-TEST_F(TopologyChangeLogTest, testRemovingEmptyDelta) {
+TEST_F(TopologyChangeLogTest, testRemovingEmptyDelta)
+{
     TopologyDelta delta1({{1, 2}}, {{2, 3}});
     TopologyDelta delta2({{}}, {});
     TopologyChangeLog log1;
@@ -152,7 +161,8 @@ TEST_F(TopologyChangeLogTest, testRemovingEmptyDelta) {
     EXPECT_EQ(log1.getRemovedChildren(WorkerId(3)), std::vector<WorkerId>{WorkerId(2)});
 }
 
-TEST_F(TopologyChangeLogTest, testAddingEmptyDelta) {
+TEST_F(TopologyChangeLogTest, testAddingEmptyDelta)
+{
     TopologyDelta delta1({{1, 2}}, {{2, 3}});
     TopologyDelta delta2({{}}, {});
     TopologyChangeLog log1;
@@ -163,7 +173,8 @@ TEST_F(TopologyChangeLogTest, testAddingEmptyDelta) {
     EXPECT_EQ(log1.getRemovedChildren(WorkerId(3)), std::vector<WorkerId>{WorkerId(2)});
 }
 
-TEST_F(TopologyChangeLogTest, testInsertingEmptyChangelog) {
+TEST_F(TopologyChangeLogTest, testInsertingEmptyChangelog)
+{
     TopologyDelta delta1({{1, 2}}, {{2, 3}});
     TopologyDelta delta2({{}}, {});
     TopologyChangeLog log1;
@@ -175,4 +186,4 @@ TEST_F(TopologyChangeLogTest, testInsertingEmptyChangelog) {
     EXPECT_EQ(log1.getAddedChildren(WorkerId(2)), std::vector<WorkerId>{WorkerId(1)});
     EXPECT_EQ(log1.getRemovedChildren(WorkerId(3)), std::vector<WorkerId>{WorkerId(2)});
 }
-}// namespace NES
+} // namespace NES

@@ -17,10 +17,12 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class CastOperation : public Operation {
-  public:
+class CastOperation : public Operation
+{
+public:
     explicit CastOperation(OperationIdentifier identifier, OperationPtr input, Types::StampPtr targetStamp);
     ~CastOperation() override = default;
 
@@ -28,9 +30,9 @@ class CastOperation : public Operation {
 
     OperationPtr getInput();
 
-  private:
+private:
     OperationWPtr input;
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CASTOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CASTOPERATION_HPP_

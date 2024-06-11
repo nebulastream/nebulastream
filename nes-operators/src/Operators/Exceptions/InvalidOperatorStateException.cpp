@@ -12,21 +12,22 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fmt/core.h>
-#include <sstream>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
-InvalidOperatorStateException::InvalidOperatorStateException(OperatorId operatorId,
-                                                             const std::vector<OperatorState>& expectedState,
-                                                             NES::OperatorState actualState)
-    : RequestExecutionException("Invalid operator state") {
-
+InvalidOperatorStateException::InvalidOperatorStateException(
+    OperatorId operatorId, const std::vector<OperatorState> & expectedState, NES::OperatorState actualState)
+    : RequestExecutionException("Invalid operator state")
+{
     std::stringstream expectedStatusString;
-    for (const auto& state : expectedState) {
+    for (const auto & state : expectedState)
+    {
         expectedStatusString << std::string(magic_enum::enum_name(state)) << " ";
     }
     message = fmt::format(
@@ -36,6 +37,9 @@ InvalidOperatorStateException::InvalidOperatorStateException(OperatorId operator
         magic_enum::enum_name(actualState));
 }
 
-const char* InvalidOperatorStateException::what() const noexcept { return message.c_str(); }
+const char * InvalidOperatorStateException::what() const noexcept
+{
+    return message.c_str();
+}
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

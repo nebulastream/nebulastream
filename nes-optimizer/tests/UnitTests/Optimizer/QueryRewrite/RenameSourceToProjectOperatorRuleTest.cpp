@@ -15,8 +15,8 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -33,31 +33,34 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 
-class RenameSourceToProjectOperatorRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class RenameSourceToProjectOperatorRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr & sourceCatalog) const
+    {
         NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -71,8 +74,8 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperator) {
-
+TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperator)
+{
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
@@ -98,14 +101,13 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperat
     EXPECT_TRUE(projectOperators.size() == 1);
 }
 
-TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOperator) {
-
+TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOperator)
+{
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query =
-        Query::from("src").as("y").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
+    Query query = Query::from("src").as("y").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
@@ -126,8 +128,8 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
     EXPECT_TRUE(projectOperators.size() == 2);
 }
 
-TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWithProject) {
-
+TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWithProject)
+{
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);

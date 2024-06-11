@@ -15,12 +15,13 @@
 #ifndef NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
 #define NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
 
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <memory>
 #include <string>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -31,8 +32,9 @@ using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 /**
  * @brief Represents a typed field in a schema.
  */
-class AttributeField {
-  public:
+class AttributeField
+{
+public:
     AttributeField() = default;
     AttributeField(std::string name, DataTypePtr dataType);
 
@@ -42,16 +44,16 @@ class AttributeField {
      * @param dataType data type
      * @return AttributeFieldPtr
      */
-    static AttributeFieldPtr create(const std::string& name, const DataTypePtr& dataType);
+    static AttributeFieldPtr create(const std::string & name, const DataTypePtr & dataType);
 
     [[nodiscard]] DataTypePtr getDataType() const;
 
-    [[nodiscard]] const std::string& getName() const;
+    [[nodiscard]] const std::string & getName() const;
 
     void setName(std::string newName);
 
     [[nodiscard]] std::string toString() const;
-    bool isEqual(const AttributeFieldPtr& attr) const;
+    bool isEqual(const AttributeFieldPtr & attr) const;
 
     uint64_t hash() const;
     /**
@@ -60,10 +62,10 @@ class AttributeField {
      */
     AttributeFieldPtr copy() const;
 
-  private:
+private:
     std::string name;
     DataTypePtr dataType;
 };
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_

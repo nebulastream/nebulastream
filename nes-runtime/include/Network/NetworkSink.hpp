@@ -15,23 +15,25 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
 
+#include <string>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <string>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
 /**
  * @brief This represent a sink operator that acts as a connecting API between query processing and network stack.
  */
-class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
+class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener
+{
     using inherited0 = SinkMedium;
     using inherited1 = Runtime::RuntimeEventListener;
 
-  public:
+public:
     /**
     * @brief constructor for the network sink
     * @param schema
@@ -40,18 +42,19 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     * @param version The initial version of this sink when it starts
     */
-    explicit NetworkSink(const SchemaPtr& schema,
-                         OperatorId uniqueNetworkSinkDescriptorId,
-                         SharedQueryId sharedQueryId,
-                         DecomposedQueryPlanId decomposedQueryPlanId,
-                         NodeLocation const& destination,
-                         NesPartition nesPartition,
-                         Runtime::NodeEnginePtr nodeEngine,
-                         size_t numOfProducers,
-                         std::chrono::milliseconds waitTime,
-                         uint8_t retryTimes,
-                         uint64_t numberOfOrigins,
-                         DecomposedQueryPlanVersion version);
+    explicit NetworkSink(
+        const SchemaPtr & schema,
+        OperatorId uniqueNetworkSinkDescriptorId,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        NodeLocation const & destination,
+        NesPartition nesPartition,
+        Runtime::NodeEnginePtr nodeEngine,
+        size_t numOfProducers,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes,
+        uint64_t numberOfOrigins,
+        DecomposedQueryPlanVersion version);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -59,23 +62,23 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param workerContext
     * @return true if no error occurred
     */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContext & workerContext) override;
 
-  protected:
+protected:
     /**
      * @brief This method is called once an event is triggered for the current sink
      * @param event
      */
-    void onEvent(Runtime::BaseEvent& event) override;
+    void onEvent(Runtime::BaseEvent & event) override;
     /**
      * @brief API method called upon receiving an event.
      * @note Only calls onEvent(event)
      * @param event
      * @param workerContext
      */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
+    void onEvent(Runtime::BaseEvent & event, Runtime::WorkerContextRef workerContext);
 
-  public:
+public:
     /**
     * @return the string representation of the network sink
     */
@@ -86,9 +89,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param task descriptor of the reconfiguration
     * @param workerContext the thread on which this is called
     */
-    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) override;
+    void reconfigure(Runtime::ReconfigurationMessage & task, Runtime::WorkerContext & workerContext) override;
 
-    void postReconfigurationCallback(Runtime::ReconfigurationMessage&) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage &) override;
 
     /**
     * @brief setup method to configure the network sink via a reconfiguration
@@ -129,7 +132,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newReceiverLocation the location of the node where the new downstream source is located
      * @param newVersion The new version number assigned to this sink
      */
-    void configureNewSinkDescriptor(const NetworkSinkDescriptor& newNetworkSinkDescriptor);
+    void configureNewSinkDescriptor(const NetworkSinkDescriptor & newNetworkSinkDescriptor);
 
     /**
      * @brief schedule a new receiver location and new receiver partition and versio number to be set for this sink.
@@ -137,7 +140,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * pending
      * @return false if the changes have already been applied, true otherwise
      */
-    bool scheduleNewDescriptor(const NetworkSinkDescriptor& networkSinkDescriptor);
+    bool scheduleNewDescriptor(const NetworkSinkDescriptor & networkSinkDescriptor);
 
     /**
      * @brief apply pending changes to the receiver location, receiver partition and version number
@@ -145,9 +148,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool applyNextSinkDescriptor();
 
-    friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
+    friend bool operator<(const NetworkSink & lhs, const NetworkSink & rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
-  private:
+private:
     /**
      * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
      * a connection pass the the new channel into the future and pass a reconfiguration message to the sink to signal that the
@@ -157,23 +160,24 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newNesPartition the partition of the source to which the connection is to be established
      * @param newVersion The new version number used by the receiver to determine if it can already accept this channel
      */
-    void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
-                                             const NodeLocation& newNodeLocation,
-                                             NesPartition newNesPartition,
-                                             DecomposedQueryPlanVersion newVersion);
+    void clearOldAndConnectToNewChannelAsync(
+        Runtime::WorkerContext & workerContext,
+        const NodeLocation & newNodeLocation,
+        NesPartition newNesPartition,
+        DecomposedQueryPlanVersion newVersion);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel
      * @param workerContext the context where buffers and channel are stored
      */
-    void unbuffer(Runtime::WorkerContext& workerContext);
+    void unbuffer(Runtime::WorkerContext & workerContext);
 
     /**
      * @brief Checks if a network channel has been established. If so, stores it in the worker context and unbuffers tuples into the channel
      * @param workerContext
      * @return true if the new channel is ready, false otherwise
      */
-    bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
+    bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext & workerContext);
 
     OperatorId uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
@@ -189,5 +193,5 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
 };
-}// namespace NES::Network
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
+} // namespace NES::Network
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

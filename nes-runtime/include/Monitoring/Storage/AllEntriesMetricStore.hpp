@@ -15,16 +15,18 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_
 
-#include <Monitoring/Storage/AbstractMetricStore.hpp>
 #include <mutex>
+#include <Monitoring/Storage/AbstractMetricStore.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
 * @brief The AllEntriesMetricStore that stores all the metrics for monitoring.
 */
-class AllEntriesMetricStore : public AbstractMetricStore {
-  public:
+class AllEntriesMetricStore : public AbstractMetricStore
+{
+public:
     explicit AllEntriesMetricStore();
     ~AllEntriesMetricStore() = default;
 
@@ -61,11 +63,11 @@ class AllEntriesMetricStore : public AbstractMetricStore {
     */
     bool hasMetrics(WorkerId nodeId) override;
 
-  private:
+private:
     std::unordered_map<WorkerId, StoredNodeMetricsPtr> storedMetrics;
     mutable std::mutex storeMutex;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_

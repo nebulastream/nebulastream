@@ -14,10 +14,12 @@
 #include <Client/ClientException.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Client {
+namespace NES::Client
+{
 
-ClientException::ClientException(const std::string& message) : RuntimeException(message, NES::collectStacktrace()) {
+ClientException::ClientException(const std::string & message) : RuntimeException(message, NES::collectStacktrace())
+{
     NES_ERROR("{}", message);
 }
 
-}// namespace NES::Client
+} // namespace NES::Client

@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
@@ -20,19 +22,20 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <cstdint>
-#include <functional>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief This test tests execution of scala expression
  */
-class ExpressionExecutionTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
-  public:
+class ExpressionExecutionTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ExpressionExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup ExpressionExecutionTest test class.");
     }
@@ -41,83 +44,83 @@ class ExpressionExecutionTest : public Testing::BaseUnitTest, public AbstractCom
     static void TearDownTestCase() { NES_INFO("Tear down ExpressionExecutionTest test class."); }
 };
 
-Value<> int8AddExpression(Value<Int8> x) {
+Value<> int8AddExpression(Value<Int8> x)
+{
     Value<Int8> y = -2_s8;
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addI8Test) {
+TEST_P(ExpressionExecutionTest, addI8Test)
+{
     Value<Int8> tempx(0_s8);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int8AddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int8AddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int8_t, int8_t>("execute");
 
     ASSERT_EQ(function(1), -1.0);
 }
 
-Value<> int16AddExpression(Value<Int16> x) {
+Value<> int16AddExpression(Value<Int16> x)
+{
     Value<Int16> y(5_s16);
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addI16Test) {
+TEST_P(ExpressionExecutionTest, addI16Test)
+{
     Value<Int16> tempx(0_s16);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt16Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int16AddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int16AddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int16_t, int16_t>("execute");
 
     ASSERT_EQ(function(8), 13);
 }
 
-Value<> int32AddExpression(Value<Int32> x) {
+Value<> int32AddExpression(Value<Int32> x)
+{
     Value<Int32> y = 5;
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addI32Test) {
+TEST_P(ExpressionExecutionTest, addI32Test)
+{
     Value<Int32> tempx = 0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int32AddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int32AddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t, int32_t>("execute");
     ASSERT_EQ(function(8), 13);
 }
 
-Value<> uint32AddExpression(Value<UInt32> x) {
+Value<> uint32AddExpression(Value<UInt32> x)
+{
     Value<UInt32> y = 5_u32;
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addUI32Test) {
+TEST_P(ExpressionExecutionTest, addUI32Test)
+{
     Value<UInt32> tempx = 0_u32;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return uint32AddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return uint32AddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<uint32_t, uint32_t>("execute");
     ASSERT_EQ(function(8), 13);
 }
 
-Value<> int64AddExpression(Value<Int64> x) {
+Value<> int64AddExpression(Value<Int64> x)
+{
     Value<Int64> y(7_s64);
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addI64Test) {
+TEST_P(ExpressionExecutionTest, addI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64AddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64AddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(7), 14);
@@ -125,17 +128,17 @@ TEST_P(ExpressionExecutionTest, addI64Test) {
     ASSERT_EQ(function(-14), -7);
 }
 
-Value<> uint64ModExpression(Value<UInt64> x) {
+Value<> uint64ModExpression(Value<UInt64> x)
+{
     Value<UInt64> y = 7_u64;
     return x % y;
 }
 
-TEST_P(ExpressionExecutionTest, modUI64Test) {
+TEST_P(ExpressionExecutionTest, modUI64Test)
+{
     Value<UInt64> tempx = 0_u64;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createUInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return uint64ModExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return uint64ModExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<uint64_t, uint64_t>("execute");
     ASSERT_EQ(function(3), 3);
@@ -143,17 +146,17 @@ TEST_P(ExpressionExecutionTest, modUI64Test) {
     ASSERT_EQ(function(18), 4);
 }
 
-Value<> int64ModExpression(Value<Int64> x) {
+Value<> int64ModExpression(Value<Int64> x)
+{
     Value<Int64> y(7_s64);
     return x % y;
 }
 
-TEST_P(ExpressionExecutionTest, modI64Test) {
+TEST_P(ExpressionExecutionTest, modI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64ModExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64ModExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(3), 3);
@@ -161,17 +164,17 @@ TEST_P(ExpressionExecutionTest, modI64Test) {
     ASSERT_EQ(function(18), 4);
 }
 
-Value<> int64BitWiseAndExpression(Value<Int64> x) {
+Value<> int64BitWiseAndExpression(Value<Int64> x)
+{
     Value<Int64> y(7_s64);
     return x & y;
 }
 
-TEST_P(ExpressionExecutionTest, bitWiseAndI64Test) {
+TEST_P(ExpressionExecutionTest, bitWiseAndI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64BitWiseAndExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64BitWiseAndExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(3), 3);
@@ -179,17 +182,17 @@ TEST_P(ExpressionExecutionTest, bitWiseAndI64Test) {
     ASSERT_EQ(function(18), 2);
 }
 
-Value<> int64BitWiseOrExpression(Value<Int64> x) {
+Value<> int64BitWiseOrExpression(Value<Int64> x)
+{
     Value<Int64> y(7_s64);
     return x | y;
 }
 
-TEST_P(ExpressionExecutionTest, BitWiseOrI64Test) {
+TEST_P(ExpressionExecutionTest, BitWiseOrI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64BitWiseOrExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64BitWiseOrExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(3), ((3_s64) | 7));
@@ -197,17 +200,17 @@ TEST_P(ExpressionExecutionTest, BitWiseOrI64Test) {
     ASSERT_EQ(function(18), ((18_s64) | 7));
 }
 
-Value<> int64BitWiseXorExpression(Value<Int64> x) {
+Value<> int64BitWiseXorExpression(Value<Int64> x)
+{
     Value<Int64> y(7_s64);
     return x ^ y;
 }
 
-TEST_P(ExpressionExecutionTest, BitWiseXorI64Test) {
+TEST_P(ExpressionExecutionTest, BitWiseXorI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64BitWiseXorExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64BitWiseXorExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(3), ((3_s64) ^ 7));
@@ -215,17 +218,17 @@ TEST_P(ExpressionExecutionTest, BitWiseXorI64Test) {
     ASSERT_EQ(function(18), ((18_s64) ^ 7));
 }
 
-Value<> int64BitWiseLeftShiftExpression(Value<Int64> x) {
+Value<> int64BitWiseLeftShiftExpression(Value<Int64> x)
+{
     Value<Int64> y(7_s64);
     return x << y;
 }
 
-TEST_P(ExpressionExecutionTest, BitWiseLeftShiftI64Test) {
+TEST_P(ExpressionExecutionTest, BitWiseLeftShiftI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64BitWiseLeftShiftExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64BitWiseLeftShiftExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(3), ((3_s64) << 7));
@@ -233,17 +236,17 @@ TEST_P(ExpressionExecutionTest, BitWiseLeftShiftI64Test) {
     ASSERT_EQ(function(18), ((18_s64) << 7));
 }
 
-Value<> int64BitWiseRightShiftExpression(Value<Int64> x) {
+Value<> int64BitWiseRightShiftExpression(Value<Int64> x)
+{
     Value<Int64> y(2_s64);
     return x >> y;
 }
 
-TEST_P(ExpressionExecutionTest, BitWiseRightShiftI64Test) {
+TEST_P(ExpressionExecutionTest, BitWiseRightShiftI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64BitWiseRightShiftExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64BitWiseRightShiftExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(3), ((3_s64) >> 2));
@@ -251,14 +254,16 @@ TEST_P(ExpressionExecutionTest, BitWiseRightShiftI64Test) {
     ASSERT_EQ(function(18), ((18_s64) >> 2));
 }
 
-Value<> int64BitWiseNotExpression(Value<Int64> x) { return ~x; }
+Value<> int64BitWiseNotExpression(Value<Int64> x)
+{
+    return ~x;
+}
 
-TEST_P(ExpressionExecutionTest, BitWiseNotI64Test) {
+TEST_P(ExpressionExecutionTest, BitWiseNotI64Test)
+{
     Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return int64BitWiseNotExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return int64BitWiseNotExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(-1), 0);
@@ -266,17 +271,17 @@ TEST_P(ExpressionExecutionTest, BitWiseNotI64Test) {
     ASSERT_EQ(function(18), ~18);
 }
 
-Value<> floatAddExpression(Value<Float> x) {
+Value<> floatAddExpression(Value<Float> x)
+{
     Value<Float> y = 7.0f;
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addFloatTest) {
+TEST_P(ExpressionExecutionTest, addFloatTest)
+{
     Value<Float> tempx = 0.0f;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createFloatStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return floatAddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return floatAddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<float, float>("execute");
     ASSERT_EQ(function(7.0), 14.0);
@@ -284,17 +289,17 @@ TEST_P(ExpressionExecutionTest, addFloatTest) {
     ASSERT_EQ(function(-14.0), -7.0);
 }
 
-Value<> doubleAddExpression(Value<Double> x) {
+Value<> doubleAddExpression(Value<Double> x)
+{
     Value<Double> y = 7.0;
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, addDoubleTest) {
+TEST_P(ExpressionExecutionTest, addDoubleTest)
+{
     Value<Double> tempx = 0.0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createDoubleStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return doubleAddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return doubleAddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<double, double>("execute");
     ASSERT_EQ(function(7.0), 14.0);
@@ -302,17 +307,17 @@ TEST_P(ExpressionExecutionTest, addDoubleTest) {
     ASSERT_EQ(function(-14.0), -7.0);
 }
 
-Value<> castFloatToDoubleAddExpression(Value<Float> x) {
+Value<> castFloatToDoubleAddExpression(Value<Float> x)
+{
     Value<Double> y = 7.0;
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, castFloatToDoubleTest) {
+TEST_P(ExpressionExecutionTest, castFloatToDoubleTest)
+{
     Value<Float> tempx = 0.0f;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createFloatStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return castFloatToDoubleAddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return castFloatToDoubleAddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<double, float>("execute");
     ASSERT_EQ(function(7.0), 14.0);
@@ -320,17 +325,17 @@ TEST_P(ExpressionExecutionTest, castFloatToDoubleTest) {
     ASSERT_EQ(function(-14.0), -7.0);
 }
 
-Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
+Value<> castInt8ToInt64AddExpression(Value<Int8> x)
+{
     Value<Int64> y(7_s64);
     return x + y;
 }
 
-TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
+TEST_P(ExpressionExecutionTest, castInt8ToInt64Test)
+{
     Value<Int8> tempx(0_s8);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return castInt8ToInt64AddExpression(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return castInt8ToInt64AddExpression(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int8_t>("execute");
     ASSERT_EQ(function(7), 14);
@@ -338,17 +343,17 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
     ASSERT_EQ(function(-14), -7);
 }
 
-Value<> castInt8ToInt64AddExpression2(Value<> x) {
+Value<> castInt8ToInt64AddExpression2(Value<> x)
+{
     Value<Int64> y(42_s64);
     return y + x;
 }
 
-TEST_P(ExpressionExecutionTest, castInt8ToInt64Test2) {
+TEST_P(ExpressionExecutionTest, castInt8ToInt64Test2)
+{
     Value<Int8> tempx(0_s8);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return castInt8ToInt64AddExpression2(tempx);
-    });
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() { return castInt8ToInt64AddExpression2(tempx); });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int8_t>("execute");
     ASSERT_EQ(function(8), 50);
@@ -357,12 +362,11 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test2) {
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-INSTANTIATE_TEST_CASE_P(testExpressions,
-                        ExpressionExecutionTest,
-                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
-                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
-                        [](const testing::TestParamInfo<ExpressionExecutionTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testExpressions,
+    ExpressionExecutionTest,
+    ::testing::ValuesIn(
+        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    [](const testing::TestParamInfo<ExpressionExecutionTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

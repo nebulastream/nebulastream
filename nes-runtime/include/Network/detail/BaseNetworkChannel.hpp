@@ -15,23 +15,26 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_DETAIL_BASENETWORKCHANNEL_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_DETAIL_BASENETWORKCHANNEL_HPP_
 
+#include <memory>
 #include <Network/ChannelId.hpp>
 #include <Network/NetworkMessage.hpp>
-#include <memory>
 #include <zmq.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-namespace NES::Network::detail {
+namespace NES::Network::detail
+{
 
 /**
  * @brief This is the base class for a network channel with support to connection init and close.
  */
-class BaseNetworkChannel {
-  public:
+class BaseNetworkChannel
+{
+public:
     static constexpr bool canSendData = false;
     static constexpr bool canSendEvent = false;
 
@@ -42,16 +45,14 @@ class BaseNetworkChannel {
      * @param address remote address
      * @param bufferManager the buffer manager
      */
-    explicit BaseNetworkChannel(zmq::socket_t&& zmqSocket,
-                                ChannelId channelId,
-                                std::string&& address,
-                                Runtime::BufferManagerPtr&& bufferManager);
+    explicit BaseNetworkChannel(
+        zmq::socket_t && zmqSocket, ChannelId channelId, std::string && address, Runtime::BufferManagerPtr && bufferManager);
 
     /**
      * @brief Method to handle the error
      * @param the error message
      */
-    void onError(Messages::ErrorMessage& errorMsg);
+    void onError(Messages::ErrorMessage & errorMsg);
 
     /**
      * Close the channel and send EndOfStream message to consumer
@@ -59,12 +60,13 @@ class BaseNetworkChannel {
      * @param terminationType the type of termination, e.g., graceful
      * @param currentMessageSequenceNumber represents the number of data buffer messages the network sink has sent
      */
-    void close(bool isEventOnly,
-               Runtime::QueryTerminationType terminationType,
-               uint16_t numSendingThreads = 0,
-               uint64_t currentMessageSequenceNumber = 0);
+    void close(
+        bool isEventOnly,
+        Runtime::QueryTerminationType terminationType,
+        uint16_t numSendingThreads = 0,
+        uint64_t currentMessageSequenceNumber = 0);
 
-  protected:
+protected:
     const std::string socketAddr;
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
@@ -72,5 +74,5 @@ class BaseNetworkChannel {
     Runtime::BufferManagerPtr bufferManager;
 };
 
-}// namespace NES::Network::detail
-#endif// NES_RUNTIME_INCLUDE_NETWORK_DETAIL_BASENETWORKCHANNEL_HPP_
+} // namespace NES::Network::detail
+#endif // NES_RUNTIME_INCLUDE_NETWORK_DETAIL_BASENETWORKCHANNEL_HPP_

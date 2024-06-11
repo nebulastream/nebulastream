@@ -14,12 +14,9 @@
 #ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_
 #define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_
 
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -31,9 +28,13 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <utility>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Util {
+namespace NES::Runtime::Execution::Util
+{
 
 /**
  * @brief Creates data for the schema <UINT64,UINT64>. The fieldToBuildCountMinOver is rnd() while timestampField gets monotonic
@@ -46,12 +47,13 @@ namespace NES::Runtime::Execution::Util {
  * @param isIngestionTime
  * @return Vector of TupleBuffers
  */
-std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
-                                                           BufferManager& bufferManager,
-                                                           SchemaPtr schema,
-                                                           const std::string& fieldToBuildCountMinOver,
-                                                           const std::string& timestampFieldName,
-                                                           const bool isIngestionTime = false);
+std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(
+    int numberOfTuples,
+    BufferManager & bufferManager,
+    SchemaPtr schema,
+    const std::string & fieldToBuildCountMinOver,
+    const std::string & timestampFieldName,
+    const bool isIngestionTime = false);
 
 /**
 * @brief Creates a CountMinSketch (if none exists) in the statisticStore and updates the counter at <row,col>
@@ -66,16 +68,17 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
 * @param fieldToBuildCountMinOver
 * @param timestampFieldName
 */
-void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-                                 Statistic::StatisticStorePtr statisticStore,
-                                 Statistic::StatisticMetricHash metricHash,
-                                 uint64_t numberOfBitsInKey,
-                                 uint64_t windowSize,
-                                 uint64_t windowSlide,
-                                 uint64_t width,
-                                 uint64_t depth,
-                                 const std::string& fieldToBuildCountMinOver,
-                                 const std::string& timestampFieldName);
+void updateTestCountMinStatistic(
+    MemoryLayouts::TestTupleBuffer & testTupleBuffer,
+    Statistic::StatisticStorePtr statisticStore,
+    Statistic::StatisticMetricHash metricHash,
+    uint64_t numberOfBitsInKey,
+    uint64_t windowSize,
+    uint64_t windowSlide,
+    uint64_t width,
+    uint64_t depth,
+    const std::string & fieldToBuildCountMinOver,
+    const std::string & timestampFieldName);
 
 /**
 * @brief Creates a HyperLogLogSketch (if none exists) in the statisticStore and updates the sketch
@@ -88,14 +91,15 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
 * @param fieldToBuildCountMinOver
 * @param timestampFieldName
 */
-void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-                                    Statistic::StatisticStorePtr statisticStore,
-                                    Statistic::StatisticMetricHash metricHash,
-                                    uint64_t windowSize,
-                                    uint64_t windowSlide,
-                                    uint64_t width,
-                                    const std::string& fieldToBuildCountMinOver,
-                                    const std::string& timestampFieldName);
+void updateTestHyperLogLogStatistic(
+    MemoryLayouts::TestTupleBuffer & testTupleBuffer,
+    Statistic::StatisticStorePtr statisticStore,
+    Statistic::StatisticMetricHash metricHash,
+    uint64_t windowSize,
+    uint64_t windowSlide,
+    uint64_t width,
+    const std::string & fieldToBuildCountMinOver,
+    const std::string & timestampFieldName);
 
 /**
 * @brief Creates a TupleBuffer from recordPtr
@@ -104,7 +108,7 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
 * @param bufferManager
 * @return Filled tupleBuffer
 */
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, BufferManagerPtr bufferManager);
+Runtime::TupleBuffer getBufferFromPointer(uint8_t * recordPtr, const SchemaPtr & schema, BufferManagerPtr bufferManager);
 
 /**
 * @brief Writes from the nautilusRecord to the record at index recordIndex
@@ -114,11 +118,8 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& s
 * @param schema
 * @param bufferManager
 */
-void writeNautilusRecord(uint64_t recordIndex,
-                         int8_t* baseBufferPtr,
-                         Nautilus::Record nautilusRecord,
-                         SchemaPtr schema,
-                         BufferManagerPtr bufferManager);
+void writeNautilusRecord(
+    uint64_t recordIndex, int8_t * baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 /**
 * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
@@ -128,9 +129,8 @@ void writeNautilusRecord(uint64_t recordIndex,
 * @param bufferManager
 * @return merged TupleBuffer
 */
-Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
-                                  const SchemaPtr schema,
-                                  Runtime::BufferManagerPtr bufferManager);
+Runtime::TupleBuffer
+mergeBuffers(std::vector<Runtime::TupleBuffer> & buffersToBeMerged, const SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
 
 /**
 * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
@@ -141,11 +141,12 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
 * @param bufferManager
 * @return buffer of tuples
 */
-std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::TupleBuffer>& buffers,
-                                                         SchemaPtr schema,
-                                                         const std::string& timeStampFieldName,
-                                                         BufferManagerPtr bufferManager,
-                                                         uint64_t windowSize);
+std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
+    std::vector<Runtime::TupleBuffer> & buffers,
+    SchemaPtr schema,
+    const std::string & timeStampFieldName,
+    BufferManagerPtr bufferManager,
+    uint64_t windowSize);
 
 /**
 * @brief Iterates through buffersToSort and sorts each buffer ascending to sortFieldName
@@ -155,10 +156,8 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
 * @param bufferManager
 * @return sorted buffers
 */
-std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::TupleBuffer>& buffersToSort,
-                                                           SchemaPtr schema,
-                                                           const std::string& sortFieldName,
-                                                           BufferManagerPtr bufferManager);
+std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
+    std::vector<Runtime::TupleBuffer> & buffersToSort, SchemaPtr schema, const std::string & sortFieldName, BufferManagerPtr bufferManager);
 
 /**
 * @brief Creates a TupleBuffer from a Nautilus::Record
@@ -167,8 +166,7 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
 * @param bufferManager
 * @return Filled TupleBuffer
 */
-Runtime::TupleBuffer
-getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
+Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record & nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 /**
 * @brief create CSV lines from the tuples
@@ -176,7 +174,7 @@ getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, Bu
 * @param schema how to read the tuples from the buffer
 * @return a full string stream as string
 */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr & schema);
 
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
@@ -188,11 +186,12 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 * @param bufferManager
 * @return Vector of TupleBuffers
 */
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
-                                                                            const SchemaPtr& schema,
-                                                                            Runtime::BufferManagerPtr bufferManager,
-                                                                            uint64_t originId = 0,
-                                                                            const std::string& timestampFieldname = "ts");
+[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
+    const std::string & csvFile,
+    const SchemaPtr & schema,
+    Runtime::BufferManagerPtr bufferManager,
+    uint64_t originId = 0,
+    const std::string & timestampFieldname = "ts");
 
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
@@ -205,12 +204,13 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 * @param tupleCount: current tuple count, i.e. how many tuples have already been produced
 * @param bufferManager: the buffer manager
 */
-void writeFieldValueToTupleBuffer(std::string inputString,
-                                  uint64_t schemaFieldIndex,
-                                  Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                  const SchemaPtr& schema,
-                                  uint64_t tupleCount,
-                                  const Runtime::BufferManagerPtr& bufferManager);
+void writeFieldValueToTupleBuffer(
+    std::string inputString,
+    uint64_t schemaFieldIndex,
+    Runtime::MemoryLayouts::TestTupleBuffer & tupleBuffer,
+    const SchemaPtr & schema,
+    uint64_t tupleCount,
+    const Runtime::BufferManagerPtr & bufferManager);
 
 /**
 * @brief function to replace all string occurrences
@@ -218,7 +218,7 @@ void writeFieldValueToTupleBuffer(std::string inputString,
 * @param toSearch search string
 * @param replaceStr replace string
 */
-void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
+void findAndReplaceAll(std::string & data, const std::string & toSearch, const std::string & replaceStr);
 
 /**
 * @brief Returns a vector that contains all the physical types from the schema
@@ -240,36 +240,58 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
 * @brief Gets the physical type of a given type given as template parameter
 * @return PhysicalTypePtr
 */
-template<typename T>
-PhysicalTypePtr getPhysicalTypePtr() {
+template <typename T>
+PhysicalTypePtr getPhysicalTypePtr()
+{
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr type;
-    if (typeid(int32_t) == typeid(T)) {
+    if (typeid(int32_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
-    } else if (typeid(uint32_t) == typeid(T)) {
+    }
+    else if (typeid(uint32_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt32());
-    } else if (typeid(int64_t) == typeid(T)) {
+    }
+    else if (typeid(int64_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    } else if (typeid(uint64_t) == typeid(T)) {
+    }
+    else if (typeid(uint64_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-    } else if (typeid(int16_t) == typeid(T)) {
+    }
+    else if (typeid(int16_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt16());
-    } else if (typeid(uint16_t) == typeid(T)) {
+    }
+    else if (typeid(uint16_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt16());
-    } else if (typeid(int8_t) == typeid(T)) {
+    }
+    else if (typeid(int8_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
-    } else if (typeid(uint8_t) == typeid(T)) {
+    }
+    else if (typeid(uint8_t) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt8());
-    } else if (typeid(float) == typeid(T)) {
+    }
+    else if (typeid(float) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
-    } else if (typeid(double) == typeid(T)) {
+    }
+    else if (typeid(double) == typeid(T))
+    {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Type not supported");
     }
     return type;
 }
 
-}// namespace NES::Runtime::Execution::Util
+} // namespace NES::Runtime::Execution::Util
 
-#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_

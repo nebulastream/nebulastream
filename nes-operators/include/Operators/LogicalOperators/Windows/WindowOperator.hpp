@@ -20,7 +20,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class WindowOperator;
 using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
@@ -28,11 +29,10 @@ using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 /**
  * @brief Window operator, which defines the window definition.
  */
-class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator {
-  public:
-    WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition,
-                   OperatorId id,
-                   OriginId originId = INVALID_ORIGIN_ID);
+class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+{
+public:
+    WindowOperator(const Windowing::LogicalWindowDescriptorPtr & windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDescriptorPtr
@@ -51,10 +51,10 @@ class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOpe
      */
     void setOriginId(OriginId originId) override;
 
-  protected:
+protected:
     const Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_

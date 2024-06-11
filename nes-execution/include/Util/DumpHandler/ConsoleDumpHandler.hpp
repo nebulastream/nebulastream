@@ -17,12 +17,14 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
-namespace QueryCompilation {
+namespace QueryCompilation
+{
 class PipelineQueryPlan;
 using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
-}// namespace QueryCompilation
+} // namespace QueryCompilation
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -33,12 +35,12 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
  */
-class ConsoleDumpHandler {
-
-  public:
+class ConsoleDumpHandler
+{
+public:
     virtual ~ConsoleDumpHandler() = default;
-    static std::shared_ptr<ConsoleDumpHandler> create(std::ostream& out);
-    explicit ConsoleDumpHandler(std::ostream& out);
+    static std::shared_ptr<ConsoleDumpHandler> create(std::ostream & out);
+    explicit ConsoleDumpHandler(std::ostream & out);
     /**
     * Dump the specific node and its children.
     */
@@ -60,12 +62,12 @@ class ConsoleDumpHandler {
      */
     void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan);
 
-  private:
-    std::ostream& out;
-    void dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
-    void multilineDumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
+private:
+    std::ostream & out;
+    void dumpHelper(NodePtr const & op, uint64_t depth, uint64_t indent, std::ostream & out) const;
+    void multilineDumpHelper(NodePtr const & op, uint64_t depth, uint64_t indent, std::ostream & out) const;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_

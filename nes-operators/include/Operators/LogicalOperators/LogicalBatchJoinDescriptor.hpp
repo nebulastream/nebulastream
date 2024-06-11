@@ -15,27 +15,31 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_
 
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <cstdint>
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 
-namespace NES::Join::Experimental {
+namespace NES::Join::Experimental
+{
 
 /**
  * @brief Runtime definition of a join operator
  * @experimental
  */
-class LogicalBatchJoinDescriptor {// todo jm its dumb that this is in the windowing dir
+class LogicalBatchJoinDescriptor
+{ // todo jm its dumb that this is in the windowing dir
 
-  public:
-    static LogicalBatchJoinDescriptorPtr create(const FieldAccessExpressionNodePtr& keyTypeBuild,
-                                                const FieldAccessExpressionNodePtr& keyTypeProbe,
-                                                uint64_t numberOfInputEdgesLeft,
-                                                uint64_t numberOfInputEdgesRight);
+public:
+    static LogicalBatchJoinDescriptorPtr create(
+        const FieldAccessExpressionNodePtr & keyTypeBuild,
+        const FieldAccessExpressionNodePtr & keyTypeProbe,
+        uint64_t numberOfInputEdgesLeft,
+        uint64_t numberOfInputEdgesRight);
 
-    explicit LogicalBatchJoinDescriptor(FieldAccessExpressionNodePtr keyTypeBuild,
-                                        FieldAccessExpressionNodePtr keyTypeProbe,
-                                        uint64_t numberOfInputEdgesLeft,
-                                        uint64_t numberOfInputEdgesRight);
+    explicit LogicalBatchJoinDescriptor(
+        FieldAccessExpressionNodePtr keyTypeBuild,
+        FieldAccessExpressionNodePtr keyTypeProbe,
+        uint64_t numberOfInputEdgesLeft,
+        uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on build join key
@@ -92,7 +96,7 @@ class LogicalBatchJoinDescriptor {// todo jm its dumb that this is in the window
     void setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
 
-  private:
+private:
     FieldAccessExpressionNodePtr keyTypeBuild;
     FieldAccessExpressionNodePtr keyTypeProbe;
     SchemaPtr buildSchema{nullptr};
@@ -103,5 +107,5 @@ class LogicalBatchJoinDescriptor {// todo jm its dumb that this is in the window
 };
 
 using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
-}// namespace NES::Join::Experimental
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_
+} // namespace NES::Join::Experimental
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_

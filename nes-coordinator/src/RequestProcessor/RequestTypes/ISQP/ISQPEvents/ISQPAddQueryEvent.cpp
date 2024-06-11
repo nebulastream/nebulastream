@@ -14,17 +14,27 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy)
-    : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy) {}
+ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr & queryPlan, Optimizer::PlacementStrategy placementStrategy)
+    : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy)
+{
+}
 
-ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy) {
+ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr & queryPlan, Optimizer::PlacementStrategy placementStrategy)
+{
     return std::make_shared<ISQPAddQueryEvent>(queryPlan, placementStrategy);
 }
 
-const QueryPlanPtr& ISQPAddQueryEvent::getQueryPlan() const { return queryPlan; }
+const QueryPlanPtr & ISQPAddQueryEvent::getQueryPlan() const
+{
+    return queryPlan;
+}
 
-Optimizer::PlacementStrategy ISQPAddQueryEvent::getPlacementStrategy() const { return placementStrategy; }
+Optimizer::PlacementStrategy ISQPAddQueryEvent::getPlacementStrategy() const
+{
+    return placementStrategy;
+}
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

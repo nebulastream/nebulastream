@@ -15,25 +15,27 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ASINEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ASINEXPRESSION_HPP_
 
+#include <cmath>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <cmath>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
 * @brief This expression finds the asin of radians.
 */
-class AsinExpression : public Expression {
-  public:
-    AsinExpression(const ExpressionPtr& radians);
-    Value<> execute(Record& record) const override;
+class AsinExpression : public Expression
+{
+public:
+    AsinExpression(const ExpressionPtr & radians);
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr radians;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ASINEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ASINEXPRESSION_HPP_

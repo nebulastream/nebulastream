@@ -17,13 +17,15 @@
 
 #include <Statistics/Synopses/SynopsesStatistic.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief A statistic that is represented by a Count-Min sketch. In
  */
-class CountMinStatistic : public SynopsesStatistic {
-  public:
+class CountMinStatistic : public SynopsesStatistic
+{
+public:
     /**
      * @brief Factory method for creating a CountMinStatistic
      * @param startTs: Timestamp of the first tuple for that this CountMin was created
@@ -34,13 +36,14 @@ class CountMinStatistic : public SynopsesStatistic {
      * @param countMinDataString: String that stores the CountMin data, so the underlying 2-D array of counters
      * @return StatisticPtr
      */
-    static StatisticPtr create(const Windowing::TimeMeasure& startTs,
-                               const Windowing::TimeMeasure& endTs,
-                               uint64_t observedTuples,
-                               uint64_t width,
-                               uint64_t depth,
-                               uint64_t numberOfBitsInKey,
-                               const std::string_view countMinDataString);
+    static StatisticPtr create(
+        const Windowing::TimeMeasure & startTs,
+        const Windowing::TimeMeasure & endTs,
+        uint64_t observedTuples,
+        uint64_t width,
+        uint64_t depth,
+        uint64_t numberOfBitsInKey,
+        const std::string_view countMinDataString);
 
     /**
      * @brief Creates a CountMin for the given startTs, endTs, width, and depth. The #observedTuples and all counters are set to 0
@@ -50,16 +53,17 @@ class CountMinStatistic : public SynopsesStatistic {
      * @param depth
      * @return StatisticPtr
      */
-    static StatisticPtr createInit(const Windowing::TimeMeasure& startTs,
-                                   const Windowing::TimeMeasure& endTs,
-                                   uint64_t width,
-                                   uint64_t depth,
-                                   uint64_t numberOfBitsInKey);
+    static StatisticPtr createInit(
+        const Windowing::TimeMeasure & startTs,
+        const Windowing::TimeMeasure & endTs,
+        uint64_t width,
+        uint64_t depth,
+        uint64_t numberOfBitsInKey);
 
-    StatisticValue<> getStatisticValue(const ProbeExpression& probeExpression) const override;
-    bool equal(const Statistic& other) const override;
+    StatisticValue<> getStatisticValue(const ProbeExpression & probeExpression) const override;
+    bool equal(const Statistic & other) const override;
     std::string toString() const override;
-    void merge(const SynopsesStatistic& other) override;
+    void merge(const SynopsesStatistic & other) override;
 
     /**
      * @brief Increments the counter at the position of <row, col>
@@ -73,14 +77,15 @@ class CountMinStatistic : public SynopsesStatistic {
     uint64_t getNumberOfBitsInKeyOffset() const;
     std::string getCountMinDataAsString() const;
 
-  private:
-    CountMinStatistic(const Windowing::TimeMeasure& startTs,
-                      const Windowing::TimeMeasure& endTs,
-                      uint64_t observedTuples,
-                      uint64_t width,
-                      uint64_t depth,
-                      uint64_t numberOfBitsInKey,
-                      const std::vector<uint64_t>& countMinData);
+private:
+    CountMinStatistic(
+        const Windowing::TimeMeasure & startTs,
+        const Windowing::TimeMeasure & endTs,
+        uint64_t observedTuples,
+        uint64_t width,
+        uint64_t depth,
+        uint64_t numberOfBitsInKey,
+        const std::vector<uint64_t> & countMinData);
 
     uint64_t width;
     uint64_t depth;
@@ -88,6 +93,6 @@ class CountMinStatistic : public SynopsesStatistic {
     std::vector<uint64_t> countMinData;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_COUNTMINSTATISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_COUNTMINSTATISTIC_HPP_

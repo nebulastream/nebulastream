@@ -15,14 +15,15 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_
 
+#include <future>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Network/detail/BaseNetworkChannel.hpp>
 #include <Network/detail/NetworkDataSender.hpp>
 #include <Network/detail/NetworkEventSender.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <future>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
 class ExchangeProtocol;
 
@@ -31,10 +32,11 @@ class ExchangeProtocol;
  * This class can send data and event packets.
  * This class is not thread-safe.
  */
-class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSender<detail::BaseNetworkChannel>> {
+class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSender<detail::BaseNetworkChannel>>
+{
     using inherited = detail::NetworkEventSender<detail::NetworkDataSender<detail::BaseNetworkChannel>>;
 
-  public:
+public:
     static constexpr bool canSendData = inherited::canSendData;
     static constexpr bool canSendEvent = inherited::canSendEvent;
 
@@ -45,19 +47,17 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
      * @param address the socket address of the remote server
      * @param bufferManager the buffer manager
      */
-    explicit NetworkChannel(zmq::socket_t&& zmqSocket,
-                            ChannelId channelId,
-                            std::string&& address,
-                            Runtime::BufferManagerPtr bufferManager);
+    explicit NetworkChannel(
+        zmq::socket_t && zmqSocket, ChannelId channelId, std::string && address, Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief close the output channel and release resources
      */
     ~NetworkChannel();
 
-    NetworkChannel(const NetworkChannel&) = delete;
+    NetworkChannel(const NetworkChannel &) = delete;
 
-    NetworkChannel& operator=(const NetworkChannel&) = delete;
+    NetworkChannel & operator=(const NetworkChannel &) = delete;
 
     /**
      * @brief Closes the underlying network connection with a termination type
@@ -80,16 +80,17 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
      * corresponding promise, the calling thread can abort the connection process if the connection is performed asynchronously.
      * @return the network channel or nullptr on error
      */
-    static NetworkChannelPtr create(const std::shared_ptr<zmq::context_t>& zmqContext,
-                                    std::string&& socketAddr,
-                                    NesPartition nesPartition,
-                                    ExchangeProtocol& protocol,
-                                    Runtime::BufferManagerPtr bufferManager,
-                                    int highWaterMark,
-                                    std::chrono::milliseconds waitTime,
-                                    uint8_t retryTimes,
-                                    DecomposedQueryPlanVersion version,
-                                    std::optional<std::future<bool>> abortConnection = std::nullopt);
+    static NetworkChannelPtr create(
+        const std::shared_ptr<zmq::context_t> & zmqContext,
+        std::string && socketAddr,
+        NesPartition nesPartition,
+        ExchangeProtocol & protocol,
+        Runtime::BufferManagerPtr bufferManager,
+        int highWaterMark,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes,
+        DecomposedQueryPlanVersion version,
+        std::optional<std::future<bool>> abortConnection = std::nullopt);
 };
 
 /**
@@ -97,10 +98,11 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
  * This class can send only event packets.
  * This class is not thread-safe.
  */
-class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNetworkChannel> {
+class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNetworkChannel>
+{
     using inherited = detail::NetworkEventSender<detail::BaseNetworkChannel>;
 
-  public:
+public:
     /**
      * @brief Creates a network channel for events-only instance with the given parameters
      * @param zmqContext the local zmq server context
@@ -108,19 +110,17 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
      * @param address the socket address of the remote server
      * @param bufferManager the buffer manager
      */
-    explicit EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
-                                     ChannelId channelId,
-                                     std::string&& address,
-                                     Runtime::BufferManagerPtr bufferManager);
+    explicit EventOnlyNetworkChannel(
+        zmq::socket_t && zmqSocket, ChannelId channelId, std::string && address, Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief close the output channel and release resources
      */
     ~EventOnlyNetworkChannel();
 
-    EventOnlyNetworkChannel(const NetworkChannel&) = delete;
+    EventOnlyNetworkChannel(const NetworkChannel &) = delete;
 
-    EventOnlyNetworkChannel& operator=(const NetworkChannel&) = delete;
+    EventOnlyNetworkChannel & operator=(const NetworkChannel &) = delete;
 
     /**
      * @brief Closes the underlying network connection with a termination type
@@ -139,16 +139,17 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
      * @param retryTimes the number of retries before the methods will raise error
      * @return the network channel or nullptr on error
      */
-    static EventOnlyNetworkChannelPtr create(const std::shared_ptr<zmq::context_t>& zmqContext,
-                                             std::string&& socketAddr,
-                                             NesPartition nesPartition,
-                                             ExchangeProtocol& protocol,
-                                             Runtime::BufferManagerPtr bufferManager,
-                                             int highWaterMark,
-                                             std::chrono::milliseconds waitTime,
-                                             uint8_t retryTimes);
+    static EventOnlyNetworkChannelPtr create(
+        const std::shared_ptr<zmq::context_t> & zmqContext,
+        std::string && socketAddr,
+        NesPartition nesPartition,
+        ExchangeProtocol & protocol,
+        Runtime::BufferManagerPtr bufferManager,
+        int highWaterMark,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes);
 };
 
-}// namespace NES::Network
+} // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_

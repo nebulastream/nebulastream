@@ -14,29 +14,32 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Aggregation {
+namespace NES::Runtime::Execution::Aggregation
+{
 /**
  * This class is the Nautilus aggregation interface
  */
-class AggregationFunction {
-  public:
-    AggregationFunction(PhysicalTypePtr inputType,
-                        PhysicalTypePtr resultType,
-                        Expressions::ExpressionPtr inputExpression,
-                        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+class AggregationFunction
+{
+public:
+    AggregationFunction(
+        PhysicalTypePtr inputType,
+        PhysicalTypePtr resultType,
+        Expressions::ExpressionPtr inputExpression,
+        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /**
      * @brief lift adds the incoming value to the existing aggregation value
      * @param memref existing aggregation value
      * @param value the value to add
      */
-    virtual void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) = 0;
+    virtual void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record & record) = 0;
 
     /**
      * @brief combine composes to aggregation value into one
@@ -49,7 +52,7 @@ class AggregationFunction {
      * @brief lower returns the aggregation value
      * @param memref the derived aggregation value
      */
-    virtual void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord) = 0;
+    virtual void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record & resultRecord) = 0;
 
     /**
      * @brief resets the stored aggregation value to init (=0)
@@ -65,7 +68,7 @@ class AggregationFunction {
 
     virtual ~AggregationFunction();
 
-  protected:
+protected:
     const PhysicalTypePtr inputType;
     const PhysicalTypePtr resultType;
     const Expressions::ExpressionPtr inputExpression;
@@ -77,16 +80,16 @@ class AggregationFunction {
      * @param physicalType the intended data type to which the value should be casted
      * @return value in the type of physicalType
      */
-    static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, const PhysicalTypePtr& physicalType);
+    static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, const PhysicalTypePtr & physicalType);
 
-    static Nautilus::Value<> createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
+    static Nautilus::Value<> createConstValue(int64_t value, const PhysicalTypePtr & physicalTypePtr);
 
-    static Nautilus::Value<> createMinValue(const PhysicalTypePtr& physicalTypePtr);
+    static Nautilus::Value<> createMinValue(const PhysicalTypePtr & physicalTypePtr);
 
-    static Nautilus::Value<> createMaxValue(const PhysicalTypePtr& physicalTypePtr);
+    static Nautilus::Value<> createMaxValue(const PhysicalTypePtr & physicalTypePtr);
 };
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;
-}// namespace NES::Runtime::Execution::Aggregation
+} // namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_

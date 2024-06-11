@@ -12,15 +12,19 @@
     limitations under the License.
 */
 
-#include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
 #include <string>
+#include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
-FunctionCallTarget::FunctionCallTarget(const std::basic_string<char>& mangledFunctionName, void* functionPtr)
-    : mangledName(mangledFunctionName), functionPtr(functionPtr) {}
-std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target) {
+FunctionCallTarget::FunctionCallTarget(const std::basic_string<char> & mangledFunctionName, void * functionPtr)
+    : mangledName(mangledFunctionName), functionPtr(functionPtr)
+{
+}
+std::ostream & operator<<(std::ostream & os, const FunctionCallTarget & target)
+{
     os << target.mangledName;
     return os;
 }
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

@@ -17,21 +17,24 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace Configurations {
+namespace Configurations
+{
 
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
-}// namespace Configurations
+} // namespace Configurations
 
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
@@ -69,18 +72,19 @@ using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
 /**
  * @brief This phase is responsible for re-writing the query plan
  */
-class QueryRewritePhase {
-  public:
-    static QueryRewritePhasePtr create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
+class QueryRewritePhase
+{
+public:
+    static QueryRewritePhasePtr create(const Configurations::CoordinatorConfigurationPtr & coordinatorConfiguration);
 
     /**
      * @brief Perform query plan re-write for the input query plan
      * @param queryPlan : the input query plan
      * @return updated query plan
      */
-    QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
+    QueryPlanPtr execute(const QueryPlanPtr & queryPlan);
 
-  private:
+private:
     explicit QueryRewritePhase(bool elegantAccelerationEnabled, bool applyRulesImprovingSharingIdentification);
 
     bool isElegantAccelerationEnabled;
@@ -96,5 +100,5 @@ class QueryRewritePhase {
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_

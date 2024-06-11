@@ -14,10 +14,11 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_
-#include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 #include <memory>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class State;
 class NonKeyedSlice;
@@ -29,18 +30,17 @@ using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
  * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
  * As the slice store is only using by a single thread, we don't have to protect its functions for concurrent accesses.
  */
-class NonKeyedBucketStore : public BucketStore<NonKeyedSlice> {
-  public:
-    explicit NonKeyedBucketStore(uint64_t entrySize,
-                                 uint64_t windowSize,
-                                 uint64_t windowSlide,
-                                 const std::unique_ptr<State>& defaultState);
+class NonKeyedBucketStore : public BucketStore<NonKeyedSlice>
+{
+public:
+    explicit NonKeyedBucketStore(
+        uint64_t entrySize, uint64_t windowSize, uint64_t windowSlide, const std::unique_ptr<State> & defaultState);
     ~NonKeyedBucketStore() = default;
 
-  private:
+private:
     NonKeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
     const uint64_t entrySize;
-    const std::unique_ptr<State>& defaultState;
+    const std::unique_ptr<State> & defaultState;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_

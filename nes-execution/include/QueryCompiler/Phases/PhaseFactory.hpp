@@ -15,14 +15,16 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation::Phases {
+namespace NES::QueryCompilation::Phases
+{
 
 /**
  * @brief An abstract factory, which allows the query compiler to create instances of particular phases,
  * without knowledge about the concrete implementations. This ensures extendability.
  */
-class PhaseFactory {
-  public:
+class PhaseFactory
+{
+public:
     /**
      * @brief Creates a lower logical operator to physical operator phase
      * @param QueryCompilerOptionsPtr options
@@ -49,8 +51,8 @@ class PhaseFactory {
     * @param QueryCompilerOptionsPtr options
     * @return LowerToExecutableQueryPlanPhasePtr
     */
-    virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
-                                                                                     bool sourceSharing) = 0;
+    virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options, bool sourceSharing)
+        = 0;
 
     /**
     * @brief Creates buffer optimization phase
@@ -60,6 +62,6 @@ class PhaseFactory {
     virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
-}// namespace NES::QueryCompilation::Phases
+} // namespace NES::QueryCompilation::Phases
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_

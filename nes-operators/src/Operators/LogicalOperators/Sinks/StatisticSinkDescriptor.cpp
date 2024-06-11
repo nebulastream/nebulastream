@@ -16,20 +16,24 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <fmt/format.h>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-std::string StatisticSinkDescriptor::toString() const {
+std::string StatisticSinkDescriptor::toString() const
+{
     return fmt::format("StatisticSinkDescriptor({})", magic_enum::enum_name(sinkFormatType));
 }
 
-SinkDescriptorPtr StatisticSinkDescriptor::create(StatisticSynopsisType sinkFormatType,
-                                                  StatisticDataCodec sinkDataCodec,
-                                                  uint64_t numberOfOrigins) {
+SinkDescriptorPtr
+StatisticSinkDescriptor::create(StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec, uint64_t numberOfOrigins)
+{
     return std::make_shared<StatisticSinkDescriptor>(StatisticSinkDescriptor(sinkFormatType, sinkDataCodec, numberOfOrigins));
 }
 
-bool StatisticSinkDescriptor::equal(const SinkDescriptorPtr& other) {
-    if (other->instanceOf<StatisticSinkDescriptor>()) {
+bool StatisticSinkDescriptor::equal(const SinkDescriptorPtr & other)
+{
+    if (other->instanceOf<StatisticSinkDescriptor>())
+    {
         const auto otherStatisticSinkDescriptor = other->as<StatisticSinkDescriptor>();
         return numberOfOrigins == otherStatisticSinkDescriptor->numberOfOrigins
             && sinkFormatType == otherStatisticSinkDescriptor->sinkFormatType
@@ -38,12 +42,19 @@ bool StatisticSinkDescriptor::equal(const SinkDescriptorPtr& other) {
     return false;
 }
 
-StatisticSynopsisType StatisticSinkDescriptor::getSinkFormatType() const { return sinkFormatType; }
-StatisticDataCodec StatisticSinkDescriptor::getSinkDataCodec() const { return sinkDataCodec; }
+StatisticSynopsisType StatisticSinkDescriptor::getSinkFormatType() const
+{
+    return sinkFormatType;
+}
+StatisticDataCodec StatisticSinkDescriptor::getSinkDataCodec() const
+{
+    return sinkDataCodec;
+}
 
-StatisticSinkDescriptor::StatisticSinkDescriptor(StatisticSynopsisType sinkFormatType,
-                                                 StatisticDataCodec sinkDataCodec,
-                                                 uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins), sinkFormatType(sinkFormatType), sinkDataCodec(sinkDataCodec) {}
+StatisticSinkDescriptor::StatisticSinkDescriptor(
+    StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec, uint64_t numberOfOrigins)
+    : SinkDescriptor(numberOfOrigins), sinkFormatType(sinkFormatType), sinkDataCodec(sinkDataCodec)
+{
+}
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

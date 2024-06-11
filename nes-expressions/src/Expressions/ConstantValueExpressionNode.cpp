@@ -12,37 +12,53 @@
     limitations under the License.
 */
 
-#include <Common/ValueTypes/ValueType.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 
-namespace NES {
-ConstantValueExpressionNode::ConstantValueExpressionNode(ValueTypePtr const& constantValue)
+namespace NES
+{
+ConstantValueExpressionNode::ConstantValueExpressionNode(ValueTypePtr const & constantValue)
     : ExpressionNode(constantValue->dataType), constantValue(constantValue){};
 
-ConstantValueExpressionNode::ConstantValueExpressionNode(const ConstantValueExpressionNode* other)
-    : ExpressionNode(other->constantValue->dataType), constantValue(other->constantValue) {}
+ConstantValueExpressionNode::ConstantValueExpressionNode(const ConstantValueExpressionNode * other)
+    : ExpressionNode(other->constantValue->dataType), constantValue(other->constantValue)
+{
+}
 
-bool ConstantValueExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<ConstantValueExpressionNode>()) {
+bool ConstantValueExpressionNode::equal(NodePtr const & rhs) const
+{
+    if (rhs->instanceOf<ConstantValueExpressionNode>())
+    {
         auto otherConstantValueNode = rhs->as<ConstantValueExpressionNode>();
         return otherConstantValueNode->constantValue->isEquals(constantValue);
     }
     return false;
 }
 
-std::string ConstantValueExpressionNode::toString() const { return "ConstantValue(" + constantValue->toString() + ")"; }
+std::string ConstantValueExpressionNode::toString() const
+{
+    return "ConstantValue(" + constantValue->toString() + ")";
+}
 
-ExpressionNodePtr ConstantValueExpressionNode::create(ValueTypePtr const& constantValue) {
+ExpressionNodePtr ConstantValueExpressionNode::create(ValueTypePtr const & constantValue)
+{
     return std::make_shared<ConstantValueExpressionNode>(ConstantValueExpressionNode(constantValue));
 }
 
-ValueTypePtr ConstantValueExpressionNode::getConstantValue() const { return constantValue; }
+ValueTypePtr ConstantValueExpressionNode::getConstantValue() const
+{
+    return constantValue;
+}
 
-void ConstantValueExpressionNode::inferStamp(SchemaPtr) {
+void ConstantValueExpressionNode::inferStamp(SchemaPtr)
+{
     // the stamp of constant value expressions is defined by the constant value type.
     // thus ut is already assigned correctly when the expression node is created.
 }
 
-ExpressionNodePtr ConstantValueExpressionNode::copy() { return std::make_shared<ConstantValueExpressionNode>(*this); }
+ExpressionNodePtr ConstantValueExpressionNode::copy()
+{
+    return std::make_shared<ConstantValueExpressionNode>(*this);
+}
 
-}// namespace NES
+} // namespace NES

@@ -18,19 +18,23 @@
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime {
-LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
-                                 std::deque<detail::MemorySegment*>&& buffers,
-                                 size_t numberOfReservedBuffers)
-    : bufferManager(bufferManager),
+namespace NES::Runtime
+{
+LocalBufferPool::LocalBufferPool(
+    const BufferManagerPtr & bufferManager, std::deque<detail::MemorySegment *> && buffers, size_t numberOfReservedBuffers)
+    : bufferManager(bufferManager)
+    ,
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-      exclusiveBuffers(numberOfReservedBuffers), exclusiveBufferCount(numberOfReservedBuffers),
+    exclusiveBuffers(numberOfReservedBuffers)
+    , exclusiveBufferCount(numberOfReservedBuffers)
+    ,
 #endif
-      numberOfReservedBuffers(numberOfReservedBuffers) {
-
+    numberOfReservedBuffers(numberOfReservedBuffers)
+{
     NES_ASSERT2_FMT(this->bufferManager, "Invalid buffer manager");
-    while (!buffers.empty()) {
-        auto* memSegment = buffers.front();
+    while (!buffers.empty())
+    {
+        auto * memSegment = buffers.front();
         buffers.pop_front();
         NES_VERIFY(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
@@ -46,44 +50,54 @@ LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
     }
 }
 
-LocalBufferPool::~LocalBufferPool() {
+LocalBufferPool::~LocalBufferPool()
+{
     // nop
 }
 
-BufferManagerType LocalBufferPool::getBufferManagerType() const { return BufferManagerType::LOCAL; }
+BufferManagerType LocalBufferPool::getBufferManagerType() const
+{
+    return BufferManagerType::LOCAL;
+}
 
-void LocalBufferPool::destroy() {
+void LocalBufferPool::destroy()
+{
     NES_DEBUG("Destroying LocalBufferPool");
     std::unique_lock lock(mutex);
-    if (bufferManager == nullptr) {
-        return;// already destroyed
+    if (bufferManager == nullptr)
+    {
+        return; // already destroyed
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    if (numberOfReservedBuffers != (size_t) exclusiveBuffers.size()) {
-        for (auto segment : allSegments) {
+    if (numberOfReservedBuffers != (size_t)exclusiveBuffers.size())
+    {
+        for (auto segment : allSegments)
+        {
             segment->controlBlock->dumpOwningThreadInfo();
         }
     }
 #endif
     size_t exclusiveBufferCount = this->exclusiveBufferCount.load();
 
-    NES_ASSERT2_FMT(numberOfReservedBuffers == exclusiveBufferCount,
-                    "one or more buffers were not returned to the pool: " << exclusiveBufferCount << " but expected "
-                                                                          << numberOfReservedBuffers);
+    NES_ASSERT2_FMT(
+        numberOfReservedBuffers == exclusiveBufferCount,
+        "one or more buffers were not returned to the pool: " << exclusiveBufferCount << " but expected " << numberOfReservedBuffers);
 
     NES_DEBUG("buffers before={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    while (!exclusiveBuffers.empty()) {
+    while (!exclusiveBuffers.empty())
+    {
         // return exclusive buffers to the global pool
-        detail::MemorySegment* memSegment = exclusiveBuffers.front();
+        detail::MemorySegment * memSegment = exclusiveBuffers.front();
         exclusiveBuffers.pop_front();
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
     NES_DEBUG("buffers after={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 #else
-    detail::MemorySegment* memSegment = nullptr;
-    while (exclusiveBuffers.read(memSegment)) {
+    detail::MemorySegment * memSegment = nullptr;
+    while (exclusiveBuffers.read(memSegment))
+    {
         // return exclusive buffers to the global pool
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
@@ -92,7 +106,8 @@ void LocalBufferPool::destroy() {
     bufferManager.reset();
 }
 
-size_t LocalBufferPool::getAvailableBuffers() const {
+size_t LocalBufferPool::getAvailableBuffers() const
+{
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(mutex);
     return exclusiveBuffers.size();
@@ -102,44 +117,53 @@ size_t LocalBufferPool::getAvailableBuffers() const {
 #endif
 }
 
-TupleBuffer LocalBufferPool::getBufferBlocking() {
+TupleBuffer LocalBufferPool::getBufferBlocking()
+{
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     {
         // try to get an exclusive buffer
         std::unique_lock lock(mutex);
-        if (!exclusiveBuffers.empty()) {
-            detail::MemorySegment* memSegment = exclusiveBuffers.front();
+        if (!exclusiveBuffers.empty())
+        {
+            detail::MemorySegment * memSegment = exclusiveBuffers.front();
             NES_VERIFY(memSegment, "null memory segment");
             exclusiveBuffers.pop_front();
-            if (memSegment->controlBlock->prepare()) {
+            if (memSegment->controlBlock->prepare())
+            {
                 return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
             }
-            NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
-                                    << memSegment->controlBlock->getReferenceCount());
+            NES_THROW_RUNTIME_ERROR(
+                "[BufferManager] got buffer with invalid reference counter " << memSegment->controlBlock->getReferenceCount());
         }
     }
     // TODO potential problem here: what if we are blocked here but one exclusive buffer is returned to the pool?
     return bufferManager->getBufferBlocking();
 #else
-    detail::MemorySegment* memSegment;
-    if (exclusiveBuffers.read(memSegment)) {
-        if (memSegment->controlBlock->prepare()) {
+    detail::MemorySegment * memSegment;
+    if (exclusiveBuffers.read(memSegment))
+    {
+        if (memSegment->controlBlock->prepare())
+        {
             exclusiveBufferCount.fetch_sub(1);
             return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-        } else {
-            NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
-                                    << memSegment->controlBlock->getReferenceCount());
+        }
+        else
+        {
+            NES_THROW_RUNTIME_ERROR(
+                "[BufferManager] got buffer with invalid reference counter " << memSegment->controlBlock->getReferenceCount());
         }
     }
     return bufferManager->getBufferBlocking();
 #endif
 }
 
-void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
+void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment * memSegment)
+{
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(mutex);
     NES_VERIFY(memSegment, "null memory segment");
-    if (!memSegment->isAvailable()) {
+    if (!memSegment->isAvailable())
+    {
         NES_THROW_RUNTIME_ERROR(
             "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
     }
@@ -147,7 +171,8 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
     exclusiveBuffers.emplace_back(memSegment);
 #else
     NES_VERIFY(memSegment, "null memory segment");
-    if (!memSegment->isAvailable()) {
+    if (!memSegment->isAvailable())
+    {
         NES_THROW_RUNTIME_ERROR(
             "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
     }
@@ -156,23 +181,38 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
 #endif
 }
 
-void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
+void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment *)
+{
     NES_THROW_RUNTIME_ERROR("This feature is not supported here");
 }
-size_t LocalBufferPool::getBufferSize() const { return bufferManager->getBufferSize(); }
+size_t LocalBufferPool::getBufferSize() const
+{
+    return bufferManager->getBufferSize();
+}
 
-size_t LocalBufferPool::getNumOfPooledBuffers() const { return numberOfReservedBuffers; }
+size_t LocalBufferPool::getNumOfPooledBuffers() const
+{
+    return numberOfReservedBuffers;
+}
 
-size_t LocalBufferPool::getNumOfUnpooledBuffers() const { return bufferManager->getNumOfUnpooledBuffers(); }
+size_t LocalBufferPool::getNumOfUnpooledBuffers() const
+{
+    return bufferManager->getNumOfUnpooledBuffers();
+}
 
-std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking() {
+std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
+{
     NES_ASSERT2_FMT(false, "This is not supported currently");
     return std::optional<TupleBuffer>();
 }
-std::optional<TupleBuffer> LocalBufferPool::getBufferTimeout(std::chrono::milliseconds) {
+std::optional<TupleBuffer> LocalBufferPool::getBufferTimeout(std::chrono::milliseconds)
+{
     NES_ASSERT2_FMT(false, "This is not supported currently");
     return std::optional<TupleBuffer>();
 }
 
-std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size) { return bufferManager->getUnpooledBuffer(size); }
-}// namespace NES::Runtime
+std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size)
+{
+    return bufferManager->getUnpooledBuffer(size);
+}
+} // namespace NES::Runtime

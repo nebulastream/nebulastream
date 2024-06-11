@@ -15,28 +15,31 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_
 
-#include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <atomic>
 #include <future>
 #include <memory>
 #include <thread>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <zmq.hpp>
 
-namespace NES {
+namespace NES
+{
 class ThreadBarrier;
-namespace Network {
+namespace Network
+{
 
 /**
  * @brief ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in
  * exchangeProtocol.
  * This class is not copyable.
  */
-class ZmqServer {
-  private:
-    static constexpr const char* dispatcherPipe = "inproc://dispatcher";
+class ZmqServer
+{
+private:
+    static constexpr const char * dispatcherPipe = "inproc://dispatcher";
 
-  public:
+public:
     /**
      * Create a ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in
      * exchangeProtocol
@@ -45,11 +48,12 @@ class ZmqServer {
      * @param numNetworkThreads
      * @param exchangeProtocol
      */
-    explicit ZmqServer(std::string hostname,
-                       uint16_t requestedPort,
-                       uint16_t numNetworkThreads,
-                       ExchangeProtocol& exchangeProtocol,
-                       Runtime::BufferManagerPtr bufferManager);
+    explicit ZmqServer(
+        std::string hostname,
+        uint16_t requestedPort,
+        uint16_t numNetworkThreads,
+        ExchangeProtocol & exchangeProtocol,
+        Runtime::BufferManagerPtr bufferManager);
 
     ~ZmqServer();
 
@@ -100,18 +104,18 @@ class ZmqServer {
      * @param hostname the hostname in use
      * @param port the port in use
      */
-    void getServerSocketInfo(std::string& hostname, uint16_t& port);
+    void getServerSocketInfo(std::string & hostname, uint16_t & port);
 
-  private:
+private:
     /**
     * @brief Remove copy constructor to make this class not copyable
     */
-    ZmqServer(const ZmqServer&) = delete;
+    ZmqServer(const ZmqServer &) = delete;
 
     /**
     * @brief Remove assignment to make this class not copyable
     */
-    ZmqServer& operator=(const ZmqServer&) = delete;
+    ZmqServer & operator=(const ZmqServer &) = delete;
 
     /**
      * @brief the receiving thread where clients send their messages to the server, here messages are forwarded to the
@@ -119,14 +123,14 @@ class ZmqServer {
      * @param numHandlerThreads number of HandlerThreads
      * @param startPromise the promise that is passed to the thread
      */
-    void routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std::promise<bool>>& startPromise);
+    void routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std::promise<bool>> & startPromise);
 
     /**
      * @brief handler thread where threads are passed from the frontend loop
      * @param barrier the threadBarrier to enable synchronization
      * @param threadId the id of the thread running the handler event loop
      */
-    void messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int threadId);
+    void messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier> & barrier, int threadId);
 
     const std::string hostname;
     /// this is the port from the configuration: can be 0
@@ -142,7 +146,7 @@ class ZmqServer {
     std::atomic_bool isRunning;
     std::atomic_bool keepRunning;
 
-    ExchangeProtocol& exchangeProtocol;
+    ExchangeProtocol & exchangeProtocol;
     Runtime::BufferManagerPtr bufferManager;
 
     /**
@@ -154,20 +158,24 @@ class ZmqServer {
     std::promise<bool> errorPromise;
 };
 
-}// namespace Network
-}// namespace NES
+} // namespace Network
+} // namespace NES
 
-namespace fmt {
-template<>
-struct formatter<NES::Network::ZmqServer> : formatter<std::string> {
-    auto format(const NES::Network::ZmqServer& zmq, format_context& ctx) -> decltype(ctx.out()) {
-        return fmt::format_to(ctx.out(),
-                              "Hostname: {} requested Port:{} number of network threads: {}",
-                              zmq.getHostname(),
-                              zmq.getRequestedPort(),
-                              zmq.getNumOfThreads());
+namespace fmt
+{
+template <>
+struct formatter<NES::Network::ZmqServer> : formatter<std::string>
+{
+    auto format(const NES::Network::ZmqServer & zmq, format_context & ctx) -> decltype(ctx.out())
+    {
+        return fmt::format_to(
+            ctx.out(),
+            "Hostname: {} requested Port:{} number of network threads: {}",
+            zmq.getHostname(),
+            zmq.getRequestedPort(),
+            zmq.getNumOfThreads());
     }
 };
-}// namespace fmt
+} // namespace fmt
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_

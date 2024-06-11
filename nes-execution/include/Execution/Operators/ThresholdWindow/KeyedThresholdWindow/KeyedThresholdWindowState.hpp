@@ -15,26 +15,28 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWSTATE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWSTATE_HPP_
 
-#include <Execution/Aggregation/AggregationValue.hpp>
 #include <mutex>
+#include <Execution/Aggregation/AggregationValue.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 /**
  * @brief This class encapsulate a state for a KeyedThresholdWindow.
  * This state belongs to a single key, and can contain multiple aggregationValues (i.e., one for each
  * aggregation function)
  */
-class KeyedThresholdWindowState {
-  public:
+class KeyedThresholdWindowState
+{
+public:
     KeyedThresholdWindowState();
 
-    KeyedThresholdWindowState(const KeyedThresholdWindowState& other);
+    KeyedThresholdWindowState(const KeyedThresholdWindowState & other);
 
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggregationValues{};
-    uint64_t recordCount = 0;// counts the records contributing to the aggregate,
+    uint64_t recordCount = 0; // counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWSTATE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWSTATE_HPP_

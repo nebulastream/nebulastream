@@ -12,22 +12,29 @@
     limitations under the License.
 */
 
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES
+{
 
-DumpContext::DumpContext(std::string contextIdentifier) : context(std::move(contextIdentifier)) {}
+DumpContext::DumpContext(std::string contextIdentifier) : context(std::move(contextIdentifier))
+{
+}
 
-DumpContextPtr DumpContext::create() { return std::make_shared<DumpContext>("NullContext"); }
+DumpContextPtr DumpContext::create()
+{
+    return std::make_shared<DumpContext>("NullContext");
+}
 
-DumpContextPtr DumpContext::create(const std::string& contextIdentifier) {
+DumpContextPtr DumpContext::create(const std::string & contextIdentifier)
+{
     // add time to identifier
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -36,27 +43,36 @@ DumpContextPtr DumpContext::create(const std::string& contextIdentifier) {
     return std::make_shared<DumpContext>(ss.str());
 }
 
-void DumpContext::registerDumpHandler(const DebugDumpHandlerPtr& debugDumpHandler) { dumpHandlers.push_back(debugDumpHandler); }
+void DumpContext::registerDumpHandler(const DebugDumpHandlerPtr & debugDumpHandler)
+{
+    dumpHandlers.push_back(debugDumpHandler);
+}
 
-void DumpContext::dump(const NodePtr& node) {
+void DumpContext::dump(const NodePtr & node)
+{
     NES_DEBUG("Dump node - {}", context);
-    for (auto& handler : dumpHandlers) {
+    for (auto & handler : dumpHandlers)
+    {
         handler->dump(node);
     }
 }
 
-void DumpContext::dump(const std::string& scope, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+void DumpContext::dump(const std::string & scope, const DecomposedQueryPlanPtr & decomposedQueryPlan)
+{
     NES_DEBUG("Dump query plan - {} - {}", context, scope);
-    for (auto& handler : dumpHandlers) {
+    for (auto & handler : dumpHandlers)
+    {
         handler->dump(context, scope, decomposedQueryPlan);
     }
 }
 
-void DumpContext::dump(const std::string& scope, const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan) {
+void DumpContext::dump(const std::string & scope, const QueryCompilation::PipelineQueryPlanPtr & pipelineQueryPlan)
+{
     NES_DEBUG("Dump pipelined query plan - {} - {}", context, scope)
-    for (auto& handler : dumpHandlers) {
+    for (auto & handler : dumpHandlers)
+    {
         handler->dump(context, scope, pipelineQueryPlan);
     }
 }
 
-}// namespace NES
+} // namespace NES

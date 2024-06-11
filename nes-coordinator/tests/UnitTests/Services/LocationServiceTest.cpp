@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <cmath>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -24,20 +24,23 @@
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TestUtils.hpp>
-#include <cmath>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
+#include <BaseIntegrationTest.hpp>
 
 #ifdef S2DEF
-namespace NES {
+namespace NES
+{
 
 std::string ip = "127.0.0.1";
 
 using allMobileResponse = std::map<std::string, std::vector<std::map<std::string, nlohmann::json>>>;
 
-class LocationServiceTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class LocationServiceTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("LocationServiceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Set up LocationServiceTest test class.")
         std::string singleLocationPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv";
@@ -50,7 +53,8 @@ class LocationServiceTest : public Testing::BaseIntegrationTest {
     NES::TopologyPtr topology;
 };
 
-TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
+TEST_F(LocationServiceTest, testRequestSingleNodeLocation)
+{
     auto rpcPortWrk1 = getAvailablePort();
     auto rpcPortWrk2 = getAvailablePort();
     auto rpcPortWrk3 = getAvailablePort();
@@ -67,22 +71,19 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
-    auto node1Id =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
+    auto node1Id
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-    auto node2Id =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
+    auto node2Id
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
     topology->addGeoLocation(node2Id, {13.4, -23});
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node3Id =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
+    auto node3Id
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
     topology->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     // test querying for node which does not exist in the system
@@ -109,7 +110,8 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     EXPECT_EQ(locationJson["longitude"], 13.351743136322877);
 }
 
-TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
+TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations)
+{
     auto rpcPortWrk1 = getAvailablePort();
     auto rpcPortWrk2 = getAvailablePort();
     auto rpcPortWrk3 = getAvailablePort();
@@ -133,28 +135,24 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
-    auto node1Id =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
+    auto node1Id
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-    auto node2Id =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
+    auto node2Id
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
     topology->addGeoLocation(node2Id, {13.4, -23});
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node3Id =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
+    auto node3Id
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node4Id =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties, bandwidthInMbps, latencyInMs);
+    auto node4Id
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //get mobile node info
     response = topology->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();
@@ -191,7 +189,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     ASSERT_EQ(edges.size(), 1);
 
     //verify correctness of the provided edge
-    const auto& edge = edges[0];
+    const auto & edge = edges[0];
     EXPECT_EQ(edge.size(), 4);
     EXPECT_NE(edge.find("source"), edge.end());
     EXPECT_EQ(edge.at("source").get<WorkerId>(), node3Id);
@@ -213,25 +211,32 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     ASSERT_EQ(edges.size(), 2);
 
     //check correctness of locations
-    for (const auto& node : nodes) {
+    for (const auto & node : nodes)
+    {
         EXPECT_EQ(node.size(), 2);
         EXPECT_TRUE(node.contains("location"));
         EXPECT_TRUE(node.contains("id"));
         const auto nodeLocation = node.at("location");
-        if (node.at("id").get<WorkerId>() == node3Id) {
+        if (node.at("id").get<WorkerId>() == node3Id)
+        {
             EXPECT_EQ(nodeLocation.at("latitude"), 52.55227464714949);
             EXPECT_EQ(nodeLocation["longitude"], 13.351743136322877);
-        } else if (node.at("id").get<WorkerId>() == node4Id) {
+        }
+        else if (node.at("id").get<WorkerId>() == node4Id)
+        {
             EXPECT_EQ(nodeLocation["latitude"], 53.55227464714949);
             EXPECT_EQ(nodeLocation["longitude"], -13.351743136322877);
-        } else {
+        }
+        else
+        {
             FAIL();
         }
     }
 
     //check correctness of edges
     std::vector sources = {node3Id, node4Id};
-    for (const auto& topologyEdge : edges) {
+    for (const auto & topologyEdge : edges)
+    {
         ASSERT_EQ(topologyEdge.at("target"), 1);
         auto edgeSource = topologyEdge.at("source").get<WorkerId>();
         auto sourcesIterator = std::find(sources.begin(), sources.end(), edgeSource);
@@ -239,5 +244,5 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
         sources.erase(sourcesIterator);
     }
 }
-}// namespace NES
+} // namespace NES
 #endif

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/TextFunctions/SimilarityFunctions/LevenshteinDistance.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -20,19 +20,23 @@
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class LevenshteinTest : public Testing::BaseUnitTest {
-  public:
+class LevenshteinTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("LevenshteinTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LevenshteinTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
@@ -46,7 +50,8 @@ class LevenshteinTest : public Testing::BaseUnitTest {
 
 /** @brief The LevenshteinDistance Class provides functionality to compare two text objects and return their difference */
 
-TEST_F(LevenshteinTest, BaseTest) {
+TEST_F(LevenshteinTest, BaseTest)
+{
     auto expression = BinaryExpressionWrapper<LevenshteinDistance>();
     auto textValue0 = Value<Text>("db");
     auto textValue1 = Value<Text>("duck");
@@ -76,11 +81,12 @@ TEST_F(LevenshteinTest, BaseTest) {
     EXPECT_EQ(dist7, 1_u64);
 }
 
-TEST_F(LevenshteinTest, FailTest) {
+TEST_F(LevenshteinTest, FailTest)
+{
     auto expression = BinaryExpressionWrapper<LevenshteinDistance>();
-    auto textValue0 = Value<Float>((float) 17.5);
+    auto textValue0 = Value<Float>((float)17.5);
     auto textValue1 = Value<Text>("duck");
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1));
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

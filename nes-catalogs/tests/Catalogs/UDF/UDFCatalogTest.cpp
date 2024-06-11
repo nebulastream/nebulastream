@@ -12,31 +12,34 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std::string_literals;
 
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
-class UDFCatalogTest : public Testing::BaseUnitTest {
-  protected:
+class UDFCatalogTest : public Testing::BaseUnitTest
+{
+protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
 
-  protected:
+protected:
     UDFCatalog udfCatalog{};
 };
 
 /**
  * @brief Test the behavior of registering and retrieving Java UDF descriptors.
  */
-TEST_F(UDFCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
+TEST_F(UDFCatalogTest, RetrieveRegisteredJavaUdfDescriptor)
+{
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
@@ -49,14 +52,16 @@ TEST_F(UDFCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
 /**
  * @brief Test that a null UDF descriptor cannot be registered.
  */
-TEST_F(UDFCatalogTest, RegisteredDescriptorMustNotBeNull) {
+TEST_F(UDFCatalogTest, RegisteredDescriptorMustNotBeNull)
+{
     EXPECT_THROW(udfCatalog.registerUDF("my_udf", nullptr), UDFException);
 }
 
 /**
  * @brief Test that an attempt to register a UDF under an existing name results in an exception.
  */
-TEST_F(UDFCatalogTest, CannotRegisterUdfUnderExistingName) {
+TEST_F(UDFCatalogTest, CannotRegisterUdfUnderExistingName)
+{
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
@@ -69,17 +74,24 @@ TEST_F(UDFCatalogTest, CannotRegisterUdfUnderExistingName) {
 /**
  * @brief Test that a null UDF descriptor is returned when attempting to retrieve an unknown UDF.
  */
-TEST_F(UDFCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getUDFDescriptor("unknown_udf"), nullptr); }
+TEST_F(UDFCatalogTest, ReturnNullptrIfUdfIsNotKnown)
+{
+    ASSERT_EQ(udfCatalog.getUDFDescriptor("unknown_udf"), nullptr);
+}
 
 /**
  * @brief Test that an attempt to remove an unknown UDF does not result in any changes to the catalog.
  */
-TEST_F(UDFCatalogTest, CannotRemoveUnknownUdf) { ASSERT_EQ(udfCatalog.removeUDF("unknown_udf"), false); }
+TEST_F(UDFCatalogTest, CannotRemoveUnknownUdf)
+{
+    ASSERT_EQ(udfCatalog.removeUDF("unknown_udf"), false);
+}
 
 /**
  * @brief Test that removal of a registered UDF is signaled.
  */
-TEST_F(UDFCatalogTest, SignalRemovalOfUdf) {
+TEST_F(UDFCatalogTest, SignalRemovalOfUdf)
+{
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
@@ -91,7 +103,8 @@ TEST_F(UDFCatalogTest, SignalRemovalOfUdf) {
 /**
  * @brief Test that a UDF is removed from the catalog after removal.
  */
-TEST_F(UDFCatalogTest, AfterRemovalTheUdfDoesNotExist) {
+TEST_F(UDFCatalogTest, AfterRemovalTheUdfDoesNotExist)
+{
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
@@ -104,7 +117,8 @@ TEST_F(UDFCatalogTest, AfterRemovalTheUdfDoesNotExist) {
 /**
  * @brief Test that a UDF with the same name can be registered again after removal.
  */
-TEST_F(UDFCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
+TEST_F(UDFCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain)
+{
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
@@ -118,7 +132,8 @@ TEST_F(UDFCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
 /**
  * @brief Test that a list of known UDF names can be retrieved from the catalog.
  */
-TEST_F(UDFCatalogTest, ReturnListOfKnownUds) {
+TEST_F(UDFCatalogTest, ReturnListOfKnownUds)
+{
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
@@ -130,4 +145,4 @@ TEST_F(UDFCatalogTest, ReturnListOfKnownUds) {
     ASSERT_EQ(udfs.front(), udfName);
 }
 
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

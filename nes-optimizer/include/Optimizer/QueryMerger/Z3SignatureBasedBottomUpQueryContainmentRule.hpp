@@ -18,17 +18,20 @@
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class SignatureContainmentCheck;
 using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
@@ -77,16 +80,15 @@ using Z3SignatureBasedBottomUpQueryContainmentRulePtr = std::shared_ptr<Z3Signat
  * Additionally information: As it traverses the query plan in a bottom up fashion an exits as soon as it identified a containment relationship
  * other than equivalent, the algorithm is not very good at identifying sharing abilities
  */
-class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMergerRule {
-
-  public:
+class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMergerRule
+{
+public:
     /**
      * @brief create an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      * @param context The Z3 context for the SMT solver
      * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      */
-    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context,
-                                                                  bool allowExhaustiveContainmentCheck);
+    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr & context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief checks for containment between the globalQueryPlan and the currently newly added query
@@ -100,12 +102,12 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      */
     ~Z3SignatureBasedBottomUpQueryContainmentRule() noexcept final = default;
 
-  private:
+private:
     /**
      * @brief explicit constructor
      * @param context The Z3 context for the SMT solver
      */
-    explicit Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck);
+    explicit Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr & context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief identify if the query plans are equal or not
@@ -114,7 +116,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @return Map containing matching pair of target and host operators
      */
     std::map<LogicalOperatorPtr, std::tuple<LogicalOperatorPtr, ContainmentRelationship>>
-    areQueryPlansContained(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan);
+    areQueryPlansContained(const QueryPlanPtr & targetQueryPlan, const QueryPlanPtr & hostQueryPlan);
 
     /**
      * @brief This method compares two operator signatures using Z3
@@ -123,7 +125,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @return bool true if equal else false
      */
     std::map<LogicalOperatorPtr, std::tuple<LogicalOperatorPtr, ContainmentRelationship>>
-    areOperatorsContained(const LogicalOperatorPtr& targetOperator, const LogicalOperatorPtr& hostOperator);
+    areOperatorsContained(const LogicalOperatorPtr & targetOperator, const LogicalOperatorPtr & hostOperator);
 
     /**
      * @brief This method makes sure that we can reset the time attribute for the contained window operation
@@ -131,10 +133,10 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param containee contained operation
      * @return true, if container and contanee are not a window operation or if window containment is possible, false otherwise
      */
-    bool checkWindowContainmentPossible(const LogicalOperatorPtr& container, const LogicalOperatorPtr& containee) const;
+    bool checkWindowContainmentPossible(const LogicalOperatorPtr & container, const LogicalOperatorPtr & containee) const;
 
     SignatureContainmentCheckPtr signatureContainmentUtil;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDBOTTOMUPQUERYCONTAINMENTRULE_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDBOTTOMUPQUERYCONTAINMENTRULE_HPP_

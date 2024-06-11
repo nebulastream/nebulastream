@@ -11,21 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <fstream>
+#include <iterator>
+#include <utility>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/ManufacturingEquipmentDataGenerator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <fstream>
-#include <iterator>
-#include <utility>
 
-namespace NES::Benchmark::DataGeneration {
-ManufacturingEquipmentDataGenerator::ManufacturingEquipmentDataGenerator() : DataGenerator() {}
+namespace NES::Benchmark::DataGeneration
+{
+ManufacturingEquipmentDataGenerator::ManufacturingEquipmentDataGenerator() : DataGenerator()
+{
+}
 
-std::string ManufacturingEquipmentDataGenerator::getName() { return "ManufacturingEquipment"; }
+std::string ManufacturingEquipmentDataGenerator::getName()
+{
+    return "ManufacturingEquipment";
+}
 
-std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize)
+{
     std::vector<Runtime::TupleBuffer> buffers;
     buffers.reserve(numberOfBuffers);
 
@@ -34,12 +41,15 @@ std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createDat
     std::ifstream file(std::string(BENCHMARK_DATA_DIRECTORY) + "/manufacturing-equipment/DEBS2012-small.txt");
     std::string line;
 
-    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
+    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++)
+    {
         auto buffer = allocateBuffer();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++)
+        {
             // check if we reached the end of the file and start from the beginning
-            if (!std::getline(file, line)) {
+            if (!std::getline(file, line))
+            {
                 file.seekg(0);
                 std::getline(file, line);
             }
@@ -66,7 +76,8 @@ std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createDat
     }
     return buffers;
 }
-SchemaPtr ManufacturingEquipmentDataGenerator::getSchema() {
+SchemaPtr ManufacturingEquipmentDataGenerator::getSchema()
+{
     return Schema::create()
         ->addField("creationTS", BasicType::INT64)
         ->addField("messageIndex", BasicType::INT64)
@@ -84,16 +95,18 @@ SchemaPtr ManufacturingEquipmentDataGenerator::getSchema() {
         ->addField("bm06", BasicType::INT16);
 }
 
-std::string ManufacturingEquipmentDataGenerator::toString() {
+std::string ManufacturingEquipmentDataGenerator::toString()
+{
     std::ostringstream oss;
     oss << getName();
     return oss.str();
 }
 
-Configurations::SchemaTypePtr ManufacturingEquipmentDataGenerator::getSchemaType() {
-    const char* dataTypeI64 = "INT64";
-    const char* dataTypeI16 = "INT16";
-    const char* dataTypeUI16 = "UINT16";
+Configurations::SchemaTypePtr ManufacturingEquipmentDataGenerator::getSchemaType()
+{
+    const char * dataTypeI64 = "INT64";
+    const char * dataTypeI16 = "INT16";
+    const char * dataTypeUI16 = "UINT16";
     std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
     schemaFieldDetails.emplace_back("creationTS", dataTypeI64);
     schemaFieldDetails.emplace_back("messageIndex", dataTypeI64);
@@ -112,4 +125,4 @@ Configurations::SchemaTypePtr ManufacturingEquipmentDataGenerator::getSchemaType
     return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

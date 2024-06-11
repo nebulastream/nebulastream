@@ -13,12 +13,13 @@
 */
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
-#include <Identifiers/Identifiers.hpp>
 #include <cstdint>
 #include <future>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 enum class ResourceType : uint8_t;
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
@@ -27,8 +28,9 @@ using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 /**
  * This is the common base class of objects that use a storage handler to lock resources before manipulating them
  */
-class StorageResourceLocker {
-  protected:
+class StorageResourceLocker
+{
+protected:
     /**
      * @brief Constructor
      * @param requiredResources a list of the resources to be locked
@@ -39,12 +41,12 @@ class StorageResourceLocker {
      * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void preExecution(const StorageHandlerPtr& storageHandle);
+    virtual void preExecution(const StorageHandlerPtr & storageHandle);
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void postExecution(const StorageHandlerPtr& storageHandle);
+    virtual void postExecution(const StorageHandlerPtr & storageHandle);
 
     /**
      * @brief get an id that identifies this object to lock resources for exclusive use by this object
@@ -52,8 +54,8 @@ class StorageResourceLocker {
      */
     virtual RequestId getResourceLockingId() = 0;
 
-  private:
+private:
     std::vector<ResourceType> requiredResources;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_

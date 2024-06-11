@@ -14,9 +14,10 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
-#include <Util/PluginRegistry.hpp>
 #include <optional>
-namespace NES {
+#include <Util/PluginRegistry.hpp>
+namespace NES
+{
 
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
@@ -25,8 +26,9 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
  * @brief DataSource interface to register a new physical data source plugin.
  * Implementations of this plugin must implement createDatasource that translates a source descriptor to a DataSourcePtr.
  */
-class DataSourcePlugin {
-  public:
+class DataSourcePlugin
+{
+public:
     DataSourcePlugin() = default;
 
     /**
@@ -39,19 +41,20 @@ class DataSourcePlugin {
      * @param successors the successor pipeline, which is used to emit data.
      * @return std::optional<DataSourcePtr>
      */
-    virtual std::optional<DataSourcePtr>
-    createDataSource(OperatorId sourceId,
-                     OriginId originId,
-                     StatisticId statisticId,
-                     const SourceDescriptorPtr& sourceDescriptor,
-                     const Runtime::NodeEnginePtr& nodeEngine,
-                     size_t numSourceLocalBuffers,
-                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) = 0;
+    virtual std::optional<DataSourcePtr> createDataSource(
+        OperatorId sourceId,
+        OriginId originId,
+        StatisticId statisticId,
+        const SourceDescriptorPtr & sourceDescriptor,
+        const Runtime::NodeEnginePtr & nodeEngine,
+        size_t numSourceLocalBuffers,
+        const std::vector<Runtime::Execution::SuccessorExecutablePipeline> & successors)
+        = 0;
 
     virtual ~DataSourcePlugin() = default;
 };
 
 using SourcePluginRegistry = Util::PluginRegistry<DataSourcePlugin>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_

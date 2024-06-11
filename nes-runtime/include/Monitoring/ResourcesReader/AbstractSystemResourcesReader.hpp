@@ -15,12 +15,13 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_ABSTRACTSYSTEMRESOURCESREADER_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_ABSTRACTSYSTEMRESOURCESREADER_HPP_
 
-#include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 class CpuMetricsWrapper;
 class MemoryMetrics;
 class NetworkMetricsWrapper;
@@ -32,15 +33,16 @@ class RuntimeMetrics;
 * @brief This is an abstract class so derived classes can collect basic system information
 * Warning: Only Linux distributions are currently supported
 */
-class AbstractSystemResourcesReader {
-  public:
+class AbstractSystemResourcesReader
+{
+public:
     //  -- Constructors --
     AbstractSystemResourcesReader();
-    AbstractSystemResourcesReader(const AbstractSystemResourcesReader&) = default;
-    AbstractSystemResourcesReader(AbstractSystemResourcesReader&&) = default;
+    AbstractSystemResourcesReader(const AbstractSystemResourcesReader &) = default;
+    AbstractSystemResourcesReader(AbstractSystemResourcesReader &&) = default;
     //  -- Assignment --
-    AbstractSystemResourcesReader& operator=(const AbstractSystemResourcesReader&) = default;
-    AbstractSystemResourcesReader& operator=(AbstractSystemResourcesReader&&) = default;
+    AbstractSystemResourcesReader & operator=(const AbstractSystemResourcesReader &) = default;
+    AbstractSystemResourcesReader & operator=(AbstractSystemResourcesReader &&) = default;
     //  -- dtor --
     virtual ~AbstractSystemResourcesReader() = default;
 
@@ -95,11 +97,11 @@ class AbstractSystemResourcesReader {
      */
     [[nodiscard]] SystemResourcesReaderType getReaderType() const;
 
-  protected:
+protected:
     SystemResourcesReaderType readerType;
 };
 using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_ABSTRACTSYSTEMRESOURCESREADER_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_ABSTRACTSYSTEMRESOURCESREADER_HPP_

@@ -14,14 +14,15 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Statistics/Statistic.hpp>
-#include <Statistics/StatisticKey.hpp>
 #include <functional>
 #include <memory>
 #include <vector>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Statistics/Statistic.hpp>
+#include <Statistics/StatisticKey.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class Statistic;
 using StatisticPtr = std::shared_ptr<Statistic>;
@@ -35,24 +36,27 @@ using StatisticFormatPtr = std::shared_ptr<AbstractStatisticFormat>;
  * is called in the StatisticSink as well as the operator handler and returns multiple statistics that are then
  * inserted into a StatisticStorage
  */
-class AbstractStatisticFormat {
-  public:
-    explicit AbstractStatisticFormat(const Schema& schema,
-                                     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                     std::function<std::string(const std::string&)> postProcessingData,
-                                     std::function<std::string(const std::string&)> preProcessingData);
+class AbstractStatisticFormat
+{
+public:
+    explicit AbstractStatisticFormat(
+        const Schema & schema,
+        Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+        std::function<std::string(const std::string &)> postProcessingData,
+        std::function<std::string(const std::string &)> preProcessingData);
 
-    explicit AbstractStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                     std::function<std::string(const std::string&)> postProcessingData,
-                                     std::function<std::string(const std::string&)> preProcessingData);
+    explicit AbstractStatisticFormat(
+        const std::string & qualifierNameWithSeparator,
+        Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+        std::function<std::string(const std::string &)> postProcessingData,
+        std::function<std::string(const std::string &)> preProcessingData);
 
     /**
      * @brief Reads the statistics from the buffer
      * @param buffer: Buffer containing the
      * @return Pairs of <StatisticHash, Statistic>
      */
-    virtual std::vector<HashStatisticPair> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) = 0;
+    virtual std::vector<HashStatisticPair> readStatisticsFromBuffer(Runtime::TupleBuffer & buffer) = 0;
 
     /**
      * @brief Writes the statistics to the buffer
@@ -61,23 +65,22 @@ class AbstractStatisticFormat {
      * @return Vector of tuple buffers containing the sketches
      */
     virtual std::vector<Runtime::TupleBuffer>
-    writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                               Runtime::BufferManager& bufferManager) = 0;
+    writeStatisticsIntoBuffers(const std::vector<HashStatisticPair> & statisticsPlusHashes, Runtime::BufferManager & bufferManager) = 0;
 
     [[nodiscard]] virtual std::string toString() const = 0;
 
     virtual ~AbstractStatisticFormat();
 
-  protected:
+protected:
     const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     const std::string startTsFieldName;
     const std::string endTsFieldName;
     const std::string statisticHashFieldName;
     const std::string statisticTypeFieldName;
     const std::string observedTuplesFieldName;
-    const std::function<std::string(const std::string&)> postProcessingData;
-    const std::function<std::string(const std::string&)> preProcessingData;
+    const std::function<std::string(const std::string &)> postProcessingData;
+    const std::function<std::string(const std::string &)> preProcessingData;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_

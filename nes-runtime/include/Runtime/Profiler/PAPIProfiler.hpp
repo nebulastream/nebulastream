@@ -14,20 +14,23 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_
-#include <Runtime/Profiler/BaseProfiler.hpp>
 #include <fstream>
 #include <memory>
 #include <vector>
+#include <Runtime/Profiler/BaseProfiler.hpp>
 
-namespace NES::Runtime::Profiler {
+namespace NES::Runtime::Profiler
+{
 #ifdef ENABLE_PAPI_PROFILER
 /**
  * @brief This class samples hardware performance counters using PAPI
  * @experimental
  */
-class PapiCpuProfiler : public BaseProfiler {
-  public:
-    enum class Presets : uint8_t {
+class PapiCpuProfiler : public BaseProfiler
+{
+public:
+    enum class Presets : uint8_t
+    {
         /// frontend, backend (core and memory), branch mispredicition stalls
         Multiplexing = 0,
         /// frontend, backend (core and memory), branch mispredicition stalls (extended)
@@ -68,7 +71,7 @@ class PapiCpuProfiler : public BaseProfiler {
      * @param threadId thread identifier
      * @param coreId core identifier
      */
-    explicit PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint32_t threadId, uint32_t coreId);
+    explicit PapiCpuProfiler(Presets preset, std::ofstream && csvWriter, uint32_t threadId, uint32_t coreId);
 
     virtual ~PapiCpuProfiler();
 
@@ -85,7 +88,7 @@ class PapiCpuProfiler : public BaseProfiler {
      */
     uint64_t stopSampling(std::size_t numItems) override;
 
-  private:
+private:
     std::ofstream csvWriter;
     const uint32_t threadId;
     const uint32_t coreId;
@@ -103,6 +106,6 @@ class PapiCpuProfiler : public BaseProfiler {
 
 using PapiCpuProfilerPtr = std::shared_ptr<PapiCpuProfiler>;
 #endif
-}// namespace NES::Runtime::Profiler
+} // namespace NES::Runtime::Profiler
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_

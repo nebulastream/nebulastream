@@ -14,7 +14,6 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
@@ -23,20 +22,30 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <nlohmann/json.hpp>
+#include <Common/DataTypes/FixedChar.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 RuntimeMetrics::RuntimeMetrics()
-    : nodeId(0), wallTimeNs(0), memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0),
-      batteryStatusInPercent(0), latCoord(0), longCoord(0) {
+    : nodeId(0)
+    , wallTimeNs(0)
+    , memoryUsageInBytes(0)
+    , cpuLoadInJiffies(0)
+    , blkioBytesRead(0)
+    , blkioBytesWritten(0)
+    , batteryStatusInPercent(0)
+    , latCoord(0)
+    , longCoord(0)
+{
     NES_DEBUG("RuntimeMetrics: Default ctor");
 }
 
-Configurations::SchemaTypePtr RuntimeMetrics::getSchemaType(const std::string& prefix) {
-
+Configurations::SchemaTypePtr RuntimeMetrics::getSchemaType(const std::string & prefix)
+{
     std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    const char* length = "0";
-    const char* unsignedIntegerDataType = "UINT64";
+    const char * length = "0";
+    const char * unsignedIntegerDataType = "UINT64";
     schemaFiledDetails.emplace_back(prefix + "node_id", unsignedIntegerDataType, length);
     schemaFiledDetails.emplace_back(prefix + "wallTimeNs", unsignedIntegerDataType, length);
     schemaFiledDetails.emplace_back(prefix + "memoryUsageInBytes", unsignedIntegerDataType, length);
@@ -49,16 +58,21 @@ Configurations::SchemaTypePtr RuntimeMetrics::getSchemaType(const std::string& p
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
-SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
+SchemaPtr RuntimeMetrics::getSchema(const std::string & prefix)
+{
+    return Schema::createFromSchemaType(getSchemaType(prefix));
+}
 
-void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
+void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex) const
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RuntimeMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     auto totalSize = RuntimeMetrics::getSchema("")->getSchemaSizeInBytes();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "RuntimeMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+    NES_ASSERT(
+        totalSize <= buf.getBufferSize(),
+        "RuntimeMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+            + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
@@ -74,7 +88,8 @@ void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void RuntimeMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void RuntimeMetrics::readFromBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RuntimeMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
     uint64_t cnt = 0;
@@ -90,7 +105,8 @@ void RuntimeMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
     longCoord = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
-nlohmann::json RuntimeMetrics::toJson() const {
+nlohmann::json RuntimeMetrics::toJson() const
+{
     nlohmann::json metricsJson{};
 
     metricsJson["NODE_ID"] = nodeId;
@@ -106,23 +122,31 @@ nlohmann::json RuntimeMetrics::toJson() const {
     return metricsJson;
 }
 
-bool RuntimeMetrics::operator==(const RuntimeMetrics& rhs) const {
+bool RuntimeMetrics::operator==(const RuntimeMetrics & rhs) const
+{
     return nodeId == rhs.nodeId && wallTimeNs == rhs.wallTimeNs && memoryUsageInBytes == rhs.memoryUsageInBytes
-        && cpuLoadInJiffies == rhs.cpuLoadInJiffies && blkioBytesRead == rhs.blkioBytesRead
-        && blkioBytesWritten == rhs.blkioBytesWritten && batteryStatusInPercent == rhs.batteryStatusInPercent
-        && latCoord == rhs.latCoord && longCoord == rhs.longCoord;
+        && cpuLoadInJiffies == rhs.cpuLoadInJiffies && blkioBytesRead == rhs.blkioBytesRead && blkioBytesWritten == rhs.blkioBytesWritten
+        && batteryStatusInPercent == rhs.batteryStatusInPercent && latCoord == rhs.latCoord && longCoord == rhs.longCoord;
 }
 
-bool RuntimeMetrics::operator!=(const RuntimeMetrics& rhs) const { return !(rhs == *this); }
+bool RuntimeMetrics::operator!=(const RuntimeMetrics & rhs) const
+{
+    return !(rhs == *this);
+}
 
-void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void writeToBuffer(const RuntimeMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void readFromBuffer(RuntimeMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-nlohmann::json asJson(const RuntimeMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const RuntimeMetrics & metrics)
+{
+    return metrics.toJson();
+}
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

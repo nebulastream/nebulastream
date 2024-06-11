@@ -20,13 +20,15 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
  * @brief Wrapper class to represent a tuple buffer with multiple CpuMetrics objects.
  */
-class CpuMetricsWrapper {
-  public:
+class CpuMetricsWrapper
+{
+public:
     /**
      * Default Ctor for CpuMetricsWrapper with timestamp=0.
      */
@@ -40,21 +42,21 @@ class CpuMetricsWrapper {
      * Ctor for CpuMetricsWrapper with a set of CpuMetrics. Node is 0 here.
      * @param arr CpuMetrics
      */
-    explicit CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
+    explicit CpuMetricsWrapper(std::vector<CpuMetrics> && arr);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.
      * @param buf
      * @param tupleIndex
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
+    void writeToBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a wrapper object from a given TupleBuffer.
      * @param buf
      * @param tupleIndex
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+    void readFromBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the cpu metrics for a given core
@@ -84,10 +86,10 @@ class CpuMetricsWrapper {
     */
     nlohmann::json toJson() const;
 
-    bool operator==(const CpuMetricsWrapper& rhs) const;
-    bool operator!=(const CpuMetricsWrapper& rhs) const;
+    bool operator==(const CpuMetricsWrapper & rhs) const;
+    bool operator!=(const CpuMetricsWrapper & rhs) const;
 
-  private:
+private:
     std::vector<CpuMetrics> cpuMetrics;
     WorkerId nodeId;
     uint64_t timestamp;
@@ -99,7 +101,7 @@ class CpuMetricsWrapper {
  * @param the TupleBuffer
  * @param the tuple index indicating the location of the tuple
 */
-void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void writeToBuffer(const CpuMetricsWrapper & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex);
 
 /**
  * @brief The deserialize method to read metrics from the given Schema and TupleBuffer.
@@ -107,15 +109,15 @@ void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, 
  * @param the TupleBuffer
  * @param the tuple index indicating the location of the tuple
 */
-void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void readFromBuffer(CpuMetricsWrapper & wrapper, Runtime::TupleBuffer & buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses the metric to JSON
  * @param metrics
  * @return the metrics as JSON
  */
-nlohmann::json asJson(const CpuMetricsWrapper& metrics);
+nlohmann::json asJson(const CpuMetricsWrapper & metrics);
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_CPUMETRICSWRAPPER_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_CPUMETRICSWRAPPER_HPP_

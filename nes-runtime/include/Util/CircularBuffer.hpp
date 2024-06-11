@@ -17,12 +17,14 @@
 
 #include <memory>
 #include <type_traits>
-namespace NES {
+namespace NES
+{
 
-namespace detail {
+namespace detail
+{
 
 // true if const iterator, false otherwise
-template<class, bool>
+template <class, bool>
 class CircularBufferIterator;
 
 /**
@@ -35,57 +37,64 @@ class CircularBufferIterator;
  * @tparam cbT type of circular buffer
  * @tparam isConst is/is-not const
  */
-template<class cbT, bool isConst>
-class CircularBufferIterator {
-  public:
+template <class cbT, bool isConst>
+class CircularBufferIterator
+{
+public:
     using type = CircularBufferIterator<cbT, isConst>;
     using value_type = typename cbT::value_type;
     using difference_type = std::ptrdiff_t;
-    using pointer = typename std::conditional_t<isConst, const value_type, value_type>*;
-    using reference = typename std::conditional_t<isConst, const value_type, value_type>&;
+    using pointer = typename std::conditional_t<isConst, const value_type, value_type> *;
+    using reference = typename std::conditional_t<isConst, const value_type, value_type> &;
     using iterator_category = std::random_access_iterator_tag;
 
     CircularBufferIterator() = default;
 
     reference operator*() const noexcept { return container->at(idx); }
-    CircularBufferIterator& operator++() noexcept {
+    CircularBufferIterator & operator++() noexcept
+    {
         ++idx;
         return *this;
     }
 
-    CircularBufferIterator& operator--() noexcept {
+    CircularBufferIterator & operator--() noexcept
+    {
         --idx;
         return *this;
     }
 
-    friend CircularBufferIterator operator-(CircularBufferIterator it, int i) noexcept {
+    friend CircularBufferIterator operator-(CircularBufferIterator it, int i) noexcept
+    {
         it -= i;
         return it;
     }
-    friend CircularBufferIterator& operator-=(CircularBufferIterator& it, int i) noexcept {
+    friend CircularBufferIterator & operator-=(CircularBufferIterator & it, int i) noexcept
+    {
         it.idx -= i;
         return it;
     }
-    template<bool C>
-    bool operator==(const CircularBufferIterator<cbT, C>& rhs) const noexcept {
+    template <bool C>
+    bool operator==(const CircularBufferIterator<cbT, C> & rhs) const noexcept
+    {
         return idx == rhs.idx;
     }
-    template<bool C>
-    bool operator!=(const CircularBufferIterator<cbT, C>& rhs) const noexcept {
+    template <bool C>
+    bool operator!=(const CircularBufferIterator<cbT, C> & rhs) const noexcept
+    {
         return idx != rhs.idx;
     }
 
-  private:
+private:
     // reuse typenames
     friend cbT;
     using uint64_type = typename cbT::uint64_type;
-    CircularBufferIterator(uint64_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept : idx(idx), container(rv){};
+    CircularBufferIterator(uint64_type idx, std::conditional_t<isConst, const cbT, cbT> * rv) noexcept : idx(idx), container(rv){};
     uint64_type idx;
 
     // non-const/const representation of container
-    std::conditional_t<isConst, const cbT, cbT>* container;
-};// class CircularBufferIterator
-}// namespace detail
+    std::conditional_t<isConst, const cbT, cbT> * container;
+}; // class CircularBufferIterator
+} // namespace detail
 
 /**
  * @brief A templated class for a circular buffer. The implementation
@@ -101,18 +110,20 @@ class CircularBufferIterator {
  *
  * @tparam T - type of the value in the buffer slots.
  */
-template<class T,
-         typename Allocator = std::allocator<T>,
-         std::enable_if_t<std::is_arithmetic<T>::value || std::is_pointer<T>::value, int> = 0>
-class CircularBuffer {
-  public:
+template <
+    class T,
+    typename Allocator = std::allocator<T>,
+    std::enable_if_t<std::is_arithmetic<T>::value || std::is_pointer<T>::value, int> = 0>
+class CircularBuffer
+{
+public:
     // STL-style typedefs, similar to std::deque
     using value_type = T;
     using allocator_type = Allocator;
     using uint64_type = std::uint64_t;
-    using pointer = T*;
-    using reference = T&;
-    using const_reference = const T&;
+    using pointer = T *;
+    using reference = T &;
+    using const_reference = const T &;
     using difference_type = std::ptrdiff_t;
     using iterator = detail::CircularBufferIterator<CircularBuffer, false>;
     using const_iterator = detail::CircularBufferIterator<CircularBuffer, true>;
@@ -124,11 +135,11 @@ class CircularBuffer {
     explicit CircularBuffer(uint64_t size) : maxSize(size), buffer(std::make_unique<T[]>(size)){};
 
     // copy and move
-    CircularBuffer(const CircularBuffer& other) = delete;
-    CircularBuffer(CircularBuffer&& other) noexcept = default;
+    CircularBuffer(const CircularBuffer & other) = delete;
+    CircularBuffer(CircularBuffer && other) noexcept = default;
 
-    CircularBuffer& operator=(const CircularBuffer&) = delete;
-    CircularBuffer& operator=(CircularBuffer&&) noexcept = default;
+    CircularBuffer & operator=(const CircularBuffer &) = delete;
+    CircularBuffer & operator=(CircularBuffer &&) noexcept = default;
 
     ~CircularBuffer() = default;
 
@@ -159,55 +170,70 @@ class CircularBuffer {
     [[nodiscard]] const_reference at(const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
 
     // modifiers: push and emplace front
-    template<bool b = true, typename = std::enable_if_t<b && std::is_copy_assignable<T>::value>>
-    void push(const T& value) noexcept(std::is_nothrow_copy_assignable<T>::value) {
-        if (full()) {
+    template <bool b = true, typename = std::enable_if_t<b && std::is_copy_assignable<T>::value>>
+    void push(const T & value) noexcept(std::is_nothrow_copy_assignable<T>::value)
+    {
+        if (full())
+        {
             decrementHead();
-        } else {
+        }
+        else
+        {
             decrementHeadIncSize();
         }
         front_() = value;
     }
 
-    template<bool b = true, typename = std::enable_if_t<b && std::is_move_assignable<T>::value>>
-    void push(T&& value) noexcept(std::is_nothrow_move_assignable<T>::value) {
-        if (full()) {
+    template <bool b = true, typename = std::enable_if_t<b && std::is_move_assignable<T>::value>>
+    void push(T && value) noexcept(std::is_nothrow_move_assignable<T>::value)
+    {
+        if (full())
+        {
             decrementHead();
-        } else {
+        }
+        else
+        {
             decrementHeadIncSize();
         }
         front_() = std::move(value);
     }
 
-    template<bool b = true, typename = std::enable_if_t<b && std::is_move_assignable<T>::value>>
-    void push(T values[], size_t size) noexcept(std::is_nothrow_move_assignable<T>::value) {
-        for (size_t i = 0; i < size; ++i) {
+    template <bool b = true, typename = std::enable_if_t<b && std::is_move_assignable<T>::value>>
+    void push(T values[], size_t size) noexcept(std::is_nothrow_move_assignable<T>::value)
+    {
+        for (size_t i = 0; i < size; ++i)
+        {
             push(values[i]);
         }
     }
 
-    template<typename... Args>
-    void emplace(Args&&... args) noexcept(
-        std::is_nothrow_constructible<T, Args...>::value&& std::is_nothrow_move_assignable<T>::value) {
-        if (full()) {
+    template <typename... Args>
+    void emplace(Args &&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value && std::is_nothrow_move_assignable<T>::value)
+    {
+        if (full())
+        {
             decrementHead();
-        } else {
+        }
+        else
+        {
             decrementHeadIncSize();
         }
         front_() = T(std::forward<Args>(args)...);
     }
 
     // modifier: pop only in back
-    T pop() {
-        if (empty()) {
+    T pop()
+    {
+        if (empty())
+        {
             return T();
         }
-        auto& elt = back_();
+        auto & elt = back_();
         decrementSize();
         return std::move(elt);
     }
 
-  private:
+private:
     // indicates writes
     uint64_t head{0};
 
@@ -226,19 +252,23 @@ class CircularBuffer {
     reference back_() noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
     [[nodiscard]] const_reference back_() const noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
 
-    void incrementHeadDecrSize() noexcept {
+    void incrementHeadDecrSize() noexcept
+    {
         head = (head + 1) % maxSize;
         --currentSize;
     }
-    void decrementHeadIncSize() noexcept {
+    void decrementHeadIncSize() noexcept
+    {
         head = (head + maxSize - 1) % maxSize;
         ++currentSize;
     }
-    void decrementHeadIncSizeByGivenSize(size_t decrement) noexcept {
+    void decrementHeadIncSizeByGivenSize(size_t decrement) noexcept
+    {
         head = (head + maxSize - decrement) % maxSize;
         currentSize += decrement;
     }
-    void incrementHeadDecrSizeByGivenSize(size_t increment) noexcept {
+    void incrementHeadDecrSizeByGivenSize(size_t increment) noexcept
+    {
         head = (head + increment) % maxSize;
         currentSize -= increment;
     }
@@ -249,6 +279,6 @@ class CircularBuffer {
     void incrementHeadByGivenSize(size_t increment) noexcept { head = (head + maxSize - increment) % maxSize; }
     void decrementHeadByGivenSize(size_t decrement) noexcept { head = (head + maxSize - decrement) % maxSize; }
 
-};// class CircularBuffer
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_UTIL_CIRCULARBUFFER_HPP_
+}; // class CircularBuffer
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_UTIL_CIRCULARBUFFER_HPP_

@@ -13,25 +13,30 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#include <vector>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include <vector>
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Stores a window operator and window definition, as well as in- and output schema
  */
-struct WindowOperatorProperties {
-    WindowOperatorProperties(WindowOperatorPtr windowOperator,
-                             SchemaPtr windowInputSchema,
-                             SchemaPtr windowOutputSchema,
-                             Windowing::LogicalWindowDescriptorPtr windowDefinition)
-        : windowOperator(std::move(windowOperator)), windowInputSchema(std::move(windowInputSchema)),
-          windowOutputSchema(std::move(windowOutputSchema)), windowDefinition(std::move(windowDefinition)){};
+struct WindowOperatorProperties
+{
+    WindowOperatorProperties(
+        WindowOperatorPtr windowOperator,
+        SchemaPtr windowInputSchema,
+        SchemaPtr windowOutputSchema,
+        Windowing::LogicalWindowDescriptorPtr windowDefinition)
+        : windowOperator(std::move(windowOperator))
+        , windowInputSchema(std::move(windowInputSchema))
+        , windowOutputSchema(std::move(windowOutputSchema))
+        , windowDefinition(std::move(windowDefinition)){};
 
     WindowOperatorPtr windowOperator;
     SchemaPtr windowInputSchema;
@@ -42,80 +47,91 @@ struct WindowOperatorProperties {
 /**
  * @brief Stores all operator nodes for lowering the stream joins
  */
-struct StreamJoinOperators {
-    StreamJoinOperators(const LogicalOperatorPtr& operatorNode,
-                        const OperatorPtr& leftInputOperator,
-                        const OperatorPtr& rightInputOperator)
-        : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator) {}
-    const LogicalOperatorPtr& operatorNode;
-    const OperatorPtr& leftInputOperator;
-    const OperatorPtr& rightInputOperator;
+struct StreamJoinOperators
+{
+    StreamJoinOperators(
+        const LogicalOperatorPtr & operatorNode, const OperatorPtr & leftInputOperator, const OperatorPtr & rightInputOperator)
+        : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator)
+    {
+    }
+    const LogicalOperatorPtr & operatorNode;
+    const OperatorPtr & leftInputOperator;
+    const OperatorPtr & rightInputOperator;
 };
 
 /**
  * @brief Stores all join configuration, e.g., window size, timestamp field name, join strategy, ...
  */
-struct StreamJoinConfigs {
-    StreamJoinConfigs(const std::string& joinFieldNameLeft,
-                      const std::string& joinFieldNameRight,
-                      const uint64_t windowSize,
-                      const uint64_t windowSlide,
-                      const TimestampField& timeStampFieldLeft,
-                      const TimestampField& timeStampFieldRight,
-                      const QueryCompilation::StreamJoinStrategy& joinStrategy)
-        : joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowSize(windowSize),
-          windowSlide(windowSlide), timeStampFieldLeft(timeStampFieldLeft), timeStampFieldRight(timeStampFieldRight),
-          joinStrategy(joinStrategy) {}
+struct StreamJoinConfigs
+{
+    StreamJoinConfigs(
+        const std::string & joinFieldNameLeft,
+        const std::string & joinFieldNameRight,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const TimestampField & timeStampFieldLeft,
+        const TimestampField & timeStampFieldRight,
+        const QueryCompilation::StreamJoinStrategy & joinStrategy)
+        : joinFieldNameLeft(joinFieldNameLeft)
+        , joinFieldNameRight(joinFieldNameRight)
+        , windowSize(windowSize)
+        , windowSlide(windowSlide)
+        , timeStampFieldLeft(timeStampFieldLeft)
+        , timeStampFieldRight(timeStampFieldRight)
+        , joinStrategy(joinStrategy)
+    {
+    }
 
-    const std::string& joinFieldNameLeft;
-    const std::string& joinFieldNameRight;
+    const std::string & joinFieldNameLeft;
+    const std::string & joinFieldNameRight;
     const uint64_t windowSize;
     const uint64_t windowSlide;
-    const TimestampField& timeStampFieldLeft;
-    const TimestampField& timeStampFieldRight;
-    const QueryCompilation::StreamJoinStrategy& joinStrategy;
+    const TimestampField & timeStampFieldLeft;
+    const TimestampField & timeStampFieldRight;
+    const QueryCompilation::StreamJoinStrategy & joinStrategy;
 };
 
 /**
  * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
  */
-class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
-  public:
+class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider
+{
+public:
     DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options);
-    static PhysicalOperatorProviderPtr create(const QueryCompilerOptionsPtr& options);
+    static PhysicalOperatorProviderPtr create(const QueryCompilerOptionsPtr & options);
     void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) override;
     virtual ~DefaultPhysicalOperatorProvider() noexcept = default;
 
-  protected:
+protected:
     /**
      * @brief Insets demultiplex operator before the current operator.
      * @param operatorNode
      */
-    void insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode);
+    void insertDemultiplexOperatorsBefore(const LogicalOperatorPtr & operatorNode);
     /**
      * @brief Insert multiplex operator after the current operator.
      * @param operatorNode
      */
-    void insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode);
+    void insertMultiplexOperatorsAfter(const LogicalOperatorPtr & operatorNode);
     /**
      * @brief Checks if the current operator is a demultiplexer, if it has multiple parents.
      * @param operatorNode
      * @return
      */
-    bool isDemultiplex(const LogicalOperatorPtr& operatorNode);
+    bool isDemultiplex(const LogicalOperatorPtr & operatorNode);
 
     /**
      * @brief Lowers a binary operator
      * @param operatorNode current operator
      */
-    void lowerBinaryOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerBinaryOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a unary operator
     * @param decomposedQueryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode);
+    void lowerUnaryOperator(const DecomposedQueryPlanPtr & decomposedQueryPlan, const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
@@ -124,13 +140,13 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     *        does not lead to code that is compiled and is entirely executed on the source/sink/TupleBuffer level.
     * @param operatorNode current operator
     */
-    void lowerUnionOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerUnionOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a project operator
     * @param operatorNode current operator
     */
-    void lowerProjectOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerProjectOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers an infer model operator
@@ -142,49 +158,49 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @brief Lowers a map operator
     * @param operatorNode current operator
     */
-    void lowerMapOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerMapOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a udf map operator
     * @param operatorNode current operator
     */
-    void lowerUDFMapOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerUDFMapOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a udf flat map operator
     * @param operatorNode current operator
     */
-    void lowerUDFFlatMapOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerUDFFlatMapOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a window operator
     * @param operatorNode current operator
     */
-    void lowerWindowOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerWindowOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a thread local window operator
     * @param operatorNode current operator
     */
-    void lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerTimeBasedWindowOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a watermark assignment operator
     * @param operatorNode current operator
     */
-    void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
     * @brief Lowers a join operator
     * @param operatorNode current operator
     */
-    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
+    void lowerJoinOperator(const LogicalOperatorPtr & operatorNode);
 
     /**
      * @brief Lowers a statistic build operator
      * @param logicalStatisticWindowOperator
      */
-    void lowerStatisticBuildOperator(Statistic::LogicalStatisticWindowOperator& logicalStatisticWindowOperator);
+    void lowerStatisticBuildOperator(Statistic::LogicalStatisticWindowOperator & logicalStatisticWindowOperator);
 
     /**
      * @brief Get a join build input generator
@@ -192,23 +208,22 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param schema the operator schema
      * @param children the upstream operators
      */
-    OperatorPtr
-    getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
+    OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr & joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
-  private:
+private:
     /**
      * @brief replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
      * @param windowOperatorProperties
      * @param operatorNode
      */
-    std::shared_ptr<Node> replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties,
-                                                         const LogicalOperatorPtr& operatorNode);
+    std::shared_ptr<Node>
+    replaceOperatorTimeBasedWindow(WindowOperatorProperties & windowOperatorProperties, const LogicalOperatorPtr & operatorNode);
 
     /**
      * @brief Lowers a join operator for the nautilus query compiler
      * @param operatorNode
      */
-    void lowerNautilusJoin(const LogicalOperatorPtr& operatorNode);
+    void lowerNautilusJoin(const LogicalOperatorPtr & operatorNode);
 
     /**
      * @brief Returns the left and right timestamp
@@ -216,9 +231,8 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param windowType
      * @return {
      */
-    [[nodiscard]] std::tuple<TimestampField, TimestampField>
-    getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
-                             const Windowing::TimeBasedWindowTypePtr& windowType) const;
+    [[nodiscard]] std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(
+        const std::shared_ptr<LogicalJoinOperator> & joinOperator, const Windowing::TimeBasedWindowTypePtr & windowType) const;
 
     /**
      * @brief Lowers the stream hash join
@@ -227,7 +241,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @return StreamJoinOperatorHandlerPtr
      */
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingHashJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
+    lowerStreamingHashJoin(const StreamJoinOperators & streamJoinOperators, const StreamJoinConfigs & streamJoinConfig);
 
     /**
      * @brief Lowers the stream nested loop join
@@ -236,9 +250,9 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @return StreamJoinOperatorHandlerPtr
      */
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
+    lowerStreamingNestedLoopJoin(const StreamJoinOperators & streamJoinOperators, const StreamJoinConfigs & streamJoinConfig);
 };
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_

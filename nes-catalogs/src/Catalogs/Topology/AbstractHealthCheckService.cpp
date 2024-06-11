@@ -17,13 +17,18 @@
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
-AbstractHealthCheckService::AbstractHealthCheckService() {}
+namespace NES
+{
+AbstractHealthCheckService::AbstractHealthCheckService()
+{
+}
 
-void AbstractHealthCheckService::stopHealthCheck() {
+void AbstractHealthCheckService::stopHealthCheck()
+{
     NES_DEBUG("AbstractHealthCheckService::stopHealthCheck called on id= {}", id);
     auto expected = true;
-    if (!isRunning.compare_exchange_strong(expected, false)) {
+    if (!isRunning.compare_exchange_strong(expected, false))
+    {
         NES_DEBUG("AbstractHealthCheckService::stopHealthCheck health check already stopped");
         return;
     }
@@ -34,40 +39,52 @@ void AbstractHealthCheckService::stopHealthCheck() {
     auto ret = shutdownRPC->get_future().get();
     NES_ASSERT(ret, "fail to shutdown health check");
 
-    if (healthCheckingThread->joinable()) {
+    if (healthCheckingThread->joinable())
+    {
         healthCheckingThread->join();
         healthCheckingThread.reset();
         NES_DEBUG("AbstractHealthCheckService::stopHealthCheck successfully stopped");
-    } else {
+    }
+    else
+    {
         NES_ERROR("HealthCheckService: health thread not joinable");
         NES_THROW_RUNTIME_ERROR("Error while stopping healthCheckingThread->join");
     }
 }
 
-void AbstractHealthCheckService::addNodeToHealthCheck(WorkerId workerId, const std::string& rpcAddress) {
+void AbstractHealthCheckService::addNodeToHealthCheck(WorkerId workerId, const std::string & rpcAddress)
+{
     NES_DEBUG("HealthCheckService: adding node with id {}", workerId);
     auto exists = topologyIdToRPCAddressMap.contains(workerId);
-    if (exists) {
+    if (exists)
+    {
         NES_THROW_RUNTIME_ERROR("HealthCheckService want to add node that already exists id=" << workerId);
     }
     topologyIdToRPCAddressMap.insert(workerId, rpcAddress);
 }
 
-void AbstractHealthCheckService::removeNodeFromHealthCheck(WorkerId workerId) {
-    if (!topologyIdToRPCAddressMap.contains(workerId)) {
+void AbstractHealthCheckService::removeNodeFromHealthCheck(WorkerId workerId)
+{
+    if (!topologyIdToRPCAddressMap.contains(workerId))
+    {
         NES_THROW_RUNTIME_ERROR("HealthCheckService want to remove a node that does not exists id=" << workerId);
     }
     NES_DEBUG("HealthCheckService: removing node with id {}", workerId);
     topologyIdToRPCAddressMap.erase(workerId);
 }
 
-bool AbstractHealthCheckService::getRunning() { return isRunning; }
+bool AbstractHealthCheckService::getRunning()
+{
+    return isRunning;
+}
 
-bool AbstractHealthCheckService::isWorkerInactive(WorkerId workerId) {
+bool AbstractHealthCheckService::isWorkerInactive(WorkerId workerId)
+{
     NES_DEBUG("HealthCheckService: checking if node with id {} is inactive", workerId);
     std::lock_guard<std::mutex> lock(cvMutex);
     bool isNotActive = inactiveWorkers.contains(workerId);
-    if (isNotActive) {
+    if (isNotActive)
+    {
         NES_DEBUG("HealthCheckService: node with id {} is inactive", workerId);
         return true;
     }
@@ -75,4 +92,4 @@ bool AbstractHealthCheckService::isWorkerInactive(WorkerId workerId) {
     return false;
 }
 
-}// namespace NES
+} // namespace NES

@@ -12,83 +12,161 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sstream>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
-uint64_t QueryStatistics::getProcessedTasks() const { return processedTasks.load(); }
+uint64_t QueryStatistics::getProcessedTasks() const
+{
+    return processedTasks.load();
+}
 
-uint64_t QueryStatistics::getProcessedTuple() const { return processedTuple.load(); }
+uint64_t QueryStatistics::getProcessedTuple() const
+{
+    return processedTuple.load();
+}
 
-uint64_t QueryStatistics::getProcessedBuffers() const { return processedBuffers.load(); }
+uint64_t QueryStatistics::getProcessedBuffers() const
+{
+    return processedBuffers.load();
+}
 
-uint64_t QueryStatistics::getTimestampQueryStart() const { return timestampQueryStart.load(); }
+uint64_t QueryStatistics::getTimestampQueryStart() const
+{
+    return timestampQueryStart.load();
+}
 
-uint64_t QueryStatistics::getTimestampFirstProcessedTask() const { return timestampFirstProcessedTask.load(); }
+uint64_t QueryStatistics::getTimestampFirstProcessedTask() const
+{
+    return timestampFirstProcessedTask.load();
+}
 
-uint64_t QueryStatistics::getTimestampLastProcessedTask() const { return timestampLastProcessedTask.load(); }
+uint64_t QueryStatistics::getTimestampLastProcessedTask() const
+{
+    return timestampLastProcessedTask.load();
+}
 
-uint64_t QueryStatistics::getProcessedWatermarks() const { return processedWatermarks.load(); }
+uint64_t QueryStatistics::getProcessedWatermarks() const
+{
+    return processedWatermarks.load();
+}
 
-uint64_t QueryStatistics::getLatencySum() const { return latencySum.load(); }
+uint64_t QueryStatistics::getLatencySum() const
+{
+    return latencySum.load();
+}
 
-uint64_t QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); }
+uint64_t QueryStatistics::getQueueSizeSum() const
+{
+    return queueSizeSum.load();
+}
 
-uint64_t QueryStatistics::getAvailableGlobalBufferSum() const { return availableGlobalBufferSum.load(); }
-uint64_t QueryStatistics::getAvailableFixedBufferSum() const { return availableFixedBufferSum.load(); }
+uint64_t QueryStatistics::getAvailableGlobalBufferSum() const
+{
+    return availableGlobalBufferSum.load();
+}
+uint64_t QueryStatistics::getAvailableFixedBufferSum() const
+{
+    return availableFixedBufferSum.load();
+}
 
-void QueryStatistics::setProcessedTasks(uint64_t processedTasks) { this->processedTasks = processedTasks; }
+void QueryStatistics::setProcessedTasks(uint64_t processedTasks)
+{
+    this->processedTasks = processedTasks;
+}
 
-void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->processedTuple = processedTuple; }
+void QueryStatistics::setProcessedTuple(uint64_t processedTuple)
+{
+    this->processedTuple = processedTuple;
+}
 
-void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite = false) {
-    if (!noOverwrite || this->timestampQueryStart == 0) {
+void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite = false)
+{
+    if (!noOverwrite || this->timestampQueryStart == 0)
+    {
         NES_DEBUG("QueryStatistics::setTimestampQueryStart called with  {}", timestampQueryStart);
         this->timestampQueryStart = timestampQueryStart;
     }
 }
-void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite = false) {
-    if (!noOverwrite || this->timestampFirstProcessedTask == 0) {
+void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite = false)
+{
+    if (!noOverwrite || this->timestampFirstProcessedTask == 0)
+    {
         NES_DEBUG("QueryStatistics::setTimestampFirstProcessedTask called with  {}", timestampFirstProcessedTask);
         this->timestampFirstProcessedTask = timestampFirstProcessedTask;
     }
 }
 
-void QueryStatistics::setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask) {
+void QueryStatistics::setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask)
+{
     this->timestampLastProcessedTask = timestampLastProcessedTask;
 }
 
-void QueryStatistics::incProcessedBuffers() { this->processedBuffers++; }
+void QueryStatistics::incProcessedBuffers()
+{
+    this->processedBuffers++;
+}
 
-void QueryStatistics::incProcessedTasks() { this->processedTasks++; }
+void QueryStatistics::incProcessedTasks()
+{
+    this->processedTasks++;
+}
 
-void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
-void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
-void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
-void QueryStatistics::incTasksPerPipelineId(PipelineId pipelineId, WorkerThreadId workerId) {
+void QueryStatistics::incProcessedWatermarks()
+{
+    this->processedWatermarks++;
+}
+void QueryStatistics::incProcessedTuple(uint64_t tupleCnt)
+{
+    this->processedTuple += tupleCnt;
+}
+void QueryStatistics::incLatencySum(uint64_t latency)
+{
+    this->latencySum += latency;
+}
+void QueryStatistics::incTasksPerPipelineId(PipelineId pipelineId, WorkerThreadId workerId)
+{
     (*this->pipelineIdToTaskThroughputMap.wlock())[pipelineId][workerId]++;
 }
-void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
-void QueryStatistics::incAvailableGlobalBufferSum(uint64_t size) { this->availableGlobalBufferSum += size; }
-void QueryStatistics::incAvailableFixedBufferSum(uint64_t size) { this->availableFixedBufferSum += size; }
+void QueryStatistics::incQueueSizeSum(uint64_t size)
+{
+    this->queueSizeSum += size;
+}
+void QueryStatistics::incAvailableGlobalBufferSum(uint64_t size)
+{
+    this->availableGlobalBufferSum += size;
+}
+void QueryStatistics::incAvailableFixedBufferSum(uint64_t size)
+{
+    this->availableFixedBufferSum += size;
+}
 
-void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->processedBuffers = processedBuffers; }
+void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers)
+{
+    this->processedBuffers = processedBuffers;
+}
 
-void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) {
+void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency)
+{
     (*tsToLatencyMap.wlock())[now].push_back(latency);
 }
 
-folly::Synchronized<std::map<PipelineId, std::map<WorkerThreadId, std::atomic<uint64_t>>>>&
-QueryStatistics::getPipelineIdToTaskMap() {
+folly::Synchronized<std::map<PipelineId, std::map<WorkerThreadId, std::atomic<uint64_t>>>> & QueryStatistics::getPipelineIdToTaskMap()
+{
     return pipelineIdToTaskThroughputMap;
 };
 
-folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>>& QueryStatistics::getTsToLatencyMap() { return tsToLatencyMap; }
+folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>> & QueryStatistics::getTsToLatencyMap()
+{
+    return tsToLatencyMap;
+}
 
-std::string QueryStatistics::getQueryStatisticsAsString() {
+std::string QueryStatistics::getQueryStatisticsAsString()
+{
     std::stringstream ss;
     ss << "queryId=" << queryId.load();
     ss << " subPlanId=" << subQueryId.load();
@@ -98,14 +176,13 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedWatermarks=" << processedWatermarks.load();
     ss << " latencyAVG=" << latencySum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     ss << " queueSizeAVG=" << queueSizeSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableGlobalBufferAVG="
-       << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableFixedBufferAVG="
-       << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
+    ss << " availableGlobalBufferAVG=" << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
+    ss << " availableFixedBufferAVG=" << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     return ss.str();
 }
 
-void QueryStatistics::clear() {
+void QueryStatistics::clear()
+{
     processedTasks = 0;
     processedTuple = 0;
     processedBuffers = 0;
@@ -116,10 +193,17 @@ void QueryStatistics::clear() {
     availableFixedBufferSum = 0;
 }
 
-SharedQueryId QueryStatistics::getQueryId() const { return queryId.load(); }
-DecomposedQueryPlanId QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
+SharedQueryId QueryStatistics::getQueryId() const
+{
+    return queryId.load();
+}
+DecomposedQueryPlanId QueryStatistics::getSubQueryId() const
+{
+    return subQueryId.load();
+}
 
-QueryStatistics::QueryStatistics(const QueryStatistics& other) {
+QueryStatistics::QueryStatistics(const QueryStatistics & other)
+{
     processedTasks = other.processedTasks.load();
     processedTuple = other.processedTuple.load();
     processedBuffers = other.processedBuffers.load();
@@ -133,4 +217,4 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other) {
     tsToLatencyMap = other.tsToLatencyMap;
 }
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime

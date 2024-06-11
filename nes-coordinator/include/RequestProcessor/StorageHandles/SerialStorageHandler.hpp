@@ -16,14 +16,16 @@
 
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 struct StorageDataStructures;
 /**
  * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
  * Not thread safe!
  */
-class SerialStorageHandler : public StorageHandler {
-  public:
+class SerialStorageHandler : public StorageHandler
+{
+public:
     /**
      * @brief factory to create a serial storage manager object
      * @param storageDataStructures a struct containing pointers to the following data structures:
@@ -109,9 +111,9 @@ class SerialStorageHandler : public StorageHandler {
      * -udfCatalog
      * -lockManager
      */
-    explicit SerialStorageHandler(StorageDataStructures& storageDataStructures);
+    explicit SerialStorageHandler(StorageDataStructures & storageDataStructures);
 
-  private:
+private:
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
@@ -122,5 +124,5 @@ class SerialStorageHandler : public StorageHandler {
     Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_

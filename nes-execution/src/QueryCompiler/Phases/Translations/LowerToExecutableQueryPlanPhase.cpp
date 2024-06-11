@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <string>
+#include <utility>
+#include <variant>
 #include <Configurations/Worker/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -53,67 +56,66 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <string>
-#include <utility>
-#include <variant>
 
-namespace NES::QueryCompilation {
-LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
-                                                                 DataSourceProviderPtr sourceProvider)
+namespace NES::QueryCompilation
+{
+LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider)
     : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)){};
 
-LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider,
-                                                                           const DataSourceProviderPtr& sourceProvider) {
+LowerToExecutableQueryPlanPhasePtr
+LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr & sinkProvider, const DataSourceProviderPtr & sourceProvider)
+{
     return std::make_shared<LowerToExecutableQueryPlanPhase>(sinkProvider, sourceProvider);
 }
 
-Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
-                                                                                  const Runtime::NodeEnginePtr& nodeEngine) {
+Runtime::Execution::ExecutableQueryPlanPtr
+LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr & pipelineQueryPlan, const Runtime::NodeEnginePtr & nodeEngine)
+{
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
     //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
-    for (const auto& pipeline : sourcePipelines) {
+    for (const auto & pipeline : sourcePipelines)
+    {
         processSource(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
     }
 
-    return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
-                                                                     pipelineQueryPlan->getQuerySubPlanId(),
-                                                                     std::move(sources),
-                                                                     std::move(sinks),
-                                                                     std::move(executablePipelines),
-                                                                     nodeEngine->getQueryManager(),
-                                                                     nodeEngine->getBufferManager());
+    return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(
+        pipelineQueryPlan->getQueryId(),
+        pipelineQueryPlan->getQuerySubPlanId(),
+        std::move(sources),
+        std::move(sinks),
+        std::move(executablePipelines),
+        nodeEngine->getQueryManager(),
+        nodeEngine->getBufferManager());
 }
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
-    const OperatorPipelinePtr& pipeline,
-    std::vector<DataSourcePtr>& sources,
-    std::vector<DataSinkPtr>& sinks,
-    std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
-
+    const OperatorPipelinePtr & pipeline,
+    std::vector<DataSourcePtr> & sources,
+    std::vector<DataSinkPtr> & sinks,
+    std::vector<Runtime::Execution::ExecutablePipelinePtr> & executablePipelines,
+    const Runtime::NodeEnginePtr & nodeEngine,
+    const PipelineQueryPlanPtr & pipelineQueryPlan,
+    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> & pipelineToExecutableMap)
+{
     // check if the particular pipeline already exist in the pipeline map.
-    if (pipelineToExecutableMap.find(pipeline->getPipelineId()) != pipelineToExecutableMap.end()) {
+    if (pipelineToExecutableMap.find(pipeline->getPipelineId()) != pipelineToExecutableMap.end())
+    {
         return pipelineToExecutableMap.at(pipeline->getPipelineId());
     }
 
-    if (pipeline->isSinkPipeline()) {
+    if (pipeline->isSinkPipeline())
+    {
         auto executableSink = processSink(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan);
         pipelineToExecutableMap.insert({pipeline->getPipelineId(), executableSink});
         return executableSink;
     }
-    if (pipeline->isOperatorPipeline()) {
-        auto executablePipeline = processOperatorPipeline(pipeline,
-                                                          sources,
-                                                          sinks,
-                                                          executablePipelines,
-                                                          nodeEngine,
-                                                          pipelineQueryPlan,
-                                                          pipelineToExecutableMap);
+    if (pipeline->isOperatorPipeline())
+    {
+        auto executablePipeline = processOperatorPipeline(
+            pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
         pipelineToExecutableMap.insert({pipeline->getPipelineId(), executablePipeline});
         return executablePipeline;
     }
@@ -121,15 +123,16 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 }
 
 void LowerToExecutableQueryPlanPhase::processSource(
-    const OperatorPipelinePtr& pipeline,
-    std::vector<DataSourcePtr>& sources,
-    std::vector<DataSinkPtr>& sinks,
-    std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
-
-    if (!pipeline->isSourcePipeline()) {
+    const OperatorPipelinePtr & pipeline,
+    std::vector<DataSourcePtr> & sources,
+    std::vector<DataSinkPtr> & sinks,
+    std::vector<Runtime::Execution::ExecutablePipelinePtr> & executablePipelines,
+    const Runtime::NodeEnginePtr & nodeEngine,
+    const PipelineQueryPlanPtr & pipelineQueryPlan,
+    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> & pipelineToExecutableMap)
+{
+    if (!pipeline->isSourcePipeline())
+    {
         NES_ERROR("This is not a source pipeline.");
         NES_ERROR("{}", pipeline->getDecomposedQueryPlan()->toString());
         throw QueryCompilationException("This is not a source pipeline.");
@@ -139,53 +142,58 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>()) {
+    if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>())
+    {
         //Fetch logical and physical source name in the descriptor
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
         auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
         //Iterate over all available physical sources
         bool foundPhysicalSource = false;
-        for (const auto& physicalSourceType : nodeEngine->getPhysicalSourceTypes()) {
+        for (const auto & physicalSourceType : nodeEngine->getPhysicalSourceTypes())
+        {
             //Check if logical and physical source name matches with any of the physical source provided by the node
             if (physicalSourceType->getLogicalSourceName() == logicalSourceName
-                && physicalSourceType->getPhysicalSourceName() == physicalSourceName) {
+                && physicalSourceType->getPhysicalSourceName() == physicalSourceName)
+            {
                 sourceDescriptor = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSourceType);
                 foundPhysicalSource = true;
                 break;
             }
         }
-        if (!foundPhysicalSource) {
-            throw QueryCompilationException("Unable to find the Physical source with logical source name " + logicalSourceName
-                                            + " and physical source name " + physicalSourceName);
+        if (!foundPhysicalSource)
+        {
+            throw QueryCompilationException(
+                "Unable to find the Physical source with logical source name " + logicalSourceName + " and physical source name "
+                + physicalSourceName);
         }
     }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
-    for (const auto& successor : pipeline->getSuccessors()) {
-        auto executableSuccessor = processSuccessor(successor,
-                                                    sources,
-                                                    sinks,
-                                                    executablePipelines,
-                                                    nodeEngine,
-                                                    pipelineQueryPlan,
-                                                    pipelineToExecutableMap);
+    for (const auto & successor : pipeline->getSuccessors())
+    {
+        auto executableSuccessor
+            = processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    auto source = sourceProvider->lower(sourceOperator->getId(),
-                                        sourceOperator->getOriginId(),
-                                        sourceOperator->getStatisticId(),
-                                        sourceDescriptor,
-                                        nodeEngine,
-                                        executableSuccessorPipelines);
+    auto source = sourceProvider->lower(
+        sourceOperator->getId(),
+        sourceOperator->getOriginId(),
+        sourceOperator->getStatisticId(),
+        sourceDescriptor,
+        nodeEngine,
+        executableSuccessorPipelines);
 
     // Add this source as a predecessor to the pipeline execution context's of all its children.
     // This way you can navigate upstream.
-    for (auto executableSuccessor : executableSuccessorPipelines) {
-        if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG("Adding current source operator: {} as a predecessor to its child pipeline: {}",
-                      source->getOperatorId(),
-                      (*nextExecutablePipeline)->getPipelineId());
+    for (auto executableSuccessor : executableSuccessorPipelines)
+    {
+        if (const auto * nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
+        {
+            NES_DEBUG(
+                "Adding current source operator: {} as a predecessor to its child pipeline: {}",
+                source->getOperatorId(),
+                (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
         }
         // note: we do not register predecessors for DataSinks.
@@ -193,98 +201,106 @@ void LowerToExecutableQueryPlanPhase::processSource(
     sources.emplace_back(source);
 }
 
-Runtime::Execution::SuccessorExecutablePipeline
-LowerToExecutableQueryPlanPhase::processSink(const OperatorPipelinePtr& pipeline,
-                                             std::vector<DataSourcePtr>&,
-                                             std::vector<DataSinkPtr>& sinks,
-                                             std::vector<Runtime::Execution::ExecutablePipelinePtr>&,
-                                             Runtime::NodeEnginePtr nodeEngine,
-                                             const PipelineQueryPlanPtr& pipelineQueryPlan) {
+Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSink(
+    const OperatorPipelinePtr & pipeline,
+    std::vector<DataSourcePtr> &,
+    std::vector<DataSinkPtr> & sinks,
+    std::vector<Runtime::Execution::ExecutablePipelinePtr> &,
+    Runtime::NodeEnginePtr nodeEngine,
+    const PipelineQueryPlanPtr & pipelineQueryPlan)
+{
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
     auto numOfProducers = pipeline->getPredecessors().size();
-    auto sink = sinkProvider->lower(sinkOperator->getId(),
-                                    sinkOperator->getSinkDescriptor(),
-                                    sinkOperator->getOutputSchema(),
-                                    std::move(nodeEngine),
-                                    pipelineQueryPlan,
-                                    numOfProducers);
+    auto sink = sinkProvider->lower(
+        sinkOperator->getId(),
+        sinkOperator->getSinkDescriptor(),
+        sinkOperator->getOutputSchema(),
+        std::move(nodeEngine),
+        pipelineQueryPlan,
+        numOfProducers);
     sinks.emplace_back(sink);
     return sink;
 }
 
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processOperatorPipeline(
-    const OperatorPipelinePtr& pipeline,
-    std::vector<DataSourcePtr>& sources,
-    std::vector<DataSinkPtr>& sinks,
-    std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
-
+    const OperatorPipelinePtr & pipeline,
+    std::vector<DataSourcePtr> & sources,
+    std::vector<DataSinkPtr> & sinks,
+    std::vector<Runtime::Execution::ExecutablePipelinePtr> & executablePipelines,
+    const Runtime::NodeEnginePtr & nodeEngine,
+    const PipelineQueryPlanPtr & pipelineQueryPlan,
+    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> & pipelineToExecutableMap)
+{
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto executableOperator = rootOperator->as<ExecutableOperator>();
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
-    for (const auto& successor : pipeline->getSuccessors()) {
-        auto executableSuccessor = processSuccessor(successor,
-                                                    sources,
-                                                    sinks,
-                                                    executablePipelines,
-                                                    nodeEngine,
-                                                    pipelineQueryPlan,
-                                                    pipelineToExecutableMap);
+    for (const auto & successor : pipeline->getSuccessors())
+    {
+        auto executableSuccessor
+            = processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
     auto queryManager = nodeEngine->getQueryManager();
 
-    auto emitToSuccessorFunctionHandler = [executableSuccessorPipelines](Runtime::TupleBuffer& buffer,
-                                                                         Runtime::WorkerContextRef workerContext) {
-        for (const auto& executableSuccessor : executableSuccessorPipelines) {
-            if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
+    auto emitToSuccessorFunctionHandler
+        = [executableSuccessorPipelines](Runtime::TupleBuffer & buffer, Runtime::WorkerContextRef workerContext)
+    {
+        for (const auto & executableSuccessor : executableSuccessorPipelines)
+        {
+            if (const auto * sink = std::get_if<DataSinkPtr>(&executableSuccessor))
+            {
                 NES_TRACE("Emit Buffer to data sink {}", (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
-            } else if (const auto* nextExecutablePipeline =
-                           std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
+            }
+            else if (const auto * nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
+            {
                 NES_TRACE("Emit Buffer to pipeline {}", (*nextExecutablePipeline)->getPipelineId());
                 (*nextExecutablePipeline)->execute(buffer, workerContext);
             }
         }
     };
 
-    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer) {
-        for (const auto& executableSuccessor : executableSuccessorPipelines) {
+    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer & buffer)
+    {
+        for (const auto & executableSuccessor : executableSuccessorPipelines)
+        {
             NES_TRACE("Emit buffer to query manager");
             queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };
 
-    auto executionContext =
-        std::make_shared<Runtime::Execution::PipelineExecutionContext>(pipeline->getPipelineId(),
-                                                                       pipelineQueryPlan->getQuerySubPlanId(),
-                                                                       queryManager->getBufferManager(),
-                                                                       queryManager->getNumberOfWorkerThreads(),
-                                                                       emitToSuccessorFunctionHandler,
-                                                                       emitToQueryManagerFunctionHandler,
-                                                                       executableOperator->getOperatorHandlers());
+    auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
+        pipeline->getPipelineId(),
+        pipelineQueryPlan->getQuerySubPlanId(),
+        queryManager->getBufferManager(),
+        queryManager->getNumberOfWorkerThreads(),
+        emitToSuccessorFunctionHandler,
+        emitToQueryManagerFunctionHandler,
+        executableOperator->getOperatorHandlers());
 
-    auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
-                                                                             pipelineQueryPlan->getQueryId(),
-                                                                             pipelineQueryPlan->getQuerySubPlanId(),
-                                                                             queryManager,
-                                                                             executionContext,
-                                                                             executableOperator->getExecutablePipelineStage(),
-                                                                             pipeline->getPredecessors().size(),
-                                                                             executableSuccessorPipelines);
+    auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(
+        pipeline->getPipelineId(),
+        pipelineQueryPlan->getQueryId(),
+        pipelineQueryPlan->getQuerySubPlanId(),
+        queryManager,
+        executionContext,
+        executableOperator->getExecutablePipelineStage(),
+        pipeline->getPredecessors().size(),
+        executableSuccessorPipelines);
 
     // Add this pipeline as a predecessor to the pipeline execution context's of all its children.
     // This way you can navigate upstream.
-    for (auto executableSuccessor : executableSuccessorPipelines) {
-        if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG("Adding current pipeline: {} as a predecessor to its child pipeline: {}",
-                      executablePipeline->getPipelineId(),
-                      (*nextExecutablePipeline)->getPipelineId());
+    for (auto executableSuccessor : executableSuccessorPipelines)
+    {
+        if (const auto * nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
+        {
+            NES_DEBUG(
+                "Adding current pipeline: {} as a predecessor to its child pipeline: {}",
+                executablePipeline->getPipelineId(),
+                (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
         }
         // note: we do not register predecessors for DataSinks.
@@ -294,16 +310,18 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     return executablePipeline;
 }
 
-SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema,
-                                                                            PhysicalSourceTypePtr physicalSourceType) {
+SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
+{
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
     auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
     auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-              physicalSourceType->toString(),
-              magic_enum::enum_name(sourceType));
+    NES_DEBUG(
+        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
+        physicalSourceType->toString(),
+        magic_enum::enum_name(sourceType));
 
-    switch (sourceType) {
+    switch (sourceType)
+    {
         case SourceType::DEFAULT_SOURCE: {
             auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
             return DefaultSourceDescriptor::create(
@@ -328,54 +346,55 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
         case SourceType::MEMORY_SOURCE: {
             auto memorySourceType = physicalSourceType->as<MemorySourceType>();
-            return MemorySourceDescriptor::create(schema,
-                                                  memorySourceType->getMemoryArea(),
-                                                  memorySourceType->getMemoryAreaSize(),
-                                                  memorySourceType->getNumberOfBufferToProduce(),
-                                                  memorySourceType->getGatheringValue(),
-                                                  memorySourceType->getGatheringMode(),
-                                                  memorySourceType->getSourceAffinity(),
-                                                  memorySourceType->getTaskQueueId(),
-                                                  logicalSourceName,
-                                                  physicalSourceName);
+            return MemorySourceDescriptor::create(
+                schema,
+                memorySourceType->getMemoryArea(),
+                memorySourceType->getMemoryAreaSize(),
+                memorySourceType->getNumberOfBufferToProduce(),
+                memorySourceType->getGatheringValue(),
+                memorySourceType->getGatheringMode(),
+                memorySourceType->getSourceAffinity(),
+                memorySourceType->getTaskQueueId(),
+                logicalSourceName,
+                physicalSourceName);
         }
         case SourceType::MONITORING_SOURCE: {
             auto monitoringSourceType = physicalSourceType->as<MonitoringSourceType>();
             return MonitoringSourceDescriptor::create(
-                monitoringSourceType->getWaitTime(),
-                Monitoring::MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
+                monitoringSourceType->getWaitTime(), Monitoring::MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
         }
         case SourceType::BENCHMARK_SOURCE: {
             auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();
-            return BenchmarkSourceDescriptor::create(schema,
-                                                     benchmarkSourceType->getMemoryArea(),
-                                                     benchmarkSourceType->getMemoryAreaSize(),
-                                                     benchmarkSourceType->getNumberOfBuffersToProduce(),
-                                                     benchmarkSourceType->getGatheringValue(),
-                                                     benchmarkSourceType->getGatheringMode(),
-                                                     benchmarkSourceType->getSourceMode(),
-                                                     benchmarkSourceType->getSourceAffinity(),
-                                                     benchmarkSourceType->getTaskQueueId(),
-                                                     logicalSourceName,
-                                                     physicalSourceName);
+            return BenchmarkSourceDescriptor::create(
+                schema,
+                benchmarkSourceType->getMemoryArea(),
+                benchmarkSourceType->getMemoryAreaSize(),
+                benchmarkSourceType->getNumberOfBuffersToProduce(),
+                benchmarkSourceType->getGatheringValue(),
+                benchmarkSourceType->getGatheringMode(),
+                benchmarkSourceType->getSourceMode(),
+                benchmarkSourceType->getSourceAffinity(),
+                benchmarkSourceType->getTaskQueueId(),
+                logicalSourceName,
+                physicalSourceName);
         }
         case SourceType::STATIC_DATA_SOURCE: {
             auto staticDataSourceType = physicalSourceType->as<NES::Experimental::StaticDataSourceType>();
-            return NES::Experimental::StaticDataSourceDescriptor::create(schema,
-                                                                         staticDataSourceType->getPathTableFile(),
-                                                                         staticDataSourceType->getLateStart());
+            return NES::Experimental::StaticDataSourceDescriptor::create(
+                schema, staticDataSourceType->getPathTableFile(), staticDataSourceType->getLateStart());
         }
         case SourceType::LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
-            return LambdaSourceDescriptor::create(schema,
-                                                  lambdaSourceType->getGenerationFunction(),
-                                                  lambdaSourceType->getNumBuffersToProduce(),
-                                                  lambdaSourceType->getGatheringValue(),
-                                                  lambdaSourceType->getGatheringMode(),
-                                                  lambdaSourceType->getSourceAffinity(),
-                                                  lambdaSourceType->getTaskQueueId(),
-                                                  logicalSourceName,
-                                                  physicalSourceName);
+            return LambdaSourceDescriptor::create(
+                schema,
+                lambdaSourceType->getGenerationFunction(),
+                lambdaSourceType->getNumBuffersToProduce(),
+                lambdaSourceType->getGatheringValue(),
+                lambdaSourceType->getGatheringMode(),
+                lambdaSourceType->getSourceAffinity(),
+                lambdaSourceType->getTaskQueueId(),
+                logicalSourceName,
+                physicalSourceName);
         }
         case SourceType::TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
@@ -383,30 +402,33 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
         case SourceType::KAFKA_SOURCE: {
             auto kafkaSourceType = physicalSourceType->as<KafkaSourceType>();
-            return KafkaSourceDescriptor::create(schema,
-                                                 kafkaSourceType->getBrokers()->getValue(),
-                                                 logicalSourceName,
-                                                 kafkaSourceType->getTopic()->getValue(),
-                                                 kafkaSourceType->getGroupId()->getValue(),
-                                                 kafkaSourceType->getAutoCommit()->getValue(),
-                                                 kafkaSourceType->getConnectionTimeout()->getValue(),
-                                                 kafkaSourceType->getOffsetMode()->getValue(),
-                                                 kafkaSourceType,
-                                                 kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
-                                                 kafkaSourceType->getBatchSize()->getValue());
+            return KafkaSourceDescriptor::create(
+                schema,
+                kafkaSourceType->getBrokers()->getValue(),
+                logicalSourceName,
+                kafkaSourceType->getTopic()->getValue(),
+                kafkaSourceType->getGroupId()->getValue(),
+                kafkaSourceType->getAutoCommit()->getValue(),
+                kafkaSourceType->getConnectionTimeout()->getValue(),
+                kafkaSourceType->getOffsetMode()->getValue(),
+                kafkaSourceType,
+                kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
+                kafkaSourceType->getBatchSize()->getValue());
         }
         default: {
             // check if a plugin can create the correct source descriptor
-            for (const auto& plugin : SourceDescriptorPluginRegistry::getPlugins()) {
+            for (const auto & plugin : SourceDescriptorPluginRegistry::getPlugins())
+            {
                 auto descriptor = plugin->create(schema, physicalSourceType);
-                if (descriptor != nullptr) {
+                if (descriptor != nullptr)
+                {
                     return descriptor;
                 }
             }
-            throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
-                                            + " not supported");
+            throw QueryCompilationException(
+                "PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
         }
     }
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

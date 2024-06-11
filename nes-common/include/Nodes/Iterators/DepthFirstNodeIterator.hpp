@@ -16,7 +16,8 @@
 #define NES_COMMON_INCLUDE_NODES_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
 #include <memory>
 #include <stack>
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -25,26 +26,28 @@ using NodePtr = std::shared_ptr<Node>;
  * @brief Depth-First iterator for node trees.
  * We first iterate over all children and then process nodes at the same level.
  */
-class DepthFirstNodeIterator {
-  public:
+class DepthFirstNodeIterator
+{
+public:
     explicit DepthFirstNodeIterator(NodePtr start);
     DepthFirstNodeIterator() = default;
 
-    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
+    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr *, NodePtr &>
+    {
         friend class DepthFirstNodeIterator;
 
-      public:
+    public:
         /**
          * @brief Moves the iterator to the next node.
          * If we reach the end of the iterator we will ignore this operation.
          * @return iterator
          */
-        iterator& operator++();
+        iterator & operator++();
 
         /**
          * @brief Checks if the iterators are not at the same position.
          */
-        bool operator!=(const iterator& other) const;
+        bool operator!=(const iterator & other) const;
 
         /**
          * @brief Gets the node at the current iterator position.
@@ -52,8 +55,8 @@ class DepthFirstNodeIterator {
          */
         NodePtr operator*();
 
-      private:
-        explicit iterator(const NodePtr& current);
+    private:
+        explicit iterator(const NodePtr & current);
         explicit iterator();
         std::stack<NodePtr> workStack;
     };
@@ -69,9 +72,9 @@ class DepthFirstNodeIterator {
      */
     static iterator end();
 
-  private:
+private:
     NodePtr start;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_NODES_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
+#endif // NES_COMMON_INCLUDE_NODES_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_

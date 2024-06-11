@@ -15,23 +15,22 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
 
+#include <cstdint>
+#include <string>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
-#include <cstdint>
 #include <fmt/core.h>
-#include <string>
 
-namespace NES::Network {
+namespace NES::Network
+{
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
 static constexpr PartitionId DEFAULT_PARTITION_ID = PartitionId(0);
 static constexpr SubpartitionId DEFAULT_SUBPARTITION_ID = SubpartitionId(0);
 
-class NesPartition {
-  public:
-    explicit NesPartition(SharedQueryId sharedQueryId,
-                          OperatorId operatorId,
-                          PartitionId partitionId,
-                          SubpartitionId subpartitionId);
+class NesPartition
+{
+public:
+    explicit NesPartition(SharedQueryId sharedQueryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId);
 
     /**
      * @brief getter for the queryId
@@ -59,7 +58,7 @@ class NesPartition {
 
     [[nodiscard]] std::string toString() const;
 
-    friend std::ostream& operator<<(std::ostream& os, const NesPartition& partition);
+    friend std::ostream & operator<<(std::ostream & os, const NesPartition & partition);
 
     /**
      * @brief The equals operator for the NesPartition. It is not comparing threadIds
@@ -67,29 +66,33 @@ class NesPartition {
      * @param rhs
      * @return
      */
-    friend bool operator==(const NesPartition& lhs, const NesPartition& rhs);
+    friend bool operator==(const NesPartition & lhs, const NesPartition & rhs);
 
-    friend bool operator<(const NesPartition& lhs, const NesPartition& rhs);
+    friend bool operator<(const NesPartition & lhs, const NesPartition & rhs);
 
-  private:
+private:
     SharedQueryId sharedQueryId;
     OperatorId operatorId;
     PartitionId partitionId;
     SubpartitionId subpartitionId;
 };
-}// namespace NES::Network
-namespace std {
-template<>
-struct hash<NES::Network::NesPartition> {
-    std::uint64_t operator()(const NES::Network::NesPartition& k) const;
+} // namespace NES::Network
+namespace std
+{
+template <>
+struct hash<NES::Network::NesPartition>
+{
+    std::uint64_t operator()(const NES::Network::NesPartition & k) const;
 };
 
-}// namespace std
+} // namespace std
 
-namespace fmt {
-template<>
-struct formatter<NES::Network::NesPartition> : formatter<std::string> {
-    auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
+namespace fmt
+{
+template <>
+struct formatter<NES::Network::NesPartition> : formatter<std::string>
+{
+    auto format(const NES::Network::NesPartition & partition, format_context & ctx) -> decltype(ctx.out());
 };
-}//namespace fmt
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
+} //namespace fmt
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_

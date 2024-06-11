@@ -15,9 +15,6 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULEPREDICTOR_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULEPREDICTOR_HPP_
 
-#include <Util/Mobility/ReconnectPoint.hpp>
-#include <Util/Mobility/Waypoint.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -25,28 +22,35 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <Util/Mobility/ReconnectPoint.hpp>
+#include <Util/Mobility/Waypoint.hpp>
+#include <Util/TimeMeasurement.hpp>
 
 #ifdef S2DEF
-#include <s2/s1chord_angle.h>
-#include <s2/s2closest_point_query.h>
-#include <s2/s2earth.h>
-#include <s2/s2point.h>
-#include <s2/s2point_index.h>
-#include <s2/s2polyline.h>
+#    include <s2/s1chord_angle.h>
+#    include <s2/s2closest_point_query.h>
+#    include <s2/s2earth.h>
+#    include <s2/s2point.h>
+#    include <s2/s2point_index.h>
+#    include <s2/s2polyline.h>
 #endif
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations::Spatial::Mobility::Experimental {
+namespace Configurations::Spatial::Mobility::Experimental
+{
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}// namespace Configurations::Spatial::Mobility::Experimental
+} // namespace Configurations::Spatial::Mobility::Experimental
 
-namespace Spatial::DataTypes::Experimental {
+namespace Spatial::DataTypes::Experimental
+{
 using NodeIdToGeoLocationMap = std::unordered_map<WorkerId, GeoLocation>;
-}// namespace Spatial::DataTypes::Experimental
+} // namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
@@ -58,10 +62,11 @@ using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor
  * of planned reconnects to new field nodes. It also triggers the reconnect process when the device is sufficiently close to the new parent
  * This class is not thread safe!
  */
-class ReconnectSchedulePredictor {
-  public:
+class ReconnectSchedulePredictor
+{
+public:
     explicit ReconnectSchedulePredictor(
-        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
+        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr & configuration);
 
     /**
      * Creates a new reconnect schedule predictor if NES was compiles with NES_USE_S2. Otherwise returns a nullptr
@@ -69,7 +74,7 @@ class ReconnectSchedulePredictor {
      * @return a pointer to the created reconnect schedule creator or nullptr is s2 is not activated
      */
     static ReconnectSchedulePredictorPtr
-    create(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
+    create(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr & configuration);
 
 #ifdef S2DEF
     /**
@@ -86,7 +91,7 @@ class ReconnectSchedulePredictor {
      * @return a pair containing an S2Point marking the end of the coverage and an S1Angle representing the distance between the
      * projected point closest to covering node and the end of coverage (half of the entire covered distance)
      */
-    static std::pair<S2Point, S1Angle> findPathCoverage(const S2Polyline& path, S2Point coveringNode, S1Angle coverage);
+    static std::pair<S2Point, S1Angle> findPathCoverage(const S2Polyline & path, S2Point coveringNode, S1Angle coverage);
 
     /**
      * @brief calculate a new reconnect schedule based on the location of other workers (potential parents to reconnect
@@ -101,12 +106,13 @@ class ReconnectSchedulePredictor {
      * @param isIndexUpdted indicates if the index was updated or has remained the same since the last schedule was calculated
      * @return the new schedule if one was calculated or nullopt else
      */
-    std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
-                                                          const DataTypes::Experimental::GeoLocation& parentLocation,
-                                                          const S2PointIndex<WorkerId>& FieldNodeIndex,
-                                                          bool isIndexUpdated);
+    std::optional<ReconnectSchedule> getReconnectSchedule(
+        const DataTypes::Experimental::Waypoint & currentLocation,
+        const DataTypes::Experimental::GeoLocation & parentLocation,
+        const S2PointIndex<WorkerId> & FieldNodeIndex,
+        bool isIndexUpdated);
 #endif
-  private:
+private:
     /**
      * check if the device deviated further than the defined distance threshold from the predicted path. If so, interpolate a new
      * path by drawing a line from an old position through the current position
@@ -114,8 +120,9 @@ class ReconnectSchedulePredictor {
      * @param currentLocation : the current device position
      * @return true if the trajectory was recalculated, false if the device did not deviate further than the threshold
      */
-    bool updatePredictedPath(const NES::Spatial::DataTypes::Experimental::GeoLocation& newPathStart,
-                             const NES::Spatial::DataTypes::Experimental::GeoLocation& currentLocation);
+    bool updatePredictedPath(
+        const NES::Spatial::DataTypes::Experimental::GeoLocation & newPathStart,
+        const NES::Spatial::DataTypes::Experimental::GeoLocation & currentLocation);
 
 #ifdef S2DEF
     /**
@@ -125,7 +132,7 @@ class ReconnectSchedulePredictor {
      * @param currentParendLocation : The location of the workers current parent
      * @param fieldNodeIndex : a spatial index containing ids of fixed location nodes
      */
-    bool scheduleReconnects(const S2Point& currentParentLocation, const S2PointIndex<WorkerId>& fieldNodeIndex);
+    bool scheduleReconnects(const S2Point & currentParentLocation, const S2PointIndex<WorkerId> & fieldNodeIndex);
 #endif
 
     /**
@@ -155,7 +162,7 @@ class ReconnectSchedulePredictor {
     size_t stepsSinceLastLocationSave;
 #endif
 };
-}// namespace Spatial::Mobility::Experimental
-}// namespace NES
+} // namespace Spatial::Mobility::Experimental
+} // namespace NES
 
-#endif// NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULEPREDICTOR_HPP_
+#endif // NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULEPREDICTOR_HPP_

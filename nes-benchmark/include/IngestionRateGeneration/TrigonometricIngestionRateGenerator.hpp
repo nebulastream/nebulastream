@@ -17,27 +17,33 @@
 
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
-namespace NES::Benchmark::IngestionRateGeneration {
+namespace NES::Benchmark::IngestionRateGeneration
+{
 /**
  * @brief As we still build on with libstdc++, this is how we get the numerical value of pi
  * @return pi
  */
-constexpr double PI() { return 3.14159265358979323846; }
+constexpr double PI()
+{
+    return 3.14159265358979323846;
+}
 
 /**
  * @brief This class inherits from IngestionRateGenerator and allows for the generation of sine and cosine distributed ingestion rates.
  */
-class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
-  public:
+class TrigonometricIngestionRateGenerator : public IngestionRateGenerator
+{
+public:
     /**
      * @brief constructor for a uniform ingestion rate generator
      * @param ingestionRateInBuffers
      * @param ingestionRateCount
      */
-    explicit TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution,
-                                                 uint64_t ingestionRateInBuffers,
-                                                 uint64_t ingestionRateCount,
-                                                 uint64_t numberOfPeriods);
+    explicit TrigonometricIngestionRateGenerator(
+        IngestionRateDistribution ingestionRateDistribution,
+        uint64_t ingestionRateInBuffers,
+        uint64_t ingestionRateCount,
+        uint64_t numberOfPeriods);
 
     /**
       * @brief creates a vector of length ingestionRateCount and fills it with values that are distributed according to ingestionRateDistribution
@@ -45,7 +51,7 @@ class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
       */
     std::vector<std::uint64_t> generateIngestionRates() override;
 
-  private:
+private:
     /**
      * @brief calculates the sine of x. Sine has a period length of ingestionRateInBuffers divided by numberOfPeriods
      * @param xValue
@@ -65,6 +71,6 @@ class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
     uint64_t numberOfPeriods;
     std::vector<uint64_t> predefinedIngestionRates;
 };
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_TRIGONOMETRICINGESTIONRATEGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_TRIGONOMETRICINGESTIONRATEGENERATOR_HPP_

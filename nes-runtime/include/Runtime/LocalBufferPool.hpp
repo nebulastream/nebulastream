@@ -15,39 +15,41 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_
 
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferRecycler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferRecycler.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-#include <folly/MPMCQueue.h>
-#include <folly/concurrency/UnboundedQueue.h>
+#    include <folly/MPMCQueue.h>
+#    include <folly/concurrency/UnboundedQueue.h>
 #endif
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 class TupleBuffer;
-namespace detail {
+namespace detail
+{
 class MemorySegment;
 }
 
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */
-class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
-  public:
+class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider
+{
+public:
     /**
      * @brief Construct a new LocalBufferPool
      * @param bufferManager the global buffer manager
      * @param availableBuffers deque of exclusive buffers
      * @param numberOfReservedBuffers number of exclusive bufferss
      */
-    explicit LocalBufferPool(const BufferManagerPtr& bufferManager,
-                             std::deque<detail::MemorySegment*>&& availableBuffers,
-                             size_t numberOfReservedBuffers);
+    explicit LocalBufferPool(
+        const BufferManagerPtr & bufferManager, std::deque<detail::MemorySegment *> && availableBuffers, size_t numberOfReservedBuffers);
     ~LocalBufferPool() override;
 
     /**
@@ -76,31 +78,31 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
      * @brief Recycle a pooled buffer that is might be exclusive to the pool
      * @param buffer
      */
-    void recyclePooledBuffer(detail::MemorySegment* memSegment) override;
+    void recyclePooledBuffer(detail::MemorySegment * memSegment) override;
 
     /**
      * @brief This calls is not supported and raises Runtime error
      * @param buffer
      */
-    void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(detail::MemorySegment * buffer) override;
 
     virtual BufferManagerType getBufferManagerType() const override;
 
-  private:
+private:
     std::shared_ptr<BufferManager> bufferManager;
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    std::deque<detail::MemorySegment*> exclusiveBuffers;
+    std::deque<detail::MemorySegment *> exclusiveBuffers;
 #else
-    folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
+    folly::MPMCQueue<detail::MemorySegment *> exclusiveBuffers;
     std::atomic<uint32_t> exclusiveBufferCount;
 #endif
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    std::vector<detail::MemorySegment*> allSegments;
+    std::vector<detail::MemorySegment *> allSegments;
 #endif
     size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_

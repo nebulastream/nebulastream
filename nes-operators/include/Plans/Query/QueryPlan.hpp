@@ -15,17 +15,18 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 
+#include <memory>
+#include <set>
+#include <unordered_set>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
-#include <memory>
-#include <set>
-#include <unordered_set>
-#include <vector>
 
-namespace NES {
+namespace NES
+{
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -42,8 +43,9 @@ using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 /**
  * @brief The query plan encapsulates a set of operators and provides a set of utility functions.
  */
-class QueryPlan {
-  public:
+class QueryPlan
+{
+public:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
      * @param queryId :  the query id
@@ -88,7 +90,7 @@ class QueryPlan {
      * @brief Appends an operator to the query plan and make the new operator as root.
      * @param operatorNode : new operator
      */
-    void appendOperatorAsNewRoot(const OperatorPtr& operatorNode);
+    void appendOperatorAsNewRoot(const OperatorPtr & operatorNode);
 
     /**
      * @brief Returns string representation of the query.
@@ -107,7 +109,7 @@ class QueryPlan {
      * Note: improves this when we have to due with multi-root use case.
      * @param newRootOperator
      */
-    void addRootOperator(const OperatorPtr& newRootOperator);
+    void addRootOperator(const OperatorPtr & newRootOperator);
 
     /**
      * remove the an operator from the root operator list.
@@ -119,22 +121,27 @@ class QueryPlan {
      * @brief Get all the operators of a specific type
      * @return returns a vector of operators
      */
-    template<class T>
-    std::vector<std::shared_ptr<T>> getOperatorByType() const {
+    template <class T>
+    std::vector<std::shared_ptr<T>> getOperatorByType() const
+    {
         // Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
         std::set<OperatorId> visitedOpIds;
-        for (const auto& rootOperator : rootOperators) {
+        for (const auto & rootOperator : rootOperators)
+        {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
+            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr)
+            {
                 auto visitingOp = (*itr)->as<Operator>();
-                if (visitedOpIds.contains(visitingOp->getId())) {
+                if (visitedOpIds.contains(visitingOp->getId()))
+                {
                     // skip rest of the steps as the node found in already visited node list
                     continue;
                 }
                 visitedOpIds.insert(visitingOp->getId());
-                if (visitingOp->instanceOf<T>()) {
+                if (visitingOp->instanceOf<T>())
+                {
                     operators.push_back(visitingOp->as<T>());
                 }
             }
@@ -222,8 +229,8 @@ class QueryPlan {
      * @param upstreamOperators : the upstream operators
      * @return all operators between (excluding) downstream and upstream operators
      */
-    std::set<OperatorPtr> findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperators,
-                                                  const std::set<OperatorPtr>& upstreamOperators);
+    std::set<OperatorPtr>
+    findAllOperatorsBetween(const std::set<OperatorPtr> & downstreamOperators, const std::set<OperatorPtr> & upstreamOperators);
 
     /**
      * @brief Get state of the query plan
@@ -247,9 +254,9 @@ class QueryPlan {
      * @param otherPlan: the other plan to be compared to this plan
      * @return true, if this and other plan are equal in their structure and operators, false else
      */
-    bool compare(QueryPlanPtr& otherPlan);
+    bool compare(QueryPlanPtr & otherPlan);
 
-  private:
+private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
      * @param queryId :  the query id
@@ -280,8 +287,8 @@ class QueryPlan {
      * @param targetOperators: the target operator
      * @return empty or operators between source and target operators
      */
-    std::set<OperatorPtr> findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator,
-                                                                       const std::set<OperatorPtr>& targetOperators);
+    std::set<OperatorPtr>
+    findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr & sourceOperator, const std::set<OperatorPtr> & targetOperators);
 
     std::vector<OperatorPtr> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;
@@ -290,5 +297,5 @@ class QueryPlan {
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

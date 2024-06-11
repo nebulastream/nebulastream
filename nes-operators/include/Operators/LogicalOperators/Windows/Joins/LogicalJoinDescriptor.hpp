@@ -15,21 +15,22 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
 
+#include <cstdint>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
-#include <cstdint>
 
-namespace NES::Join {
+namespace NES::Join
+{
 
 /**
  * @brief Runtime definition of a join operator
  * @experimental
  */
-class LogicalJoinDescriptor {
-
-  public:
+class LogicalJoinDescriptor
+{
+public:
     /**
      * With this enum we distinguish between options to compose two sources, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
      * Thus, INNER_JOIN combines two tuples in case they share a common key attribute
@@ -43,20 +44,26 @@ class LogicalJoinDescriptor {
      * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
      *
      */
-    enum class JoinType : uint8_t { INNER_JOIN, CARTESIAN_PRODUCT };
+    enum class JoinType : uint8_t
+    {
+        INNER_JOIN,
+        CARTESIAN_PRODUCT
+    };
 
-    static LogicalJoinDescriptorPtr create(ExpressionNodePtr joinExpression,
-                                           const Windowing::WindowTypePtr& windowType,
-                                           uint64_t numberOfInputEdgesLeft,
-                                           uint64_t numberOfInputEdgesRight,
-                                           JoinType joinType);
+    static LogicalJoinDescriptorPtr create(
+        ExpressionNodePtr joinExpression,
+        const Windowing::WindowTypePtr & windowType,
+        uint64_t numberOfInputEdgesLeft,
+        uint64_t numberOfInputEdgesRight,
+        JoinType joinType);
 
-    explicit LogicalJoinDescriptor(ExpressionNodePtr joinExpression,
-                                   Windowing::WindowTypePtr windowType,
-                                   uint64_t numberOfInputEdgesLeft,
-                                   uint64_t numberOfInputEdgesRight,
-                                   JoinType joinType,
-                                   OriginId originId = INVALID_ORIGIN_ID);
+    explicit LogicalJoinDescriptor(
+        ExpressionNodePtr joinExpression,
+        Windowing::WindowTypePtr windowType,
+        uint64_t numberOfInputEdgesLeft,
+        uint64_t numberOfInputEdgesRight,
+        JoinType joinType,
+        OriginId originId = INVALID_ORIGIN_ID);
 
     /**
    * @brief getter left source type
@@ -137,9 +144,9 @@ class LogicalJoinDescriptor {
      * @param other: LogicalJoinDescriptor that we want to check if they are equal
      * @return Boolean
      */
-    bool equals(const LogicalJoinDescriptor& other) const;
+    bool equals(const LogicalJoinDescriptor & other) const;
 
-  private:
+private:
     ExpressionNodePtr joinExpression;
     SchemaPtr leftSourceType = Schema::create();
     SchemaPtr rightSourceType = Schema::create();
@@ -152,5 +159,5 @@ class LogicalJoinDescriptor {
 };
 
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
-}// namespace NES::Join
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
+} // namespace NES::Join
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_

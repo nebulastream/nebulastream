@@ -14,9 +14,16 @@
 
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 
-namespace NES::Runtime::Execution {
-Operators::OperatorPtr PhysicalOperatorPipeline::getRootOperator() const { return rootOperator; }
+namespace NES::Runtime::Execution
+{
+Operators::OperatorPtr PhysicalOperatorPipeline::getRootOperator() const
+{
+    return rootOperator;
+}
 
-void PhysicalOperatorPipeline::setRootOperator(Operators::OperatorPtr rootOperator) { this->rootOperator = rootOperator; }
+void PhysicalOperatorPipeline::setRootOperator(Operators::OperatorPtr rootOperator)
+{
+    this->rootOperator = rootOperator;
+}
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

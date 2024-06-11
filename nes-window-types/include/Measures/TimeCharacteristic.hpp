@@ -19,7 +19,8 @@
 #include <API/TimeUnit.hpp>
 #include <Expressions/ExpressionNode.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class TimeCharacteristic;
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
@@ -27,13 +28,18 @@ using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
  */
-class TimeCharacteristic final {
-  public:
+class TimeCharacteristic final
+{
+public:
     constexpr static const auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
     /**
      * @brief The type as enum.
      */
-    enum class Type : uint8_t { IngestionTime, EventTime };
+    enum class Type : uint8_t
+    {
+        IngestionTime,
+        EventTime
+    };
     explicit TimeCharacteristic(Type type);
     TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
 
@@ -50,7 +56,7 @@ class TimeCharacteristic final {
      * @param field the field from which we want to extract the time.
      * @return
      */
-    static TimeCharacteristicPtr createEventTime(ExpressionNodePtr field, const TimeUnit& unit = TimeUnit(1));
+    static TimeCharacteristicPtr createEventTime(ExpressionNodePtr field, const TimeUnit & unit = TimeUnit(1));
 
     /**
      * @return The TimeCharacteristic type.
@@ -73,7 +79,7 @@ class TimeCharacteristic final {
      * @param other: Object that we want to compare this to
      * @return Boolean
      */
-    bool equals(const TimeCharacteristic& other) const;
+    bool equals(const TimeCharacteristic & other) const;
 
     uint64_t hash() const;
 
@@ -81,13 +87,13 @@ class TimeCharacteristic final {
     std::string getTypeAsString() const;
     TimeUnit getTimeUnit() const;
 
-    void setTimeUnit(const TimeUnit& unit);
+    void setTimeUnit(const TimeUnit & unit);
 
-  private:
+private:
     Type type;
     AttributeFieldPtr field;
     TimeUnit unit;
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_

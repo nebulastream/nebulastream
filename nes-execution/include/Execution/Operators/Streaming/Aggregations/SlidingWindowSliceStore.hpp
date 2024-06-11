@@ -20,7 +20,8 @@
 #include <set>
 #include <vector>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class NonKeyedSlice;
 using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
@@ -28,9 +29,10 @@ using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
 /**
 * @brief The slice store for sliding windows that maintains a set of slices for all in-flight sliding windows.
 */
-template<class SliceType>
-class SlidingWindowSliceStore {
-  public:
+template <class SliceType>
+class SlidingWindowSliceStore
+{
+public:
     using SliceTypePtr = std::shared_ptr<SliceType>;
     explicit SlidingWindowSliceStore(uint64_t windowSize, uint64_t windowSlide);
     virtual ~SlidingWindowSliceStore() = default;
@@ -44,13 +46,13 @@ class SlidingWindowSliceStore {
      * @brief Returns the slice end ts for the first slice in the slice store.
      * @return uint64_t
      */
-    SliceTypePtr& getFirstSlice();
+    SliceTypePtr & getFirstSlice();
 
     /**
      * @brief Returns the slice end ts for the last slice in the slice store.
      * @return uint64_t
      */
-    SliceTypePtr& getLastSlice();
+    SliceTypePtr & getLastSlice();
 
     /**
      * @brief Collect a set of windows between oldTs and currentTs.
@@ -87,13 +89,13 @@ class SlidingWindowSliceStore {
      */
     uint64_t getNumberOfSlices();
 
-  private:
+private:
     uint64_t windowSize;
     uint64_t windowSlide;
     std::mutex sliceStagingMutex;
     std::list<SliceTypePtr> slices;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLIDINGWINDOWSLICESTORE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLIDINGWINDOWSLICESTORE_HPP_

@@ -20,18 +20,20 @@
 
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This exception is thrown when an error occurs during UDF processing.
  */
-class UDFException : public Exceptions::RequestExecutionException {
-  public:
+class UDFException : public Exceptions::RequestExecutionException
+{
+public:
     /**
      * @brief Construct a UDF exception from a message and include the current stack trace.
      * @param message The exception message.
      */
-    explicit UDFException(const std::string& message);
+    explicit UDFException(const std::string & message);
     /**
      * @brief Return the exception message without the stack trace.
      * @return The original exception message without the stack trace.
@@ -40,11 +42,11 @@ class UDFException : public Exceptions::RequestExecutionException {
      * However, the error message is also returned to clients which submit UDFs over the REST API.
      * These clients should not receive the stack trace information.
      */
-    [[nodiscard]] const std::string& getMessage() const { return message; }
+    [[nodiscard]] const std::string & getMessage() const { return message; }
 
-  private:
+private:
     const std::string message;
 };
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_

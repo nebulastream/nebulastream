@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
@@ -35,26 +36,27 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
 #include <z3++.h>
 
 using namespace NES;
 
-class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("Z3SignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Z3SignatureBasedCompleteQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
@@ -74,7 +76,8 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -106,8 +109,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -130,8 +133,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1Children : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2Children : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1Children, sink2Children);
         }
     }
@@ -143,7 +148,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
 //FIXME: This required 1402 and 1378 to be fixed
 // We need to do the attribute name resolution just as done in SQL systems to identify or distinguish attribute names
 // coming from same streams (in case of a self join)
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQueriesWithMultipleSameSources) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQueriesWithMultipleSameSources)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -180,8 +186,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -204,10 +210,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -218,7 +227,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSources)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -238,8 +248,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -265,8 +275,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -275,7 +287,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperators)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
@@ -305,8 +318,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -329,8 +342,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -339,7 +354,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
@@ -369,8 +385,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -393,8 +409,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -403,7 +421,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
@@ -433,8 +452,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto signatureInferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     signatureInferencePhase->execute(queryPlan1);
     signatureInferencePhase->execute(queryPlan2);
 
@@ -460,8 +479,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -470,8 +491,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFilters)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -491,8 +512,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -518,8 +539,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -528,7 +551,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -548,8 +572,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -575,8 +599,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -585,8 +611,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -606,8 +632,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -633,8 +659,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -643,8 +671,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -664,8 +692,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -691,8 +719,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -701,8 +731,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
@@ -739,8 +769,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -766,8 +796,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -776,8 +808,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -814,8 +846,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -841,8 +873,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -851,8 +885,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindows)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -889,8 +923,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -913,10 +947,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -927,8 +964,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -965,8 +1002,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -989,10 +1026,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -1003,8 +1043,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -1033,8 +1073,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1057,10 +1097,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -1072,8 +1115,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operators
  * but different attribute names
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNames) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNames)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -1102,8 +1145,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1126,10 +1169,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -1141,8 +1187,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operator
  * but different attribute names and additional filter operator
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNamesAndFilters) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNamesAndFilters)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -1171,8 +1217,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1195,10 +1241,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -1209,8 +1258,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operator but in different order
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -1239,8 +1288,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1263,10 +1312,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -1277,8 +1329,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different project operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -1307,8 +1359,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1334,8 +1386,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1344,8 +1398,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same watermark operators
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -1376,8 +1430,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWa
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1400,10 +1454,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWa
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -1415,8 +1472,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWa
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different watermark operators.
  * One query with IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -1431,15 +1488,13 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 =
-        Query::from("car")
-            .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                     NES::API::Milliseconds(10),
-                                                                                     NES::API::Milliseconds()))
-            .map(Attribute("value") = 40)
-            .filter(Attribute("type") < 40)
-            .project(Attribute("type"), Attribute("value"))
-            .sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                           FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()))
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("type") < 40)
+                       .project(Attribute("type"), Attribute("value"))
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1450,8 +1505,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1477,8 +1532,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1488,30 +1545,29 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queryIdAndCatalogEntryMapping with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query1 =
-        Query::from("car")
-            .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-            .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
-            .map(Attribute("value") = 40)
-            .filter(Attribute("id") < 45)
-            .sink(printSinkDescriptor);
+    Query query1 = Query::from("car")
+                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+                       .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query2 =
-        Query::from("car")
-            .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-            .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
-            .map(Attribute("value") = 40)
-            .filter(Attribute("id") < 45)
-            .sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+                       .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1522,8 +1578,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1546,8 +1602,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1558,20 +1616,16 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
  * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy.
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
-       testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("truck").assignWatermark(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
+    Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+        FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(Query::from("truck").assignWatermark(
-                           Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                   NES::API::Milliseconds(10),
-                                                                                   NES::API::Milliseconds())))
+                       .unionWith(Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                           FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds())))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1580,16 +1634,12 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck").assignWatermark(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
+    Query subQuery2 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+        FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(Query::from("truck").assignWatermark(
-                           Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                   NES::API::Milliseconds(10),
-                                                                                   NES::API::Milliseconds())))
+                       .unionWith(Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                           FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds())))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1603,8 +1653,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1627,8 +1677,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1639,20 +1691,16 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
  * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
-       testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("truck").assignWatermark(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
+    Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+        FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(Query::from("truck").assignWatermark(
-                           Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                   NES::API::Milliseconds(10),
-                                                                                   NES::API::Milliseconds())))
+                       .unionWith(Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                           FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds())))
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1660,13 +1708,11 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query2 =
-        Query::from("car")
-            .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                     NES::API::Milliseconds(10),
-                                                                                     NES::API::Milliseconds()))
-            .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
-            .sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                           FieldAccessExpressionNode::create("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()))
+                       .unionWith(Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()))
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1677,8 +1723,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1704,8 +1750,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1714,8 +1762,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperator)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -1751,8 +1799,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1775,8 +1823,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1785,8 +1835,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -1822,8 +1872,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1846,8 +1896,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1856,8 +1908,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -1892,8 +1944,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1919,8 +1971,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -1930,8 +1984,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 //NOTE: We do not support this sharing at present as Z3 takes too long if we compare columns individually.
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithJoinOperatorWithDifferentSourceOrder)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -1967,8 +2021,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1991,8 +2045,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -2002,8 +2058,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 //FIXME: enable the test while solving #2228
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithMultipleJoinOperators) {
-
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithMultipleJoinOperators)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -2042,8 +2098,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto z3InferencePhase
+        = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -2066,8 +2122,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }

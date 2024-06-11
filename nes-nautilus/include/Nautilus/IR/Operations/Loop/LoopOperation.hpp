@@ -15,35 +15,41 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
 
+#include <vector>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <vector>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 /**
  * @brief Iterates over a buffer. Loads a record on each iteration. Contains operations which are nested inside of the LoopBlock.
  * Points to other BasicBlocks if there is control flow.
  */
-class LoopOperation : public Operation {
-  public:
-    enum class LoopType : uint8_t { DefaultLoop, CountedLoop };
+class LoopOperation : public Operation
+{
+public:
+    enum class LoopType : uint8_t
+    {
+        DefaultLoop,
+        CountedLoop
+    };
     LoopOperation(LoopType loopType);
     ~LoopOperation() override = default;
 
     LoopType getLoopType();
-    BasicBlockInvocation& getLoopBodyBlock();
-    BasicBlockInvocation& getLoopFalseBlock();
-    BasicBlockInvocation& getLoopHeadBlock();
-    BasicBlockInvocation& getLoopEndBlock();
+    BasicBlockInvocation & getLoopBodyBlock();
+    BasicBlockInvocation & getLoopFalseBlock();
+    BasicBlockInvocation & getLoopHeadBlock();
+    BasicBlockInvocation & getLoopEndBlock();
     void setLoopInfo(std::shared_ptr<LoopInfo> loopInfo);
     std::shared_ptr<LoopInfo> getLoopInfo();
     void setLoopType(LoopOperation::LoopType loopType);
 
     std::string toString() override;
 
-  private:
+private:
     LoopType loopType;
     BasicBlockInvocation loopHeadBlock;
     BasicBlockInvocation loopBodyBlock;
@@ -51,5 +57,5 @@ class LoopOperation : public Operation {
     BasicBlockInvocation loopEndBlock;
     std::shared_ptr<LoopInfo> loopInfo;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_

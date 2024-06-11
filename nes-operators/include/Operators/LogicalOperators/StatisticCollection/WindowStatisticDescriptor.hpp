@@ -15,12 +15,13 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_WINDOWSTATISTICDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_WINDOWSTATISTICDESCRIPTOR_HPP_
 
+#include <cstdint>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
-#include <cstdint>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class WindowStatisticDescriptor;
 using WindowStatisticDescriptorPtr = std::shared_ptr<WindowStatisticDescriptor>;
@@ -28,13 +29,14 @@ using WindowStatisticDescriptorPtr = std::shared_ptr<WindowStatisticDescriptor>;
 /**
  * @brief Abstract class for a WindowStatisticDescriptor
  */
-class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStatisticDescriptor> {
-  public:
+class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStatisticDescriptor>
+{
+public:
     /**
      * @brief Constructor for a WindowStatisticDescriptor
      * @param field: Over which field to track the statistic
      */
-    WindowStatisticDescriptor(const FieldAccessExpressionNodePtr& field, uint64_t width);
+    WindowStatisticDescriptor(const FieldAccessExpressionNodePtr & field, uint64_t width);
 
     virtual ~WindowStatisticDescriptor() = default;
 
@@ -43,7 +45,7 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      * @param rhs
      * @return True, if equal, otherwise false.
      */
-    virtual bool equal(const WindowStatisticDescriptorPtr& rhs) const = 0;
+    virtual bool equal(const WindowStatisticDescriptorPtr & rhs) const = 0;
 
     /**
      * @brief Getter for the FieldAccessExpression over which the statistic is being collected
@@ -62,13 +64,13 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      * @param outputSchema
      * @param qualifierNameWithSeparator
      */
-    virtual void addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) = 0;
+    virtual void addDescriptorFields(Schema & outputSchema, const std::string & qualifierNameWithSeparator) = 0;
 
     /**
      * @brief Infers all stamps for the descriptor
      * @param inputSchema
      */
-    virtual void inferStamps(const SchemaPtr& inputSchema);
+    virtual void inferStamps(const SchemaPtr & inputSchema);
 
     /**
      * @brief Creates a string representation
@@ -81,9 +83,11 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      * @tparam WindowStatisticDescriptorType
      * @return bool true if node is of WindowStatisticDescriptorType
      */
-    template<class WindowStatisticDescriptorType>
-    bool instanceOf() {
-        if (dynamic_cast<WindowStatisticDescriptorType*>(this)) {
+    template <class WindowStatisticDescriptorType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<WindowStatisticDescriptorType *>(this))
+        {
             return true;
         }
         return false;
@@ -94,9 +98,11 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
      * @tparam WindowStatisticDescriptorType
      * @return bool true if WindowStatisticDescriptor is of WindowStatisticDescriptorType
      */
-    template<class WindowStatisticDescriptorType>
-    bool instanceOf() const {
-        if (dynamic_cast<WindowStatisticDescriptorType*>(this)) {
+    template <class WindowStatisticDescriptorType>
+    bool instanceOf() const
+    {
+        if (dynamic_cast<WindowStatisticDescriptorType *>(this))
+        {
             return true;
         }
         return false;
@@ -107,9 +113,11 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
     * @tparam WindowStatisticDescriptorType
     * @return returns a shared pointer of the WindowStatisticDescriptorType
     */
-    template<class WindowStatisticDescriptorType>
-    std::shared_ptr<WindowStatisticDescriptorType> as() {
-        if (instanceOf<WindowStatisticDescriptorType>()) {
+    template <class WindowStatisticDescriptorType>
+    std::shared_ptr<WindowStatisticDescriptorType> as()
+    {
+        if (instanceOf<WindowStatisticDescriptorType>())
+        {
             return std::dynamic_pointer_cast<WindowStatisticDescriptorType>(this->shared_from_this());
         }
         throw std::logic_error("We performed an invalid cast of operator to type.");
@@ -120,19 +128,21 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
     * @tparam WindowStatisticDescriptorType
     * @return returns a shared pointer of the WindowStatisticDescriptorType
     */
-    template<class WindowStatisticDescriptorType>
-    std::shared_ptr<WindowStatisticDescriptorType> as() const {
-        if (instanceOf<WindowStatisticDescriptorType>()) {
+    template <class WindowStatisticDescriptorType>
+    std::shared_ptr<WindowStatisticDescriptorType> as() const
+    {
+        if (instanceOf<WindowStatisticDescriptorType>())
+        {
             return std::dynamic_pointer_cast<WindowStatisticDescriptorType>(this->shared_from_this());
         }
         throw std::logic_error("We performed an invalid cast of operator to type.");
     }
 
-  protected:
+protected:
     const FieldAccessExpressionNodePtr field;
     const uint64_t width;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_WINDOWSTATISTICDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_WINDOWSTATISTICDESCRIPTOR_HPP_

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
@@ -19,36 +20,42 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
-#include <utility>
 
-namespace NES::Experimental {
+namespace NES::Experimental
+{
 
-LogicalBatchJoinOperator::LogicalBatchJoinOperator(Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition,
-                                                   OperatorId id)
-    : Operator(id), LogicalBinaryOperator(id), batchJoinDefinition(std::move(batchJoinDefinition)) {}
+LogicalBatchJoinOperator::LogicalBatchJoinOperator(Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition, OperatorId id)
+    : Operator(id), LogicalBinaryOperator(id), batchJoinDefinition(std::move(batchJoinDefinition))
+{
+}
 
-bool LogicalBatchJoinOperator::isIdentical(NodePtr const& rhs) const {
+bool LogicalBatchJoinOperator::isIdentical(NodePtr const & rhs) const
+{
     return equal(rhs) && rhs->as<LogicalBatchJoinOperator>()->getId() == id;
 }
 
-std::string LogicalBatchJoinOperator::toString() const {
+std::string LogicalBatchJoinOperator::toString() const
+{
     std::stringstream ss;
     ss << "BATCHJOIN(" << id << ")";
     return ss.str();
 }
 
-Join::Experimental::LogicalBatchJoinDescriptorPtr LogicalBatchJoinOperator::getBatchJoinDefinition() const {
+Join::Experimental::LogicalBatchJoinDescriptorPtr LogicalBatchJoinOperator::getBatchJoinDefinition() const
+{
     return batchJoinDefinition;
 }
 
-bool LogicalBatchJoinOperator::inferSchema() {
-
-    if (!LogicalBinaryOperator::inferSchema()) {
+bool LogicalBatchJoinOperator::inferSchema()
+{
+    if (!LogicalBinaryOperator::inferSchema())
+    {
         return false;
     }
 
     //validate that only two different type of schema were present
-    if (distinctSchemas.size() != 2) {
+    if (distinctSchemas.size() != 2)
+    {
         throw TypeInferenceException(
             fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size()));
     }
@@ -60,8 +67,10 @@ bool LogicalBatchJoinOperator::inferSchema() {
     //Find the schema for left join key
     FieldAccessExpressionNodePtr buildJoinKey = batchJoinDefinition->getBuildJoinKey();
     auto buildJoinKeyName = buildJoinKey->getFieldName();
-    for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-        if ((*itr)->getField(buildJoinKeyName)) {
+    for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
+    {
+        if ((*itr)->getField(buildJoinKeyName))
+        {
             leftInputSchema->copyFields(*itr);
             buildJoinKey->inferStamp(leftInputSchema);
             //remove the schema from distinct schema list
@@ -74,29 +83,36 @@ bool LogicalBatchJoinOperator::inferSchema() {
     //Find the schema for right join key
     FieldAccessExpressionNodePtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
     auto probeJoinKeyName = probeJoinKey->getFieldName();
-    for (const auto& schema : distinctSchemas) {
-        if (schema->getField(probeJoinKeyName)) {
+    for (const auto & schema : distinctSchemas)
+    {
+        if (schema->getField(probeJoinKeyName))
+        {
             rightInputSchema->copyFields(schema);
             probeJoinKey->inferStamp(rightInputSchema);
         }
     }
 
     //Check if left input schema was identified
-    if (!leftInputSchema) {
-        NES_ERROR("LogicalBatchJoinOperator: Left input schema is not initialized. Make sure that left join key is present: {}",
-                  buildJoinKeyName);
+    if (!leftInputSchema)
+    {
+        NES_ERROR(
+            "LogicalBatchJoinOperator: Left input schema is not initialized. Make sure that left join key is present: {}",
+            buildJoinKeyName);
         throw TypeInferenceException("LogicalBatchJoinOperator: Left input schema is not initialized.");
     }
 
     //Check if right input schema was identified
-    if (!rightInputSchema) {
-        NES_ERROR("LogicalBatchJoinOperator: Right input schema is not initialized. Make sure that right join key is present: {}",
-                  probeJoinKeyName);
+    if (!rightInputSchema)
+    {
+        NES_ERROR(
+            "LogicalBatchJoinOperator: Right input schema is not initialized. Make sure that right join key is present: {}",
+            probeJoinKeyName);
         throw TypeInferenceException("LogicalBatchJoinOperator: Right input schema is not initialized.");
     }
 
     //Check that both left and right schema should be different
-    if (rightInputSchema->equals(leftInputSchema, false)) {
+    if (rightInputSchema->equals(leftInputSchema, false))
+    {
         NES_ERROR("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
         throw TypeInferenceException("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
     }
@@ -109,11 +125,13 @@ bool LogicalBatchJoinOperator::inferSchema() {
     outputSchema->clear();
 
     // create dynamic fields to store all fields from left and right streams
-    for (const auto& field : leftInputSchema->fields) {
+    for (const auto & field : leftInputSchema->fields)
+    {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    for (const auto& field : rightInputSchema->fields) {
+    for (const auto & field : rightInputSchema->fields)
+    {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
@@ -123,7 +141,8 @@ bool LogicalBatchJoinOperator::inferSchema() {
     return true;
 }
 
-OperatorPtr LogicalBatchJoinOperator::copy() {
+OperatorPtr LogicalBatchJoinOperator::copy()
+{
     auto copy = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDefinition, id);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
@@ -131,20 +150,26 @@ OperatorPtr LogicalBatchJoinOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
+    for (const auto & [key, value] : properties)
+    {
         copy->addProperty(key, value);
     }
     return copy;
 }
 
-bool LogicalBatchJoinOperator::equal(NodePtr const& rhs) const { return rhs->instanceOf<LogicalBatchJoinOperator>(); }// todo
+bool LogicalBatchJoinOperator::equal(NodePtr const & rhs) const
+{
+    return rhs->instanceOf<LogicalBatchJoinOperator>();
+} // todo
 
-void LogicalBatchJoinOperator::inferStringSignature() {
+void LogicalBatchJoinOperator::inferStringSignature()
+{
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
     //Infer query signatures for child operators
-    for (const auto& child : children) {
+    for (const auto & child : children)
+    {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -161,4 +186,4 @@ void LogicalBatchJoinOperator::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-}// namespace NES::Experimental
+} // namespace NES::Experimental

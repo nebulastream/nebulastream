@@ -17,7 +17,8 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class ExpressionNode;
 
@@ -34,18 +35,18 @@ ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr ABS(const ExpressionNodePtr& exp);
-ExpressionNodePtr SQRT(const ExpressionNodePtr& exp);
-ExpressionNodePtr EXP(const ExpressionNodePtr& exp);
-ExpressionNodePtr LN(const ExpressionNodePtr& exp);
-ExpressionNodePtr LOG2(const ExpressionNodePtr& exp);
-ExpressionNodePtr LOG10(const ExpressionNodePtr& exp);
-ExpressionNodePtr SIN(const ExpressionNodePtr& exp);
-ExpressionNodePtr COS(const ExpressionNodePtr& exp);
-ExpressionNodePtr RADIANS(const ExpressionNodePtr& exp);
-ExpressionNodePtr ROUND(const ExpressionNodePtr& exp);
-ExpressionNodePtr CEIL(const ExpressionNodePtr& exp);
-ExpressionNodePtr FLOOR(const ExpressionNodePtr& exp);
+ExpressionNodePtr ABS(const ExpressionNodePtr & exp);
+ExpressionNodePtr SQRT(const ExpressionNodePtr & exp);
+ExpressionNodePtr EXP(const ExpressionNodePtr & exp);
+ExpressionNodePtr LN(const ExpressionNodePtr & exp);
+ExpressionNodePtr LOG2(const ExpressionNodePtr & exp);
+ExpressionNodePtr LOG10(const ExpressionNodePtr & exp);
+ExpressionNodePtr SIN(const ExpressionNodePtr & exp);
+ExpressionNodePtr COS(const ExpressionNodePtr & exp);
+ExpressionNodePtr RADIANS(const ExpressionNodePtr & exp);
+ExpressionNodePtr ROUND(const ExpressionNodePtr & exp);
+ExpressionNodePtr CEIL(const ExpressionNodePtr & exp);
+ExpressionNodePtr FLOOR(const ExpressionNodePtr & exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp);
 ExpressionNodePtr operator--(ExpressionNodePtr exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp, int value);
@@ -104,5 +105,5 @@ ExpressionNodePtr operator--(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp, int);
 ExpressionNodePtr operator--(ExpressionItem exp, int);
 
-}// namespace NES
-#endif// NES_CLIENT_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
+} // namespace NES
+#endif // NES_CLIENT_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_

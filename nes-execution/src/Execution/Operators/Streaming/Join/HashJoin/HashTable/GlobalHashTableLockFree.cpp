@@ -16,23 +16,25 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLockFree.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-GlobalHashTableLockFree::GlobalHashTableLockFree(size_t sizeOfRecord,
-                                                 size_t numPartitions,
-                                                 FixedPagesAllocator& fixedPagesAllocator,
-                                                 size_t pageSize,
-                                                 size_t preAllocPageSizeCnt)
-    : StreamJoinHashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt) {}
+GlobalHashTableLockFree::GlobalHashTableLockFree(
+    size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator & fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt)
+    : StreamJoinHashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt)
+{
+}
 
-uint8_t* GlobalHashTableLockFree::insert(uint64_t key) const {
+uint8_t * GlobalHashTableLockFree::insert(uint64_t key) const
+{
     auto hashedKey = NES::Util::murmurHash(key);
     NES_TRACE("into key={} bucket={}", key, getBucketPos(hashedKey));
     auto entry = buckets[getBucketPos(hashedKey)]->appendConcurrentLockFree(hashedKey);
-    while (entry == nullptr) {
+    while (entry == nullptr)
+    {
         entry = buckets[getBucketPos(hashedKey)]->appendConcurrentLockFree(hashedKey);
     }
     return entry;
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

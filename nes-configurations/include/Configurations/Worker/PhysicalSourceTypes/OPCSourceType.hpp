@@ -15,13 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
 
+#include <map>
+#include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 class OPCSourceType;
 using OPCSourceTypePtr = std::shared_ptr<OPCSourceType>;
@@ -30,17 +31,16 @@ using OPCSourceTypePtr = std::shared_ptr<OPCSourceType>;
  * @brief Configuration object for OPC source config
  * connect to an OPC server and read data from there
  */
-class OPCSourceType : public PhysicalSourceType {
-
-  public:
+class OPCSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief create a OPCSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(const std::string& logicalSourceName,
-                                   const std::string& physicalSourceName,
-                                   std::map<std::string, std::string> sourceConfigMap);
+    static OPCSourceTypePtr create(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a OPCSourceConfigPtr object
@@ -48,19 +48,19 @@ class OPCSourceType : public PhysicalSourceType {
      * @return OPCSourceConfigPtr
      */
     static OPCSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig);
+    create(const std::string & logicalSourceName, const std::string & physicalSourceName, const Yaml::Node & yamlConfig);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static OPCSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     ~OPCSourceType() = default;
 
     std::string toString() override;
 
-    bool equal(const PhysicalSourceTypePtr& other) override;
+    bool equal(const PhysicalSourceTypePtr & other) override;
 
     void reset() override;
 
@@ -79,7 +79,7 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief Set node identifier
      */
-    void setNodeIdentifier(const std::string& nodeIdentifier);
+    void setNodeIdentifier(const std::string & nodeIdentifier);
 
     /**
      * @brief Get userName
@@ -89,7 +89,7 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief Set userName
      */
-    void setUserName(const std::string& userName);
+    void setUserName(const std::string & userName);
 
     /**
      * @brief Get password
@@ -99,30 +99,29 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief Set password
      */
-    void setPassword(const std::string& password);
+    void setPassword(const std::string & password);
 
-  private:
+private:
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceType(const std::string& logicalSourceName,
-                           const std::string& physicalSourceName,
-                           std::map<std::string, std::string> sourceConfigMap);
+    explicit OPCSourceType(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    explicit OPCSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with default values
      */
-    OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    OPCSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     Configurations::IntConfigOption namespaceIndex;
     Configurations::StringConfigOption nodeIdentifier;
     Configurations::StringConfigOption userName;
     Configurations::StringConfigOption password;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_

@@ -17,24 +17,26 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class ConstFloatOperation : public Operation {
-  public:
+class ConstFloatOperation : public Operation
+{
+public:
     explicit ConstFloatOperation(OperationIdentifier identifier, double constantValue, Types::StampPtr stamp);
     ~ConstFloatOperation() override = default;
 
     double getValue();
 
-    template<class T>
+    template <class T>
     T getFloatViaType();
 
     std::string toString() override;
-    static bool classof(const Operation* Op);
+    static bool classof(const Operation * Op);
 
-  private:
+private:
     double constantValue;
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTFLOATOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTFLOATOPERATION_HPP_

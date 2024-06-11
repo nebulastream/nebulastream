@@ -15,21 +15,23 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_
 
-#include <Nautilus/Tracing/ValueRef.hpp>
 #include <memory>
 #include <vector>
-namespace NES::Nautilus::Tracing {
+#include <Nautilus/Tracing/ValueRef.hpp>
+namespace NES::Nautilus::Tracing
+{
 /**
  * @brief Indicates a reference from one block to another block.
  * The block reference can capture a set of arguments.
  */
-class BlockRef {
-  public:
+class BlockRef
+{
+public:
     BlockRef(uint32_t block);
     uint32_t block;
     std::vector<ValueRef> arguments;
-    friend std::ostream& operator<<(std::ostream& os, const BlockRef& ref);
+    friend std::ostream & operator<<(std::ostream & os, const BlockRef & ref);
 };
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_

@@ -18,12 +18,15 @@
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <fmt/core.h>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
-class ChannelId {
-  public:
+class ChannelId
+{
+public:
     explicit ChannelId(NesPartition nesPartition, WorkerThreadId workerThreadId)
-        : nesPartition(nesPartition), workerThreadId(workerThreadId) {
+        : nesPartition(nesPartition), workerThreadId(workerThreadId)
+    {
         // nop
     }
 
@@ -33,21 +36,24 @@ class ChannelId {
 
     [[nodiscard]] std::string toString() const { return fmt::format("{}(workerThreadId={})", nesPartition, workerThreadId); }
 
-    friend std::ostream& operator<<(std::ostream& os, const ChannelId& channelId) { return os << channelId.toString(); }
+    friend std::ostream & operator<<(std::ostream & os, const ChannelId & channelId) { return os << channelId.toString(); }
 
-  private:
+private:
     const NesPartition nesPartition;
     const WorkerThreadId workerThreadId;
 };
-}// namespace NES::Network
+} // namespace NES::Network
 
-namespace fmt {
-template<>
-struct formatter<NES::Network::ChannelId> : formatter<std::string> {
-    auto format(const NES::Network::ChannelId& channel_id, format_context& ctx) -> decltype(ctx.out()) {
+namespace fmt
+{
+template <>
+struct formatter<NES::Network::ChannelId> : formatter<std::string>
+{
+    auto format(const NES::Network::ChannelId & channel_id, format_context & ctx) -> decltype(ctx.out())
+    {
         return fmt::format_to(ctx.out(), "{}:{}", channel_id.getThreadId(), channel_id.getNesPartition());
     }
 };
-}// namespace fmt
+} // namespace fmt
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_

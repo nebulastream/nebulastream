@@ -22,32 +22,35 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Base type for all lists. A list can have different values that all have the same underlying type.
  * LISTs are typically used to store arrays of numbers.
  */
-class List : public Nautilus::Any {
-  public:
+class List : public Nautilus::Any
+{
+public:
     static const inline auto type = TypeIdentifier::create<List>();
 
     /**
      * @brief Iterator over all entries in the list.
      */
-    class ListValueIterator {
-      public:
-        ListValueIterator(List& listRef, Value<UInt32>& currentIndex);
-        ListValueIterator& operator++();
-        bool operator==(const ListValueIterator& other) const;
+    class ListValueIterator
+    {
+    public:
+        ListValueIterator(List & listRef, Value<UInt32> & currentIndex);
+        ListValueIterator & operator++();
+        bool operator==(const ListValueIterator & other) const;
         Value<> operator*();
 
-      private:
-        List& list;
+    private:
+        List & list;
         Value<UInt32> currentIndex;
     };
 
-    explicit List(const TypeIdentifier* childType) : Any(childType){};
+    explicit List(const TypeIdentifier * childType) : Any(childType){};
 
     /**
      * @brief Return the length of the list.
@@ -61,21 +64,21 @@ class List : public Nautilus::Any {
      * @param otherList
      * @return Value<Boolean>
      */
-    virtual Value<Boolean> equals(const Value<List>& otherList) = 0;
+    virtual Value<Boolean> equals(const Value<List> & otherList) = 0;
 
     /**
     * @brief Reads one element from the text value at a specific index.
     * @param index as Value<Int32>
     * @return Value<>
     */
-    virtual Value<> read(Value<UInt32>& index) const = 0;
+    virtual Value<> read(Value<UInt32> & index) const = 0;
 
     /**
      * @brief Writes one element a specific index.
      * @param index as Value<Int32>
      * @param value as Value<>
      */
-    virtual void write(Value<UInt32>& index, const Value<>& value) = 0;
+    virtual void write(Value<UInt32> & index, const Value<> & value) = 0;
 
     ListValueIterator begin();
     ListValueIterator end();
@@ -88,16 +91,17 @@ class List : public Nautilus::Any {
  * Currently, lists are restricted to Ints and Floats.
  * @tparam T
  */
-template<typename T>
+template <typename T>
 concept IsListComponentType = std::is_base_of_v<Int, T> || std::is_same_v<Float, T> || std::is_same_v<T, Double>;
 
 /**
  * @brief A typed list that contains values of a specific nautilus data types.
  * @tparam BaseType
  */
-template<IsListComponentType BaseType>
-class TypedList final : public List {
-  public:
+template <IsListComponentType BaseType>
+class TypedList final : public List
+{
+public:
     static const inline auto type = TypeIdentifier::create<TypedList<BaseType>>();
     /**
      * @brief Exposes the component type of this TypedList.
@@ -126,27 +130,27 @@ class TypedList final : public List {
     * @param otherList
     * @return Value<Boolean>
     */
-    Value<Boolean> equals(const Value<List>& otherList) override;
+    Value<Boolean> equals(const Value<List> & otherList) override;
 
     /**
     * @brief Reads one element from the text value at a specific index.
     * @param index as Value<Int32>
     * @return Value<>
     */
-    Value<> read(Value<UInt32>& index) const override;
+    Value<> read(Value<UInt32> & index) const override;
 
     /**
      * @brief Writes one element a specific index.
      * @param index as Value<Int32>
      * @param value as Value<>
      */
-    void write(Value<UInt32>& index, const Value<>& value) override;
+    void write(Value<UInt32> & index, const Value<> & value) override;
 
     AnyPtr copy() override;
 
-  private:
+private:
     const TypedRef<RawType> rawReference;
 };
 
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_

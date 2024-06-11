@@ -15,11 +15,12 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
 
-#include <folly/concurrency/UnboundedQueue.h>
 #include <future>
 #include <thread>
+#include <folly/concurrency/UnboundedQueue.h>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class PlacementAmendmentInstance;
 using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
@@ -30,9 +31,9 @@ using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer:
  * @brief The placement amendment handler class is responsible for processing placement amendments of updated shared query plans.
  * To this end, we can initialize the handles with a pre-configured number of handler threads.
  */
-class PlacementAmendmentHandler {
-
-  public:
+class PlacementAmendmentHandler
+{
+public:
     PlacementAmendmentHandler(uint16_t numOfHandler, UMPMCAmendmentQueuePtr amendmentRequestQueue);
 
     /**
@@ -50,12 +51,12 @@ class PlacementAmendmentHandler {
      */
     void shutDown();
 
-  private:
+private:
     bool running;
     uint16_t numOfHandler;
     UMPMCAmendmentQueuePtr amendmentQueue;
     std::vector<std::thread> amendmentRunners;
 };
 
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_

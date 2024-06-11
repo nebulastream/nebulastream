@@ -20,17 +20,20 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
 /**
  * @brief The executable pipeline stage represents the executable part of a an specific pipeline.
  * For instance, during code generation we generate an implementation of this class, which defines all virtual functions.
  */
-class ExecutablePipelineStage {
-  public:
+class ExecutablePipelineStage
+{
+public:
     virtual ~ExecutablePipelineStage() = default;
 
-    explicit ExecutablePipelineStage(PipelineStageArity arity = PipelineStageArity::Unary) : arity(arity) {
+    explicit ExecutablePipelineStage(PipelineStageArity arity = PipelineStageArity::Unary) : arity(arity)
+    {
         // nop
     }
 
@@ -46,7 +49,7 @@ class ExecutablePipelineStage {
     * @param pipelineExecutionContext
     * @return 0 if no error occurred.
     */
-    virtual uint32_t setup(PipelineExecutionContext& pipelineExecutionContext);
+    virtual uint32_t setup(PipelineExecutionContext & pipelineExecutionContext);
 
     /**
     * @brief Must be called only once per executable pipeline and starts the executable pipeline.
@@ -54,7 +57,7 @@ class ExecutablePipelineStage {
     * @param pipelineExecutionContext
     * @return 0 if no error occurred.
     */
-    virtual uint32_t start(PipelineExecutionContext& pipelineExecutionContext);
+    virtual uint32_t start(PipelineExecutionContext & pipelineExecutionContext);
 
     /**
     * @brief Must be called exactly once per worker thread and initializes worker local state.
@@ -63,7 +66,7 @@ class ExecutablePipelineStage {
     * @param workerContext
     * @return 0 if no error occurred.
     */
-    virtual uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext);
+    virtual uint32_t open(PipelineExecutionContext & pipelineExecutionContext, WorkerContext & workerContext);
 
     /**
     * @brief Is called once per input buffer and performs the computation of each operator.
@@ -75,7 +78,8 @@ class ExecutablePipelineStage {
     * @return 0 if an error occurred.
     */
     virtual ExecutionResult
-    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) = 0;
+    execute(TupleBuffer & inputTupleBuffer, PipelineExecutionContext & pipelineExecutionContext, WorkerContext & workerContext)
+        = 0;
 
     /**
      * @brief Must be called exactly once per worker thread to remove worker local state.
@@ -83,14 +87,14 @@ class ExecutablePipelineStage {
      * @param workerContext
      * @return 0 if no error occurred.
      */
-    virtual uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext);
+    virtual uint32_t close(PipelineExecutionContext & pipelineExecutionContext, WorkerContext & workerContext);
 
     /**
      * @brief Must be called exactly once per executable pipeline to remove operator state.
      * @param pipelineExecutionContext
      * @return 0 if no error occurred.
      */
-    virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
+    virtual uint32_t stop(PipelineExecutionContext & pipelineExecutionContext);
 
     /**
      * @brief return the code of the pipeline
@@ -98,20 +102,22 @@ class ExecutablePipelineStage {
      */
     virtual std::string getCodeAsString();
 
-  private:
+private:
     PipelineStageArity arity;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-namespace fmt {
-template<>
-struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<std::string> {
-    auto format(const NES::Runtime::Execution::ExecutablePipelineStage& ex_pipeline_stage, format_context& ctx)
-        -> decltype(ctx.out()) {
+namespace fmt
+{
+template <>
+struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<std::string>
+{
+    auto format(const NES::Runtime::Execution::ExecutablePipelineStage & ex_pipeline_stage, format_context & ctx) -> decltype(ctx.out())
+    {
         return fmt::format_to(ctx.out(), "{}", std::string(magic_enum::enum_name(ex_pipeline_stage.getArity())));
     }
 };
-}//namespace fmt
+} //namespace fmt
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_

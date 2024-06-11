@@ -16,22 +16,24 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expressions returns a Boolean values that is true if
  * ether the leftSubExpression or rightSubExpression returns true.
  */
-class OrExpression : public Expression {
-  public:
+class OrExpression : public Expression
+{
+public:
     OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr leftSubExpression;
     const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSION_HPP_

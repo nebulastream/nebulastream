@@ -18,7 +18,8 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 // Forward declaration
 class FixedPageRefIter;
 
@@ -26,21 +27,22 @@ class FixedPageRefIter;
  * @brief This is a Nautilus wrapper for the FixedPage.
  * It wraps a MemRef to the underling data structure and provides access methods.
  */
-class FixedPageRef {
-  public:
+class FixedPageRef
+{
+public:
     /**
      * @brief Constructs the wrapper.
      * @param fixedPageRef MemRef to the FixedPage
      * @param sizeOfRecord size of one record
      */
-    FixedPageRef(const Value<MemRef>& fixedPageRef);
+    FixedPageRef(const Value<MemRef> & fixedPageRef);
 
     /**
      * @brief Allocates an new entry and returns a reference to it
      * @param hash
      * @return Value<MemRef>
      */
-    Value<MemRef> allocateEntry(const Value<UInt64>& hash);
+    Value<MemRef> allocateEntry(const Value<UInt64> & hash);
 
     /**
      * @brief Getter for sizeOfRecord
@@ -70,7 +72,7 @@ class FixedPageRef {
      * @brief Setter for currentPos
      * @param pos
      */
-    void setCurrentPos(const Value<>& pos);
+    void setCurrentPos(const Value<> & pos);
 
     /**
      * @brief Returns an iterator that points to the begin of this FixedPageRef
@@ -83,7 +85,7 @@ class FixedPageRef {
      * @param pos
      * @return FixedPageRefIter
      */
-    FixedPageRefIter at(const Value<UInt64>& pos);
+    FixedPageRefIter at(const Value<UInt64> & pos);
 
     /**
      * @brief Returns an iterator that points to the end of this FixedPageRef
@@ -96,34 +98,35 @@ class FixedPageRef {
      * @param other
      * @return Boolean
      */
-    bool operator==(const FixedPageRef& other) const;
+    bool operator==(const FixedPageRef & other) const;
 
-  private:
+private:
     Value<MemRef> fixedPageRef;
 };
 
-class FixedPageRefIter {
-  public:
+class FixedPageRefIter
+{
+public:
     friend class FixedPageRef;
 
     /**
      * @brief Constructor
      * @param fixedPageRef
      */
-    explicit FixedPageRefIter(FixedPageRef& fixedPageRef);
+    explicit FixedPageRefIter(FixedPageRef & fixedPageRef);
 
     /**
      * @brief Copy constructor
      * @param it
      */
-    FixedPageRefIter(const FixedPageRefIter& it);
+    FixedPageRefIter(const FixedPageRefIter & it);
 
     /**
      * @brief Assignment operator
      * @param it
      * @return Reference to FixedPageRefIter
      */
-    FixedPageRefIter& operator=(const FixedPageRefIter& it);
+    FixedPageRefIter & operator=(const FixedPageRefIter & it);
 
     /**
      * @brief Dereference operator that points to a given entry in the FixedPageRef
@@ -135,7 +138,7 @@ class FixedPageRefIter {
      * @brief Pre-increment operator that first increments and then returns the reference
      * @return Reference to FixedPageRefIter
      */
-    FixedPageRefIter& operator++();
+    FixedPageRefIter & operator++();
 
     /**
      * @brief Post-increment count that first returns the reference and then increments
@@ -148,19 +151,19 @@ class FixedPageRefIter {
      * @param other
      * @return Boolean
      */
-    bool operator==(const FixedPageRefIter& other) const;
+    bool operator==(const FixedPageRefIter & other) const;
 
     /**
      * @brief Inequality operator
      * @param other
      * @return Boolean
      */
-    bool operator!=(const FixedPageRefIter& other) const;
+    bool operator!=(const FixedPageRefIter & other) const;
 
-  private:
+private:
     Value<MemRef> addr;
     FixedPageRef fixedPageRef;
 };
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_

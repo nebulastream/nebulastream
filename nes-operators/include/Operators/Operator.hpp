@@ -15,12 +15,13 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <any>
 #include <unordered_map>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -41,8 +42,9 @@ OperatorId getNextOperatorId();
  */
 StatisticId getNextStatisticId();
 
-class Operator : public Node {
-  public:
+class Operator : public Node
+{
+public:
     explicit Operator(OperatorId id);
     explicit Operator(OperatorId id, StatisticId statisticId);
 
@@ -164,33 +166,33 @@ class Operator : public Node {
      * @param key key of the new property
      * @param value value of the new property
      */
-    void addProperty(const std::string& key, const std::any value);
+    void addProperty(const std::string & key, const std::any value);
 
     /**
      * @brief Add a set of properties to this operator
      * @param properties
      */
-    void addAllProperties(const OperatorProperties& properties);
+    void addAllProperties(const OperatorProperties & properties);
 
     /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key
      */
-    std::any getProperty(const std::string& key);
+    std::any getProperty(const std::string & key);
 
     /**
      * @brief Remove a property string from the stored properties map
      * @param key key of the property to remove
      */
-    void removeProperty(const std::string& key);
+    void removeProperty(const std::string & key);
 
     /**
      * Check if the given property exists in the current operator
      * @param key key of the property to check
      * @return true if property exists
      */
-    bool hasProperty(const std::string& key) const;
+    bool hasProperty(const std::string & key) const;
 
     /**
      * @brief Gets the output origin ids from this operator
@@ -204,20 +206,20 @@ class Operator : public Node {
      */
     std::string toString() const override;
 
-  protected:
+protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
      * @param operatorNode: the input operator
      * @return duplicate of the input operator
      */
-    OperatorPtr getDuplicateOfParent(const OperatorPtr& operatorNode);
+    OperatorPtr getDuplicateOfParent(const OperatorPtr & operatorNode);
 
     /**
      * @brief get duplicate of the input operator and all its children
      * @param operatorNode: the input operator
      * @return duplicate of the input operator
      */
-    OperatorPtr getDuplicateOfChild(const OperatorPtr& operatorNode);
+    OperatorPtr getDuplicateOfChild(const OperatorPtr & operatorNode);
 
     /**
      * @brief Unique Identifier of the operator within a query.
@@ -235,6 +237,6 @@ class Operator : public Node {
     OperatorProperties properties;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_

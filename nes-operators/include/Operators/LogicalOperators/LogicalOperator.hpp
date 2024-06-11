@@ -15,41 +15,44 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_
 
+#include <map>
+#include <set>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/OperatorState.hpp>
-#include <map>
-#include <set>
 
-namespace z3 {
+namespace z3
+{
 class expr;
 using ExprPtr = std::shared_ptr<expr>;
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 class QuerySignatureContext;
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Logical operator, enables schema inference and signature computation.
  */
-class LogicalOperator : public virtual Operator {
-
-  public:
+class LogicalOperator : public virtual Operator
+{
+public:
     explicit LogicalOperator(OperatorId id);
 
     /**
      * @brief Get the First Order Logic formula representation by the Z3 expression
      * @param context: the shared pointer to the z3::context
      */
-    void inferZ3Signature(const Optimizer::QuerySignatureContext& context);
+    void inferZ3Signature(const Optimizer::QuerySignatureContext & context);
 
     /**
      * @brief Set the Z3 signature for the logical operator
@@ -79,7 +82,7 @@ class LogicalOperator : public virtual Operator {
      * @brief update the hash based signature for the logical operator
      * @param signature : the signature
      */
-    void updateHashBasedSignature(size_t hashCode, const std::string& stringSignature);
+    void updateHashBasedSignature(size_t hashCode, const std::string & stringSignature);
 
     /**
      * @brief Get the Z3 expression for the logical operator
@@ -113,13 +116,13 @@ class LogicalOperator : public virtual Operator {
      */
     OperatorState getOperatorState() const;
 
-  protected:
+protected:
     Optimizer::QuerySignaturePtr z3Signature = nullptr;
     std::map<size_t, std::set<std::string>> hashBasedSignature;
     [[no_unique_address]] std::hash<std::string> hashGenerator;
     OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_

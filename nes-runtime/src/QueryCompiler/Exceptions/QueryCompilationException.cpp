@@ -14,9 +14,12 @@
 #include <Exceptions/RuntimeException.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
-QueryCompilationException::QueryCompilationException(const std::string& message, std::source_location location)
-    : Exceptions::RuntimeException(message, NES::collectStacktrace(), location) {}
+QueryCompilationException::QueryCompilationException(const std::string & message, std::source_location location)
+    : Exceptions::RuntimeException(message, NES::collectStacktrace(), location)
+{
+}
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

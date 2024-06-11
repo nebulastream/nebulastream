@@ -14,7 +14,8 @@
 
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 WatermarkStrategyDescriptor::WatermarkStrategyDescriptor() = default;
-}//namespace NES::Windowing
+} //namespace NES::Windowing

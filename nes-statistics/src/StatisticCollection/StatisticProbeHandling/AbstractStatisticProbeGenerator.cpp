@@ -14,8 +14,9 @@
 
 #include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 AbstractStatisticProbeGenerator::~AbstractStatisticProbeGenerator() = default;
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

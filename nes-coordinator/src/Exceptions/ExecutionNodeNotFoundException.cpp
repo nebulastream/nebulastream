@@ -12,12 +12,20 @@
     limitations under the License.
 */
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
-namespace NES::Exceptions {
-ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message, WorkerId id)
-    : RequestExecutionException(message), id(id) {}
+namespace NES::Exceptions
+{
+ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string & message, WorkerId id)
+    : RequestExecutionException(message), id(id)
+{
+}
 
-ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message)
-    : RequestExecutionException(message), id(INVALID_WORKER_NODE_ID) {}
+ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string & message)
+    : RequestExecutionException(message), id(INVALID_WORKER_NODE_ID)
+{
+}
 
-WorkerId ExecutionNodeNotFoundException::getWorkerId() const { return id; }
-}// namespace NES::Exceptions
+WorkerId ExecutionNodeNotFoundException::getWorkerId() const
+{
+    return id;
+}
+} // namespace NES::Exceptions

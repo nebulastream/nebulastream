@@ -13,10 +13,8 @@
 */
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseUnitTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -41,24 +39,28 @@
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("DefaultStatisticQueryGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DefaultStatisticQueryGeneratorTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         NES::Testing::BaseUnitTest::SetUp();
 
-        inputSchema = Schema::create()
-                          ->addField("f1", BasicType::INT64)
-                          ->addField("f2", BasicType::FLOAT64)
-                          ->addField("ts", BasicType::UINT64);
+        inputSchema
+            = Schema::create()->addField("f1", BasicType::INT64)->addField("f2", BasicType::FLOAT64)->addField("ts", BasicType::UINT64);
 
         // Add all fields that are general for all statistic descriptors
         outputSchemaBuildOperator = Schema::create()
@@ -81,7 +83,8 @@ class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest {
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     }
 
-    LogicalOperatorPtr checkWindowStatisticOperatorCorrect(QueryPlan& queryPlan, Windowing::WindowType& window) const {
+    LogicalOperatorPtr checkWindowStatisticOperatorCorrect(QueryPlan & queryPlan, Windowing::WindowType & window) const
+    {
         using namespace NES::Statistic;
         auto rootOperators = queryPlan.getRootOperators();
         EXPECT_EQ(rootOperators.size(), 1);
@@ -108,7 +111,8 @@ class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest {
 /**
  * @brief Tests if a query is generated correctly for a cardinality, the outcome should be a HyperLogLog
  */
-TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
+TEST_F(DefaultStatisticQueryGeneratorTest, cardinality)
+{
     using namespace NES::Statistic;
     using namespace Windowing;
 
@@ -125,16 +129,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition,
-                                                                                    *queryCatalog);
+    const auto statisticQuery
+        = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode
+        = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -153,7 +154,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
 /**
  * @brief Tests if a query is generated correctly for a selectivity, the outcome should be a CountMin
  */
-TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
+TEST_F(DefaultStatisticQueryGeneratorTest, selectivity)
+{
     using namespace NES::Statistic;
     using namespace Windowing;
 
@@ -172,16 +174,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition,
-                                                                                    *queryCatalog);
+    const auto statisticQuery
+        = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode
+        = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -201,7 +200,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
 /**
  * @brief Tests if a query is generated correctly for an ingestionRate, the outcome should be a CountMin
  */
-TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
+TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate)
+{
     using namespace NES::Statistic;
     using namespace Windowing;
 
@@ -223,16 +223,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition,
-                                                                                    *queryCatalog);
+    const auto statisticQuery
+        = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode
+        = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -252,7 +249,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
 /**
  * @brief Tests if a query is generated correctly for a bufferRate, the outcome should be a CountMin
  */
-TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
+TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate)
+{
     using namespace NES::Statistic;
     using namespace Windowing;
 
@@ -274,16 +272,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition,
-                                                                                    *queryCatalog);
+    const auto statisticQuery
+        = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode
+        = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -303,7 +298,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
 /**
  * @brief Tests if a query is generated correctly for a minVal, the outcome should be a CountMin
  */
-TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
+TEST_F(DefaultStatisticQueryGeneratorTest, minVal)
+{
     using namespace NES::Statistic;
     using namespace Windowing;
 
@@ -322,16 +318,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition,
-                                                                                    *queryCatalog);
+    const auto statisticQuery
+        = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode
+        = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -351,22 +344,19 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
 /**
  * @brief Tests if we create a statistic query for collecting cardinality of a map operator
  */
-TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCardinality) {
+TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCardinality)
+{
     using namespace NES::Statistic;
     using namespace Windowing;
 
     // Creating the filter query and "submitting" it by inserting it into the queryCatalog
-    auto query = Query::from("car")
-                     .filter(Attribute("f1") < 10)
-                     .map(Attribute("f1") = Attribute("f1"))
-                     .sink(FileSinkDescriptor::create(""));
+    auto query
+        = Query::from("car").filter(Attribute("f1") < 10).map(Attribute("f1") = Attribute("f1")).sink(FileSinkDescriptor::create(""));
     auto queryId = QueryId(42);
     query.getQueryPlan()->setQueryId(queryId);
     auto operatorId = query.getQueryPlan()->getOperatorByType<LogicalMapOperator>()[0]->getId();
-    queryCatalog->createQueryCatalogEntry(query.getQueryPlan()->toString(),
-                                          query.getQueryPlan(),
-                                          Optimizer::PlacementStrategy::BottomUp,
-                                          QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry(
+        query.getQueryPlan()->toString(), query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
     queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", query.getQueryPlan());
 
     // Adding here the specific descriptor fields
@@ -382,16 +372,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition,
-                                                                                    *queryCatalog);
+    const auto statisticQuery
+        = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode
+        = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -420,7 +407,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
 /**
  * @brief Tests if we create a statistic query for collecting cardinality of a map operator that sits behind a join operator
  */
-TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoinQueryCardinality) {
+TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoinQueryCardinality)
+{
     using namespace NES::Statistic;
     using namespace Windowing;
 
@@ -435,10 +423,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     auto queryId = QueryId(42);
     query.getQueryPlan()->setQueryId(queryId);
     auto operatorId = query.getQueryPlan()->getOperatorByType<LogicalMapOperator>()[0]->getId();
-    queryCatalog->createQueryCatalogEntry(query.getQueryPlan()->toString(),
-                                          query.getQueryPlan(),
-                                          Optimizer::PlacementStrategy::BottomUp,
-                                          QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry(
+        query.getQueryPlan()->toString(), query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
     queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", query.getQueryPlan());
 
     // Adding here the specific descriptor fields
@@ -454,16 +440,13 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition,
-                                                                                    *queryCatalog);
+    const auto statisticQuery
+        = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
-    auto statisticWindowOperatorNode =
-        checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
+    auto statisticWindowOperatorNode
+        = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window)->as<LogicalStatisticWindowOperator>();
     auto descriptor = statisticWindowOperatorNode->getWindowStatisticDescriptor();
     auto operatorSendingPolicy = statisticWindowOperatorNode->getSendingPolicy();
     auto operatorTriggerCondition = statisticWindowOperatorNode->getTriggerCondition();
@@ -492,4 +475,4 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     EXPECT_TRUE(statisticQuery.getQueryPlan()->getOperatorByType<LogicalMapOperator>().empty());
 }
 
-}// namespace NES
+} // namespace NES

@@ -11,29 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalOperatorPtr PhysicalWindowSinkOperator::create(OperatorId id,
-                                                       StatisticId statisticId,
-                                                       const SchemaPtr& inputSchema,
-                                                       const SchemaPtr& outputSchema,
-                                                       const Windowing::LogicalWindowDescriptorPtr& windowDefinition) {
+PhysicalOperatorPtr PhysicalWindowSinkOperator::create(
+    OperatorId id,
+    StatisticId statisticId,
+    const SchemaPtr & inputSchema,
+    const SchemaPtr & outputSchema,
+    const Windowing::LogicalWindowDescriptorPtr & windowDefinition)
+{
     return std::make_shared<PhysicalWindowSinkOperator>(id, statisticId, inputSchema, outputSchema, windowDefinition);
 }
 
-PhysicalWindowSinkOperator::PhysicalWindowSinkOperator(OperatorId id,
-                                                       StatisticId statisticId,
-                                                       SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       Windowing::LogicalWindowDescriptorPtr windowDefinition)
-    : Operator(id),
-      PhysicalWindowOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
+PhysicalWindowSinkOperator::PhysicalWindowSinkOperator(
+    OperatorId id,
+    StatisticId statisticId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::LogicalWindowDescriptorPtr windowDefinition)
+    : Operator(id), PhysicalWindowOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
 
-std::string PhysicalWindowSinkOperator::toString() const {
+std::string PhysicalWindowSinkOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalWindowSinkOperator:\n";
@@ -41,6 +45,9 @@ std::string PhysicalWindowSinkOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalWindowSinkOperator::copy() { return create(id, statisticId, inputSchema, outputSchema, windowDefinition); }
+OperatorPtr PhysicalWindowSinkOperator::copy()
+{
+    return create(id, statisticId, inputSchema, outputSchema, windowDefinition);
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

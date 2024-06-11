@@ -20,17 +20,20 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Statistic {
-std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryId(Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                                                               const QueryId& queryId,
-                                                                               const std::chrono::milliseconds& timeout) {
+namespace NES::Statistic
+{
+std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryId(
+    Catalogs::Query::QueryCatalogPtr queryCatalog, const QueryId & queryId, const std::chrono::milliseconds & timeout)
+{
     // Waiting for the query to be in the RUNNING state before extracting the statistic ids
     const auto endTimestamp = std::chrono::system_clock::now() + timeout;
     const auto sleepTime = std::chrono::milliseconds(1000);
-    while (std::chrono::system_clock::now() < endTimestamp) {
+    while (std::chrono::system_clock::now() < endTimestamp)
+    {
         const auto queryState = queryCatalog->getQueryState(queryId);
         NES_TRACE("Query {} is now in status {}", queryId, magic_enum::enum_name(queryState));
-        switch (queryState) {
+        switch (queryState)
+        {
             case QueryState::MARKED_FOR_HARD_STOP:
             case QueryState::MARKED_FOR_SOFT_STOP:
             case QueryState::SOFT_STOP_COMPLETED:
@@ -58,14 +61,16 @@ std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryId(C
     return {};
 }
 
-std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryPlan(const QueryPlan& queryPlan) {
+std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryPlan(const QueryPlan & queryPlan)
+{
     std::vector<StatisticId> extractedStatisticIds;
     const auto allStatisticBuildOperator = queryPlan.getOperatorByType<LogicalStatisticWindowOperator>();
 
     /* We iterator over all LogicalStatisticWindowOperator in the queryPlan and store the statistic id of
      * the operator before in extractedStatisticIds
      */
-    for (const auto& statisticBuildOperator : allStatisticBuildOperator) {
+    for (const auto & statisticBuildOperator : allStatisticBuildOperator)
+    {
         // Children are the operator before
         auto operatorsToTrack = statisticBuildOperator->getChildren();
 
@@ -73,16 +78,19 @@ std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryPlan
          * statistic ids of all of its children. Due to the fact that we might add a watermark assigner to each
          * logical query plan, if it contains a window operator, i.e., LogicalStatisticWindowOperator
          */
-        for (const auto& childOp : operatorsToTrack) {
-            if (childOp->instanceOf<const WatermarkAssignerLogicalOperator>()) {
-                const auto& childrensChildren = childOp->getChildren();
-                std::transform(childrensChildren.begin(),
-                               childrensChildren.end(),
-                               std::back_inserter(extractedStatisticIds),
-                               [](const auto& op) {
-                                   return op->template as<Operator>()->getStatisticId();
-                               });
-            } else {
+        for (const auto & childOp : operatorsToTrack)
+        {
+            if (childOp->instanceOf<const WatermarkAssignerLogicalOperator>())
+            {
+                const auto & childrensChildren = childOp->getChildren();
+                std::transform(
+                    childrensChildren.begin(),
+                    childrensChildren.end(),
+                    std::back_inserter(extractedStatisticIds),
+                    [](const auto & op) { return op->template as<Operator>()->getStatisticId(); });
+            }
+            else
+            {
                 // If the operator before is not a WatermarkAssignerLogicalOperator, we add the statistic id of the operator
                 extractedStatisticIds.emplace_back(childOp->template as<Operator>()->getStatisticId());
             }
@@ -92,4 +100,4 @@ std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryPlan
     return extractedStatisticIds;
 }
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

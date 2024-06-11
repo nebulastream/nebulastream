@@ -11,42 +11,51 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <future>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NesThread.hpp>
-#include <future>
 
-namespace NES::Network {
+namespace NES::Network
+{
 /// 60s as linger time: http://api.zeromq.org/2-1:zmq-setsockopt
 static constexpr int DEFAULT_LINGER_VALUE = 10 * 1000;
 /// 10s as ZMQ_RCVTIMEO: Maximum time before a recv operation returns with EAGAIN : http://api.zeromq.org/3-0:zmq-setsockopt
 static constexpr int DEFAULT_RCVTIMEO_VALUE = 10 * 1000;
-namespace detail {
-template<typename T>
-std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& zmqContext,
-                                        std::string&& socketAddr,
-                                        NesPartition nesPartition,
-                                        ExchangeProtocol& protocol,
-                                        Runtime::BufferManagerPtr bufferManager,
-                                        int highWaterMark,
-                                        std::chrono::milliseconds waitTime,
-                                        uint8_t retryTimes,
-                                        DecomposedQueryPlanVersion version = 0,
-                                        std::optional<std::future<bool>> abortConnection = std::nullopt) {
-    NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0,
-                    "Cannot use indefinite retries without supplying a future to abort connection");
+namespace detail
+{
+template <typename T>
+std::unique_ptr<T> createNetworkChannel(
+    std::shared_ptr<zmq::context_t> const & zmqContext,
+    std::string && socketAddr,
+    NesPartition nesPartition,
+    ExchangeProtocol & protocol,
+    Runtime::BufferManagerPtr bufferManager,
+    int highWaterMark,
+    std::chrono::milliseconds waitTime,
+    uint8_t retryTimes,
+    DecomposedQueryPlanVersion version = 0,
+    std::optional<std::future<bool>> abortConnection = std::nullopt)
+{
+    NES_ASSERT2_FMT(
+        abortConnection.has_value() || retryTimes != 0, "Cannot use indefinite retries without supplying a future to abort connection");
     std::chrono::milliseconds backOffTime = waitTime;
-    constexpr auto nameHelper = []() {
-        if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
+    constexpr auto nameHelper = []()
+    {
+        if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>)
+        {
             return "EventOnlyNetworkChannel";
-        } else {
+        }
+        else
+        {
             return "DataChannel";
         }
     };
     constexpr auto channelName = nameHelper();
-    try {
+    try
+    {
         const int linger = DEFAULT_LINGER_VALUE;
         const int rcvtimeo = DEFAULT_RCVTIMEO_VALUE;
         ChannelId channelId(nesPartition, Runtime::NesThread::getId());
@@ -58,7 +67,8 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
         // set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
         // until more space is available
-        if (highWaterMark > 0) {
+        if (highWaterMark > 0)
+        {
             zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
         }
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
@@ -67,10 +77,11 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
                                                                    : Network::Messages::ChannelType::DataChannel;
         //if retry times are set to 0, keep retrying indefinitely
-        while (i < retryTimes || retryTimes == 0) {
+        while (i < retryTimes || retryTimes == 0)
+        {
             //if the thread creater requested to abort, return nullptr
-            if (abortConnection.has_value()
-                && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            if (abortConnection.has_value() && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+            {
                 NES_DEBUG("Aborting network channel connection process on caller request");
                 return nullptr;
             }
@@ -79,34 +90,40 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
 
             zmq::message_t recvHeaderMsg;
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
-            if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
-                if (!optRecvStatus.has_value()) {
+            if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel)
+            {
+                if (!optRecvStatus.has_value())
+                {
                     NES_DEBUG("recv failed on network channel");
                     return nullptr;
                 }
             }
             NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
 
-            auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
+            auto * recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 
-            if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
+            if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER)
+            {
                 NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
             }
 
-            switch (recvHeader->getMsgType()) {
+            switch (recvHeader->getMsgType())
+            {
                 case Messages::MessageType::ServerReady: {
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
-                    auto* serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
+                    auto * serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                     // check if server responds with a ServerReadyMessage
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
-                    if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
-                        NES_ERROR("{}: Connection failed with server {} for {}"
-                                  "->Wrong server ready message! Reason: Partitions are not matching",
-                                  channelName,
-                                  socketAddr,
-                                  channelId.getNesPartition().toString());
+                    if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition()))
+                    {
+                        NES_ERROR(
+                            "{}: Connection failed with server {} for {}"
+                            "->Wrong server ready message! Reason: Partitions are not matching",
+                            channelName,
+                            socketAddr,
+                            channelId.getNesPartition().toString());
                         break;
                     }
                     NES_DEBUG("{}: Connection established with server {} for {}", channelName, socketAddr, channelId);
@@ -118,8 +135,10 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
                     auto errorMsg = *errorEnvelope.data<Messages::ErrorMessage>();
-                    if (errorMsg.isPartitionDeleted()) {
-                        if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
+                    if (errorMsg.isPartitionDeleted())
+                    {
+                        if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>)
+                        {
                             // for an event-only channel it's ok to get this message
                             // it means the producer is already done so, it won't be able
                             // to receive any event. We should figure out if this case must be
@@ -128,10 +147,12 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                             return nullptr;
                         }
                     }
-                    if (errorMsg.isVersionMismatch()) {
-                        NES_INFO("Receiver version does not match. Keep retrying until the new version has been started on the "
-                                 "receiver side",
-                                 socketAddr);
+                    if (errorMsg.isVersionMismatch())
+                    {
+                        NES_INFO(
+                            "Receiver version does not match. Keep retrying until the new version has been started on the "
+                            "receiver side",
+                            socketAddr);
                         break;
                     }
 
@@ -145,12 +166,13 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     return nullptr;
                 }
             }
-            NES_DEBUG("{}: Connection with server failed! Reconnecting attempt {} of {} backoff time {}",
-                      channelName,
-                      i,
-                      retryTimes,
-                      std::to_string(backOffTime.count()));
-            std::this_thread::sleep_for(backOffTime);// TODO make this async
+            NES_DEBUG(
+                "{}: Connection with server failed! Reconnecting attempt {} of {} backoff time {}",
+                channelName,
+                i,
+                retryTimes,
+                std::to_string(backOffTime.count()));
+            std::this_thread::sleep_for(backOffTime); // TODO make this async
             backOffTime *= 2;
             backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
             i++;
@@ -158,10 +180,15 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         NES_ERROR("{}: Error establishing a connection with server: {} Closing socket!", channelName, channelId);
         zmqSocket.close();
         return nullptr;
-    } catch (zmq::error_t& err) {
-        if (err.num() == ETERM) {
+    }
+    catch (zmq::error_t & err)
+    {
+        if (err.num() == ETERM)
+        {
             NES_DEBUG("{}: Zmq context closed!", channelName);
-        } else {
+        }
+        else
+        {
             NES_ERROR("{}: Zmq error {}", channelName, err.what());
             throw;
         }
@@ -170,75 +197,79 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
     return nullptr;
 }
 
-}// namespace detail
+} // namespace detail
 
-NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
-                               const ChannelId channelId,
-                               std::string&& address,
-                               Runtime::BufferManagerPtr bufferManager)
-    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {}
+NetworkChannel::NetworkChannel(
+    zmq::socket_t && zmqSocket, const ChannelId channelId, std::string && address, Runtime::BufferManagerPtr bufferManager)
+    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager))
+{
+}
 
-NetworkChannel::~NetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId); }
+NetworkChannel::~NetworkChannel()
+{
+    NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId);
+}
 
-void NetworkChannel::close(Runtime::QueryTerminationType terminationType,
-                           uint16_t numSendingThreads,
-                           uint64_t currentMessageSequenceNumber) {
+void NetworkChannel::close(Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads, uint64_t currentMessageSequenceNumber)
+{
     inherited::close(canSendEvent && !canSendData, terminationType, numSendingThreads, currentMessageSequenceNumber);
 }
 
-NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
-                                         std::string&& socketAddr,
-                                         NesPartition nesPartition,
-                                         ExchangeProtocol& protocol,
-                                         Runtime::BufferManagerPtr bufferManager,
-                                         int highWaterMark,
-                                         std::chrono::milliseconds waitTime,
-                                         uint8_t retryTimes,
-                                         DecomposedQueryPlanVersion version,
-                                         std::optional<std::future<bool>> abortConnection) {
-    return detail::createNetworkChannel<NetworkChannel>(zmqContext,
-                                                        std::move(socketAddr),
-                                                        nesPartition,
-                                                        protocol,
-                                                        bufferManager,
-                                                        highWaterMark,
-                                                        waitTime,
-                                                        retryTimes,
-                                                        version,
-                                                        std::move(abortConnection));
+NetworkChannelPtr NetworkChannel::create(
+    std::shared_ptr<zmq::context_t> const & zmqContext,
+    std::string && socketAddr,
+    NesPartition nesPartition,
+    ExchangeProtocol & protocol,
+    Runtime::BufferManagerPtr bufferManager,
+    int highWaterMark,
+    std::chrono::milliseconds waitTime,
+    uint8_t retryTimes,
+    DecomposedQueryPlanVersion version,
+    std::optional<std::future<bool>> abortConnection)
+{
+    return detail::createNetworkChannel<NetworkChannel>(
+        zmqContext,
+        std::move(socketAddr),
+        nesPartition,
+        protocol,
+        bufferManager,
+        highWaterMark,
+        waitTime,
+        retryTimes,
+        version,
+        std::move(abortConnection));
 }
 
-EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
-                                                 const ChannelId channelId,
-                                                 std::string&& address,
-                                                 Runtime::BufferManagerPtr bufferManager)
-    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {
+EventOnlyNetworkChannel::EventOnlyNetworkChannel(
+    zmq::socket_t && zmqSocket, const ChannelId channelId, std::string && address, Runtime::BufferManagerPtr bufferManager)
+    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager))
+{
     NES_DEBUG("Initializing EventOnlyNetworkChannel {}", channelId);
 }
 
-EventOnlyNetworkChannel::~EventOnlyNetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Event Channel not closed " << channelId); }
+EventOnlyNetworkChannel::~EventOnlyNetworkChannel()
+{
+    NES_ASSERT2_FMT(this->isClosed, "Event Channel not closed " << channelId);
+}
 
-void EventOnlyNetworkChannel::close(Runtime::QueryTerminationType terminationType) {
+void EventOnlyNetworkChannel::close(Runtime::QueryTerminationType terminationType)
+{
     NES_DEBUG("Closing EventOnlyNetworkChannel {}", channelId);
     inherited::close(canSendEvent && !canSendData, terminationType);
 }
 
-EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
-                                                           std::string&& socketAddr,
-                                                           NesPartition nesPartition,
-                                                           ExchangeProtocol& protocol,
-                                                           Runtime::BufferManagerPtr bufferManager,
-                                                           int highWaterMark,
-                                                           std::chrono::milliseconds waitTime,
-                                                           uint8_t retryTimes) {
-    return detail::createNetworkChannel<EventOnlyNetworkChannel>(zmqContext,
-                                                                 std::move(socketAddr),
-                                                                 nesPartition,
-                                                                 protocol,
-                                                                 bufferManager,
-                                                                 highWaterMark,
-                                                                 waitTime,
-                                                                 retryTimes);
+EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(
+    std::shared_ptr<zmq::context_t> const & zmqContext,
+    std::string && socketAddr,
+    NesPartition nesPartition,
+    ExchangeProtocol & protocol,
+    Runtime::BufferManagerPtr bufferManager,
+    int highWaterMark,
+    std::chrono::milliseconds waitTime,
+    uint8_t retryTimes)
+{
+    return detail::createNetworkChannel<EventOnlyNetworkChannel>(
+        zmqContext, std::move(socketAddr), nesPartition, protocol, bufferManager, highWaterMark, waitTime, retryTimes);
 }
 
-}// namespace NES::Network
+} // namespace NES::Network

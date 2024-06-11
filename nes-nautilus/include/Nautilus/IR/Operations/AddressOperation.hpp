@@ -15,18 +15,21 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
 
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
+#include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
-class AddressOperation : public Operation {
-  public:
-    explicit AddressOperation(OperationIdentifier identifier,
-                              PrimitiveStamp dataType,
-                              uint64_t recordWidthInBytes,
-                              uint64_t fieldOffsetInBytes,
-                              std::string recordIdxName,
-                              std::string addressSourceName);
+namespace NES::Nautilus::IR::Operations
+{
+class AddressOperation : public Operation
+{
+public:
+    explicit AddressOperation(
+        OperationIdentifier identifier,
+        PrimitiveStamp dataType,
+        uint64_t recordWidthInBytes,
+        uint64_t fieldOffsetInBytes,
+        std::string recordIdxName,
+        std::string addressSourceName);
     ~AddressOperation() override = default;
 
     PrimitiveStamp getDataType();
@@ -36,15 +39,15 @@ class AddressOperation : public Operation {
     std::string getAddressSourceName();
 
     std::string toString() override;
-    static bool classof(const Operation* Op);
+    static bool classof(const Operation * Op);
 
-  private:
+private:
     PrimitiveStamp dataType;
     uint64_t recordWidth;
     uint64_t fieldOffset;
     std::string recordIdxName;
     std::string addressSourceName;
 };
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_

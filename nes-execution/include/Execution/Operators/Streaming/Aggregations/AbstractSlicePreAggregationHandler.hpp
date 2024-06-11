@@ -14,18 +14,20 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <map>
 #include <tuple>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Sequencing/SequenceData.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class AbstractBufferProvider;
 }
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class MultiOriginWatermarkProcessor;
 
 /**
@@ -35,23 +37,24 @@ class MultiOriginWatermarkProcessor;
  * For each processed tuple buffer trigger is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-template<class SliceType, typename SliceStore>
-class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHandler {
-  public:
+template <class SliceType, typename SliceStore>
+class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHandler
+{
+public:
     /**
      * @brief Creates the slice pre aggregation operator handler
      * @param windowSize size of the window
      * @param windowSlide slide of the window
      * @param origins the set of origins, which can produce data for the window operator
      */
-    AbstractSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
+    AbstractSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId> & origins);
 
     /**
      * @brief Returns a thread local slice store for a specific worker
      * @param workerThreadId
      * @return SliceStore*
      */
-    SliceStore* getThreadLocalSliceStore(WorkerThreadId workerThreadId);
+    SliceStore * getThreadLocalSliceStore(WorkerThreadId workerThreadId);
 
     /**
      * @brief This method triggers the thread local state and appends all slices,
@@ -62,17 +65,13 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
      * @param sequenceData
      * @param watermarkTs
      */
-    void trigger(WorkerContext& wctx,
-                 PipelineExecutionContext& ctx,
-                 OriginId originId,
-                 SequenceData sequenceData,
-                 uint64_t watermarkTs);
+    void trigger(WorkerContext & wctx, PipelineExecutionContext & ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs);
 
     void start(PipelineExecutionContextPtr, uint32_t);
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
     ~AbstractSlicePreAggregationHandler();
 
-  protected:
+protected:
     const uint64_t windowSize;
     const uint64_t windowSlide;
     std::vector<std::unique_ptr<SliceStore>> threadLocalSliceStores;
@@ -81,12 +80,12 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
     std::atomic<uint64_t> resultSequenceNumber = 1;
     std::mutex triggerMutex;
 
-  private:
-    void
-    dispatchSliceMergingTasks(PipelineExecutionContext& ctx,
-                              std::shared_ptr<AbstractBufferProvider> bufferProvider,
-                              std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
+private:
+    void dispatchSliceMergingTasks(
+        PipelineExecutionContext & ctx,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>> & collectedSlices);
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_

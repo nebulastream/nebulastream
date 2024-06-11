@@ -16,16 +16,18 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALUNARYEXPRESSIONNODE_HPP_
 #include <Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 #include <Expressions/UnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents a logical unary expression.
  */
-class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExpressionNode {
-  protected:
+class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExpressionNode
+{
+protected:
     LogicalUnaryExpressionNode();
 
-  public:
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+public:
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -33,9 +35,9 @@ class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExp
     */
     ExpressionNodePtr copy() override = 0;
 
-  protected:
-    explicit LogicalUnaryExpressionNode(LogicalUnaryExpressionNode* other);
+protected:
+    explicit LogicalUnaryExpressionNode(LogicalUnaryExpressionNode * other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALUNARYEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALUNARYEXPRESSIONNODE_HPP_

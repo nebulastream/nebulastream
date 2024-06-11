@@ -20,18 +20,22 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
-MonitoringCatalog::MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors)
-    : metricMap(metricCollectors) {
+MonitoringCatalog::MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr> & metricCollectors)
+    : metricMap(metricCollectors)
+{
     NES_DEBUG("MonitoringCatalog: Init with collector map of size {}", metricCollectors.size());
 }
 
-MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors) {
+MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricType, MetricCollectorPtr> & metricCollectors)
+{
     return std::make_shared<MonitoringCatalog>(MonitoringCatalog(metricCollectors));
 }
 
-MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
+MonitoringCatalogPtr MonitoringCatalog::defaultCatalog()
+{
     NES_DEBUG("MonitoringCatalog: Init default catalog");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics(
@@ -42,12 +46,14 @@ MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
     return create(metrics);
 }
 
-MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) {
-    if (metricMap.contains(metricType)) {
+MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType)
+{
+    if (metricMap.contains(metricType))
+    {
         return metricMap[metricType];
     }
     NES_ERROR("MonitoringCatalog: MetricType {} is not in catalog.", std::string(magic_enum::enum_name(metricType)));
     return nullptr;
 }
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

@@ -14,19 +14,20 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
 
+#include <memory>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
 #include <folly/concurrency/UnboundedQueue.h>
-#include <memory>
-#include <vector>
 
-namespace NES {
+namespace NES
+{
 
 //todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
 
 class UnlockDeleter;
-template<typename T>
+template <typename T>
 //on deletion, of the resource handle, the unlock deleter will only unlock the resource instead of freeing it
 using ResourceHandle = std::shared_ptr<T>;
 
@@ -34,24 +35,28 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 using TopologyHandle = ResourceHandle<Topology>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 using QueryCatalogHandle = ResourceHandle<Catalogs::Query::QueryCatalog>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
+} // namespace Catalogs::Source
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
@@ -59,23 +64,26 @@ class PlacementAmendmentInstance;
 using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
 using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 using GlobalQueryPlanHandle = ResourceHandle<GlobalQueryPlan>;
 
-namespace Catalogs::UDF {
+namespace Catalogs::UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
-namespace Statistic {
+namespace Statistic
+{
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-}// namespace Statistic
+} // namespace Statistic
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 
 static constexpr RequestId MAX_REQUEST_ID = RequestId(std::numeric_limits<RequestId::Underlying>::max());
 
@@ -87,8 +95,9 @@ using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
  * This is an abstract class and its subclasses will have to provide the implementation to warrant safe concurrent
  * access the storage layer.
  */
-class StorageHandler {
-  public:
+class StorageHandler
+{
+public:
     virtual ~StorageHandler() = default;
 
     /**
@@ -177,6 +186,6 @@ class StorageHandler {
     std::mutex idMutex;
     RequestId nextFreeRequestId{1};
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_

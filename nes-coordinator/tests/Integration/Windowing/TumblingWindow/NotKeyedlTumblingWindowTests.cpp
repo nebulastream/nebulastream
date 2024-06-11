@@ -12,37 +12,41 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <utility>
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <iostream>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
 /**
  * @brief In this test we assess the correctness of the non keyed tumbling window
  */
-class NonKeyedTumblingWindowTests : public Testing::BaseIntegrationTest {
-  public:
+class NonKeyedTumblingWindowTests : public Testing::BaseIntegrationTest
+{
+public:
     WorkerConfigurationPtr workerConfiguration;
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("NonKeyedTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup NonKeyedTumblingWindowTests test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
@@ -50,24 +54,27 @@ class NonKeyedTumblingWindowTests : public Testing::BaseIntegrationTest {
         this->numberOfGeneratedBuffers = 100;
     }
 
-  protected:
+protected:
     uint64_t numberOfGeneratedBuffers;
 };
 
-struct InputValue {
+struct InputValue
+{
     uint64_t id;
     uint64_t value;
     uint64_t timestamp;
 };
 
-struct MultipleInputValues {
+struct MultipleInputValues
+{
     uint64_t value3;
     uint64_t value2;
     uint64_t value1;
     uint64_t timestamp;
 };
 
-struct InputValueMultiKeys {
+struct InputValueMultiKeys
+{
     uint64_t value;
     uint64_t key1;
     uint64_t key2;
@@ -75,16 +82,17 @@ struct InputValueMultiKeys {
     uint64_t timestamp;
 };
 
-PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
-                                              std::string physicalSourceName,
-                                              uint64_t numberOfBuffers,
-                                              uint64_t numberOfKeys = 1) {
+PhysicalSourceTypePtr
+createSimpleInputStream(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers, uint64_t numberOfKeys = 1)
+{
     return LambdaSourceType::create(
         std::move(logicalSourceName),
         std::move(physicalSourceName),
-        [numberOfKeys](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            auto inputValue = (InputValue*) buffer.getBuffer();
-            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+        [numberOfKeys](Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+        {
+            auto inputValue = (InputValue *)buffer.getBuffer();
+            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++)
+            {
                 inputValue[i].value = 1;
                 inputValue[i].id = i % numberOfKeys;
                 inputValue[i].timestamp = 1;
@@ -96,21 +104,25 @@ PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
         GatheringMode::INTERVAL_MODE);
 }
 
-class DataGeneratorMultiKey {
-  public:
-    DataGeneratorMultiKey(std::string logicalSourceName,
-                          std::string physicalSourceName,
-                          uint64_t numberOfBuffers,
-                          uint64_t numberOfKeys = 1)
-        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-          numberOfBuffers(numberOfBuffers), numberOfKeys(numberOfKeys){};
-    PhysicalSourceTypePtr getSource() {
+class DataGeneratorMultiKey
+{
+public:
+    DataGeneratorMultiKey(
+        std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers, uint64_t numberOfKeys = 1)
+        : logicalSourceName(std::move(logicalSourceName))
+        , physicalSourceName(std::move(physicalSourceName))
+        , numberOfBuffers(numberOfBuffers)
+        , numberOfKeys(numberOfKeys){};
+    PhysicalSourceTypePtr getSource()
+    {
         return LambdaSourceType::create(
             logicalSourceName,
             physicalSourceName,
-            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                auto inputValue = (InputValueMultiKeys*) buffer.getBuffer();
-                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            [this](Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+            {
+                auto inputValue = (InputValueMultiKeys *)buffer.getBuffer();
+                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++)
+                {
                     inputValue[i].value = 1;
                     inputValue[i].key1 = i % numberOfKeys;
                     inputValue[i].key2 = i % numberOfKeys;
@@ -124,7 +136,7 @@ class DataGeneratorMultiKey {
             GatheringMode::INTERVAL_MODE);
     }
 
-  private:
+private:
     std::string logicalSourceName;
     std::string physicalSourceName;
     uint64_t numberOfBuffers;
@@ -132,18 +144,23 @@ class DataGeneratorMultiKey {
     std::atomic_uint64_t counter = 0;
 };
 
-class DataGeneratorMultiValue {
-  public:
+class DataGeneratorMultiValue
+{
+public:
     DataGeneratorMultiValue(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers)
-        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-          numberOfBuffers(numberOfBuffers){};
-    PhysicalSourceTypePtr getSource() {
+        : logicalSourceName(std::move(logicalSourceName))
+        , physicalSourceName(std::move(physicalSourceName))
+        , numberOfBuffers(numberOfBuffers){};
+    PhysicalSourceTypePtr getSource()
+    {
         return LambdaSourceType::create(
             logicalSourceName,
             physicalSourceName,
-            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                auto inputValue = (MultipleInputValues*) buffer.getBuffer();
-                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            [this](Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+            {
+                auto inputValue = (MultipleInputValues *)buffer.getBuffer();
+                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++)
+                {
                     inputValue[i].value1 = 1;
                     inputValue[i].value2 = 1;
                     inputValue[i].value3 = 1;
@@ -158,25 +175,30 @@ class DataGeneratorMultiValue {
             GatheringMode::INTERVAL_MODE);
     }
 
-  private:
+private:
     std::string logicalSourceName;
     std::string physicalSourceName;
     uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
 };
 
-class DataGenerator {
-  public:
+class DataGenerator
+{
+public:
     DataGenerator(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers)
-        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-          numberOfBuffers(numberOfBuffers){};
-    PhysicalSourceTypePtr getSource() {
+        : logicalSourceName(std::move(logicalSourceName))
+        , physicalSourceName(std::move(physicalSourceName))
+        , numberOfBuffers(numberOfBuffers){};
+    PhysicalSourceTypePtr getSource()
+    {
         return LambdaSourceType::create(
             logicalSourceName,
             physicalSourceName,
-            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                auto inputValue = (InputValue*) buffer.getBuffer();
-                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            [this](Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+            {
+                auto inputValue = (InputValue *)buffer.getBuffer();
+                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++)
+                {
                     inputValue[i].value = 1;
                     inputValue[i].id = 1;
                     inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
@@ -190,20 +212,20 @@ class DataGenerator {
             GatheringMode::INTERVAL_MODE);
     }
 
-  private:
+private:
     std::string logicalSourceName;
     std::string physicalSourceName;
     uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
 };
 
-TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
+TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value")));
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -226,13 +248,13 @@ TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) 
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
+TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -254,13 +276,13 @@ TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
+TEST_F(NonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -298,13 +320,13 @@ TEST_F(NonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer)
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
+TEST_F(NonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100, 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -326,7 +348,8 @@ TEST_F(NonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleK
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowCount) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowCount)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
@@ -368,13 +391,13 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowCount) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Min(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Min(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -412,13 +435,13 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMax) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMax)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Max(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Max(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -456,13 +479,13 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMax) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowAVG) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowAVG)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Avg(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Avg(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -500,17 +523,19 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowAVG) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("value"))->as(Attribute("sum_value")),
-                            Count()->as(Attribute("count_value")),
-                            Min(Attribute("value"))->as(Attribute("min_value")),
-                            Max(Attribute("value"))->as(Attribute("max_value")),
-                            Avg(Attribute("value"))->as(Attribute("avg_value")));
+                     .apply(
+                         Sum(Attribute("value"))->as(Attribute("sum_value")),
+                         Count()->as(Attribute("count_value")),
+                         Min(Attribute("value"))->as(Attribute("min_value")),
+                         Max(Attribute("value"))->as(Attribute("max_value")),
+                         Avg(Attribute("value"))->as(Attribute("avg_value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -557,16 +582,18 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
  * In this case, we emulate that by using multi-averages on top of one value
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Avg(Attribute("value"))->as(Attribute("avg_value_3")),
-                            Avg(Attribute("value"))->as(Attribute("avg_value_2")),
-                            Avg(Attribute("value"))->as(Attribute("avg_value_1")),
-                            Count()->as(Attribute("count_value")));
+                     .apply(
+                         Avg(Attribute("value"))->as(Attribute("avg_value_3")),
+                         Avg(Attribute("value"))->as(Attribute("avg_value_2")),
+                         Avg(Attribute("value"))->as(Attribute("avg_value_1")),
+                         Count()->as(Attribute("count_value")));
     auto dg = DataGenerator("window", "window1", this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -613,7 +640,8 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
  * In this case, we emulate that by using multiple values
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount)
+{
     auto testSchema = Schema::create()
                           ->addField("value3", DataTypeFactory::createUInt64())
                           ->addField("value2", DataTypeFactory::createUInt64())
@@ -623,10 +651,11 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndC
     ASSERT_EQ(sizeof(MultipleInputValues), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Avg(Attribute("value1"))->as(Attribute("avg_value_1")),
-                            Avg(Attribute("value2"))->as(Attribute("avg_value_2")),
-                            Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
-                            Count()->as(Attribute("count_value")));
+                     .apply(
+                         Avg(Attribute("value1"))->as(Attribute("avg_value_1")),
+                         Avg(Attribute("value2"))->as(Attribute("avg_value_2")),
+                         Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
+                         Count()->as(Attribute("count_value")));
 
     auto dg = DataGeneratorMultiValue("window", "window1", this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -661,4 +690,4 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndC
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-}// namespace NES
+} // namespace NES

@@ -12,40 +12,50 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
-ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema) {
+ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+{
     uint64_t offsetCounter = 0;
-    for (auto& fieldSize : physicalFieldSizes) {
+    for (auto & fieldSize : physicalFieldSizes)
+    {
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += fieldSize * capacity;
     }
 }
 
-ColumnLayoutPtr ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize) {
+ColumnLayoutPtr ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
+{
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }
 
-uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const {
-
-    if (fieldIndex >= physicalFieldSizes.size()) {
-        throw BufferAccessException("field index: " + std::to_string(fieldIndex)
-                                    + " is larger the number of field in the memory layout "
-                                    + std::to_string(physicalFieldSizes.size()));
+uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const
+{
+    if (fieldIndex >= physicalFieldSizes.size())
+    {
+        throw BufferAccessException(
+            "field index: " + std::to_string(fieldIndex) + " is larger the number of field in the memory layout "
+            + std::to_string(physicalFieldSizes.size()));
     }
-    if (tupleIndex >= getCapacity()) {
-        throw BufferAccessException("tuple index: " + std::to_string(tupleIndex)
-                                    + " is larger the maximal capacity in the memory layout " + std::to_string(getCapacity()));
+    if (tupleIndex >= getCapacity())
+    {
+        throw BufferAccessException(
+            "tuple index: " + std::to_string(tupleIndex) + " is larger the maximal capacity in the memory layout "
+            + std::to_string(getCapacity()));
     }
 
     auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
     return fieldOffset;
 }
-const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const { return columnOffsets; }
+const std::vector<uint64_t> & ColumnLayout::getColumnOffsets() const
+{
+    return columnOffsets;
+}
 
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts

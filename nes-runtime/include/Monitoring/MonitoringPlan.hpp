@@ -15,21 +15,23 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_MONITORINGPLAN_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_MONITORINGPLAN_HPP_
 
-#include <Monitoring/Metrics/MetricType.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <memory>
 #include <set>
 #include <string>
+#include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Util/MetricCollectorType.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
 * @brief The MonitoringPlan is a config class to represent what metrics shall be collected and how.
 */
-class MonitoringPlan {
-  public:
-    static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+class MonitoringPlan
+{
+public:
+    static MonitoringPlanPtr create(const std::set<MetricType> & metrics);
     static MonitoringPlanPtr defaultPlan();
 
     /**
@@ -61,7 +63,7 @@ class MonitoringPlan {
      * @brief Returns the MetricType objects that represent the plan.
      * @return A set of metric type objects.
     */
-    [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
+    [[nodiscard]] const std::set<MetricType> & getMetricTypes() const;
 
     /**
      * @brief Returns the MetricType objects that represent the plan.
@@ -69,15 +71,15 @@ class MonitoringPlan {
     */
     [[nodiscard]] const std::set<MetricCollectorType> getCollectorTypes() const;
 
-    friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
+    friend std::ostream & operator<<(std::ostream &, const MonitoringPlan &);
 
-  private:
-    explicit MonitoringPlan(const std::set<MetricType>& metrics);
+private:
+    explicit MonitoringPlan(const std::set<MetricType> & metrics);
 
     //enum defined in SerializableDataType.proto
     std::set<MetricType> metricTypes;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGPLAN_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGPLAN_HPP_

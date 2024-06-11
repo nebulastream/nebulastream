@@ -21,12 +21,14 @@
 #include <ostream>
 #include <vector>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 /**
  * @brief This class represents a single slice for a join. It stores all values for the left and right stream.
  */
-class StreamSlice {
-  public:
+class StreamSlice
+{
+public:
     /**
      * @brief Constructor for creating a slice
      * @param sliceStart: Start timestamp of this slice
@@ -39,14 +41,14 @@ class StreamSlice {
      * @param rhs
      * @return Boolean
      */
-    bool operator==(const StreamSlice& rhs) const;
+    bool operator==(const StreamSlice & rhs) const;
 
     /**
      * @brief Compares if two slices are NOT equal
      * @param rhs
      * @return Boolean
      */
-    bool operator!=(const StreamSlice& rhs) const;
+    bool operator!=(const StreamSlice & rhs) const;
 
     /**
      * @brief Getter for the start ts of the slice
@@ -97,10 +99,10 @@ class StreamSlice {
      */
     virtual ~StreamSlice() = default;
 
-  protected:
+protected:
     uint64_t sliceStart;
     uint64_t sliceEnd;
 };
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_

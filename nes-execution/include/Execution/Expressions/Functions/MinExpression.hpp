@@ -18,21 +18,23 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expression returns the minimum of the leftSubExpression and the rightSubExpression.
  */
-class MinExpression : public Expression {
-  public:
-    MinExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<> execute(Record& record) const override;
+class MinExpression : public Expression
+{
+public:
+    MinExpression(const ExpressionPtr & leftSubExpression, const ExpressionPtr & rightSubExpression);
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr leftSubExpression;
     const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_MINEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_MINEXPRESSION_HPP_

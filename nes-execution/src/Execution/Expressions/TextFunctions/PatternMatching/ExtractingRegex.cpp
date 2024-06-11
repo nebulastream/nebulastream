@@ -11,19 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <regex>
+#include <string>
 #include <Execution/Expressions/TextFunctions/PatternMatching/ExtractingRegex.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <regex>
-#include <string>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-ExtractingRegex::ExtractingRegex(const NES::Runtime::Execution::Expressions::ExpressionPtr& textValue,
-                                 const NES::Runtime::Execution::Expressions::ExpressionPtr& regexpPattern,
-                                 const NES::Runtime::Execution::Expressions::ExpressionPtr& idx)
-    : textValue(textValue), regexpPattern(regexpPattern), idx(idx) {}
+ExtractingRegex::ExtractingRegex(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr & textValue,
+    const NES::Runtime::Execution::Expressions::ExpressionPtr & regexpPattern,
+    const NES::Runtime::Execution::Expressions::ExpressionPtr & idx)
+    : textValue(textValue), regexpPattern(regexpPattern), idx(idx)
+{
+}
 
 /**
 * @brief This Method returns a text sequence from the target text, which is matching the given regex pattern.
@@ -33,7 +37,8 @@ ExtractingRegex::ExtractingRegex(const NES::Runtime::Execution::Expressions::Exp
 * @param idx result index as Integer defines at what position in the textValue matching starts (only the first match is returned)
 * @return TextValue*
 */
-TextValue* regexExtract(TextValue* text, TextValue* reg, int idx) {
+TextValue * regexExtract(TextValue * text, TextValue * reg, int idx)
+{
     std::string strText = std::string(text->c_str(), text->length());
     std::regex tempRegex(std::string(reg->c_str(), reg->length()));
     std::smatch result;
@@ -41,8 +46,8 @@ TextValue* regexExtract(TextValue* text, TextValue* reg, int idx) {
     return TextValue::create(result[idx]);
 }
 
-Value<> ExtractingRegex::execute(NES::Nautilus::Record& record) const {
-
+Value<> ExtractingRegex::execute(NES::Nautilus::Record & record) const
+{
     // Evaluate the left sub expression and retrieve the value.
     Value<> text = textValue->execute(record);
 
@@ -52,63 +57,58 @@ Value<> ExtractingRegex::execute(NES::Nautilus::Record& record) const {
     // Evaluate the right sub expression and retrieve the value.
     Value pos = idx->execute(record);
 
-    if (text->isType<Text>() && pattern->isType<Text>()) {
-
-        if (pos->isType<Int8>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<Int8>());
-        } else if (pos->isType<Int16>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<Int16>());
-        } else if (pos->isType<Int32>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<Int32>());
-        } else if (pos->isType<Int64>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<Int64>());
-        } else if (pos->isType<UInt8>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<UInt8>());
-        } else if (pos->isType<UInt16>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<UInt16>());
-        } else if (pos->isType<UInt32>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<UInt32>());
-        } else if (pos->isType<UInt64>()) {
-            return FunctionCall<>("regexExtract",
-                                  regexExtract,
-                                  text.as<Text>()->getReference(),
-                                  pattern.as<Text>()->getReference(),
-                                  pos.as<UInt64>());
-        } else {
+    if (text->isType<Text>() && pattern->isType<Text>())
+    {
+        if (pos->isType<Int8>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<Int8>());
+        }
+        else if (pos->isType<Int16>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<Int16>());
+        }
+        else if (pos->isType<Int32>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<Int32>());
+        }
+        else if (pos->isType<Int64>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<Int64>());
+        }
+        else if (pos->isType<UInt8>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<UInt8>());
+        }
+        else if (pos->isType<UInt16>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<UInt16>());
+        }
+        else if (pos->isType<UInt32>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<UInt32>());
+        }
+        else if (pos->isType<UInt64>())
+        {
+            return FunctionCall<>(
+                "regexExtract", regexExtract, text.as<Text>()->getReference(), pattern.as<Text>()->getReference(), pos.as<UInt64>());
+        }
+        else
+        {
             // If no type was applicable we throw an exception.
             NES_THROW_RUNTIME_ERROR("Idx only defined on a numeric input argument that is of type Integer.");
         }
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("This expression is only defined for inputs of type Text and an index as Integer.");
     }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

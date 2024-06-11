@@ -13,31 +13,36 @@
 */
 
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark {
-class E2EBenchmarkConfigOverAllRunsTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark
+{
+class E2EBenchmarkConfigOverAllRunsTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("E2EBenchmarkConfigOverAllRunsTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2EBenchmarkConfigOverAllRunsTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_INFO("Setup E2EBenchmarkConfigOverAllRunsTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down E2EBenchmarkConfigOverAllRunsTest test case.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -49,7 +54,8 @@ class E2EBenchmarkConfigOverAllRunsTest : public Testing::BaseIntegrationTest {
 /**
      * @brief Testing if E2EBenchmarkConfigOverAllRuns::toStringTest() is correct by comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigOverAllRunsTest, toStringTest) {
+TEST_F(E2EBenchmarkConfigOverAllRunsTest, toStringTest)
+{
     std::stringstream oss;
     E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
@@ -85,7 +91,8 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, toStringTest) {
      * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
      * a yaml file and comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsInternalProviderTest) {
+TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsInternalProviderTest)
+{
     E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
     Yaml::Node yamlConfig;
 
@@ -99,8 +106,9 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsInternalProvi
     ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
     ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterOneSource.csv");
     ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterOneSource");
-    ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getQueryString(),
-              R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
+    ASSERT_EQ(
+        defaultConfigOverAllRuns.queries[0].getQueryString(),
+        R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
     ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getCustomDelayInSeconds(), 0);
     ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
     ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
@@ -122,7 +130,8 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsInternalProvi
      * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
      * a yaml file with a dynamic ingestion rate and comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigOverAllRunsTest, dynamicGenerateConfigOverAllRunsTest) {
+TEST_F(E2EBenchmarkConfigOverAllRunsTest, dynamicGenerateConfigOverAllRunsTest)
+{
     E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
     Yaml::Node yamlConfig;
 
@@ -136,8 +145,9 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, dynamicGenerateConfigOverAllRunsTest) 
     ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
     ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterWithDynamicIngestionRate.csv");
     ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterWithDynamicIngestionRate");
-    ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getQueryString(),
-              R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
+    ASSERT_EQ(
+        defaultConfigOverAllRuns.queries[0].getQueryString(),
+        R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
     ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getCustomDelayInSeconds(), 0);
     ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
     ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
@@ -159,7 +169,8 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, dynamicGenerateConfigOverAllRunsTest) 
      * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
      * a yaml file with a custom ingestion rate and comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigOverAllRunsTest, customGenerateConfigOverAllRunsTest) {
+TEST_F(E2EBenchmarkConfigOverAllRunsTest, customGenerateConfigOverAllRunsTest)
+{
     E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
     Yaml::Node yamlConfig;
 
@@ -173,8 +184,9 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, customGenerateConfigOverAllRunsTest) {
     ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
     ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterWithCustomIngestionRate.csv");
     ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterWithCustomIngestionRate");
-    ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getQueryString(),
-              R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
+    ASSERT_EQ(
+        defaultConfigOverAllRuns.queries[0].getQueryString(),
+        R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
     ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getCustomDelayInSeconds(), 0);
     ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
     ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
@@ -187,9 +199,10 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, customGenerateConfigOverAllRunsTest) {
     ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCount->getValue(), 1000);
     ASSERT_EQ(defaultConfigOverAllRuns.numberOfPeriods->getValue(), 1);
     ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateDistribution->getValue(), "Custom");
-    ASSERT_EQ(defaultConfigOverAllRuns.customValues->getValue(),
-              "10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 90000, 80000, 70000, 60000, 50000, 40000, "
-              "30000, 20000");
+    ASSERT_EQ(
+        defaultConfigOverAllRuns.customValues->getValue(),
+        "10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 90000, 80000, 70000, 60000, 50000, 40000, "
+        "30000, 20000");
     ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "External");
     ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: Uniform");
 }
@@ -198,7 +211,8 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, customGenerateConfigOverAllRunsTest) {
      * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
      * a yaml file with concurrent queries and comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsConcurrentQueriesTest) {
+TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsConcurrentQueriesTest)
+{
     E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
     Yaml::Node yamlConfig;
 
@@ -212,11 +226,13 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsConcurrentQue
     ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
     ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterOneSource.csv");
     ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterOneSource");
-    ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getQueryString(),
-              R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
+    ASSERT_EQ(
+        defaultConfigOverAllRuns.queries[0].getQueryString(),
+        R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
     ASSERT_EQ(defaultConfigOverAllRuns.queries[0].getCustomDelayInSeconds(), 0);
-    ASSERT_EQ(defaultConfigOverAllRuns.queries[1].getQueryString(),
-              R"(Query::from("input1").filter(Attribute("event_type") < 50).sink(NullOutputSinkDescriptor::create());)");
+    ASSERT_EQ(
+        defaultConfigOverAllRuns.queries[1].getQueryString(),
+        R"(Query::from("input1").filter(Attribute("event_type") < 50).sink(NullOutputSinkDescriptor::create());)");
     ASSERT_EQ(defaultConfigOverAllRuns.queries[1].getCustomDelayInSeconds(), 1);
     ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
     ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
@@ -235,7 +251,8 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsConcurrentQue
 /**
      * @brief Testing if E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() is correct by comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigOverAllRunsTest, getTotalSchemaSizeTest) {
+TEST_F(E2EBenchmarkConfigOverAllRunsTest, getTotalSchemaSizeTest)
+{
     size_t expectedSize = 0;
     E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
@@ -256,14 +273,13 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, getTotalSchemaSizeTest) {
      * @brief Testing if E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() is correct by
      * comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigOverAllRunsTest, getStrLogicalSrcDataGeneratorsTest) {
+TEST_F(E2EBenchmarkConfigOverAllRunsTest, getStrLogicalSrcDataGeneratorsTest)
+{
     std::stringstream expectedString;
     E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
-    defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] =
-        std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
-    defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] =
-        std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+    defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
+    defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
 
     auto defaultString = defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators();
 
@@ -271,4 +287,4 @@ TEST_F(E2EBenchmarkConfigOverAllRunsTest, getStrLogicalSrcDataGeneratorsTest) {
 
     ASSERT_EQ(defaultString, expectedString.str());
 }
-}//namespace NES::Benchmark
+} //namespace NES::Benchmark

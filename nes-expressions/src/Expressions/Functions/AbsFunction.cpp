@@ -11,25 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /*
 * Defines the abs function and registers it to the FunctionRegistry.
 */
-class AbsFunction : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
+class AbsFunction : public UnaryLogicalFunction
+{
+public:
+    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr & input) const override
+    {
+        if (!input->isNumeric())
+        {
             NES_THROW_RUNTIME_ERROR("AbsExpressions can only be evaluated on numeric values.");
         }
-        return DataTypeFactory::createDouble();// TODO: change to createInt64(): issue #3760
+        return DataTypeFactory::createDouble(); // TODO: change to createInt64(): issue #3760
     }
 };
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<AbsFunction> absFunction("abs");
 
-}// namespace NES
+} // namespace NES

@@ -15,11 +15,12 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <iterator>
 #include <stack>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Iterator for pipeline query plans, which correctly handles multiple sources and sinks.
@@ -27,31 +28,31 @@ namespace NES::QueryCompilation {
  * top-to-bottom and left-to-right
  * @see
  */
-class PipelineQueryPlanIterator {
-  public:
+class PipelineQueryPlanIterator
+{
+public:
     explicit PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan);
 
-    class iterator : public std::iterator<std::forward_iterator_tag,
-                                          OperatorPipelinePtr,
-                                          OperatorPipelinePtr,
-                                          OperatorPipelinePtr*,
-                                          OperatorPipelinePtr&> {
+    class iterator
+        : public std::
+              iterator<std::forward_iterator_tag, OperatorPipelinePtr, OperatorPipelinePtr, OperatorPipelinePtr *, OperatorPipelinePtr &>
+    {
         // use PipelineQueryPlanIterator as a fiend to access its state
         friend class PipelineQueryPlanIterator;
 
-      public:
+    public:
         /**
          * @brief Moves the iterator to the next node.
          * If we reach the end of the iterator we will ignore this operation.
          * @return iterator
          */
-        iterator& operator++();
+        iterator & operator++();
 
         /**
          * @brief Checks if the iterators are not at the same position
          * @return boolean
          */
-        bool operator!=(const iterator& other) const;
+        bool operator!=(const iterator & other) const;
 
         /**
          * @brief Gets the node at the current iterator position.
@@ -59,8 +60,8 @@ class PipelineQueryPlanIterator {
          */
         OperatorPipelinePtr operator*();
 
-      private:
-        explicit iterator(const PipelineQueryPlanPtr& current);
+    private:
+        explicit iterator(const PipelineQueryPlanPtr & current);
         explicit iterator();
         std::stack<OperatorPipelinePtr> workStack;
     };
@@ -83,9 +84,9 @@ class PipelineQueryPlanIterator {
      */
     std::vector<OperatorPipelinePtr> snapshot();
 
-  private:
+private:
     PipelineQueryPlanPtr queryPlan;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_

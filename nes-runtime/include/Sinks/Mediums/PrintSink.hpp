@@ -20,27 +20,30 @@
 #include <sstream>
 #include <string>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <iostream>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class provides a print sink
  */
-class PrintSink : public SinkMedium {
-  public:
+class PrintSink : public SinkMedium
+{
+public:
     /**
      * @brief Default constructor
      * @Note the default output will be written to cout
      */
-    PrintSink(SinkFormatPtr format,
-              Runtime::NodeEnginePtr nodeEngine,
-              uint32_t numOfProducers,
-              SharedQueryId sharedQueryId,
-              DecomposedQueryPlanId decomposedQueryPlanId,
-              std::ostream& pOutputStream = std::cout,
-              uint64_t numberOfOrigins = 1);
+    PrintSink(
+        SinkFormatPtr format,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        std::ostream & pOutputStream = std::cout,
+        uint64_t numberOfOrigins = 1);
 
     /**
      * @brief destructor
@@ -66,7 +69,7 @@ class PrintSink : public SinkMedium {
      * @param tuple buffer to write
      * @return bool indicating success of the write
      */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the print sink
@@ -80,10 +83,10 @@ class PrintSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  private:
-    std::ostream& outputStream;
+private:
+    std::ostream & outputStream;
 };
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_

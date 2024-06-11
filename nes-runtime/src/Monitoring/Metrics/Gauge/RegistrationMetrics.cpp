@@ -13,9 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
-#include <CoordinatorRPCService.pb.h>
 #include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -23,37 +21,51 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <nlohmann/json.hpp>
+#include <CoordinatorRPCService.pb.h>
+#include <Common/DataTypes/FixedChar.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 RegistrationMetrics::RegistrationMetrics()
-    : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false),
-      hasBattery(false) {
+    : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false), hasBattery(false)
+{
     NES_DEBUG("RegistrationMetrics: Default ctor");
 }
 
 RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
-    : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
-      hasBattery(hasBattery) {
-    NES_DEBUG("RegistrationMetrics: Init with flag moving:{}, hasBattery:{}",
-              std::to_string(isMoving),
-              std::to_string(hasBattery));
+    : nodeId(0)
+    , totalMemoryBytes(0)
+    , cpuCoreNum(0)
+    , totalCPUJiffies(0)
+    , cpuPeriodUS(0)
+    , cpuQuotaUS(0)
+    , isMoving(isMoving)
+    , hasBattery(hasBattery)
+{
+    NES_DEBUG("RegistrationMetrics: Init with flag moving:{}, hasBattery:{}", std::to_string(isMoving), std::to_string(hasBattery));
 }
 
-RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& metrics)
-    : nodeId(0), totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()),
-      totalCPUJiffies(metrics.totalcpujiffies()), cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()),
-      isMoving(metrics.ismoving()), hasBattery(metrics.hasbattery()) {
+RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics & metrics)
+    : nodeId(0)
+    , totalMemoryBytes(metrics.totalmemorybytes())
+    , cpuCoreNum(metrics.cpucorenum())
+    , totalCPUJiffies(metrics.totalcpujiffies())
+    , cpuPeriodUS(metrics.cpuperiodus())
+    , cpuQuotaUS(metrics.cpuquotaus())
+    , isMoving(metrics.ismoving())
+    , hasBattery(metrics.hasbattery())
+{
     NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
 }
 
-Configurations::SchemaTypePtr RegistrationMetrics::getSchemaType(const std::string& prefix) {
-
+Configurations::SchemaTypePtr RegistrationMetrics::getSchemaType(const std::string & prefix)
+{
     std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    const char* length = "0";
-    const char* unsignedIntegerDataType = "UINT64";
-    const char* integerDataType = "INT64";
-    const char* booleanDataType = "BOOLEAN";
+    const char * length = "0";
+    const char * unsignedIntegerDataType = "UINT64";
+    const char * integerDataType = "INT64";
+    const char * booleanDataType = "BOOLEAN";
     schemaFiledDetails.emplace_back(prefix + "node_id", unsignedIntegerDataType, length);
     schemaFiledDetails.emplace_back(prefix + "totalMemoryBytes", unsignedIntegerDataType, length);
     schemaFiledDetails.emplace_back(prefix + "cpuCoreNum", unsignedIntegerDataType, length);
@@ -65,18 +77,21 @@ Configurations::SchemaTypePtr RegistrationMetrics::getSchemaType(const std::stri
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
-SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
+SchemaPtr RegistrationMetrics::getSchema(const std::string & prefix)
+{
     return Schema::createFromSchemaType(getSchemaType(prefix));
 }
 
-void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
+void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex) const
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RegistrationMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     auto totalSize = RegistrationMetrics::getSchema("")->getSchemaSizeInBytes();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "RegistrationMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+    NES_ASSERT(
+        totalSize <= buf.getBufferSize(),
+        "RegistrationMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+            + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<WorkerId>(nodeId);
@@ -91,7 +106,8 @@ void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupl
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RegistrationMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
     uint64_t cnt = 0;
@@ -106,7 +122,8 @@ void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tup
     hasBattery = buffer[tupleIndex][cnt++].read<bool>();
 }
 
-nlohmann::json RegistrationMetrics::toJson() const {
+nlohmann::json RegistrationMetrics::toJson() const
+{
     nlohmann::json metricsJson{};
     metricsJson["NODE_ID"] = nodeId;
     metricsJson["TotalMemory"] = totalMemoryBytes;
@@ -122,7 +139,8 @@ nlohmann::json RegistrationMetrics::toJson() const {
     return metricsJson;
 }
 
-SerializableRegistrationMetricsPtr RegistrationMetrics::serialize() const {
+SerializableRegistrationMetricsPtr RegistrationMetrics::serialize() const
+{
     auto output = std::make_shared<SerializableRegistrationMetrics>();
     output->set_ismoving(isMoving);
     output->set_hasbattery(hasBattery);
@@ -134,22 +152,31 @@ SerializableRegistrationMetricsPtr RegistrationMetrics::serialize() const {
     return output;
 }
 
-bool RegistrationMetrics::operator==(const RegistrationMetrics& rhs) const {
+bool RegistrationMetrics::operator==(const RegistrationMetrics & rhs) const
+{
     return nodeId == rhs.nodeId && totalMemoryBytes == rhs.totalMemoryBytes && cpuCoreNum == rhs.cpuCoreNum
         && totalCPUJiffies == rhs.totalCPUJiffies && cpuPeriodUS == rhs.cpuPeriodUS && cpuQuotaUS == rhs.cpuQuotaUS
         && isMoving == rhs.isMoving && hasBattery == rhs.hasBattery;
 }
 
-bool RegistrationMetrics::operator!=(const RegistrationMetrics& rhs) const { return !(rhs == *this); }
+bool RegistrationMetrics::operator!=(const RegistrationMetrics & rhs) const
+{
+    return !(rhs == *this);
+}
 
-void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void writeToBuffer(const RegistrationMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void readFromBuffer(RegistrationMetrics & metrics, Runtime::TupleBuffer & buf, uint64_t tupleIndex)
+{
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-nlohmann::json asJson(const RegistrationMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const RegistrationMetrics & metrics)
+{
+    return metrics.toJson();
+}
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

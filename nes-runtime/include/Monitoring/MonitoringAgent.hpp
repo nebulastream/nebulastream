@@ -15,13 +15,14 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 
+#include <memory>
+#include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <memory>
-#include <unordered_map>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
@@ -31,8 +32,9 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 /**
 * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
 */
-class MonitoringAgent {
-  public:
+class MonitoringAgent
+{
+public:
     MonitoringAgent();
     explicit MonitoringAgent(bool enabled);
     MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
@@ -91,13 +93,13 @@ class MonitoringAgent {
      */
     void setNodeId(WorkerId nodeId);
 
-  private:
+private:
     WorkerId nodeId = INVALID_WORKER_NODE_ID;
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;
     bool enabled;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_

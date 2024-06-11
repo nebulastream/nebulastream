@@ -20,14 +20,16 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 class PagedVectorVarSizedRef;
 
 class PagedVectorVarSized;
 using PagedVectorVarSizedPtr = std::shared_ptr<PagedVectorVarSized>;
 
-struct VarSizedDataEntryMapValue {
-    uint8_t* entryPtr;
+struct VarSizedDataEntryMapValue
+{
+    uint8_t * entryPtr;
     uint32_t entryLength;
     uint64_t entryBufIdx;
 };
@@ -46,8 +48,9 @@ struct VarSizedDataEntryMapValue {
  * - #4639: Optimize appendAllPages()
  * - #4658: Add MemoryLayout class for PagedVectorVarSized to support different layouts
  */
-class PagedVectorVarSized {
-  public:
+class PagedVectorVarSized
+{
+public:
     static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
@@ -76,7 +79,7 @@ class PagedVectorVarSized {
      * @param length
      * @return uint64_t Returns the key of the new entry in the varSizedDataEntryMap.
      */
-    uint64_t storeText(const char* text, uint32_t length);
+    uint64_t storeText(const char * text, uint32_t length);
 
     /**
      * @brief Loads text from the varSizedDataPages by retrieving the pointer to the text and its length from the
@@ -84,19 +87,19 @@ class PagedVectorVarSized {
      * @param textEntryMapKey
      * @return TextValue*
      */
-    TextValue* loadText(uint64_t textEntryMapKey);
+    TextValue * loadText(uint64_t textEntryMapKey);
 
     /**
      * @brief Combines the pages of the given PagedVectorVarSized with the pages of this PagedVectorVarSized.
      * @param other PagedVectorVarSized
      */
-    void appendAllPages(PagedVectorVarSized& other);
+    void appendAllPages(PagedVectorVarSized & other);
 
     /**
      * @brief Getter for the pages object.
      * @return std::vector<Runtime::TupleBuffer>&
      */
-    std::vector<Runtime::TupleBuffer>& getPages();
+    std::vector<Runtime::TupleBuffer> & getPages();
 
     /**
      * @brief Returns the number of pages.
@@ -146,7 +149,7 @@ class PagedVectorVarSized {
      */
     uint64_t getCapacityPerPage() const;
 
-  private:
+private:
     friend PagedVectorVarSizedRef;
     Runtime::BufferManagerPtr bufferManager;
     SchemaPtr schema;
@@ -157,10 +160,10 @@ class PagedVectorVarSized {
     uint64_t numberOfEntriesOnCurrPage;
     std::vector<Runtime::TupleBuffer> pages;
     std::vector<Runtime::TupleBuffer> varSizedDataPages;
-    uint8_t* currVarSizedDataEntry;
+    uint8_t * currVarSizedDataEntry;
     std::map<uint64_t, VarSizedDataEntryMapValue> varSizedDataEntryMap;
     uint64_t varSizedDataEntryMapCounter;
 };
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_

@@ -18,12 +18,14 @@
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 /**
 * @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
 */
-class TimeStamp : public Any {
-  public:
+class TimeStamp : public Any
+{
+public:
     static const inline auto type = TypeIdentifier::create<TimeStamp>();
 
     TimeStamp(Value<> milliseconds);
@@ -35,30 +37,30 @@ class TimeStamp : public Any {
     * @brief Addition of two TimeStamps, i.e., their milliseconds
     * @param other the TimeStamp to add to this TimeStamp instance
     */
-    AnyPtr add(const TimeStamp& other) const;
+    AnyPtr add(const TimeStamp & other) const;
     /**
     * @brief Substraction of two TimeStamps, i.e., their milliseconds
     * @param other the TimeStamp to substract to this TimeStamp instance
     */
-    AnyPtr substract(const TimeStamp& other) const;
+    AnyPtr substract(const TimeStamp & other) const;
 
     /**
     * @brief Tests if this TimeStamp Value is equal to the other TimeSTamp Value
     * @param other the other TimeStamp
     */
-    std::shared_ptr<Boolean> equals(const TimeStamp& other) const;
+    std::shared_ptr<Boolean> equals(const TimeStamp & other) const;
 
     /**
     * @brief Tests if this TimeStamp Value is less than the other TimeSTamp Value
     * @param other the other TimeStamp
     */
-    std::shared_ptr<Boolean> lessThan(const TimeStamp& other) const;
+    std::shared_ptr<Boolean> lessThan(const TimeStamp & other) const;
 
     /**
     * @brief Tests if this TimeStamp Value is greater than the other TimeSTamp Value
     * @param other the other TimeStamp
     */
-    std::shared_ptr<Boolean> greaterThan(const TimeStamp& other) const;
+    std::shared_ptr<Boolean> greaterThan(const TimeStamp & other) const;
 
     /**
     * @brief Returns the Milliseconds of the TimeStamp
@@ -123,7 +125,7 @@ class TimeStamp : public Any {
     * @brief Returns the time difference between the two timestamps (Subtract arguments: other date - this timestamp)
     * @param other the other TimeStamp to substract from
     */
-    Value<> difference(Value<TimeStamp>& other);
+    Value<> difference(Value<TimeStamp> & other);
 
     /**
     * @brief Transforms a string in the format "YYYY-MM-DDTHH:MM:SS" to milliseconds
@@ -135,10 +137,10 @@ class TimeStamp : public Any {
     */
     Value<Text> interval();
 
-  private:
+private:
     Value<> milliseconds;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_

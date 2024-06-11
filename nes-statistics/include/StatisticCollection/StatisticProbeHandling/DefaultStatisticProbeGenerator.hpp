@@ -17,14 +17,16 @@
 
 #include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Default implementation of the AbstractStatisticProbeHandler. It simply returns a vector of StatisticProbeRequestGRPC
  * that will then ask EVERY worker node for the statistics.
  */
-class DefaultStatisticProbeGenerator : public AbstractStatisticProbeGenerator {
-  public:
+class DefaultStatisticProbeGenerator : public AbstractStatisticProbeGenerator
+{
+public:
     /**
      * @brief Creates a new instance of the DefaultStatisticProbeHandler
      * @return AbstractStatisticProbeHandlerPtr
@@ -39,12 +41,13 @@ class DefaultStatisticProbeGenerator : public AbstractStatisticProbeGenerator {
      * @param allWorkerIds
      * @return Vector of StatisticProbeRequestGRPC
      */
-    std::vector<StatisticProbeRequestGRPC> generateProbeRequests(const StatisticRegistry&,
-                                                                 const AbstractStatisticCache&,
-                                                                 const StatisticProbeRequest& probeRequest,
-                                                                 const std::vector<WorkerId>& allWorkerIds) override;
+    std::vector<StatisticProbeRequestGRPC> generateProbeRequests(
+        const StatisticRegistry &,
+        const AbstractStatisticCache &,
+        const StatisticProbeRequest & probeRequest,
+        const std::vector<WorkerId> & allWorkerIds) override;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_DEFAULTSTATISTICPROBEGENERATOR_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_DEFAULTSTATISTICPROBEGENERATOR_HPP_

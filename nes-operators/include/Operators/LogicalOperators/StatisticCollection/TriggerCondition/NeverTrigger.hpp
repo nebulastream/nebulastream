@@ -17,13 +17,15 @@
 
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Never triggers. Used as a default, if the user does not provide a trigger
  */
-class NeverTrigger : public TriggerCondition {
-  public:
+class NeverTrigger : public TriggerCondition
+{
+public:
     /**
      * @brief Creates a NeverTrigger wrapped in a TriggerConditionPtr
      * @return TriggerConditionPtr
@@ -35,7 +37,7 @@ class NeverTrigger : public TriggerCondition {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const TriggerCondition& rhs) const override;
+    bool operator==(const TriggerCondition & rhs) const override;
 
     /**
      * @brief Creates a string representation
@@ -52,9 +54,9 @@ class NeverTrigger : public TriggerCondition {
      * @brief Never returns true
      * @return Always false
      */
-    bool shallTrigger(const ExpressionNode&) override;
+    bool shallTrigger(const ExpressionNode &) override;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_NEVERTRIGGER_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_NEVERTRIGGER_HPP_

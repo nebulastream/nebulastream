@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -40,28 +38,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
-class NonKeyedThresholdWindowPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+namespace NES::Runtime::Execution
+{
+class NonKeyedThresholdWindowPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
-    ExecutablePipelineProvider* provider;
+    ExecutablePipelineProvider * provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("NonKeyedThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup NonKeyedThresholdWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup NonKeyedThresholdWindowPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -76,7 +81,8 @@ class NonKeyedThresholdWindowPipelineTest : public Testing::BaseUnitTest, public
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -95,18 +101,12 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType,
-                                                                        integerPhysicalType,
-                                                                        readF2,
-                                                                        aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(
+        integerPhysicalType, integerPhysicalType, readF2, aggregationResultFieldName);
 
     aggVector.emplace_back(sumAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::NonKeyedThresholdWindow>(
-        greaterThanExpression,
-        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-        0,
-        aggVector,
-        0);
+        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -123,15 +123,15 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64);// does not qualify
+    testBuffer[0]["f1"].write(+1_s64); // does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64);// qualifies
+    testBuffer[1]["f1"].write(+2_s64); // qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64);// qualifies
+    testBuffer[2]["f1"].write(+3_s64); // qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64);// does not qualify
+    testBuffer[3]["f1"].write(+1_s64); // does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -157,7 +157,8 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -177,17 +178,11 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType,
-                                                                            unsignedIntegerType,
-                                                                            readF2,
-                                                                            aggregationResultFieldName);
+    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(
+        integerPhysicalType, unsignedIntegerType, readF2, aggregationResultFieldName);
     aggVector.emplace_back(countAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::NonKeyedThresholdWindow>(
-        greaterThanExpression,
-        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-        0,
-        aggVector,
-        0);
+        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -204,15 +199,15 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64);// does not qualify
+    testBuffer[0]["f1"].write(+1_s64); // does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64);// qualifies
+    testBuffer[1]["f1"].write(+2_s64); // qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64);// qualifies
+    testBuffer[2]["f1"].write(+3_s64); // qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64);// does not qualify
+    testBuffer[3]["f1"].write(+1_s64); // does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -238,7 +233,8 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Min aggregation
  */
-TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -257,17 +253,11 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType,
-                                                                        integerPhysicalType,
-                                                                        readF2,
-                                                                        aggregationResultFieldName);
+    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(
+        integerPhysicalType, integerPhysicalType, readF2, aggregationResultFieldName);
     aggVector.emplace_back(minAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::NonKeyedThresholdWindow>(
-        greaterThanExpression,
-        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-        0,
-        aggVector,
-        0);
+        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -284,15 +274,15 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64);// does not qualify
+    testBuffer[0]["f1"].write(+1_s64); // does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64);// qualifies
+    testBuffer[1]["f1"].write(+2_s64); // qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64);// qualifies
+    testBuffer[2]["f1"].write(+3_s64); // qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64);// does not qualify
+    testBuffer[3]["f1"].write(+1_s64); // does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -318,7 +308,8 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Max aggregation
  */
-TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -337,17 +328,11 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType,
-                                                                        integerPhysicalType,
-                                                                        readF2,
-                                                                        aggregationResultFieldName);
+    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(
+        integerPhysicalType, integerPhysicalType, readF2, aggregationResultFieldName);
     aggVector.emplace_back(maxAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::NonKeyedThresholdWindow>(
-        greaterThanExpression,
-        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-        0,
-        aggVector,
-        0);
+        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -364,15 +349,15 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64);// does not qualify
+    testBuffer[0]["f1"].write(+1_s64); // does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64);// qualifies
+    testBuffer[1]["f1"].write(+2_s64); // qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64);// qualifies
+    testBuffer[2]["f1"].write(+3_s64); // qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64);// does not qualify
+    testBuffer[3]["f1"].write(+1_s64); // does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -398,7 +383,8 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -417,17 +403,11 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType,
-                                                                        integerPhysicalType,
-                                                                        readF2,
-                                                                        aggregationResultFieldName);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(
+        integerPhysicalType, integerPhysicalType, readF2, aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::NonKeyedThresholdWindow>(
-        greaterThanExpression,
-        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-        0,
-        aggVector,
-        0);
+        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -444,15 +424,15 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64);// does not qualify
+    testBuffer[0]["f1"].write(+1_s64); // does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64);// qualifies
+    testBuffer[1]["f1"].write(+2_s64); // qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64);// qualifies
+    testBuffer[2]["f1"].write(+3_s64); // qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64);// does not qualify
+    testBuffer[3]["f1"].write(+1_s64); // does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -476,7 +456,8 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
 }
 
 // This test ensures that the aggregated field does not have to be an integer, which is the data type of count aggregation.
-TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::FLOAT32);
@@ -495,17 +476,11 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType,
-                                                                        integerPhysicalType,
-                                                                        readF2,
-                                                                        aggregationResultFieldName);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(
+        integerPhysicalType, integerPhysicalType, readF2, aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::NonKeyedThresholdWindow>(
-        greaterThanExpression,
-        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-        0,
-        aggVector,
-        0);
+        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -522,16 +497,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64);// does not qualify
-    testBuffer[0]["f2"].write((float) 10.0);
-    testBuffer[1]["f1"].write(+2_s64);// qualifies
-    testBuffer[1]["f2"].write((float) 20.0);
-    testBuffer[2]["f1"].write(+3_s64);// qualifies
-    testBuffer[2]["f2"].write((float) 30.0);
+    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    testBuffer[0]["f2"].write((float)10.0);
+    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f2"].write((float)20.0);
+    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f2"].write((float)30.0);
 
     // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64);// does not qualify
-    testBuffer[3]["f2"].write((float) 40.0);
+    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    testBuffer[3]["f2"].write((float)40.0);
     testBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -556,7 +531,8 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
+{
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::FLOAT32);
     scanSchema->addField("f2", BasicType::INT64);
@@ -575,17 +551,11 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType,
-                                                                        integerPhysicalType,
-                                                                        readF2,
-                                                                        aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(
+        integerPhysicalType, integerPhysicalType, readF2, aggregationResultFieldName);
     aggVector.emplace_back(sumAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::NonKeyedThresholdWindow>(
-        greaterThanExpression,
-        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-        0,
-        aggVector,
-        0);
+        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -602,15 +572,15 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0]["f1"].write((float) 0.5);// does not qualify
+    testBuffer[0]["f1"].write((float)0.5); // does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write((float) 2.5);// qualifies
+    testBuffer[1]["f1"].write((float)2.5); // qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write((float) 3.75);// qualifies
+    testBuffer[2]["f1"].write((float)3.75); // qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    testBuffer[3]["f1"].write((float) 0.25);// does not qualify
+    testBuffer[3]["f1"].write((float)0.25); // does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -634,10 +604,9 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 }
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        NonKeyedThresholdWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<NonKeyedThresholdWindowPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
-}// namespace NES::Runtime::Execution
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    NonKeyedThresholdWindowPipelineTest,
+    ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<NonKeyedThresholdWindowPipelineTest::ParamType> & info) { return info.param; });
+} // namespace NES::Runtime::Execution

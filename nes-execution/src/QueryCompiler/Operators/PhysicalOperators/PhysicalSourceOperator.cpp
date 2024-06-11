@@ -11,55 +11,69 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
-                                               StatisticId statisticId,
-                                               OriginId originId,
-                                               SchemaPtr inputSchema,
-                                               SchemaPtr outputSchema,
-                                               SourceDescriptorPtr sourceDescriptor)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
-      sourceDescriptor(std::move(sourceDescriptor)), originId(originId) {}
+PhysicalSourceOperator::PhysicalSourceOperator(
+    OperatorId id,
+    StatisticId statisticId,
+    OriginId originId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    SourceDescriptorPtr sourceDescriptor)
+    : Operator(id, statisticId)
+    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
+    , sourceDescriptor(std::move(sourceDescriptor))
+    , originId(originId)
+{
+}
 
-std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(OperatorId id,
-                                                                       StatisticId statisticId,
-                                                                       OriginId originId,
-                                                                       const SchemaPtr& inputSchema,
-                                                                       const SchemaPtr& outputSchema,
-                                                                       const SourceDescriptorPtr& sourceDescriptor) {
+std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(
+    OperatorId id,
+    StatisticId statisticId,
+    OriginId originId,
+    const SchemaPtr & inputSchema,
+    const SchemaPtr & outputSchema,
+    const SourceDescriptorPtr & sourceDescriptor)
+{
     return std::make_shared<PhysicalSourceOperator>(id, statisticId, originId, inputSchema, outputSchema, sourceDescriptor);
 }
 
-std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(StatisticId statisticId,
-                                                                       SchemaPtr inputSchema,
-                                                                       SchemaPtr outputSchema,
-                                                                       SourceDescriptorPtr sourceDescriptor) {
-    return create(getNextOperatorId(),
-                  statisticId,
-                  INVALID_ORIGIN_ID,
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(sourceDescriptor));
+std::shared_ptr<PhysicalSourceOperator>
+PhysicalSourceOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor)
+{
+    return create(
+        getNextOperatorId(), statisticId, INVALID_ORIGIN_ID, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
 }
 
-OriginId PhysicalSourceOperator::getOriginId() { return originId; }
+OriginId PhysicalSourceOperator::getOriginId()
+{
+    return originId;
+}
 
-void PhysicalSourceOperator::setOriginId(OriginId originId) { this->originId = originId; }
+void PhysicalSourceOperator::setOriginId(OriginId originId)
+{
+    this->originId = originId;
+}
 
-SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }
+SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor()
+{
+    return sourceDescriptor;
+}
 
-std::string PhysicalSourceOperator::toString() const {
+std::string PhysicalSourceOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalSourceOperator:\n";
     out << PhysicalUnaryOperator::toString();
-    if (sourceDescriptor != nullptr) {
+    if (sourceDescriptor != nullptr)
+    {
         out << sourceDescriptor->toString() << "\n";
     }
     out << "originId: " << originId;
@@ -67,10 +81,11 @@ std::string PhysicalSourceOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalSourceOperator::copy() {
+OperatorPtr PhysicalSourceOperator::copy()
+{
     auto result = create(id, statisticId, originId, inputSchema, outputSchema, sourceDescriptor);
     result->addAllProperties(properties);
     return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

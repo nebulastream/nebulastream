@@ -14,11 +14,22 @@
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
-MetricCollector::MetricCollector(WorkerId workerId) : workerId(workerId) {}
-WorkerId MetricCollector::getWorkerId() const { return workerId; }
-void MetricCollector::setNodeId(const WorkerId nodeId) { this->workerId = nodeId; }
-MetricCollector::MetricCollector() : workerId(INVALID_WORKER_NODE_ID) {}
+MetricCollector::MetricCollector(WorkerId workerId) : workerId(workerId)
+{
+}
+WorkerId MetricCollector::getWorkerId() const
+{
+    return workerId;
+}
+void MetricCollector::setNodeId(const WorkerId nodeId)
+{
+    this->workerId = nodeId;
+}
+MetricCollector::MetricCollector() : workerId(INVALID_WORKER_NODE_ID)
+{
+}
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

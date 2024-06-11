@@ -20,36 +20,35 @@
 #include <Util/yaml/Yaml.hpp>
 #include <sys/socket.h>
 
-namespace NES {
+namespace NES
+{
 
 class TCPSourceType;
 using TCPSourceTypePtr = std::shared_ptr<TCPSourceType>;
 
-class TCPSourceType : public PhysicalSourceType {
-
-  public:
+class TCPSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief create a TCPSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr create(const std::string& logicalSourceName,
-                                   const std::string& physicalSourceName,
-                                   std::map<std::string, std::string> sourceConfigMap);
+    static TCPSourceTypePtr create(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a TCPSourceTypePtr object
      * @param yamlConfig inputted config options
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static TCPSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a TCPSourceTypePtr object with default values
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static TCPSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     /**
      * @brief converts configs to string
@@ -62,7 +61,7 @@ class TCPSourceType : public PhysicalSourceType {
      * @param other other config object
      * @return true if equal, false otherwise
      */
-    bool equal(const PhysicalSourceTypePtr& other) override;
+    bool equal(const PhysicalSourceTypePtr & other) override;
 
     /**
      * @brief set config obtions to default
@@ -73,7 +72,7 @@ class TCPSourceType : public PhysicalSourceType {
      * @brief set host
      * @param host new socket host
      */
-    void setSocketHost(const std::string& host);
+    void setSocketHost(const std::string & host);
 
     /**
      * @brief get host address
@@ -109,7 +108,7 @@ class TCPSourceType : public PhysicalSourceType {
      * @brief set the domain via string
      * @param domain string viable options: AF_INET IPv4 Internet protocols, AF_INET6 IPv6 Internet protocols
      */
-    void setSocketDomainViaString(const std::string& domain);
+    void setSocketDomainViaString(const std::string & domain);
 
     /**
      * @brief get the socket type
@@ -211,25 +210,24 @@ class TCPSourceType : public PhysicalSourceType {
      */
     void setBytesUsedForSocketBufferSizeTransfer(uint32_t bytesUsedForSocketBufferSizeTransferValue);
 
-  private:
+private:
     /**
      * @brief constructor to create a new TCP source type object initialized with values from sourceConfigMap
      * @param sourceConfigMap inputted config options
      */
-    explicit TCPSourceType(const std::string& logicalSourceName,
-                           const std::string& physicalSourceName,
-                           std::map<std::string, std::string> sourceConfigMap);
+    explicit TCPSourceType(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new TCP source type object initialized with values from yamlConfig
      * @param yamlConfig inputted config options
      */
-    explicit TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    explicit TCPSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new TCP source type object initialized with default values
      */
-    TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    TCPSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     Configurations::StringConfigOption socketHost;
     Configurations::IntConfigOption socketPort;
@@ -242,5 +240,5 @@ class TCPSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption socketBufferSize;
     Configurations::IntConfigOption bytesUsedForSocketBufferSizeTransfer;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_

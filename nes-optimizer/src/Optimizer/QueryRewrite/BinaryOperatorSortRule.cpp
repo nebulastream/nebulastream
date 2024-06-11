@@ -19,31 +19,40 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-BinaryOperatorSortRulePtr BinaryOperatorSortRule::create() {
+BinaryOperatorSortRulePtr BinaryOperatorSortRule::create()
+{
     return std::make_shared<BinaryOperatorSortRule>(BinaryOperatorSortRule());
 }
 
-BinaryOperatorSortRule::BinaryOperatorSortRule() { NES_DEBUG("BinaryOperatorSortRule()"); };
+BinaryOperatorSortRule::BinaryOperatorSortRule()
+{
+    NES_DEBUG("BinaryOperatorSortRule()");
+};
 
-QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr) {
+QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr)
+{
     NES_INFO("Apply BinaryOperatorSortRule ");
     //Find all join operators in the query plan and sort children individually.
     auto joinOperators = queryPlanPtr->getOperatorByType<LogicalJoinOperator>();
-    for (const auto& joinOperator : joinOperators) {
+    for (const auto & joinOperator : joinOperators)
+    {
         sortChildren(joinOperator);
     }
     //Find all Union operators in the query plan and sort children individually.
     auto unionOperators = queryPlanPtr->getOperatorByType<LogicalUnionOperator>();
-    for (const auto& unionOperator : unionOperators) {
+    for (const auto & unionOperator : unionOperators)
+    {
         sortChildren(unionOperator);
     }
     //Return the updated query plan
     return queryPlanPtr;
 }
 
-void BinaryOperatorSortRule::sortChildren(const BinaryOperatorPtr& binaryOperator) {
+void BinaryOperatorSortRule::sortChildren(const BinaryOperatorPtr & binaryOperator)
+{
     //Extract the children operators
     auto children = binaryOperator->getChildren();
     NES_ASSERT(children.size() == 2, "Binary operator should have only 2 children");
@@ -59,7 +68,8 @@ void BinaryOperatorSortRule::sortChildren(const BinaryOperatorPtr& binaryOperato
     auto rightQualifierName = rightInputSchema->getQualifierNameForSystemGeneratedFields();
 
     //Compare left and right children qualifier name
-    if (leftQualifierName.compare(rightQualifierName) > 0) {
+    if (leftQualifierName.compare(rightQualifierName) > 0)
+    {
         //Remove the left children and insert it back to the binary operator
         // if right qualifier is smaller than left qualifier alphabetically
         binaryOperator->removeChild(leftChild);
@@ -69,4 +79,4 @@ void BinaryOperatorSortRule::sortChildren(const BinaryOperatorPtr& binaryOperato
         binaryOperator->setLeftInputSchema(rightInputSchema);
     }
 }
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

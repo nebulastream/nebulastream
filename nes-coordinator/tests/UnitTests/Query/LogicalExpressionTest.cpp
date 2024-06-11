@@ -19,31 +19,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /// Due to the order of overload resolution, the implicit conversion of 0 to a nullptr has got a higher priority
 /// as an build-in conversion than the user-defined implicit conversions to the type ExpressionItem.
 /// Check that this does not cause any issues for any logical expression
-class LogicalExpressionTest : public Testing::BaseUnitTest {
-  public:
+class LogicalExpressionTest : public Testing::BaseUnitTest
+{
+public:
     std::shared_ptr<QueryParsingService> queryParsingService;
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("LogicalExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("LogicalExpressionTest: Setup QueryCatalogServiceTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
-    inline void testBinaryOperator(std::string const& op) noexcept {
-
+    inline void testBinaryOperator(std::string const & op) noexcept
+    {
         std::vector<std::tuple<std::string, std::string>> pairs{
             {"0", R"(Attribute("value"))"},
             {"1", R"(Attribute("value"))"},
@@ -54,7 +58,8 @@ class LogicalExpressionTest : public Testing::BaseUnitTest {
             {R"(Attribute("value"))", R"(Attribute("value"))"},
         };
 
-        for (auto const& [v1, v2] : pairs) {
+        for (auto const & [v1, v2] : pairs)
+        {
             auto const q1 = R"(Query::from("").filter()" + v1 + op + v2 + R"( );)";
             EXPECT_NO_THROW(queryParsingService->createQueryFromCodeString(q1));
 
@@ -66,8 +71,9 @@ class LogicalExpressionTest : public Testing::BaseUnitTest {
 
 /// Template that can check that different Operators can be used with all designated data types that construct an
 /// ExpressionItem.
-template<template<typename, auto...> typename CompilesFromArgs, template<typename...> typename CompilesFromTypes>
-void checkBinary() {
+template <template <typename, auto...> typename CompilesFromArgs, template <typename...> typename CompilesFromTypes>
+void checkBinary()
+{
     bool compiles = CompilesFromTypes<ExpressionNodePtr, ExpressionItem, int8_t>::value
         && CompilesFromTypes<ExpressionNodePtr, int8_t, ExpressionItem>::value;
     ASSERT_TRUE(compiles);
@@ -112,8 +118,8 @@ void checkBinary() {
         && CompilesFromTypes<ExpressionNodePtr, bool, ExpressionItem>::value;
     ASSERT_TRUE(compiles);
 
-    compiles = CompilesFromTypes<ExpressionNodePtr, ExpressionItem, char const*>::value
-        && CompilesFromTypes<ExpressionNodePtr, char const*, ExpressionItem>::value;
+    compiles = CompilesFromTypes<ExpressionNodePtr, ExpressionItem, char const *>::value
+        && CompilesFromTypes<ExpressionNodePtr, char const *, ExpressionItem>::value;
     ASSERT_TRUE(compiles);
 
     compiles = CompilesFromTypes<ExpressionNodePtr, ExpressionItem, ValueTypePtr>::value
@@ -136,44 +142,52 @@ SETUP_COMPILE_TIME_TESTS(gt, operator>);
 
 //TODO: re-enable tests when finishing #1170, #1781
 
-TEST_F(LogicalExpressionTest, testEqualityExpression) {
+TEST_F(LogicalExpressionTest, testEqualityExpression)
+{
     checkBinary<eqCompiles, eqCompilesFromType>();
     testBinaryOperator("==");
 }
 
-TEST_F(LogicalExpressionTest, testInequalityExpression) {
+TEST_F(LogicalExpressionTest, testInequalityExpression)
+{
     checkBinary<neqCompiles, neqCompilesFromType>();
     testBinaryOperator("!=");
 }
 
-TEST_F(LogicalExpressionTest, testAndCompile) {
+TEST_F(LogicalExpressionTest, testAndCompile)
+{
     checkBinary<landCompiles, landCompilesFromType>();
     testBinaryOperator("&&");
 }
 
-TEST_F(LogicalExpressionTest, testOrExpression) {
+TEST_F(LogicalExpressionTest, testOrExpression)
+{
     checkBinary<lorCompiles, lorCompilesFromType>();
     testBinaryOperator("||");
 }
 
-TEST_F(LogicalExpressionTest, testLeqExpression) {
+TEST_F(LogicalExpressionTest, testLeqExpression)
+{
     checkBinary<leqCompiles, leqCompilesFromType>();
     testBinaryOperator("<=");
 }
 
-TEST_F(LogicalExpressionTest, testGeqExpression) {
+TEST_F(LogicalExpressionTest, testGeqExpression)
+{
     checkBinary<geqCompiles, geqCompilesFromType>();
     testBinaryOperator(">=");
 }
 
-TEST_F(LogicalExpressionTest, testLtExpression) {
+TEST_F(LogicalExpressionTest, testLtExpression)
+{
     checkBinary<ltCompiles, ltCompilesFromType>();
     testBinaryOperator("<");
 }
 
-TEST_F(LogicalExpressionTest, testGtExpression) {
+TEST_F(LogicalExpressionTest, testGtExpression)
+{
     checkBinary<gtCompiles, gtCompilesFromType>();
     testBinaryOperator(">");
 }
 
-}// namespace NES
+} // namespace NES

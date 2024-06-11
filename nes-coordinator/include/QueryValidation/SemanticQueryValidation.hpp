@@ -17,21 +17,24 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 class schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
 class Query;
 using QueryPtr = std::shared_ptr<Query>;
 
-namespace Catalogs::UDF {
+namespace Catalogs::UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SemanticQueryValidation;
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
@@ -39,14 +42,14 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 /**
  * @brief This class is responsible for Semantic Query Validation
  */
-class SemanticQueryValidation {
-
-  public:
+class SemanticQueryValidation
+{
+public:
     /**
      * @brief Checks the semantic validity of a Query object
      * @param queryPlan: query to check
      */
-    void validate(const QueryPlanPtr& queryPlan);
+    void validate(const QueryPlanPtr & queryPlan);
 
     /**
      * @brief Constructor for the SemanticQueryValidation class
@@ -54,9 +57,8 @@ class SemanticQueryValidation {
      * @param udfCatalog: udf catalog
      * @param advanceChecks: perform advance check
      */
-    explicit SemanticQueryValidation(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                     const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                     bool advanceChecks);
+    explicit SemanticQueryValidation(
+        const Catalogs::Source::SourceCatalogPtr & sourceCatalog, const Catalogs::UDF::UDFCatalogPtr & udfCatalog, bool advanceChecks);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
@@ -64,57 +66,54 @@ class SemanticQueryValidation {
      * @param udfCatalog: udf catalog
      * @param advanceChecks: perform advance check
      */
-    static SemanticQueryValidationPtr create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                             const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                             bool advanceChecks);
+    static SemanticQueryValidationPtr
+    create(const Catalogs::Source::SourceCatalogPtr & sourceCatalog, const Catalogs::UDF::UDFCatalogPtr & udfCatalog, bool advanceChecks);
 
-  private:
+private:
     /**
      * Check if infer model operator is correctly defined or not
      * @param queryPlan: query plan to check
      */
-    void inferModelValidityCheck(const QueryPlanPtr& queryPlan);
+    void inferModelValidityCheck(const QueryPlanPtr & queryPlan);
 
     /**
      * Performs semantic validation if the query plan has sink as it root operator.
      * @param queryPlan: query plan on which the semantic validation is to be applied
      */
-    void sinkOperatorValidityCheck(const QueryPlanPtr& queryPlan);
+    void sinkOperatorValidityCheck(const QueryPlanPtr & queryPlan);
 
     /**
      * Performs advance semantic validation of the queryIdAndCatalogEntryMapping. For example, checking if the filters in the query are semantically valid.
      * @param queryPlan: query plan on which the semantic validation is to be applied
      */
-    void advanceSemanticQueryValidation(const QueryPlanPtr& queryPlan);
+    void advanceSemanticQueryValidation(const QueryPlanPtr & queryPlan);
 
     /**
      * @brief Checks if the logical source in the provided QueryPlan is valid
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan,
-                                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
+    static void logicalSourceValidityCheck(const NES::QueryPlanPtr & queryPlan, const Catalogs::Source::SourceCatalogPtr & sourceCatalog);
 
     /**
      * @brief Checks if the physical source for the provided QueryPlan is present
      * @param queryPlan: query plan to check
      * @param sourceCatalog: source catalog
      */
-    static void physicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan,
-                                            const Catalogs::Source::SourceCatalogPtr& sourceCatalog);
+    static void physicalSourceValidityCheck(const NES::QueryPlanPtr & queryPlan, const Catalogs::Source::SourceCatalogPtr & sourceCatalog);
 
     /**
      * @brief Throws InvalidQueryException with formatted exception message
      * @param predicateString: predicate string
      */
-    void createExceptionForPredicate(std::string& predicateString);
+    void createExceptionForPredicate(std::string & predicateString);
 
     /**
      * @brief Deletes a substring from a string
      * @param mainStr: main string
      * @param toErase: string to erase
      */
-    static void eraseAllSubStr(std::string& mainStr, const std::string& toErase);
+    static void eraseAllSubStr(std::string & mainStr, const std::string & toErase);
 
     /**
      * @brief Replaces all occurrences of a substring in a string
@@ -122,7 +121,7 @@ class SemanticQueryValidation {
      * @param toSearch: data to search
      * @param replaceStr: replace the string
      */
-    static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
+    static void findAndReplaceAll(std::string & data, const std::string & toSearch, const std::string & replaceStr);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool performAdvanceChecks;
@@ -131,6 +130,6 @@ class SemanticQueryValidation {
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_COORDINATOR_INCLUDE_QUERYVALIDATION_SEMANTICQUERYVALIDATION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_QUERYVALIDATION_SEMANTICQUERYVALIDATION_HPP_

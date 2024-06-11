@@ -15,11 +15,12 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_
 
+#include <chrono>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/MetricCollectorType.hpp>
-#include <chrono>
 
-namespace NES {
+namespace NES
+{
 
 class MonitoringSourceType;
 using MonitoringSourceTypePtr = std::shared_ptr<MonitoringSourceType>;
@@ -27,26 +28,27 @@ using MonitoringSourceTypePtr = std::shared_ptr<MonitoringSourceType>;
 /**
  * @brief Configuration object for monitoring source config
  */
-class MonitoringSourceType : public PhysicalSourceType {
-  public:
+class MonitoringSourceType : public PhysicalSourceType
+{
+public:
     ~MonitoringSourceType() noexcept override = default;
 
     /**
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(const std::string& logicalSourceName,
-                                          const std::string& physicalSourceName,
-                                          Monitoring::MetricCollectorType metricCollectorType,
-                                          std::chrono::milliseconds waitTimeInMs);
+    static MonitoringSourceTypePtr create(
+        const std::string & logicalSourceName,
+        const std::string & physicalSourceName,
+        Monitoring::MetricCollectorType metricCollectorType,
+        std::chrono::milliseconds waitTimeInMs);
 
     /**
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(const std::string& logicalSourceName,
-                                          const std::string& physicalSourceName,
-                                          Monitoring::MetricCollectorType metricCollectorType);
+    static MonitoringSourceTypePtr create(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, Monitoring::MetricCollectorType metricCollectorType);
 
     /**
      * @brief creates a string representation of the source
@@ -59,7 +61,7 @@ class MonitoringSourceType : public PhysicalSourceType {
      * @param other mqttSourceType ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(PhysicalSourceTypePtr const& other) override;
+    bool equal(PhysicalSourceTypePtr const & other) override;
 
     void reset() override;
 
@@ -83,19 +85,20 @@ class MonitoringSourceType : public PhysicalSourceType {
      */
     void setMetricCollectorType(Monitoring::MetricCollectorType metricCollectorType);
 
-  private:
+private:
     /**
      * @brief constructor to create a new source type with defaults.
      */
-    MonitoringSourceType(const std::string& logicalSourceName,
-                         const std::string& physicalSourceName,
-                         Monitoring::MetricCollectorType metricCollectorType,
-                         std::chrono::milliseconds waitTime);
+    MonitoringSourceType(
+        const std::string & logicalSourceName,
+        const std::string & physicalSourceName,
+        Monitoring::MetricCollectorType metricCollectorType,
+        std::chrono::milliseconds waitTime);
     Monitoring::MetricCollectorType metricCollectorType;
     std::chrono::milliseconds waitTime;
     static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_

@@ -16,26 +16,31 @@
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES
+{
 
-template<typename T>
-TaggedPointer<T>::TaggedPointer(T* ptr, uint16_t tag) {
+template <typename T>
+TaggedPointer<T>::TaggedPointer(T * ptr, uint16_t tag)
+{
     reset(ptr, tag);
 }
 
-template<typename T>
-TaggedPointer<T>& TaggedPointer<T>::operator=(T* ptr) {
+template <typename T>
+TaggedPointer<T> & TaggedPointer<T>::operator=(T * ptr)
+{
     reset(ptr);
     return *this;
 }
 
-template<typename T>
-TaggedPointer<T>::operator bool() const {
+template <typename T>
+TaggedPointer<T>::operator bool() const
+{
     return get() != nullptr;
 }
 
-template<typename T>
-void TaggedPointer<T>::reset(T* ptr, uint16_t tag) {
+template <typename T>
+void TaggedPointer<T>::reset(T * ptr, uint16_t tag)
+{
     uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
     NES_ASSERT(!(pointer >> 48), "invalid pointer");
     pointer |= static_cast<uintptr_t>(tag) << 48;
@@ -45,4 +50,4 @@ void TaggedPointer<T>::reset(T* ptr, uint16_t tag) {
 // explicit instantiation of tagged ptr
 template class TaggedPointer<Runtime::detail::BufferControlBlock>;
 
-}// namespace NES
+} // namespace NES

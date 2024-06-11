@@ -16,37 +16,46 @@
 #include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 PlacementAmendmentHandler::PlacementAmendmentHandler(uint16_t numOfHandler, UMPMCAmendmentQueuePtr amendmentQueue)
-    : running(true), numOfHandler(numOfHandler), amendmentQueue(amendmentQueue) {}
+    : running(true), numOfHandler(numOfHandler), amendmentQueue(amendmentQueue)
+{
+}
 
-void PlacementAmendmentHandler::start() {
+void PlacementAmendmentHandler::start()
+{
     // Initiate amendment runners
     NES_INFO("Initializing placement amendment handler {}", numOfHandler);
-    for (size_t i = 0; i < numOfHandler; ++i) {
-        amendmentRunners.emplace_back(std::thread([this]() {
-            handleRequest();
-        }));
+    for (size_t i = 0; i < numOfHandler; ++i)
+    {
+        amendmentRunners.emplace_back(std::thread([this]() { handleRequest(); }));
     }
 }
 
-void PlacementAmendmentHandler::handleRequest() {
-    while (running) {
+void PlacementAmendmentHandler::handleRequest()
+{
+    while (running)
+    {
         PlacementAmendmentInstancePtr placementAmendmentInstance;
-        if (!amendmentQueue->try_dequeue(placementAmendmentInstance)) {
+        if (!amendmentQueue->try_dequeue(placementAmendmentInstance))
+        {
             continue;
         }
         placementAmendmentInstance->execute();
     }
 }
 
-void PlacementAmendmentHandler::shutDown() {
+void PlacementAmendmentHandler::shutDown()
+{
     running = false;
     //Join all runners and wait them to be completed before returning the call
-    for (auto& amendmentRunner : amendmentRunners) {
-        if (amendmentRunner.joinable()) {
+    for (auto & amendmentRunner : amendmentRunners)
+    {
+        if (amendmentRunner.joinable())
+        {
             amendmentRunner.join();
         }
     }
 }
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

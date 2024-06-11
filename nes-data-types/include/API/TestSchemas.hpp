@@ -15,18 +15,20 @@
 #ifndef NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
 #define NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
 
-#include <API/Schema.hpp>
 #include <stdexcept>
 #include <unordered_map>
+#include <API/Schema.hpp>
 
-namespace NES {
-class TestSchemas {
-  public:
-    static SchemaPtr getSchemaTemplate(const std::string& name);
+namespace NES
+{
+class TestSchemas
+{
+public:
+    static SchemaPtr getSchemaTemplate(const std::string & name);
 
-  private:
+private:
     static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_

@@ -15,11 +15,13 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
 
 #include <memory>
-namespace NES::Nautilus::IR::Types {
+namespace NES::Nautilus::IR::Types
+{
 class Stamp;
 using StampPtr = std::shared_ptr<Stamp>;
-class StampFactory {
-  public:
+class StampFactory
+{
+public:
     static StampPtr createVoidStamp();
     static StampPtr createUInt8Stamp();
     static StampPtr createUInt16Stamp();
@@ -36,6 +38,6 @@ class StampFactory {
     static StampPtr createArrayStamp(uint64_t size, StampPtr component);
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_

@@ -17,10 +17,12 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerSlicing.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOperatorHandlerSlicing {
-  public:
+class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOperatorHandlerSlicing
+{
+public:
     /**
      * @brief Constructor for a NLJOperatorHandlerSlicing
      * @param inputOrigins
@@ -32,14 +34,15 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
      * @param pageSizeLeft
      * @param pageSizeRight
      */
-    NLJOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
-                              const OriginId outputOriginId,
-                              const uint64_t windowSize,
-                              const uint64_t windowSlide,
-                              const SchemaPtr& leftSchema,
-                              const SchemaPtr& rightSchema,
-                              const uint64_t pageSizeLeft,
-                              const uint64_t pageSizeRight);
+    NLJOperatorHandlerSlicing(
+        const std::vector<OriginId> & inputOrigins,
+        const OriginId outputOriginId,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr & leftSchema,
+        const SchemaPtr & rightSchema,
+        const uint64_t pageSizeLeft,
+        const uint64_t pageSizeRight);
 
     /**
      * @brief Creats a NLJOperatorHandlerSlicing
@@ -53,17 +56,18 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
      * @param pageSizeRight
      * @return NLJOperatorHandlerPtr
      */
-    static NLJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
-                                        const OriginId outputOriginId,
-                                        const uint64_t windowSize,
-                                        const uint64_t windowSlide,
-                                        const SchemaPtr& leftSchema,
-                                        const SchemaPtr& rightSchema,
-                                        const uint64_t pageSizeLeft,
-                                        const uint64_t pageSizeRight);
+    static NLJOperatorHandlerPtr create(
+        const std::vector<OriginId> & inputOrigins,
+        const OriginId outputOriginId,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr & leftSchema,
+        const SchemaPtr & rightSchema,
+        const uint64_t pageSizeLeft,
+        const uint64_t pageSizeRight);
 
     ~NLJOperatorHandlerSlicing() override = default;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJOPERATORHANDLERSLICING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJOPERATORHANDLERSLICING_HPP_

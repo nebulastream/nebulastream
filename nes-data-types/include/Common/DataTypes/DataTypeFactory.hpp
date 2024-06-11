@@ -14,10 +14,11 @@
 
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <vector>
-namespace NES {
+#include <Common/DataTypes/BasicTypes.hpp>
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -31,9 +32,9 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
 /**
  * @brief The data type factory offers multiple methods to construct data types
  */
-class DataTypeFactory {
-
-  public:
+class DataTypeFactory
+{
+public:
     /**
      * @brief Create a new Undefined type
      * @return DataTypePtr
@@ -146,7 +147,7 @@ class DataTypeFactory {
      * @param component component type of the array
      * @return DataTypePtr
      */
-    static DataTypePtr createArray(uint64_t length, const DataTypePtr& component);
+    static DataTypePtr createArray(uint64_t length, const DataTypePtr & component);
 
     /**
     * @brief Creates a new Char data type.
@@ -208,7 +209,7 @@ class DataTypeFactory {
      * @param values the value as a vector of strings, which represent the individual values.
      * @return ValueTypePtr
      */
-    static ValueTypePtr createArrayValueWithContainedType(const DataTypePtr& type, std::vector<std::string>&& values) noexcept;
+    static ValueTypePtr createArrayValueWithContainedType(const DataTypePtr & type, std::vector<std::string> && values) noexcept;
 
     /**
      * @brief Create an array value that is supposed to fit into the contained type passed as argument to this function.
@@ -220,23 +221,23 @@ class DataTypeFactory {
      *
      * @param values the value as a vector of strings, which represent the individual values.
      */
-    static ValueTypePtr createArrayValueFromContainerType(const std::shared_ptr<ArrayType>& type,
-                                                          std::vector<std::string>&& values) noexcept;
+    static ValueTypePtr
+    createArrayValueFromContainerType(const std::shared_ptr<ArrayType> & type, std::vector<std::string> && values) noexcept;
 
     /**
      * @brief Create a fixed char typed value. For instance ['a', 'b'].
      * @param values represents the fixed char as a vecotr of strings which should contain only one char each.
      * @return ValueTypePtr
      */
-    static ValueTypePtr createFixedCharValue(std::vector<std::string>&& values) noexcept;
+    static ValueTypePtr createFixedCharValue(std::vector<std::string> && values) noexcept;
 
     /**
      * @brief Create a fixed char typed value from a null-terminated c-str.
      * @param values represents the fixed char as a single string.
      * @return ValueTypePtr
      */
-    static ValueTypePtr createFixedCharValue(char const* values) noexcept;
-    static ValueTypePtr createFixedCharValue(const std::string& values) noexcept;
+    static ValueTypePtr createFixedCharValue(char const * values) noexcept;
+    static ValueTypePtr createFixedCharValue(const std::string & values) noexcept;
 
     /**
      * @brief Create a data type from a BasicType, this many is used to support the old type system API.
@@ -301,6 +302,6 @@ class DataTypeFactory {
     static DataTypePtr createFloatFromInteger(DataTypePtr stamp);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_

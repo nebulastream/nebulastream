@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <vector>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -26,28 +28,30 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpp-base64/base64.h>
-#include <fstream>
 #include <gtest/gtest.h>
-#include <memory>
-#include <string>
-#include <vector>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-struct Output {
+struct Output
+{
     float iris0;
     float iris1;
     float iris2;
 };
 
-class ONNXInferenceOperatorTest : public Testing::BaseUnitTest {
-  public:
+class ONNXInferenceOperatorTest : public Testing::BaseUnitTest
+{
+public:
     std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
     std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ONNXInferenceOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ONNXInferenceOperatorTest test class.");
     }
@@ -56,25 +60,28 @@ class ONNXInferenceOperatorTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down ONNXInferenceOperatorTest test class."); }
 };
 
-static std::string_view from_text_value_type(const NES::Nautilus::Value<Text>& value) {
-    auto textValue = reinterpret_cast<TextValue*>(value.getValue().getReference().value->getValue().value);
+static std::string_view from_text_value_type(const NES::Nautilus::Value<Text> & value)
+{
+    auto textValue = reinterpret_cast<TextValue *>(value.getValue().getReference().value->getValue().value);
     return {textValue->str(), textValue->length()};
 }
 
-static std::vector<float> decode_floats_from_base64(const std::string_view& base64_encoded) {
-
+static std::vector<float> decode_floats_from_base64(const std::string_view & base64_encoded)
+{
     std::vector<uint8_t> decoded;
     auto bytes = base64_decode(base64_encoded);
     std::copy(bytes.begin(), bytes.end(), std::back_inserter(decoded));
 
     std::vector<float> result;
-    for (size_t i = 0; i < (decoded.size() / sizeof(float)); ++i) {
-        result.push_back(*reinterpret_cast<float*>(decoded.data() + (i * sizeof(float))));
+    for (size_t i = 0; i < (decoded.size() / sizeof(float)); ++i)
+    {
+        result.push_back(*reinterpret_cast<float *>(decoded.data() + (i * sizeof(float))));
     }
     return result;
 }
 
-std::string read_file(const std::string& file_name) {
+std::string read_file(const std::string & file_name)
+{
     std::ifstream t(std::string(TEST_DATA_DIRECTORY) + file_name);
     NES_ASSERT(t.is_open(), "Could not open file: " + std::string(TEST_DATA_DIRECTORY) + file_name);
     std::stringstream buffer;
@@ -83,7 +90,8 @@ std::string read_file(const std::string& file_name) {
     return buffer.str();
 }
 
-TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeYOLOV8) {
+TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeYOLOV8)
+{
     std::string data = "data";
     auto data_out = "data";
 
@@ -106,7 +114,7 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeYOLOV8) {
     // needed for Text Allocation
     auto worker_context = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buffer_manager, 10);
 
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) worker_context.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>((int8_t *)worker_context.get()), Value<MemRef>((int8_t *)&pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -125,7 +133,8 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeYOLOV8) {
     EXPECT_EQ(collector->records[0].read(data), firstRecord.read(data));
     EXPECT_EQ(outputs.size(), expected_outputs.size());
 
-    for (size_t i = 0; i < outputs.size(); i++) {
+    for (size_t i = 0; i < outputs.size(); i++)
+    {
         EXPECT_NEAR(outputs[i], expected_outputs[i], delta);
     }
 
@@ -134,7 +143,8 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeYOLOV8) {
     inferModelOperator->terminate(ctx);
 }
 
-TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeBase64Encoding) {
+TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeBase64Encoding)
+{
     std::string data = "data";
 
     auto data_out = "data";
@@ -157,7 +167,7 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeBase64Encoding) {
     // needed for Text Allocation
     auto worker_context = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buffer_manager, 10);
 
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) worker_context.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>((int8_t *)worker_context.get()), Value<MemRef>((int8_t *)&pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -172,10 +182,11 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeBase64Encoding) {
     inferModelOperator->execute(ctx, fourthRecord);
 
     //Assertion, values from running the onnx model in python
-    std::vector<Output> expectedOutput{{0.8635288, 0.12861131, 0.00785995},
-                                       {0.8248063, 0.16215266, 0.01304107},
-                                       {0.8458433, 0.14335841, 0.01079828},
-                                       {0.8178819, 0.16869366, 0.01342443}};
+    std::vector<Output> expectedOutput{
+        {0.8635288, 0.12861131, 0.00785995},
+        {0.8248063, 0.16215266, 0.01304107},
+        {0.8458433, 0.14335841, 0.01079828},
+        {0.8178819, 0.16869366, 0.01342443}};
     auto delta = 0.0000001;
 
     EXPECT_EQ(collector->records.size(), 4);
@@ -209,7 +220,8 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeBase64Encoding) {
     inferModelOperator->terminate(ctx);
 }
 
-TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntime) {
+TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntime)
+{
     std::string f1 = "f1";
     std::string f2 = "f2";
     std::string f3 = "f3";
@@ -238,36 +250,41 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntime) {
     auto handler = std::make_shared<ONNXInferenceOperatorHandler>(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.onnx");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t *)&pipelineContext));
 
     inferModelOperator->setup(ctx);
 
-    auto firstRecord = Record({{"f1", Value<Float>((Float) 5.1)},
-                               {"f2", Value<Float>((Float) 3.5)},
-                               {"f3", Value<Float>((Float) 1.4)},
-                               {"f4", Value<Float>((Float) 0.2)}});
-    auto secondRecord = Record({{"f1", Value<Float>((Float) 4.9)},
-                                {"f2", Value<Float>((Float) 3.0)},
-                                {"f3", Value<Float>((Float) 1.4)},
-                                {"f4", Value<Float>((Float) 0.2)}});
-    auto thirdRecord = Record({{"f1", Value<Float>((Float) 4.7)},
-                               {"f2", Value<Float>((Float) 3.2)},
-                               {"f3", Value<Float>((Float) 1.3)},
-                               {"f4", Value<Float>((Float) 0.2)}});
-    auto fourthRecord = Record({{"f1", Value<Float>((Float) 4.6)},
-                                {"f2", Value<Float>((Float) 3.1)},
-                                {"f3", Value<Float>((Float) 1.5)},
-                                {"f4", Value<Float>((Float) 0.2)}});
+    auto firstRecord = Record(
+        {{"f1", Value<Float>((Float)5.1)},
+         {"f2", Value<Float>((Float)3.5)},
+         {"f3", Value<Float>((Float)1.4)},
+         {"f4", Value<Float>((Float)0.2)}});
+    auto secondRecord = Record(
+        {{"f1", Value<Float>((Float)4.9)},
+         {"f2", Value<Float>((Float)3.0)},
+         {"f3", Value<Float>((Float)1.4)},
+         {"f4", Value<Float>((Float)0.2)}});
+    auto thirdRecord = Record(
+        {{"f1", Value<Float>((Float)4.7)},
+         {"f2", Value<Float>((Float)3.2)},
+         {"f3", Value<Float>((Float)1.3)},
+         {"f4", Value<Float>((Float)0.2)}});
+    auto fourthRecord = Record(
+        {{"f1", Value<Float>((Float)4.6)},
+         {"f2", Value<Float>((Float)3.1)},
+         {"f3", Value<Float>((Float)1.5)},
+         {"f4", Value<Float>((Float)0.2)}});
     inferModelOperator->execute(ctx, firstRecord);
     inferModelOperator->execute(ctx, secondRecord);
     inferModelOperator->execute(ctx, thirdRecord);
     inferModelOperator->execute(ctx, fourthRecord);
 
     //Assertion, values from running the onnx model in python
-    std::vector<Output> expectedOutput{{0.8635288, 0.12861131, 0.00785995},
-                                       {0.8248063, 0.16215266, 0.01304107},
-                                       {0.8458433, 0.14335841, 0.01079828},
-                                       {0.8178819, 0.16869366, 0.01342443}};
+    std::vector<Output> expectedOutput{
+        {0.8635288, 0.12861131, 0.00785995},
+        {0.8248063, 0.16215266, 0.01304107},
+        {0.8458433, 0.14335841, 0.01079828},
+        {0.8178819, 0.16869366, 0.01342443}};
     auto delta = 0.0000001;
     EXPECT_EQ(collector->records.size(), 4);
     EXPECT_EQ(collector->records[0].read(f1), firstRecord.read(f1));
@@ -305,4 +322,4 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntime) {
     inferModelOperator->terminate(ctx);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

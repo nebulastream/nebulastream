@@ -11,15 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExpExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-ExpExpression::ExpExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
-    : subExpression(subExpression) {}
+ExpExpression::ExpExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr & subExpression) : subExpression(subExpression)
+{
+}
 
 /**
  * @brief This method computes returns the exponential (Euler's number) e raised to the given subExpression.
@@ -27,35 +29,60 @@ ExpExpression::ExpExpression(const NES::Runtime::Execution::Expressions::Express
  * @param x double
  * @return double
  */
-double calculateExp(double x) { return std::exp(x); }
+double calculateExp(double x)
+{
+    return std::exp(x);
+}
 
-Value<> ExpExpression::execute(NES::Nautilus::Record& record) const {
+Value<> ExpExpression::execute(NES::Nautilus::Record & record) const
+{
     Value subValue = subExpression->execute(record);
 
-    if (subValue->isType<Int8>()) {
+    if (subValue->isType<Int8>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
+    }
+    else if (subValue->isType<Int16>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
+    }
+    else if (subValue->isType<Int32>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
+    }
+    else if (subValue->isType<Int64>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
+    }
+    else if (subValue->isType<UInt8>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
+    }
+    else if (subValue->isType<UInt16>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
+    }
+    else if (subValue->isType<UInt32>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
+    }
+    else if (subValue->isType<UInt64>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
+    }
+    else if (subValue->isType<Float>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
+    }
+    else if (subValue->isType<Double>())
+    {
         return FunctionCall<>("calculateExp", calculateExp, subValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // Throw an exception if no type is applicable
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

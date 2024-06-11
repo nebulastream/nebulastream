@@ -15,11 +15,13 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 class ValueRef;
 }
 
-namespace NES::Nautilus::Tracing::TraceUtil {
+namespace NES::Nautilus::Tracing::TraceUtil
+{
 
 /**
  * Returns a boolean value indicating whether the method is executed in the interpreter.
@@ -38,15 +40,15 @@ namespace NES::Nautilus::Tracing::TraceUtil {
 * @param valueReference reference to the const value.
 * @param constValue constant value.
 */
-void traceConstOperation(const AnyPtr& constValue, const Tracing::ValueRef& valueReference);
+void traceConstOperation(const AnyPtr & constValue, const Tracing::ValueRef & valueReference);
 
 /**
 * @brief Trace a value assignment.
 * @param targetRef reference to the target value.
 * @param sourceRef reference to the source value.
 */
-void traceAssignmentOperation(const Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
-bool traceBoolOperation(const AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
+void traceAssignmentOperation(const Tracing::ValueRef & targetRef, const Nautilus::Tracing::ValueRef & sourceRef);
+bool traceBoolOperation(const AnyPtr & boolValue, const Nautilus::Tracing::ValueRef & sourceRef);
 /**
 * @brief Trace a binary operation, e.g., add, sub, div.
 * @param op operation code-
@@ -54,25 +56,23 @@ bool traceBoolOperation(const AnyPtr& boolValue, const Nautilus::Tracing::ValueR
 * @param rightRef reference to the right input.
 * @param resultRef reference to the result.
 */
-void traceBinaryOperation(const Tracing::OpCode& op,
-                          const Tracing::ValueRef& resultRef,
-                          const Tracing::ValueRef& leftRef,
-                          const Tracing::ValueRef& rightRef);
+void traceBinaryOperation(
+    const Tracing::OpCode & op, const Tracing::ValueRef & resultRef, const Tracing::ValueRef & leftRef, const Tracing::ValueRef & rightRef);
 /**
 * @brief Trace a unary operation, e.g., negate.
 * @param op operation code.
 * @param inputRef reference to the input.
 * @param resultRef reference to the result.
 */
-void traceUnaryOperation(const Tracing::OpCode& op, const Tracing::ValueRef& resultRef, const Tracing::ValueRef& inputRef);
+void traceUnaryOperation(const Tracing::OpCode & op, const Tracing::ValueRef & resultRef, const Tracing::ValueRef & inputRef);
 
 /**
 * @brief Trace a memory store.
 * @param memRef reference to memory.
 * @param valueRef reference to the value.
 */
-void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRef& valueRef);
+void traceStoreOperation(const Tracing::ValueRef & memRef, const Tracing::ValueRef & valueRef);
 
-}// namespace NES::Nautilus::Tracing::TraceUtil
+} // namespace NES::Nautilus::Tracing::TraceUtil
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_

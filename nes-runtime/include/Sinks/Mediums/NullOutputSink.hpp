@@ -20,25 +20,28 @@
 #include <sstream>
 #include <string>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <iostream>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class provides a print sink
  */
-class NullOutputSink : public SinkMedium {
-  public:
+class NullOutputSink : public SinkMedium
+{
+public:
     /**
      * @brief Default getSliceIndexByTs for could not find a slice,
      * @Note the default output will be written to cout
      */
-    explicit NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
-                            uint32_t numOfProducers,
-                            SharedQueryId sharedQueryId,
-                            DecomposedQueryPlanId decomposedQueryPlanId,
-                            uint64_t numberOfOrigins = 1);
+    explicit NullOutputSink(
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins = 1);
 
     /**
      * @brief destructor
@@ -64,7 +67,7 @@ class NullOutputSink : public SinkMedium {
      * @param tuple buffer to write
      * @return bool indicating success of the write
      */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the print sink
@@ -78,9 +81,9 @@ class NullOutputSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  private:
+private:
 };
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_

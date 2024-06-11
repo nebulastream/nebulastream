@@ -12,82 +12,90 @@
     limitations under the License.
 */
 
-#include <BaseUnitTest.hpp>
+#include <fstream>
+#include <memory>
+#include <regex>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <CoordinatorRPCService_mock.grpc.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <fstream>
 #include <gmock/gmock-spec-builders.h>
-#include <memory>
-#include <regex>
+#include <BaseUnitTest.hpp>
+#include <CoordinatorRPCService_mock.grpc.pb.h>
 
-namespace NES {
+namespace NES
+{
 
-class CoordinatorRPCClientTest : public Testing::BaseUnitTest {
-  public:
-    void SetUp() override {
+class CoordinatorRPCClientTest : public Testing::BaseUnitTest
+{
+public:
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         // IMPORTANT: We reset the logger for every testcase, because we are expecting a specific error message!
         setupLogging();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         cleanUplogging();
         Testing::BaseUnitTest::TearDown();
     }
 
-    static void SetUpTestCase() {}
+    static void SetUpTestCase() { }
     constexpr static auto VALID_LOGICAL_SOURCE_NAME = "ValidSource";
     constexpr static auto INVALID_LOGICAL_SOURCE_NAME = "InvalidSource";
 
-  protected:
-    void setupLogging() {
-        if (std::tmpnam(tmpFilePath)) {
+protected:
+    void setupLogging()
+    {
+        if (std::tmpnam(tmpFilePath))
+        {
             NES::Logger::setupLogging(tmpFilePath, NES::LogLevel::LOG_DEBUG);
-        } else {
+        }
+        else
+        {
             std::cerr << "Could not create temporary file for logging";
         }
     }
 
     void cleanUplogging() const { unlink(tmpFilePath); }
 
-    static std::tuple<std::unique_ptr<CoordinatorRPCClient>, MockCoordinatorRPCServiceStub&> defaultUUT() {
+    static std::tuple<std::unique_ptr<CoordinatorRPCClient>, MockCoordinatorRPCServiceStub &> defaultUUT()
+    {
         using namespace std::chrono_literals;
         auto stub = std::make_unique<MockCoordinatorRPCServiceStub>();
-        auto& stubRef = *stub;
+        auto & stubRef = *stub;
         return {std::make_unique<CoordinatorRPCClient>(std::move(stub), "123.123.123.123", 2, 15ms), stubRef};
     }
 
-    std::function<bool(std::string_view)> getLineFilter(LogLevel logLevel) const {
+    std::function<bool(std::string_view)> getLineFilter(LogLevel logLevel) const
+    {
         // Assumes the standard SPDLOG_PATTERN
         // Assumes that the log level is represented by [X] where X is the first letter of the LogLevel with the `LOG_` prefix
         // LOG_ERROR - E, LOG_WARNING - W, LOG_INFO - I, ...
-        std::regex timestampRegex("^\\[\\d{2}:\\d{2}:\\d{2}\\.\\d{6}\\] \\["
-                                  + std::string(magic_enum::enum_name(logLevel)).substr(4, 1) + "\\] ");
-        return [timestampRegex = std::move(timestampRegex)](const std::string_view line) {
-            return std::regex_search(line.begin(), line.end(), timestampRegex);
-        };
+        std::regex timestampRegex(
+            "^\\[\\d{2}:\\d{2}:\\d{2}\\.\\d{6}\\] \\[" + std::string(magic_enum::enum_name(logLevel)).substr(4, 1) + "\\] ");
+        return [timestampRegex = std::move(timestampRegex)](const std::string_view line)
+        { return std::regex_search(line.begin(), line.end(), timestampRegex); };
     }
 
-    std::function<bool(std::string_view)> getNoOpLineFilter() const {
-        return [](const std::string_view) {
-            return true;
-        };
+    std::function<bool(std::string_view)> getNoOpLineFilter() const
+    {
+        return [](const std::string_view) { return true; };
     }
 
-    void assertErrorMessageInLogOutput(std::string_view errorMessage,
-                                       size_t numberOfOccurences = 1,
-                                       std::optional<LogLevel> logLevel = std::nullopt) const {
-
+    void assertErrorMessageInLogOutput(
+        std::string_view errorMessage, size_t numberOfOccurences = 1, std::optional<LogLevel> logLevel = std::nullopt) const
+    {
         // Flush Logs, otherwise logs may not have been written to disk
         NES::Logger::getInstance()->forceFlush();
         std::ifstream log(tmpFilePath);
         EXPECT_TRUE(log) << "Could not open the " << tmpFilePath << "log file";
 
-        if (logLevel) {
+        if (logLevel)
+        {
             EXPECT_GE(NES_COMPILE_TIME_LOG_LEVEL, getLogLevel(*logLevel))
                 << "NES_COMPILE_TIME_LOG_LEVEL prevents log output assertions on level: " << magic_enum::enum_name(*logLevel);
             EXPECT_NE(LogLevel::LOG_NONE, *logLevel) << "Testing for logs with LogLevel::LOG_NONE is pointless";
@@ -96,12 +104,15 @@ class CoordinatorRPCClientTest : public Testing::BaseUnitTest {
 
         size_t occurences = 0;
         std::string line;
-        for (unsigned int curLine = 0; getline(log, line); curLine++) {
-            if (!lineFilterFunction(line)) {
+        for (unsigned int curLine = 0; getline(log, line); curLine++)
+        {
+            if (!lineFilterFunction(line))
+            {
                 continue;
             }
 
-            if (line.find(errorMessage) != std::string::npos) {
+            if (line.find(errorMessage) != std::string::npos)
+            {
                 occurences++;
             }
         }
@@ -110,11 +121,12 @@ class CoordinatorRPCClientTest : public Testing::BaseUnitTest {
             << fmt::format("Could not find the Error Message \"{}\" in the log {} times", errorMessage, numberOfOccurences);
     }
 
-  private:
+private:
     char tmpFilePath[L_tmpnam] = {};
 };
 
-TEST_F(CoordinatorRPCClientTest, TestEmptyPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCClientTest, TestEmptyPhysicalSourceRegistrationRequest)
+{
     using namespace ::testing;
     auto [uut, mock] = defaultUUT();
     RegisterPhysicalSourcesReply reply;
@@ -130,7 +142,8 @@ TEST_F(CoordinatorRPCClientTest, TestEmptyPhysicalSourceRegistrationRequest) {
     EXPECT_THAT(expected.physicalsourcetypes(), IsEmpty());
 }
 
-TEST_F(CoordinatorRPCClientTest, TestValidPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCClientTest, TestValidPhysicalSourceRegistrationRequest)
+{
     using namespace ::testing;
     auto [uut, mock] = defaultUUT();
     RegisterPhysicalSourcesReply reply;
@@ -155,7 +168,8 @@ TEST_F(CoordinatorRPCClientTest, TestValidPhysicalSourceRegistrationRequest) {
     EXPECT_EQ(expected.physicalsourcetypes(0).sourcetype(), magic_enum::enum_name(SourceType::DEFAULT_SOURCE));
 }
 
-TEST_F(CoordinatorRPCClientTest, TestValidAndInvalidPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCClientTest, TestValidAndInvalidPhysicalSourceRegistrationRequest)
+{
     using namespace ::testing;
     auto [uut, mock] = defaultUUT();
     RegisterPhysicalSourcesReply reply;
@@ -195,12 +209,13 @@ TEST_F(CoordinatorRPCClientTest, TestValidAndInvalidPhysicalSourceRegistrationRe
     assertErrorMessageInLogOutput("IF_THIS_APPEARS_IN_THE_ERROR_MESSAGE_THE_TEST_WAS_SUCCESSFUL", 1, LogLevel::LOG_ERROR);
 }
 
-TEST_F(CoordinatorRPCClientTest, TestGenericErrorPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCClientTest, TestGenericErrorPhysicalSourceRegistrationRequest)
+{
     using namespace ::testing;
     auto [uut, mock] = defaultUUT();
 
     EXPECT_CALL(mock, RegisterPhysicalSource(_, _, _))
-        .Times(3)// Initial + 2 Retries
+        .Times(3) // Initial + 2 Retries
         .WillRepeatedly(Return(Status(grpc::UNAVAILABLE, "THIS_SHOULD_APPEAR_IN_THE_LOG")));
 
     auto valid = DefaultSourceType::create(VALID_LOGICAL_SOURCE_NAME, fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
@@ -210,4 +225,4 @@ TEST_F(CoordinatorRPCClientTest, TestGenericErrorPhysicalSourceRegistrationReque
     assertErrorMessageInLogOutput("THIS_SHOULD_APPEAR_IN_THE_LOG", 3, LogLevel::LOG_WARNING);
 }
 
-}// namespace NES
+} // namespace NES

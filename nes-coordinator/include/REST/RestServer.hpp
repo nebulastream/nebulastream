@@ -15,14 +15,15 @@
 #ifndef NES_COORDINATOR_INCLUDE_REST_RESTSERVER_HPP_
 #define NES_COORDINATOR_INCLUDE_REST_RESTSERVER_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <condition_variable>
 #include <future>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
@@ -33,10 +34,11 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
@@ -53,30 +55,34 @@ using LocationServicePtr = std::shared_ptr<LocationService>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
-namespace Catalogs {
+namespace Catalogs
+{
 
-namespace Source {
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace UDF {
+namespace UDF
+{
 class UDFCatalog;
 using UdfCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
-namespace Query {
+namespace Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
-}// namespace Catalogs
+} // namespace Query
+} // namespace Catalogs
 
 /**
  * @brief : This class is responsible for starting the REST server.
  */
-class RestServer {
-
-  public:
+class RestServer
+{
+public:
     /**
      * @brief constructor for rest server
      * @param host
@@ -94,20 +100,21 @@ class RestServer {
      * @param bufferManager
      * @param corsAllowedOrigin
      */
-    RestServer(std::string host,
-               uint16_t port,
-               NesCoordinatorWeakPtr coordinator,
-               Catalogs::Query::QueryCatalogPtr queryCatalog,
-               SourceCatalogServicePtr sourceCatalogService,
-               TopologyPtr topology,
-               Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-               RequestHandlerServicePtr requestHandlerService,
-               MonitoringServicePtr monitoringService,
-               QueryParsingServicePtr queryParsingService,
-               GlobalQueryPlanPtr globalQueryPlan,
-               Catalogs::UDF::UDFCatalogPtr udfCatalog,
-               Runtime::BufferManagerPtr bufferManager,
-               std::optional<std::string> corsAllowedOrigin);
+    RestServer(
+        std::string host,
+        uint16_t port,
+        NesCoordinatorWeakPtr coordinator,
+        Catalogs::Query::QueryCatalogPtr queryCatalog,
+        SourceCatalogServicePtr sourceCatalogService,
+        TopologyPtr topology,
+        Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+        RequestHandlerServicePtr requestHandlerService,
+        MonitoringServicePtr monitoringService,
+        QueryParsingServicePtr queryParsingService,
+        GlobalQueryPlanPtr globalQueryPlan,
+        Catalogs::UDF::UDFCatalogPtr udfCatalog,
+        Runtime::BufferManagerPtr bufferManager,
+        std::optional<std::string> corsAllowedOrigin);
 
     /**
      * @brief method to start the rest server, calls run() internally
@@ -127,7 +134,7 @@ class RestServer {
      */
     bool stop();
 
-  private:
+private:
     std::string host;
     uint16_t port;
     NesCoordinatorWeakPtr coordinator;
@@ -146,6 +153,6 @@ class RestServer {
     std::optional<std::string> corsAllowedOrigin;
     bool stopRequested{false};
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_REST_RESTSERVER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REST_RESTSERVER_HPP_

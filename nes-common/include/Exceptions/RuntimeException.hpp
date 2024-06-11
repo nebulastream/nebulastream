@@ -15,37 +15,39 @@
 #ifndef NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 #define NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 
-#include <Util/SourceLocation.hpp>
-#include <Util/StacktraceLoader.hpp>
 #include <exception>
 #include <stdexcept>
 #include <string>
+#include <Util/SourceLocation.hpp>
+#include <Util/StacktraceLoader.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief Exception to be used to report errors and stacktraces
  * This is meant to be used for NES-related errors, wrap std exceptions with their own stacktrace, etc..
  */
-class RuntimeException : virtual public std::exception {
+class RuntimeException : virtual public std::exception
+{
+protected:
+    std::string errorMessage; ///< Error message
 
-  protected:
-    std::string errorMessage;///< Error message
-
-  public:
+public:
     /** Constructor
      *  @param msg The error message
      *  @param stacktrace Error stacktrace
      */
-    explicit RuntimeException(std::string msg,
-                              std::string&& stacktrace = collectStacktrace(),
-                              const std::source_location location = std::source_location::current());
+    explicit RuntimeException(
+        std::string msg,
+        std::string && stacktrace = collectStacktrace(),
+        const std::source_location location = std::source_location::current());
 
     /** Constructor
     *  @param msg The error message
     *  @param stacktrace Error stacktrace
     */
-    explicit RuntimeException(std::string msg, const std::string& stacktrace);
+    explicit RuntimeException(std::string msg, const std::string & stacktrace);
 
     /** Destructor.
      *  Virtual to allow for subclassing.
@@ -57,9 +59,9 @@ class RuntimeException : virtual public std::exception {
      *  is in possession of the Except object. Callers must
      *  not attempt to free the memory.
      */
-    [[nodiscard]] const char* what() const noexcept override;
+    [[nodiscard]] const char * what() const noexcept override;
 };
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_

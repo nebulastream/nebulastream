@@ -21,13 +21,15 @@
 #include <memory>
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class implements the File sing
  */
-class FileSink : public SinkMedium {
-  public:
+class FileSink : public SinkMedium
+{
+public:
     /**
      * @brief constructor that creates an empty file sink using a schema
      * @param schema of the print sink
@@ -36,14 +38,15 @@ class FileSink : public SinkMedium {
      * @param modus of writting (overwrite or append)
      * @param numberOfOrigins: number of origins of a given query
      */
-    explicit FileSink(SinkFormatPtr format,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      uint32_t numOfProducers,
-                      const std::string& filePath,
-                      bool append,
-                      SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
-                      uint64_t numberOfOrigins = 1);
+    explicit FileSink(
+        SinkFormatPtr format,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        const std::string & filePath,
+        bool append,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins = 1);
 
     /**
      * @brief dtor
@@ -67,7 +70,7 @@ class FileSink : public SinkMedium {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the file output sink
@@ -98,20 +101,20 @@ class FileSink : public SinkMedium {
      */
     std::string getAppendAsString() const;
 
-  private:
+private:
     /**
      * @brief method to write a TupleBuffer to a local file system file
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
+    bool writeDataToFile(Runtime::TupleBuffer & inputBuffer);
 
-  protected:
+protected:
     std::string filePath;
     std::ofstream outputFile;
     bool append{false};
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_

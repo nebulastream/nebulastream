@@ -11,22 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <sstream>
 #include <utility>
-namespace NES::QueryCompilation::PhysicalOperators {
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema) {
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr & inputSchema)
+{
     return std::make_shared<PhysicalDemultiplexOperator>(id, statisticId, inputSchema);
 }
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(StatisticId statisticId, SchemaPtr inputSchema) {
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(StatisticId statisticId, SchemaPtr inputSchema)
+{
     return create(getNextOperatorId(), statisticId, std::move(inputSchema));
 }
 
-PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
+PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, const SchemaPtr & inputSchema)
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema)
+{
+}
 
-std::string PhysicalDemultiplexOperator::toString() const {
+std::string PhysicalDemultiplexOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalDemultiplexOperator:\n";
@@ -34,6 +40,9 @@ std::string PhysicalDemultiplexOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalDemultiplexOperator::copy() { return create(id, statisticId, inputSchema); }
+OperatorPtr PhysicalDemultiplexOperator::copy()
+{
+    return create(id, statisticId, inputSchema);
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

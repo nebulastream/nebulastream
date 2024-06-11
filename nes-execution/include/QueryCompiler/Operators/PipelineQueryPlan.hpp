@@ -16,32 +16,35 @@
 
 #include <Nodes/Node.hpp>
 
-#include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Representation of a query plan, which consists of a set of OperatorPipelines.
  */
-class PipelineQueryPlan {
-  public:
+class PipelineQueryPlan
+{
+public:
     /**
      * @brief Creates a new pipelined query plan
      * @param sharedQueryId
      * @param decomposedQueryPlanId
      * @return PipelineQueryPlanPtr
      */
-    static PipelineQueryPlanPtr create(SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-                                       DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID);
+    static PipelineQueryPlanPtr create(
+        SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
+        DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID);
 
     /**
      * @brief Add a pipeline to the query plan
      * @param pipeline
      */
-    void addPipeline(const OperatorPipelinePtr& pipeline);
+    void addPipeline(const OperatorPipelinePtr & pipeline);
 
     /**
      * @brief Gets a list of source pipelines, which only contain a single physical source operator
@@ -59,13 +62,13 @@ class PipelineQueryPlan {
      * @brief Gets a list of all pipelines.
      * @return std::vector<OperatorPipelinePtr>
      */
-    [[nodiscard]] std::vector<OperatorPipelinePtr> const& getPipelines() const;
+    [[nodiscard]] std::vector<OperatorPipelinePtr> const & getPipelines() const;
 
     /**
      * @brief Remove a particular pipeline from the query plan
      * @param pipeline
      */
-    void removePipeline(const OperatorPipelinePtr& pipeline);
+    void removePipeline(const OperatorPipelinePtr & pipeline);
 
     /**
      * @brief Gets the query id
@@ -85,12 +88,12 @@ class PipelineQueryPlan {
      */
     std::string toString() const;
 
-  private:
+private:
     PipelineQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
     const SharedQueryId sharedQueryId;
     const DecomposedQueryPlanId decomposedQueryPlanId;
     std::vector<OperatorPipelinePtr> pipelines;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_

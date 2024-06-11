@@ -15,13 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_
 
+#include <map>
+#include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 class CSVSourceType;
 using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
@@ -30,9 +31,9 @@ using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
  * @brief Configuration object for csv source config
  * define configurations for a csv source, i.e. this source reads from data from a csv file
  */
-class CSVSourceType : public PhysicalSourceType {
-
-  public:
+class CSVSourceType : public PhysicalSourceType
+{
+public:
     ~CSVSourceType() noexcept override = default;
 
     /**
@@ -42,9 +43,8 @@ class CSVSourceType : public PhysicalSourceType {
      * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(const std::string& logicalSourceName,
-                                   const std::string& physicalSourceName,
-                                   std::map<std::string, std::string> sourceConfigMap);
+    static CSVSourceTypePtr create(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a CSVSourceTypePtr object.
@@ -53,8 +53,7 @@ class CSVSourceType : public PhysicalSourceType {
      * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static CSVSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a default CSVSourceTypePtr object.
@@ -62,7 +61,7 @@ class CSVSourceType : public PhysicalSourceType {
      * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static CSVSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     /**
      * @brief creates a string representation of the source
@@ -75,7 +74,7 @@ class CSVSourceType : public PhysicalSourceType {
      * @param other mqttSourceType ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(PhysicalSourceTypePtr const& other) override;
+    bool equal(PhysicalSourceTypePtr const & other) override;
 
     void reset() override;
 
@@ -87,7 +86,7 @@ class CSVSourceType : public PhysicalSourceType {
     /**
      * @brief Set file path, needed for: CSVSource, BinarySource
      */
-    void setFilePath(const std::string& filePath);
+    void setFilePath(const std::string & filePath);
 
     /**
      * @brief gets a ConfigurationOption object with skipHeader
@@ -107,7 +106,7 @@ class CSVSourceType : public PhysicalSourceType {
     /**
      * @brief set the value for skipHeader with the appropriate data format
      */
-    void setDelimiter(const std::string& delimiter);
+    void setDelimiter(const std::string & delimiter);
 
     /**
      * @brief gets a ConfigurationOption object with sourceGatheringInterval
@@ -155,23 +154,22 @@ class CSVSourceType : public PhysicalSourceType {
      */
     void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
 
-  private:
+private:
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(const std::string& logicalSourceName,
-                           const std::string& physicalSourceName,
-                           std::map<std::string, std::string> sourceConfigMap);
+    explicit CSVSourceType(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    explicit CSVSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with default values
      */
-    CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    CSVSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     Configurations::StringConfigOption filePath;
     Configurations::BoolConfigOption skipHeader;
@@ -182,5 +180,5 @@ class CSVSourceType : public PhysicalSourceType {
     Configurations::GatheringModeConfigOption gatheringMode;
 };
 
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_

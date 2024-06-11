@@ -14,13 +14,15 @@
 #ifndef NES_PLUGINS_CUDA_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
 #define NES_PLUGINS_CUDA_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
 
-#include <Util/jitify/jitify.hpp>
+#include <utility>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <utility>
+#include <Util/jitify/jitify.hpp>
 
-namespace NES::Runtime::CUDAKernelWrapper {
-struct KernelDescriptor {
+namespace NES::Runtime::CUDAKernelWrapper
+{
+struct KernelDescriptor
+{
     std::string name;
     dim3 grid;
     dim3 block;
@@ -33,9 +35,10 @@ struct KernelDescriptor {
  * @tparam InputRecord data type to be processed by the kernel
  * @tparam OutputRecord data resulted from the kernel
  */
-template<class InputRecord, class OutputRecord>
-class CUDAKernelWrapper {
-  public:
+template <class InputRecord, class OutputRecord>
+class CUDAKernelWrapper
+{
+public:
     CUDAKernelWrapper() = default;
 
     /**
@@ -45,10 +48,12 @@ class CUDAKernelWrapper {
      * @param bufferSize size of the gpu buffer pool to be allocated
      * @param headers header to use in the kernel (e.g., defined in a .jit file)
      */
-    void setup(const char* const kernelCode,
-               uint64_t bufferSize,
-               jitify::detail::vector<std::string> headers = 0,
-               jitify::file_callback_type callback = 0) {
+    void setup(
+        const char * const kernelCode,
+        uint64_t bufferSize,
+        jitify::detail::vector<std::string> headers = 0,
+        jitify::file_callback_type callback = 0)
+    {
         gpuBufferSize = bufferSize;
 
         cudaMalloc(&deviceInputBuffer, gpuBufferSize);
@@ -65,14 +70,17 @@ class CUDAKernelWrapper {
      * @param kernelName name of the kernel function
      * @param args additional arguments for the kernel
      */
-    template<typename... Args>
-    void execute(InputRecord* hostInputBuffer,
-                 uint64_t numberOfInputTuples,
-                 OutputRecord* hostOutputBuffer,
-                 uint64_t numberOfOutputTuples,
-                 const KernelDescriptor& kernel,
-                 Args&&... args) {
-        if (gpuBufferSize < numberOfInputTuples * sizeof(InputRecord)) {
+    template <typename... Args>
+    void execute(
+        InputRecord * hostInputBuffer,
+        uint64_t numberOfInputTuples,
+        OutputRecord * hostOutputBuffer,
+        uint64_t numberOfOutputTuples,
+        const KernelDescriptor & kernel,
+        Args &&... args)
+    {
+        if (gpuBufferSize < numberOfInputTuples * sizeof(InputRecord))
+        {
             std::cout << "Tuples to process exceed the allocated GPU buffer." << std::endl;
             throw std::runtime_error("Tuples to process exceed the allocated GPU buffer.");
         }
@@ -88,11 +96,12 @@ class CUDAKernelWrapper {
         using jitify::reflection::type_of;
         kernelProgramPtr->kernel(std::move(kernel.name))
             .instantiate()
-            .configure(kernel.grid, kernel.block, kernel.smem, kernel.stream)// the configuration
-            .launch(deviceInputBuffer,
-                    numberOfInputTuples,
-                    deviceOutputBuffer,
-                    std::forward<Args>(args)...);// the parameter of the kernel program
+            .configure(kernel.grid, kernel.block, kernel.smem, kernel.stream) // the configuration
+            .launch(
+                deviceInputBuffer,
+                numberOfInputTuples,
+                deviceOutputBuffer,
+                std::forward<Args>(args)...); // the parameter of the kernel program
 
         // copy the result of kernel execution back to the cpu
         cudaMemcpy(hostOutputBuffer, deviceOutputBuffer, numberOfOutputTuples * sizeof(OutputRecord), cudaMemcpyDeviceToHost);
@@ -101,18 +110,19 @@ class CUDAKernelWrapper {
     /**
      * @brief free the GPU memory
      */
-    void clean() {
+    void clean()
+    {
         cudaFree(deviceInputBuffer);
         cudaFree(deviceOutputBuffer);
     }
 
     virtual ~CUDAKernelWrapper() { clean(); }
 
-  private:
-    InputRecord* deviceInputBuffer; // device memory for kernel input
-    InputRecord* deviceOutputBuffer;// device memory for kernel output
+private:
+    InputRecord * deviceInputBuffer; // device memory for kernel input
+    InputRecord * deviceOutputBuffer; // device memory for kernel output
     std::shared_ptr<jitify::Program> kernelProgramPtr;
     uint64_t gpuBufferSize;
 };
-}// namespace NES::Runtime::CUDAKernelWrapper
-#endif// NES_PLUGINS_CUDA_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
+} // namespace NES::Runtime::CUDAKernelWrapper
+#endif // NES_PLUGINS_CUDA_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_

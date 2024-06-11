@@ -14,20 +14,22 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <vector>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief The BatchAggregationHandler provides an operator handler to perform aggregations.
  * This operator handler, maintains an aggregate as a state.
  */
 class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                public ::NES::detail::virtual_enable_shared_from_this<BatchAggregationHandler, false> {
-    using State = int8_t*;
+                                public ::NES::detail::virtual_enable_shared_from_this<BatchAggregationHandler, false>
+{
+    using State = int8_t *;
 
-  public:
+public:
     /**
      * @brief Creates the operator handler.
      */
@@ -38,14 +40,15 @@ class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
      * @param ctx PipelineExecutionContext
      * @param entrySize Size of the aggregated values in memory
      */
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
+    void setup(Runtime::Execution::PipelineExecutionContext & ctx, uint64_t entrySize);
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+    void start(
+        Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
 
-               uint32_t localStateVariableId) override;
+        uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext)
+        override;
 
     /**
      * @brief Returns the thread local state by a specific worker thread id
@@ -56,10 +59,10 @@ class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
 
     ~BatchAggregationHandler() override;
 
-    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage & message) override;
 
-  private:
+private:
     std::vector<State> threadLocalStateStores;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_

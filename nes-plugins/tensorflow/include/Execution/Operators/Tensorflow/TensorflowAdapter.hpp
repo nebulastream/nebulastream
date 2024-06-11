@@ -22,13 +22,15 @@
 class TfLiteInterpreter;
 class TfLiteTensor;
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class TensorflowAdapter;
 typedef std::shared_ptr<TensorflowAdapter> TensorflowAdapterPtr;
 
-class TensorflowAdapter {
-  public:
+class TensorflowAdapter
+{
+public:
     static TensorflowAdapterPtr create();
 
     TensorflowAdapter() = default;
@@ -46,9 +48,10 @@ class TensorflowAdapter {
      * @param index: location of the input value
      * @param value: the input value
      */
-    template<class T>
-    void addModelInput(int index, T value) {
-        ((T*) inputData)[index] = value;
+    template <class T>
+    void addModelInput(int index, T value)
+    {
+        ((T *)inputData)[index] = value;
     };
 
     /**
@@ -63,16 +66,16 @@ class TensorflowAdapter {
      */
     float getResultAt(int i);
 
-  private:
-    TfLiteInterpreter* interpreter{};
-    TfLiteTensor* inputTensor;
+private:
+    TfLiteInterpreter * interpreter{};
+    TfLiteTensor * inputTensor;
     int tensorSize;
-    void* inputData{};
+    void * inputData{};
     // TODO https://github.com/nebulastream/nebulastream/issues/3424
     // Right now we only support 32-bit floats as output.
-    float* outputData{};
+    float * outputData{};
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWADAPTER_HPP_
+#endif // NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWADAPTER_HPP_

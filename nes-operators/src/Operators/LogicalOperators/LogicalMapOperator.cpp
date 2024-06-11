@@ -17,28 +17,39 @@
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES {
+namespace NES
+{
 
-LogicalMapOperator::LogicalMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), mapExpression(mapExpression) {}
+LogicalMapOperator::LogicalMapOperator(const FieldAssignmentExpressionNodePtr & mapExpression, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), mapExpression(mapExpression)
+{
+}
 
-FieldAssignmentExpressionNodePtr LogicalMapOperator::getMapExpression() const { return mapExpression; }
+FieldAssignmentExpressionNodePtr LogicalMapOperator::getMapExpression() const
+{
+    return mapExpression;
+}
 
-bool LogicalMapOperator::isIdentical(NodePtr const& rhs) const {
+bool LogicalMapOperator::isIdentical(NodePtr const & rhs) const
+{
     return equal(rhs) && rhs->as<LogicalMapOperator>()->getId() == id;
 }
 
-bool LogicalMapOperator::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalMapOperator>()) {
+bool LogicalMapOperator::equal(NodePtr const & rhs) const
+{
+    if (rhs->instanceOf<LogicalMapOperator>())
+    {
         auto mapOperator = rhs->as<LogicalMapOperator>();
         return mapExpression->equal(mapOperator->mapExpression);
     }
     return false;
 };
 
-bool LogicalMapOperator::inferSchema() {
+bool LogicalMapOperator::inferSchema()
+{
     // infer the default input and output schema
-    if (!LogicalUnaryOperator::inferSchema()) {
+    if (!LogicalUnaryOperator::inferSchema())
+    {
         return false;
     }
 
@@ -48,12 +59,15 @@ bool LogicalMapOperator::inferSchema() {
     auto assignedField = mapExpression->getField();
     std::string fieldName = assignedField->getFieldName();
 
-    if (outputSchema->getField(fieldName)) {
+    if (outputSchema->getField(fieldName))
+    {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
         NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
         outputSchema->replaceField(fieldName, assignedField->getStamp());
-    } else {
+    }
+    else
+    {
         // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
         NES_TRACE("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
@@ -62,13 +76,15 @@ bool LogicalMapOperator::inferSchema() {
     return true;
 }
 
-std::string LogicalMapOperator::toString() const {
+std::string LogicalMapOperator::toString() const
+{
     std::stringstream ss;
     ss << "MAP(opId: " << id << ", statisticId: " << statisticId << ", predicate: " << mapExpression->toString() << ")";
     return ss.str();
 }
 
-OperatorPtr LogicalMapOperator::copy() {
+OperatorPtr LogicalMapOperator::copy()
+{
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression->copy()->as<FieldAssignmentExpressionNode>(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -77,13 +93,15 @@ OperatorPtr LogicalMapOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
+    for (const auto & [key, value] : properties)
+    {
         copy->addProperty(key, value);
     }
     return copy;
 }
 
-void LogicalMapOperator::inferStringSignature() {
+void LogicalMapOperator::inferStringSignature()
+{
     NES_TRACE("LogicalMapOperator: Inferring String signature for {}", toString());
     NES_ASSERT(children.size() == 1, "LogicalMapOperator: Map should have 1 child.");
     //Infer query signatures for child operator
@@ -98,4 +116,4 @@ void LogicalMapOperator::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-}// namespace NES
+} // namespace NES

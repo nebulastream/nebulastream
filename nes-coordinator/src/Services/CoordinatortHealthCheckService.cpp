@@ -19,65 +19,79 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 
-namespace NES {
+namespace NES
+{
 
-CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyPtr topology,
-                                                             std::string healthServiceName,
-                                                             Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
-    : topology(topology), workerRPCClient(WorkerRPCClient::create()), coordinatorConfiguration(coordinatorConfiguration) {
+CoordinatorHealthCheckService::CoordinatorHealthCheckService(
+    TopologyPtr topology, std::string healthServiceName, Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
+    : topology(topology), workerRPCClient(WorkerRPCClient::create()), coordinatorConfiguration(coordinatorConfiguration)
+{
     id = 9999;
     this->healthServiceName = healthServiceName;
 }
 
-void CoordinatorHealthCheckService::startHealthCheck() {
+void CoordinatorHealthCheckService::startHealthCheck()
+{
     NES_INFO("CoordinatorHealthCheckService::startHealthCheck");
     isRunning = true;
     NES_DEBUG("start health checking on coordinator");
-    healthCheckingThread = std::make_shared<std::thread>(([this]() {
-        setThreadName("nesHealth");
-        auto waitTime = std::chrono::seconds(this->coordinatorConfiguration->coordinatorHealthCheckWaitTime.getValue());
-        while (isRunning) {
-            for (auto node : topologyIdToRPCAddressMap.lock_table()) {
-                std::string destAddress = node.second;
-                //check health
-                NES_INFO("NesCoordinator::healthCheck: checking node= {}", destAddress);
-                auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
-                if (res) {
-                    NES_TRACE("NesCoordinator::healthCheck: node={} is alive", destAddress);
-                    if (inactiveWorkers.contains(node.first)) {
-                        inactiveWorkers.erase(node.first);
-                    }
-                } else {
-                    NES_WARNING("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
-                    const auto& rootWorkerNodeIds = topology->getRootWorkerNodeIds();
-                    auto found = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), node.first);
-                    if (found != rootWorkerNodeIds.end()) {
-                        NES_WARNING("The failing node is the root node so we cannot delete it");
-                        shutdownRPC->set_value(true);
-                        return;
-                    } else {
-                        auto ret = topology->unregisterWorker(node.first);
-                        inactiveWorkers.insert(node.first);
-                        if (ret) {
-                            NES_TRACE("NesCoordinator::healthCheck: remove node={} successfully", destAddress);
-                        } else {
-                            NES_WARNING("Node went offline but could not be removed from topology");
+    healthCheckingThread = std::make_shared<std::thread>((
+        [this]()
+        {
+            setThreadName("nesHealth");
+            auto waitTime = std::chrono::seconds(this->coordinatorConfiguration->coordinatorHealthCheckWaitTime.getValue());
+            while (isRunning)
+            {
+                for (auto node : topologyIdToRPCAddressMap.lock_table())
+                {
+                    std::string destAddress = node.second;
+                    //check health
+                    NES_INFO("NesCoordinator::healthCheck: checking node= {}", destAddress);
+                    auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
+                    if (res)
+                    {
+                        NES_TRACE("NesCoordinator::healthCheck: node={} is alive", destAddress);
+                        if (inactiveWorkers.contains(node.first))
+                        {
+                            inactiveWorkers.erase(node.first);
                         }
-                        //TODO Create issue for remove and child
-                        //TODO add remove from source catalog
+                    }
+                    else
+                    {
+                        NES_WARNING("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
+                        const auto & rootWorkerNodeIds = topology->getRootWorkerNodeIds();
+                        auto found = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), node.first);
+                        if (found != rootWorkerNodeIds.end())
+                        {
+                            NES_WARNING("The failing node is the root node so we cannot delete it");
+                            shutdownRPC->set_value(true);
+                            return;
+                        }
+                        else
+                        {
+                            auto ret = topology->unregisterWorker(node.first);
+                            inactiveWorkers.insert(node.first);
+                            if (ret)
+                            {
+                                NES_TRACE("NesCoordinator::healthCheck: remove node={} successfully", destAddress);
+                            }
+                            else
+                            {
+                                NES_WARNING("Node went offline but could not be removed from topology");
+                            }
+                            //TODO Create issue for remove and child
+                            //TODO add remove from source catalog
+                        }
                     }
                 }
+                {
+                    std::unique_lock<std::mutex> lk(cvMutex);
+                    cv.wait_for(lk, waitTime, [this] { return isRunning == false; });
+                }
             }
-            {
-                std::unique_lock<std::mutex> lk(cvMutex);
-                cv.wait_for(lk, waitTime, [this] {
-                    return isRunning == false;
-                });
-            }
-        }
-        shutdownRPC->set_value(true);
-        NES_DEBUG("NesCoordinator: stop health checking");
-    }));
+            shutdownRPC->set_value(true);
+            NES_DEBUG("NesCoordinator: stop health checking");
+        }));
 }
 
-}// namespace NES
+} // namespace NES

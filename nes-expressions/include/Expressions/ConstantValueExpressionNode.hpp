@@ -16,7 +16,8 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_
 
 #include <Expressions/ExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
@@ -25,12 +26,13 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
  * @brief This expression node represents a constant value and a fixed data type.
  * Thus the samp of this expression is always fixed.
  */
-class ConstantValueExpressionNode : public ExpressionNode {
-  public:
+class ConstantValueExpressionNode : public ExpressionNode
+{
+public:
     /**
      * @brief Factory method to create a ConstantValueExpressionNode.
      */
-    static ExpressionNodePtr create(ValueTypePtr const& constantValue);
+    static ExpressionNodePtr create(ValueTypePtr const & constantValue);
     ~ConstantValueExpressionNode() noexcept override = default;
 
     /**
@@ -56,7 +58,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @param otherNode
      * @return true if they are equal
      */
-    bool equal(NodePtr const& rhs) const override;
+    bool equal(NodePtr const & rhs) const override;
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -64,15 +66,15 @@ class ConstantValueExpressionNode : public ExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
-    explicit ConstantValueExpressionNode(const ConstantValueExpressionNode* other);
+protected:
+    explicit ConstantValueExpressionNode(const ConstantValueExpressionNode * other);
 
-  private:
-    explicit ConstantValueExpressionNode(ValueTypePtr const& constantValue);
+private:
+    explicit ConstantValueExpressionNode(ValueTypePtr const & constantValue);
     // Value of this expression
     ValueTypePtr constantValue;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_

@@ -14,25 +14,26 @@
 
 #ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+#include <stdexcept>
 #include <Network/NetworkMessage.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
-#include <stdexcept>
 
 /**
  * @brief This exception represents a network error
  */
-namespace NES {
+namespace NES
+{
 
-class NesNetworkException : public Exceptions::RuntimeException {
-  public:
-    explicit NesNetworkException(NES::Network::Messages::ErrMessage& msg)
-        : msg(msg), Exceptions::RuntimeException("Network error") {}
+class NesNetworkException : public Exceptions::RuntimeException
+{
+public:
+    explicit NesNetworkException(NES::Network::Messages::ErrMessage & msg) : msg(msg), Exceptions::RuntimeException("Network error") { }
 
-    const NES::Network::Messages::ErrMessage& getErrorMessage() const { return msg; }
+    const NES::Network::Messages::ErrMessage & getErrorMessage() const { return msg; }
 
-  private:
+private:
     const NES::Network::Messages::ErrMessage msg;
 };
 
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_

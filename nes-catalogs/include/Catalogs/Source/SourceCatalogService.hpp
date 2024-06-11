@@ -15,14 +15,15 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -30,20 +31,21 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class SourceCatalogEntry;
 using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
-}// namespace Catalogs::Source
+} // namespace Catalogs::Source
 
 /**
  * @brief: This class is responsible for registering/unregistering physical and logical sources.
  */
-class SourceCatalogService {
-
-  public:
+class SourceCatalogService
+{
+public:
     SourceCatalogService(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
     /**
@@ -54,7 +56,7 @@ class SourceCatalogService {
      * @return first element indicates success, second element is a error message in case of a failure
      */
     std::pair<bool, std::string>
-    registerPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
+    registerPhysicalSource(const std::string & physicalSourceName, const std::string & logicalSourceName, WorkerId topologyNodeId);
 
     /**
      * @brief method to unregister a physical source
@@ -63,9 +65,7 @@ class SourceCatalogService {
      * @param topologyNodeId : the topology node id
      * @return bool indicating success
      */
-    bool unregisterPhysicalSource(const std::string& physicalSourceName,
-                                  const std::string& logicalSourceName,
-                                  WorkerId topologyNodeId);
+    bool unregisterPhysicalSource(const std::string & physicalSourceName, const std::string & logicalSourceName, WorkerId topologyNodeId);
 
     /**
      * @brief method to register a logical source
@@ -73,7 +73,7 @@ class SourceCatalogService {
      * @param schema: schema object
      * @return bool indicating success
      */
-    bool registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
+    bool registerLogicalSource(const std::string & logicalSourceName, SchemaPtr schema);
 
     /**
      * @brief method to update schema of an existing logical source
@@ -81,21 +81,21 @@ class SourceCatalogService {
      * @param schema: schema object
      * @return bool indicating success
      */
-    bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
+    bool updateLogicalSource(const std::string & logicalSourceName, SchemaPtr schema);
 
     /**
      * @brief method to unregister a logical source
      * @param logicalSourceName
      * @return bool indicating success
      */
-    bool unregisterLogicalSource(const std::string& logicalSourceName);
+    bool unregisterLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief method returns a copy of logical source
      * @param logicalSourceName: name of the logical source
      * @return copy of the logical source
      */
-    LogicalSourcePtr getLogicalSource(const std::string& logicalSourceName);
+    LogicalSourcePtr getLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief return all logical sources as string
@@ -108,14 +108,14 @@ class SourceCatalogService {
      * @param logicalSourceName: logical source name
      * @return vector containing source catalog entry
      */
-    std::vector<Catalogs::Source::SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
+    std::vector<Catalogs::Source::SourceCatalogEntryPtr> getPhysicalSources(const std::string & logicalSourceName);
 
     /**
      * Adds the key distribution for a given source catalog entry.
      * @param catalogEntry
      * @return true if success, else false
      */
-    bool addKeyDistributionEntry(const Catalogs::Source::SourceCatalogEntryPtr& entry, std::set<uint64_t> keys);
+    bool addKeyDistributionEntry(const Catalogs::Source::SourceCatalogEntryPtr & entry, std::set<uint64_t> keys);
 
     /**
      * @brief Reset source catalog by clearing it from all physical and logical sources
@@ -131,10 +131,10 @@ class SourceCatalogService {
 
     bool reset();
 
-  private:
+private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::mutex sourceCatalogMutex;
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_

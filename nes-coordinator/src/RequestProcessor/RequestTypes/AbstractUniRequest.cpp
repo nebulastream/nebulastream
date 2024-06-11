@@ -13,12 +13,17 @@
 */
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES::RequestProcessor {
-AbstractUniRequest::AbstractUniRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries)
-    : AbstractRequest(maxRetries), StorageResourceLocker(requiredResources) {}
+namespace NES::RequestProcessor
+{
+AbstractUniRequest::AbstractUniRequest(const std::vector<ResourceType> & requiredResources, uint8_t maxRetries)
+    : AbstractRequest(maxRetries), StorageResourceLocker(requiredResources)
+{
+}
 
-std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandlerPtr& storageHandle) {
-    if (requestId == INVALID_REQUEST_ID) {
+std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandlerPtr & storageHandle)
+{
+    if (requestId == INVALID_REQUEST_ID)
+    {
         NES_THROW_RUNTIME_ERROR("Trying to execute a request before its id has been set");
     }
     //acquire locks and perform other tasks to prepare for execution
@@ -32,5 +37,8 @@ std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandler
     return followUpRequests;
 }
 
-RequestId AbstractUniRequest::getResourceLockingId() { return requestId; }
-}// namespace NES::RequestProcessor
+RequestId AbstractUniRequest::getResourceLockingId()
+{
+    return requestId;
+}
+} // namespace NES::RequestProcessor

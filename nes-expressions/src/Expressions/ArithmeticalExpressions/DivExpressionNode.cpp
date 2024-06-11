@@ -12,38 +12,46 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <sstream>
 #include <utility>
-namespace NES {
+#include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Common/DataTypes/DataType.hpp>
+namespace NES
+{
 
 DivExpressionNode::DivExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-DivExpressionNode::DivExpressionNode(DivExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
+DivExpressionNode::DivExpressionNode(DivExpressionNode * other) : ArithmeticalBinaryExpressionNode(other)
+{
+}
 
-ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
+ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr & left, const ExpressionNodePtr & right)
+{
     auto divNode = std::make_shared<DivExpressionNode>(left->getStamp());
     divNode->setChildren(left, right);
     return divNode;
 }
 
-bool DivExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<DivExpressionNode>()) {
+bool DivExpressionNode::equal(NodePtr const & rhs) const
+{
+    if (rhs->instanceOf<DivExpressionNode>())
+    {
         auto otherDivNode = rhs->as<DivExpressionNode>();
         return getLeft()->equal(otherDivNode->getLeft()) && getRight()->equal(otherDivNode->getRight());
     }
     return false;
 }
 
-std::string DivExpressionNode::toString() const {
+std::string DivExpressionNode::toString() const
+{
     std::stringstream ss;
     ss << children[0]->toString() << "/" << children[1]->toString();
     return ss.str();
 }
 
-ExpressionNodePtr DivExpressionNode::copy() {
+ExpressionNodePtr DivExpressionNode::copy()
+{
     return DivExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <memory>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
@@ -30,19 +28,24 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
-class KeyedThresholdWindowOperatorTest : public Testing::BaseUnitTest {
-  public:
+class KeyedThresholdWindowOperatorTest : public Testing::BaseUnitTest
+{
+public:
     std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
     std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::map<uint32_t, std::unique_ptr<Aggregation::AggregationValue>>> aggValues;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
@@ -54,7 +57,8 @@ class KeyedThresholdWindowOperatorTest : public Testing::BaseUnitTest {
 /**
 * @brief Tests the keyed threshold window operator with a sum aggregation.
 */
-TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
+TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
@@ -68,19 +72,12 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto sumAgg =
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(greaterThanExpression,
-                                                                          0,
-                                                                          aggFieldAccessExpressionsVector,
-                                                                          readKey,
-                                                                          keyFieldName,
-                                                                          resultFieldVector,
-                                                                          aggVector,
-                                                                          0);
+    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(
+        greaterThanExpression, 0, aggFieldAccessExpressionsVector, readKey, keyFieldName, resultFieldVector, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -88,7 +85,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t *)&pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -98,7 +95,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 
     auto recordFifty = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -113,7 +110,8 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 /**
 * @brief Tests the keyed threshold window operator with a max aggregation.
 */
-TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
+TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
@@ -127,19 +125,12 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto sumAgg =
-        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(greaterThanExpression,
-                                                                          0,
-                                                                          aggFieldAccessExpressionsVector,
-                                                                          readKey,
-                                                                          keyFieldName,
-                                                                          resultFieldVector,
-                                                                          aggVector,
-                                                                          0);
+    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(
+        greaterThanExpression, 0, aggFieldAccessExpressionsVector, readKey, keyFieldName, resultFieldVector, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -147,7 +138,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t *)&pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -157,7 +148,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
 
     auto recordFifty = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -172,7 +163,8 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
 /**
 * @brief Tests the keyed threshold window operator with a sum aggregation on rows having different keys.
 */
-TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey) {
+TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
@@ -186,19 +178,12 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto sumAgg =
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(greaterThanExpression,
-                                                                          0,
-                                                                          aggFieldAccessExpressionsVector,
-                                                                          readKey,
-                                                                          keyFieldName,
-                                                                          resultFieldVector,
-                                                                          aggVector,
-                                                                          0);
+    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(
+        greaterThanExpression, 0, aggFieldAccessExpressionsVector, readKey, keyFieldName, resultFieldVector, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -206,7 +191,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t *)&pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -218,10 +203,10 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
 
     auto recordFiftyKey0 = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinetyKey0 = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
     auto recordFiftyKey1 = Record({{"f1", +50_s64}, {"k1", +1_s64}, {"f2", +7_s64}});
     auto recordNinetyKey1 = Record({{"f1", +90_s64}, {"k1", +1_s64}, {"f2", +5_s64}});
-    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}}); // closes the window
 
     thresholdWindowOperator->execute(ctx, recordFiftyKey0);
     thresholdWindowOperator->execute(ctx, recordNinetyKey0);
@@ -244,7 +229,8 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
 /**
 * @brief Tests the keyed threshold window operator with a sum and a max aggregation on rows having different keys.
 */
-TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferentKey) {
+TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferentKey)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
@@ -258,12 +244,10 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto sumAggregationResultFieldName = "sum";
-    auto sumAgg =
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, sumAggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, sumAggregationResultFieldName);
 
     auto maxAggregationResultFieldName = "max";
-    auto maxAgg =
-        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, maxAggregationResultFieldName);
+    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, maxAggregationResultFieldName);
 
     aggVector.push_back(sumAgg);
     aggVector.push_back(maxAgg);
@@ -271,17 +255,11 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     resultFieldVector.emplace_back(sumAggregationResultFieldName);
     resultFieldVector.emplace_back(maxAggregationResultFieldName);
 
-    aggFieldAccessExpressionsVector.push_back(readF2);// sum on F2
-    aggFieldAccessExpressionsVector.push_back(readF2);// max on F2
+    aggFieldAccessExpressionsVector.push_back(readF2); // sum on F2
+    aggFieldAccessExpressionsVector.push_back(readF2); // max on F2
 
-    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(greaterThanExpression,
-                                                                          0,
-                                                                          aggFieldAccessExpressionsVector,
-                                                                          readKey,
-                                                                          keyFieldName,
-                                                                          resultFieldVector,
-                                                                          aggVector,
-                                                                          0);
+    auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(
+        greaterThanExpression, 0, aggFieldAccessExpressionsVector, readKey, keyFieldName, resultFieldVector, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -289,7 +267,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t *)&pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -301,10 +279,10 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
 
     auto recordFiftyKey0 = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinetyKey0 = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
     auto recordFiftyKey1 = Record({{"f1", +50_s64}, {"k1", +1_s64}, {"f2", +7_s64}});
     auto recordNinetyKey1 = Record({{"f1", +90_s64}, {"k1", +1_s64}, {"f2", +5_s64}});
-    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}}); // closes the window
 
     thresholdWindowOperator->execute(ctx, recordFiftyKey0);
     thresholdWindowOperator->execute(ctx, recordNinetyKey0);
@@ -326,4 +304,4 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     thresholdWindowOperator->terminate(ctx);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

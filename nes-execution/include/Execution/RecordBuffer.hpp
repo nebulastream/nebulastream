@@ -15,32 +15,35 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
 
+#include <memory>
+#include <ostream>
+#include <vector>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <memory>
-#include <ostream>
-#include <vector>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 class Record;
 }
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 using namespace Nautilus;
 
 /**
  * @brief The RecordBuffer is a representation of a set of records that are stored together.
  * In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
  */
-class RecordBuffer {
-  public:
+class RecordBuffer
+{
+public:
     /**
      * @brief Creates a new record buffer with a reference to a tuple buffer
      * @param tupleBufferRef
      */
-    explicit RecordBuffer(const Value<MemRef>& tupleBufferRef);
+    explicit RecordBuffer(const Value<MemRef> & tupleBufferRef);
 
     /**
      * @brief Read number of record that are currently stored in the record buffer.
@@ -58,14 +61,14 @@ class RecordBuffer {
      * @brief Get the reference to the TupleBuffer
      * @return Value<MemRef>
      */
-    const Value<MemRef>& getReference() const;
+    const Value<MemRef> & getReference() const;
 
     /**
      * @brief Set the number of records in the underlying tuple buffer.
      * @param numRecordsValue Value<UInt64> containing the number of records
      * to set in the tuple buffer.
      */
-    void setNumRecords(const Value<UInt64>& numRecordsValue);
+    void setNumRecords(const Value<UInt64> & numRecordsValue);
 
     /**
      * @brief Get the origin ID of the underlying tuple buffer.
@@ -84,14 +87,14 @@ class RecordBuffer {
      * @param originId Value<UInt64> containing the origin ID to set for the
      * tuple buffer.
      */
-    void setOriginId(const Value<UInt64>& originId);
+    void setOriginId(const Value<UInt64> & originId);
 
     /**
      * @brief Set the origin ID of the underlying tuple buffer.
      * @param originId Value<UInt64> containing the origin ID to set for the
      * tuple buffer.
      */
-    void setStatisticId(const Value<UInt64>& statisticId);
+    void setStatisticId(const Value<UInt64> & statisticId);
 
     /**
      * @brief Get the sequence number of the underlying tuple buffer.
@@ -105,13 +108,13 @@ class RecordBuffer {
      * @param originId Value<UInt64> containing the sequence number to set for the
      * tuple buffer.
      */
-    void setSequenceNr(const Value<UInt64>& seqNumber);
+    void setSequenceNr(const Value<UInt64> & seqNumber);
 
     /**
      * @brief Sets the chunk number for the tuple buffer
      * @param chunkNumber
      */
-    void setChunkNr(const Value<UInt64>& chunkNumber);
+    void setChunkNr(const Value<UInt64> & chunkNumber);
 
     /**
      * @brief Gets the chunk number of the underlying tuple buffer
@@ -123,7 +126,7 @@ class RecordBuffer {
      * @brief Sets the last chunk for the tuple buffer
      * @param chunkNumber
      */
-    void setLastChunk(const Value<Boolean>& isLastChunk);
+    void setLastChunk(const Value<Boolean> & isLastChunk);
 
     /**
      * @brief Gets if this is the last chunk for a sequence number
@@ -145,7 +148,7 @@ class RecordBuffer {
      * @param watermarkTs Value<UInt64> containing the watermark timestamp to set
      * for the tuple buffer.
      */
-    void setWatermarkTs(const Value<UInt64>& watermarkTs);
+    void setWatermarkTs(const Value<UInt64> & watermarkTs);
 
     /**
      * @brief Get the creation timestamp of the underlying tuple buffer.
@@ -161,16 +164,16 @@ class RecordBuffer {
      * @param creationTs Value<UInt64> containing the creation timestamp to set
      * for the tuple buffer.
      */
-    void setCreationTs(const Value<UInt64>& creationTs);
+    void setCreationTs(const Value<UInt64> & creationTs);
 
     ~RecordBuffer() = default;
 
-  private:
+private:
     Value<MemRef> tupleBufferRef;
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_

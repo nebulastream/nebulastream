@@ -14,10 +14,11 @@
 
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES {
+namespace NES
+{
 
-BufferAccessException::BufferAccessException(const std::string& message)
-    : Exceptions::RuntimeException(message, NES::collectStacktrace()) {
+BufferAccessException::BufferAccessException(const std::string & message) : Exceptions::RuntimeException(message, NES::collectStacktrace())
+{
     NES_ERROR("{}", message);
 }
-}// namespace NES
+} // namespace NES

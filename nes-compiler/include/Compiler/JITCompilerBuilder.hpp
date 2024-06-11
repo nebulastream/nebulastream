@@ -13,16 +13,18 @@
 */
 #ifndef NES_COMPILER_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
-#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <map>
 #include <memory>
-namespace NES::Compiler {
+#include <Compiler/CompilerForwardDeclarations.hpp>
+namespace NES::Compiler
+{
 
 /**
  * @brief Builder for a new JIT compiler.
  */
-class JITCompilerBuilder {
-  public:
+class JITCompilerBuilder
+{
+public:
     /**
      * @brief Constructor for a new JIT compiler object.
      */
@@ -32,25 +34,25 @@ class JITCompilerBuilder {
      * @param languageCompiler
      * @return JITCompilerBuilder
      */
-    JITCompilerBuilder& registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler);
+    JITCompilerBuilder & registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler);
 
     /**
      * @brief Enables or disables the compilation cache
      * @param useCompilationCache
      * @return JITCompilerBuilder
      */
-    JITCompilerBuilder& setUseCompilationCache(bool useCompilationCache);
+    JITCompilerBuilder & setUseCompilationCache(bool useCompilationCache);
     /**
      * @brief Creates a instance of the JITCompiler containing all language compilers.
      * @return JITCompiler
      */
     std::shared_ptr<JITCompiler> build();
 
-  private:
+private:
     std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
     bool useCompilationCache = false;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_

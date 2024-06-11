@@ -15,23 +15,33 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_
 
-#include <Common/DataTypes/DataType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 /**
  * Abstract class for window aggregations. All window aggregations operate on a field and output another field.
  */
-class WindowAggregationDescriptor {
-  public:
-    enum class Type : uint8_t { Avg, Count, Max, Min, Sum, Median };
+class WindowAggregationDescriptor
+{
+public:
+    enum class Type : uint8_t
+    {
+        Avg,
+        Count,
+        Max,
+        Min,
+        Sum,
+        Median
+    };
 
     /**
     * Defines the field to which a aggregate output is assigned.
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    WindowAggregationDescriptorPtr as(const ExpressionNodePtr& asField);
+    WindowAggregationDescriptorPtr as(const ExpressionNodePtr & asField);
 
     /**
     * Returns the result field of the aggregation
@@ -90,14 +100,14 @@ class WindowAggregationDescriptor {
      */
     bool equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) const;
 
-  protected:
-    explicit WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField);
-    WindowAggregationDescriptor(const ExpressionNodePtr& onField, const ExpressionNodePtr& asField);
+protected:
+    explicit WindowAggregationDescriptor(const FieldAccessExpressionNodePtr & onField);
+    WindowAggregationDescriptor(const ExpressionNodePtr & onField, const ExpressionNodePtr & asField);
     WindowAggregationDescriptor() = default;
     ExpressionNodePtr onField;
     ExpressionNodePtr asField;
     Type aggregationType;
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_

@@ -17,16 +17,18 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
-class LoadOperation : public Operation {
-  public:
+namespace NES::Nautilus::IR::Operations
+{
+class LoadOperation : public Operation
+{
+public:
     explicit LoadOperation(OperationIdentifier identifier, OperationPtr address, Types::StampPtr stamp);
     ~LoadOperation() override = default;
     OperationPtr getAddress();
     std::string toString() override;
 
-  private:
+private:
     OperationWPtr address;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_

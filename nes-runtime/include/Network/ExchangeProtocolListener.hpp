@@ -19,12 +19,14 @@
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Network {
+namespace NES::Network
+{
 /**
  * @brief Listener for network stack events
  */
-class ExchangeProtocolListener {
-  public:
+class ExchangeProtocolListener
+{
+public:
     virtual ~ExchangeProtocolListener() = default;
 
     /**
@@ -32,7 +34,7 @@ class ExchangeProtocolListener {
      * @param NesPartition partition that receives the event
      * @param Runtime::BaseEvent& ref to the actual event
      */
-    virtual void onEvent(NesPartition, Runtime::BaseEvent&) = 0;
+    virtual void onEvent(NesPartition, Runtime::BaseEvent &) = 0;
 
     /**
      * @brief This is called on every data buffer that the network stack receives
@@ -40,7 +42,7 @@ class ExchangeProtocolListener {
      * @param NesPartition partition that receives the data buffer
      * @param Runtime::TupleBuffer& ref to the actual data buffer
      */
-    virtual void onDataBuffer(NesPartition, Runtime::TupleBuffer&) = 0;
+    virtual void onDataBuffer(NesPartition, Runtime::TupleBuffer &) = 0;
     /**
      * @brief this is called once a nes partition receives an end of stream message.
      * @param Messages::EndOfStreamMessage eos descriptor
@@ -57,5 +59,5 @@ class ExchangeProtocolListener {
      */
     virtual void onChannelError(Messages::ErrorMessage) = 0;
 };
-}// namespace NES::Network
-#endif// NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
+} // namespace NES::Network
+#endif // NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_

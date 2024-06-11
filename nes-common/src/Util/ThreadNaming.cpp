@@ -12,21 +12,23 @@
     limitations under the License.
 */
 
-#include <Util/ThreadNaming.hpp>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
+#include <Util/ThreadNaming.hpp>
 #ifdef _POSIX_THREADS
-#define HAS_POSIX_THREAD
-#include <pthread.h>
-#include <string>
+#    define HAS_POSIX_THREAD
+#    include <string>
+#    include <pthread.h>
 #else
-#error "Unsupported architecture"
+#    error "Unsupported architecture"
 #endif
 
-namespace NES {
-void setThreadName(const char* threadNameFmt, ...) {
+namespace NES
+{
+void setThreadName(const char * threadNameFmt, ...)
+{
     char buffer[128];
     char resized_buffer[16];
     va_list args;
@@ -41,16 +43,16 @@ void setThreadName(const char* threadNameFmt, ...) {
     //this will add the thread name in the log
 
 #ifdef HAS_POSIX_THREAD
-#ifdef __linux__
+#    ifdef __linux__
     pthread_setname_np(pthread_self(), resized_buffer);
-#elif defined(__APPLE__)
+#    elif defined(__APPLE__)
     pthread_setname_np(resized_buffer);
+#    else
+#        error "Unsupported OS"
+#    endif
 #else
-#error "Unsupported OS"
-#endif
-#else
-#error "Unsupported Thread Library"
+#    error "Unsupported Thread Library"
 #endif
     va_end(args);
 }
-}// namespace NES
+} // namespace NES

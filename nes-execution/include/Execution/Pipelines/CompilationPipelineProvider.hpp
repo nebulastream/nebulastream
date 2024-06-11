@@ -15,15 +15,17 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
 /**
  * @brief Creates an executable pipeline stage that can be executed using compilation.
  */
-class CompilationPipelineProvider : public ExecutablePipelineProvider {
-  public:
-    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                    const Nautilus::CompilationOptions& options) override;
+class CompilationPipelineProvider : public ExecutablePipelineProvider
+{
+public:
+    std::unique_ptr<ExecutablePipelineStage>
+    create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions & options) override;
 };
-}// namespace NES::Runtime::Execution
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
+} // namespace NES::Runtime::Execution
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_

@@ -14,10 +14,11 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 
-#include <Common/ExecutableType/BaseVariableSizeType.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <string>
-namespace NES::Nautilus {
+#include <Runtime/TupleBuffer.hpp>
+#include <Common/ExecutableType/BaseVariableSizeType.hpp>
+namespace NES::Nautilus
+{
 
 /**
  * @brief Physical data type that represents a TextValue.
@@ -27,22 +28,23 @@ namespace NES::Nautilus {
  * @note that the char* may have no null termination.
  * Thus when reading char values, we have to check the length attribute. 
  */
-class TextValue final : public BaseVariableSizeType {
-  public:
+class TextValue final : public BaseVariableSizeType
+{
+public:
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
     /**
      * @brief Create a new TextValue with a specific size in characters.
      * @param size in characters
      * @return TextValue*
      */
-    static TextValue* create(uint32_t size);
+    static TextValue * create(uint32_t size);
 
     /**
      * @brief Creates a new TextValue from a string
      * @param string content
      * @return TextValue*
      */
-    static TextValue* create(const std::string& string);
+    static TextValue * create(const std::string & string);
 
     /**
      * @brief Creates a new TextValue from a string on a specific tuple buffer
@@ -50,7 +52,7 @@ class TextValue final : public BaseVariableSizeType {
      * @param size in characters
      * @return TextValue*
      */
-    static TextValue* create(Runtime::TupleBuffer& buffer, uint32_t size);
+    static TextValue * create(Runtime::TupleBuffer & buffer, uint32_t size);
 
     /**
      * @brief Creates a new TextValue from a string on a specific tuple buffer
@@ -58,7 +60,7 @@ class TextValue final : public BaseVariableSizeType {
      * @param string content
      * @return TextValue*
      */
-    static TextValue* create(Runtime::TupleBuffer& buffer, const std::string& string);
+    static TextValue * create(Runtime::TupleBuffer & buffer, const std::string & string);
 
     /**
      * @brief Loads a text value from a tuple buffer.
@@ -66,7 +68,7 @@ class TextValue final : public BaseVariableSizeType {
      * @param string
      * @return TextValue*
      */
-    static TextValue* load(Runtime::TupleBuffer& tupleBuffer);
+    static TextValue * load(Runtime::TupleBuffer & tupleBuffer);
 
     /**
      * @brief Returns the length in the number of characters of the text value
@@ -79,14 +81,14 @@ class TextValue final : public BaseVariableSizeType {
      * @note char* may not be null terminated.
      * @return char*
      */
-    [[nodiscard]] char* str();
+    [[nodiscard]] char * str();
 
     /**
      * @brief Returns the const char* to the text.
      * @note char* may not be null terminated.
      * @return const char*
      */
-    [[nodiscard]] const char* c_str() const;
+    [[nodiscard]] const char * c_str() const;
 
     /**
      * @brief Returns a nullterminated copy of the string
@@ -105,7 +107,7 @@ class TextValue final : public BaseVariableSizeType {
      */
     ~TextValue();
 
-  private:
+private:
     static Runtime::TupleBuffer allocateBuffer(uint32_t size);
     /**
      * @brief Private constructor to initialize a new text
@@ -114,5 +116,5 @@ class TextValue final : public BaseVariableSizeType {
     TextValue(uint32_t size);
     const uint32_t size;
 };
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_

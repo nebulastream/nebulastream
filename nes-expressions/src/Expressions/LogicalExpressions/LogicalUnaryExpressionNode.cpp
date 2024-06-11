@@ -12,22 +12,28 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-LogicalUnaryExpressionNode::LogicalUnaryExpressionNode()
-    : UnaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
+LogicalUnaryExpressionNode::LogicalUnaryExpressionNode() : UnaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode()
+{
+}
 
-LogicalUnaryExpressionNode::LogicalUnaryExpressionNode(LogicalUnaryExpressionNode* other) : UnaryExpressionNode(other) {}
+LogicalUnaryExpressionNode::LogicalUnaryExpressionNode(LogicalUnaryExpressionNode * other) : UnaryExpressionNode(other)
+{
+}
 
-bool LogicalUnaryExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalUnaryExpressionNode>()) {
+bool LogicalUnaryExpressionNode::equal(NodePtr const & rhs) const
+{
+    if (rhs->instanceOf<LogicalUnaryExpressionNode>())
+    {
         auto other = rhs->as<LogicalUnaryExpressionNode>();
         return this->getChildren()[0]->equal(other->getChildren()[0]);
     }
     return false;
 }
-}// namespace NES
+} // namespace NES

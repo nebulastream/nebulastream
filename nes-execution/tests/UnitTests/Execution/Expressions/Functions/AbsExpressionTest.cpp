@@ -11,20 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/Functions/AbsExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class AbsExpressionTest : public Testing::BaseUnitTest {
-
-  public:
+class AbsExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("AbsExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SubExpressionTest test class.");
     }
@@ -33,31 +35,31 @@ class AbsExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down SubExpressionTest test class."); }
 };
 
-TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat) {
-
+TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<AbsExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) -17.4));
-        ASSERT_EQ(resultValue, (float) 17.4);
+        auto resultValue = expression.eval(Value<Float>((float)-17.4));
+        ASSERT_EQ(resultValue, (float)17.4);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) -17.4));
-        ASSERT_EQ(resultValue, (double) 17.4);
+        auto resultValue = expression.eval(Value<Double>((double)-17.4));
+        ASSERT_EQ(resultValue, (double)17.4);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
 
-TEST_F(AbsExpressionTest, evaluateAbsExpressionUnsignedInt) {
-
+TEST_F(AbsExpressionTest, evaluateAbsExpressionUnsignedInt)
+{
     auto expression = UnaryExpressionWrapper<AbsExpression>();
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 17));
-        ASSERT_EQ(resultValue, (uint8_t) 17);
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t)17));
+        ASSERT_EQ(resultValue, (uint8_t)17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
 
@@ -83,8 +85,8 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionUnsignedInt) {
     }
 }
 
-TEST_F(AbsExpressionTest, evaluateAbsExpressionSignedInt) {
-
+TEST_F(AbsExpressionTest, evaluateAbsExpressionSignedInt)
+{
     auto expression = UnaryExpressionWrapper<AbsExpression>();
     // Int8
     {
@@ -119,9 +121,10 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionSignedInt) {
   * @brief If we execute the expression on a boolean it should throw an exception.
   */
 
-TEST_F(AbsExpressionTest, evaluateAbsExpressionOnWrongType) {
+TEST_F(AbsExpressionTest, evaluateAbsExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<AbsExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

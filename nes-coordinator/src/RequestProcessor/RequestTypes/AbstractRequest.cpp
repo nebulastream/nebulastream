@@ -11,21 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES::RequestProcessor {
-AbstractRequest::AbstractRequest(const uint8_t maxRetries) : responsePromise(), maxRetries(maxRetries) {}
+namespace NES::RequestProcessor
+{
+AbstractRequest::AbstractRequest(const uint8_t maxRetries) : responsePromise(), maxRetries(maxRetries)
+{
+}
 
-std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exception_ptr& ex,
-                                                             const StorageHandlerPtr& storageHandle) {
+std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exception_ptr & ex, const StorageHandlerPtr & storageHandle)
+{
     std::vector<AbstractRequestPtr> followUpRequests;
-    try {
+    try
+    {
         //error handling to be performed before rolling back
         preRollbackHandle(ex, storageHandle);
 
@@ -34,37 +38,60 @@ std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exceptio
 
         //error handling to be performed after rolling back
         postRollbackHandle(ex, storageHandle);
-    } catch (RequestExecutionException& exception) {
-        if (retry()) {
+    }
+    catch (RequestExecutionException & exception)
+    {
+        if (retry())
+        {
             handleError(std::current_exception(), storageHandle);
-        } else {
+        }
+        else
+        {
             NES_ERROR("Final failure to rollback. No retries left. Error: {}", exception.what());
         }
     }
     return followUpRequests;
 }
 
-bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
+bool AbstractRequest::retry()
+{
+    return actualRetries++ < maxRetries;
+}
 
-std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture() { return responsePromise.get_future(); }
+std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture()
+{
+    return responsePromise.get_future();
+}
 
-void AbstractRequest::trySetExceptionInPromise(std::exception_ptr exception) {
-    try {
+void AbstractRequest::trySetExceptionInPromise(std::exception_ptr exception)
+{
+    try
+    {
         responsePromise.set_exception(std::move(exception));
-    } catch (std::future_error& e) {
-        if (e.code() != std::future_errc::promise_already_satisfied) {
+    }
+    catch (std::future_error & e)
+    {
+        if (e.code() != std::future_errc::promise_already_satisfied)
+        {
             throw;
         }
     }
 }
 
-void AbstractRequest::setExceptionInPromiseOrRethrow(std::exception_ptr exception) {
-    try {
+void AbstractRequest::setExceptionInPromiseOrRethrow(std::exception_ptr exception)
+{
+    try
+    {
         responsePromise.set_exception(exception);
-    } catch (std::future_error& e) {
+    }
+    catch (std::future_error & e)
+    {
         std::rethrow_exception(exception);
     }
 }
 
-void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
-}// namespace NES::RequestProcessor
+void AbstractRequest::setId(RequestId requestId)
+{
+    this->requestId = requestId;
+}
+} // namespace NES::RequestProcessor

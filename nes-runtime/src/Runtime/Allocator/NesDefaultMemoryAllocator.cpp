@@ -15,14 +15,19 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
-void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment) {
-    void* tmp = nullptr;
+void * NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment)
+{
+    void * tmp = nullptr;
     NES_ASSERT2_FMT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
     return tmp;
 }
 
-void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t) { std::free(p); }
+void NesDefaultMemoryAllocator::do_deallocate(void * p, size_t, size_t)
+{
+    std::free(p);
+}
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime

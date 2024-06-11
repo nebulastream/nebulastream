@@ -16,17 +16,19 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 /**
  * @brief
  * The AvgAggregationDescriptor aggregation calculates the avg over the window.
  */
-class AvgAggregationDescriptor : public WindowAggregationDescriptor {
-  public:
+class AvgAggregationDescriptor : public WindowAggregationDescriptor
+{
+public:
     /**
     * Factory method to creates a avg aggregation on a particular field.
     */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr & onField);
 
     static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
@@ -45,9 +47,9 @@ class AvgAggregationDescriptor : public WindowAggregationDescriptor {
 
     virtual ~AvgAggregationDescriptor() = default;
 
-  private:
+private:
     explicit AvgAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     AvgAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-}// namespace NES::Windowing
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_
+} // namespace NES::Windowing
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_

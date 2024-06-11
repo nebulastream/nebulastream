@@ -14,21 +14,23 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
-#include <Execution/Operators/OperatorState.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <Execution/Operators/OperatorState.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 using namespace Nautilus;
 class RecordBuffer;
 
-namespace Operators {
+namespace Operators
+{
 class Operator;
 class OperatorState;
-}// namespace Operators
+} // namespace Operators
 
 /**
  * The execution context manages state of operators within a pipeline and provides access to some global functionality.
@@ -36,28 +38,29 @@ class OperatorState;
  * Local operator state lives throughout one pipeline invocation. It gets initialized in the open call and cleared in the close call.
  * Global operator state lives throughout the whole existence of the pipeline. It gets initialized in the setup call and cleared in the terminate call.
  */
-class ExecutionContext final {
-  public:
+class ExecutionContext final
+{
+public:
     /**
      * @brief Create new execution context with mem refs to the worker context and the pipeline context.
      * @param workerContext reference to the worker context.
      * @param pipelineContext reference to the pipeline context.
      */
-    ExecutionContext(const Value<MemRef>& workerContext, const Value<MemRef>& pipelineContext);
+    ExecutionContext(const Value<MemRef> & workerContext, const Value<MemRef> & pipelineContext);
 
     /**
      * @brief Set local operator state that keeps state in a single pipeline invocation.
      * @param op reference to the operator to identify the state.
      * @param state operator state.
      */
-    void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
+    void setLocalOperatorState(const Operators::Operator * op, std::unique_ptr<Operators::OperatorState> state);
 
     /**
      * @brief Get the operator state by the operator reference.
      * @param op operator reference
      * @return operator state.
      */
-    Operators::OperatorState* getLocalState(const Operators::Operator* op);
+    Operators::OperatorState * getLocalState(const Operators::Operator * op);
 
     /**
      * @brief Get the global operator state.
@@ -81,31 +84,31 @@ class ExecutionContext final {
      * @brief Emit a record buffer to the next pipeline or sink.
      * @param record buffer.
      */
-    void emitBuffer(const RecordBuffer& rb);
+    void emitBuffer(const RecordBuffer & rb);
 
     /**
      * @brief Returns the pipeline context
      * @return Value<MemRef> to the pipeline context
      */
-    const Value<MemRef>& getPipelineContext() const;
+    const Value<MemRef> & getPipelineContext() const;
 
     /**
      * @brief Returns the worker context
      * @return Value<MemRef> to the worker context
      */
-    const Value<MemRef>& getWorkerContext() const;
+    const Value<MemRef> & getWorkerContext() const;
 
     /**
      * @brief Returns the current origin id. This is set in the scan.
      * @return Value<UInt64> origin id
      */
-    const Value<UInt64>& getOriginId() const;
+    const Value<UInt64> & getOriginId() const;
 
     /**
      * @brief Returns the current statistic id. This is set in the Operator::open()
      * @return Value<UInt64> statistic id
      */
-    const Value<UInt64>& getCurrentStatisticId() const;
+    const Value<UInt64> & getCurrentStatisticId() const;
 
     /**
      * @brief Sets the current origin id.
@@ -123,7 +126,7 @@ class ExecutionContext final {
      * @brief Returns the current watermark ts. This is set in the scan.
      * @return Value<UInt64> watermark ts
      */
-    const Value<UInt64>& getWatermarkTs() const;
+    const Value<UInt64> & getWatermarkTs() const;
 
     /**
      * @brief Sets the current valid watermark ts.
@@ -141,13 +144,13 @@ class ExecutionContext final {
      * @brief Returns current sequence number
      * @return Value<UInt64> sequence number
      */
-    const Value<UInt64>& getSequenceNumber() const;
+    const Value<UInt64> & getSequenceNumber() const;
 
     /**
      * @brief Returns current chunk number
      * @return Value<UInt64> chunk number
      */
-    const Value<UInt64>& getChunkNumber() const;
+    const Value<UInt64> & getChunkNumber() const;
 
     /**
      * @brief Sets the current chunk number
@@ -159,7 +162,7 @@ class ExecutionContext final {
      * @brief Returns last chunk
      * @return Value<Boolean>&
      */
-    const Value<Boolean>& getLastChunk() const;
+    const Value<Boolean> & getLastChunk() const;
 
     /**
      * @brief Removes the sequence state for the current <OrigindId, SequenceNumber>
@@ -188,7 +191,7 @@ class ExecutionContext final {
      * @brief Returns the current time stamp ts. This is set by a time function
      * @return Value<UInt64> timestamp ts
      */
-    const Value<UInt64>& getCurrentTs() const;
+    const Value<UInt64> & getCurrentTs() const;
 
     /**
      * @brief Sets the current processing timestamp.
@@ -196,8 +199,8 @@ class ExecutionContext final {
      */
     void setCurrentTs(Value<UInt64> ts);
 
-  private:
-    std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
+private:
+    std::unordered_map<const Operators::Operator *, std::unique_ptr<Operators::OperatorState>> localStateMap;
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
     Value<UInt64> origin;
@@ -209,6 +212,6 @@ class ExecutionContext final {
     Value<Boolean> lastChunk;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_

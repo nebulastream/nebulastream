@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Catalogs/Topology/Prediction/TopologyTimeline.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -22,27 +21,34 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 using Experimental::TopologyPrediction::TopologyTimeline;
-class TopologyTimelineTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class TopologyTimelineTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TopologyTimelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup TopologyTimeline test class.");
     }
 
-    static std::vector<WorkerId::Underlying> getIdVector(const std::vector<NodePtr>& nodes) {
+    static std::vector<WorkerId::Underlying> getIdVector(const std::vector<NodePtr> & nodes)
+    {
         std::vector<WorkerId::Underlying> ids;
         ids.reserve(nodes.size());
-        for (auto& node : nodes) {
+        for (auto & node : nodes)
+        {
             ids.push_back(node->as<TopologyNode>()->getId().getRawValue());
         }
         std::sort(ids.begin(), ids.end());
         return ids;
     }
 
-    static void compareIdVectors(const std::vector<NodePtr>& original, const std::vector<NodePtr>& copy) {
+    static void compareIdVectors(const std::vector<NodePtr> & original, const std::vector<NodePtr> & copy)
+    {
         EXPECT_EQ(original.size(), copy.size());
         auto originalIds = getIdVector(original);
         auto copiedIds = getIdVector(copy);
@@ -53,16 +59,19 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
         ASSERT_EQ(originalIds, copiedIds);
     }
 
-    static void compareNodeAt(Experimental::TopologyPrediction::TopologyTimeline versions,
-                              Timestamp time,
-                              uint64_t id,
-                              std::vector<uint64_t> parents,
-                              std::vector<uint64_t> children) {
+    static void compareNodeAt(
+        Experimental::TopologyPrediction::TopologyTimeline versions,
+        Timestamp time,
+        uint64_t id,
+        std::vector<uint64_t> parents,
+        std::vector<uint64_t> children)
+    {
         NES_DEBUG("compare node {}", id);
         auto predictedNode = versions.getTopologyVersion(time)->getCopyOfTopologyNodeWithId(WorkerId(id));
 
         //check if the node is predicted to be removed
-        if (children.empty() && parents.empty()) {
+        if (children.empty() && parents.empty())
+        {
             EXPECT_EQ(predictedNode, nullptr);
             return;
         }
@@ -76,7 +85,8 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(TopologyTimelineTest, testNoChangesPresent) {
+TEST_F(TopologyTimelineTest, testNoChangesPresent)
+{
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     auto rootNodeId = WorkerId(1);
@@ -100,7 +110,8 @@ TEST_F(TopologyTimelineTest, testNoChangesPresent) {
 /*
  * TODO: enable this test when #4602 is solved
  */
-TEST_F(TopologyTimelineTest, DISABLED_testUpdatingMultiplePredictions) {
+TEST_F(TopologyTimelineTest, DISABLED_testUpdatingMultiplePredictions)
+{
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     auto rootNodeId = WorkerId(1);
@@ -271,4 +282,4 @@ TEST_F(TopologyTimelineTest, DISABLED_testUpdatingMultiplePredictions) {
     compareNodeAt(versionTimeline, viewTime, 4, {5}, {3});
     compareNodeAt(versionTimeline, viewTime, 5, {1}, {4, 2});
 }
-}// namespace NES
+} // namespace NES

@@ -17,32 +17,35 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
 * @brief GlobalSlicePreAggregation operator that performs the pre-aggregation step for a global window aggregation.
 */
-class NonKeyedSlicePreAggregation : public ExecutableOperator {
-  public:
+class NonKeyedSlicePreAggregation : public ExecutableOperator
+{
+public:
     /**
     * @brief Creates a GlobalSlicePreAggregation operator
     */
-    NonKeyedSlicePreAggregation(uint64_t operatorHandlerIndex,
-                                TimeFunctionPtr timeFunction,
-                                const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
-    void setup(ExecutionContext& executionCtx) const override;
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    NonKeyedSlicePreAggregation(
+        uint64_t operatorHandlerIndex,
+        TimeFunctionPtr timeFunction,
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> & aggregationFunctions);
+    void setup(ExecutionContext & executionCtx) const override;
+    void open(ExecutionContext & ctx, RecordBuffer & recordBuffer) const override;
+    void execute(ExecutionContext & ctx, Record & record) const override;
+    void close(ExecutionContext & ctx, RecordBuffer & recordBuffer) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const TimeFunctionPtr timeFunction;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATION_HPP_

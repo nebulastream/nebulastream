@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <random>
+#include <utility>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -23,25 +25,28 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <random>
-#include <utility>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 //TODO: This is a broken strategy and need to be fixed as part of the issue #2486
-BasePlacementStrategyPtr IFCOPStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                               const TopologyPtr& topology,
-                                               const TypeInferencePhasePtr& typeInferencePhase,
-                                               PlacementAmendmentMode placementAmendmentMode) {
-    return std::make_unique<IFCOPStrategy>(
-        IFCOPStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode));
+BasePlacementStrategyPtr IFCOPStrategy::create(
+    const GlobalExecutionPlanPtr & globalExecutionPlan,
+    const TopologyPtr & topology,
+    const TypeInferencePhasePtr & typeInferencePhase,
+    PlacementAmendmentMode placementAmendmentMode)
+{
+    return std::make_unique<IFCOPStrategy>(IFCOPStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode));
 }
 
-IFCOPStrategy::IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                             const TopologyPtr& topology,
-                             const TypeInferencePhasePtr& typeInferencePhase,
-                             PlacementAmendmentMode placementAmendmentMode)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
+IFCOPStrategy::IFCOPStrategy(
+    const GlobalExecutionPlanPtr & globalExecutionPlan,
+    const TopologyPtr & topology,
+    const TypeInferencePhasePtr & typeInferencePhase,
+    PlacementAmendmentMode placementAmendmentMode)
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode)
+{
+}
 
 // TODO: fix as part of #2486
 /*bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
@@ -90,8 +95,8 @@ IFCOPStrategy::IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
     return false;
 }*/
 
-PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
-
+PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr)
+{
     PlacementMatrix placementCandidate;
 
     // mapping between pair of topologyId and operator id to pair of topology node and operator index in the iterator
@@ -124,7 +129,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
 
     // perform the assignment
     std::map<TopologyNodePtr, std::vector<std::string>> topologyNodeToSourceName;
-    std::vector<OperatorId> placedOperatorIds;// bookkeeping: each operator should be placed once
+    std::vector<OperatorId> placedOperatorIds; // bookkeeping: each operator should be placed once
     // loop over all logical source
     // FIXME: #2486 Dwi: I think we will get this information from source operator's properties
     //    for (auto srcOp : queryPlan->getSourceOperators()) {
@@ -198,7 +203,8 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
     return placementCandidate;
 }
 
-double IFCOPStrategy::getCost(const PlacementMatrix&, QueryPlanPtr, double) {
+double IFCOPStrategy::getCost(const PlacementMatrix &, QueryPlanPtr, double)
+{
     double totalCost = 0.0;
 
     /*// compute over-utilization cost
@@ -231,9 +237,9 @@ double IFCOPStrategy::getCost(const PlacementMatrix&, QueryPlanPtr, double) {
     return totalCost;
 }
 
-double IFCOPStrategy::getLocalCost(const std::vector<bool>&, NES::QueryPlanPtr) {
-
-    double cost = 1.0;// initialize to 1 as we perform a product operation
+double IFCOPStrategy::getLocalCost(const std::vector<bool> &, NES::QueryPlanPtr)
+{
+    double cost = 1.0; // initialize to 1 as we perform a product operation
     /*// initial value for operator index and cost
     uint32_t opIdx = 0;
     QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
@@ -254,19 +260,20 @@ double IFCOPStrategy::getLocalCost(const std::vector<bool>&, NES::QueryPlanPtr) 
     return cost;
 }
 
-double IFCOPStrategy::getNetworkCost(const TopologyNodePtr currentNode,
-                                     const PlacementMatrix& placementCandidate,
-                                     NES::QueryPlanPtr queryPlan) {
-
+double
+IFCOPStrategy::getNetworkCost(const TopologyNodePtr currentNode, const PlacementMatrix & placementCandidate, NES::QueryPlanPtr queryPlan)
+{
     // get the local cost for the current topology node
     auto currentNodeCost = getLocalCost(placementCandidate[topologyNodeIdToIndexMap[currentNode->getId()]], queryPlan);
 
     // check if the current node has children or if it is a source node
-    if (!currentNode->getChildren().empty()) {
+    if (!currentNode->getChildren().empty())
+    {
         double childCost = 0;
 
         // loop over the child node of the current topology node and compute to cost of each node
-        for (const auto& node : currentNode->getChildren()) {
+        for (const auto & node : currentNode->getChildren())
+        {
             auto childNode = node->as<TopologyNode>();
             // compute the network cost of the current child and then sum it to childCost
             childCost += getNetworkCost(childNode, placementCandidate, queryPlan);
@@ -282,7 +289,8 @@ double IFCOPStrategy::getNetworkCost(const TopologyNodePtr currentNode,
     return currentNodeCost;
 }
 
-void IFCOPStrategy::initiateWorkerIdToIndexMap() {
+void IFCOPStrategy::initiateWorkerIdToIndexMap()
+{
     /*auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
     uint32_t topoIdx = 0;
     for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
@@ -292,11 +300,9 @@ void IFCOPStrategy::initiateWorkerIdToIndexMap() {
     }*/
 }
 
-void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
-                                            uint32_t,
-                                            IdToIteratorIndexMapping&,
-                                            std::vector<OperatorId>&,
-                                            PlacementMatrix&) {
+void IFCOPStrategy::assignRemainingOperator(
+    NES::QueryPlanPtr, uint32_t, IdToIteratorIndexMapping &, std::vector<OperatorId> &, PlacementMatrix &)
+{
     /*auto currentTopologyNodePtr = topology->getRoot();
 
     // iterate to all operator in the query to check for un-assinged operator
@@ -320,11 +326,13 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
     }*/
 }
 
-PlacementAdditionResult IFCOPStrategy::updateGlobalExecutionPlan(SharedQueryId /*queryId*/,
-                                                                 const std::set<LogicalOperatorPtr>& /*pinnedUpStreamNodes*/,
-                                                                 const std::set<LogicalOperatorPtr>& /*pinnedDownStreamNodes*/,
-                                                                 DecomposedQueryPlanVersion /*querySubPlanVersion*/) {
+PlacementAdditionResult IFCOPStrategy::updateGlobalExecutionPlan(
+    SharedQueryId /*queryId*/,
+    const std::set<LogicalOperatorPtr> & /*pinnedUpStreamNodes*/,
+    const std::set<LogicalOperatorPtr> & /*pinnedDownStreamNodes*/,
+    DecomposedQueryPlanVersion /*querySubPlanVersion*/)
+{
     NES_NOT_IMPLEMENTED();
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

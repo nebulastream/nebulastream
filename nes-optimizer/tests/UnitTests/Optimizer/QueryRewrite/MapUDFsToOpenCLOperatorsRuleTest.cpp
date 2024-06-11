@@ -15,8 +15,8 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -36,31 +36,34 @@
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 
-class MapUDFsToOpenCLOperatorsRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class MapUDFsToOpenCLOperatorsRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr & sourceCatalog) const
+    {
         NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -78,20 +81,18 @@ class MapUDFsToOpenCLOperatorsRuleTest : public Testing::BaseUnitTest {
         // when
         udfCatalog->registerUDF(udfName, udfDescriptor);
         // then
-        ASSERT_EQ(udfDescriptor,
-                  Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor(udfName)));
+        ASSERT_EQ(udfDescriptor, Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor(udfName)));
     }
 };
 
-TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
-
+TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator)
+{
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    auto javaUDFDescriptor =
-        Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf"));
+    auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf"));
     Query query = Query::from("src").mapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -115,14 +116,13 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
     EXPECT_TRUE(openCLOperators[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
 }
 
-TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator) {
-
+TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator)
+{
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto javaUDFDescriptor =
-        Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf"));
+    auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf"));
     Query query = Query::from("src")
                       .mapUDF(javaUDFDescriptor)
                       .map(Attribute("b") = Attribute("b") + Attribute("a"))

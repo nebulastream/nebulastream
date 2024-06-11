@@ -19,15 +19,17 @@
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief A unary operator with one input operator, it has exactly one input operator.
  * This virtually inheritances for Operator
  * https://en.wikipedia.org/wiki/Virtual_inheritance
  */
-class UnaryOperator : public virtual Operator {
-  public:
+class UnaryOperator : public virtual Operator
+{
+public:
     explicit UnaryOperator(OperatorId id);
     ~UnaryOperator() noexcept override = default;
 
@@ -59,7 +61,7 @@ class UnaryOperator : public virtual Operator {
      * @brief Set the input origin ids from the input stream
      * @param originIds
      */
-    void setInputOriginIds(const std::vector<OriginId>& originIds);
+    void setInputOriginIds(const std::vector<OriginId> & originIds);
 
     /**
      * @brief Gets the input origin ids  from the input stream
@@ -79,12 +81,12 @@ class UnaryOperator : public virtual Operator {
      */
     std::string toString() const override;
 
-  protected:
+protected:
     SchemaPtr inputSchema = Schema::create();
     SchemaPtr outputSchema = Schema::create();
     std::vector<OriginId> inputOriginIds;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_UNARYOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_UNARYOPERATOR_HPP_

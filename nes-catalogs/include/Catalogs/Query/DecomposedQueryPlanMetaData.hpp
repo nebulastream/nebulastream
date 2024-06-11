@@ -15,12 +15,13 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_DECOMPOSEDQUERYPLANMETADATA_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_DECOMPOSEDQUERYPLANMETADATA_HPP_
 
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/QueryState.hpp>
 #include <Util/QueryStateHistory.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class DecomposedQueryPlanMetaData;
 using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaData>;
@@ -28,13 +29,14 @@ using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaDa
 /**
  * This class stores metadata about a decomposed query plan.
  */
-class DecomposedQueryPlanMetaData {
-
-  public:
-    static DecomposedQueryPlanMetaDataPtr create(DecomposedQueryPlanId decomposedQueryPlanId,
-                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                                 QueryState decomposedQueryPlanState,
-                                                 WorkerId workerId);
+class DecomposedQueryPlanMetaData
+{
+public:
+    static DecomposedQueryPlanMetaDataPtr create(
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+        QueryState decomposedQueryPlanState,
+        WorkerId workerId);
 
     /**
      * Update the status of the qub query
@@ -46,7 +48,7 @@ class DecomposedQueryPlanMetaData {
      * Update the termination reason
      * @param terminationReason : information to update
      */
-    void setTerminationReason(const std::string& terminationReason);
+    void setTerminationReason(const std::string & terminationReason);
 
     /**
      * Get status of query sub plan
@@ -70,10 +72,10 @@ class DecomposedQueryPlanMetaData {
      * @brief String rep of the meta information
      * @return meta data as string``
      */
-    const std::string& getTerminationReason() const;
+    const std::string & getTerminationReason() const;
 
     /** @brief Retrieve a timestamped history of query status changes. */
-    const QueryStateHistory& getHistory() const;
+    const QueryStateHistory & getHistory() const;
 
     /**
      * @brief Get decomposed query plan version
@@ -81,12 +83,13 @@ class DecomposedQueryPlanMetaData {
      */
     DecomposedQueryPlanVersion getDecomposedQueryPlanVersion() const;
 
-    DecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
-                                DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                QueryState decomposedQueryPlanState,
-                                WorkerId workerId);
+    DecomposedQueryPlanMetaData(
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+        QueryState decomposedQueryPlanState,
+        WorkerId workerId);
 
-  private:
+private:
     /**
      * Id of the decomposed query plan
      */
@@ -117,6 +120,6 @@ class DecomposedQueryPlanMetaData {
      */
     std::string terminationReason;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_DECOMPOSEDQUERYPLANMETADATA_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_DECOMPOSEDQUERYPLANMETADATA_HPP_

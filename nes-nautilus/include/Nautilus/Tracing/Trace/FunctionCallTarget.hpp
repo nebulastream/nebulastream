@@ -15,19 +15,21 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_
 #include <ostream>
 #include <string>
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
 /**
  * @brief Captures a function call in the trace.
  */
-class FunctionCallTarget {
-  public:
-    FunctionCallTarget(const std::string& mangledFunctionName, void* functionPtr);
+class FunctionCallTarget
+{
+public:
+    FunctionCallTarget(const std::string & mangledFunctionName, void * functionPtr);
     std::string mangledName;
-    void* functionPtr;
-    friend std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target);
+    void * functionPtr;
+    friend std::ostream & operator<<(std::ostream & os, const FunctionCallTarget & target);
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_

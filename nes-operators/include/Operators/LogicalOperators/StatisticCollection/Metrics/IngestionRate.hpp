@@ -16,13 +16,15 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_INGESTIONRATE_HPP_
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Collects the ingestion rate on a node
  */
-class IngestionRate : public StatisticMetric {
-  public:
+class IngestionRate : public StatisticMetric
+{
+public:
     /**
      * @brief Creates a IngestionRate wrapped in a MetricPtr
      * @return MetricPtr
@@ -34,7 +36,7 @@ class IngestionRate : public StatisticMetric {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const StatisticMetric& rhs) const override;
+    bool operator==(const StatisticMetric & rhs) const override;
 
     /**
      * @brief Creates a string representation
@@ -42,13 +44,13 @@ class IngestionRate : public StatisticMetric {
      */
     std::string toString() const override;
 
-  private:
+private:
     /**
      * @brief Private constructor for IngestionRate
      */
     explicit IngestionRate();
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_INGESTIONRATE_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_INGESTIONRATE_HPP_

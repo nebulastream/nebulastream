@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
+#include <atomic>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -39,14 +39,17 @@
 #include <Runtime/QueryManager.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
-#include <atomic>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, public testing::WithParamInterface<uint32_t> {
-  public:
-    static void SetUpTestCase() {
+class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, public testing::WithParamInterface<uint32_t>
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("QueryRedeploymentIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Set up QueryRedeploymentIntegrationTest test class");
     }
@@ -59,13 +62,16 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
      * @param topology  the topology object to query
      * @return true if expected number of nodes was reached. false in case of timeout before number was reached
      */
-    static bool waitForNodes(int timeoutSeconds, size_t nodes, TopologyPtr topology) {
+    static bool waitForNodes(int timeoutSeconds, size_t nodes, TopologyPtr topology)
+    {
         size_t numberOfNodes = 0;
-        for (int i = 0; i < timeoutSeconds; ++i) {
+        for (int i = 0; i < timeoutSeconds; ++i)
+        {
             auto topoString = topology->toString();
             numberOfNodes = std::count(topoString.begin(), topoString.end(), '\n');
             numberOfNodes -= 1;
-            if (numberOfNodes == nodes) {
+            if (numberOfNodes == nodes)
+            {
                 break;
             }
         }
@@ -84,7 +90,8 @@ constexpr std::chrono::milliseconds WAIT_TIME = std::chrono::milliseconds(1000);
  * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
  * network channel to become available
  */
-TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
+TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink)
+{
     const uint64_t numBuffersToProduceBeforeCount = 20;
     const uint64_t numBuffersToProduceAfterCount = 20;
     const uint64_t numBuffersToProduce = numBuffersToProduceBeforeCount + numBuffersToProduceAfterCount;
@@ -97,7 +104,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     std::string compareStringBeforeCount;
     std::ostringstream ossBeforeCount;
     ossBeforeCount << "seq$value:INTEGER(64 bits)" << std::endl;
-    for (uint64_t i = 0; i < numBuffersToProduceBeforeCount * tuplesPerBuffer; ++i) {
+    for (uint64_t i = 0; i < numBuffersToProduceBeforeCount * tuplesPerBuffer; ++i)
+    {
         ossBeforeCount << std::to_string(i) << std::endl;
         compareStringBeforeCount = ossBeforeCount.str();
     }
@@ -105,7 +113,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     std::string compareString;
     std::ostringstream oss;
     oss << "seq$value:INTEGER(64 bits)" << std::endl;
-    for (uint64_t i = 0; i < numBuffersToProduce * tuplesPerBuffer; ++i) {
+    for (uint64_t i = 0; i < numBuffersToProduce * tuplesPerBuffer; ++i)
+    {
         oss << std::to_string(i) << std::endl;
         compareString = oss.str();
     }
@@ -138,30 +147,29 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 
     std::atomic<uint64_t> bufferCount = 0;
     std::atomic<bool> countReached = false;
-    auto lambdaSourceFunction = [&countReached, &bufferCount](NES::Runtime::TupleBuffer& buffer,
-                                                              uint64_t numberOfTuplesToProduce) {
-        struct Record {
+    auto lambdaSourceFunction = [&countReached, &bufferCount](NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+    {
+        struct Record
+        {
             uint64_t value;
         };
         auto currentCount = ++bufferCount;
-        if (currentCount > numBuffersToProduceBeforeCount) {
+        if (currentCount > numBuffersToProduceBeforeCount)
+        {
             //after sending the specified amount of tuples, wait until some tuples actually arrived
             while (!countReached)
                 ;
         }
         auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-        auto* records = buffer.getBuffer<Record>();
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        auto * records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+        {
             records[u].value = valCount + u;
         }
     };
     auto gatheringValue = 10;
-    auto lambdaSourceType = LambdaSourceType::create("seq",
-                                                     "test_stream",
-                                                     std::move(lambdaSourceFunction),
-                                                     numBuffersToProduce,
-                                                     gatheringValue,
-                                                     GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType = LambdaSourceType::create(
+        "seq", "test_stream", std::move(lambdaSourceFunction), numBuffersToProduce, gatheringValue, GatheringMode::INTERVAL_MODE);
     wrkConf1->physicalSourceTypes.add(lambdaSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -194,13 +202,14 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 /**
  * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
+TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects)
+{
     const uint64_t numberOfReconnectsToPerform = 3;
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
     const uint64_t numBuffersToProduceWhileBuffering = 10;
     const uint64_t numBuffersToProduceAfterReconnect = 10;
-    const uint64_t buffersToProducePerReconnectCycle =
-        (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering);
+    const uint64_t buffersToProducePerReconnectCycle
+        = (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering);
     const uint64_t totalBuffersToProduce = numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
@@ -216,39 +225,40 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     std::atomic<bool> waitForReconnect = false;
     std::atomic<bool> waitForFinalCount = false;
     auto lambdaSourceFunction = [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount, &actualReconnects](
-                                    NES::Runtime::TupleBuffer& buffer,
-                                    uint64_t numberOfTuplesToProduce) {
-        struct Record {
+                                    NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+    {
+        struct Record
+        {
             uint64_t value;
         };
         auto currentCount = ++bufferCount;
-        if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
+        if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle))
+        {
             //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
             while (!waitForReconfig)
                 ;
         }
         if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering
-                + (actualReconnects * buffersToProducePerReconnectCycle)) {
+                + (actualReconnects * buffersToProducePerReconnectCycle))
+        {
             //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
             waitForReconnect = true;
         }
-        if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
-                + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
+        if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering
+                + (actualReconnects * buffersToProducePerReconnectCycle))
+        {
             while (!waitForFinalCount)
                 ;
         }
         auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-        auto* records = buffer.getBuffer<Record>();
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        auto * records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+        {
             records[u].value = valCount + u;
         }
     };
-    auto lambdaSourceType = LambdaSourceType::create("seq",
-                                                     "test_stream",
-                                                     std::move(lambdaSourceFunction),
-                                                     totalBuffersToProduce,
-                                                     gatheringValue,
-                                                     GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType = LambdaSourceType::create(
+        "seq", "test_stream", std::move(lambdaSourceFunction), totalBuffersToProduce, gatheringValue, GatheringMode::INTERVAL_MODE);
 
     NES_INFO("rest port = {}", *restPort);
 
@@ -312,8 +322,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     auto networkSrcWrk3Id = 32;
 
     auto sinkLocationWrk1 = NES::Network::NodeLocation(wrk1->getWorkerId(), "localhost", *wrk1DataPort);
-    auto networkSourceCrdLocation =
-        NES::Network::NodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *crdWorkerDataPort);
+    auto networkSourceCrdLocation = NES::Network::NodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *crdWorkerDataPort);
 
     std::vector<NesWorkerPtr> reconnectParents;
 
@@ -325,34 +334,29 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     ASSERT_EQ(wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
     auto oldSubplanId = wrk2->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
     auto wrk2Source = wrk2->getNodeEngine()->getExecutableQueryPlan(oldSubplanId)->getSources().front();
-    Network::NesPartition currentWrk1TargetPartition(sharedQueryId,
-                                                     wrk2Source->getOperatorId(),
-                                                     PartitionId(0),
-                                                     SubpartitionId(0));
+    Network::NesPartition currentWrk1TargetPartition(sharedQueryId, wrk2Source->getOperatorId(), PartitionId(0), SubpartitionId(0));
 
     ASSERT_EQ(crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
     auto coordinatorSubplanId = crd->getNesWorker()->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
-    auto coordinatorSource =
-        crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
-    Network::NesPartition networkSourceCrdPartition(sharedQueryId,
-                                                    coordinatorSource->getOperatorId(),
-                                                    PartitionId(0),
-                                                    SubpartitionId(0));
+    auto coordinatorSource = crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
+    Network::NesPartition networkSourceCrdPartition(sharedQueryId, coordinatorSource->getOperatorId(), PartitionId(0), SubpartitionId(0));
 
     auto oldWorker = wrk2;
-    while (actualReconnects < numberOfReconnectsToPerform) {
+    while (actualReconnects < numberOfReconnectsToPerform)
+    {
         subPlanIdWrk3++;
 
         //wait for data to be written
         std::string compareStringBefore;
         std::ostringstream oss;
         oss << "seq$value:INTEGER(64 bits)" << std::endl;
-        for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect
-                                  + (actualReconnects
-                                     * (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
-                                        + numBuffersToProduceWhileBuffering)))
+        for (uint64_t i = 0;
+             i < (numBuffersToProduceBeforeReconnect
+                  + (actualReconnects
+                     * (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering)))
                  * tuplesPerBuffer;
-             ++i) {
+             ++i)
+        {
             oss << std::to_string(i) << std::endl;
         }
         compareStringBefore = oss.str();
@@ -379,7 +383,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         for (uint64_t i = 0;
              i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering)
                  * tuplesPerBuffer * (actualReconnects + 1);
-             ++i) {
+             ++i)
+        {
             ossAfter << std::to_string(i) << std::endl;
         }
         compareStringAfter = ossAfter.str();
@@ -388,20 +393,20 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         int noOfCompletedMigrations = 0;
         int noOfRunningPlans = 0;
 
-        RequestProcessor::StorageDataStructures storageDataStructures(coordinatorConfig,
-                                                                      topology,
-                                                                      crd->getGlobalExecutionPlan(),
-                                                                      crd->getGlobalQueryPlan(),
-                                                                      crd->getQueryCatalog(),
-                                                                      crd->getSourceCatalog(),
-                                                                      crd->getUDFCatalog(),
-                                                                      crd->getPlacementAmendmentQueue(),
-                                                                      crd->getStatisticProbeHandler());
+        RequestProcessor::StorageDataStructures storageDataStructures(
+            coordinatorConfig,
+            topology,
+            crd->getGlobalExecutionPlan(),
+            crd->getGlobalQueryPlan(),
+            crd->getQueryCatalog(),
+            crd->getSourceCatalog(),
+            crd->getUDFCatalog(),
+            crd->getPlacementAmendmentQueue(),
+            crd->getStatisticProbeHandler());
         auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
         std::vector<TopologyLinkInformation> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
         std::vector<TopologyLinkInformation> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
-        std::string coordinatorAddress =
-            coordinatorConfig->coordinatorHost.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
+        std::string coordinatorAddress = coordinatorConfig->coordinatorHost.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
         auto coordinatorRPCClient = CoordinatorRPCClient::create(coordinatorAddress);
         coordinatorRPCClient->relocateTopologyNode(removedLinks, addedLinks);
 
@@ -409,52 +414,59 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         waitForFinalCount = false;
         waitForReconfig = true;
         //wait for tuples in order to make sure that the buffer is actually tested
-        while (!waitForReconnect) {
+        while (!waitForReconnect)
+        {
         }
 
         //verify that the old partition gets unregistered
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition)
-               == Network::PartitionRegistrationStatus::Registered) {
+               == Network::PartitionRegistrationStatus::Registered)
+        {
             std::this_thread::sleep_for(std::chrono::seconds(1));
             NES_DEBUG("Partition {} has not yet been unregistered", currentWrk1TargetPartition);
-            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec)
+            {
                 FAIL();
             }
         }
-        ASSERT_NE(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition),
-                  Network::PartitionRegistrationStatus::Registered);
+        ASSERT_NE(
+            wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition),
+            Network::PartitionRegistrationStatus::Registered);
         auto lockedExecutionNode = crd->getGlobalExecutionPlan()->getLockedExecutionNode(wrk3->getWorkerId());
-        auto networkSourceWrk3Partition =
-            std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(lockedExecutionNode->operator*()
-                                                                            ->getAllDecomposedQueryPlans(sharedQueryId)
-                                                                            .front()
-                                                                            ->getSourceOperators()
-                                                                            .front()
-                                                                            ->getSourceDescriptor())
-                ->getNesPartition();
-        ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
-                  Network::PartitionRegistrationStatus::Registered);
-        EXPECT_NE(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
-                  Network::PartitionRegistrationStatus::Registered);
+        auto networkSourceWrk3Partition
+            = std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(lockedExecutionNode->operator*()
+                                                                              ->getAllDecomposedQueryPlans(sharedQueryId)
+                                                                              .front()
+                                                                              ->getSourceOperators()
+                                                                              .front()
+                                                                              ->getSourceDescriptor())
+                  ->getNesPartition();
+        ASSERT_EQ(
+            wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
+            Network::PartitionRegistrationStatus::Registered);
+        EXPECT_NE(
+            oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
+            Network::PartitionRegistrationStatus::Registered);
         currentWrk1TargetPartition = networkSourceWrk3Partition;
 
         //verify that query has been undeployed from old parent
-        while (oldWorker->getNodeEngine()->getQueryStatus(sharedQueryId)
-               != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        while (oldWorker->getNodeEngine()->getQueryStatus(sharedQueryId) != Runtime::Execution::ExecutableQueryPlanStatus::Finished)
+        {
             NES_DEBUG("Query has not yet stopped on worker {}", oldWorker->getWorkerId());
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec)
+            {
                 FAIL();
             }
         }
-        ASSERT_EQ(oldWorker->getNodeEngine()->getQueryStatus(sharedQueryId),
-                  Runtime::Execution::ExecutableQueryPlanStatus::Finished);
+        ASSERT_EQ(oldWorker->getNodeEngine()->getQueryStatus(sharedQueryId), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
 
         oldWorker = wrk3;
-        EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
-                  Network::PartitionRegistrationStatus::Registered);
+        EXPECT_EQ(
+            oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
+            Network::PartitionRegistrationStatus::Registered);
         oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).front();
 
         //check that query has left migrating state and is running again
@@ -482,7 +494,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     bool retStopLastParent = lastReconnectParent->stop(false);
     ASSERT_TRUE(retStopLastParent);
     reconnectParents.pop_back();
-    for (auto parent : reconnectParents) {
+    for (auto parent : reconnectParents)
+    {
         NES_DEBUG("stopping parent node")
         ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, parent));
         cout << "stopping worker" << endl;
@@ -507,4 +520,4 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 }
 
 INSTANTIATE_TEST_CASE_P(QueryRedeploymentIntegrationTestParam, QueryRedeploymentIntegrationTest, ::testing::Values(1, 4));
-}// namespace NES
+} // namespace NES

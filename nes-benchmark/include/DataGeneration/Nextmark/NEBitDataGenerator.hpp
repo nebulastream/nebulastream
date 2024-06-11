@@ -15,10 +15,12 @@
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEBITDATAGENERATOR_HPP_
 #include <DataGeneration/DataGenerator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-class NEBitDataGenerator : public DataGenerator {
-  public:
+class NEBitDataGenerator : public DataGenerator
+{
+public:
     explicit NEBitDataGenerator();
 
     std::string getName() override;
@@ -28,6 +30,6 @@ class NEBitDataGenerator : public DataGenerator {
     std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEBITDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEBITDATAGENERATOR_HPP_

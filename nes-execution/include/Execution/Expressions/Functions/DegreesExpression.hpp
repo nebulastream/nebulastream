@@ -15,17 +15,19 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 /**
  * @brief This expression converts the radians to degrees
  */
-class DegreesExpression : public Expression {
-  public:
-    DegreesExpression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+class DegreesExpression : public Expression
+{
+public:
+    DegreesExpression(const ExpressionPtr & subExpression);
+    Value<> execute(Record & record) const override;
 
-  private:
+private:
     const ExpressionPtr SubExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_
+} // namespace NES::Runtime::Execution::Expressions
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_

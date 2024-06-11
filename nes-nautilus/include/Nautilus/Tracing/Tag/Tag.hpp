@@ -15,12 +15,13 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_
 
-#include <Nautilus/Util/Trie.hpp>
 #include <memory>
 #include <ostream>
 #include <vector>
+#include <Nautilus/Util/Trie.hpp>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
 /**
  * @brief The tag address references a function on the callstack.
@@ -32,20 +33,21 @@ using Tag = TrieNode<TagAddress>;
  * @brief The tag identifies a specific executed operation in the interpreter.
  * It is represented by a list of all stack frame addresses between the operation and the execution root.
  */
-class TagVector {
-  public:
+class TagVector
+{
+public:
     /**
      * @brief Constructor to create a new tag.
      * @param addresses
      */
-    TagVector(const std::vector<TagAddress>& addresses);
-    friend std::ostream& operator<<(std::ostream& os, const TagVector& tag);
-    const std::vector<TagAddress>& getAddresses();
+    TagVector(const std::vector<TagAddress> & addresses);
+    friend std::ostream & operator<<(std::ostream & os, const TagVector & tag);
+    const std::vector<TagAddress> & getAddresses();
 
-  private:
+private:
     std::vector<TagAddress> addresses;
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_

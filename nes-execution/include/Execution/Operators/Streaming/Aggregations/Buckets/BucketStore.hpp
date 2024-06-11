@@ -14,15 +14,16 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_BUCKETSTORE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_BUCKETSTORE_HPP_
 
-#include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
-#include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <list>
 #include <map>
 #include <memory>
 #include <numeric>
+#include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class NonKeyedSlice;
 using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
@@ -33,9 +34,10 @@ using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
 * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
 * As the slice store is only using by a single thread, we dont have to protect its functions for concurrent accesses.
 */
-template<class SliceType>
-class BucketStore {
-  public:
+template <class SliceType>
+class BucketStore
+{
+public:
     using SliceTypePtr = std::unique_ptr<SliceType>;
     explicit BucketStore(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide){};
     virtual ~BucketStore() = default;
@@ -45,10 +47,12 @@ class BucketStore {
      * @param ts
      * @return std::vector<SliceType*>*
      */
-    std::vector<SliceType*>* findBucketsByTs(uint64_t ts) {
-        if (ts < lastWatermarkTs) {
-            throw WindowProcessingException("The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs "
-                                            + std::to_string(lastWatermarkTs));
+    std::vector<SliceType *> * findBucketsByTs(uint64_t ts)
+    {
+        if (ts < lastWatermarkTs)
+        {
+            throw WindowProcessingException(
+                "The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs " + std::to_string(lastWatermarkTs));
         }
         // get a read lock
         std::lock_guard<std::mutex> lock(mutex);
@@ -60,22 +64,28 @@ class BucketStore {
         int64_t lowerBound = timestamp - windowSize;
 
         // iterate over all windows that cover the ts
-        for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide) {
+        for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide)
+        {
             auto bucketRef = buckets.find(start);
-            if (bucketRef == buckets.end()) {
+            if (bucketRef == buckets.end())
+            {
                 auto bucket = allocateNewSlice(start, start + windowSize);
                 localResultVector.emplace_back(bucket.get());
                 buckets.emplace(start, std::move(bucket));
-            } else {
-                auto& bucket = bucketRef->second;
+            }
+            else
+            {
+                auto & bucket = bucketRef->second;
                 localResultVector.emplace_back(bucket.get());
             }
         }
 
-        const auto bucketStr =
-            std::accumulate(localResultVector.begin(), localResultVector.end(), std::string(), [&](const auto str, auto bucket) {
-                return str + std::to_string(bucket->getStart()) + ", " + std::to_string(bucket->getEnd()) + "\n";
-            });
+        const auto bucketStr = std::accumulate(
+            localResultVector.begin(),
+            localResultVector.end(),
+            std::string(),
+            [&](const auto str, auto bucket)
+            { return str + std::to_string(bucket->getStart()) + ", " + std::to_string(bucket->getEnd()) + "\n"; });
         NES_DEBUG("ts: {} bucketStr: {}", ts, bucketStr);
 
         return &localResultVector;
@@ -86,11 +96,13 @@ class BucketStore {
      * @param ts
      * @return
      */
-    std::list<std::shared_ptr<SliceType>> extractBucketsUntilTs(uint64_t ts) {
+    std::list<std::shared_ptr<SliceType>> extractBucketsUntilTs(uint64_t ts)
+    {
         std::lock_guard<std::mutex> lock(mutex);
         // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
         std::list<std::shared_ptr<SliceType>> resultBuckets;
-        for (auto i = buckets.begin(), last = buckets.end(); i != last && i->first + windowSize <= ts;) {
+        for (auto i = buckets.begin(), last = buckets.end(); i != last && i->first + windowSize <= ts;)
+        {
             resultBuckets.push_back(std::move(i->second));
             i = buckets.erase(i);
         }
@@ -107,20 +119,20 @@ class BucketStore {
      * @brief Gets an unprotected reference to all slices
      * @return std::list<KeyedSlicePtr>
      */
-    auto& getSlices() { return buckets; }
+    auto & getSlices() { return buckets; }
 
-  private:
+private:
     virtual SliceTypePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) = 0;
 
-  private:
+private:
     // use int64_t here because window could start at negative start points.
     int64_t windowSize;
     int64_t windowSlide;
     std::map<uint64_t, SliceTypePtr> buckets;
     std::atomic<uint64_t> lastWatermarkTs = 0;
-    std::vector<SliceType*> localResultVector;
+    std::vector<SliceType *> localResultVector;
     std::mutex mutex;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_BUCKETSTORE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_BUCKETSTORE_HPP_

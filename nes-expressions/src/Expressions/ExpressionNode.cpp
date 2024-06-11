@@ -12,25 +12,41 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Expressions/ExpressionNode.hpp>
 #include <utility>
-namespace NES {
-ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(std::move(stamp)) {}
+#include <Expressions/ExpressionNode.hpp>
+#include <Common/DataTypes/DataType.hpp>
+namespace NES
+{
+ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(std::move(stamp))
+{
+}
 
-bool ExpressionNode::isPredicate() const { return stamp->isBoolean(); }
+bool ExpressionNode::isPredicate() const
+{
+    return stamp->isBoolean();
+}
 
-DataTypePtr ExpressionNode::getStamp() const { return stamp; }
+DataTypePtr ExpressionNode::getStamp() const
+{
+    return stamp;
+}
 
-void ExpressionNode::setStamp(DataTypePtr stamp) { this->stamp = std::move(stamp); }
+void ExpressionNode::setStamp(DataTypePtr stamp)
+{
+    this->stamp = std::move(stamp);
+}
 
-void ExpressionNode::inferStamp(SchemaPtr schema) {
+void ExpressionNode::inferStamp(SchemaPtr schema)
+{
     // infer stamp on all children nodes
-    for (const auto& node : children) {
+    for (const auto & node : children)
+    {
         node->as<ExpressionNode>()->inferStamp(schema);
     }
 }
 
-ExpressionNode::ExpressionNode(const ExpressionNode* other) : stamp(other->stamp) {}
+ExpressionNode::ExpressionNode(const ExpressionNode * other) : stamp(other->stamp)
+{
+}
 
-}// namespace NES
+} // namespace NES

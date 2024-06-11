@@ -14,17 +14,18 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 using namespace Configurations;
 using namespace Runtime;
 
@@ -34,25 +35,28 @@ static const std::string sourceNameRight = "log_right";
 /**
  * @brief Test of distributed NEMO join
  */
-class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
+class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
+{
+public:
     BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
     QueryCompilation::WindowingStrategy windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("DistributedMatrixJoinIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DistributedMatrixJoinIntegrationTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<BufferManager>();
     }
 
-    static CSVSourceTypePtr createCSVSourceType(const std::string& logicalSourceNAme,
-                                                const std::string& physicalSourceName,
-                                                const std::string& inputPath) {
+    static CSVSourceTypePtr
+    createCSVSourceType(const std::string & logicalSourceNAme, const std::string & physicalSourceName, const std::string & inputPath)
+    {
         CSVSourceTypePtr csvSourceType = CSVSourceType::create(logicalSourceNAme, physicalSourceName);
         csvSourceType->setFilePath(inputPath);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
@@ -71,11 +75,13 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
      * @param leafNodesPerNode number of leaf nodes for the parents of last layer
      * @return the TestHarness
      */
-    TestHarness createTestHarness(const Query& query,
-                                  std::function<void(CoordinatorConfigurationPtr)> crdFunctor,
-                                  uint64_t layers,
-                                  uint64_t nodesPerNode,
-                                  uint64_t leafNodesPerNode) {
+    TestHarness createTestHarness(
+        const Query & query,
+        std::function<void(CoordinatorConfigurationPtr)> crdFunctor,
+        uint64_t layers,
+        uint64_t nodesPerNode,
+        uint64_t leafNodesPerNode)
+    {
         const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -92,30 +98,37 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
         parents.emplace_back(1);
 
         auto cnt = 1;
-        for (uint64_t i = 2; i <= layers; i++) {
+        for (uint64_t i = 2; i <= layers; i++)
+        {
             std::vector<uint64_t> newParents;
             std::string sourceName;
-            for (auto parent : parents) {
+            for (auto parent : parents)
+            {
                 uint64_t nodeCnt = nodesPerNode;
-                if (i == layers) {
+                if (i == layers)
+                {
                     nodeCnt = leafNodesPerNode;
                 }
-                for (uint64_t j = 0; j < nodeCnt; j++) {
+                for (uint64_t j = 0; j < nodeCnt; j++)
+                {
                     nodeId++;
                     nodes.emplace_back(nodeId);
                     newParents.emplace_back(nodeId);
 
-                    if (i == layers) {
+                    if (i == layers)
+                    {
                         leafNodes++;
-                        if (leafNodes % 2 == 0) {
+                        if (leafNodes % 2 == 0)
+                        {
                             sourceName = sourceNameLeft;
-                        } else {
+                        }
+                        else
+                        {
                             sourceName = sourceNameRight;
                         }
 
-                        auto csvSource = createCSVSourceType(sourceName,
-                                                             "src_" + std::to_string(leafNodes),
-                                                             std::string(TEST_DATA_DIRECTORY) + "window.csv");
+                        auto csvSource = createCSVSourceType(
+                            sourceName, "src_" + std::to_string(leafNodes), std::string(TEST_DATA_DIRECTORY) + "window.csv");
                         testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, WorkerId(parent));
                         NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding CSV source:{} for node:{}", sourceName, nodeId);
                         continue;
@@ -131,11 +144,11 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
     }
 };
 
-TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
+TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown)
+{
     uint64_t sourceNo = 4;
-    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
-        config->optimizer.joinOptimizationMode.setValue(Optimizer::DistributedJoinOptimizationMode::MATRIX);
-    };
+    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr & config)
+    { config->optimizer.joinOptimizationMode.setValue(Optimizer::DistributedJoinOptimizationMode::MATRIX); };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))
                       .where(Attribute("id") == Attribute("id"))
@@ -158,4 +171,4 @@ TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
     EXPECT_EQ(4, countOccurrences("Join", queryPlan->toString()));
 }
 
-}// namespace NES
+} // namespace NES

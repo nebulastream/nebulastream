@@ -15,20 +15,22 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
 
-#include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <memory>
 #include <string>
 #include <utility>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
-class UDFDescriptor {
-  public:
-    explicit UDFDescriptor(const std::string& methodName, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema);
+class UDFDescriptor
+{
+public:
+    explicit UDFDescriptor(const std::string & methodName, const SchemaPtr & inputSchema, const SchemaPtr & outputSchema);
 
     virtual ~UDFDescriptor() = default;
 
@@ -36,7 +38,7 @@ class UDFDescriptor {
     * @brief Return the name of the UDF method.
     * @return The name of the UDF method.udf
     */
-    [[nodiscard]] const std::string& getMethodName() const { return methodName; }
+    [[nodiscard]] const std::string & getMethodName() const { return methodName; }
 
     /**
     * @brief Retrieve the return type of the UDF
@@ -51,7 +53,7 @@ class UDFDescriptor {
      *
      * @return A SchemaPtr instance describing the output schema of the UDF method.
      */
-    const SchemaPtr& getOutputSchema() const { return outputSchema; }
+    const SchemaPtr & getOutputSchema() const { return outputSchema; }
 
     /**
      * @brief Return the input schema of the UDF operation.
@@ -60,7 +62,7 @@ class UDFDescriptor {
      *
      * @return A SchemaPtr instance describing the input schema of the UDF method.
      */
-    const SchemaPtr& getInputSchema() const { return inputSchema; }
+    const SchemaPtr & getInputSchema() const { return inputSchema; }
 
     /**
      * @brief Set the input schema of the UDF operation.
@@ -69,12 +71,13 @@ class UDFDescriptor {
      *
      * @param inputSchema A SchemaPtr instance describing the input schema of the UDF method.
      */
-    void setInputSchema(const SchemaPtr& inputSchema);
+    void setInputSchema(const SchemaPtr & inputSchema);
 
     virtual std::stringstream generateInferStringSignature() = 0;
 
-    template<class UDFDescriptor>
-    static std::shared_ptr<UDFDescriptor> as(UDFDescriptorPtr ptr) {
+    template <class UDFDescriptor>
+    static std::shared_ptr<UDFDescriptor> as(UDFDescriptorPtr ptr)
+    {
         return std::dynamic_pointer_cast<UDFDescriptor>(ptr);
     }
 
@@ -83,9 +86,11 @@ class UDFDescriptor {
      * @tparam NodeType
      * @return bool true if node is of NodeType
      */
-    template<class UDFDescriptor>
-    bool instanceOf() {
-        if (dynamic_cast<UDFDescriptor*>(this)) {
+    template <class UDFDescriptor>
+    bool instanceOf()
+    {
+        if (dynamic_cast<UDFDescriptor *>(this))
+        {
             return true;
         }
         return false;
@@ -98,13 +103,13 @@ class UDFDescriptor {
      * @return True, if both UDFDescriptors are the same, i.e., same UDF class and method name,
      * same serialized instance (state), and same byte code list; False, otherwise.
      */
-    bool operator==(const UDFDescriptor& other) const;
+    bool operator==(const UDFDescriptor & other) const;
 
-  private:
+private:
     const std::string methodName;
     const DataTypePtr returnType;
     SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
 };
-}// namespace NES::Catalogs::UDF
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
+} // namespace NES::Catalogs::UDF
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_

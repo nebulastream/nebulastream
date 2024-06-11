@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Sort/Sort.hpp>
@@ -29,28 +29,33 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class SortPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class SortPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     Nautilus::CompilationOptions options;
-    ExecutablePipelineProvider* provider{};
+    ExecutablePipelineProvider * provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SortPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SortPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup SortPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         options.setDumpToConsole(true);
@@ -67,7 +72,8 @@ class SortPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineEx
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
  */
-TEST_P(SortPipelineTest, SortPipelineTest) {
+TEST_P(SortPipelineTest, SortPipelineTest)
+{
     auto numberOfTuples = 100;
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT32);
@@ -86,9 +92,10 @@ TEST_P(SortPipelineTest, SortPipelineTest) {
 
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = numberOfTuples; i > 0; i--) {
-        testBuffer[i]["f1"].write((int32_t) i);
-        testBuffer[i]["f2"].write((int32_t) i);
+    for (uint64_t i = numberOfTuples; i > 0; i--)
+    {
+        testBuffer[i]["f1"].write((int32_t)i);
+        testBuffer[i]["f2"].write((int32_t)i);
     }
     testBuffer.setNumberOfTuples(numberOfTuples);
 
@@ -104,17 +111,17 @@ TEST_P(SortPipelineTest, SortPipelineTest) {
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), memoryLayout->getCapacity());
 
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
-        ASSERT_EQ(resulttestBuffer[i]["f1"].read<int32_t>(), (int32_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f2"].read<int32_t>(), (int32_t) i);
+    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++)
+    {
+        ASSERT_EQ(resulttestBuffer[i]["f1"].read<int32_t>(), (int32_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f2"].read<int32_t>(), (int32_t)i);
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        SortPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<SortPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    SortPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<SortPipelineTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

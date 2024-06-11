@@ -18,10 +18,12 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
-namespace NES {
-namespace detail::Runtime {
+namespace NES
+{
+namespace detail::Runtime
+{
 class MemorySegment;
-}// namespace detail::Runtime
+} // namespace detail::Runtime
 
 /**
  * @brief Memory Source that reads from main memory and produces buffers.
@@ -29,8 +31,9 @@ class MemorySegment;
  * that must have ownership of the area, i.e., it must control when to free it.
  * Do not use in distributed settings but only for single node dev and testing.
  */
-class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
-  public:
+class MemorySource : public GeneratorSource, public Runtime::BufferRecycler
+{
+public:
     /**
      * @brief The constructor of a MemorySource
      * @param schema the schema of the source
@@ -50,22 +53,23 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
-    explicit MemorySource(SchemaPtr schema,
-                          const std::shared_ptr<uint8_t>& memoryArea,
-                          size_t memoryAreaSize,
-                          Runtime::BufferManagerPtr bufferManager,
-                          Runtime::QueryManagerPtr queryManager,
-                          uint64_t numBuffersToProcess,
-                          uint64_t gatheringValue,
-                          OperatorId operatorId,
-                          OriginId originId,
-                          StatisticId statisticId,
-                          size_t numSourceLocalBuffers,
-                          GatheringMode gatheringMode,
-                          uint64_t sourceAffinity,
-                          uint64_t taskQueueId,
-                          const std::string& physicalSourceName,
-                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    explicit MemorySource(
+        SchemaPtr schema,
+        const std::shared_ptr<uint8_t> & memoryArea,
+        size_t memoryAreaSize,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        uint64_t numBuffersToProcess,
+        uint64_t gatheringValue,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        uint64_t sourceAffinity,
+        uint64_t taskQueueId,
+        const std::string & physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
@@ -84,15 +88,15 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     SourceType getType() const override;
 
-    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment *) override{};
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment *) override{};
 
-  private:
+private:
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
@@ -104,6 +108,6 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
 
 using MemorySourcePtr = std::shared_ptr<MemorySource>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_MEMORYSOURCE_HPP_

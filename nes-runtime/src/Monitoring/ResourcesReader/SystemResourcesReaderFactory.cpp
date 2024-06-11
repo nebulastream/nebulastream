@@ -16,9 +16,11 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
-AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResourcesReader() {
+AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResourcesReader()
+{
 #ifdef __linux__
     auto abstractReader = std::make_shared<LinuxSystemResourcesReader>();
     NES_INFO("SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader");
@@ -30,4 +32,4 @@ AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResource
     return abstractReader;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

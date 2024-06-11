@@ -16,13 +16,15 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXT_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The Text type represents a variable-sized text field.
  */
-class Text final : public DataType {
-  public:
+class Text final : public DataType
+{
+public:
     ~Text() override = default;
 
     /**
@@ -52,5 +54,5 @@ class Text final : public DataType {
     std::string toString() override;
 };
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXT_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXT_HPP_

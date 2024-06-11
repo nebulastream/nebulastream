@@ -15,30 +15,33 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
 
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
 #include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief This class is responsible to look up OS/HW specs of the underlying hardware, e.g., numa.
  */
-class HardwareManager {
-
-  public:
+class HardwareManager
+{
+public:
     class NumaDescriptor;
     /**
      * @brief Descriptor for a single core
      */
-    struct CpuDescriptor {
+    struct CpuDescriptor
+    {
         friend class NumaDescriptor;
 
-      public:
-        explicit CpuDescriptor(uint16_t coreId = -1, uint16_t cpuId = -1) : coreId(coreId), cpuId(cpuId) {
+    public:
+        explicit CpuDescriptor(uint16_t coreId = -1, uint16_t cpuId = -1) : coreId(coreId), cpuId(cpuId)
+        {
             // nop
         }
 
@@ -54,11 +57,11 @@ class HardwareManager {
          */
         uint16_t getCpuId() const { return cpuId; }
 
-        friend bool operator<(const CpuDescriptor& lhs, const CpuDescriptor& rhs) { return lhs.cpuId < rhs.cpuId; }
+        friend bool operator<(const CpuDescriptor & lhs, const CpuDescriptor & rhs) { return lhs.cpuId < rhs.cpuId; }
 
-        friend bool operator==(const CpuDescriptor& lhs, const CpuDescriptor& rhs) { return lhs.cpuId == rhs.cpuId; }
+        friend bool operator==(const CpuDescriptor & lhs, const CpuDescriptor & rhs) { return lhs.cpuId == rhs.cpuId; }
 
-      private:
+    private:
         uint16_t coreId = -1;
         uint16_t cpuId = -1;
     };
@@ -66,15 +69,18 @@ class HardwareManager {
     /**
      * @brief Descriptor for a single numa node
      */
-    class NumaDescriptor {
-      public:
-        explicit NumaDescriptor(uint32_t node_id = -1) : nodeId(node_id), physicalCpus() {
+    class NumaDescriptor
+    {
+    public:
+        explicit NumaDescriptor(uint32_t node_id = -1) : nodeId(node_id), physicalCpus()
+        {
             // nop
         }
 
-        NumaDescriptor(const NumaDescriptor& other) { *this = other; }
+        NumaDescriptor(const NumaDescriptor & other) { *this = other; }
 
-        NumaDescriptor& operator=(const NumaDescriptor& other) {
+        NumaDescriptor & operator=(const NumaDescriptor & other)
+        {
             nodeId = other.nodeId;
             physicalCpus = std::map<uint16_t, CpuDescriptor>(other.physicalCpus.begin(), other.physicalCpus.end());
             return *this;
@@ -85,22 +91,26 @@ class HardwareManager {
          * @param cpu the cpu index
          * @param core the core index
          */
-        void addCpu(uint16_t cpu, uint16_t core) {
-            if (physicalCpus.find(core) == physicalCpus.end()) {
+        void addCpu(uint16_t cpu, uint16_t core)
+        {
+            if (physicalCpus.find(core) == physicalCpus.end())
+            {
                 physicalCpus[core] = CpuDescriptor(core, cpu);
-            } else {
+            }
+            else
+            {
                 physicalCpus[core].cpuId = std::min<uint16_t>(physicalCpus[core].cpuId, cpu);
             }
         }
 
         uint32_t getNodeId() const { return nodeId; }
 
-      private:
+    private:
         uint32_t nodeId;
         std::map<uint16_t, CpuDescriptor> physicalCpus;
     };
 
-  public:
+public:
     /**
      * @brief Creates a new HW manager with a mapping of the CPU/Mem topology
      */
@@ -136,7 +146,7 @@ class HardwareManager {
      */
     uint32_t getNumaNodeForCore(int coreId) const;
 
-  private:
+private:
     NesDefaultMemoryAllocatorPtr globalAllocator;
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     std::vector<NumaRegionMemoryAllocatorPtr> numaRegions;
@@ -148,6 +158,6 @@ class HardwareManager {
     uint32_t numPhysicalCpus = 0;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_

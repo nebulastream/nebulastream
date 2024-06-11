@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -47,13 +47,15 @@
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 #include <z3++.h>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-class AddQueryRequestTest : public Testing::BaseUnitTest {
-  public:
+class AddQueryRequestTest : public Testing::BaseUnitTest
+{
+public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::TopDown;
@@ -70,7 +72,8 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         // init topology node for physical source
         std::map<std::string, std::any> properties;
@@ -94,16 +97,17 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         z3Context = std::make_shared<z3::context>();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                         Statistic::DefaultStatisticCache::create(),
-                                                                         topology);
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+            Statistic::StatisticRegistry::create(),
+            Statistic::DefaultStatisticProbeGenerator::create(),
+            Statistic::DefaultStatisticCache::create(),
+            topology);
     }
 };
 
 //test adding a single query until the deployment step, which cannot be done in a unit test
-TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
-
+TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery)
+{
     // Prepare
     constexpr auto requestId = RequestId(1);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -113,21 +117,19 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 amendmentQueue,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         amendmentQueue,
+         statisticProbeHandler});
 
     //Create new entry in query catalog service
-    queryCatalog->createQueryCatalogEntry("query string",
-                                          queryPlan,
-                                          Optimizer::PlacementStrategy::TopDown,
-                                          QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry("query string", queryPlan, Optimizer::PlacementStrategy::TopDown, QueryState::REGISTERED);
 
     EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::REGISTERED);
 
@@ -136,10 +138,13 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     addQueryRequest->setId(requestId);
 
     // Execute add request until deployment phase
-    try {
+    try
+    {
         addQueryRequest->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException & e)
+    {
         EXPECT_EQ(e.getMode(), RpcClientMode::Register);
     }
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

@@ -16,18 +16,20 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MINAGGREGATIONDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 /**
  * @brief
  * The MinAggregationDescriptor aggregation calculates the minimum over the window.
  */
-class MinAggregationDescriptor : public WindowAggregationDescriptor {
-  public:
+class MinAggregationDescriptor : public WindowAggregationDescriptor
+{
+public:
     /**
    * Factory method to creates a MinAggregationDescriptor aggregation on a particular field.
    */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr & onField);
 
     static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
@@ -44,9 +46,9 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
 
     virtual ~MinAggregationDescriptor() = default;
 
-  private:
+private:
     explicit MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-}// namespace NES::Windowing
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MINAGGREGATIONDESCRIPTOR_HPP_
+} // namespace NES::Windowing
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MINAGGREGATIONDESCRIPTOR_HPP_

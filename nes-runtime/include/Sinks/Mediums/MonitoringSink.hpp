@@ -15,18 +15,20 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/MetricCollectorType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Monitoring {
+namespace Monitoring
+{
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
-}// namespace Monitoring
+} // namespace Monitoring
 
 class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
@@ -34,20 +36,22 @@ using MetricPtr = std::shared_ptr<Metric>;
 /**
  * @brief this class provides a monitoring sink to collecct metrics based on a given metric collector.
  */
-class MonitoringSink : public SinkMedium {
-  public:
+class MonitoringSink : public SinkMedium
+{
+public:
     /**
      * @brief Default getSliceIndexByTs for could not find a slice,
      * @Note the default output will be written to cout
      */
-    explicit MonitoringSink(SinkFormatPtr sinkFormat,
-                            Monitoring::MetricStorePtr metricStore,
-                            Monitoring::MetricCollectorType collectorType,
-                            Runtime::NodeEnginePtr nodeEngine,
-                            uint32_t numOfProducers,
-                            SharedQueryId sharedQueryId,
-                            DecomposedQueryPlanId decomposedQueryPlanId,
-                            uint64_t numberOfOrigins = 1);
+    explicit MonitoringSink(
+        SinkFormatPtr sinkFormat,
+        Monitoring::MetricStorePtr metricStore,
+        Monitoring::MetricCollectorType collectorType,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins = 1);
 
     /**
      * @brief destructor
@@ -72,7 +76,7 @@ class MonitoringSink : public SinkMedium {
      * @param tuple buffer to write
      * @return bool indicating success of the write
      */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the print sink
@@ -86,12 +90,12 @@ class MonitoringSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  private:
+private:
     Monitoring::MetricStorePtr metricStore;
     Monitoring::MetricCollectorType collectorType;
 };
 using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_

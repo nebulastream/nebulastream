@@ -15,19 +15,21 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_
 
+#include <unordered_map>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <Statistics/StatisticKey.hpp>
 #include <Statistics/StatisticValue.hpp>
 #include <folly/Synchronized.h>
-#include <unordered_map>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Default implementation of the statistic cache. It does not overwrite any statistic and just stores any statistic
  */
-class DefaultStatisticCache : public AbstractStatisticCache {
-  public:
+class DefaultStatisticCache : public AbstractStatisticCache
+{
+public:
     /**
      * @brief Method to create a new instance of the DefaultStatisticCache
      * @return StatisticCachePtr
@@ -40,7 +42,7 @@ class DefaultStatisticCache : public AbstractStatisticCache {
      * @param statisticValue
      * @return Success of the operation
      */
-    bool insertStatistic(const StatisticHash& statisticHash, const StatisticValue<>& statisticValue) override;
+    bool insertStatistic(const StatisticHash & statisticHash, const StatisticValue<> & statisticValue) override;
 
     /**
      * @brief Retrieves the statistic from the cache
@@ -49,9 +51,8 @@ class DefaultStatisticCache : public AbstractStatisticCache {
      * @param endTs
      * @return Value of StatisticValuePtr
      */
-    std::vector<StatisticValuePtr> getStatistic(const StatisticHash& statisticHash,
-                                                const Windowing::TimeMeasure& startTs,
-                                                const Windowing::TimeMeasure& endTs) override;
+    std::vector<StatisticValuePtr> getStatistic(
+        const StatisticHash & statisticHash, const Windowing::TimeMeasure & startTs, const Windowing::TimeMeasure & endTs) override;
 
     /**
      * @brief Deletes the statistics from the cache
@@ -60,12 +61,11 @@ class DefaultStatisticCache : public AbstractStatisticCache {
      * @param endTs
      * @return Success of the operation
      */
-    bool deleteStatistics(const StatisticHash& statisticHash,
-                          const Windowing::TimeMeasure& startTs,
-                          const Windowing::TimeMeasure& endTs) override;
+    bool deleteStatistics(
+        const StatisticHash & statisticHash, const Windowing::TimeMeasure & startTs, const Windowing::TimeMeasure & endTs) override;
 
-  private:
+private:
     folly::Synchronized<std::unordered_map<StatisticHash, std::vector<StatisticValuePtr>>> keyToStatistics;
 };
-}// namespace NES::Statistic
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_
+} // namespace NES::Statistic
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_

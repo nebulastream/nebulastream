@@ -18,14 +18,15 @@
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class CSVParser;
 using CSVParserPtr = std::shared_ptr<CSVParser>;
 
-class CSVParser : public Parser {
-
-  public:
+class CSVParser : public Parser
+{
+public:
     /**
    * @brief public constructor for CSV input data parser
    * @param numberOfSchemaFields number of schema fields
@@ -42,17 +43,18 @@ class CSVParser : public Parser {
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    bool writeInputTupleToTupleBuffer(std::string_view csvInput,
-                                      uint64_t tupleCount,
-                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                      const SchemaPtr& schema,
-                                      const Runtime::BufferManagerPtr& bufferManager) override;
+    bool writeInputTupleToTupleBuffer(
+        std::string_view csvInput,
+        uint64_t tupleCount,
+        Runtime::MemoryLayouts::TestTupleBuffer & tupleBuffer,
+        const SchemaPtr & schema,
+        const Runtime::BufferManagerPtr & bufferManager) override;
 
-  private:
+private:
     uint64_t numberOfSchemaFields;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
     std::string delimiter;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_

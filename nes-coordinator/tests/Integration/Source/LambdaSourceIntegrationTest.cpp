@@ -14,7 +14,6 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -27,18 +26,23 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
+#include <BaseIntegrationTest.hpp>
 
 using std::string;
-namespace NES {
-class LambdaSourceIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES
+{
+class LambdaSourceIntegrationTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("LambdaSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LambdaSourceIntegrationTest test class.");
     }
 };
 
-TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
+TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources)
+{
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -58,16 +62,19 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     wrkConf->workerHealthCheckWaitTime = 1;
     wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
-    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        struct Record {
+    auto func1 = [](NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+    {
+        struct Record
+        {
             uint64_t id;
             uint64_t value;
             uint64_t timestamp;
         };
 
-        auto* records = buffer.getBuffer<Record>();
+        auto * records = buffer.getBuffer<Record>();
         auto ts = time(nullptr);
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+        {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
             records[u].value = u % 10;
@@ -75,16 +82,19 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
         }
     };
 
-    auto func2 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        struct Record {
+    auto func2 = [](NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+    {
+        struct Record
+        {
             uint64_t id;
             uint64_t value;
             uint64_t timestamp;
         };
 
-        auto* records = buffer.getBuffer<Record>();
+        auto * records = buffer.getBuffer<Record>();
         auto ts = time(nullptr);
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+        {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
             records[u].value = u % 10;
@@ -92,10 +102,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
         }
     };
 
-    auto lambdaSourceType1 =
-        LambdaSourceType::create("input1", "test_stream1", std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
-    auto lambdaSourceType2 =
-        LambdaSourceType::create("input2", "test_stream2", std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType1 = LambdaSourceType::create("input1", "test_stream1", std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType2 = LambdaSourceType::create("input2", "test_stream2", std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
     wrkConf->physicalSourceTypes.add(lambdaSourceType1);
     wrkConf->physicalSourceTypes.add(lambdaSourceType2);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
@@ -110,11 +118,11 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
-    if (!ret) {
+    if (!ret)
+    {
         NES_ERROR("query was not stopped within 30 sec");
     }
 
@@ -128,7 +136,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     NES_DEBUG("E2EBase: Test finished");
 }
 
-TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
+TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName)
+{
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::createDefault();
     crdConf->rpcPort = *rpcCoordinatorPort;
     crdConf->restPort = *restPort;
@@ -144,16 +153,19 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        struct Record {
+    auto func1 = [](NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+    {
+        struct Record
+        {
             uint64_t id;
             uint64_t value;
             uint64_t timestamp;
         };
 
-        auto* records = buffer.getBuffer<Record>();
+        auto * records = buffer.getBuffer<Record>();
         auto ts = time(nullptr);
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+        {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
             records[u].value = u % 10;
@@ -161,16 +173,19 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
         }
     };
 
-    auto func2 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        struct Record {
+    auto func2 = [](NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+    {
+        struct Record
+        {
             uint64_t id;
             uint64_t value;
             uint64_t timestamp;
         };
 
-        auto* records = buffer.getBuffer<Record>();
+        auto * records = buffer.getBuffer<Record>();
         auto ts = time(nullptr);
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+        {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
             records[u].value = u % 10;
@@ -178,10 +193,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
         }
     };
 
-    auto lambdaSourceType1 =
-        LambdaSourceType::create("input1", "test_stream", std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
-    auto lambdaSourceType2 =
-        LambdaSourceType::create("input2", "test_stream", std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType1 = LambdaSourceType::create("input1", "test_stream", std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType2 = LambdaSourceType::create("input2", "test_stream", std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
     wrkConf->physicalSourceTypes.add(lambdaSourceType1);
     wrkConf->physicalSourceTypes.add(lambdaSourceType2);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
@@ -194,18 +207,18 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    auto queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
-    auto queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    auto queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
-    if (!ret) {
+    if (!ret)
+    {
         NES_ERROR("query 1 was not stopped within 30 sec");
     }
     bool ret2 = NES::TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog);
-    if (!ret2) {
+    if (!ret2)
+    {
         NES_ERROR("query 2 was not stopped within 30 sec");
     }
 
@@ -219,7 +232,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES_DEBUG("E2EBase: Test finished");
 }
 
-TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
+TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread)
+{
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -236,17 +250,21 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    for (int64_t i = 0; i < 2; i++) {
-        auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            struct Record {
+    for (int64_t i = 0; i < 2; i++)
+    {
+        auto func = [](NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)
+        {
+            struct Record
+            {
                 uint64_t id;
                 uint64_t value;
                 uint64_t timestamp;
             };
 
-            auto* records = buffer.getBuffer<Record>();
+            auto * records = buffer.getBuffer<Record>();
             auto ts = time(nullptr);
-            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+            {
                 records[u].id = u;
                 //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                 records[u].value = u % 10;
@@ -255,12 +273,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
             return;
         };
 
-        auto lambdaSourceType = LambdaSourceType::create("input",
-                                                         "test_stream" + std::to_string(i),
-                                                         std::move(func),
-                                                         30,
-                                                         0,
-                                                         GatheringMode::INTERVAL_MODE);
+        auto lambdaSourceType
+            = LambdaSourceType::create("input", "test_stream" + std::to_string(i), std::move(func), 30, 0, GatheringMode::INTERVAL_MODE);
         wrkConf->physicalSourceTypes.add(lambdaSourceType);
     }
 
@@ -273,11 +287,11 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
-    if (!ret) {
+    if (!ret)
+    {
         NES_ERROR("query was not stopped within 30 sec");
     }
 
@@ -287,4 +301,4 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NES_DEBUG("E2EBase: Test finished");
 }
 
-}// namespace NES
+} // namespace NES

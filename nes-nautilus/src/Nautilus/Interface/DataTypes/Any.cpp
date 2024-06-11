@@ -14,12 +14,19 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-Any::Any(const TypeIdentifier* identifier) : Typed(identifier){};
+Any::Any(const TypeIdentifier * identifier) : Typed(identifier){};
 
-Nautilus::IR::Types::StampPtr Any::getType() const { return Nautilus::IR::Types::StampFactory::createVoidStamp(); }
+Nautilus::IR::Types::StampPtr Any::getType() const
+{
+    return Nautilus::IR::Types::StampFactory::createVoidStamp();
+}
 
-std::string Any::toString() { return "Any"; }
+std::string Any::toString()
+{
+    return "Any";
+}
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

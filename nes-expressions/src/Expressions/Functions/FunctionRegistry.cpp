@@ -13,16 +13,19 @@
 */
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 
-namespace NES {
+namespace NES
+{
 
-DataTypePtr UnaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& inputStamps) const {
+DataTypePtr UnaryLogicalFunction::inferStamp(const std::vector<DataTypePtr> & inputStamps) const
+{
     NES_ASSERT(inputStamps.size() == 1, "Unary function should only receive one input stamp.");
     return inferUnary(inputStamps[0]);
 }
 
-DataTypePtr BinaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& inputStamps) const {
+DataTypePtr BinaryLogicalFunction::inferStamp(const std::vector<DataTypePtr> & inputStamps) const
+{
     NES_ASSERT(inputStamps.size() == 2, "Binary function should receive two input stamp.");
     return inferBinary(inputStamps[0], inputStamps[1]);
 }
 
-}// namespace NES
+} // namespace NES

@@ -15,22 +15,23 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief Exception indicating problem during operator placement removal phase
  */
-class QueryPlacementRemovalException : public Exceptions::RequestExecutionException {
+class QueryPlacementRemovalException : public Exceptions::RequestExecutionException
+{
+public:
+    explicit QueryPlacementRemovalException(SharedQueryId sharedQueryId, const std::string & message);
 
-  public:
-    explicit QueryPlacementRemovalException(SharedQueryId sharedQueryId, const std::string& message);
-
-    const char* what() const noexcept override;
+    const char * what() const noexcept override;
 };
-}// namespace NES::Exceptions
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_

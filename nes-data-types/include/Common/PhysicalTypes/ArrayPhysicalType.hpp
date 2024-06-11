@@ -15,17 +15,18 @@
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_ARRAYPHYSICALTYPE_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_ARRAYPHYSICALTYPE_HPP_
 
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <utility>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The array physical type, which represent ArrayType and FixedChar types in NES.
  */
-class ArrayPhysicalType final : public PhysicalType {
-
-  public:
+class ArrayPhysicalType final : public PhysicalType
+{
+public:
     /**
      * @brief Factory function to create a new ArrayType Physical Type.
      * @param type the logical data type.
@@ -33,7 +34,9 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param component the physical component type of this array.
      */
     inline ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr component) noexcept
-        : PhysicalType(std::move(type)), length(length), physicalComponentType(std::move(component)) {}
+        : PhysicalType(std::move(type)), length(length), physicalComponentType(std::move(component))
+    {
+    }
 
     ~ArrayPhysicalType() override = default;
 
@@ -44,7 +47,8 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param component the physical component type of this array.
      * @return PhysicalTypePtr
      */
-    static inline PhysicalTypePtr create(const DataTypePtr& type, uint64_t length, PhysicalTypePtr const& component) noexcept {
+    static inline PhysicalTypePtr create(const DataTypePtr & type, uint64_t length, PhysicalTypePtr const & component) noexcept
+    {
         return std::make_shared<ArrayPhysicalType>(type, length, component);
     }
 
@@ -68,7 +72,7 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
      */
-    std::string convertRawToString(void const* rawData) const noexcept override;
+    std::string convertRawToString(void const * rawData) const noexcept override;
 
     /**
      * @brief Converts the binary representation of this value to a string without filling
@@ -77,7 +81,7 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
     */
-    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
+    std::string convertRawToStringWithoutFill(void const * rawData) const noexcept override;
 
     /**
      * @brief Returns the string representation of this physical data type.
@@ -92,6 +96,6 @@ class ArrayPhysicalType final : public PhysicalType {
     PhysicalTypePtr const physicalComponentType;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_ARRAYPHYSICALTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_ARRAYPHYSICALTYPE_HPP_

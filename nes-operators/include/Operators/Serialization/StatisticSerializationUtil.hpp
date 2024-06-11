@@ -20,7 +20,8 @@
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <StatisticWindowDescriptorMessage.pb.h>
 
-namespace NES {
+namespace NES
+{
 
 class SendingPolicyMessage;
 class TriggerConditionMessage;
@@ -29,54 +30,54 @@ class StatisticWindowDescriptorMessage;
 /**
  * @brief Provides functionality to (de-)serialize statistic components, i.e., SendingPolicy or WindowStatisticDescriptor
  */
-class StatisticSerializationUtil {
-  public:
+class StatisticSerializationUtil
+{
+public:
     /**
      * @brief Serializes the sendingPolicy into the sendingPolicyMessage
      * @param sendingPolicy
      * @param sendingPolicyMessage
      */
-    static void serializeSendingPolicy(const Statistic::SendingPolicy& sendingPolicy, SendingPolicyMessage& sendingPolicyMessage);
+    static void serializeSendingPolicy(const Statistic::SendingPolicy & sendingPolicy, SendingPolicyMessage & sendingPolicyMessage);
 
     /**
      * @brief Serializes the triggerCondition into the triggerConditionMessage
      * @param triggerCondition
      * @param triggerConditionMessage
      */
-    static void serializeTriggerCondition(const Statistic::TriggerCondition& triggerCondition,
-                                          TriggerConditionMessage& triggerConditionMessage);
+    static void
+    serializeTriggerCondition(const Statistic::TriggerCondition & triggerCondition, TriggerConditionMessage & triggerConditionMessage);
 
     /**
      * @brief Serializes the descriptor into the descriptorMessage
      * @param descriptor
      * @param descriptorMessage
      */
-    static void serializeDescriptorDetails(const Statistic::WindowStatisticDescriptor& descriptor,
-                                           StatisticWindowDescriptorMessage& descriptorMessage);
+    static void serializeDescriptorDetails(
+        const Statistic::WindowStatisticDescriptor & descriptor, StatisticWindowDescriptorMessage & descriptorMessage);
 
     /**
      * @brief Creates a SendingPolicy from a sendingPolicyMessage by deserializing it
      * @param sendingPolicyMessage
      * @return SendingPolicyPtr
      */
-    static Statistic::SendingPolicyPtr deserializeSendingPolicy(const SendingPolicyMessage& sendingPolicyMessage);
+    static Statistic::SendingPolicyPtr deserializeSendingPolicy(const SendingPolicyMessage & sendingPolicyMessage);
 
     /**
      * @brief Creates a TriggerCondition from a triggerConditionMessage by deserializing it
      * @param triggerConditionMessage
      * @return TriggerConditionPtr
      */
-    static Statistic::TriggerConditionPtr deserializeTriggerCondition(const TriggerConditionMessage& triggerConditionMessage);
+    static Statistic::TriggerConditionPtr deserializeTriggerCondition(const TriggerConditionMessage & triggerConditionMessage);
 
     /**
      * @brief Creates a WindowStatisticDescriptor from a descriptorMessage by deserializing it
      * @param descriptorMessage
      * @return WindowStatisticDescriptorPtr
      */
-    static Statistic::WindowStatisticDescriptorPtr
-    deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage);
+    static Statistic::WindowStatisticDescriptorPtr deserializeDescriptor(const StatisticWindowDescriptorMessage & descriptorMessage);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_STATISTICSERIALIZATIONUTIL_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_STATISTICSERIALIZATIONUTIL_HPP_

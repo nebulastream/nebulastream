@@ -14,23 +14,26 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class TopologyLinkInformation;
 
-namespace Experimental::TopologyPrediction {
+namespace Experimental::TopologyPrediction
+{
 class TopologyDelta;
 /**
  * This class represents a list of changes (added or removed links) which are expected to happen to the topology within a
  * certain time frame. Predictions can be added or removed from a changelog in the form of TopologyDeltas.
  */
-class TopologyChangeLog {
-  public:
+class TopologyChangeLog
+{
+public:
     /**
      * @brief construct an empty changelog
      */
@@ -43,7 +46,7 @@ class TopologyChangeLog {
      * added changelog does not contain any added link which are already present as added or any removed links which are
      * already present as removed links
      */
-    void add(const TopologyChangeLog& newChangeLog);
+    void add(const TopologyChangeLog & newChangeLog);
 
     /**
      * @brief insert information about added and removed links from a topology delta to this changelog
@@ -51,13 +54,13 @@ class TopologyChangeLog {
      * delta does not contain any added links which are already present as added in the changelog or any removed links which are
      * already present as removed links
      */
-    void update(const TopologyDelta& newDelta);
+    void update(const TopologyDelta & newDelta);
 
     /**
      * @brief remove information about added and removed links from a topology delta from this changelog
      * @param newDelta the delta whose information is to be removed from this changelog
      */
-    void erase(const TopologyDelta& delta);
+    void erase(const TopologyDelta & delta);
 
     /**
      * @brief indicates if this changelog is empty
@@ -79,15 +82,15 @@ class TopologyChangeLog {
      */
     std::vector<WorkerId> getRemovedChildren(WorkerId nodeId) const;
 
-  private:
+private:
     /**
      * @brief removes the topology link information from a map which has the parent as a key and a vector of children as the
      * value type and removes the whole entry if the vector becomes empty after removing the last child
      * @param map the mop from which values are to be removed
      * @param linksToRemove the list of links to remove from the map
      */
-    static void removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
-                                   const std::vector<TopologyLinkInformation>& linksToRemove);
+    static void removeLinksFromMap(
+        std::unordered_map<WorkerId, std::vector<WorkerId>> & map, const std::vector<TopologyLinkInformation> & linksToRemove);
 
     /**
      * @brief Helper function that adds the elements in the vectors contained in newMap to the vectors found under the same key in additionTarget, but
@@ -99,13 +102,14 @@ class TopologyChangeLog {
      * @param toSubtract if an element is present here, it will not get added to additionTarget even if it is present in newMap
      * but any element present in newMap will be removed from toSubtract
      */
-    static void updateChangelog(const std::unordered_map<WorkerId, std::vector<WorkerId>>& newMap,
-                                std::unordered_map<WorkerId, std::vector<WorkerId>>& additionTarget,
-                                std::unordered_map<WorkerId, std::vector<WorkerId>>& toSubtract);
+    static void updateChangelog(
+        const std::unordered_map<WorkerId, std::vector<WorkerId>> & newMap,
+        std::unordered_map<WorkerId, std::vector<WorkerId>> & additionTarget,
+        std::unordered_map<WorkerId, std::vector<WorkerId>> & toSubtract);
 
     std::unordered_map<WorkerId, std::vector<WorkerId>> addedLinks;
     std::unordered_map<WorkerId, std::vector<WorkerId>> removedLinks;
 };
-}// namespace Experimental::TopologyPrediction
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
+} // namespace Experimental::TopologyPrediction
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_

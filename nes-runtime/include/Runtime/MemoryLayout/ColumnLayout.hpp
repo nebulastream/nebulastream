@@ -17,7 +17,8 @@
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
 class ColumnLayout;
 /**
@@ -30,8 +31,9 @@ class ColumnLayout;
  *
  * This may be beneficial for processing performance if only a subset fields of the tuple are accessed.
  */
-class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout> {
-  public:
+class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout>
+{
+public:
     /**
      * @brief Constructor to create a ColumnLayout according to a specific schema and a buffer size.
      * @param schema the underling schema of this memory layout.
@@ -62,12 +64,12 @@ class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<Co
      * Get the column offset vector
      * @return columnOffset
      */
-    const std::vector<uint64_t>& getColumnOffsets() const;
+    const std::vector<uint64_t> & getColumnOffsets() const;
 
-  private:
+private:
     std::vector<uint64_t> columnOffsets;
 };
 
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_

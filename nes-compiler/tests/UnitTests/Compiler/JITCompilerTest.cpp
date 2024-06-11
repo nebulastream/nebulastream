@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
@@ -23,8 +23,9 @@
 #include <Compiler/Util/File.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-namespace NES::Compiler {
+#include <BaseIntegrationTest.hpp>
+namespace NES::Compiler
+{
 
 static constexpr auto TEST_FILE_BODY = "/*\n"
                                        "    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)\n"
@@ -43,17 +44,20 @@ static constexpr auto TEST_FILE_BODY = "/*\n"
                                        "*/\n"
                                        "int mul(int x, int y) { return x * y; }";
 
-class JITCompilerTest : public Testing::BaseUnitTest {
-  public:
+class JITCompilerTest : public Testing::BaseUnitTest
+{
+public:
     uint64_t waitForCompilation = 10;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("JITCompilerTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup JITCompilerTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         std::cout << "Setup JITCompilerTest test case." << std::endl;
         auto cppCompiler = CPPCompiler::create();
@@ -68,7 +72,8 @@ class JITCompilerTest : public Testing::BaseUnitTest {
 /**
  * @brief This test compiles a test CPP File
  */
-TEST_F(JITCompilerTest, compileCppCode) {
+TEST_F(JITCompilerTest, compileCppCode)
+{
     auto sourceCode = std::make_unique<SourceCode>(Language::CPP, TEST_FILE_BODY);
     auto request = CompilationRequest::create(std::move(sourceCode), "test_1", false, false, true, true);
 
@@ -82,4 +87,4 @@ TEST_F(JITCompilerTest, compileCppCode) {
     NES_DEBUG("CompilationTime:{}", compilationResult.getCompilationTime());
 }
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

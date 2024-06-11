@@ -15,12 +15,13 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_
 
+#include <memory>
 #include <Measures/TimeMeasure.hpp>
 #include <Statistics/StatisticKey.hpp>
 #include <Statistics/StatisticValue.hpp>
-#include <memory>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class AbstractStatisticCache;
 using StatisticCachePtr = std::shared_ptr<AbstractStatisticCache>;
@@ -28,15 +29,16 @@ using StatisticCachePtr = std::shared_ptr<AbstractStatisticCache>;
 /**
  * @brief Abstract class that defines an interface for all statistic caches
  */
-class AbstractStatisticCache {
-  public:
+class AbstractStatisticCache
+{
+public:
     /**
      * @brief Inserts a statistic into the cache. If a statistic exists for the same timestamp then, it will NOT be overwritten and discarded
      * @param statisticHash
      * @param statisticValue
      * @return True, if the statistic was inserted successfully, false otherwise
      */
-    virtual bool insertStatistic(const StatisticHash& statisticHash, const StatisticValue<>& statisticValue) = 0;
+    virtual bool insertStatistic(const StatisticHash & statisticHash, const StatisticValue<> & statisticValue) = 0;
 
     /**
      * @brief Gets the statistic for the given hash and interval [startTs, endTs]
@@ -45,9 +47,8 @@ class AbstractStatisticCache {
      * @param endTs
      * @return Vector of StatisticValuePtr
      */
-    virtual std::vector<StatisticValuePtr> getStatistic(const StatisticHash& statisticHash,
-                                                        const Windowing::TimeMeasure& startTs,
-                                                        const Windowing::TimeMeasure& endTs) = 0;
+    virtual std::vector<StatisticValuePtr>
+    getStatistic(const StatisticHash & statisticHash, const Windowing::TimeMeasure & startTs, const Windowing::TimeMeasure & endTs) = 0;
 
     /**
      * @brief Deletes the statistics for the given hash and interval [startTs, endTs]
@@ -56,13 +57,13 @@ class AbstractStatisticCache {
      * @param endTs
      * @return True, if at least one statistic was deleted
      */
-    virtual bool deleteStatistics(const StatisticHash& statisticHash,
-                                  const Windowing::TimeMeasure& startTs,
-                                  const Windowing::TimeMeasure& endTs) = 0;
+    virtual bool
+    deleteStatistics(const StatisticHash & statisticHash, const Windowing::TimeMeasure & startTs, const Windowing::TimeMeasure & endTs)
+        = 0;
 
     virtual ~AbstractStatisticCache();
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_

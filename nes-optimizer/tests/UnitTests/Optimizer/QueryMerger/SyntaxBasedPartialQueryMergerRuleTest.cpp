@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -27,23 +28,24 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
 
 using namespace NES;
 
-class SyntaxBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class SyntaxBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SyntaxBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
@@ -52,7 +54,8 @@ class SyntaxBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest {
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueries)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -98,8 +101,10 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1Children : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2Children : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1Children, sink2Children);
         }
     }
@@ -108,7 +113,8 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with multiple same source
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -159,10 +165,13 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipl
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_EQ(updatedRootOperators1.size(), 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    for (const auto & sink1GQNChild : updatedRootOperators1[0]->getChildren())
+    {
         bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
+        for (const auto & sink2GQNChild : updatedRootOperators1[1]->getChildren())
+        {
+            if (sink1GQNChild->equal(sink2GQNChild))
+            {
                 found = true;
             }
         }
@@ -173,7 +182,8 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipl
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -210,8 +220,10 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSou
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -220,26 +232,21 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSou
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1
+        = Query::from("car").unionWith(subQuery1).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2
+        = Query::from("car").unionWith(subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -264,8 +271,10 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperato
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1Children : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2Children : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1Children, sink2Children);
         }
     }
@@ -274,26 +283,21 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperato
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
-    Query query1 = Query::from("truck")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1
+        = Query::from("truck").unionWith(subQuery1).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2
+        = Query::from("car").unionWith(subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -318,8 +322,10 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperato
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
+    for (const auto & sink1Children : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2Children : updatedRootOperators1[1]->getChildren())
+        {
             EXPECT_EQ(sink1Children, sink2Children);
         }
     }
@@ -328,26 +334,21 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperato
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
-    Query query1 = Query::from("truck")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1
+        = Query::from("truck").unionWith(subQuery1).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2
+        = Query::from("car").unionWith(subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -375,8 +376,10 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperato
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+    for (const auto & sink1ChildOperator : updatedRootOperators1[0]->getChildren())
+    {
+        for (const auto & sink2ChildOperator : updatedRootOperators2[0]->getChildren())
+        {
             EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
@@ -385,8 +388,8 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperato
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
-
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFilters)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -426,7 +429,8 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFil
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -463,8 +467,8 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFil
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
-
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -505,8 +509,8 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMap
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
-
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue)
+{
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);

@@ -24,17 +24,20 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-HashSignatureBasedCompleteQueryMergerRulePtr HashSignatureBasedCompleteQueryMergerRule::create() {
+HashSignatureBasedCompleteQueryMergerRulePtr HashSignatureBasedCompleteQueryMergerRule::create()
+{
     return std::make_shared<HashSignatureBasedCompleteQueryMergerRule>();
 }
 
-bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO(
-        "HashSignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan)
+{
+    NES_INFO("HashSignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
-    if (queryPlansToAdd.empty()) {
+    if (queryPlansToAdd.empty())
+    {
         NES_WARNING("HashSignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
@@ -42,12 +45,13 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
 
     NES_DEBUG("HashSignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all query plans to identify the potential sharing opportunities
-    for (auto& targetQueryPlan : queryPlansToAdd) {
+    for (auto & targetQueryPlan : queryPlansToAdd)
+    {
         bool merged = false;
-        auto hostSharedQueryPlans =
-            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
-                                                                                     targetQueryPlan->getPlacementStrategy());
-        for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
+        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(
+            targetQueryPlan->getSourceConsumed(), targetQueryPlan->getPlacementStrategy());
+        for (auto & hostSharedQueryPlan : hostSharedQueryPlans)
+        {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             auto hostSignature = hostSharedQueryPlan->getHashBasedSignature();
 
@@ -60,31 +64,35 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
             auto targetSignatureHashValue = targetSignature.begin()->first;
             auto targetSignatureStringValue = *targetSignature.begin()->second.begin();
 
-            if (hostSignature.find(targetSignatureHashValue) != hostSignature.end()) {
+            if (hostSignature.find(targetSignatureHashValue) != hostSignature.end())
+            {
                 auto hostSignatureStringValues = hostSignature[targetSignatureHashValue];
-                auto match = std::find_if(hostSignatureStringValues.begin(),
-                                          hostSignatureStringValues.end(),
-                                          [&](const std::string& hostSignatureStringValue) {
-                                              return hostSignatureStringValue == targetSignatureStringValue;
-                                          });
-                if (match != hostSignatureStringValues.end()) {
+                auto match = std::find_if(
+                    hostSignatureStringValues.begin(),
+                    hostSignatureStringValues.end(),
+                    [&](const std::string & hostSignatureStringValue) { return hostSignatureStringValue == targetSignatureStringValue; });
+                if (match != hostSignatureStringValues.end())
+                {
                     targetToHostSinkOperatorMap[targetSinkOperators[0]] = hostSharedQueryPlan->getSinkOperators()[0];
                     foundMatch = true;
                 }
             }
 
-            if (foundMatch) {
+            if (foundMatch)
+            {
                 NES_TRACE("HashSignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
                 //Compute matched operator pairs
                 std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
                 matchedOperatorPairs.reserve(targetToHostSinkOperatorMap.size());
 
                 //Iterate over all matched pairs of sink operators and merge the query plan
-                for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
+                for (auto & [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap)
+                {
                     //add to the matched pair
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperator>(),
-                                                                                  targetSinkOperator->as<LogicalOperator>(),
-                                                                                  ContainmentRelationship::EQUALITY));
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(
+                        hostSinkOperator->as<LogicalOperator>(),
+                        targetSinkOperator->as<LogicalOperator>(),
+                        ContainmentRelationship::EQUALITY));
                 }
 
                 //add matched operators to the host shared query plan
@@ -98,7 +106,8 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
             }
         }
 
-        if (!merged) {
+        if (!merged)
+        {
             NES_DEBUG("HashSignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
@@ -108,4 +117,4 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

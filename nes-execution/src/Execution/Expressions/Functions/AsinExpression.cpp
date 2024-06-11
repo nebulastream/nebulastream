@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AsinExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-AsinExpression::AsinExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& radians) : radians(radians) {}
+AsinExpression::AsinExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr & radians) : radians(radians)
+{
+}
 
 /**
 * @brief This method calculates the asin of X.
@@ -28,20 +31,28 @@ AsinExpression::AsinExpression(const NES::Runtime::Execution::Expressions::Expre
 * @param x double
 * @return double
 */
-double calculateAsin(double x) { return std::asin(x); }
+double calculateAsin(double x)
+{
+    return std::asin(x);
+}
 
-Value<> AsinExpression::execute(NES::Nautilus::Record& record) const {
-
+Value<> AsinExpression::execute(NES::Nautilus::Record & record) const
+{
     Value subValue = radians->execute(record);
-    if (subValue->isType<Float>()) {
+    if (subValue->isType<Float>())
+    {
         return FunctionCall<>("calculateAsin", calculateAsin, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
+    }
+    else if (subValue->isType<Double>())
+    {
         return FunctionCall<>("calculateAsin", calculateAsin, subValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AsinExpression>> asinFunction("asin");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

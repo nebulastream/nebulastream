@@ -16,13 +16,15 @@
 #define NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_SYSTEMRESOURCESREADERFACTORY_HPP_
 #include <memory>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 class AbstractSystemResourcesReader;
 using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
 
-class SystemResourcesReaderFactory {
-  public:
+class SystemResourcesReaderFactory
+{
+public:
     /**
      * @brief Creates the appropriate SystemResourcesReader for the OS
      * @return the SystemResourcesReader
@@ -30,6 +32,6 @@ class SystemResourcesReaderFactory {
     static AbstractSystemResourcesReaderPtr getSystemResourcesReader();
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_SYSTEMRESOURCESREADERFACTORY_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_SYSTEMRESOURCESREADERFACTORY_HPP_

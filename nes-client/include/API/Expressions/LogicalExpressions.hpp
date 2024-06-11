@@ -18,7 +18,8 @@
 #include <memory>
 #include <type_traits>
 
-namespace NES {
+namespace NES
+{
 
 class ExpressionNode;
 class ExpressionItem;
@@ -43,17 +44,23 @@ ExpressionNodePtr operator!(ExpressionItem leftExp);
  * either a constant or an instance of the type ExpressionItem.
  */
 /// Utility which converts a constant or an expression item to an ExpressionNodePtr.
-template<typename T,
-         typename = std::enable_if_t<std::disjunction_v<std::is_same<std::decay_t<T>, ExpressionNodePtr>,
-                                                        std::is_same<std::decay_t<T>, ExpressionItem>,
-                                                        std::is_constructible<ExpressionItem, std::decay_t<T>>>>>
-inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr {
+template <
+    typename T,
+    typename = std::enable_if_t<std::disjunction_v<
+        std::is_same<std::decay_t<T>, ExpressionNodePtr>,
+        std::is_same<std::decay_t<T>, ExpressionItem>,
+        std::is_constructible<ExpressionItem, std::decay_t<T>>>>>
+inline auto toExpressionNodePtr(T && t) -> ExpressionNodePtr
+{
     using Arg = std::decay_t<T>;
-    if constexpr (std::is_same_v<Arg, ExpressionNodePtr>) {
+    if constexpr (std::is_same_v<Arg, ExpressionNodePtr>)
+    {
         // This is actually correct and necessary in C++17 to enable moving in the applicable cases (xval, prval).
         // In C++2a this shouldn't be necessary anymore due to P1825.
         return std::forward<T>(t);
-    } else if constexpr (std::is_same_v<Arg, ExpressionItem>) {
+    }
+    else if constexpr (std::is_same_v<Arg, ExpressionItem>)
+    {
         // Guaranteed copy elision
         return t.getExpressionNode();
     }
@@ -70,7 +77,7 @@ inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr {
  *        c) any candidate is either an expression node pointer or an expression item. Otherwise another operator
  *           might be more suitable (e.g. direct integer conversion).
  */
-template<typename... T>
+template <typename... T>
 static constexpr bool expression_generator_v = std::conjunction_v<
     std::negation<std::conjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>...>>,
     std::disjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>..., std::is_same<ExpressionItem, std::decay_t<T>>...>,
@@ -93,46 +100,54 @@ static constexpr bool expression_generator_v = std::conjunction_v<
  *
  * @return ExpressionNodePtr which reflects the operator.
  */
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator&&(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator&&(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) && toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator||(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator||(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) || toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator==(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator==(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) == toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator!=(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator!=(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) != toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator<=(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator<=(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) <= toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator>=(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator>=(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) >= toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator<(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator<(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) < toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-template<typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
-inline auto operator>(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
+template <typename LHS, typename RHS, typename = std::enable_if_t<expression_generator_v<LHS, RHS>>>
+inline auto operator>(LHS && lhs, RHS && rhs) -> ExpressionNodePtr
+{
     return toExpressionNodePtr(std::forward<LHS>(lhs)) > toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_
+#endif // NES_CLIENT_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_

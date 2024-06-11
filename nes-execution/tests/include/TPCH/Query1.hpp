@@ -14,8 +14,6 @@
 #ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY1_HPP_
 #define NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY1_HPP_
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -52,15 +50,20 @@
 #include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 #include <Util/TestTupleBuffer.hpp>
-namespace NES::Runtime::Execution {
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+namespace NES::Runtime::Execution
+{
 using namespace Expressions;
 using namespace Operators;
-class TPCH_Query1 {
-  public:
-    static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                                        Runtime::BufferManagerPtr) {
+class TPCH_Query1
+{
+public:
+    static PipelinePlan
+    getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> & tables, Runtime::BufferManagerPtr)
+    {
         PipelinePlan plan;
-        auto& lineitems = tables[TPCHTable::LineItem];
+        auto & lineitems = tables[TPCHTable::LineItem];
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
         PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
@@ -109,13 +112,12 @@ class TPCH_Query1 {
 
         //  sum(l_quantity) as sum_qty,
         auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
-        auto sumAggFunction1 =
-            std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, l_quantityField, "sum_qty");
+        auto sumAggFunction1 = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, l_quantityField, "sum_qty");
 
         // sum(l_extendedprice) as sum_base_price,
         auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
-        auto sumAggFunction2 =
-            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, l_extendedpriceField, "sum_base_price");
+        auto sumAggFunction2
+            = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, l_extendedpriceField, "sum_base_price");
 
         // disc_price = l_extendedprice * (1 - l_discount)
         auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
@@ -128,37 +130,26 @@ class TPCH_Query1 {
 
         //  sum(disc_price)
         auto disc_price = std::make_shared<ReadFieldExpression>("disc_price");
-        auto sumAggFunction3 =
-            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, disc_price, "sum_disc_price");
+        auto sumAggFunction3 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, disc_price, "sum_disc_price");
 
         //  sum(disc_price * (one + l_tax[i]))
         auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
         auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
         auto mulExpression2 = std::make_shared<AddExpression>(disc_price, addExpression);
-        auto sumAggFunction4 =
-            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulExpression2, "sum_charge");
+        auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulExpression2, "sum_charge");
 
         //   count(*)
-        auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(uintegerType,
-                                                                                         uintegerType,
-                                                                                         Expressions::ExpressionPtr(),
-                                                                                         "count_order");
+        auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(
+            uintegerType, uintegerType, Expressions::ExpressionPtr(), "count_order");
 
         std::vector<Expressions::ExpressionPtr> keyFields = {l_returnflagField, l_linestatusFiled};
-        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumAggFunction1,
-                                                                                               sumAggFunction2,
-                                                                                               sumAggFunction3,
-                                                                                               sumAggFunction4,
-                                                                                               countAggFunction5};
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
+            = {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, countAggFunction5};
 
         PhysicalTypePtr smallType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
         std::vector<PhysicalTypePtr> types = {smallType, smallType};
-        auto aggregation =
-            std::make_shared<Operators::BatchKeyedAggregation>(0 /*handler index*/,
-                                                               keyFields,
-                                                               types,
-                                                               aggregationFunctions,
-                                                               std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        auto aggregation = std::make_shared<Operators::BatchKeyedAggregation>(
+            0 /*handler index*/, keyFields, types, aggregationFunctions, std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
         map->setChild(aggregation);
 
@@ -172,5 +163,5 @@ class TPCH_Query1 {
     }
 };
 
-}// namespace NES::Runtime::Execution
-#endif// NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY1_HPP_
+} // namespace NES::Runtime::Execution
+#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY1_HPP_

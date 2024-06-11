@@ -14,4 +14,6 @@
 
 #include <Measures/WindowMeasure.hpp>
 
-namespace NES::Windowing {}// namespace NES::Windowing
+namespace NES::Windowing
+{
+} // namespace NES::Windowing

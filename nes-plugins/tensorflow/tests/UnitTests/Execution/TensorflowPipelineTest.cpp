@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -30,26 +29,32 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
-class TensorflowPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
-    ExecutablePipelineProvider* provider;
+namespace NES::Runtime::Execution
+{
+class TensorflowPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
+    ExecutablePipelineProvider * provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TensorflowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TensorflowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup TensorflowPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -64,8 +69,8 @@ class TensorflowPipelineTest : public Testing::BaseUnitTest, public AbstractPipe
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
-
+TEST_P(TensorflowPipelineTest, thresholdWindowWithSum)
+{
     //Input and output fields
     std::string f1 = "f1";
     std::string f2 = "f2";
@@ -120,20 +125,20 @@ TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    testBuffer[0][f1].write((bool) false);
-    testBuffer[0][f2].write((bool) true);
-    testBuffer[0][f3].write((bool) false);
-    testBuffer[0][f4].write((bool) true);
-    testBuffer[1][f1].write((bool) false);
-    testBuffer[1][f2].write((bool) true);
-    testBuffer[1][f3].write((bool) false);
-    testBuffer[1][f4].write((bool) true);
+    testBuffer[0][f1].write((bool)false);
+    testBuffer[0][f2].write((bool)true);
+    testBuffer[0][f3].write((bool)false);
+    testBuffer[0][f4].write((bool)true);
+    testBuffer[1][f1].write((bool)false);
+    testBuffer[1][f2].write((bool)true);
+    testBuffer[1][f3].write((bool)false);
+    testBuffer[1][f4].write((bool)true);
     testBuffer.setNumberOfTuples(2);
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto handler = std::make_shared<Operators::TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY)
-                                                                                   / "iris_95acc.tflite");
+    auto handler
+        = std::make_shared<Operators::TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -152,10 +157,9 @@ TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
 }
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        TensorflowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
-                        [](const testing::TestParamInfo<TensorflowPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
-}// namespace NES::Runtime::Execution
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    TensorflowPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+    [](const testing::TestParamInfo<TensorflowPipelineTest::ParamType> & info) { return info.param; });
+} // namespace NES::Runtime::Execution

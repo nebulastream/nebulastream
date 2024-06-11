@@ -17,7 +17,8 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class HJBuildSlicing;
 using HJBuildSlicingPtr = std::shared_ptr<HJBuildSlicing>;
@@ -26,8 +27,9 @@ using HJBuildSlicingPtr = std::shared_ptr<HJBuildSlicing>;
  * @brief This class inserts record into the correct slice. It checks the timestamp and then retrieves the correct slice from the operator handler.
  * The insertion is done via a Nautilus::FunctionCall that proxies to the hashTable->insert() and returns a pointer to allocated space for the tuple.
  */
-class HJBuildSlicing : public StreamJoinBuild {
-  public:
+class HJBuildSlicing : public StreamJoinBuild
+{
+public:
     /**
      * @brief Constructor for a HJBuildSlicing join phase
      * @param operatorHandlerIndex
@@ -39,19 +41,20 @@ class HJBuildSlicing : public StreamJoinBuild {
      * @param joinStrategy
      * @param windowingStrategy
      */
-    HJBuildSlicing(const uint64_t operatorHandlerIndex,
-                   const SchemaPtr& schema,
-                   const std::string& joinFieldName,
-                   const QueryCompilation::JoinBuildSideType joinBuildSide,
-                   const uint64_t entrySize,
-                   TimeFunctionPtr timeFunction,
-                   QueryCompilation::StreamJoinStrategy joinStrategy,
-                   QueryCompilation::WindowingStrategy windowingStrategy);
+    HJBuildSlicing(
+        const uint64_t operatorHandlerIndex,
+        const SchemaPtr & schema,
+        const std::string & joinFieldName,
+        const QueryCompilation::JoinBuildSideType joinBuildSide,
+        const uint64_t entrySize,
+        TimeFunctionPtr timeFunction,
+        QueryCompilation::StreamJoinStrategy joinStrategy,
+        QueryCompilation::WindowingStrategy windowingStrategy);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
+    void open(ExecutionContext & executionCtx, RecordBuffer & recordBuffer) const override;
+    void execute(ExecutionContext & ctx, Record & record) const override;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJBUILDSLICING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJBUILDSLICING_HPP_

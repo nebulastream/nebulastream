@@ -16,13 +16,15 @@
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_
 #include <Identifiers/Identifiers.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Represents an infrastructure characteristic that results in collecting statistics for a given node/worker
  */
-class InfrastructureStatistic : public Characteristic {
-  public:
+class InfrastructureStatistic : public Characteristic
+{
+public:
     /**
      * @brief Creates a InfrastructureStatistic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
@@ -36,7 +38,7 @@ class InfrastructureStatistic : public Characteristic {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const Characteristic& rhs) const override;
+    bool operator==(const Characteristic & rhs) const override;
 
     /**
      * @brief Implementing a hash method
@@ -56,7 +58,7 @@ class InfrastructureStatistic : public Characteristic {
      */
     WorkerId getNodeId() const;
 
-  private:
+private:
     /**
      * @brief Creates an InfrastructureCharacteristic
      * @param type
@@ -66,6 +68,6 @@ class InfrastructureStatistic : public Characteristic {
 
     WorkerId nodeId;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_

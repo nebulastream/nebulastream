@@ -16,14 +16,16 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 /**
  * @brief Implementation of the MurMur3 hash function for nautilus types.
  * This implementations is based on the hash functions of https://github.com/martinus/robin-hood-hashing/ and duckdb.
  */
-class MurMur3HashFunction : public HashFunction {
-  public:
+class MurMur3HashFunction : public HashFunction
+{
+public:
     // Seed as an initialisation.
     const uint64_t SEED = 902850234;
 
@@ -39,14 +41,14 @@ class MurMur3HashFunction : public HashFunction {
      * @param value
      * @return HashValue
      */
-    HashValue calculate(HashValue& hash, Value<>& value) override;
+    HashValue calculate(HashValue & hash, Value<> & value) override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
      * @param value
      * @return HashValue
      */
-    HashValue calculate(Value<>& value);
+    HashValue calculate(Value<> & value);
 
     /**
      * @brief Do not use this method for MurMur3Hash, we require this only until issue #3648 has been fixed TODO
@@ -55,8 +57,8 @@ class MurMur3HashFunction : public HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
+    HashValue calculateWithState(HashValue & hash, Value<> & value, Value<MemRef> & state) override;
 };
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_

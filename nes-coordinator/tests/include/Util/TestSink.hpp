@@ -28,13 +28,15 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief A sink for testing that can be part of a query plan and enables executing queries and producing results.
  */
-class TestSink : public SinkMedium {
-  public:
+class TestSink : public SinkMedium
+{
+public:
     /**
      * @brief Constructor for a TestSink
      * @param expectedTuples
@@ -42,10 +44,7 @@ class TestSink : public SinkMedium {
      * @param nodeEngine
      * @param numOfProducers
      */
-    TestSink(uint64_t expectedTuples,
-             const SchemaPtr& schema,
-             const Runtime::NodeEnginePtr& nodeEngine,
-             uint32_t numOfProducers = 1);
+    TestSink(uint64_t expectedTuples, const SchemaPtr & schema, const Runtime::NodeEnginePtr & nodeEngine, uint32_t numOfProducers = 1);
 
     /**
      * @brief Factory method for a TestSink
@@ -56,14 +55,14 @@ class TestSink : public SinkMedium {
      * @return
      */
     static std::shared_ptr<TestSink>
-    create(uint64_t expectedTuples, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1);
+    create(uint64_t expectedTuples, const SchemaPtr & schema, const Runtime::NodeEnginePtr & engine, uint32_t numOfProducers = 1);
 
     /**
      * @brief Writes the input Buffer to the resultBuffer
      * @param inputBuffer
      * @return Success of write
      */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override;
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContext &) override;
 
     /**
      * @brief Returns the TupleBuffer at the index
@@ -144,9 +143,10 @@ class TestSink : public SinkMedium {
  *
  * @tparam Type: Used to determine the record layout (field types) of the TupleBuffer.
  */
-template<class Type>
-class CollectTestSink : public SinkMedium {
-  public:
+template <class Type>
+class CollectTestSink : public SinkMedium
+{
+public:
     /**
      * @brief Construct a new Collect Test Sink object.
      * 
@@ -154,12 +154,14 @@ class CollectTestSink : public SinkMedium {
      * @param nodeEngine: Also used to create a SinkMedium. Is used to manage queries.
      * @param numOfProducers: Also used to create a SinkMedium.
      */
-    CollectTestSink(const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine, uint32_t numOfProducers = 1)
-        : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)),
-                     nodeEngine,
-                     numOfProducers,
-                     INVALID_SHARED_QUERY_ID,
-                     INVALID_DECOMPOSED_QUERY_PLAN_ID) {
+    CollectTestSink(const SchemaPtr & schema, const Runtime::NodeEnginePtr & nodeEngine, uint32_t numOfProducers = 1)
+        : SinkMedium(
+            std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)),
+            nodeEngine,
+            numOfProducers,
+            INVALID_SHARED_QUERY_ID,
+            INVALID_DECOMPOSED_QUERY_PLAN_ID)
+    {
         auto bufferManager = nodeEngine->getBufferManager(0);
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only support for row layouts");
     };
@@ -168,15 +170,18 @@ class CollectTestSink : public SinkMedium {
      * @brief Create factory function that calls the constructor of CollectTestSink and returns a shared pointer.
      */
     static std::shared_ptr<CollectTestSink<Type>>
-    create(const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1) {
+    create(const SchemaPtr & schema, const Runtime::NodeEnginePtr & engine, uint32_t numOfProducers = 1)
+    {
         return std::make_shared<CollectTestSink<Type>>(schema, engine, numOfProducers);
     }
 
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContext &) override
+    {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink: emit buffer with {} tuples", inputBuffer.getNumberOfTuples());
         auto typedResult = inputBuffer.getBuffer<Type>();
-        for (size_t i = 0; i < inputBuffer.getNumberOfTuples(); i++) {
+        for (size_t i = 0; i < inputBuffer.getNumberOfTuples(); i++)
+        {
             results.emplace_back(typedResult[i]);
         }
         NES_DEBUG("CollectTestSink saw now {} tuples!", results.size())
@@ -189,7 +194,7 @@ class CollectTestSink : public SinkMedium {
      * 
      * @return std::vector<Type>&: vector containing the results.
      */
-    std::vector<Type>& getResult() { return results; }
+    std::vector<Type> & getResult() { return results; }
 
     void setup() override { running = true; };
 
@@ -210,24 +215,31 @@ class CollectTestSink : public SinkMedium {
      * @param numberOfRecords: The number of records to produce until we stop waiting.
      * @param timeoutInMilliseconds: Amount of time that needs to pass until we stop waiting.
      */
-    void waitTillCompletedOrTimeout(size_t numberOfRecords, uint64_t timeoutInMilliseconds) {
+    void waitTillCompletedOrTimeout(size_t numberOfRecords, uint64_t timeoutInMilliseconds)
+    {
         std::unique_lock lock(m);
 
         // Create lambda function that only returns true , if a specific number of records have been processed.
-        auto waitForExpectedNumberOfRecords = [&] {
+        auto waitForExpectedNumberOfRecords = [&]
+        {
             bool isFinished = false;
-            if (!running) {
+            if (!running)
+            {
                 isFinished = true;
             }
-            if (this->results.size() < numberOfRecords) {
+            if (this->results.size() < numberOfRecords)
+            {
                 NES_DEBUG("Already saw {} records and expects a total of {}.", this->results.size(), numberOfRecords);
-            } else if (this->results.size() == numberOfRecords) {
+            }
+            else if (this->results.size() == numberOfRecords)
+            {
                 NES_DEBUG("Saw exactly as many records ({}) as expected ({}).", this->results.size(), numberOfRecords);
                 isFinished = true;
-            } else if (this->results.size() > numberOfRecords) {
-                NES_ERROR("Number of result tuples {} and expected number of tuples {} do not match.",
-                          this->results.size(),
-                          numberOfRecords);
+            }
+            else if (this->results.size() > numberOfRecords)
+            {
+                NES_ERROR(
+                    "Number of result tuples {} and expected number of tuples {} do not match.", this->results.size(), numberOfRecords);
                 EXPECT_TRUE(false);
                 isFinished = true;
             }
@@ -235,16 +247,20 @@ class CollectTestSink : public SinkMedium {
         };
 
         // If the timeout is valid, use wait_for, else simply wait for the expected number of records.
-        if (timeoutInMilliseconds > 0) {
+        if (timeoutInMilliseconds > 0)
+        {
             cv.wait_for(lock, std::chrono::milliseconds(timeoutInMilliseconds), waitForExpectedNumberOfRecords);
-        } else {
+        }
+        else
+        {
             NES_DEBUG("Waiting for condition");
             cv.wait(lock, waitForExpectedNumberOfRecords);
         }
     }
 
-  public:
-    void shutdown() override {
+public:
+    void shutdown() override
+    {
         // just in case someone is waiting. Check if they should be notified.
         running = false;
         cv.notify_all();
@@ -256,6 +272,6 @@ class CollectTestSink : public SinkMedium {
     std::atomic<bool> running;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_

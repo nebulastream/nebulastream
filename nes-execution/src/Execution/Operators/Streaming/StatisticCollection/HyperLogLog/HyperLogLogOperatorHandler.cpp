@@ -15,29 +15,35 @@
 #include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-Statistic::StatisticPtr HyperLogLogOperatorHandler::createInitStatistic(Windowing::TimeMeasure sliceStart,
-                                                                        Windowing::TimeMeasure sliceEnd) {
+Statistic::StatisticPtr HyperLogLogOperatorHandler::createInitStatistic(Windowing::TimeMeasure sliceStart, Windowing::TimeMeasure sliceEnd)
+{
     return Statistic::HyperLogLogStatistic::createInit(sliceStart, sliceEnd, width);
 }
 
-HyperLogLogOperatorHandlerPtr HyperLogLogOperatorHandler::create(const uint64_t windowSize,
-                                                                 const uint64_t windowSlide,
-                                                                 Statistic::SendingPolicyPtr sendingPolicy,
-                                                                 Statistic::StatisticFormatPtr statisticFormat,
-                                                                 const uint64_t width,
-                                                                 const std::vector<OriginId>& inputOrigins) {
+HyperLogLogOperatorHandlerPtr HyperLogLogOperatorHandler::create(
+    const uint64_t windowSize,
+    const uint64_t windowSlide,
+    Statistic::SendingPolicyPtr sendingPolicy,
+    Statistic::StatisticFormatPtr statisticFormat,
+    const uint64_t width,
+    const std::vector<OriginId> & inputOrigins)
+{
     return std::make_shared<HyperLogLogOperatorHandler>(
         HyperLogLogOperatorHandler(windowSize, windowSlide, sendingPolicy, statisticFormat, inputOrigins, width));
 }
 
-HyperLogLogOperatorHandler::HyperLogLogOperatorHandler(const uint64_t windowSize,
-                                                       const uint64_t windowSlide,
-                                                       const Statistic::SendingPolicyPtr& sendingPolicy,
-                                                       const Statistic::StatisticFormatPtr& statisticFormat,
-                                                       const std::vector<OriginId>& inputOrigins,
-                                                       const uint64_t width)
-    : AbstractSynopsesOperatorHandler(windowSize, windowSlide, sendingPolicy, statisticFormat, inputOrigins), width(width) {}
+HyperLogLogOperatorHandler::HyperLogLogOperatorHandler(
+    const uint64_t windowSize,
+    const uint64_t windowSlide,
+    const Statistic::SendingPolicyPtr & sendingPolicy,
+    const Statistic::StatisticFormatPtr & statisticFormat,
+    const std::vector<OriginId> & inputOrigins,
+    const uint64_t width)
+    : AbstractSynopsesOperatorHandler(windowSize, windowSlide, sendingPolicy, statisticFormat, inputOrigins), width(width)
+{
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

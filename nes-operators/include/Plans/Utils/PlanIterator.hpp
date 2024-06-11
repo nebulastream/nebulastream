@@ -18,7 +18,8 @@
 #include <iterator>
 #include <stack>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -47,27 +48,29 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
  * #5 - Source 1
  * #6 - Source 2
  */
-class PlanIterator {
-  public:
+class PlanIterator
+{
+public:
     explicit PlanIterator(QueryPlanPtr queryPlan);
 
     explicit PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
+    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr *, NodePtr &>
+    {
         friend class PlanIterator;
 
-      public:
+    public:
         /**
          * @brief Moves the iterator to the next node.
          * If we reach the end of the iterator we will ignore this operation.
          * @return iterator
          */
-        iterator& operator++();
+        iterator & operator++();
 
         /**
          * @brief Checks if the iterators are not at the same position
          */
-        bool operator!=(const iterator& other) const;
+        bool operator!=(const iterator & other) const;
 
         /**
          * @brief Gets the node at the current iterator position.
@@ -75,8 +78,8 @@ class PlanIterator {
          */
         NodePtr operator*();
 
-      private:
-        explicit iterator(const std::vector<OperatorPtr>& rootOperators);
+    private:
+        explicit iterator(const std::vector<OperatorPtr> & rootOperators);
         explicit iterator();
         std::stack<NodePtr> workStack;
     };
@@ -99,10 +102,10 @@ class PlanIterator {
      */
     std::vector<NodePtr> snapshot();
 
-  private:
+private:
     std::vector<OperatorPtr> rootOperators;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_

@@ -19,7 +19,8 @@
 #include <memory>
 #include <utility>
 
-namespace NES {
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -30,9 +31,10 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 /**
  * @brief The physical data type represents the physical representation of a NES data type.
  */
-class PhysicalType {
-  public:
-    inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) {}
+class PhysicalType
+{
+public:
+    inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) { }
 
     virtual ~PhysicalType() = default;
 
@@ -47,7 +49,7 @@ class PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
      */
-    virtual std::string convertRawToString(void const* rawData) const noexcept = 0;
+    virtual std::string convertRawToString(void const * rawData) const noexcept = 0;
 
     /**
      * @brief Converts the binary representation of this value to a string without filling
@@ -56,7 +58,7 @@ class PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
     */
-    virtual std::string convertRawToStringWithoutFill(void const* rawData) const noexcept = 0;
+    virtual std::string convertRawToStringWithoutFill(void const * rawData) const noexcept = 0;
 
     /**
      * @brief Returns the string representation of this physical data type.
@@ -84,12 +86,12 @@ class PhysicalType {
      * @param rhs
      * @return True if equal, otherwise false
      */
-    bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
+    bool operator==(const PhysicalType & rhs) const { return type->equals(rhs.type); }
 
     /// Type that is contained by this PhysicalType container
     DataTypePtr const type;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_

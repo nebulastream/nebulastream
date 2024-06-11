@@ -16,12 +16,17 @@
 
 #include "Configurations/TypedBaseOption.hpp"
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-template<class Type, class Factory>
-concept IsFactory = requires(std::string identifier, std::map<std::string, std::string>& inputParams, Yaml::Node node) {
-    { Factory::createFromString(identifier, inputParams) };
-    { Factory::createFromYaml(node) };
+template <class Type, class Factory>
+concept IsFactory = requires(std::string identifier, std::map<std::string, std::string> & inputParams, Yaml::Node node) {
+    {
+        Factory::createFromString(identifier, inputParams)
+    };
+    {
+        Factory::createFromYaml(node)
+    };
 };
 
 /**
@@ -34,51 +39,56 @@ concept IsFactory = requires(std::string identifier, std::map<std::string, std::
  * @tparam Type of the object that is wrapped by the option.
  * @tparam Factory type which implements the static create function to initialize a value of this option.
  */
-template<class Type, class Factory>
-    requires IsFactory<Type, Factory>
-class WrapOption : public TypedBaseOption<Type> {
-  public:
+template <class Type, class Factory>
+requires IsFactory<Type, Factory>
+class WrapOption : public TypedBaseOption<Type>
+{
+public:
     /**
      * @brief Constructor to create a new option that sets a name, and description.
      * @param name of the option.
      * @param description of the option.
      */
-    WrapOption(const std::string& name, const std::string& description);
+    WrapOption(const std::string & name, const std::string & description);
     std::string toString() override;
 
-  protected:
+protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::map<std::string, std::string> & inputParams) override;
 
-  private:
-    template<DerivedBaseOption X>
+private:
+    template <DerivedBaseOption X>
     friend class SequenceOption;
-    WrapOption() : TypedBaseOption<Type>() {}
+    WrapOption() : TypedBaseOption<Type>() { }
 };
 
-template<class Type, class Factory>
-    requires IsFactory<Type, Factory>
-WrapOption<Type, Factory>::WrapOption(const std::string& name, const std::string& description)
-    : TypedBaseOption<Type>(name, description) {}
+template <class Type, class Factory>
+requires IsFactory<Type, Factory>
+WrapOption<Type, Factory>::WrapOption(const std::string & name, const std::string & description) : TypedBaseOption<Type>(name, description)
+{
+}
 
-template<class Type, class Factory>
-    requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+template <class Type, class Factory>
+requires IsFactory<Type, Factory>
+void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string> & inputParams)
+{
     this->value = Factory::createFromString(identifier, inputParams);
 }
 
-template<class Type, class Factory>
-    requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) {
+template <class Type, class Factory>
+requires IsFactory<Type, Factory>
+void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node)
+{
     this->value = Factory::createFromYaml(node);
 }
 
-template<class Type, class Factory>
-    requires IsFactory<Type, Factory>
-std::string Configurations::WrapOption<Type, Factory>::toString() {
+template <class Type, class Factory>
+requires IsFactory<Type, Factory>
+std::string Configurations::WrapOption<Type, Factory>::toString()
+{
     return "";
 }
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_

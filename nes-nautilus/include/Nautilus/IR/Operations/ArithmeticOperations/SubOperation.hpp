@@ -17,21 +17,23 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class SubOperation : public Operation {
-  public:
+class SubOperation : public Operation
+{
+public:
     SubOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~SubOperation() override = default;
 
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
     std::string toString() override;
-    bool classof(const Operation* Op);
+    bool classof(const Operation * Op);
 
-  private:
+private:
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_SUBOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_SUBOPERATION_HPP_

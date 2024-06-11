@@ -16,16 +16,18 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class FlounderPipelineProvider : public ExecutablePipelineProvider {
-  public:
-    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                    const Nautilus::CompilationOptions& options) override {
+class FlounderPipelineProvider : public ExecutablePipelineProvider
+{
+public:
+    std::unique_ptr<ExecutablePipelineStage>
+    create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions & options) override
+    {
         return std::make_unique<CompiledExecutablePipelineStage>(physicalOperatorPipeline, "Flounder", options);
     }
 };
 
-[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<FlounderPipelineProvider>
-    flounderPipelineProvider("FlounderCompiler");
-}// namespace NES::Runtime::Execution
+[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<FlounderPipelineProvider> flounderPipelineProvider("FlounderCompiler");
+} // namespace NES::Runtime::Execution

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -29,73 +30,86 @@
 #include <Runtime/QueryManager.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <memory>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
-NodeEngineBuilder::NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration)
-    : workerConfiguration(workerConfiguration) {}
+NodeEngineBuilder::NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration) : workerConfiguration(workerConfiguration)
+{
+}
 
-NodeEngineBuilder NodeEngineBuilder::create(Configurations::WorkerConfigurationPtr workerConfiguration) {
+NodeEngineBuilder NodeEngineBuilder::create(Configurations::WorkerConfigurationPtr workerConfiguration)
+{
     return NodeEngineBuilder(workerConfiguration);
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setQueryStatusListener(AbstractQueryStatusListenerPtr nesWorker) {
+NodeEngineBuilder & NodeEngineBuilder::setQueryStatusListener(AbstractQueryStatusListenerPtr nesWorker)
+{
     this->nesWorker = std::move(nesWorker);
     return *this;
 };
 
-NodeEngineBuilder& NodeEngineBuilder::setWorkerId(WorkerId nodeEngineId) {
+NodeEngineBuilder & NodeEngineBuilder::setWorkerId(WorkerId nodeEngineId)
+{
     this->nodeEngineId = nodeEngineId;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setPartitionManager(Network::PartitionManagerPtr partitionManager) {
+NodeEngineBuilder & NodeEngineBuilder::setPartitionManager(Network::PartitionManagerPtr partitionManager)
+{
     this->partitionManager = partitionManager;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setHardwareManager(HardwareManagerPtr hardwareManager) {
+NodeEngineBuilder & NodeEngineBuilder::setHardwareManager(HardwareManagerPtr hardwareManager)
+{
     this->hardwareManager = hardwareManager;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setBufferManagers(std::vector<BufferManagerPtr> bufferManagers) {
+NodeEngineBuilder & NodeEngineBuilder::setBufferManagers(std::vector<BufferManagerPtr> bufferManagers)
+{
     this->bufferManagers = bufferManagers;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManager) {
+NodeEngineBuilder & NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManager)
+{
     this->queryManager = queryManager;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler) {
+NodeEngineBuilder & NodeEngineBuilder::setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler)
+{
     this->languageCompiler = languageCompiler;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setJITCompiler(Compiler::JITCompilerPtr jitCompiler) {
+NodeEngineBuilder & NodeEngineBuilder::setJITCompiler(Compiler::JITCompilerPtr jitCompiler)
+{
     this->jitCompiler = jitCompiler;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory) {
+NodeEngineBuilder & NodeEngineBuilder::setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory)
+{
     this->phaseFactory = phaseFactory;
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setOpenCLManager(NES::Runtime::OpenCLManagerPtr openCLManager) {
+NodeEngineBuilder & NodeEngineBuilder::setOpenCLManager(NES::Runtime::OpenCLManagerPtr openCLManager)
+{
     this->openCLManager = openCLManager;
     return *this;
 }
 
-NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
+NES::Runtime::NodeEnginePtr NodeEngineBuilder::build()
+{
     NES_ASSERT(nesWorker, "NesWorker is null");
-    try {
+    try
+    {
         auto nodeEngineId = (this->nodeEngineId == INVALID<WorkerId>) ? getNextWorkerId() : this->nodeEngineId;
-        auto partitionManager =
-            (!this->partitionManager) ? std::make_shared<Network::PartitionManager>() : this->partitionManager;
+        auto partitionManager = (!this->partitionManager) ? std::make_shared<Network::PartitionManager>() : this->partitionManager;
         auto hardwareManager = (!this->hardwareManager) ? std::make_shared<Runtime::HardwareManager>() : this->hardwareManager;
         std::vector<BufferManagerPtr> bufferManagers;
 
@@ -103,13 +117,17 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto numberOfQueues = workerConfiguration->numberOfQueues.getValue();
 
         //create one buffer manager per queue
-        if (numberOfQueues == 1) {
-            bufferManagers.push_back(
-                std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-                                                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
-                                                hardwareManager->getGlobalAllocator()));
-        } else {
-            for (auto i = 0u; i < numberOfQueues; ++i) {
+        if (numberOfQueues == 1)
+        {
+            bufferManagers.push_back(std::make_shared<BufferManager>(
+                workerConfiguration->bufferSizeInBytes.getValue(),
+                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+                hardwareManager->getGlobalAllocator()));
+        }
+        else
+        {
+            for (auto i = 0u; i < numberOfQueues; ++i)
+            {
                 bufferManagers.push_back(std::make_shared<BufferManager>(
                     workerConfiguration->bufferSizeInBytes.getValue(),
                     //if we run in static with multiple queues, we divide the whole buffer manager among the queues
@@ -118,40 +136,43 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             }
         }
 
-        if (bufferManagers.empty()) {
+        if (bufferManagers.empty())
+        {
             NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided",
-                                               NES::collectAndPrintStacktrace());
+            throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided", NES::collectAndPrintStacktrace());
         }
 
         QueryManagerPtr queryManager{this->queryManager};
-        if (!this->queryManager) {
+        if (!this->queryManager)
+        {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
             auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration->numberOfBuffersPerEpoch.getValue());
-            std::vector<uint64_t> workerToCoreMappingVec =
-                NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
-            switch (workerConfiguration->queryManagerMode.getValue()) {
+            std::vector<uint64_t> workerToCoreMappingVec
+                = NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
+            switch (workerConfiguration->queryManagerMode.getValue())
+            {
                 case QueryExecutionMode::Dynamic: {
-                    queryManager = std::make_shared<DynamicQueryManager>(nesWorker,
-                                                                         bufferManagers,
-                                                                         nodeEngineId,
-                                                                         numOfThreads,
-                                                                         hardwareManager,
-                                                                         numberOfBuffersPerEpoch,
-                                                                         workerToCoreMappingVec);
+                    queryManager = std::make_shared<DynamicQueryManager>(
+                        nesWorker,
+                        bufferManagers,
+                        nodeEngineId,
+                        numOfThreads,
+                        hardwareManager,
+                        numberOfBuffersPerEpoch,
+                        workerToCoreMappingVec);
                     break;
                 }
                 case QueryExecutionMode::Static: {
-                    queryManager =
-                        std::make_shared<MultiQueueQueryManager>(nesWorker,
-                                                                 bufferManagers,
-                                                                 nodeEngineId,
-                                                                 numOfThreads,
-                                                                 hardwareManager,
-                                                                 numberOfBuffersPerEpoch,
-                                                                 workerToCoreMappingVec,
-                                                                 workerConfiguration->numberOfQueues.getValue(),
-                                                                 workerConfiguration->numberOfThreadsPerQueue.getValue());
+                    queryManager = std::make_shared<MultiQueueQueryManager>(
+                        nesWorker,
+                        bufferManagers,
+                        nodeEngineId,
+                        numOfThreads,
+                        hardwareManager,
+                        numberOfBuffersPerEpoch,
+                        workerToCoreMappingVec,
+                        workerConfiguration->numberOfQueues.getValue(),
+                        workerConfiguration->numberOfThreadsPerQueue.getValue());
                     break;
                 }
                 default: {
@@ -159,34 +180,38 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 }
             }
         }
-        if (!partitionManager) {
+        if (!partitionManager)
+        {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating PartitionManager");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating PartitionManager",
-                                               NES::collectAndPrintStacktrace());
+            throw Exceptions::RuntimeException(
+                "Error while building NodeEngine : Error while creating PartitionManager", NES::collectAndPrintStacktrace());
         }
-        if (!queryManager) {
+        if (!queryManager)
+        {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating QueryManager");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating QueryManager",
-                                               NES::collectAndPrintStacktrace());
+            throw Exceptions::RuntimeException(
+                "Error while building NodeEngine : Error while creating QueryManager", NES::collectAndPrintStacktrace());
         }
 
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
 
-        auto compiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions,
-                                                                        phaseFactory,
-                                                                        workerConfiguration->enableSourceSharing.getValue());
+        auto compiler = QueryCompilation::NautilusQueryCompiler::create(
+            queryCompilationOptions, phaseFactory, workerConfiguration->enableSourceSharing.getValue());
 
-        if (!compiler) {
+        if (!compiler)
+        {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler",
-                                               NES::collectAndPrintStacktrace());
+            throw Exceptions::RuntimeException(
+                "Error while building NodeEngine : failed to create compiler", NES::collectAndPrintStacktrace());
         }
         std::vector<PhysicalSourceTypePtr> physicalSources;
-        for (auto entry : workerConfiguration->physicalSourceTypes.getValues()) {
+        for (auto entry : workerConfiguration->physicalSourceTypes.getValues())
+        {
             physicalSources.push_back(entry.getValue());
         }
-        if (!openCLManager) {
+        if (!openCLManager)
+        {
             NES_DEBUG("Creating default OpenCLManager");
             openCLManager = std::make_shared<OpenCLManager>();
         }
@@ -195,16 +220,18 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(hardwareManager),
             std::move(bufferManagers),
             std::move(queryManager),
-            [this](const std::shared_ptr<NodeEngine>& engine) {
-                return Network::NetworkManager::create(engine->getWorkerId(),
-                                                       this->workerConfiguration->localWorkerHost.getValue(),
-                                                       this->workerConfiguration->dataPort.getValue(),
-                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-                                                       engine->getBufferManager(),
-                                                       this->workerConfiguration->senderHighwatermark.getValue(),
-                                                       this->workerConfiguration->numWorkerThreads.getValue(),
-                                                       workerConfiguration->connectSinksAsync.getValue(),
-                                                       workerConfiguration->connectSourceEventChannelsAsync.getValue());
+            [this](const std::shared_ptr<NodeEngine> & engine)
+            {
+                return Network::NetworkManager::create(
+                    engine->getWorkerId(),
+                    this->workerConfiguration->localWorkerHost.getValue(),
+                    this->workerConfiguration->dataPort.getValue(),
+                    Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+                    engine->getBufferManager(),
+                    this->workerConfiguration->senderHighwatermark.getValue(),
+                    this->workerConfiguration->numWorkerThreads.getValue(),
+                    workerConfiguration->connectSinksAsync.getValue(),
+                    workerConfiguration->connectSourceEventChannelsAsync.getValue());
             },
             std::move(partitionManager),
             std::move(compiler),
@@ -217,14 +244,17 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->enableSourceSharing.getValue());
         //        Exceptions::installGlobalErrorListener(engine);
         return engine;
-    } catch (std::exception& err) {
+    }
+    catch (std::exception & err)
+    {
         NES_ERROR("Cannot start node engine {}", err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
 }
 
 QueryCompilation::QueryCompilerOptionsPtr
-NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration) {
+NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration & queryCompilerConfiguration)
+{
     auto queryCompilerType = queryCompilerConfiguration.queryCompilerType;
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
 
@@ -238,11 +268,14 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
 
     if (queryCompilerType == QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER
-        && queryCompilerConfiguration.windowingStrategy == QueryCompilation::WindowingStrategy::LEGACY) {
+        && queryCompilerConfiguration.windowingStrategy == QueryCompilation::WindowingStrategy::LEGACY)
+    {
         // sets SLICING windowing strategy as the default if nautilus is active.
         NES_WARNING("The LEGACY window strategy is not supported by Nautilus. Switch to SLICING!")
         queryCompilationOptions->setWindowingStrategy(QueryCompilation::WindowingStrategy::SLICING);
-    } else {
+    }
+    else
+    {
         // sets the windowing strategy
         queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
     }
@@ -256,12 +289,12 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     // set nautilus backend
     queryCompilationOptions->setNautilusBackend(queryCompilerConfiguration.nautilusBackend);
 
-    queryCompilationOptions->getHashJoinOptions()->setNumberOfPartitions(
-        queryCompilerConfiguration.numberOfPartitions.getValue());
+    queryCompilationOptions->getHashJoinOptions()->setNumberOfPartitions(queryCompilerConfiguration.numberOfPartitions.getValue());
     queryCompilationOptions->getHashJoinOptions()->setPageSize(queryCompilerConfiguration.pageSize.getValue());
     queryCompilationOptions->getHashJoinOptions()->setPreAllocPageCnt(queryCompilerConfiguration.preAllocPageCnt.getValue());
     //zero indicate that it has not been set in the yaml config
-    if (queryCompilerConfiguration.maxHashTableSize.getValue() != 0) {
+    if (queryCompilerConfiguration.maxHashTableSize.getValue() != 0)
+    {
         queryCompilationOptions->getHashJoinOptions()->setTotalSizeForDataStructures(
             queryCompilerConfiguration.maxHashTableSize.getValue());
     }
@@ -273,9 +306,10 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     return queryCompilationOptions;
 }
 
-WorkerId NodeEngineBuilder::getNextWorkerId() {
+WorkerId NodeEngineBuilder::getNextWorkerId()
+{
     const uint64_t max = -1;
     uint64_t id = time(nullptr) ^ getpid();
     return WorkerId(++id % max);
 }
-}//namespace NES::Runtime
+} //namespace NES::Runtime

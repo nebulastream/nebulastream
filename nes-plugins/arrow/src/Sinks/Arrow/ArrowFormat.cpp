@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <utility>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -23,28 +25,43 @@
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <brotli/encode.h>
-#include <iostream>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-std::string ArrowFormat::getFormattedSchema() { NES_NOT_IMPLEMENTED(); }
+std::string ArrowFormat::getFormattedSchema()
+{
+    NES_NOT_IMPLEMENTED();
+}
 
 ArrowFormat::ArrowFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
-    : SinkFormat(std::move(schema), std::move(bufferManager)) {}
+    : SinkFormat(std::move(schema), std::move(bufferManager))
+{
+}
 
-std::string ArrowFormat::getFormattedBuffer(Runtime::TupleBuffer&) {
+std::string ArrowFormat::getFormattedBuffer(Runtime::TupleBuffer &)
+{
     // since arrow writes it owns file separately along with the schema we do not need it
     NES_NOT_IMPLEMENTED();
 }
 
-std::string ArrowFormat::toString() { return "ARROW_IPC_FORMAT"; }
+std::string ArrowFormat::toString()
+{
+    return "ARROW_IPC_FORMAT";
+}
 
-FormatTypes ArrowFormat::getSinkFormat() { return FormatTypes::ARROW_IPC_FORMAT; }
+FormatTypes ArrowFormat::getSinkFormat()
+{
+    return FormatTypes::ARROW_IPC_FORMAT;
+}
 
-FormatIterator ArrowFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+FormatIterator ArrowFormat::getTupleIterator(Runtime::TupleBuffer &)
+{
+    NES_NOT_IMPLEMENTED();
+}
 
-std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::TupleBuffer& inputBuffer) {
+std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::TupleBuffer & inputBuffer)
+{
     std::vector<std::shared_ptr<arrow::Array>> arrowArrays;
     uint64_t numberOfFields = schema->fields.size();
     auto numberOfTuples = inputBuffer.getNumberOfTuples();
@@ -54,30 +71,36 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
     auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, inputBuffer);
 
     // iterate over all fields in the schema to create respective arrow builders
-    for (uint64_t columnIndex = 0; columnIndex < numberOfFields; ++columnIndex) {
+    for (uint64_t columnIndex = 0; columnIndex < numberOfFields; ++columnIndex)
+    {
         auto fieldName = schema->fields[columnIndex]->toString();
         auto attributeField = schema->get(columnIndex);
         auto dataType = attributeField->getDataType();
         auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
         auto fieldSize = physicalType->size();
         uint64_t offset = 0;
-        try {
-            if (physicalType->isBasicType()) {
+        try
+        {
+            if (physicalType->isBasicType())
+            {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                switch (basicPhysicalType->nativeType) {
+                switch (basicPhysicalType->nativeType)
+                {
                     case NES::BasicPhysicalType::NativeType::INT_8: {
                         // create an int8 builder
                         arrow::Int8Builder int8Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             int8_t value = testTupleBuffer[rowIndex][columnIndex].read<int8_t>();
                             auto append = int8Builder.Append(value);
                         }
 
                         // build the int8Array
                         auto buildArray = int8Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert INT_8 field to arrow array.");
                         }
 
@@ -91,14 +114,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::Int16Builder int16Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             int16_t value = testTupleBuffer[rowIndex][columnIndex].read<int16_t>();
                             auto append = int16Builder.Append(value);
                         }
 
                         // build the int16Array
                         auto buildArray = int16Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert INT_16 field to arrow array.");
                         }
 
@@ -112,14 +137,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::Int32Builder int32Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             int32_t value = testTupleBuffer[rowIndex][columnIndex].read<int32_t>();
                             auto append = int32Builder.Append(value);
                         }
 
                         // build the int32Array
                         auto buildArray = int32Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert INT_32 field to arrow array.");
                         }
 
@@ -133,14 +160,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::Int64Builder int64Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             int64_t value = testTupleBuffer[rowIndex][columnIndex].read<int64_t>();
                             auto append = int64Builder.Append(value);
                         }
 
                         // build the int64Array
                         auto buildArray = int64Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert INT_64 field to arrow array.");
                         }
 
@@ -154,14 +183,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::UInt8Builder uint8Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             uint8_t value = testTupleBuffer[rowIndex][columnIndex].read<uint8_t>();
                             auto append = uint8Builder.Append(value);
                         }
 
                         // build the uint8Array
                         auto buildArray = uint8Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert UINT_8 field to arrow array.");
                         }
 
@@ -175,14 +206,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::UInt16Builder uint16Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             uint16_t value = testTupleBuffer[rowIndex][columnIndex].read<uint16_t>();
                             auto append = uint16Builder.Append(value);
                         }
 
                         // build the uint16Array
                         auto buildArray = uint16Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert UINT_16 field to arrow array.");
                         }
 
@@ -196,14 +229,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::UInt32Builder uint32Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             uint32_t value = testTupleBuffer[rowIndex][columnIndex].read<uint32_t>();
                             auto append = uint32Builder.Append(value);
                         }
 
                         // build the uint32Array
                         auto buildArray = uint32Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert UINT_32 field to arrow array.");
                         }
 
@@ -217,14 +252,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::UInt64Builder uint64Builder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             uint64_t value = testTupleBuffer[rowIndex][columnIndex].read<uint64_t>();
                             auto append = uint64Builder.Append(value);
                         }
 
                         // build the uint64Array
                         auto buildArray = uint64Builder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert UINT_64 field to arrow array.");
                         }
 
@@ -238,14 +275,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::FloatBuilder floatBuilder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             float value = testTupleBuffer[rowIndex][columnIndex].read<float>();
                             auto append = floatBuilder.Append(value);
                         }
 
                         // build the floatArray
                         auto buildArray = floatBuilder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert FLOAT field to arrow array.");
                         }
 
@@ -259,14 +298,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::DoubleBuilder doubleBuilder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             double value = testTupleBuffer[rowIndex][columnIndex].read<double>();
                             auto append = doubleBuilder.Append(value);
                         }
 
                         // build the doubleArray
                         auto buildArray = doubleBuilder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert DOUBLE field to arrow array.");
                         }
 
@@ -279,14 +320,14 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::StringBuilder stringBuilder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             std::string str;
-                            auto* buffer = inputBuffer.getBuffer<char>();
+                            auto * buffer = inputBuffer.getBuffer<char>();
                             auto indexInBuffer = buffer + offset + rowIndex * schema->getSchemaSizeInBytes();
 
                             // read the child buffer index from the tuple buffer
-                            Runtime::TupleBuffer::NestedTupleBufferKey childIdx =
-                                *reinterpret_cast<uint32_t const*>(indexInBuffer);
+                            Runtime::TupleBuffer::NestedTupleBufferKey childIdx = *reinterpret_cast<uint32_t const *>(indexInBuffer);
 
                             // retrieve the child buffer from the tuple buffer
                             auto childTupleBuffer = inputBuffer.loadChildBuffer(childIdx);
@@ -295,13 +336,15 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                             uint32_t sizeOfTextField = *(childTupleBuffer.getBuffer<uint32_t>());
 
                             // build the string
-                            if (sizeOfTextField > 0) {
+                            if (sizeOfTextField > 0)
+                            {
                                 auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
                                 std::string deserialized(begin, begin + sizeOfTextField);
                                 str = std::move(deserialized);
                             }
 
-                            else {
+                            else
+                            {
                                 NES_WARNING("ArrowFormat::getArrowArrays: Variable-length field could not be read."
                                             "Invalid size in the variable-length TEXT field. Adding an empty string.")
                             }
@@ -311,7 +354,8 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // build the stringArray
                         auto buildArray = stringBuilder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert TEXT field to arrow array.");
                         }
 
@@ -325,14 +369,16 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrow::BooleanBuilder booleanBuilder;
 
                         // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex)
+                        {
                             bool value = testTupleBuffer[rowIndex][columnIndex].read<bool>();
                             auto append = booleanBuilder.Append(value);
                         }
 
                         // build the booleanArray
                         auto buildArray = booleanBuilder.Finish();
-                        if (!buildArray.ok()) {
+                        if (!buildArray.ok())
+                        {
                             NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert BOOLEAN field to arrow array.");
                         }
 
@@ -352,10 +398,13 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                     }
                 }
             }
-        } catch (const std::exception& e) {
-            NES_ERROR("ArrowFormat::getArrowArrays: Failed to convert the arrowArray to desired NES data type. "
-                      "Error: {}",
-                      e.what());
+        }
+        catch (const std::exception & e)
+        {
+            NES_ERROR(
+                "ArrowFormat::getArrowArrays: Failed to convert the arrowArray to desired NES data type. "
+                "Error: {}",
+                e.what());
         }
         offset += fieldSize;
     }
@@ -363,21 +412,26 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
     return arrowArrays;
 }
 
-std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema() {
+std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema()
+{
     std::vector<std::shared_ptr<arrow::Field>> arrowFields;
     std::shared_ptr<arrow::Schema> arrowSchema;
     uint64_t numberOfFields = schema->fields.size();
 
     // create arrow fields and add them to the field vector
-    for (uint64_t i = 0; i < numberOfFields; i++) {
+    for (uint64_t i = 0; i < numberOfFields; i++)
+    {
         auto fieldName = schema->fields[i]->toString();
         auto attributeField = schema->get(i);
         auto dataType = attributeField->getDataType();
         auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
-        try {
-            if (physicalType->isBasicType()) {
+        try
+        {
+            if (physicalType->isBasicType())
+            {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                switch (basicPhysicalType->nativeType) {
+                switch (basicPhysicalType->nativeType)
+                {
                     case NES::BasicPhysicalType::NativeType::INT_8: {
                         arrowFields.push_back(arrow::field(fieldName, arrow::int8()));
                         break;
@@ -437,7 +491,9 @@ std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema() {
                     }
                 }
             }
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception & e)
+        {
             NES_ERROR("Failed to convert the arrowArray to desired NES data type. Error: {}", e.what());
         }
     }
@@ -447,4 +503,4 @@ std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema() {
     return arrowSchema;
 }
 
-}// namespace NES
+} // namespace NES

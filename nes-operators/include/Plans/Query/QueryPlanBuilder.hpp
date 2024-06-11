@@ -15,17 +15,19 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
+#include <string>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 /**
  * This class adds the logical operators to the queryPlan and handles further conditions and updates on the updated queryPlan and its nodes, e.g.,
  * update the consumed sources after a binary operator or adds window characteristics to the join operator.
  */
-class QueryPlanBuilder {
-  public:
+class QueryPlanBuilder
+{
+public:
     /**
      * @brief: Creates a query plan from a particular source. The source is identified by its name.
      * During query processing the underlying source descriptor is retrieved from the source catalog.
@@ -40,7 +42,7 @@ class QueryPlanBuilder {
       * @param queryPlan the queryPlan to add the projection node
       * @return the updated queryPlan
       */
-    static QueryPlanPtr addProjection(const std::vector<ExpressionNodePtr>& expressions, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addProjection(const std::vector<ExpressionNodePtr> & expressions, QueryPlanPtr queryPlan);
 
     /**
      * @brief this call add the rename operator to the queryPlan, this operator renames the source
@@ -48,7 +50,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan to add the rename node
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addRename(std::string const& newSourceName, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addRename(std::string const & newSourceName, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call add the filter operator to the queryPlan, the operator filters records according to the predicate. An
@@ -57,7 +59,7 @@ class QueryPlanBuilder {
      * @param queryPlanPtr the queryPlan the filter node is added to
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addFilter(ExpressionNodePtr const& filterExpression, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addFilter(ExpressionNodePtr const & filterExpression, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
@@ -74,7 +76,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const & mapExpression, QueryPlanPtr queryPlan);
 
     /**
      * @brief Adds a synopsis build operator to this query
@@ -86,12 +88,13 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the synopsis is added to
      * @return the updated queryPlanPtr
      */
-    static QueryPlanPtr addStatisticBuildOperator(Windowing::WindowTypePtr window,
-                                                  Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                  Statistic::StatisticMetricHash metricHash,
-                                                  Statistic::SendingPolicyPtr sendingPolicy,
-                                                  Statistic::TriggerConditionPtr triggerCondition,
-                                                  QueryPlanPtr queryPlan);
+    static QueryPlanPtr addStatisticBuildOperator(
+        Windowing::WindowTypePtr window,
+        Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+        Statistic::StatisticMetricHash metricHash,
+        Statistic::SendingPolicyPtr sendingPolicy,
+        Statistic::TriggerConditionPtr triggerCondition,
+        QueryPlanPtr queryPlan);
 
     /**
      * @brief: Map java udf according to the java method given in the descriptor.
@@ -99,7 +102,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static QueryPlanPtr addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addMapUDF(Catalogs::UDF::UDFDescriptorPtr const & descriptor, QueryPlanPtr queryPlan);
 
     /**
      * @brief: FlatMap java udf according to the java method given in the descriptor.
@@ -107,7 +110,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const & descriptor, QueryPlanPtr queryPlan);
 
     /**
     * @brief UnionOperator to combine two query plans
@@ -125,11 +128,12 @@ class QueryPlanBuilder {
      * @param windowType Window definition.
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addJoin(QueryPlanPtr leftQueryPlan,
-                                QueryPlanPtr rightQueryPlan,
-                                ExpressionNodePtr joinExpression,
-                                const Windowing::WindowTypePtr& windowType,
-                                Join::LogicalJoinDescriptor::JoinType joinType);
+    static QueryPlanPtr addJoin(
+        QueryPlanPtr leftQueryPlan,
+        QueryPlanPtr rightQueryPlan,
+        ExpressionNodePtr joinExpression,
+        const Windowing::WindowTypePtr & windowType,
+        Join::LogicalJoinDescriptor::JoinType joinType);
 
     /**
      * @brief This methods add the batch join operator to a query
@@ -140,10 +144,8 @@ class QueryPlanBuilder {
      * @param onBuildKey key attribute of the right source
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addBatchJoin(QueryPlanPtr leftQueryPlan,
-                                     QueryPlanPtr rightQueryPlan,
-                                     ExpressionNodePtr onProbeKey,
-                                     ExpressionNodePtr onBuildKey);
+    static QueryPlanPtr
+    addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, ExpressionNodePtr onProbeKey, ExpressionNodePtr onBuildKey);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
@@ -151,16 +153,15 @@ class QueryPlanBuilder {
      * @param workerId id of the worker node where sink need to be placed
      * @return the updated queryPlan
      */
-    static QueryPlanPtr
-    addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    static QueryPlanPtr addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Create watermark assigner operator and adds it to the queryPlan
      * @param watermarkStrategyDescriptor which represents the semantic of this watermarkStrategy.
      * @return queryPlan
      */
-    static QueryPlanPtr assignWatermark(QueryPlanPtr queryPlan,
-                                        Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+    static QueryPlanPtr
+    assignWatermark(QueryPlanPtr queryPlan, Windowing::WatermarkStrategyDescriptorPtr const & watermarkStrategyDescriptor);
 
     /**
     * @brief: Method that checks in case a window is contained in the query
@@ -171,7 +172,7 @@ class QueryPlanBuilder {
     */
     static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType);
 
-  private:
+private:
     /**
      * @brief This method checks if an ExpressionNode is instance Of FieldAccessExpressionNode for Join and BatchJoin
      * @param expression the expression node to test
@@ -187,8 +188,7 @@ class QueryPlanBuilder {
     * @param: rightQueryPlan the right query plan of the binary operation
     * @return the updated queryPlan
     */
-    static QueryPlanPtr
-    addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
+    static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 };
-}// end namespace NES
-#endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+} // end namespace NES
+#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_

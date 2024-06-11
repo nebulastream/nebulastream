@@ -14,9 +14,11 @@
 #include <Compiler/CPPCompiler/CPPCompilerFlags.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
-void CPPCompilerFlags::addDefaultCompilerFlags() {
+void CPPCompilerFlags::addDefaultCompilerFlags()
+{
     addFlag(CXX_VERSION);
     addFlag(NO_TRIGRAPHS);
     addFlag(FPIC);
@@ -31,17 +33,20 @@ void CPPCompilerFlags::addDefaultCompilerFlags() {
 #endif
 }
 
-void CPPCompilerFlags::addSharedLibraryFlag() {
+void CPPCompilerFlags::addSharedLibraryFlag()
+{
     NES_DEBUG("Compile as shared library.");
     addFlag(SHARED);
 }
 
-void CPPCompilerFlags::enableDebugFlags() {
+void CPPCompilerFlags::enableDebugFlags()
+{
     NES_DEBUG("Compile with debugging.");
     addFlag(GENERATE_DEBUG_SYMBOLS);
 }
 
-void CPPCompilerFlags::enableOptimizationFlags() {
+void CPPCompilerFlags::enableOptimizationFlags()
+{
     NES_DEBUG("Compile with optimizations.");
     addFlag(ALL_OPTIMIZATIONS);
 #if !defined(__aarch64__)
@@ -60,9 +65,10 @@ void CPPCompilerFlags::enableOptimizationFlags() {
 #endif
 }
 
-void CPPCompilerFlags::enableProfilingFlags() {
+void CPPCompilerFlags::enableProfilingFlags()
+{
     NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
     addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
 }
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

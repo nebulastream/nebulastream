@@ -18,52 +18,55 @@
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical kafka source
  */
-class KafkaSourceDescriptor : public SourceDescriptor {
-
-  public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string brokers,
-                                      std::string topic,
-                                      std::string groupId,
-                                      bool autoCommit,
-                                      uint64_t kafkaConnectTimeout,
-                                      const std::string& offsetMode,
-                                      const KafkaSourceTypePtr& kafkaSourceType,
-                                      uint64_t numbersOfBufferToProduce,
-                                      uint64_t batchSize);
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string brokers,
-                                      std::string logicalSourceName,
-                                      std::string topic,
-                                      std::string groupId,
-                                      bool autoCommit,
-                                      uint64_t kafkaConnectTimeout,
-                                      const std::string& offsetMode,
-                                      const KafkaSourceTypePtr& kafkaSourceType,
-                                      uint64_t numbersOfBufferToProduce,
-                                      uint64_t batchSize);
+class KafkaSourceDescriptor : public SourceDescriptor
+{
+public:
+    static SourceDescriptorPtr create(
+        SchemaPtr schema,
+        std::string brokers,
+        std::string topic,
+        std::string groupId,
+        bool autoCommit,
+        uint64_t kafkaConnectTimeout,
+        const std::string & offsetMode,
+        const KafkaSourceTypePtr & kafkaSourceType,
+        uint64_t numbersOfBufferToProduce,
+        uint64_t batchSize);
+    static SourceDescriptorPtr create(
+        SchemaPtr schema,
+        std::string brokers,
+        std::string logicalSourceName,
+        std::string topic,
+        std::string groupId,
+        bool autoCommit,
+        uint64_t kafkaConnectTimeout,
+        const std::string & offsetMode,
+        const KafkaSourceTypePtr & kafkaSourceType,
+        uint64_t numbersOfBufferToProduce,
+        uint64_t batchSize);
 
     static SourceDescriptorPtr create(SchemaPtr schema, KafkaSourceTypePtr sourceConfig);
 
     /**
      * @brief Get the list of kafka brokers
      */
-    const std::string& getBrokers() const;
+    const std::string & getBrokers() const;
 
     /**
      * @brief Get the kafka topic name
      */
-    const std::string& getTopic() const;
+    const std::string & getTopic() const;
 
     /**
      * @brief Get the kafka offset mode
      */
-    const std::string& getOffsetMode() const;
+    const std::string & getOffsetMode() const;
 
     /**
      * @brief Get the number of buffers to produce
@@ -78,7 +81,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     /**
      * @brief Get the kafka consumer group id
      */
-    const std::string& getGroupId() const;
+    const std::string & getGroupId() const;
 
     /**
      * @brief Get the input type for the source
@@ -96,33 +99,35 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @return
      */
     uint64_t getKafkaConnectTimeout() const;
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const & other) const override;
     std::string toString() const override;
 
     SourceDescriptorPtr copy() override;
 
-  private:
-    explicit KafkaSourceDescriptor(SchemaPtr schema,
-                                   std::string brokers,
-                                   std::string topic,
-                                   std::string groupId,
-                                   bool autoCommit,
-                                   uint64_t kafkaConnectTimeout,
-                                   const std::string& offsetMode,
-                                   const KafkaSourceTypePtr& kafkaSourceType,
-                                   uint64_t numbersOfBufferToProduce,
-                                   uint64_t batchSize);
-    explicit KafkaSourceDescriptor(SchemaPtr schema,
-                                   std::string logicalSourceName,
-                                   std::string brokers,
-                                   std::string topic,
-                                   std::string groupId,
-                                   bool autoCommit,
-                                   uint64_t kafkaConnectTimeout,
-                                   const std::string& offsetMode,
-                                   const KafkaSourceTypePtr& kafkaSourceType,
-                                   uint64_t numbersOfBufferToProduce,
-                                   uint64_t batchSize);
+private:
+    explicit KafkaSourceDescriptor(
+        SchemaPtr schema,
+        std::string brokers,
+        std::string topic,
+        std::string groupId,
+        bool autoCommit,
+        uint64_t kafkaConnectTimeout,
+        const std::string & offsetMode,
+        const KafkaSourceTypePtr & kafkaSourceType,
+        uint64_t numbersOfBufferToProduce,
+        uint64_t batchSize);
+    explicit KafkaSourceDescriptor(
+        SchemaPtr schema,
+        std::string logicalSourceName,
+        std::string brokers,
+        std::string topic,
+        std::string groupId,
+        bool autoCommit,
+        uint64_t kafkaConnectTimeout,
+        const std::string & offsetMode,
+        const KafkaSourceTypePtr & kafkaSourceType,
+        uint64_t numbersOfBufferToProduce,
+        uint64_t batchSize);
 
     explicit KafkaSourceDescriptor(SchemaPtr schema, KafkaSourceTypePtr kafkaSourceType);
 
@@ -139,6 +144,6 @@ class KafkaSourceDescriptor : public SourceDescriptor {
 
 using KafkaSourceDescriptorPtr = std::shared_ptr<KafkaSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_

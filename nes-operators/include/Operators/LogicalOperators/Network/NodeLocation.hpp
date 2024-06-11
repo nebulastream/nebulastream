@@ -19,30 +19,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/core.h>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
 /**
  * @brief This is a network location of a nes node. It contains a node id, an ip address, and port for data transfer.
  */
-class NodeLocation {
-  public:
+class NodeLocation
+{
+public:
     explicit NodeLocation() = default;
 
     explicit NodeLocation(WorkerId workerId, std::string hostname, uint32_t port)
-        : workerId(workerId), hostname(std::move(hostname)), port(port) {
+        : workerId(workerId), hostname(std::move(hostname)), port(port)
+    {
         NES_ASSERT2_FMT(!this->hostname.empty(), "Empty hostname passed on " << workerId);
     }
 
-    NodeLocation(const NodeLocation& other) : workerId(other.workerId), hostname(other.hostname), port(other.port) {}
+    NodeLocation(const NodeLocation & other) : workerId(other.workerId), hostname(other.hostname), port(other.port) { }
 
-    NodeLocation& operator=(const NodeLocation& other) {
+    NodeLocation & operator=(const NodeLocation & other)
+    {
         workerId = other.workerId;
         hostname = other.hostname;
         port = other.port;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator!() const noexcept -> bool {
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool
+    {
         return hostname.empty() && port == 0 && workerId == INVALID_WORKER_NODE_ID;
     }
 
@@ -62,7 +67,7 @@ class NodeLocation {
      * @brief Returns the hostname
      * @return the hostname
      */
-    [[nodiscard]] const std::string& getHostname() const { return hostname; }
+    [[nodiscard]] const std::string & getHostname() const { return hostname; }
 
     /**
      * @brief Returns the port
@@ -76,14 +81,15 @@ class NodeLocation {
      * @param rhs right node location
      * @return true, if they are equal, else false
      */
-    friend bool operator==(const NodeLocation& lhs, const NodeLocation& rhs) {
+    friend bool operator==(const NodeLocation & lhs, const NodeLocation & rhs)
+    {
         return lhs.workerId == rhs.workerId && lhs.hostname == rhs.hostname && lhs.port == rhs.port;
     }
 
-  private:
+private:
     WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::string hostname;
     uint32_t port;
 };
-}// namespace NES::Network
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_
+} // namespace NES::Network
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_

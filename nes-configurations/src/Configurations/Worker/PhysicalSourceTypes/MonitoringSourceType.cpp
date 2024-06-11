@@ -12,35 +12,43 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
-MonitoringSourceType::MonitoringSourceType(const std::string& logicalSourceName,
-                                           const std::string& physicalSourceName,
-                                           Monitoring::MetricCollectorType metricCollectorType,
-                                           std::chrono::milliseconds waitTime)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::MONITORING_SOURCE),
-      metricCollectorType(metricCollectorType), waitTime(waitTime) {}
+MonitoringSourceType::MonitoringSourceType(
+    const std::string & logicalSourceName,
+    const std::string & physicalSourceName,
+    Monitoring::MetricCollectorType metricCollectorType,
+    std::chrono::milliseconds waitTime)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::MONITORING_SOURCE)
+    , metricCollectorType(metricCollectorType)
+    , waitTime(waitTime)
+{
+}
 
-MonitoringSourceTypePtr MonitoringSourceType::create(const std::string& logicalSourceName,
-                                                     const std::string& physicalSourceName,
-                                                     Monitoring::MetricCollectorType metricCollectorType,
-                                                     std::chrono::milliseconds waitTime) {
+MonitoringSourceTypePtr MonitoringSourceType::create(
+    const std::string & logicalSourceName,
+    const std::string & physicalSourceName,
+    Monitoring::MetricCollectorType metricCollectorType,
+    std::chrono::milliseconds waitTime)
+{
     return std::make_shared<MonitoringSourceType>(
         MonitoringSourceType(logicalSourceName, physicalSourceName, metricCollectorType, waitTime));
 }
 
-MonitoringSourceTypePtr MonitoringSourceType::create(const std::string& logicalSourceName,
-                                                     const std::string& physicalSourceName,
-                                                     Monitoring::MetricCollectorType metricCollectorType) {
+MonitoringSourceTypePtr MonitoringSourceType::create(
+    const std::string & logicalSourceName, const std::string & physicalSourceName, Monitoring::MetricCollectorType metricCollectorType)
+{
     return create(logicalSourceName, physicalSourceName, metricCollectorType, DEFAULT_WAIT_TIME);
 }
 
-std::string MonitoringSourceType::toString() {
+std::string MonitoringSourceType::toString()
+{
     std::stringstream ss;
     ss << "MonitoringSource Type => {\n";
     ss << "waitTimeInMs:" + std::to_string(waitTime.count());
@@ -49,24 +57,39 @@ std::string MonitoringSourceType::toString() {
     return ss.str();
 }
 
-bool MonitoringSourceType::equal(const PhysicalSourceTypePtr& other) {
-    if (!other->instanceOf<MonitoringSourceType>()) {
+bool MonitoringSourceType::equal(const PhysicalSourceTypePtr & other)
+{
+    if (!other->instanceOf<MonitoringSourceType>())
+    {
         return false;
     }
     auto otherSourceConfig = other->as<MonitoringSourceType>();
     return waitTime == otherSourceConfig->waitTime && metricCollectorType == otherSourceConfig->metricCollectorType;
 }
 
-void MonitoringSourceType::reset() { setWaitTime(DEFAULT_WAIT_TIME); }
+void MonitoringSourceType::reset()
+{
+    setWaitTime(DEFAULT_WAIT_TIME);
+}
 
-std::chrono::milliseconds MonitoringSourceType::getWaitTime() const { return waitTime; }
+std::chrono::milliseconds MonitoringSourceType::getWaitTime() const
+{
+    return waitTime;
+}
 
-void MonitoringSourceType::setWaitTime(std::chrono::milliseconds waitTime) { this->waitTime = waitTime; }
+void MonitoringSourceType::setWaitTime(std::chrono::milliseconds waitTime)
+{
+    this->waitTime = waitTime;
+}
 
-Monitoring::MetricCollectorType MonitoringSourceType::getMetricCollectorType() const { return metricCollectorType; }
+Monitoring::MetricCollectorType MonitoringSourceType::getMetricCollectorType() const
+{
+    return metricCollectorType;
+}
 
-void MonitoringSourceType::setMetricCollectorType(Monitoring::MetricCollectorType metricCollectorType) {
+void MonitoringSourceType::setMetricCollectorType(Monitoring::MetricCollectorType metricCollectorType)
+{
     this->metricCollectorType = metricCollectorType;
 }
 
-}// namespace NES
+} // namespace NES

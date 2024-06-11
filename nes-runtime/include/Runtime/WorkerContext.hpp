@@ -15,20 +15,21 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
-#include <Network/NetworkForwardRefs.hpp>
-#include <Operators/LogicalOperators/Network/NesPartition.hpp>
-#include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
-#include <folly/ThreadLocal.h>
 #include <future>
 #include <memory>
 #include <optional>
 #include <queue>
 #include <unordered_map>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <folly/ThreadLocal.h>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 class AbstractBufferProvider;
 class BufferStorage;
@@ -39,11 +40,12 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
  * Note that it is not thread-safe per se but it is meant to be used in
  * a thread-safe manner by the ThreadPool.
  */
-class WorkerContext {
-  private:
+class WorkerContext
+{
+private:
     using WorkerContextBufferProviderPtr = LocalBufferPoolPtr;
     using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
-    using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
+    using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type *;
 
     /// the id of this worker context (unique per thread).
     WorkerThreadId workerId;
@@ -67,11 +69,9 @@ class WorkerContext {
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
     std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
 
-  public:
-    explicit WorkerContext(WorkerThreadId workerId,
-                           const BufferManagerPtr& bufferManager,
-                           uint64_t numberOfBuffersPerWorker,
-                           uint32_t queueId = 0);
+public:
+    explicit WorkerContext(
+        WorkerThreadId workerId, const BufferManagerPtr & bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
 
     ~WorkerContext();
 
@@ -106,14 +106,14 @@ class WorkerContext {
      * @param object the object that we want to track
      * @param refCnt the initial ref cnt
      */
-    void setObjectRefCnt(void* object, uint32_t refCnt);
+    void setObjectRefCnt(void * object, uint32_t refCnt);
 
     /**
      * @brief Reduces by one the ref cnt. It deletes the object as soon as ref cnt reaches 0.
      * @param object the object that we want to ref count
      * @return the prev ref cnt
      */
-    uint32_t decreaseObjectRefCnt(void* object);
+    uint32_t decreaseObjectRefCnt(void * object);
 
     /**
      * @brief get the queue id of the the current worker
@@ -126,7 +126,7 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel);
+    void storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr && channel);
 
     /**
      * @brief This stores a future for network channel creation and a promise which can be used to abort the creation
@@ -134,8 +134,7 @@ class WorkerContext {
      * @param channelFuture a pair of a future waiting for the output channel to be connected and a promise to be used if the connection
      * process is to be aborted
      */
-    void storeNetworkChannelFuture(OperatorId id,
-                                   std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+    void storeNetworkChannelFuture(OperatorId id, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>> && channelFuture);
 
     /**
       * @brief This method creates a network storage for a thread
@@ -177,17 +176,15 @@ class WorkerContext {
      * @param type the termination type
      * @param currentMessageSequenceNumber represents the total number of data buffer messages sent
      */
-    bool releaseNetworkChannel(OperatorId id,
-                               Runtime::QueryTerminationType type,
-                               uint16_t sendingThreadCount,
-                               uint64_t currentMessageSequenceNumber);
+    bool releaseNetworkChannel(
+        OperatorId id, Runtime::QueryTerminationType type, uint16_t sendingThreadCount, uint64_t currentMessageSequenceNumber);
 
     /**
      * @brief This stores a network channel for an operator
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeEventOnlyChannel(OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel);
+    void storeEventOnlyChannel(OperatorId id, Network::EventOnlyNetworkChannelPtr && channel);
 
     /**
      * @brief removes a registered network channel
@@ -201,7 +198,7 @@ class WorkerContext {
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::NetworkChannel* getNetworkChannel(OperatorId ownerId);
+    Network::NetworkChannel * getNetworkChannel(OperatorId ownerId);
 
     /**
      * @brief retrieves an asynchronously established output channel.
@@ -232,7 +229,7 @@ class WorkerContext {
      * @param operatorId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(OperatorId operatorId);
+    Network::EventOnlyNetworkChannel * getEventOnlyNetworkChannel(OperatorId operatorId);
 
     /**
      * @brief insert a tuple buffer into the reconnect buffer storage
@@ -266,8 +263,8 @@ class WorkerContext {
      * @param id the id of the operator which the channel belongs to
      * @param channelFuture the future to be stored
      */
-    void storeEventChannelFuture(OperatorId id,
-                                 std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+    void storeEventChannelFuture(
+        OperatorId id, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>> && channelFuture);
 
     /**
      * @brief retrieves an asynchronously established event channel.
@@ -294,5 +291,5 @@ class WorkerContext {
     bool doesEventChannelExist(OperatorId operatorId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_

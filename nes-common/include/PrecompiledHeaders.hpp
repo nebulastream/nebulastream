@@ -24,11 +24,11 @@
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
-#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <gtest/gtest.h>
 
-#endif// NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_
+#endif // NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_

@@ -16,11 +16,13 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
-namespace NES {
+namespace NES
+{
 
-void to_json(nlohmann::json& json, const QueryStateHistoryEntry& queryState) {
+void to_json(nlohmann::json & json, const QueryStateHistoryEntry & queryState)
+{
     json["timestampInUs"] = queryState.timestampInUs;
     json["queryState"] = magic_enum::enum_name<QueryState>(queryState.queryState);
 }
 
-}// namespace NES
+} // namespace NES

@@ -15,34 +15,37 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
 
-#include <API/Schema.hpp>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <deque>
 #include <map>
 #include <mutex>
 #include <set>
 #include <string>
 #include <vector>
+#include <API/Schema.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 
 /**
  * @brief the source catalog handles the mapping of logical to physical sources
  */
-class SourceCatalog {
-  public:
+class SourceCatalog
+{
+public:
     /**
    * @brief method to add a logical source
    * @param logicalSourceName logical source name
    * @param schema of logical source as object
    * @return bool indicating if insert was successful
    */
-    bool addLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
+    bool addLogicalSource(const std::string & logicalSourceName, SchemaPtr schema);
 
     /**
        * @brief method to delete a logical source
@@ -50,7 +53,7 @@ class SourceCatalog {
        * @param logicalSourceName name of logical source to delete
        * @return bool indicating the success of the removal
        */
-    bool removeLogicalSource(const std::string& logicalSourceName);
+    bool removeLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief method to add a physical source
@@ -59,7 +62,7 @@ class SourceCatalog {
      * @param sourceCatalogEntry the source catalog entry to store
      * @return bool indicating success of insert source
      */
-    bool addPhysicalSource(const std::string& logicalSourceName, const SourceCatalogEntryPtr& sourceCatalogEntry);
+    bool addPhysicalSource(const std::string & logicalSourceName, const SourceCatalogEntryPtr & sourceCatalogEntry);
 
     /**
      * @brief method to remove a physical source
@@ -68,8 +71,7 @@ class SourceCatalog {
      * @param topologyNodeId id of the topology node
      * @return bool indicating success of remove source
      */
-    bool
-    removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId);
+    bool removePhysicalSource(const std::string & logicalSourceName, const std::string & physicalSourceName, WorkerId topologyNodeId);
 
     /**
      * @brief method to remove all physical sources of a single worker
@@ -83,7 +85,7 @@ class SourceCatalog {
      * @param logicalSourceName name of the logical source name
      * @return the pointer to the schema
      */
-    SchemaPtr getSchemaForLogicalSource(const std::string& logicalSourceName);
+    SchemaPtr getSchemaForLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief method to return the logical source for an existing logical source
@@ -91,7 +93,7 @@ class SourceCatalog {
      * @return smart pointer to the logical source else nullptr
      * @note the source will also contain the schema
      */
-    LogicalSourcePtr getLogicalSource(const std::string& logicalSourceName);
+    LogicalSourcePtr getLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief method to return the source for an existing logical source or throw exception
@@ -100,21 +102,21 @@ class SourceCatalog {
      * @note the source will also contain the schema
      * @throws RuntimeException
      */
-    LogicalSourcePtr getLogicalSourceOrThrowException(const std::string& logicalSourceName);
+    LogicalSourcePtr getLogicalSourceOrThrowException(const std::string & logicalSourceName);
 
     /**
      * @brief Check if logical source with this name exists
      * @param logicalSourceName name of the logical source
      * @return bool indicating if source exists
      */
-    bool containsLogicalSource(const std::string& logicalSourceName);
+    bool containsLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief return all topology node ids that host physical sources that contribute to this logical source
      * @param logicalSourceName name of logical source
      * @return list of topology nodes ids
      */
-    std::vector<WorkerId> getSourceNodesForLogicalSource(const std::string& logicalSourceName);
+    std::vector<WorkerId> getSourceNodesForLogicalSource(const std::string & logicalSourceName);
 
     /**
      * @brief reset the catalog and recreate the default_logical source
@@ -145,7 +147,7 @@ class SourceCatalog {
      * @param logicalSourceName name of the logical source
      * @return vector containing source catalog entries
      */
-    std::vector<SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
+    std::vector<SourceCatalogEntryPtr> getPhysicalSources(const std::string & logicalSourceName);
 
     /**
      * @brief method to update a logical source schema
@@ -153,30 +155,30 @@ class SourceCatalog {
      * @param schema of logical source as object
      * @return bool indicating if update was successful
      */
-    bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
+    bool updateLogicalSource(const std::string & logicalSourceName, SchemaPtr schema);
 
     /**
      * Gets the key distribution for a given source catalog entry.
      * @param catalogEntry
      * @return the key distribution
      */
-    std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& getKeyDistributionMap();
+    std::map<SourceCatalogEntryPtr, std::set<uint64_t>> & getKeyDistributionMap();
 
     /**
      * Set the key distribution map for all source catalog entries
      * @param distributionMap
      */
-    void setKeyDistributionMap(std::map<SourceCatalogEntryPtr, std::set<uint64_t>>& distributionMap);
+    void setKeyDistributionMap(std::map<SourceCatalogEntryPtr, std::set<uint64_t>> & distributionMap);
 
     SourceCatalog();
 
-  private:
+private:
     /**
      * @brief test if logical source with this name exists
      * @param logicalSourceName name of the logical source to test
      * @return bool indicating if source exists
      */
-    bool testIfLogicalSourceExistsInLogicalToPhysicalMapping(const std::string& logicalSourceName);
+    bool testIfLogicalSourceExistsInLogicalToPhysicalMapping(const std::string & logicalSourceName);
 
     std::recursive_mutex catalogMutex;
     //map logical source to schema
@@ -190,6 +192,6 @@ class SourceCatalog {
     void addDefaultSources();
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+} // namespace Catalogs::Source
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

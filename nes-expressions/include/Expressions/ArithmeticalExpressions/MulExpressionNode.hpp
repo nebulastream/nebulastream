@@ -15,20 +15,22 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MULEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MULEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This node represents a multiplication expression.
  */
-class MulExpressionNode final : public ArithmeticalBinaryExpressionNode {
-  public:
+class MulExpressionNode final : public ArithmeticalBinaryExpressionNode
+{
+public:
     explicit MulExpressionNode(DataTypePtr stamp);
     ~MulExpressionNode() noexcept override = default;
     /**
      * @brief Create a new Mul expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
@@ -37,10 +39,10 @@ class MulExpressionNode final : public ArithmeticalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  private:
-    explicit MulExpressionNode(MulExpressionNode* other);
+private:
+    explicit MulExpressionNode(MulExpressionNode * other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MULEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MULEXPRESSIONNODE_HPP_

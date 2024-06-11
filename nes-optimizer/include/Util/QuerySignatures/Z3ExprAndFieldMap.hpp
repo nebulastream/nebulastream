@@ -19,12 +19,14 @@
 #include <memory>
 #include <string>
 
-namespace z3 {
+namespace z3
+{
 class expr;
 using ExprPtr = std::shared_ptr<expr>;
-}// namespace z3
+} // namespace z3
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 class Z3ExprAndFieldMap;
 using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
 
@@ -39,9 +41,9 @@ using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
  * This class is used in replacing the field expressions later on.
  *
  */
-class Z3ExprAndFieldMap {
-
-  public:
+class Z3ExprAndFieldMap
+{
+public:
     static Z3ExprAndFieldMapPtr create(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap);
 
     /**
@@ -56,11 +58,11 @@ class Z3ExprAndFieldMap {
      */
     std::map<std::string, z3::ExprPtr> getFieldMap();
 
-  private:
+private:
     Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap);
 
     z3::ExprPtr expr;
     std::map<std::string, z3::ExprPtr> fieldMap;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_Z3EXPRANDFIELDMAP_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_Z3EXPRANDFIELDMAP_HPP_

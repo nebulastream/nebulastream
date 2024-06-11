@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <queue>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -29,32 +30,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <queue>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor::Experimental
+{
 
-TopologyNodeRelocationRequestPtr TopologyNodeRelocationRequest::create(const std::vector<TopologyLinkInformation>& removedLinks,
-                                                                       const std::vector<TopologyLinkInformation>& addedLinks,
-                                                                       uint8_t maxRetries) {
+TopologyNodeRelocationRequestPtr TopologyNodeRelocationRequest::create(
+    const std::vector<TopologyLinkInformation> & removedLinks, const std::vector<TopologyLinkInformation> & addedLinks, uint8_t maxRetries)
+{
     return std::make_shared<TopologyNodeRelocationRequest>(removedLinks, addedLinks, maxRetries);
 }
 
-TopologyNodeRelocationRequest::TopologyNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                                             const std::vector<TopologyLinkInformation>& addedLinks,
-                                                             uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::Topology,
-                          ResourceType::GlobalQueryPlan,
-                          ResourceType::GlobalExecutionPlan,
-                          ResourceType::SourceCatalog,
-                          ResourceType::UdfCatalog,
-                          ResourceType::CoordinatorConfiguration,
-                          ResourceType::QueryCatalogService},
-                         maxRetries),
-      removedLinks(removedLinks), addedLinks(addedLinks) {
+TopologyNodeRelocationRequest::TopologyNodeRelocationRequest(
+    const std::vector<TopologyLinkInformation> & removedLinks, const std::vector<TopologyLinkInformation> & addedLinks, uint8_t maxRetries)
+    : AbstractUniRequest(
+        {ResourceType::Topology,
+         ResourceType::GlobalQueryPlan,
+         ResourceType::GlobalExecutionPlan,
+         ResourceType::SourceCatalog,
+         ResourceType::UdfCatalog,
+         ResourceType::CoordinatorConfiguration,
+         ResourceType::QueryCatalogService},
+        maxRetries)
+    , removedLinks(removedLinks)
+    , addedLinks(addedLinks)
+{
     NES_ASSERT(!(removedLinks.empty() && addedLinks.empty()), "Could not find any removed or added links");
 }
 
-std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
+std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLogic(const StorageHandlerPtr & storageHandle)
+{
     topology = storageHandle->getTopologyHandle(requestId);
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
     globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
@@ -64,32 +68,34 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     queryCatalog = storageHandle->getQueryCatalogHandle(requestId);
 
     //no function yet to process multiple removed links
-    if (removedLinks.size() > 1) {
+    if (removedLinks.size() > 1)
+    {
         NES_NOT_IMPLEMENTED();
     }
 
     //make modifications to topology
-    for (const auto& [removedUp, removedDown] : removedLinks) {
+    for (const auto & [removedUp, removedDown] : removedLinks)
+    {
         topology->removeTopologyNodeAsChild(removedDown, removedUp);
     }
-    for (const auto& [addedUp, addedDown] : addedLinks) {
+    for (const auto & [addedUp, addedDown] : addedLinks)
+    {
         topology->addTopologyNodeAsChild(addedDown, addedUp);
     }
 
-    if (!removedLinks.empty()) {
+    if (!removedLinks.empty())
+    {
         //identify operators to be replaced
         auto [upstreamId, downstreamId] = removedLinks.front();
         auto impactedSharedQueryIds = identifyImpactedSharedQueries(upstreamId, downstreamId);
 
         // Step3. Perform operator placement amendment for impacted SQPs and deploy
-        for (const auto& impactedSharedQueryId : impactedSharedQueryIds) {
-
+        for (const auto & impactedSharedQueryId : impactedSharedQueryIds)
+        {
             //Amendment phase
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto placementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                           topology,
-                                                                                           typeInferencePhase,
-                                                                                           coordinatorConfiguration);
+            auto placementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(
+                globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
             auto impactedSharedQuery = globalQueryPlan->getSharedQueryPlan(impactedSharedQueryId);
             auto deploymentContexts = placementAmendmentPhase->execute(impactedSharedQuery);
 
@@ -98,37 +104,30 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
             deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
             // Iterate over deployment context and update execution plan
-            for (const auto& deploymentContext : deploymentContexts) {
+            for (const auto & deploymentContext : deploymentContexts)
+            {
                 auto executionNodeId = deploymentContext->getWorkerId();
                 auto sharedQueryId = deploymentContext->getSharedQueryId();
                 auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
                 auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
                 auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-                switch (decomposedQueryPlanState) {
+                switch (decomposedQueryPlanState)
+                {
                     case QueryState::MARKED_FOR_REDEPLOYMENT:
                     case QueryState::MARKED_FOR_DEPLOYMENT: {
-                        globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
-                                                                            sharedQueryId,
-                                                                            decomposedQueryPlanId,
-                                                                            decomposedQueryPlanVersion,
-                                                                            QueryState::RUNNING);
+                        globalExecutionPlan->updateDecomposedQueryPlanState(
+                            executionNodeId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion, QueryState::RUNNING);
                         break;
                     }
                     case QueryState::MARKED_FOR_MIGRATION: {
-                        globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
-                                                                            sharedQueryId,
-                                                                            decomposedQueryPlanId,
-                                                                            decomposedQueryPlanVersion,
-                                                                            QueryState::STOPPED);
-                        globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
-                                                                       sharedQueryId,
-                                                                       decomposedQueryPlanId,
-                                                                       decomposedQueryPlanVersion);
+                        globalExecutionPlan->updateDecomposedQueryPlanState(
+                            executionNodeId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion, QueryState::STOPPED);
+                        globalExecutionPlan->removeDecomposedQueryPlan(
+                            executionNodeId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion);
                         break;
                     }
                     default:
-                        NES_WARNING("Unhandled Deployment context with status: {}",
-                                    magic_enum::enum_name(decomposedQueryPlanState));
+                        NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
                 }
             }
         }
@@ -138,14 +137,14 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     return {};
 }
 
-std::set<SharedQueryId> TopologyNodeRelocationRequest::identifyImpactedSharedQueries(WorkerId upstreamNodeId,
-                                                                                     WorkerId downstreamNodeId) {
-
+std::set<SharedQueryId> TopologyNodeRelocationRequest::identifyImpactedSharedQueries(WorkerId upstreamNodeId, WorkerId downstreamNodeId)
+{
     // Step1. Identify the impacted SQPs
     auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
     auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
-    if (!upstreamExecutionNode || !downstreamExecutionNode) {
+    if (!upstreamExecutionNode || !downstreamExecutionNode)
+    {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return {};
     }
@@ -153,27 +152,31 @@ std::set<SharedQueryId> TopologyNodeRelocationRequest::identifyImpactedSharedQue
     auto upstreamSharedQueryIds = upstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     auto downstreamSharedQueryIds = downstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
-    if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty()) {
+    if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty())
+    {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return {};
     }
 
     //compute intersection among the shared query plans placed on two nodes
     std::set<SharedQueryId> impactedSharedQueryIds;
-    std::set_intersection(upstreamSharedQueryIds.begin(),
-                          upstreamSharedQueryIds.end(),
-                          downstreamSharedQueryIds.begin(),
-                          downstreamSharedQueryIds.end(),
-                          std::inserter(impactedSharedQueryIds, impactedSharedQueryIds.begin()));
+    std::set_intersection(
+        upstreamSharedQueryIds.begin(),
+        upstreamSharedQueryIds.end(),
+        downstreamSharedQueryIds.begin(),
+        downstreamSharedQueryIds.end(),
+        std::inserter(impactedSharedQueryIds, impactedSharedQueryIds.begin()));
 
     //If no common shared query plan was found to be placed on two nodes then skip rest of the operation
-    if (impactedSharedQueryIds.empty()) {
+    if (impactedSharedQueryIds.empty())
+    {
         NES_INFO("Found no shared query plan that was using the removed link");
         return {};
     }
 
     //Iterate over each shared query plan id and identify the operators that need to be replaced
-    for (auto impactedSharedQueryId : impactedSharedQueryIds) {
+    for (auto impactedSharedQueryId : impactedSharedQueryIds)
+    {
         // Step2. Mark operators for re-placements
 
         //Fetch the shared query plan and update its status
@@ -183,11 +186,8 @@ std::set<SharedQueryId> TopologyNodeRelocationRequest::identifyImpactedSharedQue
         queryCatalog->updateSharedQueryStatus(impactedSharedQueryId, QueryState::MIGRATING, "");
 
         //find the pinned operators for the changelog
-        auto [upstreamOperatorIds, downstreamOperatorIds] =
-            NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                                        upstreamExecutionNode,
-                                                                        downstreamExecutionNode,
-                                                                        topology);
+        auto [upstreamOperatorIds, downstreamOperatorIds] = NES::Experimental::findUpstreamAndDownstreamPinnedOperators(
+            sharedQueryPlan, upstreamExecutionNode, downstreamExecutionNode, topology);
         //perform re-operator placement on the query plan
         sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
     }
@@ -261,12 +261,17 @@ std::set<SharedQueryId> TopologyNodeRelocationRequest::identifyImpactedSharedQue
 //}
 
 //todo #4494: implement all the following functions
-void TopologyNodeRelocationRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+void TopologyNodeRelocationRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr &)
+{
+}
 
-std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) {
+std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::rollBack(std::exception_ptr, const StorageHandlerPtr &)
+{
     return {};
 }
 
-void TopologyNodeRelocationRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+void TopologyNodeRelocationRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr &)
+{
+}
 
-};// namespace NES::RequestProcessor::Experimental
+}; // namespace NES::RequestProcessor::Experimental

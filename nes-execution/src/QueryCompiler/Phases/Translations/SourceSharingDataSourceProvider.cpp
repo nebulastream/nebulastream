@@ -11,58 +11,69 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <utility>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 SourceSharingDataSourceProvider::SourceSharingDataSourceProvider(QueryCompilerOptionsPtr compilerOptions)
-    : DefaultDataSourceProvider(std::move(compilerOptions)) {}
+    : DefaultDataSourceProvider(std::move(compilerOptions))
+{
+}
 
-DataSourceProviderPtr QueryCompilation::SourceSharingDataSourceProvider::create(const QueryCompilerOptionsPtr& compilerOptions) {
+DataSourceProviderPtr QueryCompilation::SourceSharingDataSourceProvider::create(const QueryCompilerOptionsPtr & compilerOptions)
+{
     return std::make_shared<SourceSharingDataSourceProvider>(compilerOptions);
 }
 
-DataSourcePtr SourceSharingDataSourceProvider::lower(OperatorId operatorId,
-                                                     OriginId originId,
-                                                     StatisticId statisticId,
-                                                     SourceDescriptorPtr sourceDescriptor,
-                                                     Runtime::NodeEnginePtr nodeEngine,
-                                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
-    if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
-        return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
-                                                                originId,
-                                                                statisticId,
-                                                                std::move(sourceDescriptor),
-                                                                std::move(nodeEngine),
-                                                                compilerOptions->getNumSourceLocalBuffers(),
-                                                                std::move(successors));
+DataSourcePtr SourceSharingDataSourceProvider::lower(
+    OperatorId operatorId,
+    OriginId originId,
+    StatisticId statisticId,
+    SourceDescriptorPtr sourceDescriptor,
+    Runtime::NodeEnginePtr nodeEngine,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+{
+    if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>())
+    {
+        return ConvertLogicalToPhysicalSource::createDataSource(
+            operatorId,
+            originId,
+            statisticId,
+            std::move(sourceDescriptor),
+            std::move(nodeEngine),
+            compilerOptions->getNumSourceLocalBuffers(),
+            std::move(successors));
     }
     NES_ASSERT(sourceDescriptor->getLogicalSourceName() != "", "The source name is not allowed to be null");
 
     auto searchEntry = std::make_pair(sourceDescriptor->getLogicalSourceName(), sourceDescriptor->getPhysicalSourceName());
-    if (sourceDescriptorToDataSourceMap.contains(searchEntry)) {
-        NES_DEBUG("using already existing source for source sharing for logical name {}",
-                  sourceDescriptor->getLogicalSourceName());
+    if (sourceDescriptorToDataSourceMap.contains(searchEntry))
+    {
+        NES_DEBUG("using already existing source for source sharing for logical name {}", sourceDescriptor->getLogicalSourceName());
         sourceDescriptorToDataSourceMap[searchEntry]->addExecutableSuccessors(successors);
         sourceDescriptorToDataSourceMap[searchEntry]->incrementNumberOfConsumerQueries();
         return sourceDescriptorToDataSourceMap[searchEntry];
-    } else {
+    }
+    else
+    {
         NES_DEBUG("Create first source for source sharing for logical name  {}", sourceDescriptor->getLogicalSourceName());
-        auto source = ConvertLogicalToPhysicalSource::createDataSource(operatorId,
-                                                                       originId,
-                                                                       statisticId,
-                                                                       std::move(sourceDescriptor),
-                                                                       std::move(nodeEngine),
-                                                                       compilerOptions->getNumSourceLocalBuffers(),
-                                                                       std::move(successors));
+        auto source = ConvertLogicalToPhysicalSource::createDataSource(
+            operatorId,
+            originId,
+            statisticId,
+            std::move(sourceDescriptor),
+            std::move(nodeEngine),
+            compilerOptions->getNumSourceLocalBuffers(),
+            std::move(successors));
         sourceDescriptorToDataSourceMap[searchEntry] = source;
         source->setSourceSharing(true);
         return source;
     }
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

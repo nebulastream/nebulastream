@@ -14,21 +14,23 @@
 #ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
 #define NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
 
+#include <optional>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/Timer.hpp>
-#include <optional>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Provides the query compilation results.
  * Query compilation can succeed, in this case the result contains a ExecutableQueryPlan pointer.
  * If query compilation fails, the result contains the error and hasError() return true.
  */
-class QueryCompilationResult {
-  public:
-    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
+class QueryCompilationResult
+{
+public:
+    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<> && timer);
     static QueryCompilationResultPtr create(std::exception_ptr exception);
     /**
      * @brief Returns the query execution plan if hasError() == false.
@@ -55,13 +57,13 @@ class QueryCompilationResult {
      */
     std::exception_ptr getError();
 
-  private:
+private:
     explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan, Timer<> timer);
     explicit QueryCompilationResult(std::exception_ptr exception);
     std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
     std::optional<std::exception_ptr> exception;
     std::optional<Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock>> timer;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
+#endif // NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_

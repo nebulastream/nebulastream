@@ -12,38 +12,41 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <utility>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <iostream>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class MergeQueryExecutionTest : public Testing::BaseUnitTest,
-                                public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
-  public:
-    static void SetUpTestCase() {
+class MergeQueryExecutionTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType>
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MergeQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup MergeQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_DEBUG("QueryExecutionTest: Tear down MergeQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::BaseUnitTest::TearDown();
@@ -52,9 +55,11 @@ class MergeQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down MergeQueryExecutionTest test class."); }
 
-    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer & buf)
+    {
         int numberOfTuples = 10;
-        for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
+        for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++)
+        {
             buf[recordIndex][0].write<int64_t>(recordIndex);
             buf[recordIndex][1].write<int64_t>(1);
             buf[recordIndex][2].write<int64_t>(42);
@@ -70,7 +75,8 @@ class MergeQueryExecutionTest : public Testing::BaseUnitTest,
 // P1 = Source1 -> filter1
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
-TEST_F(MergeQueryExecutionTest, mergeQuery) {
+TEST_F(MergeQueryExecutionTest, mergeQuery)
+{
     auto schema = Schema::create()
                       ->addField("test$id", BasicType::INT64)
                       ->addField("test$one", BasicType::INT64)
@@ -88,10 +94,8 @@ TEST_F(MergeQueryExecutionTest, mergeQuery) {
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5);
     auto mergedQuery = query2.unionWith(query1).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           mergedQuery.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, mergedQuery.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto inputBuffer = executionEngine->getBuffer(schema);
@@ -103,10 +107,12 @@ TEST_F(MergeQueryExecutionTest, mergeQuery) {
     testSink->waitTillCompleted();
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 2u);
 
-    for (uint64_t i = 0; i < testSink->getNumberOfResultBuffers(); i++) {
+    for (uint64_t i = 0; i < testSink->getNumberOfResultBuffers(); i++)
+    {
         auto resultBuffer = testSink->getResultBuffer(i);
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
-        for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
+        for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex)
+        {
             EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
         }
     }

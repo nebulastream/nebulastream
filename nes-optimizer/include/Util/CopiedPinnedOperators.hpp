@@ -20,19 +20,21 @@
 #include <set>
 #include <unordered_map>
 
-namespace NES {
+namespace NES
+{
 
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 /**
  * @brief class to store copied pinned up and down stream operators
  */
-class CopiedPinnedOperators {
-
-  public:
+class CopiedPinnedOperators
+{
+public:
     /**
      * @brief Create a CopiedPinnedOperators object
      * @param pinnedUpStreamOperators: the original pinned up stream operators
@@ -40,18 +42,19 @@ class CopiedPinnedOperators {
      * @param operatorIdToOriginalOperatorMap: the operator id to the original operator map
      * @return instance of CopiedPinnedOperators
      */
-    static CopiedPinnedOperators create(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                        std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap);
+    static CopiedPinnedOperators create(
+        const std::set<LogicalOperatorPtr> & pinnedUpStreamOperators,
+        const std::set<LogicalOperatorPtr> & pinnedDownStreamOperators,
+        std::unordered_map<OperatorId, LogicalOperatorPtr> & operatorIdToOriginalOperatorMap);
 
     std::set<LogicalOperatorPtr> copiedPinnedUpStreamOperators;
     std::set<LogicalOperatorPtr> copiedPinnedDownStreamOperators;
 
-  private:
-    CopiedPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                          const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
+private:
+    CopiedPinnedOperators(
+        const std::set<LogicalOperatorPtr> & pinnedUpStreamOperators, const std::set<LogicalOperatorPtr> & pinnedDownStreamOperators);
 };
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_

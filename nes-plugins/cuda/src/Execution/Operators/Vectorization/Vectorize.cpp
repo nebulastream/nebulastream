@@ -22,46 +22,57 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void* getTupleBuffer(void* state) {
-    auto handler = static_cast<StagingHandler*>(state);
+void * getTupleBuffer(void * state)
+{
+    auto handler = static_cast<StagingHandler *>(state);
     return handler->getTupleBuffer();
 }
 
-void* getStageBuffer(void* state) {
+void * getStageBuffer(void * state)
+{
     auto tupleBufferRef = getTupleBuffer(state);
-    auto tupleBuffer = static_cast<TupleBuffer*>(tupleBufferRef);
+    auto tupleBuffer = static_cast<TupleBuffer *>(tupleBufferRef);
     return tupleBuffer->getBuffer();
 }
 
-uint64_t getCurrentWriteIndexAndIncrement(void* state) {
-    auto handler = static_cast<StagingHandler*>(state);
+uint64_t getCurrentWriteIndexAndIncrement(void * state)
+{
+    auto handler = static_cast<StagingHandler *>(state);
     return handler->getCurrentWritePositionAndIncrement();
 }
 
-bool isStageBufferFull(void* state) {
-    auto handler = static_cast<StagingHandler*>(state);
+bool isStageBufferFull(void * state)
+{
+    auto handler = static_cast<StagingHandler *>(state);
     return handler->full();
 }
 
-void resetStageBuffer(void* state) {
-    auto handler = static_cast<StagingHandler*>(state);
+void resetStageBuffer(void * state)
+{
+    auto handler = static_cast<StagingHandler *>(state);
     handler->reset();
 }
 
 Vectorize::Vectorize(uint64_t operatorHandlerIndex, std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
-    : operatorHandlerIndex(operatorHandlerIndex), memoryProvider(std::move(memoryProvider)) {}
+    : operatorHandlerIndex(operatorHandlerIndex), memoryProvider(std::move(memoryProvider))
+{
+}
 
-void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
-    if (hasChild()) {
+void Vectorize::execute(ExecutionContext & ctx, Record & record) const
+{
+    if (hasChild())
+    {
         auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         auto stageBufferAddress = Nautilus::FunctionCall("getStageBuffer", getStageBuffer, globalOperatorHandler);
-        auto writeIndex =
-            Nautilus::FunctionCall("getCurrentWriteIndexAndIncrement", getCurrentWriteIndexAndIncrement, globalOperatorHandler);
+        auto writeIndex
+            = Nautilus::FunctionCall("getCurrentWriteIndexAndIncrement", getCurrentWriteIndexAndIncrement, globalOperatorHandler);
         memoryProvider->write(writeIndex, stageBufferAddress, record);
         auto stageBufferFull = Nautilus::FunctionCall("isStageBufferFull", isStageBufferFull, globalOperatorHandler);
-        if (stageBufferFull) {
+        if (stageBufferFull)
+        {
             auto tupleBufferRef = Nautilus::FunctionCall("getTupleBuffer", getTupleBuffer, globalOperatorHandler);
             auto recordBuffer = RecordBuffer(tupleBufferRef);
             auto vectorizedChild = std::dynamic_pointer_cast<const VectorizableOperator>(child);
@@ -71,4 +82,4 @@ void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

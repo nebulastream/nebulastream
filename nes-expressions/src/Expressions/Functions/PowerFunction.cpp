@@ -11,19 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /*
 * Defines the power function and registers it to the FunctionRegistry.
 */
-class PowerFunction : public BinaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferBinary(const DataTypePtr& left, const DataTypePtr& right) const override {
-        if (!left->isNumeric() || !right->isNumeric()) {
+class PowerFunction : public BinaryLogicalFunction
+{
+public:
+    [[nodiscard]] DataTypePtr inferBinary(const DataTypePtr & left, const DataTypePtr & right) const override
+    {
+        if (!left->isNumeric() || !right->isNumeric())
+        {
             NES_THROW_RUNTIME_ERROR("PowerExpressions can only be evaluated on numeric values.");
         }
         return DataTypeFactory::createDouble();
@@ -32,4 +36,4 @@ class PowerFunction : public BinaryLogicalFunction {
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<PowerFunction> powerFunction("power");
 
-}// namespace NES
+} // namespace NES

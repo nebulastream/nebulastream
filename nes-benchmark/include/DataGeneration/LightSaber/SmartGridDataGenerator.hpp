@@ -14,10 +14,12 @@
 #ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_SMARTGRIDDATAGENERATOR_HPP_
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_SMARTGRIDDATAGENERATOR_HPP_
 #include <DataGeneration/DataGenerator.hpp>
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-class SmartGridDataGenerator : public DataGenerator {
-  public:
+class SmartGridDataGenerator : public DataGenerator
+{
+public:
     explicit SmartGridDataGenerator();
 
     std::string getName() override;
@@ -27,6 +29,6 @@ class SmartGridDataGenerator : public DataGenerator {
     std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_SMARTGRIDDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_SMARTGRIDDATAGENERATOR_HPP_

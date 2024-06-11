@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <fstream>
+#include <iterator>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
@@ -22,53 +25,65 @@
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <chrono>
-#include <fstream>
-#include <iterator>
 
 #include <string>
+#include <thread>
+#include <vector>
+#include <unistd.h>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
-#include <thread>
-#include <unistd.h>
-#include <vector>
 
-namespace NES::Monitoring {
-LinuxSystemResourcesReader::LinuxSystemResourcesReader() { readerType = SystemResourcesReaderType::LinuxReader; }
+namespace NES::Monitoring
+{
+LinuxSystemResourcesReader::LinuxSystemResourcesReader()
+{
+    readerType = SystemResourcesReaderType::LinuxReader;
+}
 
-RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
+RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics()
+{
     RuntimeMetrics output{};
     output.wallTimeNs = LinuxSystemResourcesReader::getWallTimeInNs();
 
-    std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.usage_in_bytes",
-                                             "/sys/fs/cgroup/cpuacct/cpuacct.stat",
-                                             "/sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes"};
+    std::vector<std::string> metricLocations{
+        "/sys/fs/cgroup/memory/memory.usage_in_bytes",
+        "/sys/fs/cgroup/cpuacct/cpuacct.stat",
+        "/sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes"};
 
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
 
-        if (access(metricLocations[0].c_str(), F_OK) != -1) {
+        if (access(metricLocations[0].c_str(), F_OK) != -1)
+        {
             std::ifstream memoryLoc(metricLocations[0]);
             std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)), std::istreambuf_iterator<char>());
 
             output.memoryUsageInBytes = std::stoull(memoryStr);
-        } else {
+        }
+        else
+        {
             NES_ERROR("LinuxSystemResourcesReader: File for memory.usage_in_bytes not available");
             output.memoryUsageInBytes = 0;
         }
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading memory metrics {}", e.what());
     }
 
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading cpuacct.stat for metrics");
 
-        if (access(metricLocations[1].c_str(), F_OK) != -1) {
+        if (access(metricLocations[1].c_str(), F_OK) != -1)
+        {
             std::string line;
             int i = 0;
 
             std::ifstream cpuStat(metricLocations[1]);
-            while (std::getline(cpuStat, line)) {
+            while (std::getline(cpuStat, line))
+            {
                 std::istringstream ss(line);
                 std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
 
@@ -76,31 +91,43 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
                 int len = tokens[0].copy(name, tokens[0].size());
                 name[len] = '\0';
 
-                if (i == 0) {
+                if (i == 0)
+                {
                     output.cpuLoadInJiffies = std::stoull(tokens[1]);
-                } else if (i == 1) {
+                }
+                else if (i == 1)
+                {
                     output.cpuLoadInJiffies += std::stoull(tokens[1]);
-                } else {
+                }
+                else
+                {
                     break;
                 }
                 i++;
             }
-        } else {
+        }
+        else
+        {
             NES_ERROR("LinuxSystemResourcesReader: File for cpuacct.stat not available");
             output.cpuLoadInJiffies = 0;
         }
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading cpu metrics {}", e.what());
     }
 
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading blkio.throttle.io_service_bytes for metrics");
 
-        if (access(metricLocations[2].c_str(), F_OK) != -1) {
+        if (access(metricLocations[2].c_str(), F_OK) != -1)
+        {
             std::string line;
 
             std::ifstream fileStat(metricLocations[2]);
-            while (std::getline(fileStat, line)) {
+            while (std::getline(fileStat, line))
+            {
                 std::istringstream ss(line);
                 std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
 
@@ -108,98 +135,124 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
                 int len = tokens[0].copy(name, tokens[0].size());
                 name[len] = '\0';
 
-                if (tokens[1] == "Read") {
+                if (tokens[1] == "Read")
+                {
                     output.blkioBytesRead += std::stoul(tokens[2]);
-                } else if (tokens[1] == "Write") {
+                }
+                else if (tokens[1] == "Write")
+                {
                     output.blkioBytesWritten += std::stoul(tokens[2]);
                 }
             }
-        } else {
+        }
+        else
+        {
             NES_ERROR("LinuxSystemResourcesReader: File for blkio.throttle.io_service_bytes not available");
             output.blkioBytesRead = 0;
             output.blkioBytesWritten = 0;
         }
-
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading disk metrics {}", e.what());
     }
 
     return output;
 }
 
-RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
+RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics()
+{
     RegistrationMetrics output;
 
-    std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.limit_in_bytes",
-                                             "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
-                                             "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us"};
+    std::vector<std::string> metricLocations{
+        "/sys/fs/cgroup/memory/memory.limit_in_bytes",
+        "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
+        "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us"};
 
     // memory metrics
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
         uint64_t systemMem = LinuxSystemResourcesReader::readMemoryStats().TOTAL_RAM;
         output.totalMemoryBytes = systemMem;
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading static memory metrics {}", e.what());
     }
 
     // CPU metrics
-    try {
+    try
+    {
         auto cpuStats = LinuxSystemResourcesReader::readCpuStats();
         auto totalStats = cpuStats.getTotal();
         output.totalCPUJiffies = totalStats.user + totalStats.system + totalStats.idle;
         output.cpuCoreNum = LinuxSystemResourcesReader::readCpuStats().size() - 1;
 
-        if (access(metricLocations[1].c_str(), F_OK) != -1) {
+        if (access(metricLocations[1].c_str(), F_OK) != -1)
+        {
             std::string periodLine;
             std::ifstream periodLoc(metricLocations[1]);
             std::string periodStr((std::istreambuf_iterator<char>(periodLoc)), std::istreambuf_iterator<char>());
 
             output.cpuPeriodUS = std::stoll(periodStr);
-        } else {
+        }
+        else
+        {
             NES_WARNING("LinuxSystemResourcesReader: File for cpu.cfs_period_us not available");
             output.cpuPeriodUS = 0;
         }
 
-        if (access(metricLocations[2].c_str(), F_OK) != -1) {
+        if (access(metricLocations[2].c_str(), F_OK) != -1)
+        {
             std::string quotaLine;
             std::ifstream quotaLoc(metricLocations[2]);
             std::string quotaStr((std::istreambuf_iterator<char>(quotaLoc)), std::istreambuf_iterator<char>());
 
             output.cpuQuotaUS = std::stoll(quotaStr);
-        } else {
+        }
+        else
+        {
             NES_WARNING("LinuxSystemResourcesReader: File for cpu.cfs_quota_us not available");
             output.cpuQuotaUS = 0;
         }
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading static cpu metrics {}", e.what());
     }
     return output;
 }
 
-CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
+CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats()
+{
     std::string metricLocation = "/proc/stat";
     unsigned int numCpuMetrics = std::thread::hardware_concurrency() + 1;
     auto cpu = std::vector<CpuMetrics>(numCpuMetrics);
 
-    if (access(metricLocation.c_str(), F_OK) == -1) {
+    if (access(metricLocation.c_str(), F_OK) == -1)
+    {
         return AbstractSystemResourcesReader::readCpuStats();
     }
 
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading CPU stats for number of CPUs {}", numCpuMetrics);
         std::ifstream fileStat(metricLocation);
         std::string line;
 
         auto i = 0;
-        while (std::getline(fileStat, line)) {
+        while (std::getline(fileStat, line))
+        {
             // line starts with "cpu"
-            if (!line.compare(0, 3, "cpu")) {
+            if (!line.compare(0, 3, "cpu"))
+            {
                 std::istringstream ss(line);
                 std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
 
                 // check columns
-                if (tokens.size() != 11) {
+                if (tokens.size() != 11)
+                {
                     NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: /proc/stat incorrect");
                 }
 
@@ -224,25 +277,30 @@ CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
                 i++;
             }
         }
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error calling readCpuStats() {}", e.what());
     }
     return CpuMetricsWrapper{std::move(cpu)};
 }
 
-NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
+NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats()
+{
     std::string metricLocation = "/proc/net/dev";
     auto output = NetworkMetricsWrapper();
 
-    if (access(metricLocation.c_str(), F_OK) == -1) {
+    if (access(metricLocation.c_str(), F_OK) == -1)
+    {
         return AbstractSystemResourcesReader::readNetworkStats();
     }
 
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading network stats.");
 
         // alternatively also /sys/class/net/intf/statistics can be parsed
-        FILE* fp = fopen(metricLocation.c_str(), "re");
+        FILE * fp = fopen(metricLocation.c_str(), "re");
         char buf[200];
         char ifname[20];
         uint64_t rBytes = 0;
@@ -263,31 +321,34 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
         uint64_t tCompressed = 0;
 
         // skip first two lines
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 2; i++)
+        {
             fgets(buf, 200, fp);
         }
 
         uint64_t i = 0;
-        while (fgets(buf, 200, fp)) {
-            sscanf(buf,
-                   "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
-                   ifname,
-                   &rBytes,
-                   &rPackets,
-                   &rErrs,
-                   &rDrop,
-                   &rFifo,
-                   &rFrame,
-                   &rCompressed,
-                   &rMulticast,
-                   &tBytes,
-                   &tPackets,
-                   &tErrs,
-                   &tDrop,
-                   &tFifo,
-                   &tColls,
-                   &tCarrier,
-                   &tCompressed);
+        while (fgets(buf, 200, fp))
+        {
+            sscanf(
+                buf,
+                "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
+                ifname,
+                &rBytes,
+                &rPackets,
+                &rErrs,
+                &rDrop,
+                &rFifo,
+                &rFrame,
+                &rCompressed,
+                &rMulticast,
+                &tBytes,
+                &tPackets,
+                &tErrs,
+                &tDrop,
+                &tFifo,
+                &tColls,
+                &tCarrier,
+                &tCompressed);
             auto outputValue = NetworkMetrics();
             // the name of the network interface
             // TODO: add proper handling of ifname as string (see issue #1725)
@@ -317,23 +378,27 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
             output.addNetworkMetrics(std::move(outputValue));
         }
         fclose(fp);
-
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading network stats {}", e.what());
     }
     return output;
 }
 
-MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
+MemoryMetrics LinuxSystemResourcesReader::readMemoryStats()
+{
     auto output = MemoryMetrics();
 
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading memory stats.");
 
-        auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
+        auto * sinfo = (struct sysinfo *)malloc(sizeof(struct sysinfo));
 
         int ret = sysinfo(sinfo);
-        if (ret == EFAULT) {
+        if (ret == EFAULT)
+        {
             NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading memory stats");
         }
 
@@ -352,21 +417,26 @@ MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
         output.LOADS_5MIN = sinfo->loads[1];
         output.LOADS_15MIN = sinfo->loads[2];
         free(sinfo);
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading memory stats {}", e.what());
     }
     return output;
 }
 
-DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
+DiskMetrics LinuxSystemResourcesReader::readDiskStats()
+{
     DiskMetrics output{};
 
-    try {
+    try
+    {
         NES_TRACE("LinuxSystemResourcesReader: Reading disk stats.");
-        auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
+        auto * svfs = (struct statvfs *)malloc(sizeof(struct statvfs));
 
         int ret = statvfs("/", svfs);
-        if (ret == EFAULT) {
+        if (ret == EFAULT)
+        {
             NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading disk stats");
         }
 
@@ -377,13 +447,16 @@ DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
         output.fBfree = svfs->f_bfree;
         output.fBavail = svfs->f_bavail;
         free(svfs);
-    } catch (const Exceptions::RuntimeException& e) {
+    }
+    catch (const Exceptions::RuntimeException & e)
+    {
         NES_ERROR("LinuxSystemResourcesReader: Error reading disk stats {}", e.what());
     }
     return output;
 }
 
-uint64_t LinuxSystemResourcesReader::getWallTimeInNs() {
+uint64_t LinuxSystemResourcesReader::getWallTimeInNs()
+{
     auto now = std::chrono::system_clock::now();
     auto now_s = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_s.time_since_epoch();
@@ -391,4 +464,4 @@ uint64_t LinuxSystemResourcesReader::getWallTimeInNs() {
     uint64_t duration = value.count();
     return duration;
 }
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

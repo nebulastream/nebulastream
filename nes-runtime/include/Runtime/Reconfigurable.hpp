@@ -19,7 +19,8 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class ReconfigurationMessage;
 /**
 * @brief Nes components that require to be reconfigured at Runtime need to
@@ -27,14 +28,16 @@ class ReconfigurationMessage;
 * per thread and a postReconfigurationCallback that will be called on the last thread the executes
 * the reconfiguration.
 */
-class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Reconfigurable, false> {
-  public:
+class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Reconfigurable, false>
+{
+public:
     ~Reconfigurable() NES_NOEXCEPT(false) override = default;
 
     /**
      * @brief reconfigure callback that will be called per thread
     */
-    virtual void reconfigure(ReconfigurationMessage&, WorkerContext&) {
+    virtual void reconfigure(ReconfigurationMessage &, WorkerContext &)
+    {
         // nop
     }
 
@@ -42,11 +45,12 @@ class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Recon
      * @brief callback that will be called on the last thread the executes
      * the reconfiguration
    */
-    virtual void postReconfigurationCallback(ReconfigurationMessage&) {
+    virtual void postReconfigurationCallback(ReconfigurationMessage &)
+    {
         // nop
     }
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_

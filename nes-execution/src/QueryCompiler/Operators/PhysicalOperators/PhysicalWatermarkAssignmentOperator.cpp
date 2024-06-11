@@ -11,12 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     OperatorId id,
@@ -24,54 +25,56 @@ PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
-      watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor)) {}
-
-PhysicalOperatorPtr
-PhysicalWatermarkAssignmentOperator::create(OperatorId id,
-                                            StatisticId statisticId,
-                                            const SchemaPtr& inputSchema,
-                                            const SchemaPtr& outputSchema,
-                                            const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
-    return std::make_shared<PhysicalWatermarkAssignmentOperator>(id,
-                                                                 statisticId,
-                                                                 inputSchema,
-                                                                 outputSchema,
-                                                                 watermarkStrategyDescriptor);
+    : Operator(id, statisticId)
+    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
+    , watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor))
+{
 }
 
-Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::getWatermarkStrategyDescriptor() const {
+PhysicalOperatorPtr PhysicalWatermarkAssignmentOperator::create(
+    OperatorId id,
+    StatisticId statisticId,
+    const SchemaPtr & inputSchema,
+    const SchemaPtr & outputSchema,
+    const Windowing::WatermarkStrategyDescriptorPtr & watermarkStrategyDescriptor)
+{
+    return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, statisticId, inputSchema, outputSchema, watermarkStrategyDescriptor);
+}
+
+Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::getWatermarkStrategyDescriptor() const
+{
     return watermarkStrategyDescriptor;
 }
 
-PhysicalOperatorPtr
-PhysicalWatermarkAssignmentOperator::create(StatisticId statisticId,
-                                            SchemaPtr inputSchema,
-                                            SchemaPtr outputSchema,
-                                            Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(getNextOperatorId(),
-                  statisticId,
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(watermarkStrategyDescriptor));
+PhysicalOperatorPtr PhysicalWatermarkAssignmentOperator::create(
+    StatisticId statisticId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
+{
+    return create(
+        getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }
 
-std::string PhysicalWatermarkAssignmentOperator::toString() const {
+std::string PhysicalWatermarkAssignmentOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalWatermarkAssignmentOperator:\n";
     out << PhysicalUnaryOperator::toString();
-    if (watermarkStrategyDescriptor != nullptr) {
+    if (watermarkStrategyDescriptor != nullptr)
+    {
         out << "watermarkStrategyDescriptor: " << watermarkStrategyDescriptor->toString();
     }
     out << std::endl;
     return out.str();
 }
 
-OperatorPtr PhysicalWatermarkAssignmentOperator::copy() {
+OperatorPtr PhysicalWatermarkAssignmentOperator::copy()
+{
     auto result = create(id, statisticId, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
     result->addAllProperties(properties);
     return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Operators/Arrow/ArrowFieldReader.hpp>
 #include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -27,67 +26,86 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <arrow/api.h>
-#include <utility>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-AbstractArrowFieldReader::AbstractArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier& fieldName)
-    : fieldIndex(fieldIndex), fieldName(fieldName) {}
-
-template<typename ArrowType>
-ArrowFieldReader<ArrowType>::ArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier& fieldName)
-    : AbstractArrowFieldReader(fieldIndex, fieldName) {}
-
-template<typename T>
-void* getRawArrowColumn(void* ptr, uint64_t index) {
-    auto wrapper = (RecordBufferWrapper*) ptr;
-    auto column = wrapper->batch->column(index);
-    return (void*) std::static_pointer_cast<T>(column)->raw_values();
+AbstractArrowFieldReader::AbstractArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier & fieldName)
+    : fieldIndex(fieldIndex), fieldName(fieldName)
+{
 }
 
-template<typename T>
-void* getArrowColumn(void* ptr, uint64_t index) {
-    auto wrapper = (RecordBufferWrapper*) ptr;
-    auto column = wrapper->batch->column(index);
-    return (void*) std::static_pointer_cast<T>(column).get();
+template <typename ArrowType>
+ArrowFieldReader<ArrowType>::ArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier & fieldName)
+    : AbstractArrowFieldReader(fieldIndex, fieldName)
+{
 }
 
-template<typename T>
-auto getArrayValue(void* ptr, uint64_t index) {
-    auto array = (T*) ptr;
+template <typename T>
+void * getRawArrowColumn(void * ptr, uint64_t index)
+{
+    auto wrapper = (RecordBufferWrapper *)ptr;
+    auto column = wrapper->batch->column(index);
+    return (void *)std::static_pointer_cast<T>(column)->raw_values();
+}
+
+template <typename T>
+void * getArrowColumn(void * ptr, uint64_t index)
+{
+    auto wrapper = (RecordBufferWrapper *)ptr;
+    auto column = wrapper->batch->column(index);
+    return (void *)std::static_pointer_cast<T>(column).get();
+}
+
+template <typename T>
+auto getArrayValue(void * ptr, uint64_t index)
+{
+    auto array = (T *)ptr;
     return array->Value(index);
 }
 
-TextValue* getStringValue(void* ptr, uint64_t index) {
-    auto array = (arrow::StringArray*) ptr;
+TextValue * getStringValue(void * ptr, uint64_t index)
+{
+    auto array = (arrow::StringArray *)ptr;
     auto string = array->GetString(index);
     return TextValue::create(string);
 }
 
-template<typename ArrowType>
-Value<> ArrowFieldReader<ArrowType>::getColumn(const Value<NES::Nautilus::MemRef>& recordBatch) {
-    if constexpr (HasRawValues<ArrowType>) {
-        return FunctionCall<>("getRawArrowColumn" + std::string(typeid(ArrowType).name()),
-                              getRawArrowColumn<ArrowType>,
-                              recordBatch,
-                              Value<UInt64>(fieldIndex));
-    } else {
-        return FunctionCall<>("getColumn" + std::string(typeid(ArrowType).name()),
-                              getArrowColumn<ArrowType>,
-                              recordBatch,
-                              Value<UInt64>(fieldIndex));
+template <typename ArrowType>
+Value<> ArrowFieldReader<ArrowType>::getColumn(const Value<NES::Nautilus::MemRef> & recordBatch)
+{
+    if constexpr (HasRawValues<ArrowType>)
+    {
+        return FunctionCall<>(
+            "getRawArrowColumn" + std::string(typeid(ArrowType).name()),
+            getRawArrowColumn<ArrowType>,
+            recordBatch,
+            Value<UInt64>(fieldIndex));
+    }
+    else
+    {
+        return FunctionCall<>(
+            "getColumn" + std::string(typeid(ArrowType).name()), getArrowColumn<ArrowType>, recordBatch, Value<UInt64>(fieldIndex));
     }
 }
 
-template<typename ArrowType>
-Value<> ArrowFieldReader<ArrowType>::getValue(const Value<NES::Nautilus::MemRef>& column, const Value<UInt64>& index) {
-    if constexpr (HasRawValues<ArrowType>) {
+template <typename ArrowType>
+Value<> ArrowFieldReader<ArrowType>::getValue(const Value<NES::Nautilus::MemRef> & column, const Value<UInt64> & index)
+{
+    if constexpr (HasRawValues<ArrowType>)
+    {
         using cType = typename ArrowType::value_type;
         auto offset = column + index * sizeof(cType);
         return offset.as<MemRef>().load<typename ValueForPrimitive<cType>::type>();
-    } else if constexpr (std::is_same_v<ArrowType, arrow::StringArray>) {
+    }
+    else if constexpr (std::is_same_v<ArrowType, arrow::StringArray>)
+    {
         return FunctionCall<>("getStringValue", getStringValue, column, index);
-    } else {
+    }
+    else
+    {
         return FunctionCall<>("getValue" + std::string(typeid(ArrowType).name()), getArrayValue<ArrowType>, column, index);
     }
 }
@@ -106,17 +124,21 @@ template class ArrowFieldReader<arrow::DoubleArray>;
 template class ArrowFieldReader<arrow::BooleanArray>;
 template class ArrowFieldReader<arrow::StringArray>;
 
-std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFromSchema(const SchemaPtr& schema) {
+std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFromSchema(const SchemaPtr & schema)
+{
     std::vector<std::shared_ptr<AbstractArrowFieldReader>> readers;
     auto df = DefaultPhysicalTypeFactory();
-    for (auto fieldIndex = 0_u64; fieldIndex < schema->fields.size(); fieldIndex++) {
-        auto& field = schema->fields[fieldIndex];
+    for (auto fieldIndex = 0_u64; fieldIndex < schema->fields.size(); fieldIndex++)
+    {
+        auto & field = schema->fields[fieldIndex];
         auto dataType = field->getDataType();
         auto physicalType = df.getPhysicalType(dataType);
-        if (physicalType->isBasicType()) {
+        if (physicalType->isBasicType())
+        {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
 
-            switch (basicPhysicalType->nativeType) {
+            switch (basicPhysicalType->nativeType)
+            {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
                     auto reader = std::make_shared<ArrowFieldReader<arrow::Int8Array>>(fieldIndex, field->getName());
                     readers.emplace_back(reader);
@@ -181,7 +203,9 @@ std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFro
                     NES_NOT_IMPLEMENTED();
                 }
             }
-        } else {
+        }
+        else
+        {
             // We do not support any other ARROW types (such as Lists, Maps, Tensors) yet. We could however later store
             // them in the childBuffers similar to how we store TEXT and push the computation supported by arrow down to
             // them.
@@ -191,4 +215,4 @@ std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFro
     return readers;
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

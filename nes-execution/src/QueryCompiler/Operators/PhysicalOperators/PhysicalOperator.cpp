@@ -11,13 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <sstream>
-namespace NES::QueryCompilation::PhysicalOperators {
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalOperator::PhysicalOperator(OperatorId id, StatisticId statisticId) : Operator(id, statisticId) {}
+PhysicalOperator::PhysicalOperator(OperatorId id, StatisticId statisticId) : Operator(id, statisticId)
+{
+}
 
-std::string PhysicalOperator::toString() const {
+std::string PhysicalOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalOperator:\n";
@@ -25,4 +29,4 @@ std::string PhysicalOperator::toString() const {
     return out.str();
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

@@ -14,23 +14,26 @@
 
 #ifndef NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
 #define NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
-#include <Exceptions/ErrorListener.hpp>
 #include <atomic>
 #include <future>
+#include <thread>
+#include <Exceptions/ErrorListener.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
-#include <thread>
-namespace NES::Testing {
+namespace NES::Testing
+{
 
-namespace detail {
-class TestWaitingHelper {
-  public:
+namespace detail
+{
+class TestWaitingHelper
+{
+public:
     TestWaitingHelper();
     void startWaitingThread(std::string testName);
     void completeTest();
     void failTest();
 
-  private:
+private:
     std::unique_ptr<std::thread> waitThread;
     std::shared_ptr<std::promise<bool>> testCompletion;
     std::atomic<bool> testCompletionSet{false};
@@ -40,8 +43,9 @@ class TestWaitingHelper {
 /**
  * @brief This class is used to generate source names that include an ascending counter.
  */
-class TestSourceNameHelper {
-  public:
+class TestSourceNameHelper
+{
+public:
     TestSourceNameHelper();
 
     /**
@@ -50,17 +54,19 @@ class TestSourceNameHelper {
      */
     std::string operator*();
 
-  private:
+private:
     uint64_t srcCnt;
 };
-}// namespace detail
+} // namespace detail
 
-class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper {
-    struct Deleter {
-        void operator()(void*) {}
+class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper
+{
+    struct Deleter
+    {
+        void operator()(void *) { }
     };
 
-  public:
+public:
     void SetUp() override;
     void TearDown() override;
     virtual void onFatalError(int signalNumber, std::string callstack) override;
@@ -68,10 +74,10 @@ class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, pub
 
     detail::TestSourceNameHelper srcName;
 
-  private:
+private:
     std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
 };
 
-}// namespace NES::Testing
+} // namespace NES::Testing
 
-#endif// NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_

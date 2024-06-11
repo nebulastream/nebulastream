@@ -18,15 +18,17 @@
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief FixedChar(n), where n is a positive integer.
  * FixedChar can store strings up to n characters (not bytes) in length.
  * If the string to be stored is shorter than the declared length, values of type FixedChar will be space-padded.
  */
-class FixedChar final : public ArrayType {
-  public:
+class FixedChar final : public ArrayType
+{
+public:
     /**
      * @brief Constructs a new Char(n)
      * @param length length of the char
@@ -36,6 +38,6 @@ class FixedChar final : public ArrayType {
     ~FixedChar() override = default;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_

@@ -17,14 +17,15 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Logical unary operator. It hat at most one input data source.
  */
-class LogicalUnaryOperator : public LogicalOperator, public UnaryOperator {
-
-  public:
+class LogicalUnaryOperator : public LogicalOperator, public UnaryOperator
+{
+public:
     explicit LogicalUnaryOperator(OperatorId id);
 
     /**
@@ -40,6 +41,6 @@ class LogicalUnaryOperator : public LogicalOperator, public UnaryOperator {
      */
     void inferInputOrigins() override;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_

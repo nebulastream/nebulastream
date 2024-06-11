@@ -22,12 +22,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 
-namespace NES::Nautilus::Backends::CPP {
+namespace NES::Nautilus::Backends::CPP
+{
 
 [[maybe_unused]] static CompilationBackendRegistry::Add<CPPCompilationBackend> cppCompilationBackend("CPPCompiler");
 
 std::unique_ptr<Executable>
-CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) {
+CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions & options, const DumpHelper & dumpHelper)
+{
     auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
     timer.start();
 
@@ -40,20 +42,16 @@ CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, code);
 
     std::vector<std::shared_ptr<Compiler::ExternalAPI>> externalApis;
-    if (options.usingCUDA()) {
+    if (options.usingCUDA())
+    {
         externalApis.push_back(std::make_shared<Compiler::CUDAPlatform>(options.getCUDASdkPath()));
     }
 
-    auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
-                                                        "cppQuery",
-                                                        options.isDebug(),
-                                                        false,
-                                                        options.isOptimize(),
-                                                        options.isDebug(),
-                                                        externalApis);
+    auto request = Compiler::CompilationRequest::create(
+        std::move(sourceCode), "cppQuery", options.isDebug(), false, options.isOptimize(), options.isDebug(), externalApis);
     auto res = compiler->compile(request);
     timer.snapshot("CCPCompilation");
     return std::make_unique<CPPExecutable>(res.getDynamicObject());
 }
 
-}// namespace NES::Nautilus::Backends::CPP
+} // namespace NES::Nautilus::Backends::CPP

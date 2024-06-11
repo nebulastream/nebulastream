@@ -48,7 +48,8 @@
 #include <cstdint>
 #include <cstring>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Our radix sort sorts in chunks of bytes. To perform our radix sort, we need to encode the sort column.
@@ -61,21 +62,30 @@ namespace NES::Runtime::Execution::Operators {
  * @param value
  * @return uint8_t
  */
-inline constexpr uint8_t FlipSign(uint8_t keyByte) { return keyByte ^ 128; }
+inline constexpr uint8_t FlipSign(uint8_t keyByte)
+{
+    return keyByte ^ 128;
+}
 
 /**
  * @brief Byte swap a value
  * @param value
  * @return uint8_t
  */
-template<typename T>
-inline constexpr T byteSwap(T value) {
+template <typename T>
+inline constexpr T byteSwap(T value)
+{
     static_assert(std::is_integral<T>::value, "byteSwap can only be used with integral types.");
-    switch (sizeof(T)) {
-        case 1: return value;
-        case 2: return std::endian::big == std::endian::native ? value : __builtin_bswap16(value);
-        case 4: return std::endian::big == std::endian::native ? value : __builtin_bswap32(value);
-        case 8: return std::endian::big == std::endian::native ? value : __builtin_bswap64(value);
+    switch (sizeof(T))
+    {
+        case 1:
+            return value;
+        case 2:
+            return std::endian::big == std::endian::native ? value : __builtin_bswap16(value);
+        case 4:
+            return std::endian::big == std::endian::native ? value : __builtin_bswap32(value);
+        case 8:
+            return std::endian::big == std::endian::native ? value : __builtin_bswap64(value);
         default:
             throw Exceptions::NotImplementedException("byteSwap only supports integral types with sizes 1, 2, 4, or 8 bytes.");
     }
@@ -88,8 +98,9 @@ inline constexpr T byteSwap(T value) {
  * @tparam T
  * @tparam void
  */
-template<typename T, typename = void>
-struct EncoderTraits {
+template <typename T, typename = void>
+struct EncoderTraits
+{
     using EncodedType = T;
 
     static EncodedType Encode(T, bool) { throw Exceptions::NotImplementedException("Encode not implemented for this type"); }
@@ -99,12 +110,15 @@ struct EncoderTraits {
  * @brief Encode bool values for sorting
  * @tparam T
  */
-template<>
-struct EncoderTraits<bool> {
+template <>
+struct EncoderTraits<bool>
+{
     using EncodedType = bool;
 
-    static EncodedType Encode(bool value, bool isDescending) {
-        if (isDescending) {
+    static EncodedType Encode(bool value, bool isDescending)
+    {
+        if (isDescending)
+        {
             value = !value;
         }
         return value;
@@ -115,15 +129,18 @@ struct EncoderTraits<bool> {
  * @brief Encode signed integral values for sorting
  * @tparam T
  */
-template<typename T>
-struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type> {
+template <typename T>
+struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type>
+{
     using EncodedType = T;
 
-    static EncodedType Encode(T value, bool descending) {
+    static EncodedType Encode(T value, bool descending)
+    {
         value = byteSwap(value);
-        auto* firstBytePtr = reinterpret_cast<uint8_t*>(&value);
+        auto * firstBytePtr = reinterpret_cast<uint8_t *>(&value);
         *firstBytePtr = FlipSign(*firstBytePtr);
-        if (descending) {
+        if (descending)
+        {
             value = ~value;
         }
         return value;
@@ -134,13 +151,16 @@ struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && st
  * @brief Encode unsigned integral values for sorting
  * @tparam T
  */
-template<typename T>
-struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type> {
+template <typename T>
+struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type>
+{
     using EncodedType = T;
 
-    static EncodedType Encode(T value, bool descending) {
+    static EncodedType Encode(T value, bool descending)
+    {
         value = byteSwap(value);
-        if (descending) {
+        if (descending)
+        {
             value = ~value;
         }
         return value;
@@ -151,28 +171,41 @@ struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && st
  * @brief Encode floating point values for sorting
  * @tparam T
  */
-template<typename T>
-struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+template <typename T>
+struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value>::type>
+{
     // float and double are encoded as uint32_t and uint64_t respectively
     using EncodedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
 
-    static EncodedType Encode(T value, bool descending) {
+    static EncodedType Encode(T value, bool descending)
+    {
         EncodedType encodedValue;
-        if (value == 0) {
+        if (value == 0)
+        {
             encodedValue = 0;
             encodedValue |= (1ull << (sizeof(EncodedType) * 8 - 1));
-        } else if (value > std::numeric_limits<T>::max()) {
+        }
+        else if (value > std::numeric_limits<T>::max())
+        {
             encodedValue = std::numeric_limits<EncodedType>::max() - 1;
-        } else if (value < -std::numeric_limits<T>::max()) {
+        }
+        else if (value < -std::numeric_limits<T>::max())
+        {
             encodedValue = 0;
-        } else {
-            encodedValue = *reinterpret_cast<EncodedType*>(&value);
-            if (encodedValue < (1ull << (sizeof(EncodedType) * 8 - 1))) {
+        }
+        else
+        {
+            encodedValue = *reinterpret_cast<EncodedType *>(&value);
+            if (encodedValue < (1ull << (sizeof(EncodedType) * 8 - 1)))
+            {
                 encodedValue += (1ull << (sizeof(EncodedType) * 8 - 1));
-            } else {
+            }
+            else
+            {
                 encodedValue = ~encodedValue;
             }
-            if (descending) {
+            if (descending)
+            {
                 encodedValue = ~encodedValue;
             }
             encodedValue = byteSwap(encodedValue);
@@ -181,10 +214,11 @@ struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value
     }
 };
 
-template<typename T>
-typename EncoderTraits<T>::EncodedType encodeData(T value, bool descending = false) {
+template <typename T>
+typename EncoderTraits<T>::EncodedType encodeData(T value, bool descending = false)
+{
     return EncoderTraits<T>::Encode(value, descending);
 }
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_

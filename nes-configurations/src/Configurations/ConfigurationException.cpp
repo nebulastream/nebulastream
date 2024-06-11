@@ -13,10 +13,11 @@
 */
 #include <Configurations/ConfigurationException.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-ConfigurationException::ConfigurationException(const std::string& message,
-                                               std::string&& stacktrace,
-                                               std::source_location location)
-    : RuntimeException(message, std::move(stacktrace), location) {}
-}// namespace NES::Configurations
+ConfigurationException::ConfigurationException(const std::string & message, std::string && stacktrace, std::source_location location)
+    : RuntimeException(message, std::move(stacktrace), location)
+{
+}
+} // namespace NES::Configurations

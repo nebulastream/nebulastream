@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <string>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -39,36 +39,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <string>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    NestedLoopJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager,
-                                                 uint64_t noWorkerThreads,
-                                                 OperatorHandlerPtr nljOpHandler,
-                                                 PipelineId pipelineId)
+class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext
+{
+public:
+    NestedLoopJoinMockedPipelineExecutionContext(
+        BufferManagerPtr bufferManager,
+        uint64_t noWorkerThreads,
+        OperatorHandlerPtr nljOpHandler,
+        PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId,              // mock pipeline id
-            DecomposedQueryPlanId(1),// mock query id
+            pipelineId, // mock pipeline id
+            DecomposedQueryPlanId(1), // mock query id
             bufferManager,
             noWorkerThreads,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                this->emittedBuffers.emplace_back(std::move(buffer));
-            },
-            [this](TupleBuffer& buffer) {
-                this->emittedBuffers.emplace_back(std::move(buffer));
-            },
+            [this](TupleBuffer & buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+            [this](TupleBuffer & buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
             {nljOpHandler}){};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-
-  public:
-    ExecutablePipelineProvider* provider;
+class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
+    ExecutablePipelineProvider * provider;
     BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
@@ -76,16 +75,19 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
     const uint64_t rightPageSize = 512;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("NestedLoopJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup NestedLoopJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseUnitTest::SetUp();
         NES_INFO("Setup NestedLoopJoinPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -93,29 +95,29 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
-    bool checkIfNLJWorks(const std::string& fileNameBuffersLeft,
-                         const std::string& fileNameBuffersRight,
-                         const std::string& fileNameBuffersSink,
-                         uint64_t windowSize,
-                         const SchemaPtr leftSchema,
-                         const SchemaPtr rightSchema,
-                         const SchemaPtr joinSchema,
-                         const std::string& joinFieldNameLeft,
-                         const std::string& joinFieldNameRight,
-                         const std::string& timeStampFieldLeft,
-                         const std::string& timeStampFieldRight,
-                         const std::string& windowStartFieldName,
-                         const std::string& windowEndFieldName,
-                         Expressions::ExpressionPtr joinExpression) {
-
+    bool checkIfNLJWorks(
+        const std::string & fileNameBuffersLeft,
+        const std::string & fileNameBuffersRight,
+        const std::string & fileNameBuffersSink,
+        uint64_t windowSize,
+        const SchemaPtr leftSchema,
+        const SchemaPtr rightSchema,
+        const SchemaPtr joinSchema,
+        const std::string & joinFieldNameLeft,
+        const std::string & joinFieldNameRight,
+        const std::string & timeStampFieldLeft,
+        const std::string & timeStampFieldRight,
+        const std::string & windowStartFieldName,
+        const std::string & windowEndFieldName,
+        Expressions::ExpressionPtr joinExpression)
+    {
         bool nljWorks = true;
 
         // Creating the input left and right buffers and the expected output buffer
         auto originId = 0UL;
-        auto leftBuffers =
-            Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager, originId++, timeStampFieldLeft);
-        auto rightBuffers =
-            Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
+        auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager, originId++, timeStampFieldLeft);
+        auto rightBuffers
+            = Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
         auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager, originId++);
         NES_DEBUG("read file={}", fileNameBuffersSink);
 
@@ -148,8 +150,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftEntrySize,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
-                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -159,34 +160,28 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightEntrySize,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
-                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
         Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);
 
-        auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
-                                                              joinSchemaStruct,
-                                                              joinExpression,
-                                                              windowMetaData,
-                                                              leftSchema,
-                                                              rightSchema,
-                                                              QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-                                                              QueryCompilation::WindowingStrategy::SLICING);
+        auto nljProbe = std::make_shared<Operators::NLJProbe>(
+            handlerIndex,
+            joinSchemaStruct,
+            joinExpression,
+            windowMetaData,
+            leftSchema,
+            rightSchema,
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+            QueryCompilation::WindowingStrategy::SLICING);
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(1);
-        auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(originIds,
-                                                                               outputOriginId,
-                                                                               windowSize,
-                                                                               windowSize,
-                                                                               leftSchema,
-                                                                               rightSchema,
-                                                                               leftPageSize,
-                                                                               rightPageSize);
+        auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
+            originIds, outputOriginId, windowSize, windowSize, leftSchema, rightSchema, leftPageSize, rightPageSize);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
@@ -203,18 +198,12 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
 
         auto curPipelineId = 0;
         auto noWorkerThreads = 1;
-        auto pipelineExecCtxLeft = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
-                                                                                noWorkerThreads,
-                                                                                nljOperatorHandler,
-                                                                                PipelineId(curPipelineId++));
-        auto pipelineExecCtxRight = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
-                                                                                 noWorkerThreads,
-                                                                                 nljOperatorHandler,
-                                                                                 PipelineId(curPipelineId++));
-        auto pipelineExecCtxSink = NestedLoopJoinMockedPipelineExecutionContext(bufferManager,
-                                                                                noWorkerThreads,
-                                                                                nljOperatorHandler,
-                                                                                PipelineId(curPipelineId++));
+        auto pipelineExecCtxLeft
+            = NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, PipelineId(curPipelineId++));
+        auto pipelineExecCtxRight
+            = NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, PipelineId(curPipelineId++));
+        auto pipelineExecCtxSink
+            = NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, PipelineId(curPipelineId++));
 
         nljOperatorHandler->start(std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft), 0);
 
@@ -227,42 +216,44 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         nljWorks = nljWorks && (executablePipelineSink->setup(pipelineExecCtxSink) == 0);
 
         // Executing left and right buffers
-        for (auto buffer : leftBuffers) {
+        for (auto buffer : leftBuffers)
+        {
             executablePipelineLeft->execute(buffer, pipelineExecCtxLeft, *workerContext);
         }
-        for (auto buffer : rightBuffers) {
+        for (auto buffer : rightBuffers)
+        {
             executablePipelineRight->execute(buffer, pipelineExecCtxRight, *workerContext);
         }
         nljWorks = nljWorks && (executablePipelineLeft->stop(pipelineExecCtxLeft) == 0);
         nljWorks = nljWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
         nljOperatorHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft));
-        nljOperatorHandler->stop(QueryTerminationType::Graceful,
-                                 std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
+        nljOperatorHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
         // Assure that at least one buffer has been emitted
         nljWorks = nljWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
         // Executing sink buffers
         std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
-        buildEmittedBuffers.insert(buildEmittedBuffers.end(),
-                                   pipelineExecCtxRight.emittedBuffers.begin(),
-                                   pipelineExecCtxRight.emittedBuffers.end());
-        for (auto buf : buildEmittedBuffers) {
+        buildEmittedBuffers.insert(
+            buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(), pipelineExecCtxRight.emittedBuffers.end());
+        for (auto buf : buildEmittedBuffers)
+        {
             executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
         }
         nljWorks = nljWorks && (executablePipelineSink->stop(pipelineExecCtxSink) == 0);
         std::vector<SequenceData> seqNumbers;
 
-        std::transform(pipelineExecCtxSink.emittedBuffers.begin(),
-                       pipelineExecCtxSink.emittedBuffers.end(),
-                       std::back_inserter(seqNumbers),
-                       [](const TupleBuffer& buffer) {
-                           return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk());
-                       });
+        std::transform(
+            pipelineExecCtxSink.emittedBuffers.begin(),
+            pipelineExecCtxSink.emittedBuffers.end(),
+            std::back_inserter(seqNumbers),
+            [](const TupleBuffer & buffer)
+            { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); });
         std::sort(seqNumbers.begin(), seqNumbers.end());
         bool hasDuplicates = std::adjacent_find(seqNumbers.begin(), seqNumbers.end()) != seqNumbers.end();
         nljWorks &= !hasDuplicates;
-        if (hasDuplicates) {
+        if (hasDuplicates)
+        {
             NES_ERROR("Result contains multiple buffer with the same Sequence Number");
         }
         auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, bufferManager);
@@ -270,13 +261,13 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));
 
         nljWorks = nljWorks && (resultBuffer.getNumberOfTuples() == expectedSinkBuffers[0].getNumberOfTuples());
-        nljWorks =
-            nljWorks && (Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffers[0], joinSchema->getSchemaSizeInBytes()));
+        nljWorks = nljWorks && (Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffers[0], joinSchema->getSchemaSizeInBytes()));
         return nljWorks;
     }
 };
 
-TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline)
+{
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("left$id", BasicType::UINT64)
                                 ->addField("left$value", BasicType::UINT64)
@@ -308,23 +299,25 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink.csv");
 
-    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
-                                fileNameBuffersRight,
-                                fileNameBuffersSink,
-                                windowSize,
-                                leftSchema,
-                                rightSchema,
-                                joinSchema,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
-                                timeStampFieldLeft,
-                                timeStampFieldRight,
-                                windowStartFieldName,
-                                windowEndFieldName,
-                                joinExpression));
+    ASSERT_TRUE(checkIfNLJWorks(
+        fileNameBuffersLeft,
+        fileNameBuffersRight,
+        fileNameBuffersSink,
+        windowSize,
+        leftSchema,
+        rightSchema,
+        joinSchema,
+        joinFieldNameLeft,
+        joinFieldNameRight,
+        timeStampFieldLeft,
+        timeStampFieldRight,
+        windowStartFieldName,
+        windowEndFieldName,
+        joinExpression));
 }
 
-TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput)
+{
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("left$id", BasicType::UINT64)
                                 ->addField("left$value", BasicType::UINT64)
@@ -356,23 +349,25 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink2.csv");
 
-    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
-                                fileNameBuffersRight,
-                                fileNameBuffersSink,
-                                windowSize,
-                                leftSchema,
-                                rightSchema,
-                                joinSchema,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
-                                timeStampFieldLeft,
-                                timeStampFieldRight,
-                                windowStartFieldName,
-                                windowEndFieldName,
-                                joinExpression));
+    ASSERT_TRUE(checkIfNLJWorks(
+        fileNameBuffersLeft,
+        fileNameBuffersRight,
+        fileNameBuffersSink,
+        windowSize,
+        leftSchema,
+        rightSchema,
+        joinSchema,
+        joinFieldNameLeft,
+        joinFieldNameRight,
+        timeStampFieldLeft,
+        timeStampFieldRight,
+        windowStartFieldName,
+        windowEndFieldName,
+        joinExpression));
 }
 
-TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDifferentExpressions) {
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDifferentExpressions)
+{
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("left$id", BasicType::UINT64)
                                 ->addField("left$value", BasicType::UINT64)
@@ -411,23 +406,25 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink4.csv");
 
-    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
-                                fileNameBuffersRight,
-                                fileNameBuffersSink,
-                                windowSize,
-                                leftSchema,
-                                rightSchema,
-                                joinSchema,
-                                joinFieldName1Left,
-                                joinFieldName2Right,
-                                timeStampFieldLeft,
-                                timeStampFieldRight,
-                                windowStartFieldName,
-                                windowEndFieldName,
-                                joinExpression));
+    ASSERT_TRUE(checkIfNLJWorks(
+        fileNameBuffersLeft,
+        fileNameBuffersRight,
+        fileNameBuffersSink,
+        windowSize,
+        leftSchema,
+        rightSchema,
+        joinSchema,
+        joinFieldName1Left,
+        joinFieldName2Right,
+        timeStampFieldLeft,
+        timeStampFieldRight,
+        windowStartFieldName,
+        windowEndFieldName,
+        joinExpression));
 }
 
-TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDifferentExpressionsNoEquals) {
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDifferentExpressionsNoEquals)
+{
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("left$id", BasicType::UINT64)
                                 ->addField("left$value", BasicType::UINT64)
@@ -466,23 +463,25 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink5.csv");
 
-    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
-                                fileNameBuffersRight,
-                                fileNameBuffersSink,
-                                windowSize,
-                                leftSchema,
-                                rightSchema,
-                                joinSchema,
-                                joinFieldName1Left,
-                                joinFieldName2Right,
-                                timeStampFieldLeft,
-                                timeStampFieldRight,
-                                windowStartFieldName,
-                                windowEndFieldName,
-                                keyExpressions));
+    ASSERT_TRUE(checkIfNLJWorks(
+        fileNameBuffersLeft,
+        fileNameBuffersRight,
+        fileNameBuffersSink,
+        windowSize,
+        leftSchema,
+        rightSchema,
+        joinSchema,
+        joinFieldName1Left,
+        joinFieldName2Right,
+        timeStampFieldLeft,
+        timeStampFieldRight,
+        windowStartFieldName,
+        windowEndFieldName,
+        keyExpressions));
 }
 
-TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes) {
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
+{
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("left$id", BasicType::UINT64)
                                 ->addField("left$value", BasicType::UINT64)
@@ -512,27 +511,27 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
     const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window3.csv");
     const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink3.csv");
-    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
-                                fileNameBuffersRight,
-                                fileNameBuffersSink,
-                                windowSize,
-                                leftSchema,
-                                rightSchema,
-                                joinSchema,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
-                                timeStampFieldLeft,
-                                timeStampFieldRight,
-                                windowStartFieldName,
-                                windowEndFieldName,
-                                keyExpressions));
+    ASSERT_TRUE(checkIfNLJWorks(
+        fileNameBuffersLeft,
+        fileNameBuffersRight,
+        fileNameBuffersSink,
+        windowSize,
+        leftSchema,
+        rightSchema,
+        joinSchema,
+        joinFieldNameLeft,
+        joinFieldNameRight,
+        timeStampFieldLeft,
+        timeStampFieldRight,
+        windowStartFieldName,
+        windowEndFieldName,
+        keyExpressions));
 }
 
-INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,
-                        NestedLoopJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    nestedLoopJoinPipelineTest,
+    NestedLoopJoinPipelineTest,
+    ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

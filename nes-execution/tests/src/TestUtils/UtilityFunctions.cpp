@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <filesystem>
+#include <fstream>
+#include <random>
+#include <set>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -25,56 +27,62 @@
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <filesystem>
-#include <fstream>
-#include <random>
-#include <set>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Util {
+namespace NES::Runtime::Execution::Util
+{
 
-std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
-                                                           BufferManager& bufferManager,
-                                                           SchemaPtr schema,
-                                                           const std::string& fieldToBuildCountMinOver,
-                                                           const std::string& timestampFieldName,
-                                                           const bool ingestionTime) {
-    auto currentIngestionTs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(
+    int numberOfTuples,
+    BufferManager & bufferManager,
+    SchemaPtr schema,
+    const std::string & fieldToBuildCountMinOver,
+    const std::string & timestampFieldName,
+    const bool ingestionTime)
+{
+    auto currentIngestionTs
+        = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto buffer = bufferManager.getBufferBlocking();
     std::vector<TupleBuffer> inputBuffers;
 
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     StatisticId statisticId = 1;
-    ChunkNumber chunkNumber = 1;// As we do not split a sequence number over multiple buffers here
-    auto originId = OriginId(1);// As we only have one origin in all tests
+    ChunkNumber chunkNumber = 1; // As we do not split a sequence number over multiple buffers here
+    auto originId = OriginId(1); // As we only have one origin in all tests
 
-    for (auto i = 0; i < numberOfTuples; ++i) {
+    for (auto i = 0; i < numberOfTuples; ++i)
+    {
         auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         auto curTuplePos = dynamicBuffer.getNumberOfTuples();
         dynamicBuffer[curTuplePos][fieldToBuildCountMinOver].write<int64_t>(rand() % 100000 - 50000);
         dynamicBuffer.setNumberOfTuples(curTuplePos + 1);
 
         // This way, we do not have to change Util::updateTestStatistic functions
-        if (ingestionTime) {
+        if (ingestionTime)
+        {
             dynamicBuffer[curTuplePos][timestampFieldName].write<uint64_t>(currentIngestionTs);
-        } else {
+        }
+        else
+        {
             dynamicBuffer[curTuplePos][timestampFieldName].write<uint64_t>(i);
         }
 
-        if (dynamicBuffer.getNumberOfTuples() >= dynamicBuffer.getCapacity()) {
+        if (dynamicBuffer.getNumberOfTuples() >= dynamicBuffer.getCapacity())
+        {
             buffer.setStatisticId(statisticId);
             buffer.setSequenceData({++sequenceNumber, chunkNumber, true});
             buffer.setOriginId(originId);
             buffer.setCreationTimestampInMS(currentIngestionTs);
             inputBuffers.emplace_back(buffer);
             buffer = bufferManager.getBufferBlocking();
-            currentIngestionTs =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    .count();
+            currentIngestionTs
+                = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         }
     }
 
-    if (buffer.getNumberOfTuples() > 0) {
+    if (buffer.getNumberOfTuples() > 0)
+    {
         buffer.setStatisticId(statisticId);
         buffer.setSequenceData({++sequenceNumber, chunkNumber, true});
         buffer.setOriginId(originId);
@@ -85,25 +93,28 @@ std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
     return inputBuffers;
 }
 
-void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-                                 Statistic::StatisticStorePtr statisticStore,
-                                 Statistic::StatisticMetricHash metricHash,
-                                 uint64_t numberOfBitsInKey,
-                                 uint64_t windowSize,
-                                 uint64_t windowSlide,
-                                 uint64_t width,
-                                 uint64_t depth,
-                                 const std::string& fieldToBuildCountMinOver,
-                                 const std::string& timestampFieldName) {
-
+void updateTestCountMinStatistic(
+    MemoryLayouts::TestTupleBuffer & testTupleBuffer,
+    Statistic::StatisticStorePtr statisticStore,
+    Statistic::StatisticMetricHash metricHash,
+    uint64_t numberOfBitsInKey,
+    uint64_t windowSize,
+    uint64_t windowSlide,
+    uint64_t width,
+    uint64_t depth,
+    const std::string & fieldToBuildCountMinOver,
+    const std::string & timestampFieldName)
+{
     // 1. Creating h3Seeds nad H3Hash function
     constexpr auto numberOfBitsInHashValue = NUMBER_OF_BITS_IN_HASH_VALUE;
     std::vector<uint64_t> h3Seeds;
     std::random_device rd;
     std::mt19937 gen(H3_SEED);
     std::uniform_int_distribution<uint64_t> distribution;
-    for (auto row = 0UL; row < depth; ++row) {
-        for (auto keyBit = 0UL; keyBit < numberOfBitsInKey; ++keyBit) {
+    for (auto row = 0UL; row < depth; ++row)
+    {
+        for (auto keyBit = 0UL; keyBit < numberOfBitsInKey; ++keyBit)
+        {
             h3Seeds.emplace_back(distribution(gen));
         }
     }
@@ -112,7 +123,8 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
     // 2. For each tuple in the buffer, we get the corresponding count min statistic and then update it accordingly
     auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
     Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
-    for (auto tuple : testTupleBuffer) {
+    for (auto tuple : testTupleBuffer)
+    {
         auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
         auto ts = tuple[timestampFieldName].read<uint64_t>();
         auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
@@ -120,18 +132,21 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
 
         auto allCountMinStatistics = statisticStore->getStatistics(statisticHash, startTs, endTs);
         Statistic::StatisticPtr countMinStatistic;
-        if (allCountMinStatistics.empty()) {
+        if (allCountMinStatistics.empty())
+        {
             countMinStatistic = Statistic::CountMinStatistic::createInit(startTs, endTs, width, depth, numberOfBitsInKey);
             statisticStore->insertStatistic(statisticHash, countMinStatistic);
-            NES_DEBUG("Created and inserted new countMinStatistic = {} for statisticHash = {}",
-                      countMinStatistic->toString(),
-                      statisticHash);
-        } else {
+            NES_DEBUG(
+                "Created and inserted new countMinStatistic = {} for statisticHash = {}", countMinStatistic->toString(), statisticHash);
+        }
+        else
+        {
             countMinStatistic = allCountMinStatistics[0];
         }
 
-        for (auto row = 0_u64; row < depth; ++row) {
-            int8_t* h3SeedsStart = (int8_t*) h3Seeds.data();
+        for (auto row = 0_u64; row < depth; ++row)
+        {
+            int8_t * h3SeedsStart = (int8_t *)h3Seeds.data();
             auto h3SeedsOffSet = row * ((numberOfBitsInKey * numberOfBitsInHashValue) / 8);
             Nautilus::Value<Nautilus::MemRef> h3SeedMemRef(h3SeedsStart + h3SeedsOffSet);
             Nautilus::Value<Nautilus::Int64> valKey(tuple[fieldToBuildCountMinOver].read<int64_t>());
@@ -142,20 +157,22 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
     }
 }
 
-void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-                                    Statistic::StatisticStorePtr statisticStore,
-                                    Statistic::StatisticMetricHash metricHash,
-                                    uint64_t windowSize,
-                                    uint64_t windowSlide,
-                                    uint64_t width,
-                                    const std::string& fieldToBuildCountMinOver,
-                                    const std::string& timestampFieldName) {
-
+void updateTestHyperLogLogStatistic(
+    MemoryLayouts::TestTupleBuffer & testTupleBuffer,
+    Statistic::StatisticStorePtr statisticStore,
+    Statistic::StatisticMetricHash metricHash,
+    uint64_t windowSize,
+    uint64_t windowSlide,
+    uint64_t width,
+    const std::string & fieldToBuildCountMinOver,
+    const std::string & timestampFieldName)
+{
     // For each tuple in the buffer, we get the corresponding hyperloglog statistic and then update it accordingly
     std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
     auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
     Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
-    for (auto tuple : testTupleBuffer) {
+    for (auto tuple : testTupleBuffer)
+    {
         auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
         auto ts = tuple[timestampFieldName].read<uint64_t>();
         auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
@@ -163,13 +180,14 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
 
         auto allHyperLogLogStatistics = statisticStore->getStatistics(statisticHash, startTs, endTs);
         Statistic::StatisticPtr hllStatistic;
-        if (allHyperLogLogStatistics.empty()) {
+        if (allHyperLogLogStatistics.empty())
+        {
             hllStatistic = Statistic::HyperLogLogStatistic::createInit(startTs, endTs, width);
             statisticStore->insertStatistic(statisticHash, hllStatistic);
-            NES_DEBUG("Created and inserted new hllStatistic = {} for statisticHash = {}",
-                      hllStatistic->toString(),
-                      statisticHash);
-        } else {
+            NES_DEBUG("Created and inserted new hllStatistic = {} for statisticHash = {}", hllStatistic->toString(), statisticHash);
+        }
+        else
+        {
             hllStatistic = allHyperLogLogStatistics[0];
         }
 
@@ -179,12 +197,14 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
     }
 }
 
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, BufferManagerPtr bufferManager) {
+Runtime::TupleBuffer getBufferFromPointer(uint8_t * recordPtr, const SchemaPtr & schema, BufferManagerPtr bufferManager)
+{
     auto buffer = bufferManager->getBufferBlocking();
-    uint8_t* bufferPtr = buffer.getBuffer();
+    uint8_t * bufferPtr = buffer.getBuffer();
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto& field : schema->fields) {
+    for (auto & field : schema->fields)
+    {
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         std::memcpy(bufferPtr, recordPtr, fieldType->size());
         bufferPtr += fieldType->size();
@@ -194,42 +214,44 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& s
     return buffer;
 }
 
-void writeNautilusRecord(uint64_t recordIndex,
-                         int8_t* baseBufferPtr,
-                         Nautilus::Record nautilusRecord,
-                         SchemaPtr schema,
-                         BufferManagerPtr bufferManager) {
+void writeNautilusRecord(
+    uint64_t recordIndex, int8_t * baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager)
+{
     Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
     Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    {
         auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
 
         memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
-
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    }
+    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
         auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
 
         memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
-
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Schema Layout not supported!");
     }
 }
 
-Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
-                                  const SchemaPtr schema,
-                                  Runtime::BufferManagerPtr bufferManager) {
-
+Runtime::TupleBuffer
+mergeBuffers(std::vector<Runtime::TupleBuffer> & buffersToBeMerged, const SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
+{
     auto retBuffer = bufferManager->getBufferBlocking();
     auto retBufferPtr = retBuffer.getBuffer();
 
     auto maxPossibleTuples = retBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
     auto cnt = 0UL;
-    for (auto& buffer : buffersToBeMerged) {
+    for (auto & buffer : buffersToBeMerged)
+    {
         cnt += buffer.getNumberOfTuples();
-        if (cnt > maxPossibleTuples) {
+        if (cnt > maxPossibleTuples)
+        {
             NES_WARNING("Too many tuples to fit in a single buffer.");
             return retBuffer;
         }
@@ -244,16 +266,20 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
     return retBuffer;
 }
 
-std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::TupleBuffer>& buffers,
-                                                         SchemaPtr schema,
-                                                         const std::string& timeStampFieldName,
-                                                         BufferManagerPtr bufferManager,
-                                                         uint64_t windowSize) {
-    if (buffers.size() == 0) {
+std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
+    std::vector<Runtime::TupleBuffer> & buffers,
+    SchemaPtr schema,
+    const std::string & timeStampFieldName,
+    BufferManagerPtr bufferManager,
+    uint64_t windowSize)
+{
+    if (buffers.size() == 0)
+    {
         return {};
     }
 
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
         NES_FATAL_ERROR("Column layout is not support for this function currently!");
     }
 
@@ -264,15 +290,18 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
     auto curBuffer = bufferManager->getBufferBlocking();
     auto numberOfTuplesInBuffer = 0UL;
     auto lastTimeStamp = windowSize - 1;
-    for (auto buf : buffers) {
+    for (auto buf : buffers)
+    {
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
 
-        for (auto curTuple = 0UL; curTuple < testTupleBuffer.getNumberOfTuples(); ++curTuple) {
+        for (auto curTuple = 0UL; curTuple < testTupleBuffer.getNumberOfTuples(); ++curTuple)
+        {
             if (testTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp
-                || numberOfTuplesInBuffer >= memoryLayout->getCapacity()) {
-
-                if (testTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp) {
+                || numberOfTuplesInBuffer >= memoryLayout->getCapacity())
+            {
+                if (testTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp)
+                {
                     lastTimeStamp += windowSize;
                 }
 
@@ -283,15 +312,17 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
                 numberOfTuplesInBuffer = 0;
             }
 
-            memcpy(curBuffer.getBuffer() + schema->getSchemaSizeInBytes() * numberOfTuplesInBuffer,
-                   buf.getBuffer() + schema->getSchemaSizeInBytes() * curTuple,
-                   schema->getSchemaSizeInBytes());
+            memcpy(
+                curBuffer.getBuffer() + schema->getSchemaSizeInBytes() * numberOfTuplesInBuffer,
+                buf.getBuffer() + schema->getSchemaSizeInBytes() * curTuple,
+                schema->getSchemaSizeInBytes());
             numberOfTuplesInBuffer += 1;
             curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
         }
     }
 
-    if (numberOfTuplesInBuffer > 0) {
+    if (numberOfTuplesInBuffer > 0)
+    {
         curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
         retVector.emplace_back(std::move(curBuffer));
     }
@@ -299,30 +330,34 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
     return retVector;
 }
 
-std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::TupleBuffer>& buffersToSort,
-                                                           SchemaPtr schema,
-                                                           const std::string& sortFieldName,
-                                                           BufferManagerPtr bufferManager) {
-    if (buffersToSort.size() == 0) {
+std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
+    std::vector<Runtime::TupleBuffer> & buffersToSort, SchemaPtr schema, const std::string & sortFieldName, BufferManagerPtr bufferManager)
+{
+    if (buffersToSort.size() == 0)
+    {
         return {};
     }
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
         NES_FATAL_ERROR("Column layout is not support for this function currently!");
     }
 
     std::vector<Runtime::TupleBuffer> retVector;
-    for (auto bufRead : buffersToSort) {
+    for (auto bufRead : buffersToSort)
+    {
         std::vector<size_t> indexAlreadyInNewBuffer;
         auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto testTupleBuf = Runtime::MemoryLayouts::TestTupleBuffer(memLayout, bufRead);
 
         auto bufRet = bufferManager->getBufferBlocking();
 
-        for (auto outer = 0UL; outer < bufRead.getNumberOfTuples(); ++outer) {
+        for (auto outer = 0UL; outer < bufRead.getNumberOfTuples(); ++outer)
+        {
             auto smallestIndex = bufRead.getNumberOfTuples() + 1;
-            for (auto inner = 0UL; inner < bufRead.getNumberOfTuples(); ++inner) {
-                if (std::find(indexAlreadyInNewBuffer.begin(), indexAlreadyInNewBuffer.end(), inner)
-                    != indexAlreadyInNewBuffer.end()) {
+            for (auto inner = 0UL; inner < bufRead.getNumberOfTuples(); ++inner)
+            {
+                if (std::find(indexAlreadyInNewBuffer.begin(), indexAlreadyInNewBuffer.end(), inner) != indexAlreadyInNewBuffer.end())
+                {
                     // If we have already moved this index into the
                     continue;
                 }
@@ -330,18 +365,22 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
                 auto sortValueCur = testTupleBuf[inner][sortFieldName].read<uint64_t>();
                 auto sortValueOld = testTupleBuf[smallestIndex][sortFieldName].read<uint64_t>();
 
-                if (smallestIndex == bufRead.getNumberOfTuples() + 1) {
+                if (smallestIndex == bufRead.getNumberOfTuples() + 1)
+                {
                     smallestIndex = inner;
                     continue;
-                } else if (sortValueCur < sortValueOld) {
+                }
+                else if (sortValueCur < sortValueOld)
+                {
                     smallestIndex = inner;
                 }
             }
             indexAlreadyInNewBuffer.emplace_back(smallestIndex);
             auto posRet = bufRet.getNumberOfTuples();
-            memcpy(bufRet.getBuffer() + posRet * schema->getSchemaSizeInBytes(),
-                   bufRead.getBuffer() + smallestIndex * schema->getSchemaSizeInBytes(),
-                   schema->getSchemaSizeInBytes());
+            memcpy(
+                bufRet.getBuffer() + posRet * schema->getSchemaSizeInBytes(),
+                bufRead.getBuffer() + smallestIndex * schema->getSchemaSizeInBytes(),
+                schema->getSchemaSizeInBytes());
             bufRet.setNumberOfTuples(posRet + 1);
         }
         retVector.emplace_back(bufRet);
@@ -351,10 +390,10 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
     return retVector;
 }
 
-Runtime::TupleBuffer
-getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record & nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager)
+{
     auto buffer = bufferManager->getBufferBlocking();
-    auto* bufferPtr = (int8_t*) buffer.getBuffer();
+    auto * bufferPtr = (int8_t *)buffer.getBuffer();
 
     writeNautilusRecord(0, bufferPtr, nautilusRecord, std::move(schema), bufferManager);
 
@@ -362,21 +401,25 @@ getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, Bu
     return buffer;
 }
 
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
+std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr & schema)
+{
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto* buffer = tbuffer.getBuffer<char>();
+    auto * buffer = tbuffer.getBuffer<char>();
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint64_t i = 0; i < numberOfTuples; i++) {
+    for (uint64_t i = 0; i < numberOfTuples; i++)
+    {
         uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++) {
+        for (uint64_t j = 0; j < schema->getSize(); j++)
+        {
             auto field = schema->get(j);
             auto ptr = field->getDataType();
             auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
             auto fieldSize = physicalType->size();
             auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
             ss << str.c_str();
-            if (j < schema->getSize() - 1) {
+            if (j < schema->getSize() - 1)
+            {
                 ss << ",";
             }
             offset += fieldSize;
@@ -386,11 +429,13 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     return ss.str();
 }
 
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
-                                                                            const SchemaPtr& schema,
-                                                                            Runtime::BufferManagerPtr bufferManager,
-                                                                            uint64_t originId,
-                                                                            const std::string& timestampFieldname) {
+[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
+    const std::string & csvFile,
+    const SchemaPtr & schema,
+    Runtime::BufferManagerPtr bufferManager,
+    uint64_t originId,
+    const std::string & timestampFieldname)
+{
     std::vector<Runtime::TupleBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
@@ -410,23 +455,27 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 
     uint64_t sequenceNumber = 0;
     uint64_t watermarkTS = 0;
-    do {
+    do
+    {
         std::string line = *it;
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
         auto values = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
 
         // iterate over fields of schema and cast string values to correct type
-        for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
+        for (uint64_t j = 0; j < numberOfSchemaFields; j++)
+        {
             auto field = physicalTypes[j];
             NES_TRACE("Current value is:  {}", values[j]);
             writeFieldValueToTupleBuffer(values[j], j, testBuffer, schema, tupleCount, bufferManager);
         }
-        if (schema->contains(timestampFieldname)) {
+        if (schema->contains(timestampFieldname))
+        {
             watermarkTS = std::max(watermarkTS, testBuffer[tupleCount][timestampFieldname].read<uint64_t>());
         }
         ++tupleCount;
 
-        if (tupleCount >= maxTuplesPerBuffer) {
+        if (tupleCount >= maxTuplesPerBuffer)
+        {
             tupleBuffer.setNumberOfTuples(tupleCount);
             tupleBuffer.setOriginId(OriginId(originId));
             tupleBuffer.setSequenceNumber(++sequenceNumber);
@@ -441,7 +490,8 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
         ++it;
     } while (it != endIt);
 
-    if (tupleCount > 0) {
+    if (tupleCount > 0)
+    {
         tupleBuffer.setNumberOfTuples(tupleCount);
         tupleBuffer.setOriginId(OriginId(originId));
         tupleBuffer.setSequenceNumber(++sequenceNumber);
@@ -453,24 +503,30 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     return recordBuffers;
 }
 
-void writeFieldValueToTupleBuffer(std::string inputString,
-                                  uint64_t schemaFieldIndex,
-                                  Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                  const SchemaPtr& schema,
-                                  uint64_t tupleCount,
-                                  const Runtime::BufferManagerPtr& bufferManager) {
+void writeFieldValueToTupleBuffer(
+    std::string inputString,
+    uint64_t schemaFieldIndex,
+    Runtime::MemoryLayouts::TestTupleBuffer & tupleBuffer,
+    const SchemaPtr & schema,
+    uint64_t tupleCount,
+    const Runtime::BufferManagerPtr & bufferManager)
+{
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
-    if (inputString.empty()) {
+    if (inputString.empty())
+    {
         throw Exceptions::RuntimeException("Input string for parsing is empty");
     }
     // TODO replace with csv parsing library #3949
-    try {
-        if (physicalType->isBasicType()) {
+    try
+    {
+        if (physicalType->isBasicType())
+        {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-            switch (basicPhysicalType->nativeType) {
+            switch (basicPhysicalType->nativeType)
+            {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
                     auto value = static_cast<int8_t>(std::stoi(inputString));
                     tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(value);
@@ -525,9 +581,10 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR: {
                     //verify that only a single char was transmitted
-                    if (inputString.size() > 1) {
-                        NES_FATAL_ERROR("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
-                                        inputString.c_str());
+                    if (inputString.size() > 1)
+                    {
+                        NES_FATAL_ERROR(
+                            "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}", inputString.c_str());
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);
@@ -535,9 +592,10 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
-                              "to tuple buffer",
-                              inputString);
+                    NES_TRACE(
+                        "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
+                        "to tuple buffer",
+                        inputString);
                     tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
 
                     break;
@@ -545,8 +603,10 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                     //verify that a valid bool was transmitted (valid{true,false,0,1})
                     bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
-                    if (!value) {
-                        if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0")) {
+                    if (!value)
+                    {
+                        if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0"))
+                        {
                             NES_FATAL_ERROR(
                                 "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
                                 inputString.c_str());
@@ -559,23 +619,29 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
-        } else {// char array(string) case
+        }
+        else
+        { // char array(string) case
             // obtain pointer from buffer to fill with content via strcpy
-            char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
+            char * value = tupleBuffer[tupleCount][schemaFieldIndex].read<char *>();
             // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
             // improve behavior with json library
             strcpy(value, inputString.c_str());
         }
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception & e)
+    {
         NES_ERROR("Failed to convert inputString to desired NES data type. Error: {}", e.what());
     }
 }
 
-void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
+void findAndReplaceAll(std::string & data, const std::string & toSearch, const std::string & replaceStr)
+{
     // Get the first occurrence
     uint64_t pos = data.find(toSearch);
     // Repeat till end is reached
-    while (pos != std::string::npos) {
+    while (pos != std::string::npos)
+    {
         // Replace this occurrence of Sub String
         data.replace(pos, toSearch.size(), replaceStr);
         // Get the next occurrence from the current position
@@ -583,11 +649,13 @@ void findAndReplaceAll(std::string& data, const std::string& toSearch, const std
     }
 }
 
-std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema)
+{
     std::vector<PhysicalTypePtr> retVector;
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    for (const auto& field : schema->fields) {
+    for (const auto & field : schema->fields)
+    {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         retVector.push_back(physicalField);
     }
@@ -595,38 +663,44 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
     return retVector;
 }
 
-bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte) {
+bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte)
+{
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
-    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
+    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples())
+    {
         NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
     std::set<uint64_t> sameTupleIndices;
-    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1)
+    {
         bool idxFoundInBuffer2 = false;
-        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2) {
-            if (sameTupleIndices.contains(idxBuffer2)) {
+        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2)
+        {
+            if (sameTupleIndices.contains(idxBuffer2))
+            {
                 continue;
             }
 
             auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
             auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
             auto equalTuple = (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0);
-            if (equalTuple) {
+            if (equalTuple)
+            {
                 sameTupleIndices.insert(idxBuffer2);
                 idxFoundInBuffer2 = true;
                 break;
             }
         }
 
-        if (!idxFoundInBuffer2) {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
-                      idxBuffer1);
+        if (!idxFoundInBuffer2)
+        {
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
             return false;
         }
     }
 
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
 }
-}// namespace NES::Runtime::Execution::Util
+} // namespace NES::Runtime::Execution::Util

@@ -17,7 +17,8 @@
 
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Integer;
 using IntegerPtr = std::shared_ptr<Integer>;
@@ -37,8 +38,9 @@ using TextPtr = std::shared_ptr<Text>;
 /**
  * @brief This is a default physical type factory, which maps nes types to common x86 types.
  */
-class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
-  public:
+class DefaultPhysicalTypeFactory : public PhysicalTypeFactory
+{
+public:
     DefaultPhysicalTypeFactory();
     ~DefaultPhysicalTypeFactory() override = default;
 
@@ -49,43 +51,43 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
      */
     PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const override;
 
-  private:
+private:
     /**
     * @brief Translates an integer data type into a corresponding physical type.
     * @param integerType
     * @return PhysicalTypePtr
     */
-    static PhysicalTypePtr getPhysicalType(const IntegerPtr& integerType);
+    static PhysicalTypePtr getPhysicalType(const IntegerPtr & integerType);
 
     /**
     * @brief Translates a char data type into a corresponding physical type.
     * @param dataType
     * @return PhysicalTypePtr
     */
-    static PhysicalTypePtr getPhysicalType(const CharPtr& charType);
+    static PhysicalTypePtr getPhysicalType(const CharPtr & charType);
 
     /**
     * @brief Translates a float data type into a corresponding physical type.
     * @param floatType
     * @return PhysicalTypePtr
     */
-    static PhysicalTypePtr getPhysicalType(const FloatPtr& floatType);
+    static PhysicalTypePtr getPhysicalType(const FloatPtr & floatType);
 
     /**
     * @brief Translates a array data type into a corresponding physical type.
     * @param arrayType
     * @return PhysicalTypePtr
     */
-    PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType) const;
+    PhysicalTypePtr getPhysicalType(const ArrayPtr & arrayType) const;
 
     /**
     * @brief Translates a text data type into a corresponding physical type.
     * @param arrayType
     * @return PhysicalTypePtr
     */
-    PhysicalTypePtr getPhysicalType(const TextPtr& textType) const;
+    PhysicalTypePtr getPhysicalType(const TextPtr & textType) const;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_DEFAULTPHYSICALTYPEFACTORY_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_DEFAULTPHYSICALTYPEFACTORY_HPP_

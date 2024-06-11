@@ -15,16 +15,18 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_SENSESOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_SENSESOURCE_HPP_
 
-#include <Sources/DataSource.hpp>
 #include <fstream>
 #include <string>
+#include <Sources/DataSource.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief this class implement the CSV as an input source
  */
-class SenseSource : public DataSource {
-  public:
+class SenseSource : public DataSource
+{
+public:
     /**
      * @brief constructor of sense source
      * @param schema the schema of the source
@@ -38,16 +40,17 @@ class SenseSource : public DataSource {
      * @param physicalSourceName
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
-    explicit SenseSource(SchemaPtr schema,
-                         Runtime::BufferManagerPtr bufferManager,
-                         Runtime::QueryManagerPtr queryManager,
-                         std::string udfs,
-                         OperatorId operatorId,
-                         OriginId originId,
-                         StatisticId statisticId,
-                         size_t numSourceLocalBuffers,
-                         const std::string& physicalSourceName,
-                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    explicit SenseSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        std::string udfs,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        const std::string & physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
    * @brief override the receiveData method for the source
@@ -59,7 +62,7 @@ class SenseSource : public DataSource {
    *  @brief method to fill the buffer with tuples
    *  @param buffer to be filled
    */
-    void fillBuffer(Runtime::TupleBuffer&);
+    void fillBuffer(Runtime::TupleBuffer &);
 
     /**
      * @brief override the toString method for the csv source
@@ -75,13 +78,13 @@ class SenseSource : public DataSource {
     /**
      * @brief Get UDFs for sense
      */
-    const std::string& getUdfs() const;
+    const std::string & getUdfs() const;
 
-  private:
+private:
     std::string udfs;
 };
 
 using SenseSourcePtr = std::shared_ptr<SenseSource>;
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_SENSESOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_SENSESOURCE_HPP_

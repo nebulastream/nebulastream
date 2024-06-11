@@ -14,6 +14,8 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_ABSTRACTBUCKETPREAGGREGATIONHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_ABSTRACTBUCKETPREAGGREGATIONHANDLER_HPP_
+#include <set>
+#include <vector>
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketStore.hpp>
@@ -29,9 +31,8 @@
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-#include <set>
-#include <vector>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class MultiOriginWatermarkProcessor;
 class State;
@@ -42,33 +43,30 @@ class State;
  * For each processed tuple buffer trigger is called, which checks if the thread-local store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-template<class SliceType, typename SliceStore>
-class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorHandler {
-  public:
+template <class SliceType, typename SliceStore>
+class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorHandler
+{
+public:
     /**
      * @brief Creates the operator handler .
      * @param windowSize
      * @param windowSlide
      * @param origins the set of origins, which can produce data for the window operator
      */
-    AbstractBucketPreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
+    AbstractBucketPreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId> & origins);
 
-    SliceStore* getThreadLocalBucketStore(WorkerThreadId workerThreadId);
-    void trigger(WorkerContext& wctx,
-                 PipelineExecutionContext& ctx,
-                 OriginId originId,
-                 SequenceData sequenceData,
-                 uint64_t watermarkTs);
-    void
-    dispatchSliceMergingTasks(PipelineExecutionContext& ctx,
-                              std::shared_ptr<AbstractBufferProvider> bufferProvider,
-                              std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
+    SliceStore * getThreadLocalBucketStore(WorkerThreadId workerThreadId);
+    void trigger(WorkerContext & wctx, PipelineExecutionContext & ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs);
+    void dispatchSliceMergingTasks(
+        PipelineExecutionContext & ctx,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>> & collectedSlices);
     ~AbstractBucketPreAggregationHandler();
 
     void start(PipelineExecutionContextPtr, uint32_t);
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
 
-  protected:
+protected:
     const uint64_t windowSize;
     const uint64_t windowSlide;
     std::vector<std::unique_ptr<SliceStore>> threadLocalBuckets;
@@ -78,5 +76,5 @@ class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorH
     std::mutex triggerMutex;
     std::unique_ptr<State> defaultState;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_ABSTRACTBUCKETPREAGGREGATIONHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_ABSTRACTBUCKETPREAGGREGATIONHANDLER_HPP_

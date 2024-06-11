@@ -17,12 +17,14 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
@@ -66,15 +68,15 @@ using Z3SignatureBasedPartialQueryMergerBottomUpRulePtr = std::shared_ptr<Z3Sign
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMergerRule {
-
-  public:
+class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMergerRule
+{
+public:
     static Z3SignatureBasedPartialQueryMergerBottomUpRulePtr create(z3::ContextPtr context);
     ~Z3SignatureBasedPartialQueryMergerBottomUpRule() noexcept final = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-  private:
+private:
     explicit Z3SignatureBasedPartialQueryMergerBottomUpRule(z3::ContextPtr context);
     /**
      * @brief identify if the query plans are equal or not
@@ -82,8 +84,8 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMer
      * @param hostQueryPlan : host query plan
      * @return Map containing matching pair of target and host operators
      */
-    std::map<LogicalOperatorPtr, LogicalOperatorPtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                                                                        const QueryPlanPtr& hostQueryPlan);
+    std::map<LogicalOperatorPtr, LogicalOperatorPtr>
+    areQueryPlansEqual(const QueryPlanPtr & targetQueryPlan, const QueryPlanPtr & hostQueryPlan);
 
     /**
      * @brief This method compares two operator signatures using Z3
@@ -91,10 +93,10 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMer
      * @param hostOperator : the host operator to compare with
      * @return bool true if equal else false
      */
-    std::map<LogicalOperatorPtr, LogicalOperatorPtr> areOperatorEqual(const LogicalOperatorPtr& targetOperator,
-                                                                      const LogicalOperatorPtr& hostOperator);
+    std::map<LogicalOperatorPtr, LogicalOperatorPtr>
+    areOperatorEqual(const LogicalOperatorPtr & targetOperator, const LogicalOperatorPtr & hostOperator);
     SignatureEqualityUtilPtr signatureEqualityUtil;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERBOTTOMUPRULE_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERBOTTOMUPRULE_HPP_

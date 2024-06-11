@@ -17,18 +17,20 @@
 
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 /**
  * @brief
  * The MedianAggregationDescriptor aggregation calculates the median over the window.
  */
-class MedianAggregationDescriptor : public WindowAggregationDescriptor {
-  public:
+class MedianAggregationDescriptor : public WindowAggregationDescriptor
+{
+public:
     /**
     * @brief Factory method to creates a median aggregation on a particular field.
     * @param onField field on which the aggregation should be performed
     */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr & onField);
 
     /**
      * @brief Factory method to creates a median aggregation on a particular field.
@@ -52,7 +54,7 @@ class MedianAggregationDescriptor : public WindowAggregationDescriptor {
 
     virtual ~MedianAggregationDescriptor() = default;
 
-  private:
+private:
     /**
      * @brief Creates a new MedianAggregationDescriptor
      * @param onField field on which the aggregation should be performed
@@ -66,6 +68,6 @@ class MedianAggregationDescriptor : public WindowAggregationDescriptor {
      */
     MedianAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MEDIANAGGREGATIONDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MEDIANAGGREGATIONDESCRIPTOR_HPP_

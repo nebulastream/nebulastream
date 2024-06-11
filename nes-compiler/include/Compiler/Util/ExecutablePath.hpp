@@ -17,18 +17,20 @@
 #include <filesystem>
 #include <ostream>
 #include <vector>
-namespace NES::Compiler::ExecutablePath {
+namespace NES::Compiler::ExecutablePath
+{
 
 /**
  * @brief This class holds information about the runtime path of different nes components.
  */
-class RuntimePathConfig {
-  public:
+class RuntimePathConfig
+{
+public:
     std::string clangBinaryPath;
     std::vector<std::string> includePaths;
     std::vector<std::string> libPaths;
     std::vector<std::string> libs;
-    friend std::ostream& operator<<(std::ostream& os, const RuntimePathConfig& config);
+    friend std::ostream & operator<<(std::ostream & os, const RuntimePathConfig & config);
 };
 
 bool isInInstallDir();
@@ -59,6 +61,6 @@ std::filesystem::path getLibPath(std::string libName);
  */
 [[maybe_unused]] std::filesystem::path getClangPath();
 
-}// namespace NES::Compiler::ExecutablePath
+} // namespace NES::Compiler::ExecutablePath
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_

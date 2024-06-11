@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -37,28 +35,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class BatchAggregationPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class BatchAggregationPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     Nautilus::CompilationOptions options;
-    ExecutablePipelineProvider* provider;
+    ExecutablePipelineProvider * provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("BatchAggregationPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BatchAggregationPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup BatchAggregationPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -73,7 +78,8 @@ class BatchAggregationPipelineTest : public Testing::BaseUnitTest, public Abstra
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
  */
-TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
+TEST_P(BatchAggregationPipelineTest, aggregationPipeline)
+{
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -86,8 +92,8 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     auto aggregationResultFieldName = "f1";
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF1, aggregationResultFieldName)};
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
+        = {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF1, aggregationResultFieldName)};
     auto aggregationOp = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFunctions);
     scanOperator->setChild(aggregationOp);
 
@@ -133,7 +139,8 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 70);
 }
 
-TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
+TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline)
+{
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema = schema->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -152,15 +159,11 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
 
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<Expressions::ExpressionPtr> keyFields = {readF1};
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
+        = {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
     std::vector<PhysicalTypePtr> types = {integerType};
-    auto aggregationOp =
-        std::make_shared<Operators::BatchKeyedAggregation>(0 /*handler index*/,
-                                                           keyFields,
-                                                           types,
-                                                           aggregationFunctions,
-                                                           std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+    auto aggregationOp = std::make_shared<Operators::BatchKeyedAggregation>(
+        0 /*handler index*/, keyFields, types, aggregationFunctions, std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
     scanOperator->setChild(aggregationOp);
 
@@ -194,11 +197,10 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
     ASSERT_EQ(hmSize, 3);
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        BatchAggregationPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<BatchAggregationPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    BatchAggregationPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<BatchAggregationPipelineTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

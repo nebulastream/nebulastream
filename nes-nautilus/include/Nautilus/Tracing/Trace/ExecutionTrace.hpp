@@ -14,36 +14,38 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 
-#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
-#include <Nautilus/Tracing/Trace/Block.hpp>
 #include <memory>
 #include <unordered_map>
-namespace NES::Nautilus::Tracing {
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
+#include <Nautilus/Tracing/Trace/Block.hpp>
+namespace NES::Nautilus::Tracing
+{
 
 /**
  * @brief The execution trace captures the trace of a program
  */
-class ExecutionTrace {
-  public:
+class ExecutionTrace
+{
+public:
     ExecutionTrace();
     ~ExecutionTrace() = default;
     /**
      * @brief Adds an operation to the current block
      * @param operation TraceOperation
      */
-    void addOperation(TraceOperation& operation);
+    void addOperation(TraceOperation & operation);
 
     /**
      * @brief Adds arguments that are passed to the traced function
      * @param argument
      */
-    void addArgument(const ValueRef& argument);
+    void addArgument(const ValueRef & argument);
 
     /**
      * @brief Returns all arguments of this trace.
      * @return std::vector<ValueRef>
      */
-    const std::vector<ValueRef>& getArguments();
+    const std::vector<ValueRef> & getArguments();
 
     /**
      * @brief Creates a new block in the trace.
@@ -56,13 +58,13 @@ class ExecutionTrace {
      * @param blockIndex
      * @return Block&
      */
-    Block& getBlock(uint32_t blockIndex) { return blocks[blockIndex]; }
+    Block & getBlock(uint32_t blockIndex) { return blocks[blockIndex]; }
 
     /**
      * @brief Returns a reference to all blocks
      * @return std::vector<Block>&
      */
-    std::vector<Block>& getBlocks() { return blocks; }
+    std::vector<Block> & getBlocks() { return blocks; }
 
     /**
      * @brief Returns the index to the current block.
@@ -74,7 +76,7 @@ class ExecutionTrace {
      * @brief Returns the current block
      * @return Block&
      */
-    Block& getCurrentBlock() { return blocks[currentBlock]; }
+    Block & getCurrentBlock() { return blocks[currentBlock]; }
 
     /**
      * @brief Sets the current block
@@ -88,7 +90,7 @@ class ExecutionTrace {
      * @param operationIndex
      * @return Block&
      */
-    Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
+    Block & processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
 
     /**
      * @brief Returns the return reference
@@ -97,15 +99,15 @@ class ExecutionTrace {
     std::shared_ptr<OperationRef> getReturn();
 
     std::string toString() const;
-    friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
+    friend std::ostream & operator<<(std::ostream & os, const ExecutionTrace & tag);
 
-  private:
+private:
     uint32_t currentBlock;
     std::vector<Block> blocks;
     std::vector<ValueRef> arguments;
     std::shared_ptr<OperationRef> returnRef;
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_

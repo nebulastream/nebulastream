@@ -16,22 +16,24 @@
 #include <Nautilus/Backends/Executable.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
 /**
  * @brief Executable that calls into a code fragment that is compiled with MLIR.
  */
-class MLIRExecutable : public Executable {
-  public:
+class MLIRExecutable : public Executable
+{
+public:
     MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine);
     bool hasInvocableFunctionPtr() override;
     ~MLIRExecutable() override;
 
-  protected:
-    void* getInvocableFunctionPtr(const std::string& member) override;
+protected:
+    void * getInvocableFunctionPtr(const std::string & member) override;
 
-  private:
+private:
     std::unique_ptr<mlir::ExecutionEngine> engine;
 };
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_

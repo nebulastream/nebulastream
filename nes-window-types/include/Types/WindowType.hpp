@@ -19,13 +19,15 @@
 #include <memory>
 #include <vector>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
-class WindowType : public std::enable_shared_from_this<WindowType> {
-  public:
+class WindowType : public std::enable_shared_from_this<WindowType>
+{
+public:
     explicit WindowType();
 
     virtual ~WindowType() = default;
@@ -35,10 +37,12 @@ class WindowType : public std::enable_shared_from_this<WindowType> {
      * @tparam WindowType
      * @return bool true if window is of WindowType
      */
-    template<class WindowType>
+    template <class WindowType>
 
-    bool instanceOf() {
-        if (dynamic_cast<WindowType*>(this)) {
+    bool instanceOf()
+    {
+        if (dynamic_cast<WindowType *>(this))
+        {
             return true;
         }
         return false;
@@ -49,13 +53,15 @@ class WindowType : public std::enable_shared_from_this<WindowType> {
      * @tparam WindowType
      * @return returns a shared pointer of the WindowType or throws an error if the type can't be casted.
      */
-    template<class WindowType>
-    std::shared_ptr<WindowType> as() {
-        if (instanceOf<WindowType>()) {
+    template <class WindowType>
+    std::shared_ptr<WindowType> as()
+    {
+        if (instanceOf<WindowType>())
+        {
             return std::dynamic_pointer_cast<WindowType>(this->shared_from_this());
         }
-        throw std::logic_error("WindowType:: we performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(WindowType).name());
+        throw std::logic_error(
+            "WindowType:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(WindowType).name());
     }
 
     virtual std::string toString() const = 0;
@@ -72,7 +78,7 @@ class WindowType : public std::enable_shared_from_this<WindowType> {
      * @param schema : the schema of the window
      * @return true if success else false
      */
-    virtual bool inferStamp(const SchemaPtr& schema) = 0;
+    virtual bool inferStamp(const SchemaPtr & schema) = 0;
 
     /**
      * @brief Get the hash of the window type
@@ -87,6 +93,6 @@ class WindowType : public std::enable_shared_from_this<WindowType> {
     virtual uint64_t hash() const = 0;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_

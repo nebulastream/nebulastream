@@ -11,6 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <filesystem>
+#include <fstream>
+#include <utility>
+#include <jni.h>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
@@ -19,12 +23,9 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/JNI/JNI.hpp>
 #include <Util/JNI/JNIUtils.hpp>
-#include <filesystem>
-#include <fstream>
-#include <jni.h>
-#include <utility>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * Execute the java udf
@@ -32,26 +33,30 @@ namespace NES::Runtime::Execution::Operators {
  * @param pojoObjectPtr pojo object
  * @return result of the udf
  */
-void* executeMapUdf(void* state, void* instance, void* pojoObjectPtr) {
+void * executeMapUdf(void * state, void * instance, void * pojoObjectPtr)
+{
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
-    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler *>(state);
     // Call udf function
-    jobject udfResult = jni::getEnv()->CallObjectMethod((jobject) instance, handler->getUDFMethodId(), pojoObjectPtr);
+    jobject udfResult = jni::getEnv()->CallObjectMethod((jobject)instance, handler->getUDFMethodId(), pojoObjectPtr);
     jni::jniErrorCheck();
     return udfResult;
 }
 
 MapJavaUDF::MapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema)
-    : AbstractJavaUDFOperator(operatorHandlerIndex, std::move(operatorInputSchema), std::move(operatorOutputSchema)) {}
+    : AbstractJavaUDFOperator(operatorHandlerIndex, std::move(operatorInputSchema), std::move(operatorOutputSchema))
+{
+}
 
 /**
  * Operator execution function
  * @param ctx operator context
  * @param record input record
  */
-void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
-    auto state = (LocalUDFState*) ctx.getLocalState(this);
+void MapJavaUDF::execute(ExecutionContext & ctx, Record & record) const
+{
+    auto state = (LocalUDFState *)ctx.getLocalState(this);
     auto handler = state->handler;
 
     // Convert the input record to the input field of UDF input object
@@ -68,4 +73,4 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     child->execute(ctx, resultRecord);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

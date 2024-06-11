@@ -15,7 +15,8 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
 #include <Expressions/ExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 class LogicalFunction;
 class ValueType;
@@ -25,13 +26,14 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
  * @brief This expression node represents a function with a specific name.
  * Internally it stores a LogicalFunction, which is used for inference.
  */
-class FunctionExpression final : public ExpressionNode {
-  public:
+class FunctionExpression final : public ExpressionNode
+{
+public:
     /**
      * @brief Factory method to create a ConstantValueExpressionNode.
      */
     static ExpressionNodePtr
-    create(const DataTypePtr& stamp, const std::string& functionName, const std::vector<ExpressionNodePtr>& arguments);
+    create(const DataTypePtr & stamp, const std::string & functionName, const std::vector<ExpressionNodePtr> & arguments);
 
     /**
      * @brief On a function value expression infer stamp invokes inferStamp on the child LogicalFunction
@@ -51,7 +53,7 @@ class FunctionExpression final : public ExpressionNode {
      * @param otherNode
      * @return true if they are equal
      */
-    bool equal(NodePtr const& rhs) const override;
+    bool equal(NodePtr const & rhs) const override;
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -63,7 +65,7 @@ class FunctionExpression final : public ExpressionNode {
      * @brief Returns the function name of this function
      * @return const std::string&
      */
-    const std::string& getFunctionName() const;
+    const std::string & getFunctionName() const;
 
     /**
      * @brief Returns the set of arguments of this function.
@@ -75,10 +77,10 @@ class FunctionExpression final : public ExpressionNode {
 
     explicit FunctionExpression(DataTypePtr stamp, std::string functionName, std::unique_ptr<LogicalFunction> function);
 
-  private:
+private:
     const std::string functionName;
     const std::unique_ptr<LogicalFunction> function;
 };
 
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
+} // namespace NES
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_

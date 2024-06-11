@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/FloorExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-FloorExpression::FloorExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)
-    : leftSubExpression(leftSubExpression) {}
+FloorExpression::FloorExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr & leftSubExpression)
+    : leftSubExpression(leftSubExpression)
+{
+}
 
 /**
 * @brief This method calculates the floor of x.
@@ -28,9 +31,13 @@ FloorExpression::FloorExpression(const NES::Runtime::Execution::Expressions::Exp
 * @param x double
 * @return double
 */
-double calculateFloor(double x) { return std::floor(x); }
+double calculateFloor(double x)
+{
+    return std::floor(x);
+}
 
-Value<> FloorExpression::execute(NES::Nautilus::Record& record) const {
+Value<> FloorExpression::execute(NES::Nautilus::Record & record) const
+{
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.
@@ -40,14 +47,19 @@ Value<> FloorExpression::execute(NES::Nautilus::Record& record) const {
     // In all cases we can call the same calculateFloor function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Float>()) {
+    if (leftValue->isType<Float>())
+    {
         return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
+    }
+    else if (leftValue->isType<Double>())
+    {
         return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<FloorExpression>> floorFunction("floor");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

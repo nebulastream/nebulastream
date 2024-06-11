@@ -17,22 +17,26 @@
 
 #include <memory>
 #include <string>
-namespace NES::Nautilus::IR {
+namespace NES::Nautilus::IR
+{
 
-namespace Operations {
+namespace Operations
+{
 class FunctionOperation;
 }
 
 /**
  * @brief The IRGraph represents a fragment of nautilus ir.
  */
-class IRGraph {
-  public:
-    class Flags {
-      public:
+class IRGraph
+{
+public:
+    class Flags
+    {
+    public:
         Flags();
-        const std::string& getDumpOutputPath() const;
-        void setDumpOutputPath(const std::string& dumpOutputPath);
+        const std::string & getDumpOutputPath() const;
+        void setDumpOutputPath(const std::string & dumpOutputPath);
         bool isDumpToFile() const;
         void setDumpToFile(bool dumpToFile);
         bool isDumpToConsole() const;
@@ -42,7 +46,7 @@ class IRGraph {
         bool isDebug() const;
         void setDebug(bool debug);
 
-      private:
+    private:
         std::string dumpOutputPath;
         bool dumpToFile = false;
         bool dumpToConsole = true;
@@ -54,14 +58,14 @@ class IRGraph {
     std::shared_ptr<Operations::FunctionOperation> addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation);
     std::shared_ptr<Operations::FunctionOperation> getRootOperation();
     std::string toString();
-    const Flags& getFlags() const;
-    void setFlags(const Flags& flags);
+    const Flags & getFlags() const;
+    void setFlags(const Flags & flags);
 
-  private:
+private:
     Flags flags;
     std::shared_ptr<Operations::FunctionOperation> rootOperation;
 };
 
-}// namespace NES::Nautilus::IR
+} // namespace NES::Nautilus::IR
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_

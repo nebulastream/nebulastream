@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <array>
-#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -30,23 +29,27 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 
 #ifndef LOCAL_ADDRESS
-#define LOCAL_ADDRESS "127.0.0.1"
+#    define LOCAL_ADDRESS "127.0.0.1"
 #endif
 
-class ZMQTest : public Testing::BaseIntegrationTest {
-  public:
+class ZMQTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ZMQTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup ZMQTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setup ZMQTest test case.");
         auto conf = CSVSourceType::create("x", "x1");
@@ -67,7 +70,8 @@ class ZMQTest : public Testing::BaseIntegrationTest {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("Setup ZMQTest test case.");
         Testing::BaseIntegrationTest::TearDown();
@@ -89,41 +93,46 @@ class ZMQTest : public Testing::BaseIntegrationTest {
 };
 
 /* - ZeroMQ Data Source ---------------------------------------------------- */
-TEST_F(ZMQTest, testZmqSourceReceiveData) {
+TEST_F(ZMQTest, testZmqSourceReceiveData)
+{
     // Create ZeroMQ Data Source.
     auto test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
-    auto zmq_source = createZmqSource(test_schema,
-                                      nodeEngine->getBufferManager(),
-                                      nodeEngine->getQueryManager(),
-                                      LOCAL_ADDRESS,
-                                      *zmqPort,
-                                      OperatorId(1),
-                                      INVALID_ORIGIN_ID,
-                                      INVALID_STATISTIC_ID,
-                                      12,
-                                      "defaultPhysicalStreamName",
-                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+    auto zmq_source = createZmqSource(
+        test_schema,
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(),
+        LOCAL_ADDRESS,
+        *zmqPort,
+        OperatorId(1),
+        INVALID_ORIGIN_ID,
+        INVALID_STATISTIC_ID,
+        12,
+        "defaultPhysicalStreamName",
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     NES_DEBUG("{}", zmq_source->toString());
     // bufferManager->resizeFixedBufferSize(testDataSize);
 
     // Start thread for receiving the data.
     bool receiving_finished = false;
-    auto receiving_thread = std::thread([&]() {
-        // Receive data.
-        zmq_source->open();
-        auto tuple_buffer = zmq_source->receiveData();
+    auto receiving_thread = std::thread(
+        [&]()
+        {
+            // Receive data.
+            zmq_source->open();
+            auto tuple_buffer = zmq_source->receiveData();
 
-        // Test received data.
-        uint64_t sum = 0;
-        auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
-        for (uint64_t i = 0; i != 8; ++i) {
-            sum += *(tuple++);
-        }
-        uint64_t expected = 400;
-        EXPECT_EQ(sum, expected);
+            // Test received data.
+            uint64_t sum = 0;
+            auto * tuple = (uint32_t *)tuple_buffer->getBuffer();
+            for (uint64_t i = 0; i != 8; ++i)
+            {
+                sum += *(tuple++);
+            }
+            uint64_t expected = 400;
+            EXPECT_EQ(sum, expected);
 
-        receiving_finished = true;
-    });
+            receiving_finished = true;
+        });
     uint64_t tupCnt = 8;
     // Wait until receiving is complete.
 
@@ -132,21 +141,23 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
     zmq::socket_t socket(context, ZMQ_PUSH);
     socket.connect(address.c_str());
 
-    while (!receiving_finished) {
-
+    while (!receiving_finished)
+    {
         // Send data from here.
         auto const envelopeSizeBytes = 16;
         zmq::message_t message_tupleCnt(envelopeSizeBytes);
         memcpy(message_tupleCnt.data(), &tupCnt, envelopeSizeBytes);
-        static_cast<uint64_t*>(message_tupleCnt.data())[1] = static_cast<uint64_t>(0ull);
+        static_cast<uint64_t *>(message_tupleCnt.data())[1] = static_cast<uint64_t>(0ull);
         if (auto const sentEnvelope = socket.send(message_tupleCnt, zmq::send_flags::sndmore).value_or(0);
-            sentEnvelope != envelopeSizeBytes) {
+            sentEnvelope != envelopeSizeBytes)
+        {
             NES_ERROR("ZMQ Test Error: Sending message metadata failed! {} {}", sentEnvelope, message_tupleCnt.size());
         }
 
         zmq::message_t message_data(test_data_size);
         memcpy(message_data.data(), test_data.data(), test_data_size);
-        if (auto const sentPayload = socket.send(message_data, zmq::send_flags::none); sentPayload != test_data_size) {
+        if (auto const sentPayload = socket.send(message_data, zmq::send_flags::none); sentPayload != test_data_size)
+        {
             NES_ERROR("ZMQ Test Error: Sending message payload failed!");
         }
     }
@@ -154,8 +165,8 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
 }
 
 /* - ZeroMQ Data Sink ------------------------------------------------------ */
-TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
-
+TEST_F(ZMQTest, DISABLED_testZmqSinkSendData)
+{
     //FIXME: this test makes no sense, redo it
     /**
   // Create ZeroMQ Data Sink.
@@ -213,8 +224,8 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
 }
 
 /* - ZeroMQ Data Sink to ZeroMQ Data Source  ------------------------------- */
-TEST_F(ZMQTest, DISABLED_testZmqSinkToSource) {
-
+TEST_F(ZMQTest, DISABLED_testZmqSinkToSource)
+{
     /**
   //FIXME: this test makes no sense, redo it
   // Put test data into a TupleBuffer vector.

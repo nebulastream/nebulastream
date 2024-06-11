@@ -14,16 +14,18 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <cinttypes>
 #include <ostream>
-namespace NES::Runtime::Execution::Operators {
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief A keyed slice that contains key value pairs for a specific interval of [start, end[.
  */
-class KeyedSlice {
-  public:
+class KeyedSlice
+{
+public:
     /**
      * @brief Constructor to create a new slice that covers a specific range between stat and end.
      * @param hashMapFactory a factory to create a new hashmap
@@ -57,16 +59,16 @@ class KeyedSlice {
      * @brief State of the slice.
      * @return uint64_t
      */
-    inline std::unique_ptr<Nautilus::Interface::ChainedHashMap>& getState() { return state; }
+    inline std::unique_ptr<Nautilus::Interface::ChainedHashMap> & getState() { return state; }
 
     ~KeyedSlice();
 
-  private:
+private:
     uint64_t start;
     uint64_t end;
     std::unique_ptr<Nautilus::Interface::ChainedHashMap> state;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_

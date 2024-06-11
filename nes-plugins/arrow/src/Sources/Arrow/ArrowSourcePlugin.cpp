@@ -20,35 +20,40 @@
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
 #include <Sources/DataSourcePlugin.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class ArrowSourcePlugin : public DataSourcePlugin {
-  public:
-    std::optional<DataSourcePtr>
-    createDataSource(OperatorId operatorId,
-                     OriginId originId,
-                     StatisticId statisticId,
-                     const SourceDescriptorPtr& sourceDescriptor,
-                     const Runtime::NodeEnginePtr& nodeEngine,
-                     size_t numSourceLocalBuffers,
-                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) override {
-        if (sourceDescriptor->instanceOf<ArrowSourceDescriptor>()) {
+class ArrowSourcePlugin : public DataSourcePlugin
+{
+public:
+    std::optional<DataSourcePtr> createDataSource(
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        const SourceDescriptorPtr & sourceDescriptor,
+        const Runtime::NodeEnginePtr & nodeEngine,
+        size_t numSourceLocalBuffers,
+        const std::vector<Runtime::Execution::SuccessorExecutablePipeline> & successors) override
+    {
+        if (sourceDescriptor->instanceOf<ArrowSourceDescriptor>())
+        {
             auto bufferManager = nodeEngine->getBufferManager(0u);
             auto queryManager = nodeEngine->getQueryManager();
 
             NES_INFO("ConvertLogicalToPhysicalSource: Creating Arrow file source");
             const ArrowSourceDescriptorPtr arrowSourceDescriptor = sourceDescriptor->as<ArrowSourceDescriptor>();
-            return std::make_shared<ArrowSource>(arrowSourceDescriptor->getSchema(),
-                                                 bufferManager,
-                                                 queryManager,
-                                                 arrowSourceDescriptor->getSourceConfig(),
-                                                 operatorId,
-                                                 originId,
-                                                 statisticId,
-                                                 numSourceLocalBuffers,
-                                                 GatheringMode::INTERVAL_MODE,
-                                                 sourceDescriptor->getPhysicalSourceName(),
-                                                 successors);
+            return std::make_shared<ArrowSource>(
+                arrowSourceDescriptor->getSchema(),
+                bufferManager,
+                queryManager,
+                arrowSourceDescriptor->getSourceConfig(),
+                operatorId,
+                originId,
+                statisticId,
+                numSourceLocalBuffers,
+                GatheringMode::INTERVAL_MODE,
+                sourceDescriptor->getPhysicalSourceName(),
+                successors);
         }
         return {};
     };
@@ -56,4 +61,4 @@ class ArrowSourcePlugin : public DataSourcePlugin {
 
 // Register source plugin
 [[maybe_unused]] static SourcePluginRegistry ::Add<ArrowSourcePlugin> arrowSourcePlugin;
-}// namespace NES
+} // namespace NES

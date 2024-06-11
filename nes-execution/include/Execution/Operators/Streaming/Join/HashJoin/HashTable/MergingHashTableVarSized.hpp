@@ -18,14 +18,16 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <folly/Synchronized.h>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class represents a hash map that is thread safe. It consists of multiple buckets each
  * consisting of a PagedVectorVarSized
  */
-class MergingHashTableVarSized {
-  public:
+class MergingHashTableVarSized
+{
+public:
     /**
      * @brief Constructor for a hash table that supports simultaneous insertion with multiple threads
      * @param numBuckets
@@ -44,7 +46,7 @@ class MergingHashTableVarSized {
      * @param bucket
      * @return reference to the PagedVector
      */
-    void* getBucketAtPos(size_t bucket) const;
+    void * getBucketAtPos(size_t bucket) const;
 
     /**
      * @brief Returns the number of tuples on the page in bucket at pos
@@ -74,11 +76,11 @@ class MergingHashTableVarSized {
      */
     size_t getNumBuckets() const;
 
-  private:
+private:
     std::vector<folly::Synchronized<Nautilus::Interface::PagedVectorVarSizedPtr>> bucketHeads;
     std::vector<std::atomic<size_t>> bucketNumItems;
     std::vector<std::atomic<size_t>> bucketNumPages;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_MERGINGHASHTABLEVARSIZED_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_MERGINGHASHTABLEVARSIZED_HPP_

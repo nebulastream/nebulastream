@@ -15,18 +15,20 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_BINARYEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_BINARYEXPRESSIONNODE_HPP_
 #include <Expressions/ExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief A binary expression is represents expressions with two children.
  */
-class BinaryExpressionNode : public ExpressionNode {
-  public:
+class BinaryExpressionNode : public ExpressionNode
+{
+public:
     ~BinaryExpressionNode() noexcept override = default;
 
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
+    void setChildren(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
 
     /**
      * @brief gets the left children.
@@ -44,10 +46,10 @@ class BinaryExpressionNode : public ExpressionNode {
     */
     ExpressionNodePtr copy() override = 0;
 
-  protected:
+protected:
     explicit BinaryExpressionNode(DataTypePtr stamp);
-    explicit BinaryExpressionNode(BinaryExpressionNode* other);
+    explicit BinaryExpressionNode(BinaryExpressionNode * other);
 };
 
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_BINARYEXPRESSIONNODE_HPP_
+} // namespace NES
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_BINARYEXPRESSIONNODE_HPP_

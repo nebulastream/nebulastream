@@ -12,30 +12,34 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
-#include <Runtime/QueryManager.hpp>
-#include <Sinks/Mediums/KafkaSink.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <chrono>
-#include <cppkafka/cppkafka.h>
-#include <sstream>
-#include <string>
+#    include <chrono>
+#    include <sstream>
+#    include <string>
+#    include <Runtime/QueryManager.hpp>
+#    include <Sinks/Mediums/KafkaSink.hpp>
+#    include <Util/Logger/Logger.hpp>
+#    include <cppkafka/cppkafka.h>
 
 using namespace std::chrono_literals;
 
-namespace NES {
+namespace NES
+{
 
-KafkaSink::KafkaSink(SinkFormatPtr format,
-                     Runtime::NodeEnginePtr nodeEngine,
-                     uint32_t numOfProducers,
-                     const std::string& brokers,
-                     const std::string& topic,
-                     SharedQueryId sharedQueryId,
-                     DecomposedQueryPlanId decomposedQueryPlanId,
-                     const uint64_t kafkaProducerTimeout,
-                     uint64_t numberOfOrigins)
-    : SinkMedium(format, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
-      brokers(brokers), topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
-
+KafkaSink::KafkaSink(
+    SinkFormatPtr format,
+    Runtime::NodeEnginePtr nodeEngine,
+    uint32_t numOfProducers,
+    const std::string & brokers,
+    const std::string & topic,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    const uint64_t kafkaProducerTimeout,
+    uint64_t numberOfOrigins)
+    : SinkMedium(format, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins)
+    , brokers(brokers)
+    , topic(topic)
+    , kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout))
+{
     config = std::make_unique<cppkafka::Configuration>();
     config->set("metadata.broker.list", brokers.c_str());
 
@@ -43,11 +47,15 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
     NES_DEBUG("KAFKASINK: Init KAFKA SINK to brokers  {} , topic  {}", brokers, topic);
 }
 
-KafkaSink::~KafkaSink() {}
+KafkaSink::~KafkaSink()
+{
+}
 
-bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool KafkaSink::writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContextRef)
+{
     NES_TRACE("KAFKASINK: writes buffer");
-    try {
+    try
+    {
         std::stringstream outputStream;
         NES_TRACE("KafkaSink::getData: write data");
         auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
@@ -58,9 +66,13 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
         producer->flush(std::chrono::milliseconds(kafkaProducerTimeout));
 
         NES_DEBUG("KAFKASINK: send successfully");
-    } catch (const cppkafka::HandleException& ex) {
+    }
+    catch (const cppkafka::HandleException & ex)
+    {
         throw;
-    } catch (...) {
+    }
+    catch (...)
+    {
         NES_ERROR("KAFKASINK Unknown error occurs");
         return false;
     }
@@ -68,7 +80,8 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     return true;
 }
 
-std::string KafkaSink::toString() const {
+std::string KafkaSink::toString() const
+{
     std::stringstream ss;
     ss << "KAFKA_SINK(";
     ss << "BROKER(" << brokers << "), ";
@@ -76,15 +89,18 @@ std::string KafkaSink::toString() const {
     return ss.str();
 }
 
-void KafkaSink::setup() {
+void KafkaSink::setup()
+{
     // currently not required
 }
 
-void KafkaSink::shutdown() {
+void KafkaSink::shutdown()
+{
     // currently not required
 }
 
-void KafkaSink::connect() {
+void KafkaSink::connect()
+{
     NES_DEBUG("KAFKASINK connecting...");
     producer = std::make_unique<cppkafka::Producer>(*config);
     msgBuilder = std::make_unique<cppkafka::MessageBuilder>(topic);
@@ -94,10 +110,22 @@ void KafkaSink::connect() {
     // }
 }
 
-std::string KafkaSink::getBrokers() const { return brokers; }
-std::string KafkaSink::getTopic() const { return topic; }
-uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeout.count(); }
-SinkMediumTypes KafkaSink::getSinkMediumType() { return SinkMediumTypes::KAFKA_SINK; }
+std::string KafkaSink::getBrokers() const
+{
+    return brokers;
+}
+std::string KafkaSink::getTopic() const
+{
+    return topic;
+}
+uint64_t KafkaSink::getKafkaProducerTimeout() const
+{
+    return kafkaProducerTimeout.count();
+}
+SinkMediumTypes KafkaSink::getSinkMediumType()
+{
+    return SinkMediumTypes::KAFKA_SINK;
+}
 
-}// namespace NES
+} // namespace NES
 #endif

@@ -15,71 +15,76 @@
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #ifdef ENABLE_MQTT_BUILD
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <string>
+#    include <iostream>
+#    include <string>
+#    include <API/Expressions/LogicalExpressions.hpp>
+#    include <API/Schema.hpp>
+#    include <Catalogs/Source/PhysicalSource.hpp>
+#    include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
+#    include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#    include <Runtime/NodeEngine.hpp>
+#    include <Runtime/NodeEngineBuilder.hpp>
+#    include <Sources/SourceCreator.hpp>
+#    include <Util/Logger/Logger.hpp>
+#    include <gtest/gtest.h>
+#    include <BaseIntegrationTest.hpp>
 
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/RequestHandlerService.hpp>
-#include <Util/TestUtils.hpp>
+#    include <Catalogs/Query/QueryCatalog.hpp>
+#    include <Components/NesCoordinator.hpp>
+#    include <Components/NesWorker.hpp>
+#    include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#    include <Configurations/Worker/WorkerConfiguration.hpp>
+#    include <Identifiers/Identifiers.hpp>
+#    include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#    include <Services/RequestHandlerService.hpp>
+#    include <Util/TestUtils.hpp>
+#    include <Common/DataTypes/DataTypeFactory.hpp>
 
-#ifndef OPERATORID
-#define OPERATORID OperatorId(1)
-#endif
+#    ifndef OPERATORID
+#        define OPERATORID OperatorId(1)
+#    endif
 
-#ifndef ORIGINID
-#define ORIGINID OriginId(1)
-#endif
+#    ifndef ORIGINID
+#        define ORIGINID OriginId(1)
+#    endif
 
-#ifndef STATISTICID
-#define STATISTICID 1
-#endif
+#    ifndef STATISTICID
+#        define STATISTICID 1
+#    endif
 
-#ifndef NUMSOURCELOCALBUFFERS
-#define NUMSOURCELOCALBUFFERS 12
-#endif
+#    ifndef NUMSOURCELOCALBUFFERS
+#        define NUMSOURCELOCALBUFFERS 12
+#    endif
 
-#ifndef PHYSICALSOURCENAME
-#define PHYSICALSOURCENAME "defaultPhysicalSourceName"
-#endif
+#    ifndef PHYSICALSOURCENAME
+#        define PHYSICALSOURCENAME "defaultPhysicalSourceName"
+#    endif
 
-#ifndef SUCCESSORS
-#define SUCCESSORS                                                                                                               \
-    {}
-#endif
+#    ifndef SUCCESSORS
+#        define SUCCESSORS \
+            { \
+            }
+#    endif
 
-#ifndef INPUTFORMAT
-#define INPUTFORMAT SourceDescriptor::InputFormat::JSON
-#endif
+#    ifndef INPUTFORMAT
+#        define INPUTFORMAT SourceDescriptor::InputFormat::JSON
+#    endif
 
-namespace NES {
+namespace NES
+{
 
-class MQTTSourceTest : public Testing::BaseIntegrationTest {
-  public:
+class MQTTSourceTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MQTTSourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("MQTTSOURCETEST::SetUpTestCase()");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
@@ -92,7 +97,8 @@ class MQTTSourceTest : public Testing::BaseIntegrationTest {
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         Testing::BaseIntegrationTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");
@@ -111,18 +117,20 @@ class MQTTSourceTest : public Testing::BaseIntegrationTest {
 /**
  * Tests basic set up of MQTT source
  */
-TEST_F(MQTTSourceTest, MQTTSourceInit) {
+TEST_F(MQTTSourceTest, MQTTSourceInit)
+{
     auto mqttSourceType = MQTTSourceType::create("logical", "physical");
-    auto mqttSource = createMQTTSource(test_schema,
-                                       bufferManager,
-                                       queryManager,
-                                       mqttSourceType,
-                                       OPERATORID,
-                                       ORIGINID,
-                                       STATISTICID,
-                                       NUMSOURCELOCALBUFFERS,
-                                       PHYSICALSOURCENAME,
-                                       SUCCESSORS);
+    auto mqttSource = createMQTTSource(
+        test_schema,
+        bufferManager,
+        queryManager,
+        mqttSourceType,
+        OPERATORID,
+        ORIGINID,
+        STATISTICID,
+        NUMSOURCELOCALBUFFERS,
+        PHYSICALSOURCENAME,
+        SUCCESSORS);
 
     SUCCEED();
 }
@@ -130,7 +138,8 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
 /**
  * Test if schema, MQTT server address, clientId, user, and topic are the same
  */
-TEST_F(MQTTSourceTest, MQTTSourcePrint) {
+TEST_F(MQTTSourceTest, MQTTSourcePrint)
+{
     auto mqttSourceType = MQTTSourceType::create("logical", "physical");
     mqttSourceType->setUrl("tcp://127.0.0.1:1883");
     mqttSourceType->setCleanSession(false);
@@ -139,16 +148,17 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
     mqttSourceType->setTopic("v1/devices/me/telemetry");
     mqttSourceType->setQos(1);
 
-    auto mqttSource = createMQTTSource(test_schema,
-                                       bufferManager,
-                                       queryManager,
-                                       mqttSourceType,
-                                       OPERATORID,
-                                       ORIGINID,
-                                       STATISTICID,
-                                       NUMSOURCELOCALBUFFERS,
-                                       PHYSICALSOURCENAME,
-                                       SUCCESSORS);
+    auto mqttSource = createMQTTSource(
+        test_schema,
+        bufferManager,
+        queryManager,
+        mqttSourceType,
+        OPERATORID,
+        ORIGINID,
+        STATISTICID,
+        NUMSOURCELOCALBUFFERS,
+        PHYSICALSOURCENAME,
+        SUCCESSORS);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER(32 bits)), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
@@ -165,33 +175,34 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 /**
  * Tests if obtained value is valid.
  */
-TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
+TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue)
+{
     auto mqttSourceType = MQTTSourceType::create("logical", "physical");
     auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
-    auto mqttSource = createMQTTSource(test_schema,
-                                       bufferManager,
-                                       queryManager,
-                                       mqttSourceType,
-                                       OPERATORID,
-                                       ORIGINID,
-                                       STATISTICID,
-                                       NUMSOURCELOCALBUFFERS,
-                                       PHYSICALSOURCENAME,
-                                       SUCCESSORS);
+    auto mqttSource = createMQTTSource(
+        test_schema,
+        bufferManager,
+        queryManager,
+        mqttSourceType,
+        OPERATORID,
+        ORIGINID,
+        STATISTICID,
+        NUMSOURCELOCALBUFFERS,
+        PHYSICALSOURCENAME,
+        SUCCESSORS);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
-    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
+    auto * tuple = (uint32_t *)tuple_buffer->getBuffer();
     value = *tuple;
     uint64_t expected = 43;
-    NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: {}. Received value is: {}",
-              expected,
-              value);
+    NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: {}. Received value is: {}", expected, value);
     EXPECT_EQ(value, expected);
 }
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
-TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
+TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -238,8 +249,8 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -258,7 +269,8 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
+TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -342,5 +354,5 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-}// namespace NES
+} // namespace NES
 #endif

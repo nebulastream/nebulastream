@@ -18,12 +18,14 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 class FieldAccessExpressionNode;
 using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class FilterPushDownRule;
 using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
@@ -34,9 +36,9 @@ using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
  *  1.) The Leaf node in the query plan will always be source node. This means the filter can't be push below a source node.
  *  2.) Every operator below a filter has it's own set of rules that decide if and how the filter can be pushed below that operator
  */
-class FilterPushDownRule : public BaseRewriteRule {
-
-  public:
+class FilterPushDownRule : public BaseRewriteRule
+{
+public:
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
     static FilterPushDownRulePtr create();
@@ -47,9 +49,9 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param filterOperator
      * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
      */
-    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
+    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr & filterPredicate);
 
-  private:
+private:
     explicit FilterPushDownRule();
 
     /**
@@ -103,8 +105,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * joinOperator and parOperator.
      */
-    void
-    pushFilterBelowJoin(LogicalFilterOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator, NodePtr parentOperator);
+    void pushFilterBelowJoin(LogicalFilterOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator, NodePtr parentOperator);
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
@@ -169,7 +170,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param node the map operator node
      * @return name of the field
      */
-    static std::string getAssignmentFieldFromMapOperator(const NodePtr& node);
+    static std::string getAssignmentFieldFromMapOperator(const NodePtr & node);
 
     /**
      * @brief pushes a filter below a projection operator. If the projection renames a attribute that is used by the filter,
@@ -194,8 +195,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param filterOperator filter operator whose predicate need to be checked and updated
      * @param expressionNodes expression nodes containing the attribute name and the new attribute name
      */
-    static void renameFilterAttributesByExpressionNodes(const LogicalFilterOperatorPtr& filterOperator,
-                                                        const std::vector<ExpressionNodePtr>& expressionNodes);
+    static void renameFilterAttributesByExpressionNodes(
+        const LogicalFilterOperatorPtr & filterOperator, const std::vector<ExpressionNodePtr> & expressionNodes);
 
     /**
      * @brief Rename the attribute in the field access expression node.
@@ -203,8 +204,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param toReplace attribute name to be replaced
      * @param replacement new attribute name
      */
-    static void
-    renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode, std::string toReplace, std::string replacement);
+    static void renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode, std::string toReplace, std::string replacement);
 
     /**
      * @brief Substitute the filter predicate's field access expression node with the map operator's expression node if needed
@@ -212,11 +212,10 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param mapOperator map operator node where the filter should be pushed below
      * @param fieldName field name of the attribute that is assigned a field by the map transformation
      */
-    void substituteFilterAttributeWithMapTransformation(const LogicalFilterOperatorPtr& filterOperator,
-                                                        const LogicalMapOperatorPtr& mapOperator,
-                                                        const std::string& fieldName);
+    void substituteFilterAttributeWithMapTransformation(
+        const LogicalFilterOperatorPtr & filterOperator, const LogicalMapOperatorPtr & mapOperator, const std::string & fieldName);
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWNRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWNRULE_HPP_

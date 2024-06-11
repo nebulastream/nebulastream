@@ -15,37 +15,41 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDNEMOJOINRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDNEMOJOINRULE_HPP_
 
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <map>
 #include <set>
 #include <vector>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Catalogs::Source {
+namespace NES::Catalogs::Source
+{
 class SourceCatalogEntry;
 using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
-}// namespace NES::Catalogs::Source
+} // namespace NES::Catalogs::Source
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 class DistributedNemoJoinRule;
 using DistributedNemoJoinRulePtr = std::shared_ptr<DistributedNemoJoinRule>;
 
 /**
  * @brief DistributedNemoJoinRule which is rewriting a central to a distributed grid-partitioned join based on the physical streams.
  */
-class DistributedNemoJoinRule : public BaseRewriteRule {
-  public:
-    static DistributedNemoJoinRulePtr
-    create(Configurations::OptimizerConfiguration configuration,
-           TopologyPtr topology,
-           const std::map<Catalogs::Source::SourceCatalogEntryPtr, std::set<uint64_t>>& distMap);
+class DistributedNemoJoinRule : public BaseRewriteRule
+{
+public:
+    static DistributedNemoJoinRulePtr create(
+        Configurations::OptimizerConfiguration configuration,
+        TopologyPtr topology,
+        const std::map<Catalogs::Source::SourceCatalogEntryPtr, std::set<uint64_t>> & distMap);
     virtual ~DistributedNemoJoinRule() = default;
 
     /**
@@ -56,10 +60,11 @@ class DistributedNemoJoinRule : public BaseRewriteRule {
      */
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  private:
-    explicit DistributedNemoJoinRule(Configurations::OptimizerConfiguration configuration,
-                                     TopologyPtr topology,
-                                     const std::map<Catalogs::Source::SourceCatalogEntryPtr, std::set<uint64_t>>& distMap);
+private:
+    explicit DistributedNemoJoinRule(
+        Configurations::OptimizerConfiguration configuration,
+        TopologyPtr topology,
+        const std::map<Catalogs::Source::SourceCatalogEntryPtr, std::set<uint64_t>> & distMap);
 
     /**
      * Helper function to identify in the distribution map nodes with common keys
@@ -74,13 +79,13 @@ class DistributedNemoJoinRule : public BaseRewriteRule {
      * @return A map that points from a key -> set of operators
      */
     static std::map<uint64_t, std::set<SourceLogicalOperatorPtr>>
-    getOperatorsWithCommonKeys(const QueryPlanPtr& queryPlan, const std::map<uint64_t, std::set<WorkerId>>& commonKeys);
+    getOperatorsWithCommonKeys(const QueryPlanPtr & queryPlan, const std::map<uint64_t, std::set<WorkerId>> & commonKeys);
 
-  private:
+private:
     TopologyPtr topology;
     Configurations::OptimizerConfiguration configuration;
     std::map<Catalogs::Source::SourceCatalogEntryPtr, std::set<uint64_t>> keyDistributionMap;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDNEMOJOINRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDNEMOJOINRULE_HPP_

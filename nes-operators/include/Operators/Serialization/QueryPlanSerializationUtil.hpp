@@ -15,19 +15,21 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
 
-#include <SerializableQueryPlan.pb.h>
-#include <Util/QueryState.hpp>
 #include <memory>
+#include <Util/QueryState.hpp>
+#include <SerializableQueryPlan.pb.h>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class SerializableQueryPlan;
 
-class QueryPlanSerializationUtil {
-  public:
+class QueryPlanSerializationUtil
+{
+public:
     /**
      * @brief Serializes a Query Plan and all its root operators to a SerializableQueryPlan object.
      * @param queryPlan: The query plan
@@ -35,16 +37,15 @@ class QueryPlanSerializationUtil {
      * @param isClientOriginated Indicate if the source operator is originated from a client.
      * @return the pointer to serialized SerializableQueryPlan
      */
-    static void serializeQueryPlan(const QueryPlanPtr& queryPlan,
-                                   SerializableQueryPlan* serializableQueryPlan,
-                                   bool isClientOriginated = false);
+    static void
+    serializeQueryPlan(const QueryPlanPtr & queryPlan, SerializableQueryPlan * serializableQueryPlan, bool isClientOriginated = false);
 
     /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
      * @param serializedQueryPlan the serialized query plan.
      * @return the pointer to the deserialized query plan
      */
-    static QueryPlanPtr deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
+    static QueryPlanPtr deserializeQueryPlan(const SerializableQueryPlan * serializedQueryPlan);
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_

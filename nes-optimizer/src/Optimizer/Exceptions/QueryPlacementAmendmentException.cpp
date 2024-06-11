@@ -14,10 +14,16 @@
 
 #include <Optimizer/Exceptions/QueryPlacementAmendmentException.hpp>
 
-namespace NES::Exceptions {
-QueryPlacementAmendmentException::QueryPlacementAmendmentException(SharedQueryId sharedQueryId, const std::string& message)
-    : RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message) {}
+namespace NES::Exceptions
+{
+QueryPlacementAmendmentException::QueryPlacementAmendmentException(SharedQueryId sharedQueryId, const std::string & message)
+    : RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message)
+{
+}
 
-const char* QueryPlacementAmendmentException::what() const noexcept { return RequestExecutionException::what(); }
+const char * QueryPlacementAmendmentException::what() const noexcept
+{
+    return RequestExecutionException::what();
+}
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

@@ -14,27 +14,29 @@
 #ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief this exception indicates an error during the undeployment of a query
  */
-class QueryUndeploymentException : public RequestExecutionException {
-  public:
+class QueryUndeploymentException : public RequestExecutionException
+{
+public:
     /**
      * @brief constructor
      * @param sharedQueryId the shared query id of the query that was being undeployed when the exception occurred
      * @param message message containing information about the error
      */
-    QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string& message);
+    QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string & message);
 
-    [[nodiscard]] const char* what() const noexcept override;
+    [[nodiscard]] const char * what() const noexcept override;
 };
-}// namespace NES::Exceptions
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

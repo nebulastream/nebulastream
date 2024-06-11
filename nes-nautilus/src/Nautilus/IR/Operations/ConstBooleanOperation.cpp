@@ -12,21 +12,32 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <string>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-#include <cstdint>
-#include <string>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 ConstBooleanOperation::ConstBooleanOperation(OperationIdentifier identifier, bool constantValue)
-    : Operation(OperationType::ConstBooleanOp, identifier, Types::StampFactory::createBooleanStamp()),
-      constantValue(constantValue) {}
+    : Operation(OperationType::ConstBooleanOp, identifier, Types::StampFactory::createBooleanStamp()), constantValue(constantValue)
+{
+}
 
-bool ConstBooleanOperation::getValue() { return constantValue; }
-bool ConstBooleanOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstBooleanOp; }
+bool ConstBooleanOperation::getValue()
+{
+    return constantValue;
+}
+bool ConstBooleanOperation::classof(const Operation * Op)
+{
+    return Op->getOperationType() == OperationType::ConstBooleanOp;
+}
 
-std::string ConstBooleanOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstBooleanOperation::toString()
+{
+    return identifier + " = " + std::to_string(constantValue);
+}
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

@@ -25,18 +25,21 @@
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Abstract class for handling operators that collect statistics.
  */
-class AbstractSynopsesOperatorHandler : public OperatorHandler {
-  public:
-    AbstractSynopsesOperatorHandler(const uint64_t windowSize,
-                                    const uint64_t windowSlide,
-                                    const Statistic::SendingPolicyPtr& sendingPolicy,
-                                    const Statistic::StatisticFormatPtr& statisticFormat,
-                                    const std::vector<OriginId>& inputOrigins);
+class AbstractSynopsesOperatorHandler : public OperatorHandler
+{
+public:
+    AbstractSynopsesOperatorHandler(
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const Statistic::SendingPolicyPtr & sendingPolicy,
+        const Statistic::StatisticFormatPtr & statisticFormat,
+        const std::vector<OriginId> & inputOrigins);
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
@@ -49,8 +52,7 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      * @param timestamp
      * @return StatisticPtr
      */
-    Statistic::StatisticPtr
-    getStatistic(WorkerThreadId workerThreadId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
+    Statistic::StatisticPtr getStatistic(WorkerThreadId workerThreadId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
 
     /**
      * @brief Checks if we can/have to send/emit sketches to the sink
@@ -58,9 +60,8 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      * @param statisticHash
      * @param pipelineCtx
      */
-    void checkStatisticsSending(const BufferMetaData& bufferMetaData,
-                                Statistic::StatisticHash statisticHash,
-                                PipelineExecutionContext* pipelineCtx);
+    void checkStatisticsSending(
+        const BufferMetaData & bufferMetaData, Statistic::StatisticHash statisticHash, PipelineExecutionContext * pipelineCtx);
 
     /**
      * @brief Merges all statistics in statisticsPlusHashes. This is necessary, as each thread creates their own count min sketches
@@ -68,8 +69,7 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      * @param statisticsPlusHashes
      * @return Vector of merged statistics.
      */
-    std::vector<Statistic::HashStatisticPair>
-    mergeStatistics(const std::vector<Statistic::HashStatisticPair>& statisticsPlusHashes);
+    std::vector<Statistic::HashStatisticPair> mergeStatistics(const std::vector<Statistic::HashStatisticPair> & statisticsPlusHashes);
 
     /**
      * @brief Abstract method that each synopsis has to implement. It creates a new statistic for the given time period.
@@ -79,7 +79,7 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      */
     virtual Statistic::StatisticPtr createInitStatistic(Windowing::TimeMeasure sliceStart, Windowing::TimeMeasure sliceEnd) = 0;
 
-  private:
+private:
     // For now, we simply use our existing statistic store, even though, we only store one type of statistic.
     // This might not be the most efficient, but this way, we have the most flexibility moving forward.
     std::vector<Statistic::StatisticStorePtr> operatorStatisticStores;
@@ -89,6 +89,6 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_ABSTRACTSYNOPSESOPERATORHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_ABSTRACTSYNOPSESOPERATORHANDLER_HPP_

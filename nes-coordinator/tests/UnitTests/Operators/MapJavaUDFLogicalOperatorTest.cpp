@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
@@ -22,19 +22,22 @@
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-#include <string>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std::string_literals;
 
-namespace NES {
+namespace NES
+{
 
-class MapJavaUDFLogicalOperatorTest : public Testing::BaseUnitTest {
-  protected:
+class MapJavaUDFLogicalOperatorTest : public Testing::BaseUnitTest
+{
+protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("MapJavaUDFLogicalOperatorTest", NES::LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchema) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchema)
+{
     // Create a JavaUDFDescriptor with a specific schema.
     auto outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean());
     auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}.setOutputSchema(outputSchema).build();
@@ -54,18 +57,17 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchema) {
     ASSERT_TRUE(mapUdfLogicalOperator->getInputSchema()->equals(inputSchema));
 
     // The output schema of the operator should be prefixed with source name.
-    auto expectedOutputSchema =
-        std::make_shared<Schema>()->addField(sourceName + "$outputAttribute", DataTypeFactory::createBoolean());
+    auto expectedOutputSchema = std::make_shared<Schema>()->addField(sourceName + "$outputAttribute", DataTypeFactory::createBoolean());
     ASSERT_TRUE(mapUdfLogicalOperator->getOutputSchema()->equals(expectedOutputSchema));
 }
 
-TEST_F(MapJavaUDFLogicalOperatorTest, InferStringSignature) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferStringSignature)
+{
     // Create a MapUdfLogicalOperator with a JavaUDFDescriptor and a source as a child.
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
     auto mapUdfLogicalOperator = std::make_shared<MapUDFLogicalOperator>(javaUDFDescriptor, OperatorId(1));
     auto child = std::make_shared<SourceLogicalOperator>(
-        std::make_shared<SchemaSourceDescriptor>(
-            std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64())),
+        std::make_shared<SchemaSourceDescriptor>(std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64())),
         OperatorId(2));
     mapUdfLogicalOperator->addChild(child);
 
@@ -75,8 +77,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferStringSignature) {
     ASSERT_TRUE(hashBasedSignature.size() == 1);
 
     // The signature ends with the string signature of the child.
-    auto& signature = *hashBasedSignature.begin()->second.begin();
-    auto& childSignature = *child->getHashBasedSignature().begin()->second.begin();
+    auto & signature = *hashBasedSignature.begin()->second.begin();
+    auto & childSignature = *child->getHashBasedSignature().begin()->second.begin();
     NES_DEBUG("{}", signature);
     ASSERT_TRUE(signature.ends_with("." + childSignature));
 }
@@ -87,10 +89,11 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferStringSignature) {
 // The bug: When we try to add p2 as a parent to n2, the parent is not added because there already exists a parent with the same
 // operator ID.
 // Cause: n2 is a shallow copy of n1, so it retains the list of parents of n1 with the same IDs.
-TEST_F(MapJavaUDFLogicalOperatorTest, AddParentToCopy) {
+TEST_F(MapJavaUDFLogicalOperatorTest, AddParentToCopy)
+{
     // given: Create MapJavaUDFLogicalOperator with a parent.
-    auto n1 = LogicalOperatorFactory::createMapUDFLogicalOperator(
-        Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor());
+    auto n1
+        = LogicalOperatorFactory::createMapUDFLogicalOperator(Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor());
     auto p1 = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
     n1->addParent(p1);
 
@@ -109,7 +112,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, AddParentToCopy) {
 
 // The following tests verify that the input schema of the UDF is compatible with the output schema of the parent operator.
 // This test is the happy case, in which both schemas are compatible.
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaCompatibleTypes) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaCompatibleTypes)
+{
     auto udfInputSchema = Schema::create()
                               ->addField("charField", BasicType::INT8)
                               ->addField("shortField", BasicType::INT16)
@@ -139,7 +143,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaCompatibleTypes) {
 }
 
 // The schemas are not compatible because they contain the same field names but with different data types.
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaInCompatibleTypes) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaInCompatibleTypes)
+{
     auto udfInputSchema = Schema::create()
                               ->addField("charField", BasicType::INT8)
                               ->addField("shortField", BasicType::INT16)
@@ -167,20 +172,21 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaInCompatibleTypes) {
 }
 
 // The schemas are not compatible because they contain a different number of fields.
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaDifferentSize) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaDifferentSize)
+{
     auto udfInputSchema = Schema::create()->addField("field1", BasicType::INT8);
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
     // Additional field in the schema below.
-    auto childOutputSchema =
-        Schema::create()->addField("source$field1", BasicType::INT8)->addField("source$field2", BasicType::INT8);
+    auto childOutputSchema = Schema::create()->addField("source$field1", BasicType::INT8)->addField("source$field2", BasicType::INT8);
     auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
     op->addChild(source);
     EXPECT_THROW(op->inferSchema(), NES::TypeInferenceException);
 }
 
 // The schemas are not compatible because a field is missing.
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaMissingField) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaMissingField)
+{
     auto udfInputSchema = Schema::create()->addField("field1", BasicType::INT8)->addField("missingField", BasicType::INT8);
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
@@ -194,7 +200,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaMissingField) {
 // The schemas are not compatible because an unsigned integer field is used.
 // The exception message should contain this information.
 // The test does not verify this automatically but the debug log output can be manually checked.
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaUnsignedIntegers) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaUnsignedIntegers)
+{
     auto udfInputSchema = Schema::create()
                               ->addField("charField", BasicType::INT8)
                               ->addField("shortField", BasicType::INT16)
@@ -214,7 +221,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaUnsignedIntegers) {
 // The schemas are compatible because UINT64 in the child output schema are mapped to Java long in the UDF.
 // The log should contain a WARN message indicating the possible integer overflow.
 // The test does not verify this automatically but the log output can be manually checked.
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaUnsignedLong) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaUnsignedLong)
+{
     auto udfInputSchema = Schema::create()->addField("unsignedLongField", BasicType::INT64);
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
@@ -228,7 +236,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaUnsignedLong) {
 // The schemas are compatible if the Java UDF input type is not a complex object,
 // the name of the field in the child operator output schema does not matter.
 // Regression test for https://github.com/nebulastream/nebulastream/issues/4334
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleField) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleField)
+{
     auto udfInputSchema = Schema::create()->addField("", BasicType::INT64);
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
@@ -241,7 +250,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleField) {
 
 // The schemas are not compatible because the types are different.
 // Regression test for https://github.com/nebulastream/nebulastream/issues/4334
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleFieldIncompatibleTypes) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleFieldIncompatibleTypes)
+{
     auto udfInputSchema = Schema::create()->addField("", BasicType::INT64);
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
@@ -253,7 +263,8 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleFieldIncompatibleTypes) {
 
 // The schemas are compatible because the UINT64 can be mapped to INT64.
 // Regression test for https://github.com/nebulastream/nebulastream/issues/4334
-TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleFieldUnsignedLong) {
+TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleFieldUnsignedLong)
+{
     auto udfInputSchema = Schema::create()->addField("", BasicType::INT64);
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
@@ -263,4 +274,4 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaSingleFieldUnsignedLong) {
     // No exception is thrown here
     op->inferSchema();
 }
-}// namespace NES
+} // namespace NES

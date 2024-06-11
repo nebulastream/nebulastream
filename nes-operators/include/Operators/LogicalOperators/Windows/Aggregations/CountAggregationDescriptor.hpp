@@ -16,14 +16,16 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_COUNTAGGREGATIONDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 /**
  * @brief
  * The CountAggregationDescriptor aggregation calculates the CountAggregationDescriptor over the window.
  */
-class CountAggregationDescriptor : public WindowAggregationDescriptor {
-  public:
+class CountAggregationDescriptor : public WindowAggregationDescriptor
+{
+public:
     /**
     * Factory method to creates a CountAggregationDescriptor aggregation on a particular field.
     */
@@ -45,9 +47,9 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
 
     virtual ~CountAggregationDescriptor() = default;
 
-  private:
+private:
     explicit CountAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     CountAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-}// namespace NES::Windowing
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_COUNTAGGREGATIONDESCRIPTOR_HPP_
+} // namespace NES::Windowing
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_COUNTAGGREGATIONDESCRIPTOR_HPP_

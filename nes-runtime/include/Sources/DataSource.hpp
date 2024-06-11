@@ -15,6 +15,12 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
 
+#include <atomic>
+#include <chrono>
+#include <future>
+#include <mutex>
+#include <optional>
+#include <thread>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -23,18 +29,14 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/GatheringMode.hpp>
-#include <atomic>
-#include <chrono>
-#include <future>
-#include <mutex>
-#include <optional>
-#include <thread>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 class TestTupleBuffer;
 }
 
-namespace NES {
+namespace NES
+{
 class KalmanFilter;
 
 /**
@@ -47,9 +49,9 @@ class KalmanFilter;
 *  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
 */
 
-class DataSource : public Runtime::Reconfigurable, public DataEmitter {
-
-  public:
+class DataSource : public Runtime::Reconfigurable, public DataEmitter
+{
+public:
     /**
      * @brief public constructor for data source
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
@@ -67,19 +69,20 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
      * @param taskQueueId the ID of the queue to which the task is pushed
      */
-    explicit DataSource(SchemaPtr schema,
-                        Runtime::BufferManagerPtr bufferManager,
-                        Runtime::QueryManagerPtr queryManager,
-                        OperatorId operatorId,
-                        OriginId originId,
-                        StatisticId statisticId,
-                        size_t numSourceLocalBuffers,
-                        GatheringMode gatheringMode,
-                        const std::string& physicalSourceName,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
-                            std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
-                        uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
-                        uint64_t taskQueueId = 0);
+    explicit DataSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string & physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors
+        = std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
+        uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
+        uint64_t taskQueueId = 0);
 
     DataSource() = delete;
 
@@ -222,8 +225,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @tparam Derived the class type that we want to cast the shared ptr
      * @return this instance casted to the desired shared_ptr<Derived> type
      */
-    template<typename Derived>
-    std::shared_ptr<Derived> shared_from_base() {
+    template <typename Derived>
+    std::shared_ptr<Derived> shared_from_base()
+    {
         return std::static_pointer_cast<Derived>(DataEmitter::shared_from_this());
     }
 
@@ -238,14 +242,14 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @note Currently has no behaviour. We need to overwrite DataEmitter::onEvent for compliance.
      * @param event
      */
-    virtual void onEvent(Runtime::BaseEvent&) override;
+    virtual void onEvent(Runtime::BaseEvent &) override;
     /**
      * @brief API method called upon receiving an event, whose handling requires the WorkerContext (e.g. its network channels).
      * @note Only calls onEvent(event) of this class or derived classes.
      * @param event
      * @param workerContext
      */
-    virtual void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
+    virtual void onEvent(Runtime::BaseEvent & event, Runtime::WorkerContextRef workerContext);
 
     [[nodiscard]] virtual bool fail();
 
@@ -261,7 +265,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void incrementNumberOfConsumerQueries() { numberOfConsumerQueries++; };
 
-  protected:
+protected:
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
@@ -278,7 +282,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode gatheringMode;
     SourceType type;
-    Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful};// protected by mutex
+    Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful}; // protected by mutex
     std::atomic_bool wasStarted{false};
     std::atomic_bool futureRetrieved{false};
     std::atomic_bool running{false};
@@ -292,14 +296,14 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::atomic<uint64_t> refCounter = 0;
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
 
-    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
+    void emitWork(Runtime::TupleBuffer & buffer, bool addBufferMetaData = true) override;
 
     NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 
-  protected:
+protected:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 
-  private:
+private:
     mutable std::recursive_mutex startStopMutex;
     uint64_t maxSequenceNumber = 0;
 
@@ -314,11 +318,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     */
     virtual void runningRoutineWithIngestionRate();
 
-    bool endOfStreamSent{false};// protected by startStopMutex
+    bool endOfStreamSent{false}; // protected by startStopMutex
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_

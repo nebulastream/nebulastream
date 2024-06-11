@@ -18,16 +18,17 @@
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class NESBinaryParser;
 using NESParserPtr = std::shared_ptr<NESBinaryParser>;
 /**
  * Parser for NebulasSteram
  */
-class NESBinaryParser : public Parser {
-
-  public:
+class NESBinaryParser : public Parser
+{
+public:
     /**
    * @brief public constructor for NES input data parser
    */
@@ -41,12 +42,13 @@ class NESBinaryParser : public Parser {
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    bool writeInputTupleToTupleBuffer(std::string_view binaryBuffer,
-                                      uint64_t tupleCount,
-                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                      const SchemaPtr& schema,
-                                      const Runtime::BufferManagerPtr& bufferManager) override;
+    bool writeInputTupleToTupleBuffer(
+        std::string_view binaryBuffer,
+        uint64_t tupleCount,
+        Runtime::MemoryLayouts::TestTupleBuffer & tupleBuffer,
+        const SchemaPtr & schema,
+        const Runtime::BufferManagerPtr & bufferManager) override;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESBINARYPARSER_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESBINARYPARSER_HPP_

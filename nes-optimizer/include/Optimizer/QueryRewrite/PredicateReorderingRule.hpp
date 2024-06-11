@@ -15,12 +15,13 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
 
-#include <Expressions/ExpressionNode.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
+#include <Expressions/ExpressionNode.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
@@ -29,9 +30,10 @@ using OperatorPtr = std::shared_ptr<Operator>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class PredicateReorderingRule;
 using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
@@ -60,9 +62,9 @@ using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
  *
  */
 
-class PredicateReorderingRule : public BaseRewriteRule {
-
-  public:
+class PredicateReorderingRule : public BaseRewriteRule
+{
+public:
     static PredicateReorderingRulePtr create();
     PredicateReorderingRule() = default;
     virtual ~PredicateReorderingRule() = default;
@@ -74,13 +76,13 @@ class PredicateReorderingRule : public BaseRewriteRule {
      */
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  private:
+private:
     /**
      * @brief Given a node, check if the parent or the child is a filter.
      * @param OperatorPtr: the node to be check
      * @return boolean, true when a consecutive filter is found
      */
-    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
+    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr & firstFilter);
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_

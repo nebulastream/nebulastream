@@ -18,11 +18,23 @@
 #include <Util/Logger/Logger.hpp>
 #include <mlir/IR/MLIRContext.h>
 
-namespace NES::Nautilus::Backends::MLIR {
-MLIRExecutable::MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine) : engine(std::move(engine)) {}
+namespace NES::Nautilus::Backends::MLIR
+{
+MLIRExecutable::MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine) : engine(std::move(engine))
+{
+}
 
-void* MLIRExecutable::getInvocableFunctionPtr(const std::string& member) { return engine->lookup(member).get(); }
-bool MLIRExecutable::hasInvocableFunctionPtr() { return true; }
-MLIRExecutable::~MLIRExecutable() { NES_DEBUG("~MLIRExecutable"); }
+void * MLIRExecutable::getInvocableFunctionPtr(const std::string & member)
+{
+    return engine->lookup(member).get();
+}
+bool MLIRExecutable::hasInvocableFunctionPtr()
+{
+    return true;
+}
+MLIRExecutable::~MLIRExecutable()
+{
+    NES_DEBUG("~MLIRExecutable");
+}
 
-}// namespace NES::Nautilus::Backends::MLIR
+} // namespace NES::Nautilus::Backends::MLIR

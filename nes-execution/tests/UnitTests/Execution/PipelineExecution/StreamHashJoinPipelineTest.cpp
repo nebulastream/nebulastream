@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
+#include <cstring>
+#include <string>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -35,52 +36,53 @@
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <cstring>
 #include <gtest/gtest.h>
-#include <string>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    HashJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager,
-                                           uint64_t noWorkerThreads,
-                                           OperatorHandlerPtr hashJoinOpHandler,
-                                           PipelineId pipelineId)
+class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext
+{
+public:
+    HashJoinMockedPipelineExecutionContext(
+        BufferManagerPtr bufferManager,
+        uint64_t noWorkerThreads,
+        OperatorHandlerPtr hashJoinOpHandler,
+        PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId,              // mock pipeline id
-            DecomposedQueryPlanId(1),// mock query id
+            pipelineId, // mock pipeline id
+            DecomposedQueryPlanId(1), // mock query id
             bufferManager,
             noWorkerThreads,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                this->emittedBuffers.emplace_back(std::move(buffer));
-            },
-            [this](TupleBuffer& buffer) {
-                this->emittedBuffers.emplace_back(std::move(buffer));
-            },
+            [this](TupleBuffer & buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+            [this](TupleBuffer & buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
             {hashJoinOpHandler}){};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-
-  public:
-    ExecutablePipelineProvider* provider;
+class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
+    ExecutablePipelineProvider * provider;
     BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("HashJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup HashJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -89,7 +91,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down HashJoinPipelineTest test case.");
         BaseUnitTest::TearDown();
     }
@@ -97,28 +100,29 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down HashJoinPipelineTest test class."); }
 
-    bool checkIfHashJoinWorks(const std::string& fileNameBuffersLeft,
-                              const std::string& fileNameBuffersRight,
-                              const std::string& fileNameBuffersSink,
-                              const uint64_t windowSize,
-                              const uint64_t windowSlide,
-                              const SchemaPtr leftSchema,
-                              const SchemaPtr rightSchema,
-                              const SchemaPtr joinSchema,
-                              const std::string& joinFieldNameLeft,
-                              const std::string& joinFieldNameRight,
-                              const std::string& timeStampFieldLeft,
-                              const std::string& timeStampFieldRight,
-                              const std::string& windowStartFieldName,
-                              const std::string& windowEndFieldName) {
+    bool checkIfHashJoinWorks(
+        const std::string & fileNameBuffersLeft,
+        const std::string & fileNameBuffersRight,
+        const std::string & fileNameBuffersSink,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr leftSchema,
+        const SchemaPtr rightSchema,
+        const SchemaPtr joinSchema,
+        const std::string & joinFieldNameLeft,
+        const std::string & joinFieldNameRight,
+        const std::string & timeStampFieldLeft,
+        const std::string & timeStampFieldRight,
+        const std::string & windowStartFieldName,
+        const std::string & windowEndFieldName)
+    {
         bool hashJoinWorks = true;
 
         // Creating the input left and right buffers and the expected output buffer
         auto originId = 0UL;
-        auto leftBuffers =
-            Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager, originId++, timeStampFieldLeft);
-        auto rightBuffers =
-            Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
+        auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager, originId++, timeStampFieldLeft);
+        auto rightBuffers
+            = Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
         auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager, originId++);
         NES_DEBUG("read file={}", fileNameBuffersSink);
 
@@ -151,8 +155,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
-                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
         auto joinBuildRight = std::make_shared<Operators::HJBuildSlicing>(
@@ -161,8 +164,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightSchema->getSchemaSizeInBytes(),
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
-                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
 
@@ -173,28 +175,29 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
         auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
-        auto joinProbe = std::make_shared<Operators::HJProbe>(handlerIndex,
-                                                              joinSchemaStruct,
-                                                              keyExpressions,
-                                                              windowMetaData,
-                                                              QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                              QueryCompilation::WindowingStrategy::SLICING);
+        auto joinProbe = std::make_shared<Operators::HJProbe>(
+            handlerIndex,
+            joinSchemaStruct,
+            keyExpressions,
+            windowMetaData,
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            QueryCompilation::WindowingStrategy::SLICING);
 
         // Creating the hash join operator
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(2);
-        auto hashJoinOpHandler =
-            Operators::HJOperatorHandlerSlicing::create(originIds,
-                                                        outputOriginId,
-                                                        windowSize,
-                                                        windowSlide,
-                                                        leftSchema,
-                                                        rightSchema,
-                                                        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                        NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
-                                                        NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                        NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
-                                                        NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
+        auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(
+            originIds,
+            outputOriginId,
+            windowSize,
+            windowSlide,
+            leftSchema,
+            rightSchema,
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+            NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+            NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
+            NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
@@ -211,18 +214,12 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
 
         auto curPipelineId = 0;
         auto noWorkerThreads = 1;
-        auto pipelineExecCtxLeft = HashJoinMockedPipelineExecutionContext(bufferManager,
-                                                                          noWorkerThreads,
-                                                                          hashJoinOpHandler,
-                                                                          PipelineId(curPipelineId++));
-        auto pipelineExecCtxRight = HashJoinMockedPipelineExecutionContext(bufferManager,
-                                                                           noWorkerThreads,
-                                                                           hashJoinOpHandler,
-                                                                           PipelineId(curPipelineId++));
-        auto pipelineExecCtxSink = HashJoinMockedPipelineExecutionContext(bufferManager,
-                                                                          noWorkerThreads,
-                                                                          hashJoinOpHandler,
-                                                                          PipelineId(curPipelineId++));
+        auto pipelineExecCtxLeft
+            = HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, PipelineId(curPipelineId++));
+        auto pipelineExecCtxRight
+            = HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, PipelineId(curPipelineId++));
+        auto pipelineExecCtxSink
+            = HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, PipelineId(curPipelineId++));
 
         hashJoinOpHandler->start(std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft), 0);
 
@@ -235,10 +232,12 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         hashJoinWorks = hashJoinWorks && (executablePipelineSink->setup(pipelineExecCtxSink) == 0);
 
         // Executing left and right buffers
-        for (auto buffer : leftBuffers) {
+        for (auto buffer : leftBuffers)
+        {
             executablePipelineLeft->execute(buffer, pipelineExecCtxLeft, *workerContext);
         }
-        for (auto buffer : rightBuffers) {
+        for (auto buffer : rightBuffers)
+        {
             executablePipelineRight->execute(buffer, pipelineExecCtxRight, *workerContext);
         }
         hashJoinWorks = hashJoinWorks && (executablePipelineLeft->stop(pipelineExecCtxLeft) == 0);
@@ -247,15 +246,14 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         hashJoinOpHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
         // Assure that at least one buffer has been emitted
-        hashJoinWorks =
-            hashJoinWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
+        hashJoinWorks = hashJoinWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
         // Executing sink buffers
         std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
-        buildEmittedBuffers.insert(buildEmittedBuffers.end(),
-                                   pipelineExecCtxRight.emittedBuffers.begin(),
-                                   pipelineExecCtxRight.emittedBuffers.end());
-        for (auto buf : buildEmittedBuffers) {
+        buildEmittedBuffers.insert(
+            buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(), pipelineExecCtxRight.emittedBuffers.end());
+        for (auto buf : buildEmittedBuffers)
+        {
             executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
         }
         hashJoinWorks = hashJoinWorks && (executablePipelineSink->stop(pipelineExecCtxSink) == 0);
@@ -265,13 +263,14 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));
 
         hashJoinWorks = hashJoinWorks && (resultBuffer.getNumberOfTuples() == expectedSinkBuffers[0].getNumberOfTuples());
-        hashJoinWorks = hashJoinWorks
-            && (Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffers[0], joinSchema->getSchemaSizeInBytes()));
+        hashJoinWorks
+            = hashJoinWorks && (Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffers[0], joinSchema->getSchemaSizeInBytes()));
         return hashJoinWorks;
     }
 };
 
-TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline) {
+TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline)
+{
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("left$id", BasicType::UINT64)
                                 ->addField("left$value", BasicType::UINT64)
@@ -298,28 +297,29 @@ TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline) {
     const std::string fileNameBuffersRight(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     const std::string fileNameBuffersSink(std::string(TEST_DATA_DIRECTORY) + "window_sink2.csv");
 
-    ASSERT_TRUE(checkIfHashJoinWorks(fileNameBuffersLeft,
-                                     fileNameBuffersRight,
-                                     fileNameBuffersSink,
-                                     windowSize,
-                                     windowSize,
-                                     leftSchema,
-                                     rightSchema,
-                                     joinSchema,
-                                     joinFieldNameLeft,
-                                     joinFieldNameRight,
-                                     timeStampFieldLeft,
-                                     timeStampFieldRight,
-                                     windowStartFieldName,
-                                     windowEndFieldName));
+    ASSERT_TRUE(checkIfHashJoinWorks(
+        fileNameBuffersLeft,
+        fileNameBuffersRight,
+        fileNameBuffersSink,
+        windowSize,
+        windowSize,
+        leftSchema,
+        rightSchema,
+        joinSchema,
+        joinFieldNameLeft,
+        joinFieldNameRight,
+        timeStampFieldLeft,
+        timeStampFieldRight,
+        windowStartFieldName,
+        windowEndFieldName));
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        HashJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter",
-                                          "PipelineCompiler"),//CPPPipelineCompiler is currently not working
-                        [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    HashJoinPipelineTest,
+    ::testing::Values(
+        "PipelineInterpreter",
+        "PipelineCompiler"), //CPPPipelineCompiler is currently not working
+    [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType> & info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

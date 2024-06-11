@@ -14,9 +14,10 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SINKS_DATASINKPLUGIN_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_DATASINKPLUGIN_HPP_
-#include <Util/PluginRegistry.hpp>
 #include <optional>
-namespace NES {
+#include <Util/PluginRegistry.hpp>
+namespace NES
+{
 
 class SinkMedium;
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
@@ -25,8 +26,9 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
  * @brief DataSink interface to register a new physical data sink plugin.
  * Implementations of this plugin must implement createDataSink that translates a sink descriptor to a DataSinkPtr.
  */
-class DataSinkPlugin {
-  public:
+class DataSinkPlugin
+{
+public:
     DataSinkPlugin() = default;
     /**
      * @brief Translates a sink descriptor to a data sink.
@@ -38,16 +40,18 @@ class DataSinkPlugin {
      * @param numOfProducers number of data producers.
      * @return
      */
-    virtual std::optional<DataSinkPtr> createDataSink(OperatorId sinkId,
-                                                      SinkDescriptorPtr sinkDescriptor,
-                                                      SchemaPtr schema,
-                                                      Runtime::NodeEnginePtr nodeEngine,
-                                                      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                                      size_t numOfProducers) = 0;
+    virtual std::optional<DataSinkPtr> createDataSink(
+        OperatorId sinkId,
+        SinkDescriptorPtr sinkDescriptor,
+        SchemaPtr schema,
+        Runtime::NodeEnginePtr nodeEngine,
+        const QueryCompilation::PipelineQueryPlanPtr & querySubPlan,
+        size_t numOfProducers)
+        = 0;
     virtual ~DataSinkPlugin() = default;
 };
 
 using SinkPluginRegistry = Util::PluginRegistry<DataSinkPlugin>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_DATASINKPLUGIN_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_DATASINKPLUGIN_HPP_

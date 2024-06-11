@@ -15,11 +15,12 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_
 
+#include <future>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEventPriority.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <future>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
@@ -27,15 +28,17 @@ using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
 /**
 * @brief base class of ISQP response type
 */
-struct ISQPResponse {};
+struct ISQPResponse
+{
+};
 using ISQPResponsePtr = std::shared_ptr<ISQPResponse>;
 
 /**
  * @brief base class for the ISQP event types
  */
-class ISQPEvent : public std::enable_shared_from_this<ISQPEvent> {
-
-  public:
+class ISQPEvent : public std::enable_shared_from_this<ISQPEvent>
+{
+public:
     /**
      * @brief Ctor
      * @param priority: priority of the external event
@@ -54,9 +57,11 @@ class ISQPEvent : public std::enable_shared_from_this<ISQPEvent> {
      * @tparam ISQPExternalEvent
      * @return bool true if node is of specific event type
      */
-    template<class ISQPEventType>
-    bool instanceOf() {
-        if (dynamic_cast<ISQPEventType*>(this)) {
+    template <class ISQPEventType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<ISQPEventType *>(this))
+        {
             return true;
         }
         return false;
@@ -67,9 +72,11 @@ class ISQPEvent : public std::enable_shared_from_this<ISQPEvent> {
      * @tparam ISQPExternalEvent
      * @return shared object of specific event type
      */
-    template<class ISQPEventType>
-    std::shared_ptr<ISQPEventType> as() {
-        if (instanceOf<ISQPEventType>()) {
+    template <class ISQPEventType>
+    std::shared_ptr<ISQPEventType> as()
+    {
+        if (instanceOf<ISQPEventType>())
+        {
             return std::dynamic_pointer_cast<ISQPEventType>(this->shared_from_this());
         }
         std::string className = typeid(ISQPEventType).name();
@@ -80,9 +87,9 @@ class ISQPEvent : public std::enable_shared_from_this<ISQPEvent> {
 
     virtual ~ISQPEvent() = default;
 
-  private:
+private:
     uint8_t priority;
 };
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_

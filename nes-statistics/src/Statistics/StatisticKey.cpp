@@ -12,32 +12,44 @@
     limitations under the License.
 */
 
-#include <Statistics/StatisticKey.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>
+#include <Statistics/StatisticKey.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-StatisticKey::StatisticKey(MetricPtr metric, StatisticId statisticId) : metric(std::move(metric)), statisticId(statisticId) {}
+StatisticKey::StatisticKey(MetricPtr metric, StatisticId statisticId) : metric(std::move(metric)), statisticId(statisticId)
+{
+}
 
-bool StatisticKey::operator==(const StatisticKey& rhs) const {
+bool StatisticKey::operator==(const StatisticKey & rhs) const
+{
     return (*metric) == (*rhs.metric) && statisticId == rhs.statisticId;
 }
 
-bool StatisticKey::operator!=(const StatisticKey& rhs) const { return !(rhs == *this); }
+bool StatisticKey::operator!=(const StatisticKey & rhs) const
+{
+    return !(rhs == *this);
+}
 
-std::string StatisticKey::toString() const {
+std::string StatisticKey::toString() const
+{
     std::ostringstream oss;
     oss << "Metric(" << metric->toString() << ") ";
     oss << "StatisticId(" << statisticId << ")";
     return oss.str();
 }
 
-StatisticHash StatisticKey::combineStatisticIdWithMetricHash(StatisticMetricHash metricHash, StatisticId statisticId) {
+StatisticHash StatisticKey::combineStatisticIdWithMetricHash(StatisticMetricHash metricHash, StatisticId statisticId)
+{
     return statisticId ^ (metricHash + goldenRatio);
 }
 
-StatisticHash StatisticKey::hash() const { return combineStatisticIdWithMetricHash(metric->hash(), statisticId); }
+StatisticHash StatisticKey::hash() const
+{
+    return combineStatisticIdWithMetricHash(metric->hash(), statisticId);
+}
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

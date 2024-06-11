@@ -15,14 +15,16 @@
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 
-namespace NES::Exceptions {
-class StorageHandlerAcquireResourcesException : public RequestExecutionException {
-  public:
-    explicit StorageHandlerAcquireResourcesException(const std::string& message);
+namespace NES::Exceptions
+{
+class StorageHandlerAcquireResourcesException : public RequestExecutionException
+{
+public:
+    explicit StorageHandlerAcquireResourcesException(const std::string & message);
 
-  private:
+private:
     std::string message;
 };
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_

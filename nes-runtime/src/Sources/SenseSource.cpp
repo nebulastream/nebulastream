@@ -12,42 +12,48 @@
     limitations under the License.
 */
 
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
-SenseSource::SenseSource(SchemaPtr schema,
-                         Runtime::BufferManagerPtr bufferManager,
-                         Runtime::QueryManagerPtr queryManager,
-                         std::string udfs,
-                         OperatorId operatorId,
-                         OriginId originId,
-                         StatisticId statisticId,
-                         size_t numSourceLocalBuffers,
-                         const std::string& physicalSourceName,
-                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(std::move(schema),
-                 std::move(bufferManager),
-                 std::move(queryManager),
-                 operatorId,
-                 originId,
-                 statisticId,
-                 numSourceLocalBuffers,
-                 GatheringMode::INTERVAL_MODE,
-                 physicalSourceName,
-                 std::move(successors)),
-      udfs(std::move(udfs)) {}
+SenseSource::SenseSource(
+    SchemaPtr schema,
+    Runtime::BufferManagerPtr bufferManager,
+    Runtime::QueryManagerPtr queryManager,
+    std::string udfs,
+    OperatorId operatorId,
+    OriginId originId,
+    StatisticId statisticId,
+    size_t numSourceLocalBuffers,
+    const std::string & physicalSourceName,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+    : DataSource(
+        std::move(schema),
+        std::move(bufferManager),
+        std::move(queryManager),
+        operatorId,
+        originId,
+        statisticId,
+        numSourceLocalBuffers,
+        GatheringMode::INTERVAL_MODE,
+        physicalSourceName,
+        std::move(successors))
+    , udfs(std::move(udfs))
+{
+}
 
-std::optional<Runtime::TupleBuffer> SenseSource::receiveData() {
+std::optional<Runtime::TupleBuffer> SenseSource::receiveData()
+{
     NES_DEBUG("SenseSource::receiveData called");
     auto buf = bufferManager->getBufferBlocking();
     fillBuffer(buf);
@@ -55,16 +61,25 @@ std::optional<Runtime::TupleBuffer> SenseSource::receiveData() {
     return buf;
 }
 
-std::string SenseSource::toString() const {
+std::string SenseSource::toString() const
+{
     std::stringstream ss;
     ss << "SenseSource(SCHEMA(" << schema->toString() << "), UDFS=" << udfs << endl;
     return ss.str();
 }
 
-void SenseSource::fillBuffer(Runtime::TupleBuffer&) {}
+void SenseSource::fillBuffer(Runtime::TupleBuffer &)
+{
+}
 
-SourceType SenseSource::getType() const { return SourceType::SENSE_SOURCE; }
+SourceType SenseSource::getType() const
+{
+    return SourceType::SENSE_SOURCE;
+}
 
-const string& SenseSource::getUdfs() const { return udfs; }
+const string & SenseSource::getUdfs() const
+{
+    return udfs;
+}
 
-}// namespace NES
+} // namespace NES

@@ -12,51 +12,75 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <chrono>
+#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 
-namespace NES {
+namespace NES
+{
 
-DecomposedQueryPlanMetaDataPtr DecomposedQueryPlanMetaData::create(DecomposedQueryPlanId decomposedQueryPlanId,
-                                                                   DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                                                   QueryState decomposedQueryPlanState,
-                                                                   WorkerId workerId) {
-    return std::make_shared<DecomposedQueryPlanMetaData>(decomposedQueryPlanId,
-                                                         decomposedQueryPlanVersion,
-                                                         decomposedQueryPlanState,
-                                                         workerId);
+DecomposedQueryPlanMetaDataPtr DecomposedQueryPlanMetaData::create(
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+    QueryState decomposedQueryPlanState,
+    WorkerId workerId)
+{
+    return std::make_shared<DecomposedQueryPlanMetaData>(
+        decomposedQueryPlanId, decomposedQueryPlanVersion, decomposedQueryPlanState, workerId);
 }
 
-DecomposedQueryPlanMetaData::DecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
-                                                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                                         QueryState decomposedQueryPlanState,
-                                                         WorkerId workerId)
-    : decomposedQueryPlanId(decomposedQueryPlanId), decomposedQueryPlanVersion(decomposedQueryPlanVersion),
-      decomposedQueryPlanState(decomposedQueryPlanState), workerId(workerId) {}
+DecomposedQueryPlanMetaData::DecomposedQueryPlanMetaData(
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+    QueryState decomposedQueryPlanState,
+    WorkerId workerId)
+    : decomposedQueryPlanId(decomposedQueryPlanId)
+    , decomposedQueryPlanVersion(decomposedQueryPlanVersion)
+    , decomposedQueryPlanState(decomposedQueryPlanState)
+    , workerId(workerId)
+{
+}
 
-void DecomposedQueryPlanMetaData::updateState(QueryState newDecomposedQueryPlanState) {
+void DecomposedQueryPlanMetaData::updateState(QueryState newDecomposedQueryPlanState)
+{
     decomposedQueryPlanState = newDecomposedQueryPlanState;
-    uint64_t usSinceEpoch =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    uint64_t usSinceEpoch
+        = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     history.emplace_back(usSinceEpoch, decomposedQueryPlanState);
 }
 
-void DecomposedQueryPlanMetaData::setTerminationReason(const std::string& terminationReason) {
+void DecomposedQueryPlanMetaData::setTerminationReason(const std::string & terminationReason)
+{
     this->terminationReason = terminationReason;
 }
 
-DecomposedQueryPlanId DecomposedQueryPlanMetaData::getDecomposedQueryPlanId() const { return decomposedQueryPlanId; }
+DecomposedQueryPlanId DecomposedQueryPlanMetaData::getDecomposedQueryPlanId() const
+{
+    return decomposedQueryPlanId;
+}
 
-QueryState DecomposedQueryPlanMetaData::getDecomposedQueryPlanStatus() const { return decomposedQueryPlanState; }
+QueryState DecomposedQueryPlanMetaData::getDecomposedQueryPlanStatus() const
+{
+    return decomposedQueryPlanState;
+}
 
-WorkerId DecomposedQueryPlanMetaData::getWorkerId() const { return workerId; }
+WorkerId DecomposedQueryPlanMetaData::getWorkerId() const
+{
+    return workerId;
+}
 
-const std::string& DecomposedQueryPlanMetaData::getTerminationReason() const { return terminationReason; }
+const std::string & DecomposedQueryPlanMetaData::getTerminationReason() const
+{
+    return terminationReason;
+}
 
-const QueryStateHistory& DecomposedQueryPlanMetaData::getHistory() const { return history; }
+const QueryStateHistory & DecomposedQueryPlanMetaData::getHistory() const
+{
+    return history;
+}
 
-DecomposedQueryPlanVersion DecomposedQueryPlanMetaData::getDecomposedQueryPlanVersion() const {
+DecomposedQueryPlanVersion DecomposedQueryPlanMetaData::getDecomposedQueryPlanVersion() const
+{
     return decomposedQueryPlanVersion;
 }
 
-}// namespace NES
+} // namespace NES

@@ -19,7 +19,8 @@
 #include <memory>
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -28,9 +29,10 @@ class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /// @brief Representation of a user-defined constant in the NES type system.
-class [[nodiscard]] ValueType {
-  public:
-    [[nodiscard]] inline explicit ValueType(const DataTypePtr& type) : dataType(std::move(type)) {}
+class [[nodiscard]] ValueType
+{
+public:
+    [[nodiscard]] inline explicit ValueType(const DataTypePtr & type) : dataType(std::move(type)) { }
 
     virtual ~ValueType() = default;
 
@@ -40,14 +42,15 @@ class [[nodiscard]] ValueType {
     /// @brief Returns a string representation of this value
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
-    template<class CheckedType>
-    auto as() {
-        return dynamic_cast<CheckedType*>(this);
+    template <class CheckedType>
+    auto as()
+    {
+        return dynamic_cast<CheckedType *>(this);
     }
 
     DataTypePtr const dataType;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_

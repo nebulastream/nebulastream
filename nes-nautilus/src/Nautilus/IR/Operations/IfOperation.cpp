@@ -16,45 +16,76 @@
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 IfOperation::IfOperation(OperationPtr booleanValue)
-    : Operation(Operation::OperationType::IfOp, Types::StampFactory::createVoidStamp()), booleanValue(booleanValue) {}
+    : Operation(Operation::OperationType::IfOp, Types::StampFactory::createVoidStamp()), booleanValue(booleanValue)
+{
+}
 
-OperationPtr IfOperation::getValue() { return booleanValue.lock(); }
+OperationPtr IfOperation::getValue()
+{
+    return booleanValue.lock();
+}
 
-BasicBlockInvocation& IfOperation::getTrueBlockInvocation() { return trueBlockInvocation; }
-BasicBlockInvocation& IfOperation::getFalseBlockInvocation() { return falseBlockInvocation; }
+BasicBlockInvocation & IfOperation::getTrueBlockInvocation()
+{
+    return trueBlockInvocation;
+}
+BasicBlockInvocation & IfOperation::getFalseBlockInvocation()
+{
+    return falseBlockInvocation;
+}
 
-void IfOperation::setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation) {
+void IfOperation::setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation)
+{
     this->trueBlockInvocation.setBlock(trueBlockInvocation);
 }
-void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) {
+void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation)
+{
     this->falseBlockInvocation.setBlock(falseBlockInvocation);
 }
 
-BasicBlockPtr IfOperation::getMergeBlock() { return mergeBlock.lock(); }
-OperationPtr IfOperation::getBooleanValue() { return booleanValue.lock(); }
-void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = mergeBlock; }
+BasicBlockPtr IfOperation::getMergeBlock()
+{
+    return mergeBlock.lock();
+}
+OperationPtr IfOperation::getBooleanValue()
+{
+    return booleanValue.lock();
+}
+void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock)
+{
+    this->mergeBlock = mergeBlock;
+}
 
-std::string IfOperation::toString() {
-    std::string baseString =
-        "if " + getValue()->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
-    if (trueBlockInvocation.getArguments().size() > 0) {
+std::string IfOperation::toString()
+{
+    std::string baseString = "if " + getValue()->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
+    if (trueBlockInvocation.getArguments().size() > 0)
+    {
         baseString += trueBlockInvocation.getArguments()[0]->getIdentifier();
-        for (int i = 1; i < (int) trueBlockInvocation.getArguments().size(); ++i) {
+        for (int i = 1; i < (int)trueBlockInvocation.getArguments().size(); ++i)
+        {
             baseString += ", " + trueBlockInvocation.getArguments().at(i)->getIdentifier();
         }
     }
-    if (falseBlockInvocation.getBlock()) {
+    if (falseBlockInvocation.getBlock())
+    {
         baseString += ") : Block_" + falseBlockInvocation.getBlock()->getIdentifier() + '(';
-        if (falseBlockInvocation.getArguments().size() > 0) {
+        if (falseBlockInvocation.getArguments().size() > 0)
+        {
             baseString += falseBlockInvocation.getArguments()[0]->getIdentifier();
-            for (int i = 1; i < (int) falseBlockInvocation.getArguments().size(); ++i) {
+            for (int i = 1; i < (int)falseBlockInvocation.getArguments().size(); ++i)
+            {
                 baseString += ", " + falseBlockInvocation.getArguments().at(i)->getIdentifier();
             }
         }
     }
     return baseString += ')';
 }
-bool IfOperation::hasFalseCase() { return this->falseBlockInvocation.getBlock() != nullptr; }
-}// namespace NES::Nautilus::IR::Operations
+bool IfOperation::hasFalseCase()
+{
+    return this->falseBlockInvocation.getBlock() != nullptr;
+}
+} // namespace NES::Nautilus::IR::Operations

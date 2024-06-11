@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AtanExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-AtanExpression::AtanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)
-    : leftSubExpression(leftSubExpression) {}
+AtanExpression::AtanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr & leftSubExpression)
+    : leftSubExpression(leftSubExpression)
+{
+}
 
 /**
  * @brief This method calculates the atan of x.
@@ -28,21 +31,33 @@ AtanExpression::AtanExpression(const NES::Runtime::Execution::Expressions::Expre
  * @param x double
  * @return double
  */
-double calculateAtanDouble(double x) { return std::atan(x); }
-double calculateAtanFloat(float x) { return std::atan(x); }
+double calculateAtanDouble(double x)
+{
+    return std::atan(x);
+}
+double calculateAtanFloat(float x)
+{
+    return std::atan(x);
+}
 
-Value<> AtanExpression::execute(NES::Nautilus::Record& record) const {
+Value<> AtanExpression::execute(NES::Nautilus::Record & record) const
+{
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
-    if (leftValue->isType<Float>()) {
+    if (leftValue->isType<Float>())
+    {
         return FunctionCall<>("calculateAtanFloat", calculateAtanFloat, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
+    }
+    else if (leftValue->isType<Double>())
+    {
         return FunctionCall<>("calculateAtanDouble", calculateAtanDouble, leftValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Double or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AtanExpression>> atanFunction("atan");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

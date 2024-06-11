@@ -14,6 +14,9 @@
 
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 
-namespace NES {
-InvalidQueryException::InvalidQueryException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
-}// namespace NES
+namespace NES
+{
+InvalidQueryException::InvalidQueryException(const std::string & message) : Exceptions::RequestExecutionException(message)
+{
+}
+} // namespace NES

@@ -15,20 +15,22 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
 #include <Expressions/BinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an When expression.
  * It is used as part of a case expression, if it evaluates the left child to true, the right child will be returned.
  */
-class WhenExpressionNode final : public BinaryExpressionNode {
-  public:
+class WhenExpressionNode final : public BinaryExpressionNode
+{
+public:
     explicit WhenExpressionNode(DataTypePtr stamp);
     ~WhenExpressionNode() noexcept override = default;
 
     /**
      * @brief Create a new When expression.
      */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
+    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
 
     /**
      * @brief Infers the stamp of this expression node.
@@ -37,7 +39,7 @@ class WhenExpressionNode final : public BinaryExpressionNode {
      */
     void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const & rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
@@ -46,10 +48,10 @@ class WhenExpressionNode final : public BinaryExpressionNode {
      */
     ExpressionNodePtr copy() override;
 
-  private:
-    explicit WhenExpressionNode(WhenExpressionNode* other);
+private:
+    explicit WhenExpressionNode(WhenExpressionNode * other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_

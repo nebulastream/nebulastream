@@ -15,17 +15,26 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Text.hpp>
 
-namespace NES {
+namespace NES
+{
 
-bool Text::equals(DataTypePtr otherDataType) { return otherDataType->isText(); }
+bool Text::equals(DataTypePtr otherDataType)
+{
+    return otherDataType->isText();
+}
 
-DataTypePtr Text::join(DataTypePtr otherDataType) {
-    if (otherDataType->isText()) {
+DataTypePtr Text::join(DataTypePtr otherDataType)
+{
+    if (otherDataType->isText())
+    {
         return DataTypeFactory::createText();
     }
     return DataTypeFactory::createUndefined();
 }
 
-std::string Text::toString() { return "Text"; }
+std::string Text::toString()
+{
+    return "Text";
+}
 
-}// namespace NES
+} // namespace NES

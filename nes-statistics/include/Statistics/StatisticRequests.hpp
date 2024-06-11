@@ -15,6 +15,8 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_
 
+#include <functional>
+#include <sstream>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
@@ -22,31 +24,39 @@
 #include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <Statistics/StatisticKey.hpp>
 #include <Types/WindowType.hpp>
-#include <functional>
-#include <sstream>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Base struct for any statistic requests to be sent to the worker nodes
  */
-struct StatisticRequest {
-    explicit StatisticRequest(const StatisticHash& statisticHash) : statisticHash(statisticHash) {}
+struct StatisticRequest
+{
+    explicit StatisticRequest(const StatisticHash & statisticHash) : statisticHash(statisticHash) { }
     const StatisticHash statisticHash;
 };
 
 /**
  * @brief Struct that represents a request to track a statistic, for now, we do not use it but we will later
  */
-struct StatisticTrackRequest : public StatisticRequest {
-    StatisticTrackRequest(const StatisticHash& statisticHash,
-                          const CharacteristicPtr& characteristic,
-                          const TriggerConditionPtr& triggerCondition,
-                          const SendingPolicyPtr& sendingPolicy,
-                          const Windowing::WindowTypePtr& windowType,
-                          const std::function<void(CharacteristicPtr)>& callBack)
-        : StatisticRequest(statisticHash), characteristic(characteristic), triggerCondition(triggerCondition),
-          sendingPolicy(sendingPolicy), windowType(windowType), callBack(callBack) {}
+struct StatisticTrackRequest : public StatisticRequest
+{
+    StatisticTrackRequest(
+        const StatisticHash & statisticHash,
+        const CharacteristicPtr & characteristic,
+        const TriggerConditionPtr & triggerCondition,
+        const SendingPolicyPtr & sendingPolicy,
+        const Windowing::WindowTypePtr & windowType,
+        const std::function<void(CharacteristicPtr)> & callBack)
+        : StatisticRequest(statisticHash)
+        , characteristic(characteristic)
+        , triggerCondition(triggerCondition)
+        , sendingPolicy(sendingPolicy)
+        , windowType(windowType)
+        , callBack(callBack)
+    {
+    }
     const CharacteristicPtr characteristic;
     const TriggerConditionPtr triggerCondition;
     const SendingPolicyPtr sendingPolicy;
@@ -57,23 +67,23 @@ struct StatisticTrackRequest : public StatisticRequest {
 /**
  * @brief Struct that represents a request to probe a statistic
  */
-struct StatisticProbeRequest : public StatisticRequest {
-    explicit StatisticProbeRequest(const StatisticHash& statisticHash,
-                                   const Windowing::TimeMeasure& startTs,
-                                   const Windowing::TimeMeasure& endTs,
-                                   const Windowing::TimeMeasure& granularity,
-                                   const ProbeExpression& probeExpression)
-        : StatisticRequest(statisticHash), startTs(startTs), endTs(endTs), probeExpression(probeExpression),
-          granularity(granularity) {}
+struct StatisticProbeRequest : public StatisticRequest
+{
+    explicit StatisticProbeRequest(
+        const StatisticHash & statisticHash,
+        const Windowing::TimeMeasure & startTs,
+        const Windowing::TimeMeasure & endTs,
+        const Windowing::TimeMeasure & granularity,
+        const ProbeExpression & probeExpression)
+        : StatisticRequest(statisticHash), startTs(startTs), endTs(endTs), probeExpression(probeExpression), granularity(granularity)
+    {
+    }
 
-    explicit StatisticProbeRequest(const StatisticHash& statisticHash,
-                                   const Windowing::TimeMeasure& granularity,
-                                   const ProbeExpression& probeExpression)
-        : StatisticProbeRequest(statisticHash,
-                                Windowing::TimeMeasure(0),
-                                Windowing::TimeMeasure(UINT64_MAX),
-                                granularity,
-                                probeExpression) {}
+    explicit StatisticProbeRequest(
+        const StatisticHash & statisticHash, const Windowing::TimeMeasure & granularity, const ProbeExpression & probeExpression)
+        : StatisticProbeRequest(statisticHash, Windowing::TimeMeasure(0), Windowing::TimeMeasure(UINT64_MAX), granularity, probeExpression)
+    {
+    }
     const Windowing::TimeMeasure startTs;
     const Windowing::TimeMeasure endTs;
     const ProbeExpression probeExpression;
@@ -83,21 +93,26 @@ struct StatisticProbeRequest : public StatisticRequest {
 /**
  * @brief Struct that represents a request to probe a statistic plus a grpc address to send the request to
  */
-struct StatisticProbeRequestGRPC : public StatisticProbeRequest {
-    explicit StatisticProbeRequestGRPC(const StatisticHash& statisticHash,
-                                       const Windowing::TimeMeasure& startTs,
-                                       const Windowing::TimeMeasure& endTs,
-                                       const ProbeExpression& probeExpression,
-                                       const Windowing::TimeMeasure& granularity,
-                                       const WorkerId& workerId)
-        : StatisticProbeRequestGRPC(StatisticProbeRequest(statisticHash, startTs, endTs, granularity, probeExpression),
-                                    workerId) {}
-    explicit StatisticProbeRequestGRPC(const StatisticProbeRequest& probeRequest, const WorkerId& workerId)
-        : StatisticProbeRequest(probeRequest), workerId(workerId) {}
+struct StatisticProbeRequestGRPC : public StatisticProbeRequest
+{
+    explicit StatisticProbeRequestGRPC(
+        const StatisticHash & statisticHash,
+        const Windowing::TimeMeasure & startTs,
+        const Windowing::TimeMeasure & endTs,
+        const ProbeExpression & probeExpression,
+        const Windowing::TimeMeasure & granularity,
+        const WorkerId & workerId)
+        : StatisticProbeRequestGRPC(StatisticProbeRequest(statisticHash, startTs, endTs, granularity, probeExpression), workerId)
+    {
+    }
+    explicit StatisticProbeRequestGRPC(const StatisticProbeRequest & probeRequest, const WorkerId & workerId)
+        : StatisticProbeRequest(probeRequest), workerId(workerId)
+    {
+    }
 
     const WorkerId workerId;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_

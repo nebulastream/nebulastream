@@ -33,26 +33,35 @@
 #include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <z3++.h>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const ExpressionNodePtr& expression,
-                                                                 const z3::ContextPtr& context) {
+Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const ExpressionNodePtr & expression, const z3::ContextPtr & context)
+{
     NES_DEBUG("Creating Z3 expression for input expression {}", expression->toString());
-    if (expression->instanceOf<LogicalExpressionNode>()) {
+    if (expression->instanceOf<LogicalExpressionNode>())
+    {
         return createForLogicalExpressions(expression, context);
     }
-    if (expression->instanceOf<ArithmeticalExpressionNode>()) {
+    if (expression->instanceOf<ArithmeticalExpressionNode>())
+    {
         return createForArithmeticalExpressions(expression, context);
-    } else if (expression->instanceOf<ConstantValueExpressionNode>()) {
+    }
+    else if (expression->instanceOf<ConstantValueExpressionNode>())
+    {
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
         auto value = constantValueExpression->getConstantValue();
         return DataTypeToZ3ExprUtil::createForDataValue(value, context);
-    } else if (expression->instanceOf<FieldAccessExpressionNode>()) {
+    }
+    else if (expression->instanceOf<FieldAccessExpressionNode>())
+    {
         auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
         std::string fieldName = fieldAccessExpression->getFieldName();
         DataTypePtr fieldType = fieldAccessExpression->getStamp();
         return DataTypeToZ3ExprUtil::createForField(fieldName, fieldType, context);
-    } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
+    }
+    else if (expression->instanceOf<FieldAssignmentExpressionNode>())
+    {
         auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
         return createForExpression(fieldAssignmentExpressionNode->getAssignment(), context);
     }
@@ -60,10 +69,12 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const Expressio
     return nullptr;
 }
 
-Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(const ExpressionNodePtr& expression,
-                                                                              const z3::ContextPtr& context) {
+Z3ExprAndFieldMapPtr
+ExpressionToZ3ExprUtil::createForArithmeticalExpressions(const ExpressionNodePtr & expression, const z3::ContextPtr & context)
+{
     NES_DEBUG("Create Z3 expression for arithmetical expression {}", expression->toString());
-    if (expression->instanceOf<AddExpressionNode>()) {
+    if (expression->instanceOf<AddExpressionNode>())
+    {
         auto addExpressionNode = expression->as<AddExpressionNode>();
         auto left = createForExpression(addExpressionNode->getLeft(), context);
         auto right = createForExpression(addExpressionNode->getRight(), context);
@@ -76,7 +87,8 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(co
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_add(*context, 2, array)));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
     }
-    if (expression->instanceOf<SubExpressionNode>()) {
+    if (expression->instanceOf<SubExpressionNode>())
+    {
         auto subExpressionNode = expression->as<SubExpressionNode>();
         auto left = createForExpression(subExpressionNode->getLeft(), context);
         auto right = createForExpression(subExpressionNode->getRight(), context);
@@ -88,7 +100,9 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(co
         Z3_ast array[] = {*left->getExpr(), *right->getExpr()};
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_sub(*context, 2, array)));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<MulExpressionNode>()) {
+    }
+    else if (expression->instanceOf<MulExpressionNode>())
+    {
         auto mulExpressionNode = expression->as<MulExpressionNode>();
         auto left = createForExpression(mulExpressionNode->getLeft(), context);
         auto right = createForExpression(mulExpressionNode->getRight(), context);
@@ -100,7 +114,9 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(co
         Z3_ast array[] = {*left->getExpr(), *right->getExpr()};
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_mul(*context, 2, array)));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<DivExpressionNode>()) {
+    }
+    else if (expression->instanceOf<DivExpressionNode>())
+    {
         auto divExpressionNode = expression->as<DivExpressionNode>();
         auto left = createForExpression(divExpressionNode->getLeft(), context);
         auto right = createForExpression(divExpressionNode->getRight(), context);
@@ -112,15 +128,16 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(co
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_div(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the arithmetical expression node: "
-                            + expression->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the arithmetical expression node: " + expression->toString());
     return nullptr;
 }
 
-Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const ExpressionNodePtr& expression,
-                                                                         const z3::ContextPtr& context) {
+Z3ExprAndFieldMapPtr
+ExpressionToZ3ExprUtil::createForLogicalExpressions(const ExpressionNodePtr & expression, const z3::ContextPtr & context)
+{
     NES_DEBUG("Create Z3 expression node for logical expression {}", expression->toString());
-    if (expression->instanceOf<AndExpressionNode>()) {
+    if (expression->instanceOf<AndExpressionNode>())
+    {
         auto andExpressionNode = expression->as<AndExpressionNode>();
         auto left = createForExpression(andExpressionNode->getLeft(), context);
         auto right = createForExpression(andExpressionNode->getRight(), context);
@@ -133,7 +150,8 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
     }
-    if (expression->instanceOf<OrExpressionNode>()) {
+    if (expression->instanceOf<OrExpressionNode>())
+    {
         auto orExpressionNode = expression->as<OrExpressionNode>();
         auto left = createForExpression(orExpressionNode->getLeft(), context);
         auto right = createForExpression(orExpressionNode->getRight(), context);
@@ -145,7 +163,9 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         Z3_ast array[] = {*left->getExpr(), *right->getExpr()};
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_or(*context, 2, array)));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<LessExpressionNode>()) {
+    }
+    else if (expression->instanceOf<LessExpressionNode>())
+    {
         auto lessExpressionNode = expression->as<LessExpressionNode>();
         auto left = createForExpression(lessExpressionNode->getLeft(), context);
         auto right = createForExpression(lessExpressionNode->getRight(), context);
@@ -154,14 +174,16 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
 
-        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa()) {
-            auto expr =
-                std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_lt(*context, *left->getExpr(), *right->getExpr())));
+        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa())
+        {
+            auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_lt(*context, *left->getExpr(), *right->getExpr())));
             return Z3ExprAndFieldMap::create(expr, leftFieldMap);
         }
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_lt(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<LessEqualsExpressionNode>()) {
+    }
+    else if (expression->instanceOf<LessEqualsExpressionNode>())
+    {
         auto lessEqualsExpressionNode = expression->as<LessEqualsExpressionNode>();
         auto left = createForExpression(lessEqualsExpressionNode->getLeft(), context);
         auto right = createForExpression(lessEqualsExpressionNode->getRight(), context);
@@ -169,14 +191,16 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         //Merge the right field map into left field map
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
-        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa()) {
-            auto expr =
-                std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_leq(*context, *left->getExpr(), *right->getExpr())));
+        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa())
+        {
+            auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_leq(*context, *left->getExpr(), *right->getExpr())));
             return Z3ExprAndFieldMap::create(expr, leftFieldMap);
         }
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_le(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<GreaterExpressionNode>()) {
+    }
+    else if (expression->instanceOf<GreaterExpressionNode>())
+    {
         auto greaterExpressionNode = expression->as<GreaterExpressionNode>();
         auto left = createForExpression(greaterExpressionNode->getLeft(), context);
         auto right = createForExpression(greaterExpressionNode->getRight(), context);
@@ -185,14 +209,19 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
         std::shared_ptr<z3::expr> expr;
-        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa()) {
+        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa())
+        {
             expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_gt(*context, *left->getExpr(), *right->getExpr())));
-        } else {
+        }
+        else
+        {
             expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_gt(*context, *left->getExpr(), *right->getExpr())));
         }
 
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<GreaterEqualsExpressionNode>()) {
+    }
+    else if (expression->instanceOf<GreaterEqualsExpressionNode>())
+    {
         auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
         auto left = createForExpression(greaterEqualsExpressionNode->getLeft(), context);
         auto right = createForExpression(greaterEqualsExpressionNode->getRight(), context);
@@ -201,13 +230,18 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
         std::shared_ptr<z3::expr> expr;
-        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa()) {
+        if (left->getExpr()->is_fpa() || right->getExpr()->is_fpa())
+        {
             expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_geq(*context, *left->getExpr(), *right->getExpr())));
-        } else {
+        }
+        else
+        {
             expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_ge(*context, *left->getExpr(), *right->getExpr())));
         }
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
-    } else if (expression->instanceOf<EqualsExpressionNode>()) {
+    }
+    else if (expression->instanceOf<EqualsExpressionNode>())
+    {
         auto equalsExpressionNode = expression->as<EqualsExpressionNode>();
         auto left = createForExpression(equalsExpressionNode->getLeft(), context);
         auto right = createForExpression(equalsExpressionNode->getRight(), context);
@@ -218,7 +252,9 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
 
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFiledMap);
-    } else if (expression->instanceOf<NegateExpressionNode>()) {
+    }
+    else if (expression->instanceOf<NegateExpressionNode>())
+    {
         auto negateExpressionNode = expression->as<NegateExpressionNode>();
         auto expr = createForExpression(negateExpressionNode->child(), context);
         auto updatedExpr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_not(*context, *expr->getExpr())));
@@ -228,4 +264,4 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
     return nullptr;
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

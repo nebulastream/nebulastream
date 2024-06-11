@@ -18,44 +18,49 @@
 #include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
 #include <Util/BenchmarkUtils.hpp>
 
-namespace NES::Benchmark::IngestionRateGeneration {
+namespace NES::Benchmark::IngestionRateGeneration
+{
 
-IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
+IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns & configOverAllRuns)
+{
     auto ingestionRateDistributionStr = configOverAllRuns.ingestionRateDistribution->getValue();
     auto ingestionRateDistribution = getDistributionFromString(ingestionRateDistributionStr);
     auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
     auto ingestionRateCount = configOverAllRuns.ingestionRateCount->getValue();
     auto numberOfPeriods = configOverAllRuns.numberOfPeriods->getValue();
 
-    if (ingestionRateDistribution == IngestionRateDistribution::UNIFORM) {
+    if (ingestionRateDistribution == IngestionRateDistribution::UNIFORM)
+    {
         return std::make_unique<UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCount);
-    } else if (ingestionRateDistribution == IngestionRateDistribution::SINUS
-               || ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
-        return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution,
-                                                                     ingestionRateInBuffers,
-                                                                     ingestionRateCount,
-                                                                     numberOfPeriods);
-    } else if (ingestionRateDistribution == IngestionRateDistribution::CUSTOM) {
+    }
+    else if (
+        ingestionRateDistribution == IngestionRateDistribution::SINUS || ingestionRateDistribution == IngestionRateDistribution::COSINUS)
+    {
+        return std::make_unique<TrigonometricIngestionRateGenerator>(
+            ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCount, numberOfPeriods);
+    }
+    else if (ingestionRateDistribution == IngestionRateDistribution::CUSTOM)
+    {
         auto customValues = NES::Util::splitWithStringDelimiter<uint64_t>(configOverAllRuns.customValues->getValue(), ",");
         return std::make_unique<CustomIngestionRateGenerator>(ingestionRateCount, customValues);
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported");
     }
 }
 
-IngestionRateDistribution IngestionRateGenerator::getDistributionFromString(std::string& ingestionRateDistribution) {
-    if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform"
-        || ingestionRateDistribution == "uniform")
+IngestionRateDistribution IngestionRateGenerator::getDistributionFromString(std::string & ingestionRateDistribution)
+{
+    if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform" || ingestionRateDistribution == "uniform")
         return IngestionRateDistribution::UNIFORM;
     else if (ingestionRateDistribution == "SINUS" || ingestionRateDistribution == "Sinus" || ingestionRateDistribution == "sinus")
         return IngestionRateDistribution::SINUS;
-    else if (ingestionRateDistribution == "COSINUS" || ingestionRateDistribution == "Cosinus"
-             || ingestionRateDistribution == "cosinus")
+    else if (ingestionRateDistribution == "COSINUS" || ingestionRateDistribution == "Cosinus" || ingestionRateDistribution == "cosinus")
         return IngestionRateDistribution::COSINUS;
-    else if (ingestionRateDistribution == "CUSTOM" || ingestionRateDistribution == "Custom"
-             || ingestionRateDistribution == "custom")
+    else if (ingestionRateDistribution == "CUSTOM" || ingestionRateDistribution == "Custom" || ingestionRateDistribution == "custom")
         return IngestionRateDistribution::CUSTOM;
     else
         return IngestionRateDistribution::UNDEFINED;
 }
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration

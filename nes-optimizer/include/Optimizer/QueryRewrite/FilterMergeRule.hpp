@@ -15,12 +15,13 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
 
-#include <Expressions/ExpressionNode.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
+#include <Expressions/ExpressionNode.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
@@ -29,9 +30,10 @@ using OperatorPtr = std::shared_ptr<Operator>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class FilterMergeRule;
 using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
@@ -56,9 +58,9 @@ using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
  *
  */
 
-class FilterMergeRule : public BaseRewriteRule {
-
-  public:
+class FilterMergeRule : public BaseRewriteRule
+{
+public:
     static FilterMergeRulePtr create();
     FilterMergeRule() = default;
     virtual ~FilterMergeRule() = default;
@@ -70,13 +72,13 @@ class FilterMergeRule : public BaseRewriteRule {
      */
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  private:
+private:
     /**
      * @brief Given a filter, retrieve all the consecutive filters (including the filter itself).
      * @param firstFilter: the filter to check
      * @return vector of filters
      */
-    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
+    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr & firstFilter);
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_

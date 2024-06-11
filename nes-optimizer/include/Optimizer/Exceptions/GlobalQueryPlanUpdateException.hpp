@@ -15,20 +15,22 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This exception is thrown if some error occurred while performing update on Global query plan
  */
-class GlobalQueryPlanUpdateException : public Exceptions::RequestExecutionException {
-  public:
-    explicit GlobalQueryPlanUpdateException(const std::string& message);
+class GlobalQueryPlanUpdateException : public Exceptions::RequestExecutionException
+{
+public:
+    explicit GlobalQueryPlanUpdateException(const std::string & message);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_

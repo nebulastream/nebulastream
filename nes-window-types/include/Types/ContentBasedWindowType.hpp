@@ -15,20 +15,24 @@
 #ifndef NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_
 #define NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_
 
-#include <Types/WindowType.hpp>
 #include <vector>
+#include <Types/WindowType.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class ContentBasedWindowType;
 using ContentBasedWindowTypePtr = std::shared_ptr<ContentBasedWindowType>;
 class ThresholdWindow;
 using ThresholdWindowPtr = std::shared_ptr<ThresholdWindow>;
 
-class ContentBasedWindowType : public WindowType {
-
-  public:
-    enum class ContentBasedSubWindowType : uint8_t { THRESHOLDWINDOW };
+class ContentBasedWindowType : public WindowType
+{
+public:
+    enum class ContentBasedSubWindowType : uint8_t
+    {
+        THRESHOLDWINDOW
+    };
 
     explicit ContentBasedWindowType();
 
@@ -46,6 +50,6 @@ class ContentBasedWindowType : public WindowType {
        */
     static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_

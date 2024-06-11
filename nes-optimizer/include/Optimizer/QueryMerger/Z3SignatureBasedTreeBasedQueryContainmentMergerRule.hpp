@@ -18,22 +18,23 @@
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 
-namespace NES {
+namespace NES
+{
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
 class MatchedOperatorPair;
 using MatchedOperatorPairPtr = std::shared_ptr<MatchedOperatorPair>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SignatureContainmentCheck;
 using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
 
 class Z3SignatureBasedTreeBasedQueryContainmentMergerRule;
-using Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr =
-    std::shared_ptr<Z3SignatureBasedTreeBasedQueryContainmentMergerRule>;
+using Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedTreeBasedQueryContainmentMergerRule>;
 
 /**
  * @brief Z3SignatureBasedTreeBasedQueryContainmentMergerRule utilizes containment relationships for the merging process.
@@ -84,16 +85,15 @@ using Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr =
  * 3. window operations: We extract all upstream window operators, identify the contained window operator, and add it to the container's
  * upstream operator chain
  */
-class Z3SignatureBasedTreeBasedQueryContainmentMergerRule final : public BaseQueryMergerRule {
-
-  public:
-    static Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr create(z3::ContextPtr context,
-                                                                         bool allowExhaustiveContainmentCheck);
+class Z3SignatureBasedTreeBasedQueryContainmentMergerRule final : public BaseQueryMergerRule
+{
+public:
+    static Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr create(z3::ContextPtr context, bool allowExhaustiveContainmentCheck);
     ~Z3SignatureBasedTreeBasedQueryContainmentMergerRule() noexcept final = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-  private:
+private:
     explicit Z3SignatureBasedTreeBasedQueryContainmentMergerRule(z3::ContextPtr context, bool allowExhaustiveContainmentCheck);
 
     /**
@@ -110,13 +110,14 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRule final : public BaseQue
      * @param containerOperator the current container operator
      * @param containedOperatorChain vector with all extracted operators from the contained query
      */
-    void addContainmentOperatorChain(SharedQueryPlanPtr& containerQueryPlan,
-                                     const OperatorPtr& containerOperator,
-                                     const OperatorPtr& containedOperator,
-                                     const std::vector<LogicalOperatorPtr> containedOperatorChain) const;
+    void addContainmentOperatorChain(
+        SharedQueryPlanPtr & containerQueryPlan,
+        const OperatorPtr & containerOperator,
+        const OperatorPtr & containedOperator,
+        const std::vector<LogicalOperatorPtr> containedOperatorChain) const;
 
     SignatureContainmentCheckPtr SignatureContainmentUtil;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDTREEBASEDQUERYCONTAINMENTMERGERRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDTREEBASEDQUERYCONTAINMENTMERGERRULE_HPP_

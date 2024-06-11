@@ -13,7 +13,6 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -44,14 +43,16 @@
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <z3++.h>
 
 using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
-  public:
+class MlHeuristicPlacementTest : public Testing::BaseUnitTest
+{
+public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     NES::Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
@@ -60,20 +61,23 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MlHeuristicPlacementTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup MlHeuristicPlacementTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
 
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
-    void topologyGenerator() {
+    void topologyGenerator()
+    {
         topology = Topology::create();
 
         std::vector<int> parents = {-1, 0, 0, 0, 1, 2, 3, 3, 4, 5, 5, 6, 7};
@@ -85,26 +89,33 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
 
         std::vector<int> sources{8, 9, 10, 11, 12};
 
-        for (int i = 0; i < (int) resources.size(); i++) {
+        for (int i = 0; i < (int)resources.size(); i++)
+        {
             auto workerId = WorkerId(i + 1);
 
             std::map<std::string, std::any> properties;
             properties[NES::Worker::Properties::MAINTENANCE] = false;
             properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-            if (std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i)) {
+            if (std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i))
+            {
                 properties["tf_installed"] = true;
             }
-            if (std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i)) {
+            if (std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i))
+            {
                 properties["low_throughput_source"] = true;
             }
-            if (std::count(ml_hardwares.begin(), ml_hardwares.end(), i)) {
+            if (std::count(ml_hardwares.begin(), ml_hardwares.end(), i))
+            {
                 properties["ml_hardware"] = true;
             }
 
             workerId = topology->registerWorker(workerId, "localhost", 123, 124, resources[i], properties, 0, 0);
-            if (i == 0) {
+            if (i == 0)
+            {
                 topology->addAsRootWorkerId(workerId);
-            } else if (i > 1) {
+            }
+            else if (i > 1)
+            {
                 topology->addTopologyNodeAsChild(WorkerId(workerId.getRawValue() - 1), workerId);
                 topology->removeTopologyNodeAsChild(WorkerId(1), workerId);
             }
@@ -139,36 +150,35 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(csvSourceType);
 
-        for (int source : sources) {
-            auto streamCatalogEntry =
-                Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(source + 1));
+        for (int source : sources)
+        {
+            auto streamCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(source + 1));
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                         Statistic::DefaultStatisticCache::create(),
-                                                                         Topology::create());
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+            Statistic::StatisticRegistry::create(),
+            Statistic::DefaultStatisticProbeGenerator::create(),
+            Statistic::DefaultStatisticCache::create(),
+            Topology::create());
     }
 };
 
 /* Test query placement with Ml heuristic strategy  */
-TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
-
+TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy)
+{
     topologyGenerator();
-    Query query =
-        Query::from("iris")
-            .inferModel(
-                std::string(TEST_DATA_DIRECTORY) + "/iris.tflite",
-                {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                {Attribute("iris0", BasicType::FLOAT32),
-                 Attribute("iris1", BasicType::FLOAT32),
-                 Attribute("iris2", BasicType::FLOAT32)})
-            .filter(Attribute("iris0") < 3.0)
-            .project(Attribute("iris1"), Attribute("iris2"))
-            .sink(PrintSinkDescriptor::create());
+    Query query
+        = Query::from("iris")
+              .inferModel(
+                  std::string(TEST_DATA_DIRECTORY) + "/iris.tflite",
+                  {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
+                  {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
+              .filter(Attribute("iris0") < 3.0)
+              .project(Attribute("iris1"), Attribute("iris2"))
+              .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::MlHeuristic);
@@ -178,20 +188,15 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
-                                                             sourceCatalog,
-                                                             Configurations::OptimizerConfiguration(),
-                                                             statisticProbeHandler);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(
+        topology, sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
-    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                        topology,
-                                                                                        typeInferencePhase,
-                                                                                        coordinatorConfiguration);
+    auto queryPlacementAmendmentPhase
+        = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     NES_DEBUG("MlHeuristicPlacementTest: topology: \n{}", topology->toString());
@@ -215,20 +220,22 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     uint64_t totalQuerySubPlansOnNode11 = 3;
     uint64_t totalQuerySubPlansOnNode12 = 2;
     uint64_t totalQuerySubPlansOnNode13 = 1;
-    std::vector querySubPlanSizeCompare = {totalQuerySubPlansOnNode1,
-                                           totalQuerySubPlansOnNode2,
-                                           totalQuerySubPlansOnNode3,
-                                           totalQuerySubPlansOnNode4,
-                                           totalQuerySubPlansOnNode5,
-                                           totalQuerySubPlansOnNode6,
-                                           totalQuerySubPlansOnNode7,
-                                           totalQuerySubPlansOnNode8,
-                                           totalQuerySubPlansOnNode9,
-                                           totalQuerySubPlansOnNode10,
-                                           totalQuerySubPlansOnNode11,
-                                           totalQuerySubPlansOnNode12,
-                                           totalQuerySubPlansOnNode13};
-    for (const auto& executionNode : executionNodes) {
+    std::vector querySubPlanSizeCompare
+        = {totalQuerySubPlansOnNode1,
+           totalQuerySubPlansOnNode2,
+           totalQuerySubPlansOnNode3,
+           totalQuerySubPlansOnNode4,
+           totalQuerySubPlansOnNode5,
+           totalQuerySubPlansOnNode6,
+           totalQuerySubPlansOnNode7,
+           totalQuerySubPlansOnNode8,
+           totalQuerySubPlansOnNode9,
+           totalQuerySubPlansOnNode10,
+           totalQuerySubPlansOnNode11,
+           totalQuerySubPlansOnNode12,
+           totalQuerySubPlansOnNode13};
+    for (const auto & executionNode : executionNodes)
+    {
         auto querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
         NES_INFO("Worker Id {} ", executionNode->operator*()->getId());
         EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->operator*()->getId().getRawValue() - 1]);

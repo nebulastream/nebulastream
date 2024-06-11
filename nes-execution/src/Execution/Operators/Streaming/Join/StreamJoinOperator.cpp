@@ -14,10 +14,13 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-StreamJoinOperator::StreamJoinOperator(QueryCompilation::StreamJoinStrategy joinStrategy,
-                                       QueryCompilation::WindowingStrategy windowingStrategy)
-    : joinStrategy(joinStrategy), windowingStrategy(windowingStrategy) {}
+StreamJoinOperator::StreamJoinOperator(
+    QueryCompilation::StreamJoinStrategy joinStrategy, QueryCompilation::WindowingStrategy windowingStrategy)
+    : joinStrategy(joinStrategy), windowingStrategy(windowingStrategy)
+{
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

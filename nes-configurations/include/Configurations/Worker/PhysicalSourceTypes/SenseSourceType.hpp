@@ -15,13 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_
 
+#include <map>
+#include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 class SenseSourceType;
 using SenseSourceTypePtr = std::shared_ptr<SenseSourceType>;
@@ -29,37 +30,35 @@ using SenseSourceTypePtr = std::shared_ptr<SenseSourceType>;
 /**
 * @brief Configuration object for source config
 */
-class SenseSourceType : public PhysicalSourceType {
-
-  public:
+class SenseSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief create a SenseSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(const std::string& logicalSourceName,
-                                     const std::string& physicalSourceName,
-                                     std::map<std::string, std::string> sourceConfigMap);
+    static SenseSourceTypePtr create(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @param yamlConfig inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static SenseSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static SenseSourceTypePtr create(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     ~SenseSourceType() = default;
 
     std::string toString() override;
 
-    bool equal(const PhysicalSourceTypePtr& other) override;
+    bool equal(const PhysicalSourceTypePtr & other) override;
 
     /**
      * @brief Get udsf
@@ -69,29 +68,28 @@ class SenseSourceType : public PhysicalSourceType {
     /**
      * @brief Set udsf
      */
-    void setUdfs(const std::string& udfs);
+    void setUdfs(const std::string & udfs);
 
     void reset() override;
 
-  private:
+private:
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(const std::string& logicalSourceName,
-                    const std::string& physicalSourceName,
-                    std::map<std::string, std::string> sourceConfigMap);
+    SenseSourceType(
+        const std::string & logicalSourceName, const std::string & physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    SenseSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values
      */
-    SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    SenseSourceType(const std::string & logicalSourceName, const std::string & physicalSourceName);
 
     Configurations::StringConfigOption udfs;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_

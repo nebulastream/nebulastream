@@ -17,20 +17,21 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
   * @brief This expression computes the sine of the subExpression.
   */
-class SinExpression : public Expression {
+class SinExpression : public Expression
+{
+public:
+    SinExpression(const ExpressionPtr & subExpression);
+    Value<> execute(Record & record) const override;
 
-  public:
-    SinExpression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
-
-  private:
+private:
     const ExpressionPtr subExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_SINEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_SINEXPRESSION_HPP_

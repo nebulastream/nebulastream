@@ -15,13 +15,14 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <map>
 #include <memory>
 #include <optional>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
@@ -30,9 +31,9 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
  * @brief This is a utility class that operates on the topology nodes to find different types of topology nodes between
  * given pair of topology nodes.
  */
-class PathFinder {
-
-  public:
+class PathFinder
+{
+public:
     PathFinder(std::vector<WorkerId> rootWorkerIds);
 
     virtual ~PathFinder() = default;
@@ -65,7 +66,7 @@ class PathFinder {
      * @param destinationNode : the destination topology node
      * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
      */
-    std::vector<TopologyNodePtr> findNodesBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode);
+    std::vector<TopologyNodePtr> findNodesBetween(const TopologyNodePtr & sourceNode, const TopologyNodePtr & destinationNode);
 
     /**
      * @brief Find the set of shared nodes (inclusive of) between a set of source and destination topology nodes
@@ -73,12 +74,11 @@ class PathFinder {
      * @param destinationNodes : the destination topology nodes
      * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
      */
-    std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
-                                                  std::vector<TopologyNodePtr> destinationNodes);
+    std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes, std::vector<TopologyNodePtr> destinationNodes);
 
-  private:
+private:
     std::vector<WorkerId> rootWorkerIds;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_

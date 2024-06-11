@@ -12,38 +12,44 @@
     limitations under the License.
 */
 
-#include <Util/DumpHelper.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
 #include <utility>
+#include <Util/DumpHelper.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES
+{
 
-DumpHelper
-DumpHelper::create(const std::string& contextIdentifier, bool dumpToConsole, bool dumpToFile, const std::string& outputPath) {
+DumpHelper DumpHelper::create(const std::string & contextIdentifier, bool dumpToConsole, bool dumpToFile, const std::string & outputPath)
+{
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
     ss << contextIdentifier << "-" << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H:%M:%S");
     std::string path = outputPath.empty() ? std::filesystem::current_path().string() : outputPath;
     path = path + std::filesystem::path::preferred_separator + "dump";
-    if (!std::filesystem::is_directory(path)) {
+    if (!std::filesystem::is_directory(path))
+    {
         std::filesystem::create_directory(path);
     }
     path = path + std::filesystem::path::preferred_separator + ss.str();
-    if (!std::filesystem::is_directory(path)) {
+    if (!std::filesystem::is_directory(path))
+    {
         std::filesystem::create_directory(path);
     }
     return DumpHelper(ss.str(), dumpToConsole, dumpToFile, path);
 }
 
-void DumpHelper::dump(const std::string_view& name, const std::string_view& output) const {
-    if (this->dumpToConsole) {
+void DumpHelper::dump(const std::string_view & name, const std::string_view & output) const
+{
+    if (this->dumpToConsole)
+    {
         NES_INFO("DUMP: {} {}", contextIdentifier, name);
         NES_INFO("{}", output);
     }
-    if (this->dumpToFile) {
+    if (this->dumpToFile)
+    {
         auto fileName = std::string{name};
         std::replace(fileName.begin(), fileName.end(), ' ', '_');
         auto path = std::string{outputPath} + std::filesystem::path::preferred_separator + fileName;
@@ -58,7 +64,11 @@ void DumpHelper::dump(const std::string_view& name, const std::string_view& outp
 }
 
 DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath)
-    : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), dumpToFile(dumpToFile),
-      outputPath(std::move(outputPath)) {}
+    : contextIdentifier(std::move(contextIdentifier))
+    , dumpToConsole(dumpToConsole)
+    , dumpToFile(dumpToFile)
+    , outputPath(std::move(outputPath))
+{
+}
 
-}// namespace NES
+} // namespace NES

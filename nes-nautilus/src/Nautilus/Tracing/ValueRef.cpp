@@ -12,49 +12,60 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
-#include <utility>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
 ValueRef::ValueRef() : blockId(), operationId(){};
 
 ValueRef::ValueRef(uint32_t blockId, uint32_t operationId, NES::Nautilus::IR::Types::StampPtr type)
     : blockId(blockId), operationId(operationId), type(std::move(type)){};
 
-ValueRef::ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type){};
-ValueRef::ValueRef(const ValueRef&& other)
-    : blockId(other.blockId), operationId(other.operationId), type(std::move(other.type)){};
+ValueRef::ValueRef(const ValueRef & other) : blockId(other.blockId), operationId(other.operationId), type(other.type){};
+ValueRef::ValueRef(const ValueRef && other) : blockId(other.blockId), operationId(other.operationId), type(std::move(other.type)){};
 
-ValueRef& ValueRef::operator=(const ValueRef& other) {
+ValueRef & ValueRef::operator=(const ValueRef & other)
+{
     this->operationId = other.operationId;
     this->blockId = other.blockId;
     this->type = other.type;
     return *this;
 }
 
-ValueRef& ValueRef::operator=(const ValueRef&& other) {
+ValueRef & ValueRef::operator=(const ValueRef && other)
+{
     this->operationId = other.operationId;
     this->blockId = other.blockId;
     this->type = other.type;
     return *this;
 }
 
-ValueRef createNextRef(const NES::Nautilus::IR::Types::StampPtr& stamp) {
-    if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
+ValueRef createNextRef(const NES::Nautilus::IR::Types::StampPtr & stamp)
+{
+    if (auto ctx = Nautilus::Tracing::TraceContext::get())
+    {
         return ctx->createNextRef(stamp);
     }
     // create default value.
     return ValueRef(0 /* blockId */, 0 /*operationId */, NES::Nautilus::IR::Types::StampFactory::createVoidStamp());
 }
 
-std::ostream& operator<<(std::ostream& os, const ValueRef& valueRef) {
+std::ostream & operator<<(std::ostream & os, const ValueRef & valueRef)
+{
     os << "$" << valueRef.blockId << "_" << valueRef.operationId;
     return os;
 }
-bool ValueRef::operator==(const ValueRef& rhs) const { return blockId == rhs.blockId && operationId == rhs.operationId; }
-bool ValueRef::operator!=(const ValueRef& rhs) const { return !(rhs == *this); }
+bool ValueRef::operator==(const ValueRef & rhs) const
+{
+    return blockId == rhs.blockId && operationId == rhs.operationId;
+}
+bool ValueRef::operator!=(const ValueRef & rhs) const
+{
+    return !(rhs == *this);
+}
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

@@ -17,8 +17,10 @@
 
 #include <cstdint>
 
-namespace NES::Runtime {
-enum class ReconfigurationType : uint8_t {
+namespace NES::Runtime
+{
+enum class ReconfigurationType : uint8_t
+{
     /// use Initialize for reconfiguration tasks that initialize a reconfigurable instance
     Initialize,
     /// use Destroy for reconfiguration tasks that cleans up a reconfigurable instance
@@ -38,4 +40,4 @@ enum class ReconfigurationType : uint8_t {
 };
 }
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONTYPE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONTYPE_HPP_

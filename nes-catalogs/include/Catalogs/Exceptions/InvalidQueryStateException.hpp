@@ -15,26 +15,28 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_
 
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <vector>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 /**
  * @brief Exception is raised when the query is in an Invalid status
  */
-class InvalidQueryStateException : public RequestExecutionException {
-  public:
-    explicit InvalidQueryStateException(const std::vector<QueryState>& expectedState, QueryState actualState);
+class InvalidQueryStateException : public RequestExecutionException
+{
+public:
+    explicit InvalidQueryStateException(const std::vector<QueryState> & expectedState, QueryState actualState);
 
-    [[nodiscard]] const char* what() const noexcept override;
+    [[nodiscard]] const char * what() const noexcept override;
 
     [[nodiscard]] QueryState getActualState();
 
-  private:
+private:
     std::string message;
     QueryState actualState;
 };
-}// namespace NES::Exceptions
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_

@@ -15,11 +15,12 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_
 
-#include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <map>
 #include <vector>
+#include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -32,9 +33,10 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class GlobalQueryNode;
 using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SyntaxBasedPartialQueryMergerRule;
 using SyntaxBasedPartialQueryMergerRulePtr = std::shared_ptr<SyntaxBasedPartialQueryMergerRule>;
@@ -80,24 +82,24 @@ using SyntaxBasedPartialQueryMergerRulePtr = std::shared_ptr<SyntaxBasedPartialQ
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class SyntaxBasedPartialQueryMergerRule : public BaseQueryMergerRule {
-
-  public:
+class SyntaxBasedPartialQueryMergerRule : public BaseQueryMergerRule
+{
+public:
     static SyntaxBasedPartialQueryMergerRulePtr create();
     ~SyntaxBasedPartialQueryMergerRule() override = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-  private:
+private:
     /**
      * @brief identify if the query plans are equal or not
      * @param targetQueryPlan : target query plan
      * @param hostQueryPlan : host query plan
      * @return Map containing matching pair of target and host operators
      */
-    std::map<OperatorPtr, OperatorPtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan);
+    std::map<OperatorPtr, OperatorPtr> areQueryPlansEqual(const QueryPlanPtr & targetQueryPlan, const QueryPlanPtr & hostQueryPlan);
 
-    std::map<OperatorPtr, OperatorPtr> areOperatorEqual(const OperatorPtr& targetOperator, const OperatorPtr& hostOperator);
+    std::map<OperatorPtr, OperatorPtr> areOperatorEqual(const OperatorPtr & targetOperator, const OperatorPtr & hostOperator);
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_

@@ -13,16 +13,18 @@
 */
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
-#include "Util/yaml/Yaml.hpp"
 #include <string>
-namespace NES::Configurations {
+#include "Util/yaml/Yaml.hpp"
+namespace NES::Configurations
+{
 
 /**
  * @brief This class is the basis of all option.
  * All option can define a name and a description.
  */
-class BaseOption {
-  public:
+class BaseOption
+{
+public:
     BaseOption() = default;
 
     /**
@@ -30,7 +32,7 @@ class BaseOption {
      * @param name of the option.
      * @param description of the option.
      */
-    BaseOption(const std::string& name, const std::string& description);
+    BaseOption(const std::string & name, const std::string & description);
     virtual ~BaseOption() = default;
 
     /**
@@ -43,7 +45,7 @@ class BaseOption {
      * @param other option.
      * @return true if the option is equal.
      */
-    virtual bool operator==(const BaseOption& other);
+    virtual bool operator==(const BaseOption & other);
 
     /**
      * @brief Getter for the name of the option.
@@ -63,7 +65,7 @@ class BaseOption {
      */
     virtual std::string toString() = 0;
 
-  protected:
+protected:
     friend class BaseConfiguration;
 
     /**
@@ -78,15 +80,15 @@ class BaseOption {
      * @param identifier of the children option if the option is nested.
      * @param value of the option as a string
      */
-    virtual void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) = 0;
+    virtual void parseFromString(std::string identifier, std::map<std::string, std::string> & inputParams) = 0;
 
     std::string name;
     std::string description;
 };
 
-template<class T>
+template <class T>
 concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_

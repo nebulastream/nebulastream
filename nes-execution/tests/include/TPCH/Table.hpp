@@ -14,14 +14,15 @@
 
 #ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
 #define NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <utility>
-namespace NES::Runtime {
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
+namespace NES::Runtime
+{
 
 class TableBuilder;
 
@@ -29,56 +30,62 @@ class TableBuilder;
  * @brief This provides a table abstraction for testing, revisit this if we have a similar abstraction in the runtime.
  * A table stores a set of tuple buffers (chunks).
  */
-class Table {
-  public:
+class Table
+{
+public:
     Table(MemoryLayouts::MemoryLayoutPtr layout) : layout(std::move(layout)){};
 
-    std::vector<TupleBuffer>& getChunks() { return chunks; }
-    MemoryLayouts::MemoryLayoutPtr& getLayout() { return layout; }
+    std::vector<TupleBuffer> & getChunks() { return chunks; }
+    MemoryLayouts::MemoryLayoutPtr & getLayout() { return layout; }
 
-    static void store(std::unique_ptr<Table>& table, std::string tableDir) {
-        for (size_t i = 0; i < table->chunks.size(); i++) {
-            auto& chunk = table->chunks[i];
+    static void store(std::unique_ptr<Table> & table, std::string tableDir)
+    {
+        for (size_t i = 0; i < table->chunks.size(); i++)
+        {
+            auto & chunk = table->chunks[i];
             std::ofstream outputFile;
             auto chunkPath = fmt::format("{}/chunk_{}.nes", tableDir, i);
             outputFile.open(chunkPath, std::ios::out | std::ofstream::binary);
             auto numberOfTuple = chunk.getNumberOfTuples();
-            outputFile.write((char*) (&numberOfTuple), sizeof(numberOfTuple));
-            outputFile.write(chunk.getBuffer<char>(), (size_t) chunk.getBufferSize());
+            outputFile.write((char *)(&numberOfTuple), sizeof(numberOfTuple));
+            outputFile.write(chunk.getBuffer<char>(), (size_t)chunk.getBufferSize());
             outputFile.flush();
             outputFile.close();
         }
     }
 
     static std::unique_ptr<Table>
-    load(const std::string& tableDir, const Runtime::BufferManagerPtr& bm, const MemoryLayouts::MemoryLayoutPtr& layout) {
+    load(const std::string & tableDir, const Runtime::BufferManagerPtr & bm, const MemoryLayouts::MemoryLayoutPtr & layout)
+    {
         auto table = std::make_unique<Table>(layout);
-        for (const auto& chunkFile : std::filesystem::directory_iterator(tableDir)) {
-            if (!chunkFile.is_regular_file()) {
+        for (const auto & chunkFile : std::filesystem::directory_iterator(tableDir))
+        {
+            if (!chunkFile.is_regular_file())
+            {
                 continue;
             }
 
             auto buffer = bm->getBufferNoBlocking();
-            if (!buffer.has_value()) {
+            if (!buffer.has_value())
+            {
                 NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");
             }
-            auto& chunk = table->addChunk(buffer.value());
+            auto & chunk = table->addChunk(buffer.value());
             std::ifstream input(chunkFile.path(), std::ios::binary | std::ios::ate);
-            auto chunkFileSize = (unsigned) input.tellg();
-            NES_ASSERT(chunkFileSize <= chunk.getBufferSize() + sizeof(uint64_t),
-                       "The chunk file cant be lager then the allocated buffer");
+            auto chunkFileSize = (unsigned)input.tellg();
+            NES_ASSERT(chunkFileSize <= chunk.getBufferSize() + sizeof(uint64_t), "The chunk file cant be lager then the allocated buffer");
             input.seekg(0);
             uint64_t numberOfTuple;
-            input.read((char*) &numberOfTuple, sizeof(numberOfTuple));
+            input.read((char *)&numberOfTuple, sizeof(numberOfTuple));
             input.read(chunk.getBuffer<char>(), chunkFileSize);
             chunk.setNumberOfTuples(numberOfTuple);
         }
         return table;
     }
 
-  private:
+private:
     friend TableBuilder;
-    TupleBuffer& addChunk(TupleBuffer& buffer) { return chunks.emplace_back(buffer); }
+    TupleBuffer & addChunk(TupleBuffer & buffer) { return chunks.emplace_back(buffer); }
     MemoryLayouts::MemoryLayoutPtr layout;
     std::vector<TupleBuffer> chunks;
 };
@@ -86,49 +93,50 @@ class Table {
 /**
  * @brief Builder to create tables.
  */
-class TableBuilder {
-  public:
-    TableBuilder(Runtime::BufferManagerPtr bm, const MemoryLayouts::MemoryLayoutPtr& layout)
-        : bm(std::move(bm)), table(std::make_unique<Table>(layout)) {
+class TableBuilder
+{
+public:
+    TableBuilder(Runtime::BufferManagerPtr bm, const MemoryLayouts::MemoryLayoutPtr & layout)
+        : bm(std::move(bm)), table(std::make_unique<Table>(layout))
+    {
         appendBuffer();
     }
 
     std::unique_ptr<Table> finishTable() { return std::move(table); }
 
-    template<typename... Types>
-    void append(std::tuple<Types...> values) {
-
+    template <typename... Types>
+    void append(std::tuple<Types...> values)
+    {
         uint64_t fieldIndex = 0;
         auto numberOfRecords = currentBuffer->getNumberOfTuples();
-        if (numberOfRecords == currentBuffer->getCapacity()) {
+        if (numberOfRecords == currentBuffer->getCapacity())
+        {
             appendBuffer();
             numberOfRecords = currentBuffer->getNumberOfTuples();
         }
         auto recordReference = (*currentBuffer)[numberOfRecords];
-        std::apply(
-            [&](auto&&... fieldValue) {
-                (recordReference[fieldIndex++].write(fieldValue), ...);
-            },
-            values);
+        std::apply([&](auto &&... fieldValue) { (recordReference[fieldIndex++].write(fieldValue), ...); }, values);
         currentBuffer->setNumberOfTuples(currentBuffer->getNumberOfTuples() + 1);
     };
 
-  private:
-    void appendBuffer() {
+private:
+    void appendBuffer()
+    {
         auto buffer = bm->getBufferNoBlocking();
-        if (!buffer.has_value()) {
+        if (!buffer.has_value())
+        {
             NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");
         }
-        auto& chunk = table->addChunk(buffer.value());
+        auto & chunk = table->addChunk(buffer.value());
         currentBuffer = std::make_unique<MemoryLayouts::TestTupleBuffer>(table->layout, chunk);
     }
 
-  private:
+private:
     Runtime::BufferManagerPtr bm;
     std::unique_ptr<Table> table;
     std::unique_ptr<MemoryLayouts::TestTupleBuffer> currentBuffer;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_

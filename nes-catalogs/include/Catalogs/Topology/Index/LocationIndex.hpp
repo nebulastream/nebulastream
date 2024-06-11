@@ -14,19 +14,20 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/TimeMeasurement.hpp>
 #ifdef S2DEF
-#include <s2/s2point_index.h>
+#    include <s2/s2point_index.h>
 #endif
 
-namespace NES::Spatial::Index::Experimental {
+namespace NES::Spatial::Index::Experimental
+{
 
 const int DEFAULT_SEARCH_RADIUS = 50;
 
@@ -34,8 +35,9 @@ const int DEFAULT_SEARCH_RADIUS = 50;
  * this class holds information about the geographical position of nodes, for which such a position is known (field nodes)
  * and offers functions to find field nodes within certain ares
  */
-class LocationIndex {
-  public:
+class LocationIndex
+{
+public:
     LocationIndex();
 
     /**
@@ -45,8 +47,7 @@ class LocationIndex {
      * @param geoLocation  the location of the Field node
      * @return true on success
      */
-    bool initializeFieldNodeCoordinates(WorkerId topologyNodeId,
-                                        NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool initializeFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation && geoLocation);
 
     /**
      * Experimental
@@ -55,7 +56,7 @@ class LocationIndex {
      * @param geoLocation  the new location of the Field node
      * @return true on success, false if the node was not a field node
      */
-    bool updateFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool updateFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation && geoLocation);
 
     /**
      * Experimental
@@ -72,8 +73,8 @@ class LocationIndex {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<WorkerId> getClosestNodeTo(const NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
-                                             int radius = DEFAULT_SEARCH_RADIUS) const;
+    std::optional<WorkerId>
+    getClosestNodeTo(const NES::Spatial::DataTypes::Experimental::GeoLocation && geoLocation, int radius = DEFAULT_SEARCH_RADIUS) const;
 
     /**
      * Experimental
@@ -92,7 +93,7 @@ class LocationIndex {
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
     std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
-    getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& center, double radius) const;
+    getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation & center, double radius) const;
 
     /**
      * Experimental
@@ -100,7 +101,7 @@ class LocationIndex {
      * @param topologyNodeId: id of the node to be inserted
      * @param geoLocation: location of the node
      */
-    void addMobileNode(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    void addMobileNode(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation && geoLocation);
 
     /**
      * Experimental
@@ -122,7 +123,7 @@ class LocationIndex {
      */
     size_t getSizeOfPointIndex();
 
-  private:
+private:
     /**
      * Experimental
      * @brief This method sets the location of a field node and adds it to the spatial index. No check for existing entries is
@@ -131,7 +132,7 @@ class LocationIndex {
      * @param geoLocation: the (new) location of the field node
      * @return true if successful
      */
-    bool setFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool setFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation && geoLocation);
 
     // Map containing locations of all registered worker nodes
     std::unordered_map<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation> workerGeoLocationMap;
@@ -140,5 +141,5 @@ class LocationIndex {
     S2PointIndex<WorkerId> workerPointIndex;
 #endif
 };
-}// namespace NES::Spatial::Index::Experimental
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
+} // namespace NES::Spatial::Index::Experimental
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_

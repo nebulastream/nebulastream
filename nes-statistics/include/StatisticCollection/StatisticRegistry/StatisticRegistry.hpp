@@ -15,15 +15,16 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICREGISTRY_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICREGISTRY_HPP_
 
+#include <functional>
+#include <map>
+#include <optional>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <Statistics/StatisticKey.hpp>
 #include <folly/Synchronized.h>
-#include <functional>
-#include <map>
-#include <optional>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class StatisticRegistry;
 using StatisticRegistryPtr = std::shared_ptr<StatisticRegistry>;
@@ -32,8 +33,9 @@ using StatisticRegistryPtr = std::shared_ptr<StatisticRegistry>;
  * @brief This registry stores StatisticInfo for each StatisticKey. For now, we do not support that a same statistic key
  * can have different triggerCondition and callbacks, see issue #4776 and issue #4778
  */
-class StatisticRegistry {
-  public:
+class StatisticRegistry
+{
+public:
     static StatisticRegistryPtr create();
 
     /**
@@ -56,8 +58,8 @@ class StatisticRegistry {
      * @param granularity: Granularity, i.e., 5 Seconds, of the window the statistic is built on
      * @return std::optional<StatisticInfoWLock>
      */
-    std::optional<StatisticInfoWLock> getStatisticInfoWithGranularity(const StatisticHash statisticHash,
-                                                                      const Windowing::TimeMeasure& granularity);
+    std::optional<StatisticInfoWLock>
+    getStatisticInfoWithGranularity(const StatisticHash statisticHash, const Windowing::TimeMeasure & granularity);
 
     /**
      * @brief Inserts a StatisticKey and the StatisticInfo into this StatisticRegistry
@@ -91,10 +93,10 @@ class StatisticRegistry {
      */
     bool isRunning(const StatisticHash statisticHash) const;
 
-  private:
+private:
     folly::Synchronized<std::unordered_map<StatisticHash, folly::Synchronized<StatisticInfo>>> keyToStatisticInfo;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICREGISTRY_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICREGISTRY_HPP_

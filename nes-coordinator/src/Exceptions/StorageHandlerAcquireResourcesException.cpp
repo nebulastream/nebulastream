@@ -11,14 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/StorageHandlerAcquireResourcesException.hpp>
 #include <utility>
-namespace NES::Exceptions {
+#include <Exceptions/StorageHandlerAcquireResourcesException.hpp>
+namespace NES::Exceptions
+{
 /**
  * This request is raised when an error occurs during resource acquisition by the storage handler and the error is not related to
  * the resource being locked already. Trying to lock a resource which has been locked before will instead raise a ResourceLockingException
  * @param message a message indicating what went wrong
  */
-StorageHandlerAcquireResourcesException::StorageHandlerAcquireResourcesException(const std::string& message)
-    : RequestExecutionException(message) {}
-}// namespace NES::Exceptions
+StorageHandlerAcquireResourcesException::StorageHandlerAcquireResourcesException(const std::string & message)
+    : RequestExecutionException(message)
+{
+}
+} // namespace NES::Exceptions

@@ -17,12 +17,14 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental
+{
 /**
  * @brief Descriptor defining properties used for creating physical table source
  */
-class StaticDataSourceDescriptor : public SourceDescriptor {
-  public:
+class StaticDataSourceDescriptor : public SourceDescriptor
+{
+public:
     /**
      * @brief Ctor of a StaticDataSourceDescriptor
      * @param schema the schema of the source
@@ -36,7 +38,7 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      * @return a correctly initialized shared ptr to StaticDataSourceDescriptor
      */
-    static std::shared_ptr<StaticDataSourceDescriptor> create(const SchemaPtr& schema, std::string pathTableFile, bool lateStart);
+    static std::shared_ptr<StaticDataSourceDescriptor> create(const SchemaPtr & schema, std::string pathTableFile, bool lateStart);
 
     /**
      * @brief Provides the string representation of the table source
@@ -49,7 +51,7 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      * @param other the source descriptor to compare against
      * @return true if type, schema, and table area are equal
      */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const & other) const override;
 
     /**
      * @brief return the path to the table file to be loaded.
@@ -65,9 +67,9 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     std::string pathTableFile;
     bool lateStart;
 };
-}// namespace NES::Experimental
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_
+} // namespace NES::Experimental
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_

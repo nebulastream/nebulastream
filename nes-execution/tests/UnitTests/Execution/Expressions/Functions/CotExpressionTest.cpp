@@ -12,20 +12,22 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <cmath>
 #include <Execution/Expressions/Functions/CotExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class CotExpressionTest : public Testing::BaseUnitTest {
-
-  public:
+class CotExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("CotExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup CotExpressionTest test class.");
     }
@@ -39,9 +41,13 @@ class CotExpressionTest : public Testing::BaseUnitTest {
  * @param x
  * @return cot
  */
-double cot(double x) { return std::cos(x) / std::sin(x); }
+double cot(double x)
+{
+    return std::cos(x) / std::sin(x);
+}
 
-TEST_F(CotExpressionTest, evaluateCotExpressionInteger) {
+TEST_F(CotExpressionTest, evaluateCotExpressionInteger)
+{
     auto expression = UnaryExpressionWrapper<CotExpression>();
     // Int8
     {
@@ -69,17 +75,18 @@ TEST_F(CotExpressionTest, evaluateCotExpressionInteger) {
     }
 }
 
-TEST_F(CotExpressionTest, evaluateCotExpressionFloat) {
+TEST_F(CotExpressionTest, evaluateCotExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<CotExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 90));
+        auto resultValue = expression.eval(Value<Float>((float)90));
         ASSERT_EQ(resultValue, cot(90));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 90));
+        auto resultValue = expression.eval(Value<Double>((double)90));
         ASSERT_EQ(resultValue, cot(90));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -88,9 +95,10 @@ TEST_F(CotExpressionTest, evaluateCotExpressionFloat) {
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
-TEST_F(CotExpressionTest, evaluateCotExpressionOnWrongType) {
+TEST_F(CotExpressionTest, evaluateCotExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<CotExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

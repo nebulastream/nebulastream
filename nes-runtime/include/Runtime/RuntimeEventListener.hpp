@@ -14,29 +14,32 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
-#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <memory>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::Network {
+namespace NES::Network
+{
 class ExchangeProtocol;
 }
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class BaseEvent;
 /**
  * @brief This is the listener for runtime events
  */
-class RuntimeEventListener : public NES::detail::virtual_enable_shared_from_this<RuntimeEventListener, false> {
+class RuntimeEventListener : public NES::detail::virtual_enable_shared_from_this<RuntimeEventListener, false>
+{
     friend class NES::Network::ExchangeProtocol;
 
-  protected:
+protected:
     /**
      * @brief API method called upon receiving an event
      * @param event
      */
-    virtual void onEvent(Runtime::BaseEvent& event) = 0;
+    virtual void onEvent(Runtime::BaseEvent & event) = 0;
 };
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_

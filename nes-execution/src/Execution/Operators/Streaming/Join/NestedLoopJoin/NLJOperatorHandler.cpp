@@ -16,14 +16,15 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Runtime::Execution::Operators {
-void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
-                                             StreamSlice& sliceRight,
-                                             const WindowInfo& windowInfo,
-                                             PipelineExecutionContext* pipelineCtx) {
-    if (sliceLeft.getNumberOfTuplesLeft() > 0 && sliceRight.getNumberOfTuplesRight() > 0) {
-        dynamic_cast<NLJSlice&>(sliceLeft).combinePagedVectors();
-        dynamic_cast<NLJSlice&>(sliceRight).combinePagedVectors();
+namespace NES::Runtime::Execution::Operators
+{
+void NLJOperatorHandler::emitSliceIdsToProbe(
+    StreamSlice & sliceLeft, StreamSlice & sliceRight, const WindowInfo & windowInfo, PipelineExecutionContext * pipelineCtx)
+{
+    if (sliceLeft.getNumberOfTuplesLeft() > 0 && sliceRight.getNumberOfTuplesRight() > 0)
+    {
+        dynamic_cast<NLJSlice &>(sliceLeft).combinePagedVectors();
+        dynamic_cast<NLJSlice &>(sliceRight).combinePagedVectors();
 
         auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
         auto bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTriggerTask>();
@@ -40,48 +41,52 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
         tupleBuffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
 
         pipelineCtx->dispatchBuffer(tupleBuffer);
-        NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
-                 "{} and no. right tuples {}",
-                 bufferMemory->leftSliceIdentifier,
-                 bufferMemory->rightSliceIdentifier,
-                 tupleBuffer.getWatermark(),
-                 tupleBuffer.getSequenceNumber(),
-                 tupleBuffer.getOriginId(),
-                 sliceLeft.getNumberOfTuplesLeft(),
-                 sliceRight.getNumberOfTuplesRight());
+        NES_INFO(
+            "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
+            "{} and no. right tuples {}",
+            bufferMemory->leftSliceIdentifier,
+            bufferMemory->rightSliceIdentifier,
+            tupleBuffer.getWatermark(),
+            tupleBuffer.getSequenceNumber(),
+            tupleBuffer.getOriginId(),
+            sliceLeft.getNumberOfTuplesLeft(),
+            sliceRight.getNumberOfTuplesRight());
     }
 }
 
-StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) {
-    return std::make_shared<NLJSlice>(sliceStart,
-                                      sliceEnd,
-                                      numberOfWorkerThreads,
-                                      bufferManager,
-                                      leftSchema,
-                                      pageSizeLeft,
-                                      rightSchema,
-                                      pageSizeRight);
+StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd)
+{
+    return std::make_shared<NLJSlice>(
+        sliceStart, sliceEnd, numberOfWorkerThreads, bufferManager, leftSchema, pageSizeLeft, rightSchema, pageSizeRight);
 }
 
-NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                                       const OriginId outputOriginId,
-                                       const uint64_t windowSize,
-                                       const uint64_t windowSlide,
-                                       const SchemaPtr& leftSchema,
-                                       const SchemaPtr& rightSchema,
-                                       const uint64_t pageSizeLeft,
-                                       const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
-      pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
+NLJOperatorHandler::NLJOperatorHandler(
+    const std::vector<OriginId> & inputOrigins,
+    const OriginId outputOriginId,
+    const uint64_t windowSize,
+    const uint64_t windowSlide,
+    const SchemaPtr & leftSchema,
+    const SchemaPtr & rightSchema,
+    const uint64_t pageSizeLeft,
+    const uint64_t pageSizeRight)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema)
+    , pageSizeLeft(pageSizeLeft)
+    , pageSizeRight(pageSizeRight)
+{
+}
 
-void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
+void * getNLJPagedVectorProxy(void * ptrNljSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt)
+{
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
-    auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
+    auto * nljSlice = static_cast<NLJSlice *>(ptrNljSlice);
     NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
-    switch (joinBuildSide) {
-        case QueryCompilation::JoinBuildSideType::Left: return nljSlice->getPagedVectorRefLeft(workerThreadId);
-        case QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerThreadId);
+    switch (joinBuildSide)
+    {
+        case QueryCompilation::JoinBuildSideType::Left:
+            return nljSlice->getPagedVectorRefLeft(workerThreadId);
+        case QueryCompilation::JoinBuildSideType::Right:
+            return nljSlice->getPagedVectorRefRight(workerThreadId);
     }
 }
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

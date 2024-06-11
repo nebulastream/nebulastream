@@ -17,7 +17,8 @@
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class AbstractStatisticStore;
 using StatisticStorePtr = std::shared_ptr<AbstractStatisticStore>;
@@ -29,28 +30,30 @@ using StatisticFormatPtr = std::shared_ptr<AbstractStatisticFormat>;
  * @brief Physical sink that receives a tuple buffer, extracts statistics, and writes these statistics
  * to the statisticStore
  */
-class StatisticSink : public SinkMedium {
-  public:
-    StatisticSink(const SinkFormatPtr& sinkFormat,
-                  const Runtime::NodeEnginePtr& nodeEngine,
-                  uint32_t numOfProducers,
-                  SharedQueryId sharedQueryId,
-                  DecomposedQueryPlanId decomposedQueryPlanId,
-                  uint64_t numberOfOrigins,
-                  StatisticStorePtr statisticStore,
-                  StatisticFormatPtr statisticSinkFormat);
+class StatisticSink : public SinkMedium
+{
+public:
+    StatisticSink(
+        const SinkFormatPtr & sinkFormat,
+        const Runtime::NodeEnginePtr & nodeEngine,
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins,
+        StatisticStorePtr statisticStore,
+        StatisticFormatPtr statisticSinkFormat);
 
     void setup() override;
     void shutdown() override;
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
+    bool writeData(Runtime::TupleBuffer & inputBuffer, Runtime::WorkerContext & workerContext) override;
     std::string toString() const override;
     SinkMediumTypes getSinkMediumType() override;
 
-  private:
+private:
     StatisticStorePtr statisticStore;
     StatisticFormatPtr statisticSinkFormat;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_STATISTICSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_STATISTICSINK_HPP_

@@ -13,15 +13,17 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMP_HPP_
-#include <Nautilus/Util/CastUtils.hpp>
 #include <memory>
 #include <ostream>
 #include <typeinfo>
-namespace NES::Nautilus::IR::Types {
+#include <Nautilus/Util/CastUtils.hpp>
+namespace NES::Nautilus::IR::Types
+{
 
-class Stamp : public Typed {
-  public:
-    Stamp(const TypeIdentifier* typeIdentifier);
+class Stamp : public Typed
+{
+public:
+    Stamp(const TypeIdentifier * typeIdentifier);
     virtual ~Stamp() = default;
     bool isInteger();
     bool isFloat();
@@ -35,6 +37,6 @@ class Stamp : public Typed {
 
 using StampPtr = std::shared_ptr<Stamp>;
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMP_HPP_

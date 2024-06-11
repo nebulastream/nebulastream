@@ -11,54 +11,75 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <utility>
 #include <Catalogs/Topology/Topology.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <memory>
-#include <utility>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-SerialStorageHandler::SerialStorageHandler(StorageDataStructures& storageDataStructures)
-    : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),
-      topology(std::move(storageDataStructures.topology)),
-      globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
-      globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
-      queryCatalog(std::move(storageDataStructures.queryCatalog)), sourceCatalog(std::move(storageDataStructures.sourceCatalog)),
-      udfCatalog(std::move(storageDataStructures.udfCatalog)), amendmentQueue(std::move(storageDataStructures.amendmentQueue)),
-      statisticProbeHandler(std::move(storageDataStructures.statisticProbeHandler)) {}
+SerialStorageHandler::SerialStorageHandler(StorageDataStructures & storageDataStructures)
+    : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration))
+    , topology(std::move(storageDataStructures.topology))
+    , globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan))
+    , globalQueryPlan(std::move(storageDataStructures.globalQueryPlan))
+    , queryCatalog(std::move(storageDataStructures.queryCatalog))
+    , sourceCatalog(std::move(storageDataStructures.sourceCatalog))
+    , udfCatalog(std::move(storageDataStructures.udfCatalog))
+    , amendmentQueue(std::move(storageDataStructures.amendmentQueue))
+    , statisticProbeHandler(std::move(storageDataStructures.statisticProbeHandler))
+{
+}
 
-StorageHandlerPtr SerialStorageHandler::create(StorageDataStructures storageDataStructures) {
+StorageHandlerPtr SerialStorageHandler::create(StorageDataStructures storageDataStructures)
+{
     return std::make_shared<SerialStorageHandler>(storageDataStructures);
 }
 
-Optimizer::GlobalExecutionPlanPtr SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId) {
+Optimizer::GlobalExecutionPlanPtr SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId)
+{
     return {&*globalExecutionPlan, UnlockDeleter()};
 }
 
-TopologyHandle SerialStorageHandler::getTopologyHandle(const RequestId) { return {&*topology, UnlockDeleter()}; }
+TopologyHandle SerialStorageHandler::getTopologyHandle(const RequestId)
+{
+    return {&*topology, UnlockDeleter()};
+}
 
-QueryCatalogHandle SerialStorageHandler::getQueryCatalogHandle(const RequestId) { return {&*queryCatalog, UnlockDeleter()}; }
+QueryCatalogHandle SerialStorageHandler::getQueryCatalogHandle(const RequestId)
+{
+    return {&*queryCatalog, UnlockDeleter()};
+}
 
-GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const RequestId) {
+GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const RequestId)
+{
     return {&*globalQueryPlan, UnlockDeleter()};
 }
 
-Catalogs::Source::SourceCatalogPtr SerialStorageHandler::getSourceCatalogHandle(const RequestId) {
+Catalogs::Source::SourceCatalogPtr SerialStorageHandler::getSourceCatalogHandle(const RequestId)
+{
     return {&*sourceCatalog, UnlockDeleter()};
 }
 
-Catalogs::UDF::UDFCatalogPtr SerialStorageHandler::getUDFCatalogHandle(const RequestId) {
+Catalogs::UDF::UDFCatalogPtr SerialStorageHandler::getUDFCatalogHandle(const RequestId)
+{
     return {&*udfCatalog, UnlockDeleter()};
 }
 
-Configurations::CoordinatorConfigurationPtr SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
+Configurations::CoordinatorConfigurationPtr SerialStorageHandler::getCoordinatorConfiguration(const RequestId)
+{
     return {&*coordinatorConfiguration, UnlockDeleter()};
 }
 
-Optimizer::UMPMCAmendmentQueuePtr SerialStorageHandler::getAmendmentQueue() { return {&*amendmentQueue, UnlockDeleter()}; }
+Optimizer::UMPMCAmendmentQueuePtr SerialStorageHandler::getAmendmentQueue()
+{
+    return {&*amendmentQueue, UnlockDeleter()};
+}
 
-Statistic::StatisticProbeHandlerPtr SerialStorageHandler::getStatisticProbeHandler(RequestId) {
+Statistic::StatisticProbeHandlerPtr SerialStorageHandler::getStatisticProbeHandler(RequestId)
+{
     return {&*statisticProbeHandler, UnlockDeleter()};
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

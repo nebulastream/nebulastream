@@ -12,41 +12,52 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <string>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
-std::unique_ptr<UDFCatalog> UDFCatalog::create() { return std::make_unique<UDFCatalog>(); }
+std::unique_ptr<UDFCatalog> UDFCatalog::create()
+{
+    return std::make_unique<UDFCatalog>();
+}
 
-void UDFCatalog::registerUDF(const std::string& name, UDFDescriptorPtr descriptor) {
+void UDFCatalog::registerUDF(const std::string & name, UDFDescriptorPtr descriptor)
+{
     NES_DEBUG("Registering UDF '{}'", name);
-    if (descriptor == nullptr) {
+    if (descriptor == nullptr)
+    {
         throw UDFException("UDF descriptor must not be null");
     }
-    if (auto success = udfStore.insert({name, descriptor}).second; !success) {
+    if (auto success = udfStore.insert({name, descriptor}).second; !success)
+    {
         std::stringstream ss;
         ss << "UDF '" << name << "' already exists";
         throw UDFException(ss.str());
     }
 }
 
-UDFDescriptorPtr UDFCatalog::getUDFDescriptor(const std::string& name) {
+UDFDescriptorPtr UDFCatalog::getUDFDescriptor(const std::string & name)
+{
     NES_DEBUG("Looking up descriptor for UDF '{}'", name);
     auto entry = udfStore.find(name);
-    if (entry == udfStore.end()) {
+    if (entry == udfStore.end())
+    {
         NES_DEBUG("UDF '{}' does not exist", name);
         return nullptr;
     }
     return entry->second;
 }
 
-bool UDFCatalog::removeUDF(const std::string& name) {
+bool UDFCatalog::removeUDF(const std::string & name)
+{
     NES_DEBUG("Removing UDF '{}'", name);
     auto entry = udfStore.find(name);
-    if (entry == udfStore.end()) {
+    if (entry == udfStore.end())
+    {
         NES_DEBUG("Did not find UDF '{}'", name);
         // Removing an unregistered UDF is not an error condition
         // because it could have been removed by another user.
@@ -57,14 +68,16 @@ bool UDFCatalog::removeUDF(const std::string& name) {
     return true;
 }
 
-std::vector<std::string> UDFCatalog::listUDFs() const {
+std::vector<std::string> UDFCatalog::listUDFs() const
+{
     NES_DEBUG("Listing names of registered UDFs");
     auto list = std::vector<std::string>{};
     list.reserve(udfStore.size());
-    for (const auto& [key, _] : udfStore) {
+    for (const auto & [key, _] : udfStore)
+    {
         list.push_back(key);
     }
     return list;
 }
 
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

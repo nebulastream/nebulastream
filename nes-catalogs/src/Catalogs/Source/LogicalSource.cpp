@@ -12,23 +12,31 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-LogicalSourcePtr LogicalSource::create(const std::string& logicalSourceName, const SchemaPtr& schema) {
+LogicalSourcePtr LogicalSource::create(const std::string & logicalSourceName, const SchemaPtr & schema)
+{
     return std::make_shared<LogicalSource>(LogicalSource(std::move(logicalSourceName), std::move(schema)));
 }
 
-LogicalSource::LogicalSource(const std::string& logicalSourceName, const SchemaPtr& schemaPtr)
-    : logicalSourceName(logicalSourceName) {
+LogicalSource::LogicalSource(const std::string & logicalSourceName, const SchemaPtr & schemaPtr) : logicalSourceName(logicalSourceName)
+{
     schema = schemaPtr->copy();
 }
 
-SchemaPtr LogicalSource::getSchema() { return schema; }
+SchemaPtr LogicalSource::getSchema()
+{
+    return schema;
+}
 
-std::string LogicalSource::getLogicalSourceName() { return logicalSourceName; }
+std::string LogicalSource::getLogicalSourceName()
+{
+    return logicalSourceName;
+}
 
-}// namespace NES
+} // namespace NES

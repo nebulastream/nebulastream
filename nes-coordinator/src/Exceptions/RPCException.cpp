@@ -11,13 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/RpcException.hpp>
 #include <utility>
-namespace NES::Exceptions {
-RpcException::RpcException(const std::string& message, std::vector<RpcAsyncRequest> failedRpcs)
-    : RequestExecutionException(message), failedRpcs(std::move(failedRpcs)) {}
+#include <Exceptions/RpcException.hpp>
+namespace NES::Exceptions
+{
+RpcException::RpcException(const std::string & message, std::vector<RpcAsyncRequest> failedRpcs)
+    : RequestExecutionException(message), failedRpcs(std::move(failedRpcs))
+{
+}
 
-const char* RpcException::what() const noexcept { return message.c_str(); }
+const char * RpcException::what() const noexcept
+{
+    return message.c_str();
+}
 
-std::vector<RpcAsyncRequest> RpcException::getFailedCalls() { return failedRpcs; }
-}// namespace NES::Exceptions
+std::vector<RpcAsyncRequest> RpcException::getFailedCalls()
+{
+    return failedRpcs;
+}
+} // namespace NES::Exceptions

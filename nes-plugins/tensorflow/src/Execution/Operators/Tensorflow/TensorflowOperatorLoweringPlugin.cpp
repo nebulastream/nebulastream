@@ -21,16 +21,20 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperatorLoweringPlugin {
-  public:
+class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperatorLoweringPlugin
+{
+public:
     TensorflowOperatorLoweringPlugin() { NES_INFO("Load TensorflowOperatorLoweringPlugin"); }
 
-    std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
-    lower(const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) override {
-        if (!physicalOperator->instanceOf<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>()) {
+    std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr> lower(
+        const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr & physicalOperator,
+        std::vector<Runtime::Execution::OperatorHandlerPtr> & operatorHandlers) override
+    {
+        if (!physicalOperator->instanceOf<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>())
+        {
             return {};
         }
         NES_INFO("Lower infer model operator to Tensorflow operator");
@@ -38,20 +42,23 @@ class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperat
         auto model = inferModelOperator->getModel();
 
         // Only accept Tensorflow Lite Models (.tflite file suffix)
-        if (!model.ends_with(".tflite")) {
+        if (!model.ends_with(".tflite"))
+        {
             return {};
         }
 
         //Fetch the name of input fields
         std::vector<std::string> inputFields;
-        for (const auto& inputField : inferModelOperator->getInputFields()) {
+        for (const auto & inputField : inferModelOperator->getInputFields())
+        {
             auto fieldAccessExpression = inputField->as<FieldAccessExpressionNode>();
             inputFields.push_back(fieldAccessExpression->getFieldName());
         }
 
         //Fetch the name of output fields
         std::vector<std::string> outputFields;
-        for (const auto& outputField : inferModelOperator->getOutputFields()) {
+        for (const auto & outputField : inferModelOperator->getOutputFields())
+        {
             auto fieldAccessExpression = outputField->as<FieldAccessExpressionNode>();
             outputFields.push_back(fieldAccessExpression->getFieldName());
         }
@@ -62,9 +69,7 @@ class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperat
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
         //build nautilus infer model operator
-        return std::make_shared<Runtime::Execution::Operators::TensorflowInferenceOperator>(indexForThisHandler,
-                                                                                            inputFields,
-                                                                                            outputFields);
+        return std::make_shared<Runtime::Execution::Operators::TensorflowInferenceOperator>(indexForThisHandler, inputFields, outputFields);
     }
 };
 
@@ -72,4 +77,4 @@ class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperat
 [[maybe_unused]] static QueryCompilation::NautilusOperatorLoweringPluginRegistry::Add<TensorflowOperatorLoweringPlugin>
     tensorflowOperatorLoweringPlugin;
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

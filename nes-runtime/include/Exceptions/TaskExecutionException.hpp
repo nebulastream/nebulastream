@@ -15,28 +15,30 @@
 #ifndef NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
 #define NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
 
+#include <string>
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This exception is thrown when an error occurs during window processing.
  */
-class TaskExecutionException : public Exceptions::RuntimeException {
-  public:
+class TaskExecutionException : public Exceptions::RuntimeException
+{
+public:
     /**
      * @brief Construct a PipelineExecutionException exception from a message.
      * @param message The exception message.
      */
-    explicit TaskExecutionException(const Runtime::Execution::SuccessorExecutablePipeline pipeline, std::string&& message);
+    explicit TaskExecutionException(const Runtime::Execution::SuccessorExecutablePipeline pipeline, std::string && message);
 
     Runtime::Execution::SuccessorExecutablePipeline getExecutable() const;
 
-  private:
+private:
     const std::string message;
     const Runtime::Execution::SuccessorExecutablePipeline pipeline;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_

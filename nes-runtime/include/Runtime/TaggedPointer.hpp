@@ -16,30 +16,32 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
 #include <cstdint>
 #if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__powerpc64__)) && !(defined(__aarch64__))
-#error "TaggedPointer is x64, arm64 and ppc64 specific code."
+#    error "TaggedPointer is x64, arm64 and ppc64 specific code."
 #endif
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief This class represents a mutable pointer that stores a tag in the 16 msb bits
  * @tparam T
  */
-template<typename T>
-class TaggedPointer {
-  public:
+template <typename T>
+class TaggedPointer
+{
+public:
     /**
      * @brief Creates a TaggedPointer from a pointer and a tag
      * @param ptr
      * @param tag
      */
-    explicit TaggedPointer(T* ptr, uint16_t tag = 0);
+    explicit TaggedPointer(T * ptr, uint16_t tag = 0);
 
     /**
      * @brief Assign operators from a pointer of type T
      * @param ptr the new pointer
      * @return self
      */
-    TaggedPointer& operator=(T* ptr);
+    TaggedPointer & operator=(T * ptr);
 
     /**
      * @brief Bool converted, true if pointer is valid
@@ -57,37 +59,37 @@ class TaggedPointer {
      * @brief returns the de-tagged pointer casted to T*
      * @return
      */
-    inline T* get() { return static_cast<T*>(pointer()); }
+    inline T * get() { return static_cast<T *>(pointer()); }
 
     /**
      * @brief returns the de-tagged pointer casted to const T*
      * @return
      */
-    inline const T* get() const { return static_cast<const T*>(pointer()); }
+    inline const T * get() const { return static_cast<const T *>(pointer()); }
 
     /**
      * @brief returns the de-tagged pointer casted to T&
      * @return
      */
-    inline const T& operator*() const { return *get(); }
+    inline const T & operator*() const { return *get(); }
 
     /**
      * @brief returns the de-tagged pointer casted to const T&
      * @return
      */
-    inline T& operator*() { return *get(); }
+    inline T & operator*() { return *get(); }
 
     /**
      * @brief returns the de-tagged pointer casted to const T*
      * @return
      */
-    inline const T* operator->() const { return get(); }
+    inline const T * operator->() const { return get(); }
 
     /**
      * @brief returns the de-tagged pointer casted to T*
      * @return
      */
-    inline T* operator->() { return get(); }
+    inline T * operator->() { return get(); }
 
     /**
      * @brief returns the companion tag
@@ -99,18 +101,18 @@ class TaggedPointer {
      * @brief returns the de-tagged pointer casted to void*
      * @return
      */
-    inline void* pointer() const { return reinterpret_cast<void*>(data & ((1ULL << 48) - 1)); }
+    inline void * pointer() const { return reinterpret_cast<void *>(data & ((1ULL << 48) - 1)); }
 
     /**
      * @brief reset by mutating the internal pointer and the tag
      * @return
      */
-    void reset(T* ptr = nullptr, uint16_t tag = 0);
+    void reset(T * ptr = nullptr, uint16_t tag = 0);
 
-  private:
+private:
     uintptr_t data = 0;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_

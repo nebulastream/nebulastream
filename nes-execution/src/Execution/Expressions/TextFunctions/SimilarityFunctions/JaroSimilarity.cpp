@@ -11,27 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <regex>
+#include <string>
 #include <Execution/Expressions/TextFunctions/SimilarityFunctions/JaroSimilarity.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <regex>
-#include <string>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-JaroSimilarity::JaroSimilarity(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                               const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression,
-                               const NES::Runtime::Execution::Expressions::ExpressionPtr& flagExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression), flagExpression(flagExpression) {}
+JaroSimilarity::JaroSimilarity(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr & leftSubExpression,
+    const NES::Runtime::Execution::Expressions::ExpressionPtr & rightSubExpression,
+    const NES::Runtime::Execution::Expressions::ExpressionPtr & flagExpression)
+    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression), flagExpression(flagExpression)
+{
+}
 
 /**
  * Compares if two text objects are equivalent
  * @param leftText, rightText the text objects to compare
  * @return Integer, 0 = equivalent, else not
  */
-int64_t textEquals(const TextValue* leftText, const TextValue* rightText) {
-    if (leftText->length() != rightText->length()) {
+int64_t textEquals(const TextValue * leftText, const TextValue * rightText)
+{
+    if (leftText->length() != rightText->length())
+    {
         return -1;
     }
     return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length());
@@ -43,9 +49,11 @@ int64_t textEquals(const TextValue* leftText, const TextValue* rightText) {
   * @param rightText text object
   * @return Jaccard Distance as Integer.
   */
-double textJaro(const TextValue* leftText, const TextValue* rightText) {
+double textJaro(const TextValue * leftText, const TextValue * rightText)
+{
     /** if texts are equal we can save time */
-    if (textEquals(leftText, rightText) == 0) {
+    if (textEquals(leftText, rightText) == 0)
+    {
         return 1.0;
     }
 
@@ -56,21 +64,24 @@ double textJaro(const TextValue* leftText, const TextValue* rightText) {
     /** hashes for matches */
     auto leftHash = new int32_t[leftText->length()];
     auto rightHash = new int32_t[rightText->length()];
-    for (int32_t i = 0; i < (int32_t) leftText->length(); i++) {
+    for (int32_t i = 0; i < (int32_t)leftText->length(); i++)
+    {
         leftHash[i] = 0;
     }
-    for (int32_t i = 0; i < (int32_t) rightText->length(); i++) {
+    for (int32_t i = 0; i < (int32_t)rightText->length(); i++)
+    {
         rightHash[i] = 0;
     }
 
     /** first string */
-    for (int32_t i = 0; i < (int32_t) leftText->length(); i++) {
-
+    for (int32_t i = 0; i < (int32_t)leftText->length(); i++)
+    {
         /** Check if there is any matches */
-        for (int32_t j = fmax(0, i - maxSim); j < fmin(rightText->length(), i + maxSim + 1); j++) {
-
+        for (int32_t j = fmax(0, i - maxSim); j < fmin(rightText->length(), i + maxSim + 1); j++)
+        {
             /** If there is a match */
-            if (leftText->c_str()[i] == rightText->c_str()[j] && rightHash[j] == 0) {
+            if (leftText->c_str()[i] == rightText->c_str()[j] && rightHash[j] == 0)
+            {
                 leftHash[i] = 1;
                 rightHash[j] = 1;
                 match++;
@@ -80,7 +91,8 @@ double textJaro(const TextValue* leftText, const TextValue* rightText) {
     }
 
     /** no matches */
-    if (match == 0) {
+    if (match == 0)
+    {
         return 0.0;
     }
 
@@ -89,9 +101,9 @@ double textJaro(const TextValue* leftText, const TextValue* rightText) {
     int32_t point = 0;
 
     /** We search for matches with a third matched character between the indices */
-    for (int32_t i = 0; i < (int32_t) leftText->length(); i++)
-        if (leftHash[i]) {
-
+    for (int32_t i = 0; i < (int32_t)leftText->length(); i++)
+        if (leftHash[i])
+        {
             /** Find the next matched character
                in second string */
             while (rightHash[point] == 0)
@@ -103,8 +115,8 @@ double textJaro(const TextValue* leftText, const TextValue* rightText) {
 
     transpositions /= 2;
 
-    return (((double) match) / ((double) leftText->length()) + ((double) match) / ((double) rightText->length())
-            + ((double) match - transpositions) / ((double) match))
+    return (((double)match) / ((double)leftText->length()) + ((double)match) / ((double)rightText->length())
+            + ((double)match - transpositions) / ((double)match))
         / 3.0;
 }
 
@@ -114,15 +126,20 @@ double textJaro(const TextValue* leftText, const TextValue* rightText) {
   * @param rightText text object
   * @return Jaccard Distance as Integer.
   */
-double textJaroWinkler(const TextValue* leftText, const TextValue* rightText, double jaroDist) {
+double textJaroWinkler(const TextValue * leftText, const TextValue * rightText, double jaroDist)
+{
     int32_t prefix = 0;
 
     /** check for prefix */
-    for (int32_t i = 0; i < fmin(rightText->length(), leftText->length()); i++) {
+    for (int32_t i = 0; i < fmin(rightText->length(), leftText->length()); i++)
+    {
         /** If the characters match */
-        if (rightText->c_str()[i] == leftText->c_str()[i]) {
+        if (rightText->c_str()[i] == leftText->c_str()[i])
+        {
             prefix++;
-        } else {
+        }
+        else
+        {
             break;
         }
     }
@@ -139,8 +156,8 @@ double textJaroWinkler(const TextValue* leftText, const TextValue* rightText, do
     return jaroDist + 0.1 * prefix * (1 - jaroDist);
 }
 
-Value<> JaroSimilarity::execute(NES::Nautilus::Record& record) const {
-
+Value<> JaroSimilarity::execute(NES::Nautilus::Record & record) const
+{
     // Evaluate the left sub expression and retrieve the value.
     Value<> leftValue = leftSubExpression->execute(record);
 
@@ -149,22 +166,27 @@ Value<> JaroSimilarity::execute(NES::Nautilus::Record& record) const {
 
     Value<> flagValue = flagExpression->execute(record);
 
-    if (leftValue->isType<Text>() && rightValue->isType<Text>() && flagValue->isType<Boolean>()) {
-        Value<> distance =
-            FunctionCall<>("textJaro", textJaro, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
-        if (flagValue.as<Boolean>()) {
-            return FunctionCall<>("textJaroWinkler",
-                                  textJaroWinkler,
-                                  leftValue.as<Text>()->getReference(),
-                                  rightValue.as<Text>()->getReference(),
-                                  distance.as<Double>());
+    if (leftValue->isType<Text>() && rightValue->isType<Text>() && flagValue->isType<Boolean>())
+    {
+        Value<> distance
+            = FunctionCall<>("textJaro", textJaro, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
+        if (flagValue.as<Boolean>())
+        {
+            return FunctionCall<>(
+                "textJaroWinkler",
+                textJaroWinkler,
+                leftValue.as<Text>()->getReference(),
+                rightValue.as<Text>()->getReference(),
+                distance.as<Double>());
         }
         return distance;
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for the Winkler "
                                 "addition (favourable ratings og matching prefixes).");
     }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

@@ -17,10 +17,12 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class BitWiseAndOperation : public Operation {
-  public:
+class BitWiseAndOperation : public Operation
+{
+public:
     /**
      * @brief Constructor for a BitWiseAndOperation
      * @param identifier
@@ -57,11 +59,11 @@ class BitWiseAndOperation : public Operation {
      * @param Op
      * @return boolean
      */
-    bool classof(const Operation* Op);
+    bool classof(const Operation * Op);
 
-  private:
+private:
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEANDOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEANDOPERATION_HPP_

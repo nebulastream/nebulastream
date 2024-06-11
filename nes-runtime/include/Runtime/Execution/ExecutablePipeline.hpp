@@ -14,6 +14,10 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#include <atomic>
+#include <memory>
+#include <variant>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
@@ -21,28 +25,32 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <atomic>
-#include <memory>
-#include <variant>
-#include <vector>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
 /**
  * @brief An ExecutablePipeline represents a fragment of an overall query.
  * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
-class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventListener {
+class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventListener
+{
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     using inherited0 = Reconfigurable;
     using inherited1 = Runtime::RuntimeEventListener;
 
     friend class QueryManager;
 
-    enum class PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
+    enum class PipelineStatus : uint8_t
+    {
+        PipelineCreated,
+        PipelineRunning,
+        PipelineStopped,
+        PipelineFailed
+    };
 
-  public:
+public:
     /**
      * @brief Constructor for an executable pipeline.
      * @param pipelineId The Id of this pipeline
@@ -55,15 +63,16 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    explicit ExecutablePipeline(PipelineId pipelineId,
-                                SharedQueryId sharedQueryId,
-                                DecomposedQueryPlanId decomposedQueryPlanId,
-                                QueryManagerPtr queryManager,
-                                PipelineExecutionContextPtr pipelineExecutionContext,
-                                ExecutablePipelineStagePtr executablePipelineStage,
-                                uint32_t numOfProducingPipelines,
-                                std::vector<SuccessorExecutablePipeline> successorPipelines,
-                                bool reconfiguration);
+    explicit ExecutablePipeline(
+        PipelineId pipelineId,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryManagerPtr queryManager,
+        PipelineExecutionContextPtr pipelineExecutionContext,
+        ExecutablePipelineStagePtr executablePipelineStage,
+        uint32_t numOfProducingPipelines,
+        std::vector<SuccessorExecutablePipeline> successorPipelines,
+        bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -76,15 +85,16 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    static ExecutablePipelinePtr create(PipelineId pipelineId,
-                                        SharedQueryId sharedQueryId,
-                                        DecomposedQueryPlanId decomposedQueryPlanId,
-                                        const QueryManagerPtr& queryManager,
-                                        const PipelineExecutionContextPtr& pipelineExecutionContext,
-                                        const ExecutablePipelineStagePtr& executablePipelineStage,
-                                        uint32_t numOfProducingPipelines,
-                                        const std::vector<SuccessorExecutablePipeline>& successorPipelines,
-                                        bool reconfiguration = false);
+    static ExecutablePipelinePtr create(
+        PipelineId pipelineId,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        const QueryManagerPtr & queryManager,
+        const PipelineExecutionContextPtr & pipelineExecutionContext,
+        const ExecutablePipelineStagePtr & executablePipelineStage,
+        uint32_t numOfProducingPipelines,
+        const std::vector<SuccessorExecutablePipeline> & successorPipelines,
+        bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage
@@ -92,13 +102,13 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @param workerContext: the worker context
      * @return true if no error occurred
      */
-    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+    ExecutionResult execute(TupleBuffer & inputBuffer, WorkerContextRef workerContext);
 
     /**
    * @brief Initialises a pipeline stage
    * @return boolean if successful
    */
-    bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
+    bool setup(const QueryManagerPtr & queryManager, const BufferManagerPtr & bufferManager);
 
     /**
      * @brief Starts a pipeline stage and passes statemanager and local state counter further to the operator handler
@@ -148,13 +158,13 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @param task the reconfig descriptor
      * @param context the worker context
      */
-    void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
+    void reconfigure(ReconfigurationMessage & task, WorkerContext & context) override;
 
     /**
      * @brief final reconfigure callback called upon a reconfiguration
      * @param task the reconfig descriptor
      */
-    void postReconfigurationCallback(ReconfigurationMessage& task) override;
+    void postReconfigurationCallback(ReconfigurationMessage & task) override;
 
     /**
      * @brief Get query plan id.
@@ -166,23 +176,23 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @brief Gets the successor pipelines
      * @return SuccessorPipelines
      */
-    const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
+    const std::vector<SuccessorExecutablePipeline> & getSuccessors() const;
 
     /**
      * @brief API method called upon receiving an event (from downstream)
      * @param event
      */
-    void onEvent(Runtime::BaseEvent& event) override;
+    void onEvent(Runtime::BaseEvent & event) override;
 
     /**
      * @brief API method called upon receiving an event (from downstream)
      * @param event
      */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef);
+    void onEvent(Runtime::BaseEvent & event, Runtime::WorkerContextRef);
 
     PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
-  private:
+private:
     const PipelineId pipelineId;
     const SharedQueryId sharedQueryId;
     const DecomposedQueryPlanId decomposedQueryPlanId;
@@ -195,6 +205,6 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

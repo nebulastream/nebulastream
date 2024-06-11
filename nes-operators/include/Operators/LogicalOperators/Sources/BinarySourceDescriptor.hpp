@@ -17,14 +17,15 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical binary source
  */
-class BinarySourceDescriptor : public SourceDescriptor {
-
-  public:
+class BinarySourceDescriptor : public SourceDescriptor
+{
+public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath);
     static SourceDescriptorPtr create(SchemaPtr schema, std::string sourceName, std::string filePath);
 
@@ -32,15 +33,15 @@ class BinarySourceDescriptor : public SourceDescriptor {
      * @brief Get the path of binary file
      * @return
      */
-    const std::string& getFilePath() const;
+    const std::string & getFilePath() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const & other) const override;
 
     std::string toString() const override;
 
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string sourceName, std::string filePath);
 
@@ -49,6 +50,6 @@ class BinarySourceDescriptor : public SourceDescriptor {
 
 using BinarySourceDescriptorPtr = std::shared_ptr<BinarySourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BINARYSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BINARYSOURCEDESCRIPTOR_HPP_

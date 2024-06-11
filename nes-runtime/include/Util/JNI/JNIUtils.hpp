@@ -13,15 +13,16 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
 #define NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
-#include <Util/JNI/JNI.hpp>
-#include <Util/SourceLocation.hpp>
 #include <string_view>
 #include <unordered_map>
+#include <Util/JNI/JNI.hpp>
+#include <Util/SourceLocation.hpp>
 
 /**
  * @brief This header provides basic functions that simplify the interaction with a JVM over JNI.
  */
-namespace NES::jni {
+namespace NES::jni
+{
 
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
@@ -53,14 +54,14 @@ jobject allocateObject(jclass clazz);
  * @param clazzName
  * @return jclass
  */
-jclass findClass(const std::string_view& clazzName);
+jclass findClass(const std::string_view & clazzName);
 
 /**
  * @brief Finds a method with a given name
  * @param methodName
  * @return jmethodID
  */
-jmethodID getMethod(jclass clazz, const std::string_view& methodName, const std::string_view& signature);
+jmethodID getMethod(jclass clazz, const std::string_view & methodName, const std::string_view & signature);
 
 /**
  * @brief Creates a java.lang.Boolean object for a given bool.
@@ -116,7 +117,7 @@ jobject createByte(int8_t value);
  * @param value
  * @return jobject
  */
-jstring createString(const std::string_view& value);
+jstring createString(const std::string_view & value);
 
 /**
  * @brief Extracts a bool from a java.lang.Boolean object
@@ -178,8 +179,8 @@ std::string getStringObjectValue(jstring object);
  * @param javaClassName
  * @return std::string
  */
-const std::string convertToJNIName(const std::string& javaClassName);
+const std::string convertToJNIName(const std::string & javaClassName);
 
-}// namespace NES::jni
+} // namespace NES::jni
 
-#endif// NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_

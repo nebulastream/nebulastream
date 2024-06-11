@@ -12,53 +12,68 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NexmarkCommon.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-#include <Configurations/Coordinator/SchemaType.hpp>
 #include <algorithm>
 #include <fstream>
-#include <math.h>
 #include <utility>
+#include <math.h>
+#include <Configurations/Coordinator/SchemaType.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-NEBitDataGenerator::NEBitDataGenerator() : DataGenerator() {}
+NEBitDataGenerator::NEBitDataGenerator() : DataGenerator()
+{
+}
 
-std::string NEBitDataGenerator::getName() { return "NEBit"; }
+std::string NEBitDataGenerator::getName()
+{
+    return "NEBit";
+}
 
-std::vector<Runtime::TupleBuffer> NEBitDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> NEBitDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize)
+{
     std::vector<Runtime::TupleBuffer> buffers;
     buffers.reserve(numberOfBuffers);
 
     auto memoryLayout = getMemoryLayout(bufferSize);
 
-    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
+    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++)
+    {
         auto buffer = allocateBuffer();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++)
+        {
             long auction, bidder;
 
             long epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
 
-            if (rand() % 100 > NexmarkCommon::HOT_AUCTIONS_PROB) {
-                auction = (((epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1)
-                            / NexmarkCommon::HOT_AUCTION_RATIO)
-                           * NexmarkCommon::HOT_AUCTION_RATIO);
-            } else {
-                long a =
-                    std::max(0L, epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1 - 20000);
+            if (rand() % 100 > NexmarkCommon::HOT_AUCTIONS_PROB)
+            {
+                auction
+                    = (((epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1)
+                        / NexmarkCommon::HOT_AUCTION_RATIO)
+                       * NexmarkCommon::HOT_AUCTION_RATIO);
+            }
+            else
+            {
+                long a = std::max(0L, epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1 - 20000);
                 long b = epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1;
                 auction = a + rand() % (b - a + 1 + 100);
             }
 
-            if (rand() % 100 > 85) {
+            if (rand() % 100 > 85)
+            {
                 long personId = epoch * NexmarkCommon::PERSON_EVENT_RATIO + NexmarkCommon::PERSON_EVENT_RATIO - 1;
                 bidder = (personId / NexmarkCommon::HOT_SELLER_RATIO) * NexmarkCommon::HOT_SELLER_RATIO;
-            } else {
+            }
+            else
+            {
                 long personId = epoch * NexmarkCommon::PERSON_EVENT_RATIO + NexmarkCommon::PERSON_EVENT_RATIO - 1;
                 long activePersons = std::min(personId, 60000L);
                 long n = rand() % (activePersons + 100);
@@ -74,7 +89,8 @@ std::vector<Runtime::TupleBuffer> NEBitDataGenerator::createData(size_t numberOf
     }
     return buffers;
 }
-SchemaPtr NEBitDataGenerator::getSchema() {
+SchemaPtr NEBitDataGenerator::getSchema()
+{
     return Schema::create()
         ->addField("creationTS", BasicType::UINT64)
         ->addField("timestamp", BasicType::UINT64)
@@ -83,9 +99,10 @@ SchemaPtr NEBitDataGenerator::getSchema() {
         ->addField("price", BasicType::FLOAT64);
 }
 
-Configurations::SchemaTypePtr NEBitDataGenerator::getSchemaType() {
-    const char* dataTypeUI64 = "UINT64";
-    const char* dataTypeF64 = "FLOAT64";
+Configurations::SchemaTypePtr NEBitDataGenerator::getSchemaType()
+{
+    const char * dataTypeUI64 = "UINT64";
+    const char * dataTypeF64 = "FLOAT64";
     std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
     schemaFieldDetails.emplace_back("creationTS", dataTypeUI64);
     schemaFieldDetails.emplace_back("timestamp", dataTypeUI64);
@@ -95,10 +112,11 @@ Configurations::SchemaTypePtr NEBitDataGenerator::getSchemaType() {
     return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
-std::string NEBitDataGenerator::toString() {
+std::string NEBitDataGenerator::toString()
+{
     std::ostringstream oss;
     oss << getName();
     return oss.str();
 }
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

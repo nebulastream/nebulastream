@@ -26,10 +26,12 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/TestPhaseProvider.hpp>
 
-namespace NES::TestUtils {
+namespace NES::TestUtils
+{
 
-class TestSinkProvider : public QueryCompilation::DataSinkProvider {
-  public:
+class TestSinkProvider : public QueryCompilation::DataSinkProvider
+{
+public:
     /**
      * @brief Lowers a sink descriptor to a executable data sink.
      * @param operatorId id of this sink
@@ -40,12 +42,13 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
      * @param numOfProducers
      * @return DataSinkPtr
      */
-    DataSinkPtr lower(OperatorId sinkId,
-                      SinkDescriptorPtr sinkDescriptor,
-                      SchemaPtr schema,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                      size_t numOfProducers) override;
+    DataSinkPtr lower(
+        OperatorId sinkId,
+        SinkDescriptorPtr sinkDescriptor,
+        SchemaPtr schema,
+        Runtime::NodeEnginePtr nodeEngine,
+        const QueryCompilation::PipelineQueryPlanPtr & querySubPlan,
+        size_t numOfProducers) override;
 };
-}// namespace NES::TestUtils
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
+} // namespace NES::TestUtils
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_

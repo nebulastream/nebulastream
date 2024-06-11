@@ -15,16 +15,18 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <cstddef>
+#include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief The Abstract buffer storage class to backup tuple buffers that are passing through node engine
  */
-class AbstractBufferStorage {
-  public:
+class AbstractBufferStorage
+{
+public:
     virtual ~AbstractBufferStorage() noexcept = default;
 
     /**
@@ -46,5 +48,5 @@ class AbstractBufferStorage {
      */
     virtual size_t getStorageSize() const = 0;
 };
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
