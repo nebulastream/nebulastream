@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.150](https://github.com/nebulastream/nebulastream/tree/v0.6.150) (2024-06-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.149...v0.6.150)
+
+### Bug Fixes 🐛
+
+- \[BUG\] The MQTT source writes numbers as strings in the JSON output [\#4935](https://github.com/nebulastream/nebulastream/issues/4935)
+
 ## [v0.6.149](https://github.com/nebulastream/nebulastream/tree/v0.6.149) (2024-06-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.148...v0.6.149)
