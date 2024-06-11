@@ -24,38 +24,37 @@ class CountMinOperatorHandler;
 using CountMinOperatorHandlerPtr = std::shared_ptr<CountMinOperatorHandler>;
 
 /**
- * @brief Operatorhandler for a CountMinBuild operator. It stores all count min sketches in a StatisticStore.
+ * @brief Operatorhandler for a CountMinBuild operator. It stores all count min
+ * sketches in a StatisticStore.
  */
 class CountMinOperatorHandler : public AbstractSynopsesOperatorHandler {
-  public:
-    static CountMinOperatorHandlerPtr create(const uint64_t windowSize,
-                                             const uint64_t windowSlide,
-                                             Statistic::SendingPolicyPtr sendingPolicy,
-                                             const uint64_t width,
-                                             const uint64_t depth,
-                                             Statistic::StatisticFormatPtr statisticFormat,
-                                             const std::vector<OriginId>& inputOrigins,
-                                             const uint64_t numberOfBitsInKey);
+public:
+  static CountMinOperatorHandlerPtr
+  create(const uint64_t windowSize, const uint64_t windowSlide,
+         Statistic::SendingPolicyPtr sendingPolicy, const uint64_t width,
+         const uint64_t depth, Statistic::StatisticFormatPtr statisticFormat,
+         const std::vector<OriginId> &inputOrigins,
+         const uint64_t numberOfBitsInKey);
 
-    Statistic::StatisticPtr createInitStatistic(Windowing::TimeMeasure sliceStart, Windowing::TimeMeasure sliceEnd) override;
-    const std::vector<uint64_t>& getH3Seeds() const;
+  Statistic::StatisticPtr
+  createInitStatistic(Windowing::TimeMeasure sliceStart,
+                      Windowing::TimeMeasure sliceEnd) override;
+  const std::vector<uint64_t> &getH3Seeds() const;
 
-  private:
-    CountMinOperatorHandler(const uint64_t windowSize,
-                            const uint64_t windowSlide,
-                            Statistic::SendingPolicyPtr sendingPolicy,
-                            const uint64_t width,
-                            const uint64_t depth,
-                            Statistic::StatisticFormatPtr statisticFormat,
-                            const std::vector<OriginId>& inputOrigins,
-                            const uint64_t numberOfBitsInKey);
+private:
+  CountMinOperatorHandler(const uint64_t windowSize, const uint64_t windowSlide,
+                          Statistic::SendingPolicyPtr sendingPolicy,
+                          const uint64_t width, const uint64_t depth,
+                          Statistic::StatisticFormatPtr statisticFormat,
+                          const std::vector<OriginId> &inputOrigins,
+                          const uint64_t numberOfBitsInKey);
 
-    std::vector<uint64_t> h3Seeds;
-    const uint64_t width;
-    const uint64_t depth;
-    const uint64_t numberOfBitsInKey;
+  std::vector<uint64_t> h3Seeds;
+  const uint64_t width;
+  const uint64_t depth;
+  const uint64_t numberOfBitsInKey;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINOPERATORHANDLER_HPP_

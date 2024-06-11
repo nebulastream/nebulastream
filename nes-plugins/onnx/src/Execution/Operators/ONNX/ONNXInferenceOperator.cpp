@@ -24,88 +24,101 @@
 namespace NES::Runtime::Execution::Operators {
 
 namespace ONNX_PROXY {
-void applyModel(void* inferModelHandler) {
-    auto handler = static_cast<ONNXInferenceOperatorHandler*>(inferModelHandler);
-    handler->infer();
+void applyModel(void *inferModelHandler) {
+  auto handler = static_cast<ONNXInferenceOperatorHandler *>(inferModelHandler);
+  handler->infer();
 }
 
-template<typename T>
-void addValueToModel(void* inferModelHandler, const T& data) {
-    auto handler = static_cast<ONNXInferenceOperatorHandler*>(inferModelHandler);
-    handler->appendToByteArray(data);
+template <typename T>
+void addValueToModel(void *inferModelHandler, const T &data) {
+  auto handler = static_cast<ONNXInferenceOperatorHandler *>(inferModelHandler);
+  handler->appendToByteArray(data);
 }
 
-void addBase64ValueToModel(void* inferModelHandler, TextValue* data) {
-    auto handler = static_cast<ONNXInferenceOperatorHandler*>(inferModelHandler);
-    handler->appendBase64EncodedData(std::string_view(data->str(), data->length()));
+void addBase64ValueToModel(void *inferModelHandler, TextValue *data) {
+  auto handler = static_cast<ONNXInferenceOperatorHandler *>(inferModelHandler);
+  handler->appendBase64EncodedData(
+      std::string_view(data->str(), data->length()));
 }
 
-float getValueFromModel(int index, void* inferModelHandler) {
-    auto handler = static_cast<ONNXInferenceOperatorHandler*>(inferModelHandler);
-    return handler->getResultAt(index);
+float getValueFromModel(int index, void *inferModelHandler) {
+  auto handler = static_cast<ONNXInferenceOperatorHandler *>(inferModelHandler);
+  return handler->getResultAt(index);
 }
 
-TextValue* getBase64ValueFromModel(void* inferModelHandler) {
-    auto handler = static_cast<ONNXInferenceOperatorHandler*>(inferModelHandler);
-    return TextValue::create(handler->getBase64EncodedData());
+TextValue *getBase64ValueFromModel(void *inferModelHandler) {
+  auto handler = static_cast<ONNXInferenceOperatorHandler *>(inferModelHandler);
+  return TextValue::create(handler->getBase64EncodedData());
 }
-}// namespace ONNX_PROXY
+} // namespace ONNX_PROXY
 using namespace ONNX_PROXY;
 
-void ONNXInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const {
-    //1. Extract the handler
-    auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
+void ONNXInferenceOperator::execute(ExecutionContext &ctx,
+                                    NES::Nautilus::Record &record) const {
+  // 1. Extract the handler
+  auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
 
-    //2. Add input values for the model inference
-    for (const auto& fieldName : inputFieldNames) {
-        const auto& value = record.read(fieldName);
-        if (value->isType<Float>()) {
-            FunctionCall("addValueToModel", addValueToModel<float>, inferModelHandler, value.as<Float>());
-        } else if (value->isType<Double>()) {
-            FunctionCall("addValueToModel", addValueToModel<double>, inferModelHandler, value.as<Double>());
-        } else if (value->isType<UInt64>()) {
-            FunctionCall("addValueToModel", addValueToModel<uint64_t>, inferModelHandler, value.as<UInt64>());
-        } else if (value->isType<UInt32>()) {
-            FunctionCall("addValueToModel", addValueToModel<uint32_t>, inferModelHandler, value.as<UInt32>());
-        } else if (value->isType<UInt16>()) {
-            FunctionCall("addValueToModel", addValueToModel<uint16_t>, inferModelHandler, value.as<UInt16>());
-        } else if (value->isType<UInt8>()) {
-            FunctionCall("addValueToModel", addValueToModel<uint8_t>, inferModelHandler, value.as<UInt8>());
-        } else if (value->isType<Int64>()) {
-            FunctionCall("addValueToModel", addValueToModel<int64_t>, inferModelHandler, value.as<Int64>());
-        } else if (value->isType<Int32>()) {
-            FunctionCall("addValueToModel", addValueToModel<int32_t>, inferModelHandler, value.as<Int32>());
-        } else if (value->isType<Int16>()) {
-            FunctionCall("addValueToModel", addValueToModel<int16_t>, inferModelHandler, value.as<Int16>());
-        } else if (value->isType<Int8>()) {
-            FunctionCall("addValueToModel", addValueToModel<int8_t>, inferModelHandler, value.as<Int8>());
-        } else if (value->isType<Nautilus::Text>()) {
-            FunctionCall<>("addBase64ValueToModel",
-                           addBase64ValueToModel,
-                           inferModelHandler,
-                           value.as<Text>().value->getReference());
-        } else {
-            NES_ERROR("Cannot handle inputs other than of type int, float, double and Base64 encoded bytes (Text)");
-        }
-    }
-
-    //3. infer model on the input values
-    Nautilus::FunctionCall("applyModel", applyModel, inferModelHandler);
-
-    if (outputFieldNames.size() == 1 && outputFieldNames.at(0) == "data") {
-        //4.1 Get the output tensor as base64
-        Value<> value = FunctionCall("getBase64ValueFromModel", getBase64ValueFromModel, inferModelHandler);
-        record.write("data", value);
+  // 2. Add input values for the model inference
+  for (const auto &fieldName : inputFieldNames) {
+    const auto &value = record.read(fieldName);
+    if (value->isType<Float>()) {
+      FunctionCall("addValueToModel", addValueToModel<float>, inferModelHandler,
+                   value.as<Float>());
+    } else if (value->isType<Double>()) {
+      FunctionCall("addValueToModel", addValueToModel<double>,
+                   inferModelHandler, value.as<Double>());
+    } else if (value->isType<UInt64>()) {
+      FunctionCall("addValueToModel", addValueToModel<uint64_t>,
+                   inferModelHandler, value.as<UInt64>());
+    } else if (value->isType<UInt32>()) {
+      FunctionCall("addValueToModel", addValueToModel<uint32_t>,
+                   inferModelHandler, value.as<UInt32>());
+    } else if (value->isType<UInt16>()) {
+      FunctionCall("addValueToModel", addValueToModel<uint16_t>,
+                   inferModelHandler, value.as<UInt16>());
+    } else if (value->isType<UInt8>()) {
+      FunctionCall("addValueToModel", addValueToModel<uint8_t>,
+                   inferModelHandler, value.as<UInt8>());
+    } else if (value->isType<Int64>()) {
+      FunctionCall("addValueToModel", addValueToModel<int64_t>,
+                   inferModelHandler, value.as<Int64>());
+    } else if (value->isType<Int32>()) {
+      FunctionCall("addValueToModel", addValueToModel<int32_t>,
+                   inferModelHandler, value.as<Int32>());
+    } else if (value->isType<Int16>()) {
+      FunctionCall("addValueToModel", addValueToModel<int16_t>,
+                   inferModelHandler, value.as<Int16>());
+    } else if (value->isType<Int8>()) {
+      FunctionCall("addValueToModel", addValueToModel<int8_t>,
+                   inferModelHandler, value.as<Int8>());
+    } else if (value->isType<Nautilus::Text>()) {
+      FunctionCall<>("addBase64ValueToModel", addBase64ValueToModel,
+                     inferModelHandler, value.as<Text>().value->getReference());
     } else {
-        //4.2 Get inferred output from the adapter as floats
-        for (uint32_t i = 0; i < outputFieldNames.size(); i++) {
-            Value<> value = FunctionCall("getValueFromModel", getValueFromModel, Value<UInt32>(i), inferModelHandler);
-            record.write(outputFieldNames.at(i), value);
-        }
+      NES_ERROR("Cannot handle inputs other than of type int, float, double "
+                "and Base64 encoded bytes (Text)");
     }
+  }
 
-    //4. Trigger execution of next operator
-    child->execute(ctx, (Record&) record);
+  // 3. infer model on the input values
+  Nautilus::FunctionCall("applyModel", applyModel, inferModelHandler);
+
+  if (outputFieldNames.size() == 1 && outputFieldNames.at(0) == "data") {
+    // 4.1 Get the output tensor as base64
+    Value<> value = FunctionCall("getBase64ValueFromModel",
+                                 getBase64ValueFromModel, inferModelHandler);
+    record.write("data", value);
+  } else {
+    // 4.2 Get inferred output from the adapter as floats
+    for (uint32_t i = 0; i < outputFieldNames.size(); i++) {
+      Value<> value = FunctionCall("getValueFromModel", getValueFromModel,
+                                   Value<UInt32>(i), inferModelHandler);
+      record.write(outputFieldNames.at(i), value);
+    }
+  }
+
+  // 4. Trigger execution of next operator
+  child->execute(ctx, (Record &)record);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

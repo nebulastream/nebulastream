@@ -23,78 +23,82 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class BitcounterExpressionTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("BitcounterExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup BitcounterExpressionTest test class.");
-    }
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("BitcounterExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup BitcounterExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down BitcounterExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down BitcounterExpressionTest test class.");
+  }
 };
 TEST_F(BitcounterExpressionTest, divIntegers) {
-    auto expression = UnaryExpressionWrapper<BitcounterExpression>();
+  auto expression = UnaryExpressionWrapper<BitcounterExpression>();
 
-    // Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>(31_s8));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }
-    // Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>(31_s16));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }// Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(31_s32));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }
-    // Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>(31_s64));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }
+  // Int8
+  {
+    auto resultValue = expression.eval(Value<Int8>(31_s8));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  }
+  // Int16
+  {
+    auto resultValue = expression.eval(Value<Int16>(31_s16));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  } // Int32
+  {
+    auto resultValue = expression.eval(Value<Int32>(31_s32));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  }
+  // Int64
+  {
+    auto resultValue = expression.eval(Value<Int64>(31_s64));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  }
 }
 
 TEST_F(BitcounterExpressionTest, divUIntegers) {
-    auto expression = UnaryExpressionWrapper<BitcounterExpression>();
+  auto expression = UnaryExpressionWrapper<BitcounterExpression>();
 
-    // UInt8
-    {
-        auto resultValue = expression.eval(Value<UInt8>(31_u8));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }
-    // UInt16
-    {
-        auto resultValue = expression.eval(Value<UInt16>(31_u16));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }// UInt32
-    {
-        auto resultValue = expression.eval(Value<UInt32>(31_u32));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }
-    // UInt64
-    {
-        auto resultValue = expression.eval(Value<UInt64>(31_u64));
-        ASSERT_EQ(resultValue, 5_u32);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }
+  // UInt8
+  {
+    auto resultValue = expression.eval(Value<UInt8>(31_u8));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  }
+  // UInt16
+  {
+    auto resultValue = expression.eval(Value<UInt16>(31_u16));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  } // UInt32
+  {
+    auto resultValue = expression.eval(Value<UInt32>(31_u32));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  }
+  // UInt64
+  {
+    auto resultValue = expression.eval(Value<UInt64>(31_u64));
+    ASSERT_EQ(resultValue, 5_u32);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
+  }
 }
 
 /**
-* @brief If we execute the expression on a boolean it should throw an exception.
-*/
+ * @brief If we execute the expression on a boolean it should throw an
+ * exception.
+ */
 TEST_F(BitcounterExpressionTest, evaluateBitCounterExpressionOnWrongType) {
-    auto expression = UnaryExpressionWrapper<BitcounterExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+  auto expression = UnaryExpressionWrapper<BitcounterExpression>();
+  ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

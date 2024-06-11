@@ -34,46 +34,58 @@ using namespace std;
 namespace NES {
 
 class PlanIteratorTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("PlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup PlanIteratorTest test class.");
-    }
+public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("PlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup PlanIteratorTest test class.");
+  }
 
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
 
-        pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
-        pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
-        pred3 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
-        pred4 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
-        pred5 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
-        pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
-        pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
+    pred1 = ConstantValueExpressionNode::create(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+    pred2 = ConstantValueExpressionNode::create(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
+    pred3 = ConstantValueExpressionNode::create(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
+    pred4 = ConstantValueExpressionNode::create(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
+    pred5 = ConstantValueExpressionNode::create(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    pred6 = ConstantValueExpressionNode::create(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
+    pred7 = ConstantValueExpressionNode::create(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
-        sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-        sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical2"));
-        filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
-        sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        sinkOp3 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sourceOp1 = LogicalOperatorFactory::createSourceOperator(
+        LogicalSourceDescriptor::create("default_logical"));
+    sourceOp2 = LogicalOperatorFactory::createSourceOperator(
+        LogicalSourceDescriptor::create("default_logical2"));
+    filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
+    filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
+    filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
+    filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
+    sinkOp1 = LogicalOperatorFactory::createSinkOperator(
+        PrintSinkDescriptor::create());
+    sinkOp2 = LogicalOperatorFactory::createSinkOperator(
+        PrintSinkDescriptor::create());
+    sinkOp3 = LogicalOperatorFactory::createSinkOperator(
+        PrintSinkDescriptor::create());
 
-        children.clear();
-        parents.clear();
-    }
+    children.clear();
+    parents.clear();
+  }
 
-  protected:
-    ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    LogicalOperatorPtr sourceOp1, sourceOp2;
+protected:
+  ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
+  LogicalOperatorPtr sourceOp1, sourceOp2;
 
-    LogicalOperatorPtr filterOp1, filterOp2, filterOp3, filterOp4;
-    LogicalOperatorPtr sinkOp1, sinkOp2, sinkOp3;
+  LogicalOperatorPtr filterOp1, filterOp2, filterOp3, filterOp4;
+  LogicalOperatorPtr sinkOp1, sinkOp2, sinkOp3;
 
-    std::vector<NodePtr> children{};
-    std::vector<NodePtr> parents{};
+  std::vector<NodePtr> children{};
+  std::vector<NodePtr> parents{};
 };
 
 /**
@@ -83,18 +95,18 @@ class PlanIteratorTest : public Testing::BaseUnitTest {
  *
  */
 TEST_F(PlanIteratorTest, iterateFilterQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+  auto queryPlan = QueryPlan::create(sourceOp1);
+  queryPlan->appendOperatorAsNewRoot(filterOp1);
+  queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
-    NES_DEBUG("{}", queryPlan->toString());
+  NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
+  auto queryPlanIter = PlanIterator(queryPlan).begin();
+  ASSERT_EQ(sinkOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
 /**
@@ -108,25 +120,25 @@ TEST_F(PlanIteratorTest, iterateFilterQueryPlan) {
  *
  */
 TEST_F(PlanIteratorTest, iterateMultiSinkQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp2);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    queryPlan->addRootOperator(sinkOp2);
-    filterOp1->addParent(sinkOp2);
+  auto queryPlan = QueryPlan::create(sourceOp1);
+  queryPlan->appendOperatorAsNewRoot(filterOp1);
+  queryPlan->appendOperatorAsNewRoot(filterOp2);
+  queryPlan->appendOperatorAsNewRoot(sinkOp1);
+  queryPlan->addRootOperator(sinkOp2);
+  filterOp1->addParent(sinkOp2);
 
-    NES_DEBUG("{}", queryPlan->toString());
+  NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
+  auto queryPlanIter = PlanIterator(queryPlan).begin();
+  ASSERT_EQ(sinkOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp2, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sinkOp2, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
 /**
@@ -140,24 +152,24 @@ TEST_F(PlanIteratorTest, iterateMultiSinkQueryPlan) {
  *
  */
 TEST_F(PlanIteratorTest, iterateMultiSourceQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    filterOp1->addChild(filterOp2);
-    filterOp2->addChild(sourceOp2);
+  auto queryPlan = QueryPlan::create(sourceOp1);
+  queryPlan->appendOperatorAsNewRoot(filterOp1);
+  queryPlan->appendOperatorAsNewRoot(sinkOp1);
+  filterOp1->addChild(filterOp2);
+  filterOp2->addChild(sourceOp2);
 
-    NES_DEBUG("{}", queryPlan->toString());
+  NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp2, *queryPlanIter);
+  auto queryPlanIter = PlanIterator(queryPlan).begin();
+  ASSERT_EQ(sinkOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sourceOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp2, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sourceOp2, *queryPlanIter);
 }
 
 /**
@@ -173,38 +185,38 @@ TEST_F(PlanIteratorTest, iterateMultiSourceQueryPlan) {
  *
  */
 TEST_F(PlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp3);
-    queryPlan->appendOperatorAsNewRoot(filterOp2);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    filterOp2->addParent(sinkOp2);
-    queryPlan->addRootOperator(sinkOp2);
-    filterOp2->addChild(filterOp4);
-    filterOp4->addChild(sourceOp2);
-    sourceOp2->addParent(sinkOp3);
-    queryPlan->addRootOperator(sinkOp3);
+  auto queryPlan = QueryPlan::create(sourceOp1);
+  queryPlan->appendOperatorAsNewRoot(filterOp3);
+  queryPlan->appendOperatorAsNewRoot(filterOp2);
+  queryPlan->appendOperatorAsNewRoot(filterOp1);
+  queryPlan->appendOperatorAsNewRoot(sinkOp1);
+  filterOp2->addParent(sinkOp2);
+  queryPlan->addRootOperator(sinkOp2);
+  filterOp2->addChild(filterOp4);
+  filterOp4->addChild(sourceOp2);
+  sourceOp2->addParent(sinkOp3);
+  queryPlan->addRootOperator(sinkOp3);
 
-    NES_DEBUG("{}", queryPlan->toString());
+  NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp3, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp4, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp3, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp2, *queryPlanIter);
+  auto queryPlanIter = PlanIterator(queryPlan).begin();
+  ASSERT_EQ(sinkOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sinkOp2, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp2, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp3, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sourceOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp4, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sinkOp3, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sourceOp2, *queryPlanIter);
 }
 
 /**
@@ -220,32 +232,32 @@ TEST_F(PlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
  *
  */
 TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp3);
-    queryPlan->appendOperatorAsNewRoot(filterOp2);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    filterOp2->addParent(sinkOp2);
-    queryPlan->addRootOperator(sinkOp2);
-    filterOp2->addChild(filterOp4);
-    filterOp4->addChild(sourceOp1);
+  auto queryPlan = QueryPlan::create(sourceOp1);
+  queryPlan->appendOperatorAsNewRoot(filterOp3);
+  queryPlan->appendOperatorAsNewRoot(filterOp2);
+  queryPlan->appendOperatorAsNewRoot(filterOp1);
+  queryPlan->appendOperatorAsNewRoot(sinkOp1);
+  filterOp2->addParent(sinkOp2);
+  queryPlan->addRootOperator(sinkOp2);
+  filterOp2->addChild(filterOp4);
+  filterOp4->addChild(sourceOp1);
 
-    NES_DEBUG("{}", queryPlan->toString());
+  NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp3, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp4, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
+  auto queryPlanIter = PlanIterator(queryPlan).begin();
+  ASSERT_EQ(sinkOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp1, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sinkOp2, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp2, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp3, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(filterOp4, *queryPlanIter);
+  ++queryPlanIter;
+  ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
-}// namespace NES
+} // namespace NES

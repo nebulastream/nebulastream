@@ -30,61 +30,70 @@ namespace NES::Configurations {
 /**
  * @brief This class is the bases for all configuration.
  * A configuration contains a set of config option as member fields.
- * An individual option could ether be defined as an root class, e.g., see CoordinatorConfiguration, in this case it would correspond to a dedicated YAML file.
- * Or it could be member field of a high level configuration, e.g., see OptimizerConfiguration.
- * To identify a member field, all configuration have to implement getOptionMap() and return a set of options.
+ * An individual option could ether be defined as an root class, e.g., see
+ * CoordinatorConfiguration, in this case it would correspond to a dedicated
+ * YAML file. Or it could be member field of a high level configuration, e.g.,
+ * see OptimizerConfiguration. To identify a member field, all configuration
+ * have to implement getOptionMap() and return a set of options.
  */
 class BaseConfiguration : public BaseOption {
-  public:
-    /**
-     * @brief Constructor for a root configuration. In this case the name and description are empty.
-     */
-    BaseConfiguration();
+public:
+  /**
+   * @brief Constructor for a root configuration. In this case the name and
+   * description are empty.
+   */
+  BaseConfiguration();
 
-    /**
-     * @brief Constructor for a nested configuration, which declares a specific name and description.
-     * This is required for all nested configurations.
-     * @param name of the configuration.
-     * @param description of the configuration.
-     */
-    BaseConfiguration(const std::string& name, const std::string& description);
-    virtual ~BaseConfiguration() = default;
+  /**
+   * @brief Constructor for a nested configuration, which declares a specific
+   * name and description. This is required for all nested configurations.
+   * @param name of the configuration.
+   * @param description of the configuration.
+   */
+  BaseConfiguration(const std::string &name, const std::string &description);
+  virtual ~BaseConfiguration() = default;
 
-    /**
-     * @brief Overwrite the default configurations with those loaded from a YAML file.
-     * @param filePath file path to the yaml file
-     */
-    void overwriteConfigWithYAMLFileInput(const std::string& filePath);
+  /**
+   * @brief Overwrite the default configurations with those loaded from a YAML
+   * file.
+   * @param filePath file path to the yaml file
+   */
+  void overwriteConfigWithYAMLFileInput(const std::string &filePath);
 
-    /**
-     * @brief Overwrite the default configurations with command line input.
-     * @param inputParams map with key=command line parameter and value = value
-     */
-    void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
+  /**
+   * @brief Overwrite the default configurations with command line input.
+   * @param inputParams map with key=command line parameter and value = value
+   */
+  void overwriteConfigWithCommandLineInput(
+      const std::map<std::string, std::string> &inputParams);
 
-    /**
-     * save the value for workerId in worker.yaml config file
-     * @param yamlFilePath path to the yaml config file
-     * @param workerId workerId to be persisted
-     * @param withOverwrite false if workerId is not in yaml file, true if it is and has to be changed
-     * @return true if persistence succeeded, false otherwise
-     */
-    bool persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite);
+  /**
+   * save the value for workerId in worker.yaml config file
+   * @param yamlFilePath path to the yaml config file
+   * @param workerId workerId to be persisted
+   * @param withOverwrite false if workerId is not in yaml file, true if it is
+   * and has to be changed
+   * @return true if persistence succeeded, false otherwise
+   */
+  bool persistWorkerIdInYamlConfigFile(std::string yamlFilePath,
+                                       WorkerId workerId, bool withOverwrite);
 
-    /**
-     * @brief clears all options and set the default values
-     */
-    void clear() override;
+  /**
+   * @brief clears all options and set the default values
+   */
+  void clear() override;
 
-    std::string toString() override;
+  std::string toString() override;
 
-  protected:
-    void parseFromYAMLNode(const Yaml::Node config) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
-    virtual std::vector<Configurations::BaseOption*> getOptions() = 0;
-    std::map<std::string, Configurations::BaseOption*> getOptionMap();
+protected:
+  void parseFromYAMLNode(const Yaml::Node config) override;
+  void
+  parseFromString(std::string identifier,
+                  std::map<std::string, std::string> &inputParams) override;
+  virtual std::vector<Configurations::BaseOption *> getOptions() = 0;
+  std::map<std::string, Configurations::BaseOption *> getOptionMap();
 };
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_

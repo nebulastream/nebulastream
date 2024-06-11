@@ -27,71 +27,76 @@
 namespace NES::Runtime::Execution::Operators {
 
 class LimitOperatorTest : public testing::Test {
-  public:
-    /* Will be called before any test in this class is executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("LimitOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LimitOperatorTest test class.");
-    }
+public:
+  /* Will be called before any test in this class is executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("LimitOperatorTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup LimitOperatorTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down LimitOperatorTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down LimitOperatorTest test class.");
+  }
 };
 
 /**
  * @brief Tests if we limit the number of tuples
  */
 TEST_F(LimitOperatorTest, TestLimit) {
-    constexpr uint64_t LIMIT = 10;
-    constexpr uint64_t TUPLES = 20;
+  constexpr uint64_t LIMIT = 10;
+  constexpr uint64_t TUPLES = 20;
 
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
+  auto bm = std::make_shared<Runtime::BufferManager>();
+  auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+  auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+  schema->addField("f1", BasicType::INT64);
 
-    auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+  auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
+  auto pipelineContext = MockedPipelineExecutionContext({handler});
+  auto ctx = ExecutionContext(
+      Value<MemRef>(reinterpret_cast<int8_t *>(wc.get())),
+      Value<MemRef>(reinterpret_cast<int8_t *>(&pipelineContext)));
 
-    auto limitOperator = Limit(0);
-    auto collector = std::make_shared<CollectOperator>();
-    limitOperator.setChild(collector);
-    for (uint64_t i = 0; i < TUPLES; ++i) {
-        auto record = Record({{"f1", Value<>(0)}});
-        limitOperator.execute(ctx, record);
-    }
+  auto limitOperator = Limit(0);
+  auto collector = std::make_shared<CollectOperator>();
+  limitOperator.setChild(collector);
+  for (uint64_t i = 0; i < TUPLES; ++i) {
+    auto record = Record({{"f1", Value<>(0)}});
+    limitOperator.execute(ctx, record);
+  }
 
-    ASSERT_EQ(collector->records.size(), LIMIT);
+  ASSERT_EQ(collector->records.size(), LIMIT);
 }
 
 /**
  * @brief Tests with a limit of 0
  */
 TEST_F(LimitOperatorTest, TestLimitZero) {
-    constexpr uint64_t LIMIT = 0;
-    constexpr uint64_t TUPLES = 20;
+  constexpr uint64_t LIMIT = 0;
+  constexpr uint64_t TUPLES = 20;
 
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
+  auto bm = std::make_shared<Runtime::BufferManager>();
+  auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+  auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+  schema->addField("f1", BasicType::INT64);
 
-    auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+  auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
+  auto pipelineContext = MockedPipelineExecutionContext({handler});
+  auto ctx = ExecutionContext(
+      Value<MemRef>(reinterpret_cast<int8_t *>(wc.get())),
+      Value<MemRef>(reinterpret_cast<int8_t *>(&pipelineContext)));
 
-    auto limitOperator = Limit(0);
-    auto collector = std::make_shared<CollectOperator>();
-    limitOperator.setChild(collector);
-    for (uint64_t i = 0; i < TUPLES; ++i) {
-        auto record = Record({{"f1", Value<>(0)}});
-        limitOperator.execute(ctx, record);
-    }
+  auto limitOperator = Limit(0);
+  auto collector = std::make_shared<CollectOperator>();
+  limitOperator.setChild(collector);
+  for (uint64_t i = 0; i < TUPLES; ++i) {
+    auto record = Record({{"f1", Value<>(0)}});
+    limitOperator.execute(ctx, record);
+  }
 
-    ASSERT_EQ(collector->records.size(), LIMIT);
+  ASSERT_EQ(collector->records.size(), LIMIT);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

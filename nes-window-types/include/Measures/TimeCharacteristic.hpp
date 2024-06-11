@@ -25,69 +25,74 @@ class TimeCharacteristic;
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 /**
- * @brief The time stamp characteristic represents if an window is in event or processing time.
+ * @brief The time stamp characteristic represents if an window is in event or
+ * processing time.
  */
 class TimeCharacteristic final {
-  public:
-    constexpr static const auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
-    /**
-     * @brief The type as enum.
-     */
-    enum class Type : uint8_t { IngestionTime, EventTime };
-    explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
+public:
+  constexpr static const auto RECORD_CREATION_TS_FIELD_NAME =
+      "$record.creationTs";
+  /**
+   * @brief The type as enum.
+   */
+  enum class Type : uint8_t { IngestionTime, EventTime };
+  explicit TimeCharacteristic(Type type);
+  TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
 
-    /**
-     * @brief Factory to create a time characteristic for ingestion time window
-     * @param unit the time unit of the ingestion time
-     * @return TimeCharacteristicPtr
-     */
-    static TimeCharacteristicPtr createIngestionTime();
+  /**
+   * @brief Factory to create a time characteristic for ingestion time window
+   * @param unit the time unit of the ingestion time
+   * @return TimeCharacteristicPtr
+   */
+  static TimeCharacteristicPtr createIngestionTime();
 
-    /**
-     * @brief Factory to create a event time window with an time extractor on a specific field.
-     * @param unit the time unit of the EventTime, defaults to milliseconds
-     * @param field the field from which we want to extract the time.
-     * @return
-     */
-    static TimeCharacteristicPtr createEventTime(ExpressionNodePtr field, const TimeUnit& unit = TimeUnit(1));
+  /**
+   * @brief Factory to create a event time window with an time extractor on a
+   * specific field.
+   * @param unit the time unit of the EventTime, defaults to milliseconds
+   * @param field the field from which we want to extract the time.
+   * @return
+   */
+  static TimeCharacteristicPtr
+  createEventTime(ExpressionNodePtr field, const TimeUnit &unit = TimeUnit(1));
 
-    /**
-     * @return The TimeCharacteristic type.
-     */
-    Type getType() const;
+  /**
+   * @return The TimeCharacteristic type.
+   */
+  Type getType() const;
 
-    /**
-     * @return  If it is a event time window this returns the field, from which we extract the time stamp.
-     */
-    AttributeFieldPtr getField() const;
+  /**
+   * @return  If it is a event time window this returns the field, from which we
+   * extract the time stamp.
+   */
+  AttributeFieldPtr getField() const;
 
-    /**
-     * @brief Set the field from which we extract the time stamp.
-     * @param field for extracting the time stamp
-     */
-    void setField(AttributeFieldPtr field);
+  /**
+   * @brief Set the field from which we extract the time stamp.
+   * @param field for extracting the time stamp
+   */
+  void setField(AttributeFieldPtr field);
 
-    /**
-     * @brief Compares for equality
-     * @param other: Object that we want to compare this to
-     * @return Boolean
-     */
-    bool equals(const TimeCharacteristic& other) const;
+  /**
+   * @brief Compares for equality
+   * @param other: Object that we want to compare this to
+   * @return Boolean
+   */
+  bool equals(const TimeCharacteristic &other) const;
 
-    uint64_t hash() const;
+  uint64_t hash() const;
 
-    std::string toString() const;
-    std::string getTypeAsString() const;
-    TimeUnit getTimeUnit() const;
+  std::string toString() const;
+  std::string getTypeAsString() const;
+  TimeUnit getTimeUnit() const;
 
-    void setTimeUnit(const TimeUnit& unit);
+  void setTimeUnit(const TimeUnit &unit);
 
-  private:
-    Type type;
-    AttributeFieldPtr field;
-    TimeUnit unit;
+private:
+  Type type;
+  AttributeFieldPtr field;
+  TimeUnit unit;
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_

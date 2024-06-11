@@ -22,35 +22,38 @@ namespace NES::Compiler {
  * @brief Builder for a new JIT compiler.
  */
 class JITCompilerBuilder {
-  public:
-    /**
-     * @brief Constructor for a new JIT compiler object.
-     */
-    JITCompilerBuilder() = default;
-    /**
-     * @brief Registers a new language compiler to this JIT compiler.
-     * @param languageCompiler
-     * @return JITCompilerBuilder
-     */
-    JITCompilerBuilder& registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler);
+public:
+  /**
+   * @brief Constructor for a new JIT compiler object.
+   */
+  JITCompilerBuilder() = default;
+  /**
+   * @brief Registers a new language compiler to this JIT compiler.
+   * @param languageCompiler
+   * @return JITCompilerBuilder
+   */
+  JITCompilerBuilder &registerLanguageCompiler(
+      const std::shared_ptr<const LanguageCompiler> languageCompiler);
 
-    /**
-     * @brief Enables or disables the compilation cache
-     * @param useCompilationCache
-     * @return JITCompilerBuilder
-     */
-    JITCompilerBuilder& setUseCompilationCache(bool useCompilationCache);
-    /**
-     * @brief Creates a instance of the JITCompiler containing all language compilers.
-     * @return JITCompiler
-     */
-    std::shared_ptr<JITCompiler> build();
+  /**
+   * @brief Enables or disables the compilation cache
+   * @param useCompilationCache
+   * @return JITCompilerBuilder
+   */
+  JITCompilerBuilder &setUseCompilationCache(bool useCompilationCache);
+  /**
+   * @brief Creates a instance of the JITCompiler containing all language
+   * compilers.
+   * @return JITCompiler
+   */
+  std::shared_ptr<JITCompiler> build();
 
-  private:
-    std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
-    bool useCompilationCache = false;
+private:
+  std::map<const Language, std::shared_ptr<const LanguageCompiler>>
+      languageCompilers;
+  bool useCompilationCache = false;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_

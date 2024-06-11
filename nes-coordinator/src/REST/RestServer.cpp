@@ -39,8 +39,7 @@
 
 namespace NES {
 
-RestServer::RestServer(std::string host,
-                       uint16_t port,
+RestServer::RestServer(std::string host, uint16_t port,
                        NesCoordinatorWeakPtr coordinator,
                        Catalogs::Query::QueryCatalogPtr queryCatalog,
                        SourceCatalogServicePtr sourceCatalogService,
@@ -53,124 +52,143 @@ RestServer::RestServer(std::string host,
                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
                        std::optional<std::string> corsAllowedOrigin)
-    : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalog(std::move(queryCatalog)),
-      globalExecutionPlan(std::move(globalExecutionPlan)), requestHandlerService(std::move(requestHandlerService)),
-      globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
-      topology(std::move(topology)), udfCatalog(std::move(udfCatalog)), monitoringService(std::move(monitoringService)),
-      queryParsingService(std::move(queryParsingService)), bufferManager(std::move(bufferManager)),
+    : host(std::move(host)), port(port), coordinator(std::move(coordinator)),
+      queryCatalog(std::move(queryCatalog)),
+      globalExecutionPlan(std::move(globalExecutionPlan)),
+      requestHandlerService(std::move(requestHandlerService)),
+      globalQueryPlan(std::move(globalQueryPlan)),
+      sourceCatalogService(std::move(sourceCatalogService)),
+      topology(std::move(topology)), udfCatalog(std::move(udfCatalog)),
+      monitoringService(std::move(monitoringService)),
+      queryParsingService(std::move(queryParsingService)),
+      bufferManager(std::move(bufferManager)),
       corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
-    NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
-    RestServerInterruptHandler::hookUserInterruptHandler();
-    try {
-        // Initialize Oatpp Environment
-        oatpp::base::Environment::init();
-        //Creates component parts necessary to start server, then starts a blocking server
-        run();
-        // Destroy Oatpp Environment
-        oatpp::base::Environment::destroy();
-    } catch (const std::exception& e) {
-        NES_FATAL_ERROR("RestServer: Unable to start REST server [{}:{}] {}", host, std::to_string(port), e.what());
-        return false;
-    } catch (...) {
-        NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
-        return false;
-    }
-    return true;
+  NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
+  RestServerInterruptHandler::hookUserInterruptHandler();
+  try {
+    // Initialize Oatpp Environment
+    oatpp::base::Environment::init();
+    // Creates component parts necessary to start server, then starts a blocking
+    // server
+    run();
+    // Destroy Oatpp Environment
+    oatpp::base::Environment::destroy();
+  } catch (const std::exception &e) {
+    NES_FATAL_ERROR("RestServer: Unable to start REST server [{}:{}] {}", host,
+                    std::to_string(port), e.what());
+    return false;
+  } catch (...) {
+    NES_FATAL_ERROR(
+        "RestServer: Unable to start REST server unknown exception.");
+    return false;
+  }
+  return true;
 }
 
 bool RestServer::stop() {
-    std::unique_lock lock(mutex);
-    stopRequested = true;
-    return stopRequested;
+  std::unique_lock lock(mutex);
+  stopRequested = true;
+  return stopRequested;
 }
 
 void RestServer::run() {
 
-    /* create serializer and deserializer configurations */
-    auto serializeConfig = oatpp::parser::json::mapping::Serializer::Config::createShared();
-    auto deserializeConfig = oatpp::parser::json::mapping::Deserializer::Config::createShared();
+  /* create serializer and deserializer configurations */
+  auto serializeConfig =
+      oatpp::parser::json::mapping::Serializer::Config::createShared();
+  auto deserializeConfig =
+      oatpp::parser::json::mapping::Deserializer::Config::createShared();
 
-    /* enable beautifier */
-    serializeConfig->useBeautifier = true;
+  /* enable beautifier */
+  serializeConfig->useBeautifier = true;
 
-    /* Initialize Object mapper */
-    auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared(serializeConfig, deserializeConfig);
+  /* Initialize Object mapper */
+  auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared(
+      serializeConfig, deserializeConfig);
 
-    /* Initialize Error Handler */
-    ErrorHandlerPtr errorHandler = std::make_shared<ErrorHandler>(objectMapper);
+  /* Initialize Error Handler */
+  ErrorHandlerPtr errorHandler = std::make_shared<ErrorHandler>(objectMapper);
 
-    /* Create Router for HTTP requests routing */
-    auto router = oatpp::web::server::HttpRouter::createShared();
+  /* Create Router for HTTP requests routing */
+  auto router = oatpp::web::server::HttpRouter::createShared();
 
-    /* Create controllers and add all of their endpoints to the router */
-    auto connectivityController = REST::Controller::ConnectivityController::create(objectMapper, "/connectivity");
-    auto queryCatalogController =
-        REST::Controller::QueryCatalogController::create(objectMapper, queryCatalog, coordinator, "/queryCatalog", errorHandler);
-    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
-    auto queryController = REST::Controller::QueryController::create(objectMapper,
-                                                                     requestHandlerService,
-                                                                     queryCatalog,
-                                                                     globalQueryPlan,
-                                                                     globalExecutionPlan,
-                                                                     "/query",
-                                                                     errorHandler);
-    auto udfCatalogController =
-        REST::Controller::UDFCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
-    auto sourceCatalogController = REST::Controller::SourceCatalogController::create(objectMapper,
-                                                                                     sourceCatalogService,
-                                                                                     queryParsingService,
-                                                                                     errorHandler,
-                                                                                     "/sourceCatalog");
-    auto locationController = REST::Controller::LocationController::create(objectMapper, topology, "/location", errorHandler);
-    auto monitoringController = REST::Controller::MonitoringController::create(objectMapper,
-                                                                               monitoringService,
-                                                                               bufferManager,
-                                                                               errorHandler,
-                                                                               "/monitoring");
+  /* Create controllers and add all of their endpoints to the router */
+  auto connectivityController =
+      REST::Controller::ConnectivityController::create(objectMapper,
+                                                       "/connectivity");
+  auto queryCatalogController =
+      REST::Controller::QueryCatalogController::create(
+          objectMapper, queryCatalog, coordinator, "/queryCatalog",
+          errorHandler);
+  auto topologyController = REST::Controller::TopologyController::create(
+      objectMapper, topology, "/topology", errorHandler);
+  auto queryController = REST::Controller::QueryController::create(
+      objectMapper, requestHandlerService, queryCatalog, globalQueryPlan,
+      globalExecutionPlan, "/query", errorHandler);
+  auto udfCatalogController = REST::Controller::UDFCatalogController::create(
+      objectMapper, udfCatalog, "/udfCatalog", errorHandler);
+  auto sourceCatalogController =
+      REST::Controller::SourceCatalogController::create(
+          objectMapper, sourceCatalogService, queryParsingService, errorHandler,
+          "/sourceCatalog");
+  auto locationController = REST::Controller::LocationController::create(
+      objectMapper, topology, "/location", errorHandler);
+  auto monitoringController = REST::Controller::MonitoringController::create(
+      objectMapper, monitoringService, bufferManager, errorHandler,
+      "/monitoring");
 
-    router->addController(connectivityController);
-    router->addController(queryCatalogController);
-    router->addController(queryController);
-    router->addController(topologyController);
-    router->addController(sourceCatalogController);
-    router->addController(udfCatalogController);
-    router->addController(locationController);
-    router->addController(connectivityController);
-    router->addController(queryCatalogController);
-    router->addController(monitoringController);
+  router->addController(connectivityController);
+  router->addController(queryCatalogController);
+  router->addController(queryController);
+  router->addController(topologyController);
+  router->addController(sourceCatalogController);
+  router->addController(udfCatalogController);
+  router->addController(locationController);
+  router->addController(connectivityController);
+  router->addController(queryCatalogController);
+  router->addController(monitoringController);
 
-    /* Create HTTP connection handler with router */
-    auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
-    //register error handler
-    connectionHandler->setErrorHandler(std::make_shared<ErrorHandler>(objectMapper));
+  /* Create HTTP connection handler with router */
+  auto connectionHandler =
+      oatpp::web::server::HttpConnectionHandler::createShared(router);
+  // register error handler
+  connectionHandler->setErrorHandler(
+      std::make_shared<ErrorHandler>(objectMapper));
 
-    /* Add CORS-enabling interceptors */
-    if (corsAllowedOrigin.has_value()) {
-        connectionHandler->addRequestInterceptor(std::make_shared<oatpp::web::server::interceptor::AllowOptionsGlobal>());
-        connectionHandler->addResponseInterceptor(
-            std::make_shared<oatpp::web::server::interceptor::AllowCorsGlobal>(corsAllowedOrigin.value()));
-    }
+  /* Add CORS-enabling interceptors */
+  if (corsAllowedOrigin.has_value()) {
+    connectionHandler->addRequestInterceptor(
+        std::make_shared<
+            oatpp::web::server::interceptor::AllowOptionsGlobal>());
+    connectionHandler->addResponseInterceptor(
+        std::make_shared<oatpp::web::server::interceptor::AllowCorsGlobal>(
+            corsAllowedOrigin.value()));
+  }
 
-    /* Create TCP connection provider */
-    auto connectionProvider =
-        oatpp::network::tcp::server::ConnectionProvider::createShared({host, port, oatpp::network::Address::IP_4});
+  /* Create TCP connection provider */
+  auto connectionProvider =
+      oatpp::network::tcp::server::ConnectionProvider::createShared(
+          {host, port, oatpp::network::Address::IP_4});
 
-    /* Create a server, which takes provided TCP connections and passes them to HTTP connection handler. */
-    oatpp::network::Server server(connectionProvider, connectionHandler);
+  /* Create a server, which takes provided TCP connections and passes them to
+   * HTTP connection handler. */
+  oatpp::network::Server server(connectionProvider, connectionHandler);
 
-    /* Print info about server port */
-    NES_INFO("NebulaStream REST Server listening on port {}", port);
+  /* Print info about server port */
+  NES_INFO("NebulaStream REST Server listening on port {}", port);
 
-    /* Run server */
-    server.run([this]() -> bool {
-        NES_DEBUG("checking if stop request has arrived for rest server listening on port {}.", port);
-        std::unique_lock lock(mutex);
-        return !stopRequested;
-    });
-    connectionProvider->stop();
-    connectionHandler->stop();
+  /* Run server */
+  server.run([this]() -> bool {
+    NES_DEBUG("checking if stop request has arrived for rest server listening "
+              "on port {}.",
+              port);
+    std::unique_lock lock(mutex);
+    return !stopRequested;
+  });
+  connectionProvider->stop();
+  connectionHandler->stop();
 }
 
-}// namespace NES
+} // namespace NES

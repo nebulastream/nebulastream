@@ -20,35 +20,40 @@
 namespace NES::Windowing {
 /**
  * @brief
- * The SumAggregationDescriptor aggregation calculates the running sum over the window.
+ * The SumAggregationDescriptor aggregation calculates the running sum over the
+ * window.
  */
 class SumAggregationDescriptor : public WindowAggregationDescriptor {
-  public:
-    virtual ~SumAggregationDescriptor() = default;
+public:
+  virtual ~SumAggregationDescriptor() = default;
 
-    /**
-    * Factory method to creates a sum aggregation on a particular field.
-    */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+  /**
+   * Factory method to creates a sum aggregation on a particular field.
+   */
+  static WindowAggregationDescriptorPtr on(const ExpressionNodePtr &onField);
 
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+  static WindowAggregationDescriptorPtr
+  create(FieldAccessExpressionNodePtr onField,
+         FieldAccessExpressionNodePtr asField);
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    WindowAggregationDescriptorPtr copy() override;
+  WindowAggregationDescriptorPtr copy() override;
 
-    DataTypePtr getInputStamp() override;
-    DataTypePtr getPartialAggregateStamp() override;
-    DataTypePtr getFinalAggregateStamp() override;
+  DataTypePtr getInputStamp() override;
+  DataTypePtr getPartialAggregateStamp() override;
+  DataTypePtr getFinalAggregateStamp() override;
 
-  private:
-    explicit SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+private:
+  explicit SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+  SumAggregationDescriptor(ExpressionNodePtr onField,
+                           ExpressionNodePtr asField);
 };
-}// namespace NES::Windowing
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_
+} // namespace NES::Windowing
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_

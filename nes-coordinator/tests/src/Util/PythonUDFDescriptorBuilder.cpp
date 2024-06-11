@@ -16,40 +16,49 @@
 
 namespace NES::Catalogs::UDF {
 PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::build() {
-    return PythonUDFDescriptor::create(functionName, functionString, inputSchema, outputSchema);
+  return PythonUDFDescriptor::create(functionName, functionString, inputSchema,
+                                     outputSchema);
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionName(const std::string& newFunctionName) {
-    this->functionName = newFunctionName;
-    return *this;
+PythonUDFDescriptorBuilder &PythonUDFDescriptorBuilder::setFunctionName(
+    const std::string &newFunctionName) {
+  this->functionName = newFunctionName;
+  return *this;
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionString(const std::string& newFunctionString) {
-    this->functionString = newFunctionString;
-    return *this;
+PythonUDFDescriptorBuilder &PythonUDFDescriptorBuilder::setFunctionString(
+    const std::string &newFunctionString) {
+  this->functionString = newFunctionString;
+  return *this;
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setInputSchema(const SchemaPtr& newInputSchema) {
-    this->inputSchema = newInputSchema;
-    return *this;
+PythonUDFDescriptorBuilder &
+PythonUDFDescriptorBuilder::setInputSchema(const SchemaPtr &newInputSchema) {
+  this->inputSchema = newInputSchema;
+  return *this;
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema) {
-    this->outputSchema = newOutputSchema;
-    return *this;
+PythonUDFDescriptorBuilder &
+PythonUDFDescriptorBuilder::setOutputSchema(const SchemaPtr &newOutputSchema) {
+  this->outputSchema = newOutputSchema;
+  return *this;
 }
 
-PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor() {
-    std::string functionName = "udf_function";
-    std::string functionString = "def udf_function(x):\n\ty = x + 10\n\treturn y\n";
-    SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
-    SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
-    return PythonUDFDescriptorBuilder{}
-        .setFunctionName(functionName)
-        .setFunctionString(functionString)
-        .setInputSchema(inputSchema)
-        .setOutputSchema(outputSchema)
-        .build();
+PythonUDFDescriptorPtr
+PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor() {
+  std::string functionName = "udf_function";
+  std::string functionString =
+      "def udf_function(x):\n\ty = x + 10\n\treturn y\n";
+  SchemaPtr inputSchema = std::make_shared<Schema>()->addField(
+      "inputAttribute", DataTypeFactory::createUInt64());
+  SchemaPtr outputSchema = std::make_shared<Schema>()->addField(
+      "outputAttribute", DataTypeFactory::createUInt64());
+  return PythonUDFDescriptorBuilder{}
+      .setFunctionName(functionName)
+      .setFunctionString(functionString)
+      .setInputSchema(inputSchema)
+      .setOutputSchema(outputSchema)
+      .build();
 }
 
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

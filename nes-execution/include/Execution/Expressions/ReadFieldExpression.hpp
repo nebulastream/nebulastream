@@ -21,22 +21,24 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression reads a specific field from the input record and returns its value.
+ * @brief This expression reads a specific field from the input record and
+ * returns its value.
  */
 class ReadFieldExpression : public Expression {
-  public:
-    /**
-     * @brief Creates a new ReadFieldExpression.
-     * @param field the field name that is read from the record.
-     */
-    ReadFieldExpression(Nautilus::Record::RecordFieldIdentifier field);
-    Value<> execute(Record& record) const override;
+public:
+  /**
+   * @brief Creates a new ReadFieldExpression.
+   * @param field the field name that is read from the record.
+   */
+  ReadFieldExpression(Nautilus::Record::RecordFieldIdentifier field);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const Nautilus::Record::RecordFieldIdentifier field;
+private:
+  const Nautilus::Record::RecordFieldIdentifier field;
 };
-using ReadFieldExpressionPtr = std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>;
+using ReadFieldExpressionPtr =
+    std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>;
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_

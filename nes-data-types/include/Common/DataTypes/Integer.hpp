@@ -22,54 +22,54 @@ namespace NES {
 /**
  * @brief The Integer type represents whole numbers, that is,
  * numbers without fractional components, of various ranges.
- * The internal Integer type is parameterised by its bit size, and its lower and upper bound
- * Integer(bitSize, lowerBound, upperBound)
+ * The internal Integer type is parameterised by its bit size, and its lower and
+ * upper bound Integer(bitSize, lowerBound, upperBound)
  */
 class Integer final : public Numeric {
 
-  public:
-    /**
-     * @brief Constructs a new Integer type.
-     * @param bits the number of bits in which this type is represented.
-     * @param lowerBound the lower bound, which is contained in that integer.
-     * @param upperBound the upper bound, which is contained in that integer.
-     */
-    inline Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) noexcept
-        : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
+public:
+  /**
+   * @brief Constructs a new Integer type.
+   * @param bits the number of bits in which this type is represented.
+   * @param lowerBound the lower bound, which is contained in that integer.
+   * @param upperBound the upper bound, which is contained in that integer.
+   */
+  inline Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) noexcept
+      : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
 
-    ~Integer() override = default;
+  ~Integer() override = default;
 
-    /**
-    * @brief Checks if this data type is Integer.
-    */
-    [[nodiscard]] bool isInteger() const override { return true; }
+  /**
+   * @brief Checks if this data type is Integer.
+   */
+  [[nodiscard]] bool isInteger() const override { return true; }
 
-    /**
-    * @brief Checks if two data types are equal.
-    * @param otherDataType
-    * @return
-    */
-    bool equals(DataTypePtr otherDataType) override;
+  /**
+   * @brief Checks if two data types are equal.
+   * @param otherDataType
+   * @return
+   */
+  bool equals(DataTypePtr otherDataType) override;
 
-    /**
-    * @brief Calculates the joined data type between this data type and the other.
-    * If they have no possible joined data type, the coined type is Undefined.
-    * For integers, we can join with all numeric data types.
-    * @param other data type
-    * @return DataTypePtr joined data type
-    */
-    DataTypePtr join(DataTypePtr otherDataType) override;
+  /**
+   * @brief Calculates the joined data type between this data type and the
+   * other. If they have no possible joined data type, the coined type is
+   * Undefined. For integers, we can join with all numeric data types.
+   * @param other data type
+   * @return DataTypePtr joined data type
+   */
+  DataTypePtr join(DataTypePtr otherDataType) override;
 
-    /**
-    * @brief Returns a string representation of the data type.
-    * @return string
-    */
-    std::string toString() override;
+  /**
+   * @brief Returns a string representation of the data type.
+   * @return string
+   */
+  std::string toString() override;
 
-    int64_t const lowerBound;
-    int64_t const upperBound;
+  int64_t const lowerBound;
+  int64_t const upperBound;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_

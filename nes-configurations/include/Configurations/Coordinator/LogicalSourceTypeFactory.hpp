@@ -29,21 +29,23 @@ class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
 
 class LogicalSourceTypeFactory {
-  public:
-    /**
-     * Create logical source config from string parameters (yaml/cli)
-     * @param identifier
-     * @param inputParams
-     */
-    static LogicalSourceTypePtr createFromString(std::string identifier, std::map<std::string, std::string>& inputParams);
+public:
+  /**
+   * Create logical source config from string parameters (yaml/cli)
+   * @param identifier
+   * @param inputParams
+   */
+  static LogicalSourceTypePtr
+  createFromString(std::string identifier,
+                   std::map<std::string, std::string> &inputParams);
 
-    /**
-     * @brief create logical stream config with yaml file
-     * @param logicalStreamConfig yaml elements from yaml file
-     * @return physical stream config object
-     */
-    static LogicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
+  /**
+   * @brief create logical stream config with yaml file
+   * @param logicalStreamConfig yaml elements from yaml file
+   * @return physical stream config object
+   */
+  static LogicalSourceTypePtr createFromYaml(Yaml::Node &yamlConfig);
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_

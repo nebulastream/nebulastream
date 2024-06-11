@@ -31,70 +31,61 @@
 namespace NES::TestUtils {
 
 class TestSourceDescriptor : public SourceDescriptor {
-  public:
-    /**
-     * @brief Constructor for a TestSourceDescriptor
-     * @param schema
-     * @param createSourceFunction
-     */
-    TestSourceDescriptor(
-        SchemaPtr schema,
-        std::function<DataSourcePtr(SchemaPtr schema,
-                                    OperatorId,
-                                    OriginId,
-                                    StatisticId,
-                                    SourceDescriptorPtr,
-                                    Runtime::NodeEnginePtr,
-                                    size_t,
-                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction);
-    /**
-     * @brief Factory method for creating a DataSource
-     * @param operatorId
-     * @param originId
-     * @param sourceDescriptor
-     * @param nodeEngine
-     * @param numSourceLocalBuffers
-     * @param successors
-     * @return DataSource
-     */
-    DataSourcePtr create(OperatorId operatorId,
-                         OriginId originId,
-                         StatisticId statisticId,
-                         SourceDescriptorPtr sourceDescriptor,
-                         Runtime::NodeEnginePtr nodeEngine,
-                         size_t numSourceLocalBuffers,
-                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+public:
+  /**
+   * @brief Constructor for a TestSourceDescriptor
+   * @param schema
+   * @param createSourceFunction
+   */
+  TestSourceDescriptor(
+      SchemaPtr schema,
+      std::function<DataSourcePtr(
+          SchemaPtr schema, OperatorId, OriginId, StatisticId,
+          SourceDescriptorPtr, Runtime::NodeEnginePtr, size_t,
+          std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
+          createSourceFunction);
+  /**
+   * @brief Factory method for creating a DataSource
+   * @param operatorId
+   * @param originId
+   * @param sourceDescriptor
+   * @param nodeEngine
+   * @param numSourceLocalBuffers
+   * @param successors
+   * @return DataSource
+   */
+  DataSourcePtr create(
+      OperatorId operatorId, OriginId originId, StatisticId statisticId,
+      SourceDescriptorPtr sourceDescriptor, Runtime::NodeEnginePtr nodeEngine,
+      size_t numSourceLocalBuffers,
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
-    /**
-     * @brief Creates a string representation
-     * @return String representation
-     */
-    [[nodiscard]] std::string toString() const override;
+  /**
+   * @brief Creates a string representation
+   * @return String representation
+   */
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Checks if two SourceDescriptors are equal
-     * @return True, if equal otherwise false
-     */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const&) const override;
+  /**
+   * @brief Checks if two SourceDescriptors are equal
+   * @return True, if equal otherwise false
+   */
+  [[nodiscard]] bool equal(SourceDescriptorPtr const &) const override;
 
-    /**
-     * @brief Copies this SourceDescriptors
-     * @return New SourceDescriptor
-     */
-    SourceDescriptorPtr copy() override;
+  /**
+   * @brief Copies this SourceDescriptors
+   * @return New SourceDescriptor
+   */
+  SourceDescriptorPtr copy() override;
 
-  private:
-    std::function<DataSourcePtr(SchemaPtr schema,
-                                OperatorId,
-                                OriginId,
-                                StatisticId,
-                                SourceDescriptorPtr,
-                                Runtime::NodeEnginePtr,
-                                size_t,
-                                std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
-        createSourceFunction;
+private:
+  std::function<DataSourcePtr(
+      SchemaPtr schema, OperatorId, OriginId, StatisticId, SourceDescriptorPtr,
+      Runtime::NodeEnginePtr, size_t,
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
+      createSourceFunction;
 };
 
-}// namespace NES::TestUtils
+} // namespace NES::TestUtils
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_

@@ -18,18 +18,31 @@
 
 namespace NES {
 
-SinkFormat::SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager, false) {}
+SinkFormat::SinkFormat(SchemaPtr schema,
+                       Runtime::BufferManagerPtr bufferManager)
+    : SinkFormat(schema, bufferManager, false) {}
 
-SinkFormat::SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp)
-    : schema(std::move(schema)), bufferManager(std::move(bufferManager)), addTimestamp(addTimestamp) {}
+SinkFormat::SinkFormat(SchemaPtr schema,
+                       Runtime::BufferManagerPtr bufferManager,
+                       bool addTimestamp)
+    : schema(std::move(schema)), bufferManager(std::move(bufferManager)),
+      addTimestamp(addTimestamp) {}
 
 SchemaPtr SinkFormat::getSchemaPtr() { return schema; }
 
-void SinkFormat::setSchemaPtr(SchemaPtr schema) { this->schema = std::move(schema); }
+void SinkFormat::setSchemaPtr(SchemaPtr schema) {
+  this->schema = std::move(schema);
+}
 
-Runtime::BufferManagerPtr SinkFormat::getBufferManager() { return bufferManager; }
+Runtime::BufferManagerPtr SinkFormat::getBufferManager() {
+  return bufferManager;
+}
 
-void SinkFormat::setBufferManager(Runtime::BufferManagerPtr bufferManager) { this->bufferManager = std::move(bufferManager); }
+void SinkFormat::setBufferManager(Runtime::BufferManagerPtr bufferManager) {
+  this->bufferManager = std::move(bufferManager);
+}
 bool SinkFormat::getAddTimestamp() { return addTimestamp; }
-void SinkFormat::setAddTimestamp(bool addTimestamp) { this->addTimestamp = addTimestamp; }
-}// namespace NES
+void SinkFormat::setAddTimestamp(bool addTimestamp) {
+  this->addTimestamp = addTimestamp;
+}
+} // namespace NES

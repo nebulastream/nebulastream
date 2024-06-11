@@ -20,24 +20,28 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Vectorize operator that materializes incoming tuples until the stage buffer capacity is met.
- * Once the buffer is full, the child operator is invoked.
+ * @brief Vectorize operator that materializes incoming tuples until the stage
+ * buffer capacity is met. Once the buffer is full, the child operator is
+ * invoked.
  */
 class Vectorize : public ExecutableOperator {
-  public:
-    /**
-     * @brief Constructor.
-     * @param operatorHandlerIndex the index of the handler of this operator in the pipeline execution context.
-     */
-    explicit Vectorize(uint64_t operatorHandlerIndex, std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider);
+public:
+  /**
+   * @brief Constructor.
+   * @param operatorHandlerIndex the index of the handler of this operator in
+   * the pipeline execution context.
+   */
+  explicit Vectorize(
+      uint64_t operatorHandlerIndex,
+      std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider);
 
-    void execute(ExecutionContext& ctx, Record& record) const override;
+  void execute(ExecutionContext &ctx, Record &record) const override;
 
-  private:
-    uint64_t operatorHandlerIndex;
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+private:
+  uint64_t operatorHandlerIndex;
+  std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZE_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZE_HPP_

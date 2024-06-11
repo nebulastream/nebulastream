@@ -20,21 +20,21 @@
 namespace NES::Nautilus::IR::Operations {
 
 class LoopInfo {
-  public:
-    virtual bool isCountedLoop() { return false; }
-    virtual ~LoopInfo() = default;
+public:
+  virtual bool isCountedLoop() { return false; }
+  virtual ~LoopInfo() = default;
 };
 
 class DefaultLoopInfo : public LoopInfo {};
 
 class CountedLoopInfo : public LoopInfo {
-  public:
-    uint64_t lowerBound;
-    uint64_t upperBound;
-    uint64_t stepSize;
-    bool isCountedLoop() override { return true; }
+public:
+  uint64_t lowerBound;
+  uint64_t upperBound;
+  uint64_t stepSize;
+  bool isCountedLoop() override { return true; }
 };
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_

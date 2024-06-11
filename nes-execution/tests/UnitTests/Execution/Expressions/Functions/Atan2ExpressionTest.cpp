@@ -21,40 +21,46 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class Atan2ExpressionTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("Atan2ExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Atan2ExpressionTest test class.");
-    }
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("Atan2ExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup Atan2ExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down Atan2ExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down Atan2ExpressionTest test class.");
+  }
 };
 
 TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionFloat) {
-    auto expression = BinaryExpressionWrapper<Atan2Expression>();
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 0.5), Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue, 0.7853981633974483);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = BinaryExpressionWrapper<Atan2Expression>();
+  // Float
+  {
+    auto resultValue =
+        expression.eval(Value<Float>((float)0.5), Value<Float>((float)0.5));
+    ASSERT_EQ(resultValue, 0.7853981633974483);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionDouble) {
-    auto expression = BinaryExpressionWrapper<Atan2Expression>();
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 0.5), Value<Double>((double) 0.5));
-        ASSERT_EQ(resultValue, 0.7853981633974483);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = BinaryExpressionWrapper<Atan2Expression>();
+  // Double
+  {
+    auto resultValue =
+        expression.eval(Value<Double>((double)0.5), Value<Double>((double)0.5));
+    ASSERT_EQ(resultValue, 0.7853981633974483);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionOnWrongType) {
-    auto expression = BinaryExpressionWrapper<Atan2Expression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
-    ASSERT_ANY_THROW(expression.eval(Value<Double>(0.5), Value<Int8>((Int8) 1)););
+  auto expression = BinaryExpressionWrapper<Atan2Expression>();
+  ASSERT_ANY_THROW(
+      expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
+  ASSERT_ANY_THROW(expression.eval(Value<Double>(0.5), Value<Int8>((Int8)1)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

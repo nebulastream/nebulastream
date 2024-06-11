@@ -17,19 +17,21 @@
 
 namespace NES::Statistic {
 
-StatisticProbeGeneratorPtr DefaultStatisticProbeGenerator::create() { return std::make_shared<DefaultStatisticProbeGenerator>(); }
+StatisticProbeGeneratorPtr DefaultStatisticProbeGenerator::create() {
+  return std::make_shared<DefaultStatisticProbeGenerator>();
+}
 
 std::vector<StatisticProbeRequestGRPC>
-DefaultStatisticProbeGenerator::generateProbeRequests(const StatisticRegistry&,
-                                                      const AbstractStatisticCache&,
-                                                      const StatisticProbeRequest& probeRequest,
-                                                      const std::vector<WorkerId>& allWorkerIds) {
-    NES_DEBUG("Creating probe requests for probe request");
-    std::vector<StatisticProbeRequestGRPC> allProbeRequests;
-    for (const auto& workerId : allWorkerIds) {
-        allProbeRequests.emplace_back(probeRequest, workerId);
-    }
+DefaultStatisticProbeGenerator::generateProbeRequests(
+    const StatisticRegistry &, const AbstractStatisticCache &,
+    const StatisticProbeRequest &probeRequest,
+    const std::vector<WorkerId> &allWorkerIds) {
+  NES_DEBUG("Creating probe requests for probe request");
+  std::vector<StatisticProbeRequestGRPC> allProbeRequests;
+  for (const auto &workerId : allWorkerIds) {
+    allProbeRequests.emplace_back(probeRequest, workerId);
+  }
 
-    return allProbeRequests;
+  return allProbeRequests;
 }
-}// namespace NES::Statistic
+} // namespace NES::Statistic

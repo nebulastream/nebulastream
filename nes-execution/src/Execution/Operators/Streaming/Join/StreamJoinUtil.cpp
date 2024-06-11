@@ -23,48 +23,51 @@
 namespace NES::Runtime::Execution {
 
 namespace Util {
-SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema) {
-    NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
-               "Left and right schema do not have the same layout type");
-    auto retSchema = Schema::create(leftSchema->getLayoutType());
-    auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier();
+SchemaPtr createJoinSchema(const SchemaPtr &leftSchema,
+                           const SchemaPtr &rightSchema) {
+  NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
+             "Left and right schema do not have the same layout type");
+  auto retSchema = Schema::create(leftSchema->getLayoutType());
+  auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() +
+                                    rightSchema->getSourceNameQualifier();
 
-    retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
-    retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
+  retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
+  retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
 
-    for (auto& fields : leftSchema->fields) {
-        retSchema->addField(fields->getName(), fields->getDataType());
-    }
+  for (auto &fields : leftSchema->fields) {
+    retSchema->addField(fields->getName(), fields->getDataType());
+  }
 
-    for (auto& fields : rightSchema->fields) {
-        retSchema->addField(fields->getName(), fields->getDataType());
-    }
-    NES_DEBUG("Created joinSchema {} from leftSchema {} and rightSchema {}.",
-              retSchema->toString(),
-              leftSchema->toString(),
-              rightSchema->toString());
+  for (auto &fields : rightSchema->fields) {
+    retSchema->addField(fields->getName(), fields->getDataType());
+  }
+  NES_DEBUG("Created joinSchema {} from leftSchema {} and rightSchema {}.",
+            retSchema->toString(), leftSchema->toString(),
+            rightSchema->toString());
 
-    return retSchema;
+  return retSchema;
 }
-}// namespace Util
+} // namespace Util
 
 WindowInfo::WindowInfo(uint64_t windowStart, uint64_t windowEnd)
     : windowStart(windowStart), windowEnd(windowEnd), windowId(windowEnd) {
-    if (windowEnd < windowStart) {
-        NES_WARNING(
-            "WindowEnd is larger then windowStart and therefore, windowStart will be set to 0, as we detected an overflow");
-        this->windowStart = 0;
-    }
+  if (windowEnd < windowStart) {
+    NES_WARNING("WindowEnd is larger then windowStart and therefore, "
+                "windowStart will be set to 0, as we detected an overflow");
+    this->windowStart = 0;
+  }
 }
 
 WindowInfo::WindowInfo() : WindowInfo(0_u64, 0_u64){};
 
-bool WindowInfo::operator<(const WindowInfo& other) const { return windowId < other.windowId; }
-
-std::string WindowInfo::toString() const {
-    std::ostringstream oss;
-    oss << windowStart << "," << windowEnd << "," << windowId;
-    return oss.str();
+bool WindowInfo::operator<(const WindowInfo &other) const {
+  return windowId < other.windowId;
 }
 
-}// namespace NES::Runtime::Execution
+std::string WindowInfo::toString() const {
+  std::ostringstream oss;
+  oss << windowStart << "," << windowEnd << "," << windowId;
+  return oss.str();
+}
+
+} // namespace NES::Runtime::Execution

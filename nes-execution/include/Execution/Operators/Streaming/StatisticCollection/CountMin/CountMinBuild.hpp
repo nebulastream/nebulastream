@@ -24,34 +24,35 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Operator for creating count min sketches across time-based windows. We create one sketch per window and
- * emit the sketch, once we see a larger watermarkTs than the endTs of the window.
+ * @brief Operator for creating count min sketches across time-based windows. We
+ * create one sketch per window and emit the sketch, once we see a larger
+ * watermarkTs than the endTs of the window.
  */
 class CountMinBuild : public ExecutableOperator {
-  public:
-    CountMinBuild(const uint64_t operatorHandlerIndex,
-                  const std::string_view fieldToTrackFieldName,
-                  const uint64_t numberOfBitsInKey,
-                  const uint64_t width,
-                  const uint64_t depth,
-                  const Statistic::StatisticMetricHash metricHash,
-                  TimeFunctionPtr timeFunction,
-                  const uint64_t numberOfBitsInHashValue = NUMBER_OF_BITS_IN_HASH_VALUE);
+public:
+  CountMinBuild(
+      const uint64_t operatorHandlerIndex,
+      const std::string_view fieldToTrackFieldName,
+      const uint64_t numberOfBitsInKey, const uint64_t width,
+      const uint64_t depth, const Statistic::StatisticMetricHash metricHash,
+      TimeFunctionPtr timeFunction,
+      const uint64_t numberOfBitsInHashValue = NUMBER_OF_BITS_IN_HASH_VALUE);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+  void open(ExecutionContext &executionCtx,
+            RecordBuffer &recordBuffer) const override;
+  void execute(ExecutionContext &ctx, Record &record) const override;
+  void close(ExecutionContext &ctx, RecordBuffer &recordBuffer) const override;
 
-  private:
-    const uint64_t operatorHandlerIndex;
-    const std::string fieldToTrackFieldName;
-    const uint64_t sizeOfOneRowInBytes;
-    const uint64_t width;
-    const uint64_t depth;
-    const Statistic::StatisticMetricHash metricHash;
-    const TimeFunctionPtr timeFunction;
-    const std::unique_ptr<Nautilus::Interface::HashFunction> h3HashFunction;
+private:
+  const uint64_t operatorHandlerIndex;
+  const std::string fieldToTrackFieldName;
+  const uint64_t sizeOfOneRowInBytes;
+  const uint64_t width;
+  const uint64_t depth;
+  const Statistic::StatisticMetricHash metricHash;
+  const TimeFunctionPtr timeFunction;
+  const std::unique_ptr<Nautilus::Interface::HashFunction> h3HashFunction;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINBUILD_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_COUNTMIN_COUNTMINBUILD_HPP_

@@ -24,31 +24,38 @@
 
 namespace NES::Optimizer {
 
-MapUDFsToOpenCLOperatorsRulePtr NES::Optimizer::MapUDFsToOpenCLOperatorsRule::create() {
-    return std::make_shared<MapUDFsToOpenCLOperatorsRule>(MapUDFsToOpenCLOperatorsRule());
+MapUDFsToOpenCLOperatorsRulePtr
+NES::Optimizer::MapUDFsToOpenCLOperatorsRule::create() {
+  return std::make_shared<MapUDFsToOpenCLOperatorsRule>(
+      MapUDFsToOpenCLOperatorsRule());
 }
 
 QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
 
-    auto mapJavaUDFOperatorsToReplace = queryPlan->getOperatorByType<MapUDFLogicalOperator>();
-    if (mapJavaUDFOperatorsToReplace.empty()) {
-        return queryPlan;
-    }
-
-    for (const auto& mapJavaUDFOperator : mapJavaUDFOperatorsToReplace) {
-        //Create new open cl operator
-        auto udfDescriptor = mapJavaUDFOperator->getUDFDescriptor();
-        if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
-            auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
-            auto openCLOperator = std::make_shared<LogicalOpenCLOperator>(javaUDFDescriptor, getNextOperatorId());
-            //replace map java udf operator with open cl operator
-            if (!mapJavaUDFOperator->replace(openCLOperator)) {
-                NES_ERROR("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
-                throw UDFException("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
-            }
-        }
-    }
+  auto mapJavaUDFOperatorsToReplace =
+      queryPlan->getOperatorByType<MapUDFLogicalOperator>();
+  if (mapJavaUDFOperatorsToReplace.empty()) {
     return queryPlan;
+  }
+
+  for (const auto &mapJavaUDFOperator : mapJavaUDFOperatorsToReplace) {
+    // Create new open cl operator
+    auto udfDescriptor = mapJavaUDFOperator->getUDFDescriptor();
+    if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
+      auto javaUDFDescriptor =
+          udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+      auto openCLOperator = std::make_shared<LogicalOpenCLOperator>(
+          javaUDFDescriptor, getNextOperatorId());
+      // replace map java udf operator with open cl operator
+      if (!mapJavaUDFOperator->replace(openCLOperator)) {
+        NES_ERROR("MapUDFsToOpenCLOperatorsRule: Unable to replace map java "
+                  "UDF with Open cl operator");
+        throw UDFException("MapUDFsToOpenCLOperatorsRule: Unable to replace "
+                           "map java UDF with Open cl operator");
+      }
+    }
+  }
+  return queryPlan;
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

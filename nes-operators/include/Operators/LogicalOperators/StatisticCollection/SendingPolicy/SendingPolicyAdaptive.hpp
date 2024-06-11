@@ -19,36 +19,38 @@
 namespace NES::Statistic {
 
 // defines for the sending policies. This way, we reduce the number of ()
-#define SENDING_ADAPTIVE(StatisticDataCodec) SendingPolicyAdaptive::create(StatisticDataCodec)
+#define SENDING_ADAPTIVE(StatisticDataCodec)                                   \
+  SendingPolicyAdaptive::create(StatisticDataCodec)
 
 /**
- * @brief Represents a sending policy, where a created statistic is send to the store, depending on external factors
+ * @brief Represents a sending policy, where a created statistic is send to the
+ * store, depending on external factors
  */
 class SendingPolicyAdaptive : public SendingPolicy {
-  public:
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    [[nodiscard]] std::string toString() const override;
+public:
+  /**
+   * @brief Creates a string representation
+   * @return std::string
+   */
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Virtual destructor
-     */
-    ~SendingPolicyAdaptive() override = default;
+  /**
+   * @brief Virtual destructor
+   */
+  ~SendingPolicyAdaptive() override = default;
 
-    bool operator==(const SendingPolicy& rhs) const override;
+  bool operator==(const SendingPolicy &rhs) const override;
 
-    /**
-     * @brief Creates an ADAPTIVE SendingPolicy
-     * @return SendingPolicyPtr
-     */
-    static SendingPolicyPtr create(StatisticDataCodec sinkDataCodec);
+  /**
+   * @brief Creates an ADAPTIVE SendingPolicy
+   * @return SendingPolicyPtr
+   */
+  static SendingPolicyPtr create(StatisticDataCodec sinkDataCodec);
 
-  private:
-    explicit SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec);
+private:
+  explicit SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICYADAPTIVE_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICYADAPTIVE_HPP_

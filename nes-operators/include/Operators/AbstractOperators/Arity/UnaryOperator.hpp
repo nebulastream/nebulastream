@@ -22,69 +22,69 @@
 namespace NES {
 
 /**
- * @brief A unary operator with one input operator, it has exactly one input operator.
- * This virtually inheritances for Operator
+ * @brief A unary operator with one input operator, it has exactly one input
+ * operator. This virtually inheritances for Operator
  * https://en.wikipedia.org/wiki/Virtual_inheritance
  */
 class UnaryOperator : public virtual Operator {
-  public:
-    explicit UnaryOperator(OperatorId id);
-    ~UnaryOperator() noexcept override = default;
+public:
+  explicit UnaryOperator(OperatorId id);
+  ~UnaryOperator() noexcept override = default;
 
-    /**
+  /**
    * @brief get the input schema of this operator
    * @return SchemaPtr
    */
-    SchemaPtr getInputSchema() const;
+  SchemaPtr getInputSchema() const;
 
-    /**
-     * @brief set the input schema of this operator
-     * @param inputSchema
-    */
-    void setInputSchema(SchemaPtr inputSchema);
+  /**
+   * @brief set the input schema of this operator
+   * @param inputSchema
+   */
+  void setInputSchema(SchemaPtr inputSchema);
 
-    /**
-    * @brief get the result schema of this operator
-    * @return SchemaPtr
-    */
-    SchemaPtr getOutputSchema() const override;
+  /**
+   * @brief get the result schema of this operator
+   * @return SchemaPtr
+   */
+  SchemaPtr getOutputSchema() const override;
 
-    /**
-     * @brief set the result schema of this operator
-     * @param outputSchema
-    */
-    void setOutputSchema(SchemaPtr outputSchema) override;
+  /**
+   * @brief set the result schema of this operator
+   * @param outputSchema
+   */
+  void setOutputSchema(SchemaPtr outputSchema) override;
 
-    /**
-     * @brief Set the input origin ids from the input stream
-     * @param originIds
-     */
-    void setInputOriginIds(const std::vector<OriginId>& originIds);
+  /**
+   * @brief Set the input origin ids from the input stream
+   * @param originIds
+   */
+  void setInputOriginIds(const std::vector<OriginId> &originIds);
 
-    /**
-     * @brief Gets the input origin ids  from the input stream
-     * @return std::vector<OriginId>
-     */
-    std::vector<OriginId> getInputOriginIds() const;
+  /**
+   * @brief Gets the input origin ids  from the input stream
+   * @return std::vector<OriginId>
+   */
+  std::vector<OriginId> getInputOriginIds() const;
 
-    /**
-     * @brief Gets the output origin ids from this operator
-     * @return std::vector<OriginId>
-     */
-    std::vector<OriginId> getOutputOriginIds() const override;
+  /**
+   * @brief Gets the output origin ids from this operator
+   * @return std::vector<OriginId>
+   */
+  std::vector<OriginId> getOutputOriginIds() const override;
 
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
-    std::string toString() const override;
+  /**
+   * @brief returns the string representation of the class
+   * @return the string representation of the class
+   */
+  std::string toString() const override;
 
-  protected:
-    SchemaPtr inputSchema = Schema::create();
-    SchemaPtr outputSchema = Schema::create();
-    std::vector<OriginId> inputOriginIds;
+protected:
+  SchemaPtr inputSchema = Schema::create();
+  SchemaPtr outputSchema = Schema::create();
+  std::vector<OriginId> inputOriginIds;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_UNARYOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_UNARYOPERATOR_HPP_

@@ -20,17 +20,17 @@ namespace NES::Nautilus::IR::Types {
  * @brief A address stamp, which represents a data type for a memory address.
  */
 class AddressStamp : public Stamp {
-  public:
-    static const inline auto type = TypeIdentifier::create<AddressStamp>();
+public:
+  static const inline auto type = TypeIdentifier::create<AddressStamp>();
 
-    /**
-     * @brief Constructor to create a void stamp.
-     */
-    AddressStamp();
+  /**
+   * @brief Constructor to create a void stamp.
+   */
+  AddressStamp();
 
-    const std::string toString() const override;
+  const std::string toString() const override;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_

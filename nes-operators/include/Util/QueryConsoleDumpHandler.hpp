@@ -25,38 +25,41 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 /**
- * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
+ * @brief Converts query plans and pipeline plans to the .nesviz format and
+ * dumps them to a file.m
  */
 class QueryConsoleDumpHandler {
 
-  public:
-    virtual ~QueryConsoleDumpHandler() = default;
-    static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream& out);
-    explicit QueryConsoleDumpHandler(std::ostream& out);
-    /**
-    * Dump the specific node and its children.
-    */
-    void dump(NodePtr node);
+public:
+  virtual ~QueryConsoleDumpHandler() = default;
+  static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream &out);
+  explicit QueryConsoleDumpHandler(std::ostream &out);
+  /**
+   * Dump the specific node and its children.
+   */
+  void dump(NodePtr node);
 
-    /**
-    * Dump the specific node and its children with details in multiple lines.
-    */
-    void multilineDump(NodePtr const& node);
+  /**
+   * Dump the specific node and its children with details in multiple lines.
+   */
+  void multilineDump(NodePtr const &node);
 
-    /**
-     * @brief Dump a query plan with a specific context and scope.
-     * @param context the context
-     * @param scope the scope
-     * @param plan the query plan
-     */
-    void dump(std::string context, std::string scope, QueryPlanPtr plan);
+  /**
+   * @brief Dump a query plan with a specific context and scope.
+   * @param context the context
+   * @param scope the scope
+   * @param plan the query plan
+   */
+  void dump(std::string context, std::string scope, QueryPlanPtr plan);
 
-  private:
-    std::ostream& out;
-    void dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
-    void multilineDumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
+private:
+  std::ostream &out;
+  void dumpHelper(NodePtr const &op, uint64_t depth, uint64_t indent,
+                  std::ostream &out) const;
+  void multilineDumpHelper(NodePtr const &op, uint64_t depth, uint64_t indent,
+                           std::ostream &out) const;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_
+#endif // NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_

@@ -27,26 +27,30 @@ using NESParserPtr = std::shared_ptr<NESBinaryParser>;
  */
 class NESBinaryParser : public Parser {
 
-  public:
-    /**
+public:
+  /**
    * @brief public constructor for NES input data parser
    */
-    NESBinaryParser();
+  NESBinaryParser();
 
-    /**
-   * @brief takes a binary nes tuple buffer as string_view and copies it into a TupleBuffer
-   * @param binaryBuffer: string value that is cast to the PhysicalType and written to the TupleBuffer
-   * @param tupleCount: the number of tuples already written to the current TupleBuffer
-   * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
+  /**
+   * @brief takes a binary nes tuple buffer as string_view and copies it into a
+   * TupleBuffer
+   * @param binaryBuffer: string value that is cast to the PhysicalType and
+   * written to the TupleBuffer
+   * @param tupleCount: the number of tuples already written to the current
+   * TupleBuffer
+   * @param tupleBuffer: the TupleBuffer to which the value is written
+   * containing the currently chosen memory layout
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    bool writeInputTupleToTupleBuffer(std::string_view binaryBuffer,
-                                      uint64_t tupleCount,
-                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                      const SchemaPtr& schema,
-                                      const Runtime::BufferManagerPtr& bufferManager) override;
+  bool writeInputTupleToTupleBuffer(
+      std::string_view binaryBuffer, uint64_t tupleCount,
+      Runtime::MemoryLayouts::TestTupleBuffer &tupleBuffer,
+      const SchemaPtr &schema,
+      const Runtime::BufferManagerPtr &bufferManager) override;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESBINARYPARSER_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESBINARYPARSER_HPP_

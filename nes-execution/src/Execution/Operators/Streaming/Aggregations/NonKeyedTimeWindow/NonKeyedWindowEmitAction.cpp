@@ -18,43 +18,43 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getGlobalSliceState(void* combinedSlice);
-void deleteNonKeyedSlice(void* slice);
+void *getGlobalSliceState(void *combinedSlice);
+void deleteNonKeyedSlice(void *slice);
 
 NonKeyedWindowEmitAction::NonKeyedWindowEmitAction(
-    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-    const std::string& startTsFieldName,
-    const std::string& endTsFieldName,
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>
+        &aggregationFunctions,
+    const std::string &startTsFieldName, const std::string &endTsFieldName,
     OriginId resultOriginId)
-    : aggregationFunctions(aggregationFunctions), startTsFieldName(startTsFieldName), endTsFieldName(endTsFieldName),
+    : aggregationFunctions(aggregationFunctions),
+      startTsFieldName(startTsFieldName), endTsFieldName(endTsFieldName),
       resultOriginId(resultOriginId) {}
 
-void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
-                                         ExecuteOperatorPtr& child,
-                                         Value<UInt64>& windowStart,
-                                         Value<UInt64>& windowEnd,
-                                         Value<UInt64>& sequenceNumber,
-                                         Value<UInt64>& chunkNumber,
-                                         Value<Boolean>& lastChunk,
-                                         Value<MemRef>& globalSlice) const {
-    ctx.setWatermarkTs(windowStart);
-    ctx.setOrigin(resultOriginId.getRawValue());
-    ctx.setSequenceNumber(sequenceNumber);
-    ctx.setChunkNumber(chunkNumber);
-    ctx.setLastChunk(lastChunk);
+void NonKeyedWindowEmitAction::emitSlice(
+    ExecutionContext &ctx, ExecuteOperatorPtr &child,
+    Value<UInt64> &windowStart, Value<UInt64> &windowEnd,
+    Value<UInt64> &sequenceNumber, Value<UInt64> &chunkNumber,
+    Value<Boolean> &lastChunk, Value<MemRef> &globalSlice) const {
+  ctx.setWatermarkTs(windowStart);
+  ctx.setOrigin(resultOriginId.getRawValue());
+  ctx.setSequenceNumber(sequenceNumber);
+  ctx.setChunkNumber(chunkNumber);
+  ctx.setLastChunk(lastChunk);
 
-    auto windowState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
-    Record resultWindow;
-    resultWindow.write(startTsFieldName, windowStart);
-    resultWindow.write(endTsFieldName, windowEnd);
-    uint64_t stateOffset = 0;
-    for (const auto& function : aggregationFunctions) {
-        auto valuePtr = windowState + stateOffset;
-        function->lower(valuePtr.as<MemRef>(), resultWindow);
-        stateOffset = stateOffset + function->getSize();
-    }
-    child->execute(ctx, resultWindow);
+  auto windowState = Nautilus::FunctionCall("getGlobalSliceState",
+                                            getGlobalSliceState, globalSlice);
+  Record resultWindow;
+  resultWindow.write(startTsFieldName, windowStart);
+  resultWindow.write(endTsFieldName, windowEnd);
+  uint64_t stateOffset = 0;
+  for (const auto &function : aggregationFunctions) {
+    auto valuePtr = windowState + stateOffset;
+    function->lower(valuePtr.as<MemRef>(), resultWindow);
+    stateOffset = stateOffset + function->getSize();
+  }
+  child->execute(ctx, resultWindow);
 
-    Nautilus::FunctionCall("deleteNonKeyedSlice", deleteNonKeyedSlice, globalSlice);
+  Nautilus::FunctionCall("deleteNonKeyedSlice", deleteNonKeyedSlice,
+                         globalSlice);
 }
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

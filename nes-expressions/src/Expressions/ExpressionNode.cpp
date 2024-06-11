@@ -22,15 +22,18 @@ bool ExpressionNode::isPredicate() const { return stamp->isBoolean(); }
 
 DataTypePtr ExpressionNode::getStamp() const { return stamp; }
 
-void ExpressionNode::setStamp(DataTypePtr stamp) { this->stamp = std::move(stamp); }
-
-void ExpressionNode::inferStamp(SchemaPtr schema) {
-    // infer stamp on all children nodes
-    for (const auto& node : children) {
-        node->as<ExpressionNode>()->inferStamp(schema);
-    }
+void ExpressionNode::setStamp(DataTypePtr stamp) {
+  this->stamp = std::move(stamp);
 }
 
-ExpressionNode::ExpressionNode(const ExpressionNode* other) : stamp(other->stamp) {}
+void ExpressionNode::inferStamp(SchemaPtr schema) {
+  // infer stamp on all children nodes
+  for (const auto &node : children) {
+    node->as<ExpressionNode>()->inferStamp(schema);
+  }
+}
 
-}// namespace NES
+ExpressionNode::ExpressionNode(const ExpressionNode *other)
+    : stamp(other->stamp) {}
+
+} // namespace NES

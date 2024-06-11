@@ -14,32 +14,46 @@
 
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <fmt/format.h>
-const NES::QueryCompilation::TimestampField::TimeFunctionType&
+const NES::QueryCompilation::TimestampField::TimeFunctionType &
 NES::QueryCompilation::TimestampField::getTimeFunctionType() const {
-    return timeFunctionType;
+  return timeFunctionType;
 }
-NES::Windowing::TimeUnit NES::QueryCompilation::TimestampField::getUnit() const { return unit; }
-const std::string& NES::QueryCompilation::TimestampField::getName() const { return fieldName; }
-NES::Runtime::Execution::Operators::TimeFunctionPtr NES::QueryCompilation::TimestampField::toTimeFunction() const {
-    switch (timeFunctionType) {
-        case EVENT_TIME:
-            return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
-                std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldName),
-                unit);
-        case INGESTION_TIME: return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
-    }
+NES::Windowing::TimeUnit
+NES::QueryCompilation::TimestampField::getUnit() const {
+  return unit;
 }
-NES::QueryCompilation::TimestampField NES::QueryCompilation::TimestampField::IngestionTime() {
-    return {"IngestionTime", Windowing::TimeUnit(1), INGESTION_TIME};
+const std::string &NES::QueryCompilation::TimestampField::getName() const {
+  return fieldName;
 }
-NES::QueryCompilation::TimestampField NES::QueryCompilation::TimestampField::EventTime(std::string fieldName,
-                                                                                       Windowing::TimeUnit tm) {
-    return {std::move(fieldName), std::move(tm), EVENT_TIME};
+NES::Runtime::Execution::Operators::TimeFunctionPtr
+NES::QueryCompilation::TimestampField::toTimeFunction() const {
+  switch (timeFunctionType) {
+  case EVENT_TIME:
+    return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
+        std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(
+            fieldName),
+        unit);
+  case INGESTION_TIME:
+    return std::make_unique<
+        Runtime::Execution::Operators::IngestionTimeFunction>();
+  }
 }
-NES::QueryCompilation::TimestampField::TimestampField(std::string fieldName,
-                                                      Windowing::TimeUnit unit,
-                                                      TimeFunctionType timeFunctionType)
-    : fieldName(std::move(fieldName)), unit(std::move(unit)), timeFunctionType(timeFunctionType) {}
-std::ostream& NES::QueryCompilation::operator<<(std::ostream& os, const TimestampField& obj) {
-    return os << fmt::format("TimestampField({}, {})", obj.fieldName, obj.unit.getMillisecondsConversionMultiplier());
+NES::QueryCompilation::TimestampField
+NES::QueryCompilation::TimestampField::IngestionTime() {
+  return {"IngestionTime", Windowing::TimeUnit(1), INGESTION_TIME};
+}
+NES::QueryCompilation::TimestampField
+NES::QueryCompilation::TimestampField::EventTime(std::string fieldName,
+                                                 Windowing::TimeUnit tm) {
+  return {std::move(fieldName), std::move(tm), EVENT_TIME};
+}
+NES::QueryCompilation::TimestampField::TimestampField(
+    std::string fieldName, Windowing::TimeUnit unit,
+    TimeFunctionType timeFunctionType)
+    : fieldName(std::move(fieldName)), unit(std::move(unit)),
+      timeFunctionType(timeFunctionType) {}
+std::ostream &NES::QueryCompilation::operator<<(std::ostream &os,
+                                                const TimestampField &obj) {
+  return os << fmt::format("TimestampField({}, {})", obj.fieldName,
+                           obj.unit.getMillisecondsConversionMultiplier());
 }

@@ -23,15 +23,16 @@ namespace NES::Network::Messages {
  * @brief This a payload message with an event
  */
 class EventBufferMessage {
-  public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::EventBuffer;
+public:
+  static constexpr MessageType MESSAGE_TYPE = MessageType::EventBuffer;
 
-    explicit inline EventBufferMessage(Runtime::EventType eventType, uint32_t payloadSize) noexcept
-        : eventType(eventType), payloadSize(payloadSize) {}
+  explicit inline EventBufferMessage(Runtime::EventType eventType,
+                                     uint32_t payloadSize) noexcept
+      : eventType(eventType), payloadSize(payloadSize) {}
 
-    Runtime::EventType const eventType;
-    uint32_t const payloadSize;
+  Runtime::EventType const eventType;
+  uint32_t const payloadSize;
 };
 
-}// namespace NES::Network::Messages
-#endif// NES_RUNTIME_INCLUDE_NETWORK_EVENTBUFFERMESSAGE_HPP_
+} // namespace NES::Network::Messages
+#endif // NES_RUNTIME_INCLUDE_NETWORK_EVENTBUFFERMESSAGE_HPP_

@@ -27,37 +27,42 @@ namespace NES::Runtime::Execution::Operators {
  * @brief A multi origin version of the lock free watermark processor.
  */
 class MultiOriginWatermarkProcessor {
-  public:
-    explicit MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins);
+public:
+  explicit MultiOriginWatermarkProcessor(const std::vector<OriginId> &origins);
 
-    /**
-     * @brief Creates a new watermark processor, for a specific number of origins.
-     * @param origins
-     */
-    static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId>& origins);
+  /**
+   * @brief Creates a new watermark processor, for a specific number of origins.
+   * @param origins
+   */
+  static std::shared_ptr<MultiOriginWatermarkProcessor>
+  create(const std::vector<OriginId> &origins);
 
-    /**
-     * @brief Updates the watermark timestamp and origin and emits the current watermark.
-     * @param ts watermark timestamp
-     * @param sequenceData of the watermark ts
-     * @param origin of the watermark ts
-     * @return currentWatermarkTs
-     */
-    uint64_t updateWatermark(uint64_t ts, SequenceData sequenceData, OriginId origin);
+  /**
+   * @brief Updates the watermark timestamp and origin and emits the current
+   * watermark.
+   * @param ts watermark timestamp
+   * @param sequenceData of the watermark ts
+   * @param origin of the watermark ts
+   * @return currentWatermarkTs
+   */
+  uint64_t updateWatermark(uint64_t ts, SequenceData sequenceData,
+                           OriginId origin);
 
-    /**
-     * @brief Returns the current watermark across all origins
-     * @return uint64_t
-     */
-    [[nodiscard]] uint64_t getCurrentWatermark();
+  /**
+   * @brief Returns the current watermark across all origins
+   * @return uint64_t
+   */
+  [[nodiscard]] uint64_t getCurrentWatermark();
 
-    std::string getCurrentStatus();
+  std::string getCurrentStatus();
 
-  private:
-    const std::vector<OriginId> origins;
-    std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors = {};
+private:
+  const std::vector<OriginId> origins;
+  std::vector<
+      std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>
+      watermarkProcessors = {};
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_

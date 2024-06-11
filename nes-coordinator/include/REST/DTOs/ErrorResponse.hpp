@@ -24,20 +24,20 @@ namespace NES::REST::DTO {
 
 class ErrorResponse : public oatpp::DTO {
 
-    DTO_INIT(ErrorResponse, DTO)
+  DTO_INIT(ErrorResponse, DTO)
 
-    DTO_FIELD_INFO(status) { info->description = "Short status text"; }
-    DTO_FIELD(String, status);
+  DTO_FIELD_INFO(status) { info->description = "Short status text"; }
+  DTO_FIELD(String, status);
 
-    DTO_FIELD_INFO(code) { info->description = "Status code"; }
-    DTO_FIELD(Int32, code);
+  DTO_FIELD_INFO(code) { info->description = "Status code"; }
+  DTO_FIELD(Int32, code);
 
-    DTO_FIELD_INFO(message) { info->description = "Verbose message"; }
-    DTO_FIELD(String, message);
+  DTO_FIELD_INFO(message) { info->description = "Verbose message"; }
+  DTO_FIELD(String, message);
 };
 
-}// namespace NES::REST::DTO
+} // namespace NES::REST::DTO
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-#endif// NES_COORDINATOR_INCLUDE_REST_DTOS_ERRORRESPONSE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REST_DTOS_ERRORRESPONSE_HPP_

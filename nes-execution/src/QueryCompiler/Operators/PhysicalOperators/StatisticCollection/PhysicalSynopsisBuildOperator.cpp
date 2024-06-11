@@ -16,17 +16,31 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-const std::string& PhysicalSynopsisBuildOperator::getNameOfFieldToTrack() const { return nameOfFieldToTrack; }
+const std::string &
+PhysicalSynopsisBuildOperator::getNameOfFieldToTrack() const {
+  return nameOfFieldToTrack;
+}
 
-Statistic::StatisticMetricHash PhysicalSynopsisBuildOperator::getMetricHash() const { return metricHash; }
+Statistic::StatisticMetricHash
+PhysicalSynopsisBuildOperator::getMetricHash() const {
+  return metricHash;
+}
 
-const Windowing::WindowTypePtr& PhysicalSynopsisBuildOperator::getWindowType() const { return windowType; }
+const Windowing::WindowTypePtr &
+PhysicalSynopsisBuildOperator::getWindowType() const {
+  return windowType;
+}
 
-const Statistic::SendingPolicyPtr& PhysicalSynopsisBuildOperator::getSendingPolicy() const { return sendingPolicy; }
+const Statistic::SendingPolicyPtr &
+PhysicalSynopsisBuildOperator::getSendingPolicy() const {
+  return sendingPolicy;
+}
 
-PhysicalSynopsisBuildOperator::PhysicalSynopsisBuildOperator(const std::string_view nameOfFieldToTrack,
-                                                             const Statistic::StatisticMetricHash metricHash,
-                                                             const Windowing::WindowTypePtr windowType,
-                                                             const Statistic::SendingPolicyPtr sendingPolicy)
-    : nameOfFieldToTrack(nameOfFieldToTrack), metricHash(metricHash), windowType(windowType), sendingPolicy(sendingPolicy) {}
-}// namespace NES::QueryCompilation::PhysicalOperators
+PhysicalSynopsisBuildOperator::PhysicalSynopsisBuildOperator(
+    const std::string_view nameOfFieldToTrack,
+    const Statistic::StatisticMetricHash metricHash,
+    const Windowing::WindowTypePtr windowType,
+    const Statistic::SendingPolicyPtr sendingPolicy)
+    : nameOfFieldToTrack(nameOfFieldToTrack), metricHash(metricHash),
+      windowType(windowType), sendingPolicy(sendingPolicy) {}
+} // namespace NES::QueryCompilation::PhysicalOperators

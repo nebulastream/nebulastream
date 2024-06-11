@@ -23,27 +23,29 @@
 namespace NES {
 
 /**
- * @brief: This class is responsible for handling requests related to monitor the alive status of nodes from the coordinator
+ * @brief: This class is responsible for handling requests related to monitor
+ * the alive status of nodes from the coordinator
  */
 class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
-  public:
-    CoordinatorHealthCheckService(TopologyPtr topology,
-                                  std::string healthServiceName,
-                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+public:
+  CoordinatorHealthCheckService(
+      TopologyPtr topology, std::string healthServiceName,
+      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
-    /**
-     * Method to start the health checking
-     */
-    void startHealthCheck() override;
+  /**
+   * Method to start the health checking
+   */
+  void startHealthCheck() override;
 
-  private:
-    TopologyPtr topology;
-    WorkerRPCClientPtr workerRPCClient;
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+private:
+  TopologyPtr topology;
+  WorkerRPCClientPtr workerRPCClient;
+  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 
-using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
+using CoordinatorHealthCheckServicePtr =
+    std::shared_ptr<CoordinatorHealthCheckService>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_

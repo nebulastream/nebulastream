@@ -22,37 +22,43 @@ class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 /**
- * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated slices for global
- * tumbling and sliding window aggregations.
+ * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated
+ * slices for global tumbling and sliding window aggregations.
  */
 class KeyedSliceMergingHandler : public OperatorHandler {
 
-  public:
-    static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
-    /**
-     * @brief Constructor for the KeyedSliceMergingHandler
-     * @param windowDefinition
-     */
-    KeyedSliceMergingHandler();
+public:
+  static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
+  /**
+   * @brief Constructor for the KeyedSliceMergingHandler
+   * @param windowDefinition
+   */
+  KeyedSliceMergingHandler();
 
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
+  void setup(Runtime::Execution::PipelineExecutionContext &ctx,
+             uint64_t keySize, uint64_t valueSize);
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
+  void start(
+      Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+      uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
-    /**
-     * @brief Creates a new global slice for a specific slice merge task
-     * @param sliceMergeTask SliceMergeTask
-     * @return GlobalSlicePtr
-     */
-    KeyedSlicePtr createGlobalSlice(SliceMergeTask<KeyedSlice>* sliceMergeTask, uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
-    ~KeyedSliceMergingHandler() override;
+  void stop(Runtime::QueryTerminationType queryTerminationType,
+            Runtime::Execution::PipelineExecutionContextPtr
+                pipelineExecutionContext) override;
+  /**
+   * @brief Creates a new global slice for a specific slice merge task
+   * @param sliceMergeTask SliceMergeTask
+   * @return GlobalSlicePtr
+   */
+  KeyedSlicePtr
+  createGlobalSlice(SliceMergeTask<KeyedSlice> *sliceMergeTask,
+                    uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
+  ~KeyedSliceMergingHandler() override;
 
-  private:
-    uint64_t keySize;
-    uint64_t valueSize;
+private:
+  uint64_t keySize;
+  uint64_t valueSize;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEMERGINGHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEMERGINGHANDLER_HPP_

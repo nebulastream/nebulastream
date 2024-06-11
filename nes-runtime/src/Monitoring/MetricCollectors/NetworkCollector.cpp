@@ -25,32 +25,38 @@
 
 namespace NES::Monitoring {
 NetworkCollector::NetworkCollector()
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+    : MetricCollector(),
+      resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(NetworkMetrics::getSchema("")) {
-    NES_INFO("NetworkCollector: Init NetworkCollector with schema {}", schema->toString());
+  NES_INFO("NetworkCollector: Init NetworkCollector with schema {}",
+           schema->toString());
 }
 
-MetricCollectorType NetworkCollector::getType() { return MetricCollectorType::NETWORK_COLLECTOR; }
+MetricCollectorType NetworkCollector::getType() {
+  return MetricCollectorType::NETWORK_COLLECTOR;
+}
 
-bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
-    try {
-        NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
-        measuredVal.setNodeId(getWorkerId());
-        writeToBuffer(measuredVal, tupleBuffer, 0);
-        NES_TRACE("NetworkCollector: Written metrics for {}: {}", getWorkerId(), asJson(measuredVal));
-    } catch (const std::exception& ex) {
-        NES_ERROR("NetworkCollector: Error while collecting metrics {}", ex.what());
-        return false;
-    }
-    return true;
+bool NetworkCollector::fillBuffer(Runtime::TupleBuffer &tupleBuffer) {
+  try {
+    NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
+    measuredVal.setNodeId(getWorkerId());
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+    NES_TRACE("NetworkCollector: Written metrics for {}: {}", getWorkerId(),
+              asJson(measuredVal));
+  } catch (const std::exception &ex) {
+    NES_ERROR("NetworkCollector: Error while collecting metrics {}", ex.what());
+    return false;
+  }
+  return true;
 }
 
 SchemaPtr NetworkCollector::getSchema() { return schema; }
 
 const MetricPtr NetworkCollector::readMetric() const {
-    NetworkMetricsWrapper wrapper = resourceReader->readNetworkStats();
-    wrapper.setNodeId(getWorkerId());
-    return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedNetworkMetrics);
+  NetworkMetricsWrapper wrapper = resourceReader->readNetworkStats();
+  wrapper.setNodeId(getWorkerId());
+  return std::make_shared<Metric>(std::move(wrapper),
+                                  MetricType::WrappedNetworkMetrics);
 }
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

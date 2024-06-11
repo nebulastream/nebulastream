@@ -21,17 +21,17 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-     * @brief This expression cos the Expression
-     */
+ * @brief This expression cos the Expression
+ */
 class Log10Expression : public Expression {
-  public:
-    explicit Log10Expression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+public:
+  explicit Log10Expression(const ExpressionPtr &subExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr subExpression;
+private:
+  const ExpressionPtr subExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LOG10EXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LOG10EXPRESSION_HPP_

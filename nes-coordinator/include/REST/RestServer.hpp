@@ -36,7 +36,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
@@ -58,94 +58,92 @@ namespace Catalogs {
 namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
 namespace UDF {
 class UDFCatalog;
 using UdfCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
 namespace Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
-}// namespace Catalogs
+} // namespace Query
+} // namespace Catalogs
 
 /**
  * @brief : This class is responsible for starting the REST server.
  */
 class RestServer {
 
-  public:
-    /**
-     * @brief constructor for rest server
-     * @param host
-     * @param port
-     * @param coordinator
-     * @param queryCatalog
-     * @param sourceCatalogService
-     * @param topology
-     * @param globalExecutionPlan
-     * @param requestHandlerService
-     * @param monitoringService
-     * @param queryParsingService
-     * @param globalQueryPlan
-     * @param udfCatalog
-     * @param bufferManager
-     * @param corsAllowedOrigin
-     */
-    RestServer(std::string host,
-               uint16_t port,
-               NesCoordinatorWeakPtr coordinator,
-               Catalogs::Query::QueryCatalogPtr queryCatalog,
-               SourceCatalogServicePtr sourceCatalogService,
-               TopologyPtr topology,
-               Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-               RequestHandlerServicePtr requestHandlerService,
-               MonitoringServicePtr monitoringService,
-               QueryParsingServicePtr queryParsingService,
-               GlobalQueryPlanPtr globalQueryPlan,
-               Catalogs::UDF::UDFCatalogPtr udfCatalog,
-               Runtime::BufferManagerPtr bufferManager,
-               std::optional<std::string> corsAllowedOrigin);
+public:
+  /**
+   * @brief constructor for rest server
+   * @param host
+   * @param port
+   * @param coordinator
+   * @param queryCatalog
+   * @param sourceCatalogService
+   * @param topology
+   * @param globalExecutionPlan
+   * @param requestHandlerService
+   * @param monitoringService
+   * @param queryParsingService
+   * @param globalQueryPlan
+   * @param udfCatalog
+   * @param bufferManager
+   * @param corsAllowedOrigin
+   */
+  RestServer(std::string host, uint16_t port, NesCoordinatorWeakPtr coordinator,
+             Catalogs::Query::QueryCatalogPtr queryCatalog,
+             SourceCatalogServicePtr sourceCatalogService, TopologyPtr topology,
+             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+             RequestHandlerServicePtr requestHandlerService,
+             MonitoringServicePtr monitoringService,
+             QueryParsingServicePtr queryParsingService,
+             GlobalQueryPlanPtr globalQueryPlan,
+             Catalogs::UDF::UDFCatalogPtr udfCatalog,
+             Runtime::BufferManagerPtr bufferManager,
+             std::optional<std::string> corsAllowedOrigin);
 
-    /**
-     * @brief method to start the rest server, calls run() internally
-     * @return bool indicating success
-     */
-    bool start();
+  /**
+   * @brief method to start the rest server, calls run() internally
+   * @return bool indicating success
+   */
+  bool start();
 
-    /**
-     * @brief method called within start()
-     * starts the server after initializing controllers, endpoints and necessary components like connection handler, router.
-     */
-    void run();
+  /**
+   * @brief method called within start()
+   * starts the server after initializing controllers, endpoints and necessary
+   * components like connection handler, router.
+   */
+  void run();
 
-    /**
-     * @brief method to stop rest server
-     * @return bool indicating sucesss
-     */
-    bool stop();
+  /**
+   * @brief method to stop rest server
+   * @return bool indicating sucesss
+   */
+  bool stop();
 
-  private:
-    std::string host;
-    uint16_t port;
-    NesCoordinatorWeakPtr coordinator;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    RequestHandlerServicePtr requestHandlerService;
-    GlobalQueryPlanPtr globalQueryPlan;
-    SourceCatalogServicePtr sourceCatalogService;
-    TopologyPtr topology;
-    Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    MonitoringServicePtr monitoringService;
-    QueryParsingServicePtr queryParsingService;
-    Runtime::BufferManagerPtr bufferManager;
-    std::condition_variable conditionVariable;
-    std::mutex mutex;
-    std::optional<std::string> corsAllowedOrigin;
-    bool stopRequested{false};
+private:
+  std::string host;
+  uint16_t port;
+  NesCoordinatorWeakPtr coordinator;
+  Catalogs::Query::QueryCatalogPtr queryCatalog;
+  Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+  RequestHandlerServicePtr requestHandlerService;
+  GlobalQueryPlanPtr globalQueryPlan;
+  SourceCatalogServicePtr sourceCatalogService;
+  TopologyPtr topology;
+  Catalogs::UDF::UDFCatalogPtr udfCatalog;
+  MonitoringServicePtr monitoringService;
+  QueryParsingServicePtr queryParsingService;
+  Runtime::BufferManagerPtr bufferManager;
+  std::condition_variable conditionVariable;
+  std::mutex mutex;
+  std::optional<std::string> corsAllowedOrigin;
+  bool stopRequested{false};
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_REST_RESTSERVER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REST_RESTSERVER_HPP_

@@ -23,67 +23,71 @@ namespace NES::Runtime::Execution::Expressions {
 
 class Log2ExpressionTest : public Testing::BaseUnitTest {
 
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("Log2ExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Log2ExpressionTest test class.");
-    }
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("Log2ExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup Log2ExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down Log2ExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down Log2ExpressionTest test class.");
+  }
 };
 
 TEST_F(Log2ExpressionTest, evaluateLog2ExpressionInteger) {
-    auto expression = UnaryExpressionWrapper<Log2Expression>();
-    // Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>(8_s8));
-        ASSERT_EQ(resultValue, 3.0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>(8_s16));
-        ASSERT_EQ(resultValue, 3.0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(8_s32));
-        ASSERT_EQ(resultValue, 3.0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>(8_s64));
-        ASSERT_EQ(resultValue, 3.0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<Log2Expression>();
+  // Int8
+  {
+    auto resultValue = expression.eval(Value<Int8>(8_s8));
+    ASSERT_EQ(resultValue, 3.0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int16
+  {
+    auto resultValue = expression.eval(Value<Int16>(8_s16));
+    ASSERT_EQ(resultValue, 3.0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int32
+  {
+    auto resultValue = expression.eval(Value<Int32>(8_s32));
+    ASSERT_EQ(resultValue, 3.0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int64
+  {
+    auto resultValue = expression.eval(Value<Int64>(8_s64));
+    ASSERT_EQ(resultValue, 3.0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 TEST_F(Log2ExpressionTest, evaluateLog2ExpressionFloat) {
-    auto expression = UnaryExpressionWrapper<Log2Expression>();
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 8));
-        ASSERT_EQ(resultValue, 3.0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 8));
-        ASSERT_EQ(resultValue, 3.0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<Log2Expression>();
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)8));
+    ASSERT_EQ(resultValue, 3.0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>((double)8));
+    ASSERT_EQ(resultValue, 3.0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 /**
-    * @brief If we execute the expression on a boolean it should throw an exception.
-    */
+ * @brief If we execute the expression on a boolean it should throw an
+ * exception.
+ */
 TEST_F(Log2ExpressionTest, evaluateAsinExpressionOnWrongType) {
-    auto expression = UnaryExpressionWrapper<Log2Expression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+  auto expression = UnaryExpressionWrapper<Log2Expression>();
+  ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

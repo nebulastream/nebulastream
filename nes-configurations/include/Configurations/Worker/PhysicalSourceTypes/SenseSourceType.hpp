@@ -27,71 +27,81 @@ class SenseSourceType;
 using SenseSourceTypePtr = std::shared_ptr<SenseSourceType>;
 
 /**
-* @brief Configuration object for source config
-*/
+ * @brief Configuration object for source config
+ */
 class SenseSourceType : public PhysicalSourceType {
 
-  public:
-    /**
-     * @brief create a SenseSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
-     * @return SenseSourceConfigPtr
-     */
-    static SenseSourceTypePtr create(const std::string& logicalSourceName,
-                                     const std::string& physicalSourceName,
-                                     std::map<std::string, std::string> sourceConfigMap);
+public:
+  /**
+   * @brief create a SenseSourceConfigPtr object
+   * @param sourceConfigMap inputted config options
+   * @return SenseSourceConfigPtr
+   */
+  static SenseSourceTypePtr
+  create(const std::string &logicalSourceName,
+         const std::string &physicalSourceName,
+         std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief create a SenseSourceConfigPtr object
-     * @param yamlConfig inputted config options
-     * @return SenseSourceConfigPtr
-     */
-    static SenseSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+  /**
+   * @brief create a SenseSourceConfigPtr object
+   * @param yamlConfig inputted config options
+   * @return SenseSourceConfigPtr
+   */
+  static SenseSourceTypePtr create(const std::string &logicalSourceName,
+                                   const std::string &physicalSourceName,
+                                   Yaml::Node yamlConfig);
 
-    /**
-     * @brief create a SenseSourceConfigPtr object
-     * @return SenseSourceConfigPtr
-     */
-    static SenseSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+  /**
+   * @brief create a SenseSourceConfigPtr object
+   * @return SenseSourceConfigPtr
+   */
+  static SenseSourceTypePtr create(const std::string &logicalSourceName,
+                                   const std::string &physicalSourceName);
 
-    ~SenseSourceType() = default;
+  ~SenseSourceType() = default;
 
-    std::string toString() override;
+  std::string toString() override;
 
-    bool equal(const PhysicalSourceTypePtr& other) override;
+  bool equal(const PhysicalSourceTypePtr &other) override;
 
-    /**
-     * @brief Get udsf
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getUdfs() const;
+  /**
+   * @brief Get udsf
+   */
+  [[nodiscard]] std::shared_ptr<
+      Configurations::ConfigurationOption<std::string>>
+  getUdfs() const;
 
-    /**
-     * @brief Set udsf
-     */
-    void setUdfs(const std::string& udfs);
+  /**
+   * @brief Set udsf
+   */
+  void setUdfs(const std::string &udfs);
 
-    void reset() override;
+  void reset() override;
 
-  private:
-    /**
-     * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
-     */
-    SenseSourceType(const std::string& logicalSourceName,
-                    const std::string& physicalSourceName,
-                    std::map<std::string, std::string> sourceConfigMap);
+private:
+  /**
+   * @brief constructor to create a new Sense source config object initialized
+   * with values form sourceConfigMap
+   */
+  SenseSourceType(const std::string &logicalSourceName,
+                  const std::string &physicalSourceName,
+                  std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
-     */
-    SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+  /**
+   * @brief constructor to create a new Sense source config object initialized
+   * with values form sourceConfigMap
+   */
+  SenseSourceType(const std::string &logicalSourceName,
+                  const std::string &physicalSourceName, Yaml::Node yamlConfig);
 
-    /**
-     * @brief constructor to create a new Sense source config object initialized with default values
-     */
-    SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+  /**
+   * @brief constructor to create a new Sense source config object initialized
+   * with default values
+   */
+  SenseSourceType(const std::string &logicalSourceName,
+                  const std::string &physicalSourceName);
 
-    Configurations::StringConfigOption udfs;
+  Configurations::StringConfigOption udfs;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_

@@ -24,26 +24,26 @@
 namespace NES::Nautilus::Interface {
 
 class HashTest : public Testing::BaseUnitTest {
-  public:
-    std::unique_ptr<HashFunction> hf;
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("HashTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup HashTest test class.");
-    }
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        hf = std::make_unique<MurMur3HashFunction>();
-    }
+public:
+  std::unique_ptr<HashFunction> hf;
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("HashTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup HashTest test class.");
+  }
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    hf = std::make_unique<MurMur3HashFunction>();
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down HashTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() { NES_INFO("Tear down HashTest test class."); }
 };
 
 TEST_F(HashTest, IntHashTest) {
-    auto f1 = Value<Int8>(42_s8);
-    auto res = hf->calculate(f1);
-    ASSERT_EQ(res, 9297814887077134198_u64);
+  auto f1 = Value<Int8>(42_s8);
+  auto res = hf->calculate(f1);
+  ASSERT_EQ(res, 9297814887077134198_u64);
 }
 
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface

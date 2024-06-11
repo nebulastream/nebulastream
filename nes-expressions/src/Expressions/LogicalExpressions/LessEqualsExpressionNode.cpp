@@ -16,30 +16,37 @@
 #include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
-LessEqualsExpressionNode::LessEqualsExpressionNode(LessEqualsExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+LessEqualsExpressionNode::LessEqualsExpressionNode(
+    LessEqualsExpressionNode *other)
+    : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr LessEqualsExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
-    auto lessThen = std::make_shared<LessEqualsExpressionNode>();
-    lessThen->setChildren(left, right);
-    return lessThen;
+ExpressionNodePtr
+LessEqualsExpressionNode::create(const ExpressionNodePtr &left,
+                                 const ExpressionNodePtr &right) {
+  auto lessThen = std::make_shared<LessEqualsExpressionNode>();
+  lessThen->setChildren(left, right);
+  return lessThen;
 }
 
-bool LessEqualsExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LessEqualsExpressionNode>()) {
-        auto other = rhs->as<LessEqualsExpressionNode>();
-        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
-    }
-    return false;
+bool LessEqualsExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<LessEqualsExpressionNode>()) {
+    auto other = rhs->as<LessEqualsExpressionNode>();
+    return this->getLeft()->equal(other->getLeft()) &&
+           this->getRight()->equal(other->getRight());
+  }
+  return false;
 }
 
 std::string LessEqualsExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << children[0]->toString() << "<=" << children[1]->toString();
-    return ss.str();
+  std::stringstream ss;
+  ss << children[0]->toString() << "<=" << children[1]->toString();
+  return ss.str();
 }
 
 ExpressionNodePtr LessEqualsExpressionNode::copy() {
-    return LessEqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+  return LessEqualsExpressionNode::create(
+      children[0]->as<ExpressionNode>()->copy(),
+      children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

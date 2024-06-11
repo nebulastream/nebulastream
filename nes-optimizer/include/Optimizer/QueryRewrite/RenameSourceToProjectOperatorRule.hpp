@@ -20,30 +20,32 @@
 namespace NES::Optimizer {
 
 class RenameSourceToProjectOperatorRule;
-using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
+using RenameSourceToProjectOperatorRulePtr =
+    std::shared_ptr<RenameSourceToProjectOperatorRule>;
 
 /**
- * @brief This rule is responsible for transforming Source Rename operator to the projection operator
+ * @brief This rule is responsible for transforming Source Rename operator to
+ * the projection operator
  */
 class RenameSourceToProjectOperatorRule : public BaseRewriteRule {
 
-  public:
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
-    virtual ~RenameSourceToProjectOperatorRule() = default;
+public:
+  QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+  virtual ~RenameSourceToProjectOperatorRule() = default;
 
-    static RenameSourceToProjectOperatorRulePtr create();
+  static RenameSourceToProjectOperatorRulePtr create();
 
-  private:
-    RenameSourceToProjectOperatorRule() = default;
+private:
+  RenameSourceToProjectOperatorRule() = default;
 
-    /**
-     * @brief Convert input operator into project operator
-     * @param operatorNode : the rename source operator
-     * @return pointer to the converted project operator
-     */
-    static OperatorPtr convert(const OperatorPtr& operatorNode);
+  /**
+   * @brief Convert input operator into project operator
+   * @param operatorNode : the rename source operator
+   * @return pointer to the converted project operator
+   */
+  static OperatorPtr convert(const OperatorPtr &operatorNode);
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_RENAMESOURCETOPROJECTOPERATORRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_RENAMESOURCETOPROJECTOPERATORRULE_HPP_

@@ -18,9 +18,14 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 namespace NES {
 
-TaskExecutionException::TaskExecutionException(Runtime::Execution::SuccessorExecutablePipeline pipeline, std::string&& message)
+TaskExecutionException::TaskExecutionException(
+    Runtime::Execution::SuccessorExecutablePipeline pipeline,
+    std::string &&message)
     : Exceptions::RuntimeException(message), pipeline(pipeline) {}
 
-Runtime::Execution::SuccessorExecutablePipeline TaskExecutionException::getExecutable() const { return pipeline; }
+Runtime::Execution::SuccessorExecutablePipeline
+TaskExecutionException::getExecutable() const {
+  return pipeline;
+}
 
-}// namespace NES
+} // namespace NES

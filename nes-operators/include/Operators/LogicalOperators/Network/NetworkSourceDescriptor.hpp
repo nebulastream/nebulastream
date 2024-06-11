@@ -24,90 +24,89 @@
 namespace NES::Network {
 
 /**
- * @brief Descriptor defining properties used for creating physical zmq source inside the network stack
+ * @brief Descriptor defining properties used for creating physical zmq source
+ * inside the network stack
  */
 class NetworkSourceDescriptor : public SourceDescriptor {
 
-  public:
-    /**
-     * @brief The constructor for the network source descriptor
-     * @param schema
-     * @param nesPartition
-     * @param nodeLocation
-     * @param initialVersion the initial version of the source
-     * @param uniqueNetworkSourceIdentifier a unique identifier for the source
-     * @return instance of network source descriptor
-     */
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      const NesPartition& nesPartition,
-                                      const NodeLocation& nodeLocation,
-                                      std::chrono::milliseconds waitTime,
-                                      uint32_t retryTimes,
-                                      DecomposedQueryPlanVersion version,
-                                      OperatorId uniqueNetworkSourceId);
+public:
+  /**
+   * @brief The constructor for the network source descriptor
+   * @param schema
+   * @param nesPartition
+   * @param nodeLocation
+   * @param initialVersion the initial version of the source
+   * @param uniqueNetworkSourceIdentifier a unique identifier for the source
+   * @return instance of network source descriptor
+   */
+  static SourceDescriptorPtr
+  create(SchemaPtr schema, const NesPartition &nesPartition,
+         const NodeLocation &nodeLocation, std::chrono::milliseconds waitTime,
+         uint32_t retryTimes, DecomposedQueryPlanVersion version,
+         OperatorId uniqueNetworkSourceId);
 
-    /**
-     * @brief equal method for the NetworkSourceDescriptor
-     * @param other
-     * @return true if equal, else false
-     */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+  /**
+   * @brief equal method for the NetworkSourceDescriptor
+   * @param other
+   * @return true if equal, else false
+   */
+  [[nodiscard]] bool equal(SourceDescriptorPtr const &other) const override;
 
-    /**
-     * @brief creates a string representation of the NetworkSourceDescriptor
-     * @return the string representation
-     */
-    std::string toString() const override;
+  /**
+   * @brief creates a string representation of the NetworkSourceDescriptor
+   * @return the string representation
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief getter for the nes partition
-     * @return the nesPartition
-     */
-    NesPartition getNesPartition() const;
+  /**
+   * @brief getter for the nes partition
+   * @return the nesPartition
+   */
+  NesPartition getNesPartition() const;
 
-    NodeLocation getNodeLocation() const;
+  NodeLocation getNodeLocation() const;
 
-    /**
-     * @brief getter for the wait time
-     * @return the wait time
-     */
-    std::chrono::milliseconds getWaitTime() const;
+  /**
+   * @brief getter for the wait time
+   * @return the wait time
+   */
+  std::chrono::milliseconds getWaitTime() const;
 
-    /**
-     * @brief getter for the retry times
-     * @return the retry times
-     */
-    uint8_t getRetryTimes() const;
+  /**
+   * @brief getter for the retry times
+   * @return the retry times
+   */
+  uint8_t getRetryTimes() const;
 
-    /**
-     * @brief getter for the version
-     * @return the version
-     */
-    uint16_t getVersion() const;
+  /**
+   * @brief getter for the version
+   * @return the version
+   */
+  uint16_t getVersion() const;
 
-    OperatorId getUniqueId() const;
+  OperatorId getUniqueId() const;
 
-    SourceDescriptorPtr copy() override;
+  SourceDescriptorPtr copy() override;
 
-  private:
-    explicit NetworkSourceDescriptor(SchemaPtr schema,
-                                     const NesPartition& nesPartition,
-                                     const NodeLocation& nodeLocation,
-                                     std::chrono::milliseconds waitTime,
-                                     uint32_t retryTimes,
-                                     DecomposedQueryPlanVersion version,
-                                     OperatorId uniqueNetworkSourceId);
+private:
+  explicit NetworkSourceDescriptor(SchemaPtr schema,
+                                   const NesPartition &nesPartition,
+                                   const NodeLocation &nodeLocation,
+                                   std::chrono::milliseconds waitTime,
+                                   uint32_t retryTimes,
+                                   DecomposedQueryPlanVersion version,
+                                   OperatorId uniqueNetworkSourceId);
 
-    NesPartition nesPartition;
-    NodeLocation nodeLocation;
-    std::chrono::milliseconds waitTime;
-    uint8_t retryTimes;
-    DecomposedQueryPlanVersion version;
-    OperatorId uniqueNetworkSourceId;
+  NesPartition nesPartition;
+  NodeLocation nodeLocation;
+  std::chrono::milliseconds waitTime;
+  uint8_t retryTimes;
+  DecomposedQueryPlanVersion version;
+  OperatorId uniqueNetworkSourceId;
 };
 
 using NetworkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
 
-}// namespace NES::Network
+} // namespace NES::Network
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NETWORKSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NETWORKSOURCEDESCRIPTOR_HPP_

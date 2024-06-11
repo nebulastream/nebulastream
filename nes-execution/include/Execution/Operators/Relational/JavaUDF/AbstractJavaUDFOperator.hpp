@@ -26,41 +26,49 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief An abstract java udf operator, which is used by the Map and Flatmap operator.
- * Its state is managed inside a JavaUDFOperatorHandler.
+ * @brief An abstract java udf operator, which is used by the Map and Flatmap
+ * operator. Its state is managed inside a JavaUDFOperatorHandler.
  */
 class AbstractJavaUDFOperator : public ExecutableOperator {
-  protected:
-    class LocalUDFState : public OperatorState {
-      public:
-        explicit LocalUDFState(Value<MemRef>& handler, Value<MemRef>& instance) : handler(handler), instance(instance) {}
-        Value<MemRef> handler;
-        Value<MemRef> instance;
-    };
-
+protected:
+  class LocalUDFState : public OperatorState {
   public:
-    /**
-     * @brief Creates a AbstractJavaUDFOperator operator
-     * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
-     * @param operatorInputSchema The input schema of the flat map operator.
-     * @param operatorOutputSchema The output schema of the flat map operator.
-     */
-    AbstractJavaUDFOperator(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema);
-    void setup(ExecutionContext& executionCtx) const override;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    explicit LocalUDFState(Value<MemRef> &handler, Value<MemRef> &instance)
+        : handler(handler), instance(instance) {}
+    Value<MemRef> handler;
+    Value<MemRef> instance;
+  };
 
-  protected:
-    const uint64_t operatorHandlerIndex;
+public:
+  /**
+   * @brief Creates a AbstractJavaUDFOperator operator
+   * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
+   * @param operatorInputSchema The input schema of the flat map operator.
+   * @param operatorOutputSchema The output schema of the flat map operator.
+   */
+  AbstractJavaUDFOperator(uint64_t operatorHandlerIndex,
+                          SchemaPtr operatorInputSchema,
+                          SchemaPtr operatorOutputSchema);
+  void setup(ExecutionContext &executionCtx) const override;
+  void open(ExecutionContext &executionCtx,
+            RecordBuffer &recordBuffer) const override;
+  void close(ExecutionContext &executionCtx,
+             RecordBuffer &recordBuffer) const override;
 
-    // These needs to be the same Schemas as used in the operator handler.
-    // We need them here to support some functionality during for-loops in execute where we cannot access the handler.
-    const SchemaPtr operatorInputSchema, operatorOutputSchema;
+protected:
+  const uint64_t operatorHandlerIndex;
 
-    Nautilus::Value<MemRef> createInputPojo(Record& record, Value<MemRef>& handler) const;
-    Record extractRecordFromPojo(const Value<MemRef>& handler, const Value<MemRef>& outputPojoPtr) const;
+  // These needs to be the same Schemas as used in the operator handler.
+  // We need them here to support some functionality during for-loops in execute
+  // where we cannot access the handler.
+  const SchemaPtr operatorInputSchema, operatorOutputSchema;
+
+  Nautilus::Value<MemRef> createInputPojo(Record &record,
+                                          Value<MemRef> &handler) const;
+  Record extractRecordFromPojo(const Value<MemRef> &handler,
+                               const Value<MemRef> &outputPojoPtr) const;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_ABSTRACTJAVAUDFOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_ABSTRACTJAVAUDFOPERATOR_HPP_

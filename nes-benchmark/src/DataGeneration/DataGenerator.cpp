@@ -32,64 +32,77 @@
 
 namespace NES::Benchmark::DataGeneration {
 
-Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
+Runtime::MemoryLayouts::MemoryLayoutPtr
+DataGenerator::getMemoryLayout(size_t bufferSize) {
 
-    auto schema = this->getSchema();
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
-        return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-        return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+  auto schema = this->getSchema();
+  if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+    return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
+  } else if (schema->getLayoutType() ==
+             Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+  }
+
+  return nullptr;
+}
+
+NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() {
+  return bufferManager->getBufferBlocking();
+}
+
+DataGeneratorPtr
+DataGenerator::createGeneratorByName(std::string type,
+                                     Yaml::Node generatorNode) {
+
+  NES_INFO("DataGenerator created from type: {}", type)
+
+  if (type.empty() || type == "Default") {
+    return std::make_unique<DefaultDataGenerator>(/* minValue */ 0,
+                                                  /* maxValue */ 1000);
+  } else if (type == "Uniform") {
+    if (generatorNode["minValue"].IsNone() ||
+        generatorNode["maxValue"].IsNone()) {
+      NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for "
+                              "a Uniform Datagenerator!");
     }
 
-    return nullptr;
-}
-
-NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() { return bufferManager->getBufferBlocking(); }
-
-DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::Node generatorNode) {
-
-    NES_INFO("DataGenerator created from type: {}", type)
-
-    if (type.empty() || type == "Default") {
-        return std::make_unique<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
-    } else if (type == "Uniform") {
-        if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
-            NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Uniform Datagenerator!");
-        }
-
-        auto minValue = generatorNode["minValue"].As<uint64_t>();
-        auto maxValue = generatorNode["maxValue"].As<uint64_t>();
-        return std::make_unique<DefaultDataGenerator>(minValue, maxValue);
-    } else if (type == "NEBit") {
-        return std::make_unique<NEBitDataGenerator>();
-    } else if (type == "NEAuction") {
-        return std::make_unique<NEAuctionDataGenerator>();
-    } else if (type == "Zipfian") {
-        if (generatorNode["alpha"].IsNone() || generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
-            NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Zipfian Datagenerator!");
-        }
-
-        auto alpha = generatorNode["alpha"].As<double>();
-        auto minValue = generatorNode["minValue"].As<uint64_t>();
-        auto maxValue = generatorNode["maxValue"].As<uint64_t>();
-        return std::make_unique<ZipfianDataGenerator>(alpha, minValue, maxValue);
-
-    } else if (NES::Util::toUpperCase(type) == "YSB" || type == "YSBKafka") {
-        return std::make_unique<YSBDataGenerator>();
-    } else if (type == "SmartGrid") {
-        return std::make_unique<SmartGridDataGenerator>();
-    } else if (type == "LinearRoad") {
-        return std::make_unique<LinearRoadDataGenerator>();
-    } else if (type == "ClusterMonitoring") {
-        return std::make_unique<ClusterMonitoringDataGenerator>();
-    } else if (type == "ManufacturingEquipment") {
-        return std::make_unique<ManufacturingEquipmentDataGenerator>();
-    } else {
-        NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
+    auto minValue = generatorNode["minValue"].As<uint64_t>();
+    auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+    return std::make_unique<DefaultDataGenerator>(minValue, maxValue);
+  } else if (type == "NEBit") {
+    return std::make_unique<NEBitDataGenerator>();
+  } else if (type == "NEAuction") {
+    return std::make_unique<NEAuctionDataGenerator>();
+  } else if (type == "Zipfian") {
+    if (generatorNode["alpha"].IsNone() || generatorNode["minValue"].IsNone() ||
+        generatorNode["maxValue"].IsNone()) {
+      NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for "
+                              "a Zipfian Datagenerator!");
     }
+
+    auto alpha = generatorNode["alpha"].As<double>();
+    auto minValue = generatorNode["minValue"].As<uint64_t>();
+    auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+    return std::make_unique<ZipfianDataGenerator>(alpha, minValue, maxValue);
+
+  } else if (NES::Util::toUpperCase(type) == "YSB" || type == "YSBKafka") {
+    return std::make_unique<YSBDataGenerator>();
+  } else if (type == "SmartGrid") {
+    return std::make_unique<SmartGridDataGenerator>();
+  } else if (type == "LinearRoad") {
+    return std::make_unique<LinearRoadDataGenerator>();
+  } else if (type == "ClusterMonitoring") {
+    return std::make_unique<ClusterMonitoringDataGenerator>();
+  } else if (type == "ManufacturingEquipment") {
+    return std::make_unique<ManufacturingEquipmentDataGenerator>();
+  } else {
+    NES_THROW_RUNTIME_ERROR("DataGenerator " << type
+                                             << " could not been parsed!");
+  }
 }
 
-void DataGenerator::setBufferManager(Runtime::BufferManagerPtr newBufferManager) {
-    DataGenerator::bufferManager = newBufferManager;
+void DataGenerator::setBufferManager(
+    Runtime::BufferManagerPtr newBufferManager) {
+  DataGenerator::bufferManager = newBufferManager;
 }
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

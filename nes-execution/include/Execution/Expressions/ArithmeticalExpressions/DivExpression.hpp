@@ -19,18 +19,20 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression divides the leftSubExpression by the rightSubExpression.
+ * @brief This expression divides the leftSubExpression by the
+ * rightSubExpression.
  */
 class DivExpression : public Expression {
-  public:
-    DivExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+public:
+  DivExpression(ExpressionPtr leftSubExpression,
+                ExpressionPtr rightSubExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSION_HPP_

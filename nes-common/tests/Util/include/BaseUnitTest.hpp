@@ -24,54 +24,59 @@ namespace NES::Testing {
 
 namespace detail {
 class TestWaitingHelper {
-  public:
-    TestWaitingHelper();
-    void startWaitingThread(std::string testName);
-    void completeTest();
-    void failTest();
+public:
+  TestWaitingHelper();
+  void startWaitingThread(std::string testName);
+  void completeTest();
+  void failTest();
 
-  private:
-    std::unique_ptr<std::thread> waitThread;
-    std::shared_ptr<std::promise<bool>> testCompletion;
-    std::atomic<bool> testCompletionSet{false};
-    static constexpr uint64_t WAIT_TIME_SETUP = 5;
+private:
+  std::unique_ptr<std::thread> waitThread;
+  std::shared_ptr<std::promise<bool>> testCompletion;
+  std::atomic<bool> testCompletionSet{false};
+  static constexpr uint64_t WAIT_TIME_SETUP = 5;
 };
 
 /**
- * @brief This class is used to generate source names that include an ascending counter.
+ * @brief This class is used to generate source names that include an ascending
+ * counter.
  */
 class TestSourceNameHelper {
-  public:
-    TestSourceNameHelper();
+public:
+  TestSourceNameHelper();
 
-    /**
-     * @brief Returns the string "source" concatenated with the source counter. The latter is then increased.
-     * @return std::string
-     */
-    std::string operator*();
+  /**
+   * @brief Returns the string "source" concatenated with the source counter.
+   * The latter is then increased.
+   * @return std::string
+   */
+  std::string operator*();
 
-  private:
-    uint64_t srcCnt;
+private:
+  uint64_t srcCnt;
 };
-}// namespace detail
+} // namespace detail
 
-class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper {
-    struct Deleter {
-        void operator()(void*) {}
-    };
+class BaseUnitTest : public testing::Test,
+                     public Exceptions::ErrorListener,
+                     public detail::TestWaitingHelper {
+  struct Deleter {
+    void operator()(void *) {}
+  };
 
-  public:
-    void SetUp() override;
-    void TearDown() override;
-    virtual void onFatalError(int signalNumber, std::string callstack) override;
-    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
+public:
+  void SetUp() override;
+  void TearDown() override;
+  virtual void onFatalError(int signalNumber, std::string callstack) override;
+  virtual void onFatalException(std::shared_ptr<std::exception> exception,
+                                std::string callstack) override;
 
-    detail::TestSourceNameHelper srcName;
+  detail::TestSourceNameHelper srcName;
 
-  private:
-    std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
+private:
+  std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
 };
 
-}// namespace NES::Testing
+} // namespace NES::Testing
 
-#endif// NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_

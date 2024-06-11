@@ -19,51 +19,55 @@
 namespace NES {
 
 class FieldAssignmentExpressionNode;
-using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+using FieldAssignmentExpressionNodePtr =
+    std::shared_ptr<FieldAssignmentExpressionNode>;
 /**
- * @brief A FieldAssignmentExpression represents the assignment of an expression result to a specific field.
+ * @brief A FieldAssignmentExpression represents the assignment of an expression
+ * result to a specific field.
  */
 class FieldAssignmentExpressionNode : public BinaryExpressionNode {
-  public:
-    explicit FieldAssignmentExpressionNode(DataTypePtr stamp);
+public:
+  explicit FieldAssignmentExpressionNode(DataTypePtr stamp);
 
-    /**
-     * @brief Create untyped field read.
-     */
-    static FieldAssignmentExpressionNodePtr create(const FieldAccessExpressionNodePtr& fieldAccess,
-                                                   const ExpressionNodePtr& expressionNodePtr);
+  /**
+   * @brief Create untyped field read.
+   */
+  static FieldAssignmentExpressionNodePtr
+  create(const FieldAccessExpressionNodePtr &fieldAccess,
+         const ExpressionNodePtr &expressionNodePtr);
 
-    [[nodiscard]] std::string toString() const override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
 
-    /**
-     * @brief return the field to which a new value is assigned.
-     * @return FieldAccessExpressionNodePtr
-     */
-    FieldAccessExpressionNodePtr getField() const;
+  /**
+   * @brief return the field to which a new value is assigned.
+   * @return FieldAccessExpressionNodePtr
+   */
+  FieldAccessExpressionNodePtr getField() const;
 
-    /**
-     * @brief returns the expressions, which calculates the new value.
-     * @return ExpressionNodePtr
-     */
-    ExpressionNodePtr getAssignment() const;
+  /**
+   * @brief returns the expressions, which calculates the new value.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr getAssignment() const;
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  protected:
-    explicit FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other);
+protected:
+  explicit FieldAssignmentExpressionNode(FieldAssignmentExpressionNode *other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDASSIGNMENTEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDASSIGNMENTEXPRESSIONNODE_HPP_

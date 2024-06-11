@@ -23,34 +23,42 @@ namespace NES::Runtime::Execution::Operators {
 
 BatchKeyedAggregationHandler::BatchKeyedAggregationHandler() {}
 
-Nautilus::Interface::ChainedHashMap* BatchKeyedAggregationHandler::getThreadLocalStore(WorkerThreadId workerThreadId) {
-    auto index = workerThreadId % threadLocalSliceStores.size();
-    return threadLocalSliceStores[index].get();
+Nautilus::Interface::ChainedHashMap *
+BatchKeyedAggregationHandler::getThreadLocalStore(
+    WorkerThreadId workerThreadId) {
+  auto index = workerThreadId % threadLocalSliceStores.size();
+  return threadLocalSliceStores[index].get();
 }
 
-void BatchKeyedAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
-                                         uint64_t keySize,
-                                         uint64_t valueSize) {
-    // TODO: provide a way to indicate the number of keys from the outside.
-    auto numberOfKeys = 1000;
-    for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
-        auto hashMap =
-            std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
-        threadLocalSliceStores.emplace_back(std::move(hashMap));
-    }
+void BatchKeyedAggregationHandler::setup(
+    Runtime::Execution::PipelineExecutionContext &ctx, uint64_t keySize,
+    uint64_t valueSize) {
+  // TODO: provide a way to indicate the number of keys from the outside.
+  auto numberOfKeys = 1000;
+  for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
+    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+    auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(
+        keySize, valueSize, numberOfKeys, std::move(allocator));
+    threadLocalSliceStores.emplace_back(std::move(hashMap));
+  }
 }
 
-void BatchKeyedAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
-    NES_DEBUG("start GlobalSlicePreAggregationHandler");
+void BatchKeyedAggregationHandler::start(
+    Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
+  NES_DEBUG("start GlobalSlicePreAggregationHandler");
 }
 
-void BatchKeyedAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                        Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: {}", queryTerminationType);
+void BatchKeyedAggregationHandler::stop(
+    Runtime::QueryTerminationType queryTerminationType,
+    Runtime::Execution::PipelineExecutionContextPtr) {
+  NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: {}",
+            queryTerminationType);
 }
-BatchKeyedAggregationHandler::~BatchKeyedAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
+BatchKeyedAggregationHandler::~BatchKeyedAggregationHandler() {
+  NES_DEBUG("~GlobalSlicePreAggregationHandler");
+}
 
-void BatchKeyedAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
+void BatchKeyedAggregationHandler::postReconfigurationCallback(
+    Runtime::ReconfigurationMessage &) {}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

@@ -26,52 +26,53 @@ using NodePtr = std::shared_ptr<Node>;
  * We first iterate over all children and then process nodes at the same level.
  */
 class DepthFirstNodeIterator {
+public:
+  explicit DepthFirstNodeIterator(NodePtr start);
+  DepthFirstNodeIterator() = default;
+
+  class iterator : public std::iterator<std::forward_iterator_tag, NodePtr,
+                                        NodePtr, NodePtr *, NodePtr &> {
+    friend class DepthFirstNodeIterator;
+
   public:
-    explicit DepthFirstNodeIterator(NodePtr start);
-    DepthFirstNodeIterator() = default;
-
-    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
-        friend class DepthFirstNodeIterator;
-
-      public:
-        /**
-         * @brief Moves the iterator to the next node.
-         * If we reach the end of the iterator we will ignore this operation.
-         * @return iterator
-         */
-        iterator& operator++();
-
-        /**
-         * @brief Checks if the iterators are not at the same position.
-         */
-        bool operator!=(const iterator& other) const;
-
-        /**
-         * @brief Gets the node at the current iterator position.
-         * @return
-         */
-        NodePtr operator*();
-
-      private:
-        explicit iterator(const NodePtr& current);
-        explicit iterator();
-        std::stack<NodePtr> workStack;
-    };
+    /**
+     * @brief Moves the iterator to the next node.
+     * If we reach the end of the iterator we will ignore this operation.
+     * @return iterator
+     */
+    iterator &operator++();
 
     /**
-     * @brief Starts a new iterator at the start node.
-     * @return iterator.
+     * @brief Checks if the iterators are not at the same position.
      */
-    iterator begin();
+    bool operator!=(const iterator &other) const;
+
     /**
-     * @brief The end of this iterator has an empty work stack.
-     * @return iterator.
+     * @brief Gets the node at the current iterator position.
+     * @return
      */
-    static iterator end();
+    NodePtr operator*();
 
   private:
-    NodePtr start;
-};
-}// namespace NES
+    explicit iterator(const NodePtr &current);
+    explicit iterator();
+    std::stack<NodePtr> workStack;
+  };
 
-#endif// NES_COMMON_INCLUDE_NODES_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
+  /**
+   * @brief Starts a new iterator at the start node.
+   * @return iterator.
+   */
+  iterator begin();
+  /**
+   * @brief The end of this iterator has an empty work stack.
+   * @return iterator.
+   */
+  static iterator end();
+
+private:
+  NodePtr start;
+};
+} // namespace NES
+
+#endif // NES_COMMON_INCLUDE_NODES_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_

@@ -21,7 +21,7 @@
 
 namespace NES::Nautilus::IR::Types {
 
-Stamp::Stamp(const TypeIdentifier* typeIdentifier) : Typed(typeIdentifier) {}
+Stamp::Stamp(const TypeIdentifier *typeIdentifier) : Typed(typeIdentifier) {}
 
 bool Stamp::isInteger() { return isa<IntegerStamp>(*this); }
 
@@ -34,4 +34,4 @@ bool Stamp::isBoolean() { return isa<BooleanStamp>(*this); }
 
 bool Stamp::isVoid() { return isa<VoidStamp>(*this); }
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types

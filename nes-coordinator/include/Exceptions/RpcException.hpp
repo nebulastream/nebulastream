@@ -27,27 +27,28 @@ namespace Exceptions {
  * @brief This exception indicates the failure of an rpc
  */
 class RpcException : public RequestExecutionException {
-  public:
-    /**
-     * @brief Constructor
-     * @param message a human readable message describing the error
-     * @param failedRpcRequests information about the failed RPC requests
-     */
-    explicit RpcException(const std::string& message, std::vector<RpcAsyncRequest> failedRpcRequests);
+public:
+  /**
+   * @brief Constructor
+   * @param message a human readable message describing the error
+   * @param failedRpcRequests information about the failed RPC requests
+   */
+  explicit RpcException(const std::string &message,
+                        std::vector<RpcAsyncRequest> failedRpcRequests);
 
-    [[nodiscard]] const char* what() const noexcept override;
+  [[nodiscard]] const char *what() const noexcept override;
 
-    /**
-     * @brief get a list of the rpcs that failed
-     * @return a list of structs containing a pointer to the completion queue and the count of operations performed in
-     * that queue
-     */
-    std::vector<RpcAsyncRequest> getFailedCalls();
+  /**
+   * @brief get a list of the rpcs that failed
+   * @return a list of structs containing a pointer to the completion queue and
+   * the count of operations performed in that queue
+   */
+  std::vector<RpcAsyncRequest> getFailedCalls();
 
-  private:
-    std::string message;
-    std::vector<RpcAsyncRequest> failedRpcs;
+private:
+  std::string message;
+  std::vector<RpcAsyncRequest> failedRpcs;
 };
-}// namespace Exceptions
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_
+} // namespace Exceptions
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_

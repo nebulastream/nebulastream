@@ -22,29 +22,37 @@
 
 namespace NES::Windowing {
 
-TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic)
+TimeBasedWindowType::TimeBasedWindowType(
+    TimeCharacteristicPtr timeCharacteristic)
     : timeCharacteristic(std::move(timeCharacteristic)) {}
 
-bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
-    if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime) {
-        auto fieldName = timeCharacteristic->getField()->getName();
-        auto existingField = schema->getField(fieldName);
-        if (!existingField->getDataType()->isInteger()) {
-            NES_ERROR("TimeBasedWindow should use a uint for time field {}", fieldName);
-            throw InvalidFieldException("TimeBasedWindow should use a uint for time field " + fieldName);
-        } else if (existingField) {
-            timeCharacteristic->getField()->setName(existingField->getName());
-            return true;
-        } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
-            return true;
-        } else {
-            NES_ERROR("TimeBasedWindow using a non existing time field  {}", fieldName);
-            throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
-        }
+bool TimeBasedWindowType::inferStamp(const SchemaPtr &schema) {
+  if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime) {
+    auto fieldName = timeCharacteristic->getField()->getName();
+    auto existingField = schema->getField(fieldName);
+    if (!existingField->getDataType()->isInteger()) {
+      NES_ERROR("TimeBasedWindow should use a uint for time field {}",
+                fieldName);
+      throw InvalidFieldException(
+          "TimeBasedWindow should use a uint for time field " + fieldName);
+    } else if (existingField) {
+      timeCharacteristic->getField()->setName(existingField->getName());
+      return true;
+    } else if (fieldName ==
+               Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+      return true;
+    } else {
+      NES_ERROR("TimeBasedWindow using a non existing time field  {}",
+                fieldName);
+      throw InvalidFieldException(
+          "TimeBasedWindow using a non existing time field " + fieldName);
     }
-    return true;
+  }
+  return true;
 }
 
-TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const { return timeCharacteristic; }
+TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const {
+  return timeCharacteristic;
+}
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing

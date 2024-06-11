@@ -27,139 +27,162 @@
 namespace NES::QueryCompilation {
 
 PipelineId getNextPipelineId() {
-    static std::atomic_uint64_t id = INITIAL_PIPELINE_ID.getRawValue();
-    return PipelineId(id++);
+  static std::atomic_uint64_t id = INITIAL_PIPELINE_ID.getRawValue();
+  return PipelineId(id++);
 }
 
 OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType)
-    : id(pipelineId),
-      decomposedQueryPlan(
-          DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID)),
+    : id(pipelineId), decomposedQueryPlan(DecomposedQueryPlan::create(
+                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                          INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID)),
       pipelineType(pipelineType) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::OperatorPipelineType));
+  return std::make_shared<OperatorPipeline>(
+      OperatorPipeline(getNextPipelineId(), Type::OperatorPipelineType));
 }
 
 OperatorPipelinePtr OperatorPipeline::createSinkPipeline() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SinkPipelineType));
+  return std::make_shared<OperatorPipeline>(
+      OperatorPipeline(getNextPipelineId(), Type::SinkPipelineType));
 }
 
 OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::SourcePipelineType));
+  return std::make_shared<OperatorPipeline>(
+      OperatorPipeline(getNextPipelineId(), Type::SourcePipelineType));
 }
 
-void OperatorPipeline::setType(Type pipelineType) { this->pipelineType = pipelineType; }
-
-bool OperatorPipeline::isOperatorPipeline() const { return pipelineType == Type::OperatorPipelineType; }
-
-bool OperatorPipeline::isSinkPipeline() const { return pipelineType == Type::SinkPipelineType; }
-
-bool OperatorPipeline::isSourcePipeline() const { return pipelineType == Type::SourcePipelineType; }
-
-void OperatorPipeline::addPredecessor(const OperatorPipelinePtr& pipeline) {
-    pipeline->successorPipelines.emplace_back(shared_from_this());
-    this->predecessorPipelines.emplace_back(pipeline);
+void OperatorPipeline::setType(Type pipelineType) {
+  this->pipelineType = pipelineType;
 }
 
-void OperatorPipeline::addSuccessor(const OperatorPipelinePtr& pipeline) {
-    if (pipeline) {
-        pipeline->predecessorPipelines.emplace_back(weak_from_this());
-        this->successorPipelines.emplace_back(pipeline);
-    }
+bool OperatorPipeline::isOperatorPipeline() const {
+  return pipelineType == Type::OperatorPipelineType;
+}
+
+bool OperatorPipeline::isSinkPipeline() const {
+  return pipelineType == Type::SinkPipelineType;
+}
+
+bool OperatorPipeline::isSourcePipeline() const {
+  return pipelineType == Type::SourcePipelineType;
+}
+
+void OperatorPipeline::addPredecessor(const OperatorPipelinePtr &pipeline) {
+  pipeline->successorPipelines.emplace_back(shared_from_this());
+  this->predecessorPipelines.emplace_back(pipeline);
+}
+
+void OperatorPipeline::addSuccessor(const OperatorPipelinePtr &pipeline) {
+  if (pipeline) {
+    pipeline->predecessorPipelines.emplace_back(weak_from_this());
+    this->successorPipelines.emplace_back(pipeline);
+  }
 }
 
 std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const {
-    std::vector<OperatorPipelinePtr> predecessors;
-    for (const auto& predecessor : predecessorPipelines) {
-        predecessors.emplace_back(predecessor.lock());
-    }
-    return predecessors;
+  std::vector<OperatorPipelinePtr> predecessors;
+  for (const auto &predecessor : predecessorPipelines) {
+    predecessors.emplace_back(predecessor.lock());
+  }
+  return predecessors;
 }
 
-bool OperatorPipeline::hasOperators() const { return !this->decomposedQueryPlan->getRootOperators().empty(); }
+bool OperatorPipeline::hasOperators() const {
+  return !this->decomposedQueryPlan->getRootOperators().empty();
+}
 
 void OperatorPipeline::clearPredecessors() {
-    for (const auto& pre : predecessorPipelines) {
-        if (auto prePipeline = pre.lock()) {
-            prePipeline->removeSuccessor(shared_from_this());
-        }
+  for (const auto &pre : predecessorPipelines) {
+    if (auto prePipeline = pre.lock()) {
+      prePipeline->removeSuccessor(shared_from_this());
     }
-    predecessorPipelines.clear();
+  }
+  predecessorPipelines.clear();
 }
 
-void OperatorPipeline::removePredecessor(const OperatorPipelinePtr& pipeline) {
-    for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter) {
-        if (iter->lock().get() == pipeline.get()) {
-            predecessorPipelines.erase(iter);
-            return;
-        }
+void OperatorPipeline::removePredecessor(const OperatorPipelinePtr &pipeline) {
+  for (auto iter = predecessorPipelines.begin();
+       iter != predecessorPipelines.end(); ++iter) {
+    if (iter->lock().get() == pipeline.get()) {
+      predecessorPipelines.erase(iter);
+      return;
     }
+  }
 }
-void OperatorPipeline::removeSuccessor(const OperatorPipelinePtr& pipeline) {
-    for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter) {
-        if (iter->get() == pipeline.get()) {
-            successorPipelines.erase(iter);
-            return;
-        }
+void OperatorPipeline::removeSuccessor(const OperatorPipelinePtr &pipeline) {
+  for (auto iter = successorPipelines.begin(); iter != successorPipelines.end();
+       ++iter) {
+    if (iter->get() == pipeline.get()) {
+      successorPipelines.erase(iter);
+      return;
     }
+  }
 }
 void OperatorPipeline::clearSuccessors() {
-    for (const auto& succ : successorPipelines) {
-        succ->removePredecessor(shared_from_this());
-    }
-    successorPipelines.clear();
+  for (const auto &succ : successorPipelines) {
+    succ->removePredecessor(shared_from_this());
+  }
+  successorPipelines.clear();
 }
 
-std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const { return successorPipelines; }
+std::vector<OperatorPipelinePtr> const &
+OperatorPipeline::getSuccessors() const {
+  return successorPipelines;
+}
 
 void OperatorPipeline::prependOperator(OperatorPtr newRootOperator) {
-    if (!this->isOperatorPipeline() && this->hasOperators()) {
-        throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
-    }
-    if (newRootOperator->hasProperty("LogicalOperatorId")) {
-        operatorIds.push_back(std::any_cast<OperatorId>(newRootOperator->getProperty("LogicalOperatorId")));
-    }
-    this->decomposedQueryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
+  if (!this->isOperatorPipeline() && this->hasOperators()) {
+    throw QueryCompilationException(
+        "Sink and Source pipelines can have more then one operator");
+  }
+  if (newRootOperator->hasProperty("LogicalOperatorId")) {
+    operatorIds.push_back(std::any_cast<OperatorId>(
+        newRootOperator->getProperty("LogicalOperatorId")));
+  }
+  this->decomposedQueryPlan->appendOperatorAsNewRoot(
+      std::move(newRootOperator));
 }
 
 PipelineId OperatorPipeline::getPipelineId() const { return id; }
 
-DecomposedQueryPlanPtr OperatorPipeline::getDecomposedQueryPlan() { return decomposedQueryPlan; }
+DecomposedQueryPlanPtr OperatorPipeline::getDecomposedQueryPlan() {
+  return decomposedQueryPlan;
+}
 
-const std::vector<OperatorId>& OperatorPipeline::getOperatorIds() const { return operatorIds; }
+const std::vector<OperatorId> &OperatorPipeline::getOperatorIds() const {
+  return operatorIds;
+}
 
-template<typename T>
-static std::vector<PipelineId> getIds(const std::vector<T>& pipelines) {
-    std::vector<PipelineId> ids;
-    std::transform(pipelines.begin(), pipelines.end(), std::back_inserter(ids), [](const auto& pipeline) {
-        return pipeline.get()->getPipelineId();
-    });
-    return ids;
+template <typename T>
+static std::vector<PipelineId> getIds(const std::vector<T> &pipelines) {
+  std::vector<PipelineId> ids;
+  std::transform(
+      pipelines.begin(), pipelines.end(), std::back_inserter(ids),
+      [](const auto &pipeline) { return pipeline.get()->getPipelineId(); });
+  return ids;
 }
 std::string OperatorPipeline::toString() const {
-    auto successorsStr = std::accumulate(successorPipelines.begin(),
-                                         successorPipelines.end(),
-                                         std::string(),
-                                         [](const std::string& result, const OperatorPipelinePtr& succPipeline) {
-                                             auto succPipelineId = fmt::format("{}", succPipeline->id);
-                                             return result.empty() ? succPipelineId : result + ", " + succPipelineId;
-                                         });
+  auto successorsStr = std::accumulate(
+      successorPipelines.begin(), successorPipelines.end(), std::string(),
+      [](const std::string &result, const OperatorPipelinePtr &succPipeline) {
+        auto succPipelineId = fmt::format("{}", succPipeline->id);
+        return result.empty() ? succPipelineId : result + ", " + succPipelineId;
+      });
 
-    auto predecessorsStr =
-        std::accumulate(predecessorPipelines.begin(),
-                        predecessorPipelines.end(),
-                        std::string(),
-                        [](const std::string& result, const std::weak_ptr<OperatorPipeline>& predecessorPipeline) {
-                            auto predecessorPipelineId = fmt::format("{}", predecessorPipeline.lock()->id);
-                            return result.empty() ? predecessorPipelineId : result + ", " + predecessorPipelineId;
-                        });
+  auto predecessorsStr = std::accumulate(
+      predecessorPipelines.begin(), predecessorPipelines.end(), std::string(),
+      [](const std::string &result,
+         const std::weak_ptr<OperatorPipeline> &predecessorPipeline) {
+        auto predecessorPipelineId =
+            fmt::format("{}", predecessorPipeline.lock()->id);
+        return result.empty() ? predecessorPipelineId
+                              : result + ", " + predecessorPipelineId;
+      });
 
-    return fmt::format("- Id: {}, Type: {}, Successors: {}, Predecessors: {}\n- QueryPlan: {}",
-                       id,
-                       magic_enum::enum_name(pipelineType),
-                       successorsStr,
-                       predecessorsStr,
-                       decomposedQueryPlan->toString());
+  return fmt::format(
+      "- Id: {}, Type: {}, Successors: {}, Predecessors: {}\n- QueryPlan: {}",
+      id, magic_enum::enum_name(pipelineType), successorsStr, predecessorsStr,
+      decomposedQueryPlan->toString());
 }
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

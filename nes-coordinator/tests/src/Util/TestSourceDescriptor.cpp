@@ -16,37 +16,32 @@ namespace NES::TestUtils {
 
 TestSourceDescriptor::TestSourceDescriptor(
     SchemaPtr schema,
-    std::function<DataSourcePtr(SchemaPtr schema,
-                                OperatorId,
-                                OriginId,
-                                StatisticId,
-                                SourceDescriptorPtr,
-                                Runtime::NodeEnginePtr,
-                                size_t,
-                                std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
-    : SourceDescriptor(std::move(schema)), createSourceFunction(std::move(createSourceFunction)) {}
+    std::function<DataSourcePtr(
+        SchemaPtr schema, OperatorId, OriginId, StatisticId,
+        SourceDescriptorPtr, Runtime::NodeEnginePtr, size_t,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
+        createSourceFunction)
+    : SourceDescriptor(std::move(schema)),
+      createSourceFunction(std::move(createSourceFunction)) {}
 
-DataSourcePtr TestSourceDescriptor::create(OperatorId operatorId,
-                                           OriginId originId,
-                                           StatisticId statisticId,
-                                           SourceDescriptorPtr sourceDescriptor,
-                                           Runtime::NodeEnginePtr nodeEngine,
-                                           size_t numSourceLocalBuffers,
-                                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
-    return createSourceFunction(schema,
-                                operatorId,
-                                originId,
-                                statisticId,
-                                std::move(sourceDescriptor),
-                                std::move(nodeEngine),
-                                numSourceLocalBuffers,
-                                std::move(successors));
+DataSourcePtr TestSourceDescriptor::create(
+    OperatorId operatorId, OriginId originId, StatisticId statisticId,
+    SourceDescriptorPtr sourceDescriptor, Runtime::NodeEnginePtr nodeEngine,
+    size_t numSourceLocalBuffers,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
+  return createSourceFunction(
+      schema, operatorId, originId, statisticId, std::move(sourceDescriptor),
+      std::move(nodeEngine), numSourceLocalBuffers, std::move(successors));
 }
 
 std::string TestSourceDescriptor::toString() const { return std::string(); }
 
-bool TestSourceDescriptor::equal(const SourceDescriptorPtr&) const { return false; }
+bool TestSourceDescriptor::equal(const SourceDescriptorPtr &) const {
+  return false;
+}
 
-SourceDescriptorPtr TestSourceDescriptor::copy() { return NES::SourceDescriptorPtr(); }
+SourceDescriptorPtr TestSourceDescriptor::copy() {
+  return NES::SourceDescriptorPtr();
+}
 
-}// namespace NES::TestUtils
+} // namespace NES::TestUtils

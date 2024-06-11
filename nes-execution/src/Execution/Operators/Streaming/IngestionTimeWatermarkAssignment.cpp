@@ -23,30 +23,34 @@
 namespace NES::Runtime::Execution::Operators {
 
 class WatermarkState : public OperatorState {
-  public:
-    explicit WatermarkState() {}
-    Value<> currentWatermark = Value<UInt64>(0_u64);
+public:
+  explicit WatermarkState() {}
+  Value<> currentWatermark = Value<UInt64>(0_u64);
 };
 
-IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction)
+IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(
+    TimeFunctionPtr timeFunction)
     : timeFunction(std::move(timeFunction)){};
 
-void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
-    if (hasChild()) {
-        child->open(executionCtx, recordBuffer);
-    }
+void IngestionTimeWatermarkAssignment::open(ExecutionContext &executionCtx,
+                                            RecordBuffer &recordBuffer) const {
+  // We have to do this here, as we do not want to set the statistic id of this
+  // build operator in the execution context
+  if (hasChild()) {
+    child->open(executionCtx, recordBuffer);
+  }
 
-    timeFunction->open(executionCtx, recordBuffer);
-    auto emptyRecord = Record();
-    Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    if (tsField > executionCtx.getWatermarkTs()) {
-        executionCtx.setWatermarkTs(tsField.as<UInt64>());
-    }
+  timeFunction->open(executionCtx, recordBuffer);
+  auto emptyRecord = Record();
+  Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
+  if (tsField > executionCtx.getWatermarkTs()) {
+    executionCtx.setWatermarkTs(tsField.as<UInt64>());
+  }
 }
 
-void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const {
-    child->execute(executionCtx, record);
+void IngestionTimeWatermarkAssignment::execute(ExecutionContext &executionCtx,
+                                               Record &record) const {
+  child->execute(executionCtx, record);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

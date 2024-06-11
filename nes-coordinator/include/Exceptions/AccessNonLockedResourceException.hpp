@@ -20,21 +20,23 @@ enum class ResourceType : uint8_t;
 }
 namespace Exceptions {
 /**
- * @brief This exception is raised, in case a request tries to access a resource via the storage handler without having locked it before.
+ * @brief This exception is raised, in case a request tries to access a resource
+ * via the storage handler without having locked it before.
  */
 class AccessNonLockedResourceException : public RequestExecutionException {
-  public:
-    explicit AccessNonLockedResourceException(const std::string& message, RequestProcessor::ResourceType resourceType);
+public:
+  explicit AccessNonLockedResourceException(
+      const std::string &message, RequestProcessor::ResourceType resourceType);
 
-    /**
-     * @brief Access the type of the resource which could not be accessed
-     * @return the resource type
-     */
-    RequestProcessor::ResourceType getResourceType();
+  /**
+   * @brief Access the type of the resource which could not be accessed
+   * @return the resource type
+   */
+  RequestProcessor::ResourceType getResourceType();
 
-  private:
-    RequestProcessor::ResourceType resourceType;
+private:
+  RequestProcessor::ResourceType resourceType;
 };
-}// namespace Exceptions
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
+} // namespace Exceptions
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_

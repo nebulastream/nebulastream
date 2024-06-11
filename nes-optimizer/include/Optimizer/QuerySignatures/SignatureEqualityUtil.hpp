@@ -23,7 +23,7 @@ using SolverPtr = std::shared_ptr<solver>;
 
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
 namespace NES::Optimizer {
 
@@ -38,30 +38,31 @@ using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
  */
 class SignatureEqualityUtil {
 
-  public:
-    static SignatureEqualityUtilPtr create(const z3::ContextPtr& context);
+public:
+  static SignatureEqualityUtilPtr create(const z3::ContextPtr &context);
 
-    explicit SignatureEqualityUtil(const z3::ContextPtr& context);
+  explicit SignatureEqualityUtil(const z3::ContextPtr &context);
 
-    /**
-     * @brief Check equality of the given signatures
-     * @param signature1
-     * @param signature2
-     * @return true if tey are equal else false
-     */
-    bool checkEquality(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
+  /**
+   * @brief Check equality of the given signatures
+   * @param signature1
+   * @param signature2
+   * @return true if tey are equal else false
+   */
+  bool checkEquality(const QuerySignaturePtr &signature1,
+                     const QuerySignaturePtr &signature2);
 
-    /**
-     * @brief Reset z3 solver
-     * @return true if reset successful else false
-     */
-    bool resetSolver();
+  /**
+   * @brief Reset z3 solver
+   * @return true if reset successful else false
+   */
+  bool resetSolver();
 
-  private:
-    z3::ContextPtr context;
-    z3::SolverPtr solver;
-    uint64_t counter;
-    const uint16_t RESET_SOLVER_THRESHOLD = 20050;
+private:
+  z3::ContextPtr context;
+  z3::SolverPtr solver;
+  uint64_t counter;
+  const uint16_t RESET_SOLVER_THRESHOLD = 20050;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_

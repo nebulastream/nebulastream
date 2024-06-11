@@ -22,70 +22,69 @@
 namespace NES::QueryCompilation {
 
 /**
- * @brief Iterator for pipeline query plans, which correctly handles multiple sources and sinks.
- * The iterator visits each pipeline exactly one time in the following order:
- * top-to-bottom and left-to-right
+ * @brief Iterator for pipeline query plans, which correctly handles multiple
+ * sources and sinks. The iterator visits each pipeline exactly one time in the
+ * following order: top-to-bottom and left-to-right
  * @see
  */
 class PipelineQueryPlanIterator {
+public:
+  explicit PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan);
+
+  class iterator
+      : public std::iterator<std::forward_iterator_tag, OperatorPipelinePtr,
+                             OperatorPipelinePtr, OperatorPipelinePtr *,
+                             OperatorPipelinePtr &> {
+    // use PipelineQueryPlanIterator as a fiend to access its state
+    friend class PipelineQueryPlanIterator;
+
   public:
-    explicit PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan);
-
-    class iterator : public std::iterator<std::forward_iterator_tag,
-                                          OperatorPipelinePtr,
-                                          OperatorPipelinePtr,
-                                          OperatorPipelinePtr*,
-                                          OperatorPipelinePtr&> {
-        // use PipelineQueryPlanIterator as a fiend to access its state
-        friend class PipelineQueryPlanIterator;
-
-      public:
-        /**
-         * @brief Moves the iterator to the next node.
-         * If we reach the end of the iterator we will ignore this operation.
-         * @return iterator
-         */
-        iterator& operator++();
-
-        /**
-         * @brief Checks if the iterators are not at the same position
-         * @return boolean
-         */
-        bool operator!=(const iterator& other) const;
-
-        /**
-         * @brief Gets the node at the current iterator position.
-         * @return OperatorPipelinePtr
-         */
-        OperatorPipelinePtr operator*();
-
-      private:
-        explicit iterator(const PipelineQueryPlanPtr& current);
-        explicit iterator();
-        std::stack<OperatorPipelinePtr> workStack;
-    };
-
     /**
-     * @brief Starts a new iterator at the start node, which is always a sink.
+     * @brief Moves the iterator to the next node.
+     * If we reach the end of the iterator we will ignore this operation.
      * @return iterator
      */
-    iterator begin();
+    iterator &operator++();
 
     /**
-    * @brief The end of this iterator has an empty work stack.
-    * @return iterator
-    */
-    static iterator end();
-
-    /**
-     * @brief Return a snapshot of the iterator.
-     * @return vector<NodePtr> nodes
+     * @brief Checks if the iterators are not at the same position
+     * @return boolean
      */
-    std::vector<OperatorPipelinePtr> snapshot();
+    bool operator!=(const iterator &other) const;
+
+    /**
+     * @brief Gets the node at the current iterator position.
+     * @return OperatorPipelinePtr
+     */
+    OperatorPipelinePtr operator*();
 
   private:
-    PipelineQueryPlanPtr queryPlan;
-};
-}// namespace NES::QueryCompilation
+    explicit iterator(const PipelineQueryPlanPtr &current);
+    explicit iterator();
+    std::stack<OperatorPipelinePtr> workStack;
+  };
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_
+  /**
+   * @brief Starts a new iterator at the start node, which is always a sink.
+   * @return iterator
+   */
+  iterator begin();
+
+  /**
+   * @brief The end of this iterator has an empty work stack.
+   * @return iterator
+   */
+  static iterator end();
+
+  /**
+   * @brief Return a snapshot of the iterator.
+   * @return vector<NodePtr> nodes
+   */
+  std::vector<OperatorPipelinePtr> snapshot();
+
+private:
+  PipelineQueryPlanPtr queryPlan;
+};
+} // namespace NES::QueryCompilation
+
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_

@@ -24,32 +24,38 @@
 
 namespace NES::Monitoring {
 CpuCollector::CpuCollector()
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+    : MetricCollector(),
+      resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(CpuMetrics::getSchema("")) {
-    NES_INFO("CpuCollector: Init CpuCollector with schema {}", schema->toString());
+  NES_INFO("CpuCollector: Init CpuCollector with schema {}",
+           schema->toString());
 }
 
-MetricCollectorType CpuCollector::getType() { return MetricCollectorType::CPU_COLLECTOR; }
+MetricCollectorType CpuCollector::getType() {
+  return MetricCollectorType::CPU_COLLECTOR;
+}
 
-bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
-    try {
-        CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
-        measuredVal.setNodeId(getWorkerId());
-        writeToBuffer(measuredVal, tupleBuffer, 0);
-        NES_TRACE("CpuCollector: Written metrics for {}: {}", getWorkerId(), asJson(measuredVal));
-    } catch (const std::exception& ex) {
-        NES_ERROR("CpuCollector: Error while collecting metrics {}", ex.what());
-        return false;
-    }
-    return true;
+bool CpuCollector::fillBuffer(Runtime::TupleBuffer &tupleBuffer) {
+  try {
+    CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
+    measuredVal.setNodeId(getWorkerId());
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+    NES_TRACE("CpuCollector: Written metrics for {}: {}", getWorkerId(),
+              asJson(measuredVal));
+  } catch (const std::exception &ex) {
+    NES_ERROR("CpuCollector: Error while collecting metrics {}", ex.what());
+    return false;
+  }
+  return true;
 }
 
 SchemaPtr CpuCollector::getSchema() { return schema; }
 
 const MetricPtr CpuCollector::readMetric() const {
-    CpuMetricsWrapper wrapper = resourceReader->readCpuStats();
-    wrapper.setNodeId(getWorkerId());
-    return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedCpuMetrics);
+  CpuMetricsWrapper wrapper = resourceReader->readCpuStats();
+  wrapper.setNodeId(getWorkerId());
+  return std::make_shared<Metric>(std::move(wrapper),
+                                  MetricType::WrappedCpuMetrics);
 }
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

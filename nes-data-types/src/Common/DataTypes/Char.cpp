@@ -20,12 +20,12 @@ namespace NES {
 bool Char::equals(DataTypePtr otherDataType) { return otherDataType->isChar(); }
 
 DataTypePtr Char::join(DataTypePtr otherDataType) {
-    if (otherDataType->isChar()) {
-        return DataTypeFactory::createChar();
-    }
-    return DataTypeFactory::createUndefined();
+  if (otherDataType->isChar()) {
+    return DataTypeFactory::createChar();
+  }
+  return DataTypeFactory::createUndefined();
 }
 
 std::string Char::toString() { return "Char"; }
 
-}// namespace NES
+} // namespace NES

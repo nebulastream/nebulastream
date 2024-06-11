@@ -15,111 +15,176 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation {
-OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const {
-    return outputBufferOptimizationLevel;
+OutputBufferOptimizationLevel
+QueryCompilerOptions::getOutputBufferOptimizationLevel() const {
+  return outputBufferOptimizationLevel;
 };
 
-void QueryCompilerOptions::setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level) {
-    this->outputBufferOptimizationLevel = level;
+void QueryCompilerOptions::setOutputBufferOptimizationLevel(
+    OutputBufferOptimizationLevel level) {
+  this->outputBufferOptimizationLevel = level;
 };
 
-void QueryCompilerOptions::setNumSourceLocalBuffers(uint64_t num) { this->numSourceLocalBuffers = num; }
+void QueryCompilerOptions::setNumSourceLocalBuffers(uint64_t num) {
+  this->numSourceLocalBuffers = num;
+}
 
-uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSourceLocalBuffers; }
+uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const {
+  return numSourceLocalBuffers;
+}
 
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
-    auto options = QueryCompilerOptions();
-    options.setCompilationStrategy(CompilationStrategy::OPTIMIZE);
-    options.setPipeliningStrategy(PipeliningStrategy::OPERATOR_FUSION);
-    options.setFilterProcessingStrategy(FilterProcessingStrategy::BRANCHED);
-    options.setNumSourceLocalBuffers(64);
-    options.setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel::ALL);
-    options.setWindowingStrategy(WindowingStrategy::SLICING);
-    options.setQueryCompiler(QueryCompilerType::NAUTILUS_QUERY_COMPILER);
-    options.setDumpMode(DumpMode::FILE_AND_CONSOLE);
-    options.setNautilusBackend(NautilusBackend::MLIR_COMPILER_BACKEND);
+  auto options = QueryCompilerOptions();
+  options.setCompilationStrategy(CompilationStrategy::OPTIMIZE);
+  options.setPipeliningStrategy(PipeliningStrategy::OPERATOR_FUSION);
+  options.setFilterProcessingStrategy(FilterProcessingStrategy::BRANCHED);
+  options.setNumSourceLocalBuffers(64);
+  options.setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel::ALL);
+  options.setWindowingStrategy(WindowingStrategy::SLICING);
+  options.setQueryCompiler(QueryCompilerType::NAUTILUS_QUERY_COMPILER);
+  options.setDumpMode(DumpMode::FILE_AND_CONSOLE);
+  options.setNautilusBackend(NautilusBackend::MLIR_COMPILER_BACKEND);
 
-    QueryCompilerOptions::StreamHashJoinOptionsPtr hashOptions = std::make_shared<QueryCompilerOptions::StreamHashJoinOptions>();
-    hashOptions->setNumberOfPartitions(NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
-    hashOptions->setPageSize(NES::Configurations::DEFAULT_HASH_PAGE_SIZE);
-    hashOptions->setPreAllocPageCnt(NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT);
-    hashOptions->setTotalSizeForDataStructures(NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
-    options.setStreamJoinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
-    options.setHashJoinOptions(hashOptions);
-    return std::make_shared<QueryCompilerOptions>(options);
+  QueryCompilerOptions::StreamHashJoinOptionsPtr hashOptions =
+      std::make_shared<QueryCompilerOptions::StreamHashJoinOptions>();
+  hashOptions->setNumberOfPartitions(
+      NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
+  hashOptions->setPageSize(NES::Configurations::DEFAULT_HASH_PAGE_SIZE);
+  hashOptions->setPreAllocPageCnt(
+      NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT);
+  hashOptions->setTotalSizeForDataStructures(
+      NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
+  options.setStreamJoinStrategy(
+      QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
+  options.setHashJoinOptions(hashOptions);
+  return std::make_shared<QueryCompilerOptions>(options);
 }
 
-PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const { return pipeliningStrategy; }
-
-void QueryCompilerOptions::setHashJoinOptions(QueryCompilerOptions::StreamHashJoinOptionsPtr streamHashJoinOptions) {
-    this->hashJoinOptions = streamHashJoinOptions;
+PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const {
+  return pipeliningStrategy;
 }
 
-void QueryCompilerOptions::setPipeliningStrategy(PipeliningStrategy pipeliningStrategy) {
-    this->pipeliningStrategy = pipeliningStrategy;
+void QueryCompilerOptions::setHashJoinOptions(
+    QueryCompilerOptions::StreamHashJoinOptionsPtr streamHashJoinOptions) {
+  this->hashJoinOptions = streamHashJoinOptions;
 }
 
-void QueryCompilerOptions::setQueryCompiler(NES::QueryCompilation::QueryCompilerType queryCompiler) {
-    this->queryCompiler = queryCompiler;
+void QueryCompilerOptions::setPipeliningStrategy(
+    PipeliningStrategy pipeliningStrategy) {
+  this->pipeliningStrategy = pipeliningStrategy;
 }
 
-QueryCompilerType QueryCompilerOptions::getQueryCompiler() const { return queryCompiler; }
-
-CompilationStrategy QueryCompilerOptions::getCompilationStrategy() const { return compilationStrategy; }
-
-void QueryCompilerOptions::setCompilationStrategy(CompilationStrategy compilationStrategy) {
-    this->compilationStrategy = compilationStrategy;
+void QueryCompilerOptions::setQueryCompiler(
+    NES::QueryCompilation::QueryCompilerType queryCompiler) {
+  this->queryCompiler = queryCompiler;
 }
 
-void QueryCompilerOptions::setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy) {
-    this->filterProcessingStrategy = filterProcessingStrategy;
+QueryCompilerType QueryCompilerOptions::getQueryCompiler() const {
+  return queryCompiler;
 }
 
-QueryCompilerOptions::FilterProcessingStrategy QueryCompilerOptions::getFilterProcessingStrategy() const {
-    return filterProcessingStrategy;
+CompilationStrategy QueryCompilerOptions::getCompilationStrategy() const {
+  return compilationStrategy;
 }
 
-WindowingStrategy QueryCompilerOptions::getWindowingStrategy() const { return windowingStrategy; }
-
-void QueryCompilerOptions::setWindowingStrategy(WindowingStrategy windowingStrategy) {
-    QueryCompilerOptions::windowingStrategy = windowingStrategy;
+void QueryCompilerOptions::setCompilationStrategy(
+    CompilationStrategy compilationStrategy) {
+  this->compilationStrategy = compilationStrategy;
 }
 
-NautilusBackend QueryCompilerOptions::getNautilusBackend() const { return nautilusBackend; }
-
-void QueryCompilerOptions::setNautilusBackend(const NautilusBackend nautilusBackend) {
-    QueryCompilerOptions::nautilusBackend = nautilusBackend;
+void QueryCompilerOptions::setFilterProcessingStrategy(
+    FilterProcessingStrategy filterProcessingStrategy) {
+  this->filterProcessingStrategy = filterProcessingStrategy;
 }
 
-void QueryCompilerOptions::setStreamJoinStrategy(QueryCompilation::StreamJoinStrategy strategy) { this->joinStrategy = strategy; }
-
-QueryCompilation::StreamJoinStrategy QueryCompilerOptions::getStreamJoinStrategy() const { return joinStrategy; }
-
-QueryCompilerOptions::StreamHashJoinOptionsPtr QueryCompilerOptions::getHashJoinOptions() { return hashJoinOptions; }
-
-const DumpMode& QueryCompilerOptions::getDumpMode() const { return dumpMode; }
-
-void QueryCompilerOptions::setDumpMode(DumpMode dumpMode) { QueryCompilerOptions::dumpMode = dumpMode; }
-
-uint64_t QueryCompilerOptions::StreamHashJoinOptions::getNumberOfPartitions() const { return numberOfPartitions; }
-
-void QueryCompilerOptions::StreamHashJoinOptions::setNumberOfPartitions(uint64_t num) { numberOfPartitions = num; }
-
-uint64_t QueryCompilerOptions::StreamHashJoinOptions::getPageSize() const { return pageSize; }
-
-void QueryCompilerOptions::StreamHashJoinOptions::setPageSize(uint64_t size) { pageSize = size; }
-
-uint64_t QueryCompilerOptions::StreamHashJoinOptions::getPreAllocPageCnt() const { return preAllocPageCnt; }
-
-void QueryCompilerOptions::StreamHashJoinOptions::setPreAllocPageCnt(uint64_t cnt) { preAllocPageCnt = cnt; }
-
-uint64_t QueryCompilerOptions::StreamHashJoinOptions::getTotalSizeForDataStructures() const { return totalSizeForDataStructures; }
-
-void QueryCompilerOptions::StreamHashJoinOptions::setTotalSizeForDataStructures(uint64_t totalSizeForDataStructures) {
-    this->totalSizeForDataStructures = totalSizeForDataStructures;
+QueryCompilerOptions::FilterProcessingStrategy
+QueryCompilerOptions::getFilterProcessingStrategy() const {
+  return filterProcessingStrategy;
 }
 
-void QueryCompilerOptions::setCUDASdkPath(const std::string& cudaSdkPath) { QueryCompilerOptions::cudaSdkPath = cudaSdkPath; }
-const std::string QueryCompilerOptions::getCUDASdkPath() const { return cudaSdkPath; }
+WindowingStrategy QueryCompilerOptions::getWindowingStrategy() const {
+  return windowingStrategy;
+}
 
-}// namespace NES::QueryCompilation
+void QueryCompilerOptions::setWindowingStrategy(
+    WindowingStrategy windowingStrategy) {
+  QueryCompilerOptions::windowingStrategy = windowingStrategy;
+}
+
+NautilusBackend QueryCompilerOptions::getNautilusBackend() const {
+  return nautilusBackend;
+}
+
+void QueryCompilerOptions::setNautilusBackend(
+    const NautilusBackend nautilusBackend) {
+  QueryCompilerOptions::nautilusBackend = nautilusBackend;
+}
+
+void QueryCompilerOptions::setStreamJoinStrategy(
+    QueryCompilation::StreamJoinStrategy strategy) {
+  this->joinStrategy = strategy;
+}
+
+QueryCompilation::StreamJoinStrategy
+QueryCompilerOptions::getStreamJoinStrategy() const {
+  return joinStrategy;
+}
+
+QueryCompilerOptions::StreamHashJoinOptionsPtr
+QueryCompilerOptions::getHashJoinOptions() {
+  return hashJoinOptions;
+}
+
+const DumpMode &QueryCompilerOptions::getDumpMode() const { return dumpMode; }
+
+void QueryCompilerOptions::setDumpMode(DumpMode dumpMode) {
+  QueryCompilerOptions::dumpMode = dumpMode;
+}
+
+uint64_t
+QueryCompilerOptions::StreamHashJoinOptions::getNumberOfPartitions() const {
+  return numberOfPartitions;
+}
+
+void QueryCompilerOptions::StreamHashJoinOptions::setNumberOfPartitions(
+    uint64_t num) {
+  numberOfPartitions = num;
+}
+
+uint64_t QueryCompilerOptions::StreamHashJoinOptions::getPageSize() const {
+  return pageSize;
+}
+
+void QueryCompilerOptions::StreamHashJoinOptions::setPageSize(uint64_t size) {
+  pageSize = size;
+}
+
+uint64_t
+QueryCompilerOptions::StreamHashJoinOptions::getPreAllocPageCnt() const {
+  return preAllocPageCnt;
+}
+
+void QueryCompilerOptions::StreamHashJoinOptions::setPreAllocPageCnt(
+    uint64_t cnt) {
+  preAllocPageCnt = cnt;
+}
+
+uint64_t
+QueryCompilerOptions::StreamHashJoinOptions::getTotalSizeForDataStructures()
+    const {
+  return totalSizeForDataStructures;
+}
+
+void QueryCompilerOptions::StreamHashJoinOptions::setTotalSizeForDataStructures(
+    uint64_t totalSizeForDataStructures) {
+  this->totalSizeForDataStructures = totalSizeForDataStructures;
+}
+
+void QueryCompilerOptions::setCUDASdkPath(const std::string &cudaSdkPath) {
+  QueryCompilerOptions::cudaSdkPath = cudaSdkPath;
+}
+const std::string QueryCompilerOptions::getCUDASdkPath() const {
+  return cudaSdkPath;
+}
+
+} // namespace NES::QueryCompilation

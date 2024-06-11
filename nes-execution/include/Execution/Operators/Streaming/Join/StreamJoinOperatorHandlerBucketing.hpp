@@ -21,16 +21,18 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class StreamJoinOperatorHandlerBucketing : public JoinOperatorHandlerInterfaceBucketing,
-                                           virtual public StreamJoinOperatorHandler {
-  public:
-    std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId) override;
-    std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
-    void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) override;
+class StreamJoinOperatorHandlerBucketing
+    : public JoinOperatorHandlerInterfaceBucketing,
+      virtual public StreamJoinOperatorHandler {
+public:
+  std::vector<StreamSlice *> *
+  getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId) override;
+  std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice &slice) override;
+  void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) override;
 
-  private:
-    std::vector<std::vector<StreamSlice*>> windowsToFill;
+private:
+  std::vector<std::vector<StreamSlice *>> windowsToFill;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERBUCKETING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERBUCKETING_HPP_

@@ -18,26 +18,36 @@ namespace NES::Nautilus::IR::Types {
 IntegerStamp::IntegerStamp(BitWidth bitWidth, SignednessSemantics signedness)
     : Stamp(&type), bitWidth(bitWidth), signedness(signedness) {}
 
-IntegerStamp::SignednessSemantics IntegerStamp::getSignedness() const { return signedness; }
+IntegerStamp::SignednessSemantics IntegerStamp::getSignedness() const {
+  return signedness;
+}
 
-bool IntegerStamp::isSigned() const { return getSignedness() == SignednessSemantics::Signed; }
+bool IntegerStamp::isSigned() const {
+  return getSignedness() == SignednessSemantics::Signed;
+}
 
-bool IntegerStamp::isUnsigned() const { return getSignedness() == SignednessSemantics::Unsigned; }
+bool IntegerStamp::isUnsigned() const {
+  return getSignedness() == SignednessSemantics::Unsigned;
+}
 
 IntegerStamp::BitWidth IntegerStamp::getBitWidth() const { return bitWidth; }
 
 uint32_t IntegerStamp::getNumberOfBits() const {
-    switch (getBitWidth()) {
-        case BitWidth::I8: return 8;
-        case BitWidth::I16: return 16;
-        case BitWidth::I32: return 32;
-        case BitWidth::I64: return 64;
-    }
+  switch (getBitWidth()) {
+  case BitWidth::I8:
+    return 8;
+  case BitWidth::I16:
+    return 16;
+  case BitWidth::I32:
+    return 32;
+  case BitWidth::I64:
+    return 64;
+  }
 }
 
 const std::string IntegerStamp::toString() const {
-    auto prefix = isUnsigned() ? "ui" : "i";
-    return prefix + std::to_string(getNumberOfBits());
+  auto prefix = isUnsigned() ? "ui" : "i";
+  return prefix + std::to_string(getNumberOfBits());
 }
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types

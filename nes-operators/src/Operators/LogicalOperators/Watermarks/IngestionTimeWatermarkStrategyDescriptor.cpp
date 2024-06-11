@@ -17,17 +17,25 @@
 
 namespace NES::Windowing {
 
-IngestionTimeWatermarkStrategyDescriptor::IngestionTimeWatermarkStrategyDescriptor() = default;
+IngestionTimeWatermarkStrategyDescriptor::
+    IngestionTimeWatermarkStrategyDescriptor() = default;
 
-WatermarkStrategyDescriptorPtr IngestionTimeWatermarkStrategyDescriptor::create() {
-    return std::make_shared<IngestionTimeWatermarkStrategyDescriptor>(Windowing::IngestionTimeWatermarkStrategyDescriptor());
+WatermarkStrategyDescriptorPtr
+IngestionTimeWatermarkStrategyDescriptor::create() {
+  return std::make_shared<IngestionTimeWatermarkStrategyDescriptor>(
+      Windowing::IngestionTimeWatermarkStrategyDescriptor());
 }
-bool IngestionTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other) {
-    return other->instanceOf<IngestionTimeWatermarkStrategyDescriptor>();
+bool IngestionTimeWatermarkStrategyDescriptor::equal(
+    WatermarkStrategyDescriptorPtr other) {
+  return other->instanceOf<IngestionTimeWatermarkStrategyDescriptor>();
 }
 
-std::string IngestionTimeWatermarkStrategyDescriptor::toString() { return "TYPE = INGESTION-TIME"; }
+std::string IngestionTimeWatermarkStrategyDescriptor::toString() {
+  return "TYPE = INGESTION-TIME";
+}
 
-bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr) { return true; }
+bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr) {
+  return true;
+}
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing

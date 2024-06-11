@@ -22,21 +22,24 @@
 namespace NES {
 
 /**
- * @brief This exception is thrown when an error occurs during window processing.
+ * @brief This exception is thrown when an error occurs during window
+ * processing.
  */
 class TaskExecutionException : public Exceptions::RuntimeException {
-  public:
-    /**
-     * @brief Construct a PipelineExecutionException exception from a message.
-     * @param message The exception message.
-     */
-    explicit TaskExecutionException(const Runtime::Execution::SuccessorExecutablePipeline pipeline, std::string&& message);
+public:
+  /**
+   * @brief Construct a PipelineExecutionException exception from a message.
+   * @param message The exception message.
+   */
+  explicit TaskExecutionException(
+      const Runtime::Execution::SuccessorExecutablePipeline pipeline,
+      std::string &&message);
 
-    Runtime::Execution::SuccessorExecutablePipeline getExecutable() const;
+  Runtime::Execution::SuccessorExecutablePipeline getExecutable() const;
 
-  private:
-    const std::string message;
-    const Runtime::Execution::SuccessorExecutablePipeline pipeline;
+private:
+  const std::string message;
+  const Runtime::Execution::SuccessorExecutablePipeline pipeline;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_

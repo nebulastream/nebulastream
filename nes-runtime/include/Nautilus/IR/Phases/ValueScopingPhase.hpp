@@ -27,51 +27,54 @@
 namespace NES::Nautilus::IR {
 
 /**
- * @brief This phase takes an IR graph that contains information on loop-headers, merge-blocks, and for all 
- *        BasicBlockArguments, it is known which n possible base operations the argument references.
+ * @brief This phase takes an IR graph that contains information on
+ * loop-headers, merge-blocks, and for all BasicBlockArguments, it is known
+ * which n possible base operations the argument references.
  */
 class ValueScopingPhase {
+public:
+  /**
+   * @brief Applies the ValueScopingPhase to the supplied IR graph.
+   * @requirements RemoveBrOnlyPhase, LoopDetectionPhase::applyLoopDetection,
+   * StructuredControlFlowPhase
+   * @param IR graph that the ValueScopingPhase is applied to.
+   */
+  void apply(std::shared_ptr<IR::IRGraph> ir);
+
+private:
+  struct IfOpCandidate {
+    std::shared_ptr<IR::Operations::IfOperation> ifOp;
+    bool isTrueBranch;
+  };
+  /**
+   * @brief Internal context object contains phase logic and state.
+   */
+  class ValueScopingPhaseContext {
   public:
     /**
-     * @brief Applies the ValueScopingPhase to the supplied IR graph.
-     * @requirements RemoveBrOnlyPhase, LoopDetectionPhase::applyLoopDetection, StructuredControlFlowPhase
-     * @param IR graph that the ValueScopingPhase is applied to.
+     * @brief Constructor for the context of the ValueScopingPhaseContext.
+     *
+     * @param ir: IRGraph to which ValueScopingPhaseContext will be applied.
      */
-    void apply(std::shared_ptr<IR::IRGraph> ir);
+    ValueScopingPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+    /**
+     * @brief Actually applies the ValueScopingPhaseContext to the IR.
+     */
+    void process();
 
   private:
-    struct IfOpCandidate {
-        std::shared_ptr<IR::Operations::IfOperation> ifOp;
-        bool isTrueBranch;
-    };
     /**
-     * @brief Internal context object contains phase logic and state.
+     * @brief Iterates over all operations of all blocks. Replaces references to
+     * arguments with base operations, if arguments are only referenced by a
+     * single unique base operation.
      */
-    class ValueScopingPhaseContext {
-      public:
-        /**
-         * @brief Constructor for the context of the ValueScopingPhaseContext.
-         * 
-         * @param ir: IRGraph to which ValueScopingPhaseContext will be applied.
-         */
-        ValueScopingPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
-        /**
-         * @brief Actually applies the ValueScopingPhaseContext to the IR.
-         */
-        void process();
+    void replaceArguments();
 
-      private:
-        /**
-         * @brief Iterates over all operations of all blocks. Replaces references to arguments with base operations, if
-         *        arguments are only referenced by a single unique base operation.
-         */
-        void replaceArguments();
-
-      private:
-        std::shared_ptr<IR::IRGraph> ir;
-        std::unordered_set<std::string> visitedBlocks;
-    };
+  private:
+    std::shared_ptr<IR::IRGraph> ir;
+    std::unordered_set<std::string> visitedBlocks;
+  };
 };
 
-}// namespace NES::Nautilus::IR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_
+} // namespace NES::Nautilus::IR
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_

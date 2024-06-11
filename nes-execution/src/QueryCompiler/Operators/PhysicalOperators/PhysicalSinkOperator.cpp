@@ -23,42 +23,47 @@ PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            SinkDescriptorPtr sinkDescriptor)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId),
+      PhysicalUnaryOperator(id, statisticId, std::move(inputSchema),
+                            std::move(outputSchema)),
       sinkDescriptor(std::move(sinkDescriptor)) {}
 
-PhysicalOperatorPtr PhysicalSinkOperator::create(StatisticId statisticId,
-                                                 SchemaPtr inputSchema,
-                                                 SchemaPtr outputSchema,
-                                                 SinkDescriptorPtr sinkDescriptor) {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(sinkDescriptor));
+PhysicalOperatorPtr
+PhysicalSinkOperator::create(StatisticId statisticId, SchemaPtr inputSchema,
+                             SchemaPtr outputSchema,
+                             SinkDescriptorPtr sinkDescriptor) {
+  return create(getNextOperatorId(), statisticId, std::move(inputSchema),
+                std::move(outputSchema), std::move(sinkDescriptor));
 }
 
-PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id,
-                                                 StatisticId statisticId,
-                                                 const SchemaPtr& inputSchema,
-                                                 const SchemaPtr& outputSchema,
-                                                 const SinkDescriptorPtr& sinkDescriptor) {
-    return std::make_shared<PhysicalSinkOperator>(id, statisticId, inputSchema, outputSchema, sinkDescriptor);
+PhysicalOperatorPtr PhysicalSinkOperator::create(
+    OperatorId id, StatisticId statisticId, const SchemaPtr &inputSchema,
+    const SchemaPtr &outputSchema, const SinkDescriptorPtr &sinkDescriptor) {
+  return std::make_shared<PhysicalSinkOperator>(id, statisticId, inputSchema,
+                                                outputSchema, sinkDescriptor);
 }
 
-SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() { return sinkDescriptor; }
+SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() {
+  return sinkDescriptor;
+}
 
 std::string PhysicalSinkOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalSinkOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    if (sinkDescriptor != nullptr) {
-        out << sinkDescriptor->toString();
-    }
-    out << std::endl;
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalSinkOperator:\n";
+  out << PhysicalUnaryOperator::toString();
+  if (sinkDescriptor != nullptr) {
+    out << sinkDescriptor->toString();
+  }
+  out << std::endl;
+  return out.str();
 }
 
 OperatorPtr PhysicalSinkOperator::copy() {
-    auto result = create(id, statisticId, inputSchema, outputSchema, sinkDescriptor);
-    result->addAllProperties(properties);
-    return result;
+  auto result =
+      create(id, statisticId, inputSchema, outputSchema, sinkDescriptor);
+  result->addAllProperties(properties);
+  return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

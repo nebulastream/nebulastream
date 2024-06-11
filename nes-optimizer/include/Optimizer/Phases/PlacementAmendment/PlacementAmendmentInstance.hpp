@@ -29,12 +29,12 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
 namespace Catalogs::Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -48,48 +48,49 @@ class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 class PlacementAmendmentInstance;
-using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
+using PlacementAmendmentInstancePtr =
+    std::shared_ptr<PlacementAmendmentInstance>;
 
 /**
  * @brief class representing the placement amendment instance
  */
 class PlacementAmendmentInstance {
-  public:
-    static PlacementAmendmentInstancePtr create(SharedQueryPlanPtr sharedQueryPlan,
-                                                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                TopologyPtr topology,
-                                                TypeInferencePhasePtr typeInferencePhase,
-                                                Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                Catalogs::Query::QueryCatalogPtr queryCatalog);
+public:
+  static PlacementAmendmentInstancePtr
+  create(SharedQueryPlanPtr sharedQueryPlan,
+         Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+         TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
+         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+         Catalogs::Query::QueryCatalogPtr queryCatalog);
 
-    PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
-                               Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                               TopologyPtr topology,
-                               TypeInferencePhasePtr typeInferencePhase,
-                               Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                               Catalogs::Query::QueryCatalogPtr queryCatalog);
+  PlacementAmendmentInstance(
+      SharedQueryPlanPtr sharedQueryPlan,
+      Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+      TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
+      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+      Catalogs::Query::QueryCatalogPtr queryCatalog);
 
-    /**
-     * @brief Get promise to check if the amendment instance was processed
-     * @return
-     */
-    std::future<bool> getFuture();
+  /**
+   * @brief Get promise to check if the amendment instance was processed
+   * @return
+   */
+  std::future<bool> getFuture();
 
-    /**
-     * @brief Perform the placement amendment
-     * @return true if success else false
-     */
-    void execute();
+  /**
+   * @brief Perform the placement amendment
+   * @return true if success else false
+   */
+  void execute();
 
-  private:
-    SharedQueryPlanPtr sharedQueryPlan;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    TopologyPtr topology;
-    TypeInferencePhasePtr typeInferencePhase;
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
-    std::promise<bool> completionPromise;
+private:
+  SharedQueryPlanPtr sharedQueryPlan;
+  Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+  TopologyPtr topology;
+  TypeInferencePhasePtr typeInferencePhase;
+  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+  Catalogs::Query::QueryCatalogPtr queryCatalog;
+  std::promise<bool> completionPromise;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_

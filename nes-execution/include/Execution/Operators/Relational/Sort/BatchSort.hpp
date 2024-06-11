@@ -25,34 +25,36 @@ enum class SortOrder : uint8_t { Ascending, Descending };
 
 /**
  * @brief Batch sort operator.
- * The batch sort operator, consumes input tuples and materializes them in a global state.
- * If all input records are processed, we sort the global state and emit the sorted tuples.
+ * The batch sort operator, consumes input tuples and materializes them in a
+ * global state. If all input records are processed, we sort the global state
+ * and emit the sorted tuples.
  */
 class BatchSort : public ExecutableOperator {
-  public:
-    /**
-     * @brief Construct a new BatchSort operator
-     *
-     * @param operatorHandlerIndex operator handler index
-     * @param dataTypes data types of the input tuples
-     */
-    BatchSort(uint64_t operatorHandlerIndex,
-              const std::vector<PhysicalTypePtr>& dataTypes,
-              const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
-              const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers,
-              SortOrder sortOrder = SortOrder::Ascending);
+public:
+  /**
+   * @brief Construct a new BatchSort operator
+   *
+   * @param operatorHandlerIndex operator handler index
+   * @param dataTypes data types of the input tuples
+   */
+  BatchSort(
+      uint64_t operatorHandlerIndex,
+      const std::vector<PhysicalTypePtr> &dataTypes,
+      const std::vector<Record::RecordFieldIdentifier> &fieldIdentifiers,
+      const std::vector<Record::RecordFieldIdentifier> &sortFieldIdentifiers,
+      SortOrder sortOrder = SortOrder::Ascending);
 
-    void execute(ExecutionContext& executionCtx, Record& record) const override;
-    void setup(ExecutionContext& executionCtx) const override;
+  void execute(ExecutionContext &executionCtx, Record &record) const override;
+  void setup(ExecutionContext &executionCtx) const override;
 
-  private:
-    const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-    const uint64_t operatorHandlerIndex;
-    const std::vector<PhysicalTypePtr> dataTypes;
-    const std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
-    const std::vector<Record::RecordFieldIdentifier> sortFieldIdentifiers;
-    const SortOrder sortOrder;
+private:
+  const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+  const uint64_t operatorHandlerIndex;
+  const std::vector<PhysicalTypePtr> dataTypes;
+  const std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
+  const std::vector<Record::RecordFieldIdentifier> sortFieldIdentifiers;
+  const SortOrder sortOrder;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORT_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORT_HPP_

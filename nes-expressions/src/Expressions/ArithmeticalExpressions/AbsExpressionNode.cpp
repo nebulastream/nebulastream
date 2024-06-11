@@ -21,39 +21,44 @@
 
 namespace NES {
 
-AbsExpressionNode::AbsExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+AbsExpressionNode::AbsExpressionNode(DataTypePtr stamp)
+    : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
 
-AbsExpressionNode::AbsExpressionNode(AbsExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
+AbsExpressionNode::AbsExpressionNode(AbsExpressionNode *other)
+    : ArithmeticalUnaryExpressionNode(other) {}
 
-ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr& child) {
-    auto absNode = std::make_shared<AbsExpressionNode>(child->getStamp());
-    absNode->setChild(child);
-    return absNode;
+ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr &child) {
+  auto absNode = std::make_shared<AbsExpressionNode>(child->getStamp());
+  absNode->setChild(child);
+  return absNode;
 }
 
 void AbsExpressionNode::inferStamp(SchemaPtr schema) {
-    // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+  // infer stamp of child, check if its numerical, assume same stamp
+  ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // increase lower bound to 0
-    stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0_s64);
-    NES_TRACE("AbsExpressionNode: increased the lower bound of stamp to 0: {}", toString());
+  // increase lower bound to 0
+  stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0_s64);
+  NES_TRACE("AbsExpressionNode: increased the lower bound of stamp to 0: {}",
+            toString());
 }
 
-bool AbsExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<AbsExpressionNode>()) {
-        auto otherAbsNode = rhs->as<AbsExpressionNode>();
-        return child()->equal(otherAbsNode->child());
-    }
-    return false;
+bool AbsExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<AbsExpressionNode>()) {
+    auto otherAbsNode = rhs->as<AbsExpressionNode>();
+    return child()->equal(otherAbsNode->child());
+  }
+  return false;
 }
 
 std::string AbsExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << "ABS(" << children[0]->toString() << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "ABS(" << children[0]->toString() << ")";
+  return ss.str();
 }
 
-ExpressionNodePtr AbsExpressionNode::copy() { return AbsExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr AbsExpressionNode::copy() {
+  return AbsExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+} // namespace NES

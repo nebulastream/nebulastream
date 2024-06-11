@@ -19,26 +19,27 @@
 namespace NES::Nautilus::IR::Types {
 
 /**
- * @brief A array stamp that represents a array data type of a fixed size and a specific component type.
+ * @brief A array stamp that represents a array data type of a fixed size and a
+ * specific component type.
  */
 class ArrayStamp : public Stamp {
-  public:
-    static const inline auto type = TypeIdentifier::create<ArrayStamp>();
-    /**
-     * @brief Constructor to create a array stamp.
-     */
-    ArrayStamp(const uint64_t size, StampPtr componentStamp);
+public:
+  static const inline auto type = TypeIdentifier::create<ArrayStamp>();
+  /**
+   * @brief Constructor to create a array stamp.
+   */
+  ArrayStamp(const uint64_t size, StampPtr componentStamp);
 
-    uint64_t getSize() const;
+  uint64_t getSize() const;
 
-    const StampPtr& getComponentStamp() const;
-    const std::string toString() const override;
+  const StampPtr &getComponentStamp() const;
+  const std::string toString() const override;
 
-  private:
-    const uint64_t size;
-    const StampPtr componentStamp;
+private:
+  const uint64_t size;
+  const StampPtr componentStamp;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ARRAYSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ARRAYSTAMP_HPP_

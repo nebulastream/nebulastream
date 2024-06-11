@@ -20,20 +20,21 @@
 
 namespace NES::Nautilus::IR::Operations {
 /**
- * @brief Terminator Operation(Op), must be last Op in BasicBlock(BB). Passes control flow from one BB to another.
- * 
+ * @brief Terminator Operation(Op), must be last Op in BasicBlock(BB). Passes
+ * control flow from one BB to another.
+ *
  */
 class BranchOperation : public Operation {
-  public:
-    explicit BranchOperation();
-    ~BranchOperation() override = default;
+public:
+  explicit BranchOperation();
+  ~BranchOperation() override = default;
 
-    BasicBlockInvocation& getNextBlockInvocation();
-    std::string toString() override;
-    static bool classof(const Operation* Op);
+  BasicBlockInvocation &getNextBlockInvocation();
+  std::string toString() override;
+  static bool classof(const Operation *Op);
 
-  private:
-    BasicBlockInvocation basicBlock;
+private:
+  BasicBlockInvocation basicBlock;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_

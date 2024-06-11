@@ -33,513 +33,588 @@ using namespace NES;
 
 class SyntaxBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest {
 
-  public:
-    SchemaPtr schema;
+public:
+  SchemaPtr schema;
 
-    /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("SyntaxBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
-    }
+  /* Will be called before all tests in this class are started. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("SyntaxBasedPartialQueryMergerRuleTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    schema = Schema::create()
+                 ->addField("id", BasicType::UINT32)
+                 ->addField("value", BasicType::UINT64);
+  }
 };
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with same queryIdAndCatalogEntryMapping
  */
 TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1Children, sink2Children);
-        }
+  for (const auto &sink1Children : updatedRootOperators1[0]->getChildren()) {
+    for (const auto &sink2Children : updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1Children, sink2Children);
     }
+  }
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with multiple same source
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with same queryIdAndCatalogEntryMapping with multiple same source
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingEqualQueriesWithMultipleSameSources) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sinkOperator11 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  auto sinkOperator11 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    sinkOperator11->addChild(sourceOperator11);
-    sinkOperator11->addChild(sourceOperator21);
+  sinkOperator11->addChild(sourceOperator11);
+  sinkOperator11->addChild(sourceOperator21);
 
-    QueryPlanPtr queryPlan1 = QueryPlan::create();
-    queryPlan1->addRootOperator(sinkOperator11);
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  QueryPlanPtr queryPlan1 = QueryPlan::create();
+  queryPlan1->addRootOperator(sinkOperator11);
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sinkOperator12 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  auto sinkOperator12 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    sinkOperator12->addChild(sourceOperator12);
-    sinkOperator12->addChild(sourceOperator22);
+  sinkOperator12->addChild(sourceOperator12);
+  sinkOperator12->addChild(sourceOperator22);
 
-    QueryPlanPtr queryPlan2 = QueryPlan::create();
-    queryPlan2->addRootOperator(sinkOperator12);
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  QueryPlanPtr queryPlan2 = QueryPlan::create();
+  queryPlan2->addRootOperator(sinkOperator12);
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
-                found = true;
-            }
-        }
-        EXPECT_TRUE(found);
+  for (const auto &sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    bool found = false;
+    for (const auto &sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+      if (sink1GQNChild->equal(sink2GQNChild)) {
+        found = true;
+      }
     }
+    EXPECT_TRUE(found);
+  }
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different source
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentSources) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("truck").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("truck")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 1);
+  auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
-    //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
+  // assert
+  for (const auto &sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto &sink2ChildOperator :
+         updatedRootOperators2[0]->getChildren()) {
+      EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
     }
+  }
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with same queryIdAndCatalogEntryMapping with unionWith operators
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithUnionOperators) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("truck");
+  Query query1 = Query::from("car")
+                     .unionWith(subQuery1)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .unionWith(subQuery2)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1Children, sink2Children);
-        }
+  for (const auto &sink1Children : updatedRootOperators1[0]->getChildren()) {
+    for (const auto &sink2Children : updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1Children, sink2Children);
     }
+  }
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with queryIdAndCatalogEntryMapping with different order of unionWith operator
+ * children
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("car");
-    Query query1 = Query::from("truck")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithMergeOperatorChildrenOrder) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("car");
+  Query query1 = Query::from("truck")
+                     .unionWith(subQuery1)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .unionWith(subQuery2)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1Children, sink2Children);
-        }
+  for (const auto &sink1Children : updatedRootOperators1[0]->getChildren()) {
+    for (const auto &sink2Children : updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1Children, sink2Children);
     }
+  }
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with queryIdAndCatalogEntryMapping with unionWith operators but different
+ * children
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("bike");
-    Query query1 = Query::from("truck")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("bike");
+  Query query1 = Query::from("truck")
+                     .unionWith(subQuery1)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .unionWith(subQuery2)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 1);
+  auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
-    //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
+  // assert
+  for (const auto &sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto &sink2ChildOperator :
+         updatedRootOperators2[0]->getChildren()) {
+      EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
     }
+  }
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentFilters) {
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    auto sourceOperators = updatedSharedQueryPlan1->getLeafOperators();
-    EXPECT_TRUE(sourceOperators.size() == 1);
+  auto sourceOperators = updatedSharedQueryPlan1->getLeafOperators();
+  EXPECT_TRUE(sourceOperators.size() == 1);
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentFiltersField) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id1") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id1") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedPartialQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedPartialQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedPartialQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedPartialQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(sharedQueryPlansToDeploy.size() == 1);
+  // assert
+  auto sharedQueryPlansToDeploy =
+      globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(sharedQueryPlansToDeploy.size() == 1);
 
-    auto sharedQueryPlan1 = sharedQueryPlansToDeploy[0]->getQueryPlan();
+  auto sharedQueryPlan1 = sharedQueryPlansToDeploy[0]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = sharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = sharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentMapAttribute) {
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car").map(Attribute("value1") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value1") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    //assert
-    auto sourceOperators = updatedSharedQueryPlan1->getLeafOperators();
-    EXPECT_TRUE(sourceOperators.size() == 1);
+  // assert
+  auto sourceOperators = updatedSharedQueryPlan1->getLeafOperators();
+  EXPECT_TRUE(sourceOperators.size() == 1);
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
+TEST_F(SyntaxBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentMapValue) {
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car").map(Attribute("value") = 50).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 50)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedPartialQueryMergerRule::create();
-    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto syntaxBasedEqualQueryMergerRule =
+      Optimizer::SyntaxBasedPartialQueryMergerRule::create();
+  syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+  // assert
+  auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+  auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    //assert
-    auto sourceOperators = updatedSharedQueryPlan1->getLeafOperators();
-    EXPECT_TRUE(sourceOperators.size() == 1);
+  // assert
+  auto sourceOperators = updatedSharedQueryPlan1->getLeafOperators();
+  EXPECT_TRUE(sourceOperators.size() == 1);
 }

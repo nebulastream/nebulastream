@@ -19,34 +19,42 @@
 #include <cmath>
 namespace NES::Runtime::Execution::Expressions {
 
-CeilExpression::CeilExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+CeilExpression::CeilExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr &subExpression)
     : subExpression(subExpression) {}
 
 /**
-* @brief This method calculates the modulus ceil of x .
-* This function is basically a wrapper for std::ceil and enables us to use it in our execution engine framework.
-* @param x double
-* @return double
-*/
+ * @brief This method calculates the modulus ceil of x .
+ * This function is basically a wrapper for std::ceil and enables us to use it
+ * in our execution engine framework.
+ * @param x double
+ * @return double
+ */
 double calculateCeil(double x) { return std::ceil(x); }
 
-Value<> CeilExpression::execute(NES::Nautilus::Record& record) const {
-    // Evaluate the left sub expression and retrieve the value.
-    Value leftValue = subExpression->execute(record);
+Value<> CeilExpression::execute(NES::Nautilus::Record &record) const {
+  // Evaluate the left sub expression and retrieve the value.
+  Value leftValue = subExpression->execute(record);
 
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // leftValue.as<Float>() makes an explicit cast from Value to Value<Float>.
-    // In all cases we can call the same calculateCeil function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Float>()) {
-        return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
-        return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Double>());
-    } else {
-        // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
-    }
+  // As we don't know the exact type of value here, we have to check the type
+  // and then call the function. leftValue.as<Float>() makes an explicit cast
+  // from Value to Value<Float>. In all cases we can call the same calculateCeil
+  // function as under the hood C++ can do an implicit cast from primitive
+  // integer types to the double argument. Later we will introduce implicit
+  // casts on this level to hide this casting boilerplate code.
+  if (leftValue->isType<Float>()) {
+    return FunctionCall<>("calculateCeil", calculateCeil,
+                          leftValue.as<Float>());
+  } else if (leftValue->isType<Double>()) {
+    return FunctionCall<>("calculateCeil", calculateCeil,
+                          leftValue.as<Double>());
+  } else {
+    // If no type was applicable we throw an exception.
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on numeric input arguments that are "
+        "Float.");
+  }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CeilExpression>> ceilFunction("ceil");
-}// namespace NES::Runtime::Execution::Expressions
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CeilExpression>>
+    ceilFunction("ceil");
+} // namespace NES::Runtime::Execution::Expressions

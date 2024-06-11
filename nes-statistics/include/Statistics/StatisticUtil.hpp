@@ -22,18 +22,19 @@ namespace NES::Statistic {
  * @brief This class contains static utility methods for the statistics
  */
 class StatisticUtil {
-  public:
-    /**
-     * @brief Retrieves the H3 hash of the value
-     * @param value
-     * @param row
-     * @param depth
-     * @param numberOfBitsInKey
-     * @return uint64_t
-     */
-    static uint64_t getH3HashValue(BasicValue& value, uint64_t row, uint64_t depth, uint64_t numberOfBitsInKey);
+public:
+  /**
+   * @brief Retrieves the H3 hash of the value
+   * @param value
+   * @param row
+   * @param depth
+   * @param numberOfBitsInKey
+   * @return uint64_t
+   */
+  static uint64_t getH3HashValue(BasicValue &value, uint64_t row,
+                                 uint64_t depth, uint64_t numberOfBitsInKey);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_STATISTICUTIL_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTICUTIL_HPP_

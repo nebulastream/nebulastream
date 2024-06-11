@@ -20,29 +20,29 @@
 
 namespace NES::Nautilus::IR::Operations {
 class FunctionOperation : public Operation {
-  public:
-    explicit FunctionOperation(std::string name,
-                               std::vector<PrimitiveStamp> inputArgs,
-                               std::vector<std::string> inputArgNames,
-                               Types::StampPtr outputArg);
-    ~FunctionOperation() override = default;
+public:
+  explicit FunctionOperation(std::string name,
+                             std::vector<PrimitiveStamp> inputArgs,
+                             std::vector<std::string> inputArgNames,
+                             Types::StampPtr outputArg);
+  ~FunctionOperation() override = default;
 
-    [[nodiscard]] const std::string& getName() const;
-    BasicBlockPtr addFunctionBasicBlock(BasicBlockPtr functionBasicBlock);
-    BasicBlockPtr getFunctionBasicBlock();
-    [[nodiscard]] const std::vector<PrimitiveStamp>& getInputArgs() const;
-    [[nodiscard]] Types::StampPtr getOutputArg() const;
-    [[nodiscard]] const std::vector<std::string>& getInputArgNames() const;
+  [[nodiscard]] const std::string &getName() const;
+  BasicBlockPtr addFunctionBasicBlock(BasicBlockPtr functionBasicBlock);
+  BasicBlockPtr getFunctionBasicBlock();
+  [[nodiscard]] const std::vector<PrimitiveStamp> &getInputArgs() const;
+  [[nodiscard]] Types::StampPtr getOutputArg() const;
+  [[nodiscard]] const std::vector<std::string> &getInputArgNames() const;
 
-    std::string toString() override;
-    static bool classof(const Operation* Op);
+  std::string toString() override;
+  static bool classof(const Operation *Op);
 
-  private:
-    std::string name;
-    BasicBlockPtr functionBasicBlock;
-    std::vector<PrimitiveStamp> inputArgs;
-    std::vector<std::string> inputArgNames;
+private:
+  std::string name;
+  BasicBlockPtr functionBasicBlock;
+  std::vector<PrimitiveStamp> inputArgs;
+  std::vector<std::string> inputArgNames;
 };
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_

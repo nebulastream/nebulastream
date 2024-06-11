@@ -21,32 +21,33 @@ namespace NES {
  * @brief This node represents an AND combination between the two children.
  */
 class AndExpressionNode : public LogicalBinaryExpressionNode {
-  public:
-    AndExpressionNode();
-    ~AndExpressionNode() override = default;
-    /**
-    * @brief Create a new AND expression
-    */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
-    /**
-     * @brief Infers the stamp of this logical AND expression node.
-     * We assume that both children of an and expression are predicates.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+public:
+  AndExpressionNode();
+  ~AndExpressionNode() override = default;
+  /**
+   * @brief Create a new AND expression
+   */
+  static ExpressionNodePtr create(ExpressionNodePtr const &left,
+                                  ExpressionNodePtr const &right);
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] std::string toString() const override;
+  /**
+   * @brief Infers the stamp of this logical AND expression node.
+   * We assume that both children of an and expression are predicates.
+   * @param typeInferencePhaseContext
+   * @param schema the current schema.
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  private:
-    explicit AndExpressionNode(AndExpressionNode* other);
+private:
+  explicit AndExpressionNode(AndExpressionNode *other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSIONNODE_HPP_

@@ -23,37 +23,43 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 /**
- * @brief contains the predicted reconnect points along the trajectory of this worker.
- * Note: As the current location of this worker changes, the ReconnectSchedulePredictor can potentially re-compute all previous predictions.
+ * @brief contains the predicted reconnect points along the trajectory of this
+ * worker. Note: As the current location of this worker changes, the
+ * ReconnectSchedulePredictor can potentially re-compute all previous
+ * predictions.
  */
 class ReconnectSchedule {
-  public:
-    /**
-     * Constructor
-     * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
-     */
-    explicit ReconnectSchedule(std::vector<ReconnectPoint> reconnectVector);
-    /**
-     * @brief getter function for the vector containing the scheduled reconnects
-     * @return a vector containing reconnect points consisting of expected next parent id, estimated reconnect location, estimated reconnect time
-     */
-    [[nodiscard]] const std::vector<ReconnectPoint>& getReconnectVector() const;
+public:
+  /**
+   * Constructor
+   * @param reconnectVector a vector containing times, locations and new parent
+   * ids for the expected reconnects
+   */
+  explicit ReconnectSchedule(std::vector<ReconnectPoint> reconnectVector);
+  /**
+   * @brief getter function for the vector containing the scheduled reconnects
+   * @return a vector containing reconnect points consisting of expected next
+   * parent id, estimated reconnect location, estimated reconnect time
+   */
+  [[nodiscard]] const std::vector<ReconnectPoint> &getReconnectVector() const;
 
-    /**
-     * @brief removes the upcoming scheduled reconnect point from the front of the list
-     * @return true on success
-     */
-    bool removeNextReconnect();
+  /**
+   * @brief removes the upcoming scheduled reconnect point from the front of the
+   * list
+   * @return true on success
+   */
+  bool removeNextReconnect();
 
-    /**
-     * @brief get a reconnect schedule object which does not contain any values to represent that no prediction exists
-     * @return a reconnect schedule with all its members set to nullptr
-     */
-    static ReconnectSchedule Empty();
+  /**
+   * @brief get a reconnect schedule object which does not contain any values to
+   * represent that no prediction exists
+   * @return a reconnect schedule with all its members set to nullptr
+   */
+  static ReconnectSchedule Empty();
 
-  private:
-    std::vector<ReconnectPoint> reconnectVector;
+private:
+  std::vector<ReconnectPoint> reconnectVector;
 };
-}// namespace NES::Spatial::Mobility::Experimental
+} // namespace NES::Spatial::Mobility::Experimental
 
-#endif// NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
+#endif // NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_

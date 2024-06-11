@@ -16,11 +16,16 @@
 
 namespace NES::Compiler {
 
-CompilationResult::CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>&& timer)
+CompilationResult::CompilationResult(
+    std::shared_ptr<DynamicObject> dynamicObject, Timer<> &&timer)
     : dynamicObject(std::move(dynamicObject)), timer(std::move(timer)) {}
 
-std::shared_ptr<DynamicObject> CompilationResult::getDynamicObject() const { return dynamicObject; }
+std::shared_ptr<DynamicObject> CompilationResult::getDynamicObject() const {
+  return dynamicObject;
+}
 
-uint64_t CompilationResult::getCompilationTime() const { return timer.getRuntime(); }
+uint64_t CompilationResult::getCompilationTime() const {
+  return timer.getRuntime();
+}
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

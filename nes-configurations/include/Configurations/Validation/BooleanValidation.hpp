@@ -21,17 +21,18 @@
 namespace NES::Configurations {
 
 /**
-    * @brief This class implements validation for parameters that should represent booleans
-    */
+ * @brief This class implements validation for parameters that should represent
+ * booleans
+ */
 class BooleanValidation : public ConfigurationValidation {
-  public:
-    /**
-         * @brief Method to check the validity of a parameter as a bool
-         * @param boolean number to validate
-         * @return true if the parameter is a valid bool, false otherwise
-         */
-    bool isValid(const std::string& boolean) const override;
+public:
+  /**
+   * @brief Method to check the validity of a parameter as a bool
+   * @param boolean number to validate
+   * @return true if the parameter is a valid bool, false otherwise
+   */
+  bool isValid(const std::string &boolean) const override;
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_

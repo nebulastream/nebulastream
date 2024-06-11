@@ -24,34 +24,35 @@ class ServerCompletionQueue;
 namespace NES {
 class WorkerRPCServer;
 /**
- * @brief This is taken from https://github.com/grpc/grpc/tree/master/examples/cpp/helloworld
- *  Take in the "service" instance (in this case representing an asynchronous
- * server) and the completion queue "completionQueue" used for asynchronous communication
- * with the gRPC Runtime.
+ * @brief This is taken from
+ * https://github.com/grpc/grpc/tree/master/examples/cpp/helloworld Take in the
+ * "service" instance (in this case representing an asynchronous server) and the
+ * completion queue "completionQueue" used for asynchronous communication with
+ * the gRPC Runtime.
  */
 class CallData {
-  public:
-    /**
-     * @brief Constructor for the Call Data
-     * @param service server to listen on
-     * @param cq queue to listen on
-     */
-    explicit CallData(WorkerRPCServer& service);
+public:
+  /**
+   * @brief Constructor for the Call Data
+   * @param service server to listen on
+   * @param cq queue to listen on
+   */
+  explicit CallData(WorkerRPCServer &service);
 
-    /**
-    * @brief Run method to process the call data through it different stages
-    */
-    void proceed();
+  /**
+   * @brief Run method to process the call data through it different stages
+   */
+  void proceed();
 
-  private:
-    // The means of communication with the gRPC Runtime for an asynchronous
-    // server.
-    WorkerRPCServer& service;
+private:
+  // The means of communication with the gRPC Runtime for an asynchronous
+  // server.
+  WorkerRPCServer &service;
 
-    // Let's implement a tiny state machine with the following states.
-    enum class CallStatus : uint8_t { CREATE, PROCESS, FINISH };
-    CallStatus status = CallStatus::CREATE;// The current serving state.
+  // Let's implement a tiny state machine with the following states.
+  enum class CallStatus : uint8_t { CREATE, PROCESS, FINISH };
+  CallStatus status = CallStatus::CREATE; // The current serving state.
 };
 
-}// namespace NES
-#endif// NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_
+} // namespace NES
+#endif // NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_

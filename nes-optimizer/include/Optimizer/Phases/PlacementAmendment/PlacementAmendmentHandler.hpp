@@ -22,40 +22,44 @@
 namespace NES::Optimizer {
 
 class PlacementAmendmentInstance;
-using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
+using PlacementAmendmentInstancePtr =
+    std::shared_ptr<PlacementAmendmentInstance>;
 
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
+using UMPMCAmendmentQueuePtr = std::shared_ptr<
+    folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
 
 /**
- * @brief The placement amendment handler class is responsible for processing placement amendments of updated shared query plans.
- * To this end, we can initialize the handles with a pre-configured number of handler threads.
+ * @brief The placement amendment handler class is responsible for processing
+ * placement amendments of updated shared query plans. To this end, we can
+ * initialize the handles with a pre-configured number of handler threads.
  */
 class PlacementAmendmentHandler {
 
-  public:
-    PlacementAmendmentHandler(uint16_t numOfHandler, UMPMCAmendmentQueuePtr amendmentRequestQueue);
+public:
+  PlacementAmendmentHandler(uint16_t numOfHandler,
+                            UMPMCAmendmentQueuePtr amendmentRequestQueue);
 
-    /**
-     * @brief Start processing amendment instances
-     */
-    void start();
+  /**
+   * @brief Start processing amendment instances
+   */
+  void start();
 
-    /**
-     * @brief Processed requests queued in the amendment request queue
-     */
-    void handleRequest();
+  /**
+   * @brief Processed requests queued in the amendment request queue
+   */
+  void handleRequest();
 
-    /**
-     * @brief Shutdown the handler
-     */
-    void shutDown();
+  /**
+   * @brief Shutdown the handler
+   */
+  void shutDown();
 
-  private:
-    bool running;
-    uint16_t numOfHandler;
-    UMPMCAmendmentQueuePtr amendmentQueue;
-    std::vector<std::thread> amendmentRunners;
+private:
+  bool running;
+  uint16_t numOfHandler;
+  UMPMCAmendmentQueuePtr amendmentQueue;
+  std::vector<std::thread> amendmentRunners;
 };
 
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_

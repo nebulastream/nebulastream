@@ -31,57 +31,76 @@ namespace NES {
 namespace Monitoring {
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
-}// namespace Monitoring
+} // namespace Monitoring
 
 namespace Statistic {
 class StatisticManager;
 using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
-}// namespace Statistic
+} // namespace Statistic
 
 namespace Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class ReconnectSchedulePredictor;
-using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
-}// namespace Spatial::Mobility::Experimental
+using ReconnectSchedulePredictorPtr =
+    std::shared_ptr<ReconnectSchedulePredictor>;
+} // namespace Spatial::Mobility::Experimental
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
-  public:
-    WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
-                    Monitoring::MonitoringAgentPtr monitoringAgent,
-                    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor);
+public:
+  WorkerRPCServer(
+      Runtime::NodeEnginePtr nodeEngine,
+      Monitoring::MonitoringAgentPtr monitoringAgent,
+      NES::Spatial::Mobility::Experimental::LocationProviderPtr
+          locationProvider,
+      NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr
+          trajectoryPredictor);
 
-    Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
+  Status RegisterQuery(ServerContext *context,
+                       const RegisterQueryRequest *request,
+                       RegisterQueryReply *reply) override;
 
-    Status UnregisterQuery(ServerContext* context, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) override;
+  Status UnregisterQuery(ServerContext *context,
+                         const UnregisterQueryRequest *request,
+                         UnregisterQueryReply *reply) override;
 
-    Status StartQuery(ServerContext* context, const StartQueryRequest* request, StartQueryReply* reply) override;
+  Status StartQuery(ServerContext *context, const StartQueryRequest *request,
+                    StartQueryReply *reply) override;
 
-    Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
+  Status StopQuery(ServerContext *context, const StopQueryRequest *request,
+                   StopQueryReply *reply) override;
 
-    Status
-    RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;
+  Status RegisterMonitoringPlan(ServerContext *,
+                                const MonitoringRegistrationRequest *request,
+                                MonitoringRegistrationReply *) override;
 
-    Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
+  Status GetMonitoringData(ServerContext *context,
+                           const MonitoringDataRequest *request,
+                           MonitoringDataReply *reply) override;
 
-    Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
+  Status BeginBuffer(ServerContext *context, const BufferRequest *request,
+                     BufferReply *reply) override;
 
-    Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
+  Status UpdateNetworkSink(ServerContext *,
+                           const UpdateNetworkSinkRequest *request,
+                           UpdateNetworkSinkReply *reply) override;
 
-    Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
+  Status GetLocation(ServerContext *, const GetLocationRequest *request,
+                     GetLocationReply *reply) override;
 
-    Status ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) override;
+  Status ProbeStatistics(ServerContext *, const ProbeStatisticsRequest *request,
+                         ProbeStatisticsReply *reply) override;
 
-  private:
-    Runtime::NodeEnginePtr nodeEngine;
-    Statistic::StatisticManagerPtr statisticManager;
-    Monitoring::MonitoringAgentPtr monitoringAgent;
-    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
-    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
+private:
+  Runtime::NodeEnginePtr nodeEngine;
+  Statistic::StatisticManagerPtr statisticManager;
+  Monitoring::MonitoringAgentPtr monitoringAgent;
+  NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
+  NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr
+      trajectoryPredictor;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
+#endif // NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_

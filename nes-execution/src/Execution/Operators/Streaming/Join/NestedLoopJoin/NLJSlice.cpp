@@ -18,82 +18,83 @@
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-NLJSlice::NLJSlice(uint64_t windowStart,
-                   uint64_t windowEnd,
-                   uint64_t numberOfWorker,
-                   BufferManagerPtr& bufferManager,
-                   SchemaPtr& leftSchema,
-                   uint64_t leftPageSize,
-                   SchemaPtr& rightSchema,
-                   uint64_t rightPageSize)
+NLJSlice::NLJSlice(uint64_t windowStart, uint64_t windowEnd,
+                   uint64_t numberOfWorker, BufferManagerPtr &bufferManager,
+                   SchemaPtr &leftSchema, uint64_t leftPageSize,
+                   SchemaPtr &rightSchema, uint64_t rightPageSize)
     : StreamSlice(windowStart, windowEnd) {
-    for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        leftTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, leftSchema, leftPageSize));
-    }
+  for (uint64_t i = 0; i < numberOfWorker; ++i) {
+    leftTuples.emplace_back(
+        std::make_unique<Nautilus::Interface::PagedVectorVarSized>(
+            bufferManager, leftSchema, leftPageSize));
+  }
 
-    for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        rightTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, rightSchema, rightPageSize));
-    }
-    NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
-              NLJSlice::toString(),
-              numberOfWorker,
-              leftTuples.size(),
-              rightTuples.size());
+  for (uint64_t i = 0; i < numberOfWorker; ++i) {
+    rightTuples.emplace_back(
+        std::make_unique<Nautilus::Interface::PagedVectorVarSized>(
+            bufferManager, rightSchema, rightPageSize));
+  }
+  NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} "
+            "leftTuples.size() and {} rightTuples.size()",
+            NLJSlice::toString(), numberOfWorker, leftTuples.size(),
+            rightTuples.size());
 }
 
 uint64_t NLJSlice::getNumberOfTuplesLeft() {
-    uint64_t sum = 0;
-    for (auto& pagedVec : leftTuples) {
-        sum += pagedVec->getNumberOfEntries();
-    }
-    return sum;
+  uint64_t sum = 0;
+  for (auto &pagedVec : leftTuples) {
+    sum += pagedVec->getNumberOfEntries();
+  }
+  return sum;
 }
 
 uint64_t NLJSlice::getNumberOfTuplesRight() {
-    uint64_t sum = 0;
-    for (auto& pagedVec : rightTuples) {
-        sum += pagedVec->getNumberOfEntries();
-    }
-    return sum;
+  uint64_t sum = 0;
+  for (auto &pagedVec : rightTuples) {
+    sum += pagedVec->getNumberOfEntries();
+  }
+  return sum;
 }
 
 std::string NLJSlice::toString() {
-    std::ostringstream basicOstringstream;
-    basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd
-                       << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
-                       << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
-    return basicOstringstream.str();
+  std::ostringstream basicOstringstream;
+  basicOstringstream << "(sliceStart: " << sliceStart
+                     << " sliceEnd: " << sliceEnd
+                     << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
+                     << " rightNumberOfTuples: " << getNumberOfTuplesRight()
+                     << ")";
+  return basicOstringstream.str();
 }
 
-void* NLJSlice::getPagedVectorRefLeft(WorkerThreadId workerThreadId) {
-    const auto pos = workerThreadId % leftTuples.size();
-    return leftTuples[pos].get();
+void *NLJSlice::getPagedVectorRefLeft(WorkerThreadId workerThreadId) {
+  const auto pos = workerThreadId % leftTuples.size();
+  return leftTuples[pos].get();
 }
 
-void* NLJSlice::getPagedVectorRefRight(WorkerThreadId workerThreadId) {
-    const auto pos = workerThreadId % rightTuples.size();
-    return rightTuples[pos].get();
+void *NLJSlice::getPagedVectorRefRight(WorkerThreadId workerThreadId) {
+  const auto pos = workerThreadId % rightTuples.size();
+  return rightTuples[pos].get();
 }
 
 void NLJSlice::combinePagedVectors() {
-    NES_TRACE("Combining pagedVectors for window: {}", this->toString());
+  NES_TRACE("Combining pagedVectors for window: {}", this->toString());
 
-    // Appending all PagedVectors for the left join side and removing all items except the first one
-    if (leftTuples.size() > 1) {
-        for (uint64_t i = 1; i < leftTuples.size(); ++i) {
-            leftTuples[0]->appendAllPages(*leftTuples[i]);
-        }
-        leftTuples.erase(leftTuples.begin() + 1, leftTuples.end());
+  // Appending all PagedVectors for the left join side and removing all items
+  // except the first one
+  if (leftTuples.size() > 1) {
+    for (uint64_t i = 1; i < leftTuples.size(); ++i) {
+      leftTuples[0]->appendAllPages(*leftTuples[i]);
     }
+    leftTuples.erase(leftTuples.begin() + 1, leftTuples.end());
+  }
 
-    // Appending all PagedVectors for the right join side and removing all items except the first one
-    if (rightTuples.size() > 1) {
-        for (uint64_t i = 1; i < rightTuples.size(); ++i) {
-            rightTuples[0]->appendAllPages(*rightTuples[i]);
-        }
-        rightTuples.erase(rightTuples.begin() + 1, rightTuples.end());
+  // Appending all PagedVectors for the right join side and removing all items
+  // except the first one
+  if (rightTuples.size() > 1) {
+    for (uint64_t i = 1; i < rightTuples.size(); ++i) {
+      rightTuples[0]->appendAllPages(*rightTuples[i]);
     }
+    rightTuples.erase(rightTuples.begin() + 1, rightTuples.end());
+  }
 }
-};// namespace NES::Runtime::Execution
+}; // namespace NES::Runtime::Execution

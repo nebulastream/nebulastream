@@ -23,17 +23,17 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This expression finds the asin of radians.
-*/
+ * @brief This expression finds the asin of radians.
+ */
 class AsinExpression : public Expression {
-  public:
-    AsinExpression(const ExpressionPtr& radians);
-    Value<> execute(Record& record) const override;
+public:
+  AsinExpression(const ExpressionPtr &radians);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr radians;
+private:
+  const ExpressionPtr radians;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ASINEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ASINEXPRESSION_HPP_

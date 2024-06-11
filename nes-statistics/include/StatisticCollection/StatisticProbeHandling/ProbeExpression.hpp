@@ -20,24 +20,28 @@
 namespace NES::Statistic {
 
 /*
- * @brief This class is being used as a container to store a probeExpression. As we do not want to limit ourselves to
- * probeExpressions in the future, we create an abstract class so that we can easily extend the functionality.
- * To receive a StatisticValue from a Statistic, we pass an object of this class and then the Statistic has to evaluate
- * the expression and return a StatisticValue. The actual implementation highly depends on the underlying Statistic.
- * For example, a Count-Min sketch can only evaluate a ArithmeticalBinaryExpressionNode with one side being a
- * ConstantValueExpressionNode and the other expression the tracked field name. A sample is a little bit more powerful
- * in terms of what expression it can expect and evaluate, as it stores all fields of the data stream.
+ * @brief This class is being used as a container to store a probeExpression. As
+ * we do not want to limit ourselves to probeExpressions in the future, we
+ * create an abstract class so that we can easily extend the functionality. To
+ * receive a StatisticValue from a Statistic, we pass an object of this class
+ * and then the Statistic has to evaluate the expression and return a
+ * StatisticValue. The actual implementation highly depends on the underlying
+ * Statistic. For example, a Count-Min sketch can only evaluate a
+ * ArithmeticalBinaryExpressionNode with one side being a
+ * ConstantValueExpressionNode and the other expression the tracked field name.
+ * A sample is a little bit more powerful in terms of what expression it can
+ * expect and evaluate, as it stores all fields of the data stream.
  */
 class ProbeExpression {
-  public:
-    explicit ProbeExpression(const ExpressionNodePtr& probeExpression);
+public:
+  explicit ProbeExpression(const ExpressionNodePtr &probeExpression);
 
-    const ExpressionNodePtr& getProbeExpression() const;
+  const ExpressionNodePtr &getProbeExpression() const;
 
-  private:
-    ExpressionNodePtr probeExpression;
+private:
+  ExpressionNodePtr probeExpression;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_PROBEEXPRESSION_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_PROBEEXPRESSION_HPP_

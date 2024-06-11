@@ -29,72 +29,82 @@ class StatisticRegistry;
 using StatisticRegistryPtr = std::shared_ptr<StatisticRegistry>;
 
 /**
- * @brief This registry stores StatisticInfo for each StatisticKey. For now, we do not support that a same statistic key
- * can have different triggerCondition and callbacks, see issue #4776 and issue #4778
+ * @brief This registry stores StatisticInfo for each StatisticKey. For now, we
+ * do not support that a same statistic key can have different triggerCondition
+ * and callbacks, see issue #4776 and issue #4778
  */
 class StatisticRegistry {
-  public:
-    static StatisticRegistryPtr create();
+public:
+  static StatisticRegistryPtr create();
 
-    /**
-     * @brief Gets a StatisticInfo for a StatisticKey
-     * @param statisticHash
-     * @return StatisticInfoWLock
-     */
-    StatisticInfoWLock getStatisticInfo(const StatisticHash statisticHash);
+  /**
+   * @brief Gets a StatisticInfo for a StatisticKey
+   * @param statisticHash
+   * @return StatisticInfoWLock
+   */
+  StatisticInfoWLock getStatisticInfo(const StatisticHash statisticHash);
 
-    /**
-     * @brief Gets the queryId for a StatisticKey
-     * @param statisticHash
-     * @return QueryId
-     */
-    QueryId getQueryId(const StatisticHash statisticHash) const;
+  /**
+   * @brief Gets the queryId for a StatisticKey
+   * @param statisticHash
+   * @return QueryId
+   */
+  QueryId getQueryId(const StatisticHash statisticHash) const;
 
-    /**
-     * @brief Gets a StatisticInfo for a StatisticKey and checks if the StatisticInfo has the same granularity
-     * @param statisticHash
-     * @param granularity: Granularity, i.e., 5 Seconds, of the window the statistic is built on
-     * @return std::optional<StatisticInfoWLock>
-     */
-    std::optional<StatisticInfoWLock> getStatisticInfoWithGranularity(const StatisticHash statisticHash,
-                                                                      const Windowing::TimeMeasure& granularity);
+  /**
+   * @brief Gets a StatisticInfo for a StatisticKey and checks if the
+   * StatisticInfo has the same granularity
+   * @param statisticHash
+   * @param granularity: Granularity, i.e., 5 Seconds, of the window the
+   * statistic is built on
+   * @return std::optional<StatisticInfoWLock>
+   */
+  std::optional<StatisticInfoWLock>
+  getStatisticInfoWithGranularity(const StatisticHash statisticHash,
+                                  const Windowing::TimeMeasure &granularity);
 
-    /**
-     * @brief Inserts a StatisticKey and the StatisticInfo into this StatisticRegistry
-     * @param statisticHash
-     * @param statisticInfo
-     */
-    void insert(const StatisticHash statisticHash, const StatisticInfo statisticInfo);
+  /**
+   * @brief Inserts a StatisticKey and the StatisticInfo into this
+   * StatisticRegistry
+   * @param statisticHash
+   * @param statisticInfo
+   */
+  void insert(const StatisticHash statisticHash,
+              const StatisticInfo statisticInfo);
 
-    /**
-     * @brief Checks if this registry contains the statisticHash already
-     * @param statisticHash
-     * @return True, if this registry contains the statisticHash already. False, otherwise.
-     */
-    bool contains(const StatisticHash statisticHash);
+  /**
+   * @brief Checks if this registry contains the statisticHash already
+   * @param statisticHash
+   * @return True, if this registry contains the statisticHash already. False,
+   * otherwise.
+   */
+  bool contains(const StatisticHash statisticHash);
 
-    /**
-     * @brief Query belonging to this StatisticKey is stopped. Therefore, we set the queryId to INVALID_QUERY_ID.
-     * @param statisticHash
-     */
-    void queryStopped(const StatisticHash statisticHash);
+  /**
+   * @brief Query belonging to this StatisticKey is stopped. Therefore, we set
+   * the queryId to INVALID_QUERY_ID.
+   * @param statisticHash
+   */
+  void queryStopped(const StatisticHash statisticHash);
 
-    /**
-     * @brief Deletes/clears all underlying stored data
-     */
-    void clear();
+  /**
+   * @brief Deletes/clears all underlying stored data
+   */
+  void clear();
 
-    /**
-     * @brief Checks if a query is running according to this registry
-     * @param statisticHash
-     * @return True, if queryId != INVALID_QUERY_ID
-     */
-    bool isRunning(const StatisticHash statisticHash) const;
+  /**
+   * @brief Checks if a query is running according to this registry
+   * @param statisticHash
+   * @return True, if queryId != INVALID_QUERY_ID
+   */
+  bool isRunning(const StatisticHash statisticHash) const;
 
-  private:
-    folly::Synchronized<std::unordered_map<StatisticHash, folly::Synchronized<StatisticInfo>>> keyToStatisticInfo;
+private:
+  folly::Synchronized<
+      std::unordered_map<StatisticHash, folly::Synchronized<StatisticInfo>>>
+      keyToStatisticInfo;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICREGISTRY_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICREGISTRY_HPP_

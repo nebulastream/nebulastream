@@ -21,140 +21,153 @@
 
 namespace NES::Util {
 
-uint64_t numberOfUniqueValues(std::vector<uint64_t>& values) {
-    std::sort(values.begin(), values.end());
-    return std::unique(values.begin(), values.end()) - values.begin();
+uint64_t numberOfUniqueValues(std::vector<uint64_t> &values) {
+  std::sort(values.begin(), values.end());
+  return std::unique(values.begin(), values.end()) - values.begin();
 }
 
-std::string escapeJson(const std::string& str) {
-    std::ostringstream o;
-    for (char c : str) {
-        if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f')) {
-            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) c;
-        } else {
-            o << c;
-        }
+std::string escapeJson(const std::string &str) {
+  std::ostringstream o;
+  for (char c : str) {
+    if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f')) {
+      o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)c;
+    } else {
+      o << c;
     }
-    return o.str();
+  }
+  return o.str();
 }
 
-void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
-    // Get the first occurrence
-    uint64_t pos = data.find(toSearch);
-    // Repeat till end is reached
-    while (pos != std::string::npos) {
-        // Replace this occurrence of Sub String
-        data.replace(pos, toSearch.size(), replaceStr);
-        // Get the next occurrence from the current position
-        pos = data.find(toSearch, pos + replaceStr.size());
-    }
+void findAndReplaceAll(std::string &data, const std::string &toSearch,
+                       const std::string &replaceStr) {
+  // Get the first occurrence
+  uint64_t pos = data.find(toSearch);
+  // Repeat till end is reached
+  while (pos != std::string::npos) {
+    // Replace this occurrence of Sub String
+    data.replace(pos, toSearch.size(), replaceStr);
+    // Get the next occurrence from the current position
+    pos = data.find(toSearch, pos + replaceStr.size());
+  }
 }
 
-std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace) {
-    if (origin.find(search) != std::string::npos) {
-        return origin.replace(origin.find(search), search.size(), replace);
-    }
-    return origin;
+std::string replaceFirst(std::string origin, const std::string &search,
+                         const std::string &replace) {
+  if (origin.find(search) != std::string::npos) {
+    return origin.replace(origin.find(search), search.size(), replace);
+  }
+  return origin;
 }
 
-bool endsWith(const std::string& fullString, const std::string& ending) {
-    if (fullString.length() >= ending.length()) {
-        // get the start of the ending index of the full string and compare with the ending string
-        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    }// if full string is smaller than the ending automatically return false
-    return false;
+bool endsWith(const std::string &fullString, const std::string &ending) {
+  if (fullString.length() >= ending.length()) {
+    // get the start of the ending index of the full string and compare with the
+    // ending string
+    return (0 == fullString.compare(fullString.length() - ending.length(),
+                                    ending.length(), ending));
+  } // if full string is smaller than the ending automatically return false
+  return false;
 }
 
-bool startsWith(const std::string& fullString, const std::string& ending) { return (fullString.rfind(ending, 0) == 0); }
+bool startsWith(const std::string &fullString, const std::string &ending) {
+  return (fullString.rfind(ending, 0) == 0);
+}
 
 std::string toUpperCase(std::string string) {
-    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
-    return string;
+  std::transform(string.begin(), string.end(), string.begin(), ::toupper);
+  return string;
 }
 
-void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header) {
-    std::ofstream ofstream(csvFileName, std::ios::trunc | std::ios::out);
-    ofstream << header << std::endl;
-    ofstream.close();
+void writeHeaderToCsvFile(const std::string &csvFileName,
+                          const std::string &header) {
+  std::ofstream ofstream(csvFileName, std::ios::trunc | std::ios::out);
+  ofstream << header << std::endl;
+  ofstream.close();
 }
 
-void writeRowToCsvFile(const std::string& csvFileName, const std::string& row) {
-    std::ofstream ofstream(csvFileName, std::ios::app | std::ios::out);
-    ofstream << row << std::endl;
-    ofstream.close();
+void writeRowToCsvFile(const std::string &csvFileName, const std::string &row) {
+  std::ofstream ofstream(csvFileName, std::ios::app | std::ios::out);
+  ofstream << row << std::endl;
+  ofstream.close();
 }
 
-std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed) {
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(subQueryPlanSourceConsumed);
-    sourceNames.emplace_back(queryPlanSourceConsumed);
-    std::sort(sourceNames.begin(), sourceNames.end());
-    // accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
-    auto updatedSourceName =
-        std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) {
-            return a + "_" + b;
-        });
-    return updatedSourceName;
+std::string updateSourceName(std::string queryPlanSourceConsumed,
+                             std::string subQueryPlanSourceConsumed) {
+  // Update the Source names by sorting and then concatenating the source names
+  // from the sub query plan
+  std::vector<std::string> sourceNames;
+  sourceNames.emplace_back(subQueryPlanSourceConsumed);
+  sourceNames.emplace_back(queryPlanSourceConsumed);
+  std::sort(sourceNames.begin(), sourceNames.end());
+  // accumulating sourceNames with delimiters between all sourceNames to enable
+  // backtracking of origin
+  auto updatedSourceName =
+      std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"),
+                      [](std::string a, std::string b) { return a + "_" + b; });
+  return updatedSourceName;
 }
 
 uint64_t murmurHash(uint64_t key) {
-    uint64_t hash = key;
+  uint64_t hash = key;
 
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xff51afd7ed558ccd);
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xc4ceb9fe1a85ec53);
-    hash ^= hash >> 33;
+  hash ^= hash >> 33;
+  hash *= UINT64_C(0xff51afd7ed558ccd);
+  hash ^= hash >> 33;
+  hash *= UINT64_C(0xc4ceb9fe1a85ec53);
+  hash ^= hash >> 33;
 
-    return hash;
+  return hash;
 }
 
-uint64_t countLines(const std::string& str) {
-    std::stringstream stream(str);
-    return countLines(stream);
+uint64_t countLines(const std::string &str) {
+  std::stringstream stream(str);
+  return countLines(stream);
 }
 
-uint64_t countLines(std::istream& stream) {
-    std::string tmpStr;
-    uint64_t cnt = 0;
-    while (std::getline(stream, tmpStr)) {
-        ++cnt;
-    }
+uint64_t countLines(std::istream &stream) {
+  std::string tmpStr;
+  uint64_t cnt = 0;
+  while (std::getline(stream, tmpStr)) {
+    ++cnt;
+  }
 
-    return cnt;
+  return cnt;
 }
 
 std::string_view trimWhiteSpaces(std::string_view in) {
-    // Skip all `isspace` elements from the left (begin) and from the right (end-1)
-    auto left = in.begin();
-    for (;; ++left) {
-        if (left == in.end()) {
-            return {};
-        }
-        if (!isspace(*left)) {
-            break;
-        }
+  // Skip all `isspace` elements from the left (begin) and from the right
+  // (end-1)
+  auto left = in.begin();
+  for (;; ++left) {
+    if (left == in.end()) {
+      return {};
     }
-    auto right = in.end() - 1;
-    for (; right > left && isspace(*right); --right)
-        ;
-    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
+    if (!isspace(*left)) {
+      break;
+    }
+  }
+  auto right = in.end() - 1;
+  for (; right > left && isspace(*right); --right)
+    ;
+  return {left, static_cast<std::string_view::size_type>(
+                    std::distance(left, right + 1))};
 }
 
 std::string_view trimChar(std::string_view in, char trimFor) {
-    // Skip all `trimFor` elements from the left (begin) and from the right (end-1)
-    auto left = in.begin();
-    for (;; ++left) {
-        if (left == in.end())
-            return {};
-        if (*left != trimFor)
-            break;
-    }
-    auto right = in.end() - 1;
-    for (; right > left && *right == trimFor; --right)
-        ;
-    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
+  // Skip all `trimFor` elements from the left (begin) and from the right
+  // (end-1)
+  auto left = in.begin();
+  for (;; ++left) {
+    if (left == in.end())
+      return {};
+    if (*left != trimFor)
+      break;
+  }
+  auto right = in.end() - 1;
+  for (; right > left && *right == trimFor; --right)
+    ;
+  return {left, static_cast<std::string_view::size_type>(
+                    std::distance(left, right + 1))};
 }
 
-}// namespace NES::Util
+} // namespace NES::Util

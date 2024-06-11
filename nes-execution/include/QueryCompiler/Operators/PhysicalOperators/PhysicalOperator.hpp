@@ -21,26 +21,27 @@ namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief General abstraction for all physical operators.
- * A physical operator represents the concrete realization of a logical operator.
- * It can be a direct mapping, e.g., a LogicalFilterOperator maps to a PhysicalFilterOperator.
- * Other logical operators can also result in multiple physical operators,
- * e.g., CentralWindowOperator results in a SlicePreAggregation and a WindowSinkOperator.
- * This mapping is called lowering and is defined in a PhysicalOperatorProvider.
+ * A physical operator represents the concrete realization of a logical
+ * operator. It can be a direct mapping, e.g., a LogicalFilterOperator maps to a
+ * PhysicalFilterOperator. Other logical operators can also result in multiple
+ * physical operators, e.g., CentralWindowOperator results in a
+ * SlicePreAggregation and a WindowSinkOperator. This mapping is called lowering
+ * and is defined in a PhysicalOperatorProvider.
  */
 class PhysicalOperator : public virtual Operator {
-  protected:
-    explicit PhysicalOperator(OperatorId id, StatisticId statisticId);
+protected:
+  explicit PhysicalOperator(OperatorId id, StatisticId statisticId);
 
-  public:
-    ~PhysicalOperator() noexcept = default;
+public:
+  ~PhysicalOperator() noexcept = default;
 
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
-    std::string toString() const;
+  /**
+   * @brief returns the string representation of the class
+   * @return the string representation of the class
+   */
+  std::string toString() const;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATOR_HPP_

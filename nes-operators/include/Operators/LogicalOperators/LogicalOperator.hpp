@@ -27,13 +27,13 @@ class expr;
 using ExprPtr = std::shared_ptr<expr>;
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
 namespace NES::Optimizer {
 class QuerySignatureContext;
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
 namespace NES {
 
@@ -42,84 +42,87 @@ namespace NES {
  */
 class LogicalOperator : public virtual Operator {
 
-  public:
-    explicit LogicalOperator(OperatorId id);
+public:
+  explicit LogicalOperator(OperatorId id);
 
-    /**
-     * @brief Get the First Order Logic formula representation by the Z3 expression
-     * @param context: the shared pointer to the z3::context
-     */
-    void inferZ3Signature(const Optimizer::QuerySignatureContext& context);
+  /**
+   * @brief Get the First Order Logic formula representation by the Z3
+   * expression
+   * @param context: the shared pointer to the z3::context
+   */
+  void inferZ3Signature(const Optimizer::QuerySignatureContext &context);
 
-    /**
-     * @brief Set the Z3 signature for the logical operator
-     * @param signature : the signature
-     */
-    void setZ3Signature(Optimizer::QuerySignaturePtr signature);
+  /**
+   * @brief Set the Z3 signature for the logical operator
+   * @param signature : the signature
+   */
+  void setZ3Signature(Optimizer::QuerySignaturePtr signature);
 
-    /**
-     * @brief Infers the input origin of a logical operator.
-     * If this operator dose not assign new origin ids, e.g., windowing,
-     * this function collects the origin ids from all upstream operators.
-     */
-    virtual void inferInputOrigins() = 0;
+  /**
+   * @brief Infers the input origin of a logical operator.
+   * If this operator dose not assign new origin ids, e.g., windowing,
+   * this function collects the origin ids from all upstream operators.
+   */
+  virtual void inferInputOrigins() = 0;
 
-    /**
-     * @brief Get the String based signature for the operator
-     */
-    virtual void inferStringSignature() = 0;
+  /**
+   * @brief Get the String based signature for the operator
+   */
+  virtual void inferStringSignature() = 0;
 
-    /**
-     * @brief Set the hash based signature for the logical operator
-     * @param signature : the signature
-     */
-    void setHashBasedSignature(std::map<size_t, std::set<std::string>> signature);
+  /**
+   * @brief Set the hash based signature for the logical operator
+   * @param signature : the signature
+   */
+  void setHashBasedSignature(std::map<size_t, std::set<std::string>> signature);
 
-    /**
-     * @brief update the hash based signature for the logical operator
-     * @param signature : the signature
-     */
-    void updateHashBasedSignature(size_t hashCode, const std::string& stringSignature);
+  /**
+   * @brief update the hash based signature for the logical operator
+   * @param signature : the signature
+   */
+  void updateHashBasedSignature(size_t hashCode,
+                                const std::string &stringSignature);
 
-    /**
-     * @brief Get the Z3 expression for the logical operator
-     * @return reference to the Z3 expression
-     */
-    Optimizer::QuerySignaturePtr getZ3Signature() const;
+  /**
+   * @brief Get the Z3 expression for the logical operator
+   * @return reference to the Z3 expression
+   */
+  Optimizer::QuerySignaturePtr getZ3Signature() const;
 
-    /**
-     * @brief Get the string signature computed based on upstream operator chain
-     * @return string representing the query signature
-     */
-    std::map<size_t, std::set<std::string>> getHashBasedSignature() const;
+  /**
+   * @brief Get the string signature computed based on upstream operator chain
+   * @return string representing the query signature
+   */
+  std::map<size_t, std::set<std::string>> getHashBasedSignature() const;
 
-    /**
-     * @brief infers the input and out schema of this operator depending on its child.
-     * @param typeInferencePhaseContext needed for stamp inferring
-     * @return true if schema was correctly inferred
-     */
-    virtual bool inferSchema() = 0;
+  /**
+   * @brief infers the input and out schema of this operator depending on its
+   * child.
+   * @param typeInferencePhaseContext needed for stamp inferring
+   * @return true if schema was correctly inferred
+   */
+  virtual bool inferSchema() = 0;
 
-    /**
-     * @brief Update state of the operator
-     * @param newOperatorState : new state of the operator
-     * @throws InvalidOperatorStateException
-     */
-    void setOperatorState(OperatorState newOperatorState);
+  /**
+   * @brief Update state of the operator
+   * @param newOperatorState : new state of the operator
+   * @throws InvalidOperatorStateException
+   */
+  void setOperatorState(OperatorState newOperatorState);
 
-    /**
-     * @brief Get the operator state
-     * @return the current state of the operator
-     */
-    OperatorState getOperatorState() const;
+  /**
+   * @brief Get the operator state
+   * @return the current state of the operator
+   */
+  OperatorState getOperatorState() const;
 
-  protected:
-    Optimizer::QuerySignaturePtr z3Signature = nullptr;
-    std::map<size_t, std::set<std::string>> hashBasedSignature;
-    [[no_unique_address]] std::hash<std::string> hashGenerator;
-    OperatorState operatorState = OperatorState::TO_BE_PLACED;
+protected:
+  Optimizer::QuerySignaturePtr z3Signature = nullptr;
+  std::map<size_t, std::set<std::string>> hashBasedSignature;
+  [[no_unique_address]] std::hash<std::string> hashGenerator;
+  OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_

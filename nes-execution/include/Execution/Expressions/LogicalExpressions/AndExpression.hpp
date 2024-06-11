@@ -19,18 +19,20 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression returns true if both leftSubExpression and rightSubExpression return true.
+ * @brief This expression returns true if both leftSubExpression and
+ * rightSubExpression return true.
  */
 class AndExpression : public Expression {
-  public:
-    AndExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+public:
+  AndExpression(ExpressionPtr leftSubExpression,
+                ExpressionPtr rightSubExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSION_HPP_

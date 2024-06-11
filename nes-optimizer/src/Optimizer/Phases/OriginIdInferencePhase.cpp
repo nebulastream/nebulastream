@@ -24,37 +24,44 @@ namespace NES::Optimizer {
 OriginIdInferencePhase::OriginIdInferencePhase() {}
 
 OriginIdInferencePhasePtr OriginIdInferencePhase::create() {
-    return std::make_shared<OriginIdInferencePhase>(OriginIdInferencePhase());
+  return std::make_shared<OriginIdInferencePhase>(OriginIdInferencePhase());
 }
 
 QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan) {
-    performInference(queryPlan->getOperatorByType<OriginIdAssignmentOperator>(), queryPlan->getRootOperators());
-    return queryPlan;
+  performInference(queryPlan->getOperatorByType<OriginIdAssignmentOperator>(),
+                   queryPlan->getRootOperators());
+  return queryPlan;
 }
 
-DecomposedQueryPlanPtr OriginIdInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan) {
-    performInference(decomposedQueryPlan->getOperatorByType<OriginIdAssignmentOperator>(),
-                     decomposedQueryPlan->getRootOperators());
-    return decomposedQueryPlan;
+DecomposedQueryPlanPtr
+OriginIdInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan) {
+  performInference(
+      decomposedQueryPlan->getOperatorByType<OriginIdAssignmentOperator>(),
+      decomposedQueryPlan->getRootOperators());
+  return decomposedQueryPlan;
 }
 
-void OriginIdInferencePhase::performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
-                                              std::vector<OperatorPtr> rootOperators) {
-    // origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
-    uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-    // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
-    for (auto originIdAssignmentOperators : originIdAssignmentOperator) {
-        originIdAssignmentOperators->setOriginId(OriginId(originIdCounter++));
+void OriginIdInferencePhase::performInference(
+    std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
+    std::vector<OperatorPtr> rootOperators) {
+  // origin ids, always start from 1 to n, whereby n is the number of operators
+  // that assign new orin ids
+  uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
+  // set origin id for all operators of type OriginIdAssignmentOperator. For
+  // example, window, joins and sources.
+  for (auto originIdAssignmentOperators : originIdAssignmentOperator) {
+    originIdAssignmentOperators->setOriginId(OriginId(originIdCounter++));
+  }
+
+  // propagate origin ids through the complete query plan
+  for (auto rootOperator : rootOperators) {
+    if (auto logicalOperator = rootOperator->as_if<LogicalOperator>()) {
+      logicalOperator->inferInputOrigins();
+    } else {
+      throw Exceptions::InvalidLogicalOperatorException(
+          "During OriginIdInferencePhase all root operators have to be "
+          "LogicalOperators");
     }
-
-    // propagate origin ids through the complete query plan
-    for (auto rootOperator : rootOperators) {
-        if (auto logicalOperator = rootOperator->as_if<LogicalOperator>()) {
-            logicalOperator->inferInputOrigins();
-        } else {
-            throw Exceptions::InvalidLogicalOperatorException(
-                "During OriginIdInferencePhase all root operators have to be LogicalOperators");
-        }
-    }
+  }
 }
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

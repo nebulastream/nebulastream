@@ -22,45 +22,47 @@
 namespace NES::Runtime::MemoryLayouts {
 
 /**
- * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.
- * As the base class, it has multiple methods or members that are useful for both derived classes.
+ * @brief This abstract class is the base class for DynamicRowLayoutBuffer and
+ * DynamicColumnLayoutBuffer. As the base class, it has multiple methods or
+ * members that are useful for both derived classes.
  * @caution This class is non-thread safe
  */
 class MemoryLayoutTupleBuffer {
 
-  public:
-    /**
-     * @brief Constructor for DynamicLayoutBuffer
-     * @param tupleBuffer
-     * @param capacity
-     */
-    MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, uint64_t capacity);
+public:
+  /**
+   * @brief Constructor for DynamicLayoutBuffer
+   * @param tupleBuffer
+   * @param capacity
+   */
+  MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, uint64_t capacity);
 
-    virtual ~MemoryLayoutTupleBuffer() = default;
+  virtual ~MemoryLayoutTupleBuffer() = default;
 
-    /**
-    * @brief This method returns the maximum number of records, so the capacity.
-    * @return
-    */
-    uint64_t getCapacity() const;
+  /**
+   * @brief This method returns the maximum number of records, so the capacity.
+   * @return
+   */
+  uint64_t getCapacity() const;
 
-    /**
-     * @brief This method returns the current number of records that are in the associated buffer
-     * @return
-     */
-    uint64_t getNumberOfRecords() const;
+  /**
+   * @brief This method returns the current number of records that are in the
+   * associated buffer
+   * @return
+   */
+  uint64_t getNumberOfRecords() const;
 
-    /**
-     * @brief This methods returns a reference to the associated buffer
-     * @return
-     */
-    TupleBuffer getTupleBuffer();
+  /**
+   * @brief This methods returns a reference to the associated buffer
+   * @return
+   */
+  TupleBuffer getTupleBuffer();
 
-  protected:
-    TupleBuffer tupleBuffer;
-    uint64_t capacity;
-    uint64_t numberOfRecords = 0;
+protected:
+  TupleBuffer tupleBuffer;
+  uint64_t capacity;
+  uint64_t numberOfRecords = 0;
 };
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_

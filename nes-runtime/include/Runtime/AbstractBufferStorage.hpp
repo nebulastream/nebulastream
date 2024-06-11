@@ -21,30 +21,31 @@
 namespace NES::Runtime {
 
 /**
- * @brief The Abstract buffer storage class to backup tuple buffers that are passing through node engine
+ * @brief The Abstract buffer storage class to backup tuple buffers that are
+ * passing through node engine
  */
 class AbstractBufferStorage {
-  public:
-    virtual ~AbstractBufferStorage() noexcept = default;
+public:
+  virtual ~AbstractBufferStorage() noexcept = default;
 
-    /**
-     * @brief Inserts a pair id, buffer link to the buffer storage
-     * @param queryId id of current query
-     * @param bufferPtr pointer to the buffer that will be stored
-     */
-    virtual void insertBuffer(NES::Runtime::TupleBuffer bufferPtr) = 0;
+  /**
+   * @brief Inserts a pair id, buffer link to the buffer storage
+   * @param queryId id of current query
+   * @param bufferPtr pointer to the buffer that will be stored
+   */
+  virtual void insertBuffer(NES::Runtime::TupleBuffer bufferPtr) = 0;
 
-    /**
-     * @brief Deletes q pair<id,buffer> from buffer storage
-     * @param timestamp max timestamp of current epoch
-     */
-    virtual void trimBuffer(uint64_t timestamp) = 0;
+  /**
+   * @brief Deletes q pair<id,buffer> from buffer storage
+   * @param timestamp max timestamp of current epoch
+   */
+  virtual void trimBuffer(uint64_t timestamp) = 0;
 
-    /**
-     * @brief Return current storage size
-     * @return Current storage size
-     */
-    virtual size_t getStorageSize() const = 0;
+  /**
+   * @brief Return current storage size
+   * @return Current storage size
+   */
+  virtual size_t getStorageSize() const = 0;
 };
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_

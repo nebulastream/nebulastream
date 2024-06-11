@@ -21,92 +21,94 @@ namespace NES {
 namespace detail {
 
 struct MemoryAreaDeleter {
-    void operator()(uint8_t* ptr) const { free(ptr); }
+  void operator()(uint8_t *ptr) const { free(ptr); }
 };
 
-}// namespace detail
+} // namespace detail
 
-BenchmarkSourceType::BenchmarkSourceType(const std::string& logicalSourceName,
-                                         const std::string& physicalSourceName,
-                                         uint8_t* memoryArea,
-                                         size_t memoryAreaSize,
-                                         uint64_t numBuffersToProduce,
-                                         uint64_t gatheringValue,
-                                         GatheringMode gatheringMode,
-                                         SourceMode sourceMode,
-                                         uint64_t sourceAffinity,
-                                         uint64_t taskQueueId)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::BENCHMARK_SOURCE),
-      memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
-      numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
-      sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
+BenchmarkSourceType::BenchmarkSourceType(
+    const std::string &logicalSourceName, const std::string &physicalSourceName,
+    uint8_t *memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProduce,
+    uint64_t gatheringValue, GatheringMode gatheringMode, SourceMode sourceMode,
+    uint64_t sourceAffinity, uint64_t taskQueueId)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName,
+                         SourceType::BENCHMARK_SOURCE),
+      memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+      memoryAreaSize(memoryAreaSize),
+      numberOfBuffersToProduce(numBuffersToProduce),
+      gatheringValue(gatheringValue), gatheringMode(gatheringMode),
+      sourceMode(sourceMode), sourceAffinity(sourceAffinity),
+      taskQueueId(taskQueueId) {}
 
-BenchmarkSourceTypePtr BenchmarkSourceType::create(const std::string& logicalSourceName,
-                                                   const std::string& physicalSourceName,
-                                                   uint8_t* memoryArea,
-                                                   size_t memoryAreaSize,
-                                                   uint64_t numBuffersToProduce,
-                                                   uint64_t gatheringValue,
-                                                   GatheringMode gatheringMode,
-                                                   SourceMode sourceMode,
-                                                   uint64_t sourceAffinity,
-                                                   uint64_t taskQueueId) {
-    NES_ASSERT(memoryArea, "invalid memory area");
-    return std::make_shared<BenchmarkSourceType>(BenchmarkSourceType(logicalSourceName,
-                                                                     physicalSourceName,
-                                                                     memoryArea,
-                                                                     memoryAreaSize,
-                                                                     numBuffersToProduce,
-                                                                     gatheringValue,
-                                                                     gatheringMode,
-                                                                     sourceMode,
-                                                                     sourceAffinity,
-                                                                     taskQueueId));
+BenchmarkSourceTypePtr BenchmarkSourceType::create(
+    const std::string &logicalSourceName, const std::string &physicalSourceName,
+    uint8_t *memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProduce,
+    uint64_t gatheringValue, GatheringMode gatheringMode, SourceMode sourceMode,
+    uint64_t sourceAffinity, uint64_t taskQueueId) {
+  NES_ASSERT(memoryArea, "invalid memory area");
+  return std::make_shared<BenchmarkSourceType>(BenchmarkSourceType(
+      logicalSourceName, physicalSourceName, memoryArea, memoryAreaSize,
+      numBuffersToProduce, gatheringValue, gatheringMode, sourceMode,
+      sourceAffinity, taskQueueId));
 }
 
-const std::shared_ptr<uint8_t>& BenchmarkSourceType::getMemoryArea() const { return memoryArea; }
+const std::shared_ptr<uint8_t> &BenchmarkSourceType::getMemoryArea() const {
+  return memoryArea;
+}
 
 size_t BenchmarkSourceType::getMemoryAreaSize() const { return memoryAreaSize; }
 
-uint64_t BenchmarkSourceType::getGatheringValue() const { return gatheringValue; }
+uint64_t BenchmarkSourceType::getGatheringValue() const {
+  return gatheringValue;
+}
 
-GatheringMode BenchmarkSourceType::getGatheringMode() const { return gatheringMode; }
+GatheringMode BenchmarkSourceType::getGatheringMode() const {
+  return gatheringMode;
+}
 
 SourceMode BenchmarkSourceType::getSourceMode() const { return sourceMode; }
 
-uint64_t BenchmarkSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+uint64_t BenchmarkSourceType::getNumberOfBuffersToProduce() const {
+  return numberOfBuffersToProduce;
+}
 
-uint64_t BenchmarkSourceType::getSourceAffinity() const { return sourceAffinity; }
+uint64_t BenchmarkSourceType::getSourceAffinity() const {
+  return sourceAffinity;
+}
 uint64_t BenchmarkSourceType::getTaskQueueId() const { return taskQueueId; }
 
 std::string BenchmarkSourceType::toString() {
-    std::stringstream ss;
-    ss << "LambdaSourceType => {\n";
-    ss << "MemoryArea :" << memoryArea;
-    ss << "MemoryAreaSize :" << memoryAreaSize;
-    ss << "NumberOfBuffersToProduce :" << numberOfBuffersToProduce;
-    ss << "GatheringValue :" << gatheringValue;
-    ss << "GatheringMode :" << magic_enum::enum_name(gatheringMode);
-    ss << "SourceMode :" << magic_enum::enum_name(sourceMode);
-    ss << "SourceAffinity :" << sourceAffinity;
-    ss << "taskQueueId :" << taskQueueId;
-    ss << "\n}";
-    return ss.str();
+  std::stringstream ss;
+  ss << "LambdaSourceType => {\n";
+  ss << "MemoryArea :" << memoryArea;
+  ss << "MemoryAreaSize :" << memoryAreaSize;
+  ss << "NumberOfBuffersToProduce :" << numberOfBuffersToProduce;
+  ss << "GatheringValue :" << gatheringValue;
+  ss << "GatheringMode :" << magic_enum::enum_name(gatheringMode);
+  ss << "SourceMode :" << magic_enum::enum_name(sourceMode);
+  ss << "SourceAffinity :" << sourceAffinity;
+  ss << "taskQueueId :" << taskQueueId;
+  ss << "\n}";
+  return ss.str();
 }
 
-bool BenchmarkSourceType::equal(const PhysicalSourceTypePtr& other) {
-    if (!other->instanceOf<BenchmarkSourceType>()) {
-        return false;
-    }
-    auto otherSourceConfig = other->as<BenchmarkSourceType>();
-    return memoryArea == otherSourceConfig->memoryArea && memoryAreaSize == otherSourceConfig->memoryAreaSize
-        && numberOfBuffersToProduce == otherSourceConfig->numberOfBuffersToProduce
-        && gatheringValue == otherSourceConfig->gatheringValue && gatheringMode == otherSourceConfig->gatheringMode
-        && sourceMode == otherSourceConfig->sourceMode && sourceAffinity == otherSourceConfig->sourceAffinity;
+bool BenchmarkSourceType::equal(const PhysicalSourceTypePtr &other) {
+  if (!other->instanceOf<BenchmarkSourceType>()) {
+    return false;
+  }
+  auto otherSourceConfig = other->as<BenchmarkSourceType>();
+  return memoryArea == otherSourceConfig->memoryArea &&
+         memoryAreaSize == otherSourceConfig->memoryAreaSize &&
+         numberOfBuffersToProduce ==
+             otherSourceConfig->numberOfBuffersToProduce &&
+         gatheringValue == otherSourceConfig->gatheringValue &&
+         gatheringMode == otherSourceConfig->gatheringMode &&
+         sourceMode == otherSourceConfig->sourceMode &&
+         sourceAffinity == otherSourceConfig->sourceAffinity;
 }
 
 void BenchmarkSourceType::reset() {
-    //nothing
+  // nothing
 }
 
-}// namespace NES
+} // namespace NES

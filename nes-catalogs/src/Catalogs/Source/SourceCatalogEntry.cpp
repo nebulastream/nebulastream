@@ -18,23 +18,36 @@
 
 namespace NES::Catalogs::Source {
 
-SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId)
-    : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId) {}
+SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource,
+                                       LogicalSourcePtr logicalSource,
+                                       WorkerId topologyNodeId)
+    : physicalSource(std::move(physicalSource)),
+      logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId) {}
 
 SourceCatalogEntryPtr
-SourceCatalogEntry::create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId) {
-    return std::make_shared<SourceCatalogEntry>(SourceCatalogEntry(physicalSource, logicalSource, topologyNodeId));
+SourceCatalogEntry::create(PhysicalSourcePtr physicalSource,
+                           LogicalSourcePtr logicalSource,
+                           WorkerId topologyNodeId) {
+  return std::make_shared<SourceCatalogEntry>(
+      SourceCatalogEntry(physicalSource, logicalSource, topologyNodeId));
 }
 
-const PhysicalSourcePtr& SourceCatalogEntry::getPhysicalSource() const { return physicalSource; }
+const PhysicalSourcePtr &SourceCatalogEntry::getPhysicalSource() const {
+  return physicalSource;
+}
 
-const LogicalSourcePtr& SourceCatalogEntry::getLogicalSource() const { return logicalSource; }
+const LogicalSourcePtr &SourceCatalogEntry::getLogicalSource() const {
+  return logicalSource;
+}
 
-WorkerId SourceCatalogEntry::getTopologyNodeId() const { return topologyNodeId; }
+WorkerId SourceCatalogEntry::getTopologyNodeId() const {
+  return topologyNodeId;
+}
 
 std::string SourceCatalogEntry::toString() {
-    std::stringstream ss;
-    ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
-    return ss.str();
+  std::stringstream ss;
+  ss << "physicalSource=" << physicalSource
+     << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
+  return ss.str();
 }
-}// namespace NES::Catalogs::Source
+} // namespace NES::Catalogs::Source

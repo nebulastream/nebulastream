@@ -21,21 +21,22 @@ namespace NES {
 
 class [[nodiscard]] BasicValue final : public ValueType {
 
-  public:
-    [[nodiscard]] inline BasicValue(const DataTypePtr& type, std::string&& value) noexcept
-        : ValueType(type), value(std::move(value)) {}
+public:
+  [[nodiscard]] inline BasicValue(const DataTypePtr &type,
+                                  std::string &&value) noexcept
+      : ValueType(type), value(std::move(value)) {}
 
-    ~BasicValue() override = default;
+  ~BasicValue() override = default;
 
-    /// @brief Returns a string representation of this value.
-    [[nodiscard]] std::string toString() const noexcept override;
+  /// @brief Returns a string representation of this value.
+  [[nodiscard]] std::string toString() const noexcept override;
 
-    /// @brief Checks if two values are equal.
-    [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept override;
+  /// @brief Checks if two values are equal.
+  [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept override;
 
-    std::string value;
+  std::string value;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_

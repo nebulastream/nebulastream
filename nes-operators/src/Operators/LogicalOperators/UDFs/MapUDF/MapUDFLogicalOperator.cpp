@@ -20,36 +20,39 @@
 
 namespace NES {
 
-MapUDFLogicalOperator::MapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id)
+MapUDFLogicalOperator::MapUDFLogicalOperator(
+    const Catalogs::UDF::UDFDescriptorPtr &udfDescriptor, OperatorId id)
     : Operator(id), UDFLogicalOperator(udfDescriptor, id) {}
 
 std::string MapUDFLogicalOperator::toString() const {
-    std::stringstream ss;
-    ss << "MAP_UDF(" << id << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "MAP_UDF(" << id << ")";
+  return ss.str();
 }
 
 OperatorPtr MapUDFLogicalOperator::copy() {
-    auto copy = std::make_shared<MapUDFLogicalOperator>(this->getUDFDescriptor(), id);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
-    copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
-        copy->addProperty(key, value);
-    }
-    return copy;
+  auto copy =
+      std::make_shared<MapUDFLogicalOperator>(this->getUDFDescriptor(), id);
+  copy->setInputOriginIds(inputOriginIds);
+  copy->setInputSchema(inputSchema);
+  copy->setOutputSchema(outputSchema);
+  copy->setHashBasedSignature(hashBasedSignature);
+  copy->setZ3Signature(z3Signature);
+  copy->setOperatorState(operatorState);
+  copy->setStatisticId(statisticId);
+  for (const auto &[key, value] : properties) {
+    copy->addProperty(key, value);
+  }
+  return copy;
 }
 
-bool MapUDFLogicalOperator::equal(const NodePtr& other) const {
-    return other->instanceOf<MapUDFLogicalOperator>() && UDFLogicalOperator::equal(other);
+bool MapUDFLogicalOperator::equal(const NodePtr &other) const {
+  return other->instanceOf<MapUDFLogicalOperator>() &&
+         UDFLogicalOperator::equal(other);
 }
 
-bool MapUDFLogicalOperator::isIdentical(const NodePtr& other) const {
-    return equal(other) && id == other->as<MapUDFLogicalOperator>()->id;
+bool MapUDFLogicalOperator::isIdentical(const NodePtr &other) const {
+  return equal(other) && id == other->as<MapUDFLogicalOperator>()->id;
 }
 
-}// namespace NES
+} // namespace NES

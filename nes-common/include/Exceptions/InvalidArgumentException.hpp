@@ -24,12 +24,13 @@ namespace NES {
  * @brief This class is used for adding custom invalid argument exception.
  */
 class InvalidArgumentException : public std::exception {
-  public:
-    explicit InvalidArgumentException(const std::string& name, const std::string& value);
-    [[nodiscard]] const char* what() const noexcept override;
+public:
+  explicit InvalidArgumentException(const std::string &name,
+                                    const std::string &value);
+  [[nodiscard]] const char *what() const noexcept override;
 
-  private:
-    std::string message;
+private:
+  std::string message;
 };
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_

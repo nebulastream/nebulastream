@@ -21,52 +21,57 @@
 namespace NES::Statistic {
 
 /**
- * @brief This is a thread-safe StatisticStore that simply stores all data in an unordered_map that is made thread-safe
- * by using folly::Synchronized
+ * @brief This is a thread-safe StatisticStore that simply stores all data in an
+ * unordered_map that is made thread-safe by using folly::Synchronized
  */
 class DefaultStatisticStore : public AbstractStatisticStore {
-  public:
-    /**
-     * @brief Creates a DefaultStatisticStore
-     * @return StatisticStorePtr
-     */
-    static StatisticStorePtr create();
+public:
+  /**
+   * @brief Creates a DefaultStatisticStore
+   * @return StatisticStorePtr
+   */
+  static StatisticStorePtr create();
 
-    std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
-                                            const Windowing::TimeMeasure& startTs,
-                                            const Windowing::TimeMeasure& endTs) override;
+  std::vector<StatisticPtr>
+  getStatistics(const StatisticHash &statisticHash,
+                const Windowing::TimeMeasure &startTs,
+                const Windowing::TimeMeasure &endTs) override;
 
-    std::vector<HashStatisticPair> getAllStatistics() override;
+  std::vector<HashStatisticPair> getAllStatistics() override;
 
-    /**
-     * @brief Implements the insert of the interface. If a statistic exists with the same startTs and endTs, we do not
-     * allow the insertion.
-     * @param statisticKey
-     * @param statistic
-     * @return True, if the statistic was inserted into this storage.
-     */
-    bool insertStatistic(const StatisticHash& statisticHash, StatisticPtr statistic) override;
+  /**
+   * @brief Implements the insert of the interface. If a statistic exists with
+   * the same startTs and endTs, we do not allow the insertion.
+   * @param statisticKey
+   * @param statistic
+   * @return True, if the statistic was inserted into this storage.
+   */
+  bool insertStatistic(const StatisticHash &statisticHash,
+                       StatisticPtr statistic) override;
 
-    /**
-     * @brief Implements the delete of the interface for all statistics in the period [startTs, endTs]
-     * @param statisticKey
-     * @param startTs
-     * @param endTs
-     * @return True, if at least one statistic was deleted
-     */
-    bool deleteStatistics(const StatisticHash& statisticHash,
-                          const Windowing::TimeMeasure& startTs,
-                          const Windowing::TimeMeasure& endTs) override;
+  /**
+   * @brief Implements the delete of the interface for all statistics in the
+   * period [startTs, endTs]
+   * @param statisticKey
+   * @param startTs
+   * @param endTs
+   * @return True, if at least one statistic was deleted
+   */
+  bool deleteStatistics(const StatisticHash &statisticHash,
+                        const Windowing::TimeMeasure &startTs,
+                        const Windowing::TimeMeasure &endTs) override;
 
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~DefaultStatisticStore();
+  /**
+   * @brief Virtual destructor
+   */
+  virtual ~DefaultStatisticStore();
 
-  private:
-    folly::Synchronized<std::unordered_map<StatisticHash, std::vector<StatisticPtr>>> keyToStatistics;
+private:
+  folly::Synchronized<
+      std::unordered_map<StatisticHash, std::vector<StatisticPtr>>>
+      keyToStatistics;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_DEFAULTSTATISTICSTORE_HPP_
+#endif // NES_RUNTIME_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_DEFAULTSTATISTICSTORE_HPP_

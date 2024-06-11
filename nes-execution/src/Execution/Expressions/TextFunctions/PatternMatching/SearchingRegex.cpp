@@ -20,40 +20,46 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-SearchingRegex::SearchingRegex(const NES::Runtime::Execution::Expressions::ExpressionPtr& textValue,
-                               const NES::Runtime::Execution::Expressions::ExpressionPtr& regexpPattern)
+SearchingRegex::SearchingRegex(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr &textValue,
+    const NES::Runtime::Execution::Expressions::ExpressionPtr &regexpPattern)
     : textValue(textValue), regexpPattern(regexpPattern) {}
 
 /**
- * @brief This Method returns whether some sub-sequence in the target sequence (the subject) matches the regular expression rgx (the pattern).
- * This function is basically a wrapper for std::regex_search and enables us to use it in our execution engine framework.
+ * @brief This Method returns whether some sub-sequence in the target sequence
+ * (the subject) matches the regular expression rgx (the pattern). This function
+ * is basically a wrapper for std::regex_search and enables us to use it in our
+ * execution engine framework.
  * @param text TextValue* the text (string) to extract the regexpPattern from
  * @param regex TextValue* the pattern to match
  * @return bool if sub-sequence in the text matches the pattern
  */
-bool regex_search(TextValue* text, TextValue* reg) {
+bool regex_search(TextValue *text, TextValue *reg) {
 
-    std::string strText = std::string(text->str(), text->length());
-    std::regex tempRegex(std::string(reg->str(), reg->length()));
-    std::smatch result;
+  std::string strText = std::string(text->str(), text->length());
+  std::regex tempRegex(std::string(reg->str(), reg->length()));
+  std::smatch result;
 
-    return std::regex_search(strText, result, tempRegex);
+  return std::regex_search(strText, result, tempRegex);
 }
 
-Value<> SearchingRegex::execute(NES::Nautilus::Record& record) const {
+Value<> SearchingRegex::execute(NES::Nautilus::Record &record) const {
 
-    // Evaluate the left sub expression and retrieve the value.
-    Value<> text = textValue->execute(record);
+  // Evaluate the left sub expression and retrieve the value.
+  Value<> text = textValue->execute(record);
 
-    // Evaluate the right sub expression and retrieve the value.
-    Value<> pattern = regexpPattern->execute(record);
+  // Evaluate the right sub expression and retrieve the value.
+  Value<> pattern = regexpPattern->execute(record);
 
-    if (text->isType<Text>() && pattern->isType<Text>()) {
+  if (text->isType<Text>() && pattern->isType<Text>()) {
 
-        return FunctionCall<>("regex_search", regex_search, text.as<Text>()->getReference(), pattern.as<Text>()->getReference());
-    } else {
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments of type Text.");
-    }
+    return FunctionCall<>("regex_search", regex_search,
+                          text.as<Text>()->getReference(),
+                          pattern.as<Text>()->getReference());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "This expression is only defined on input arguments of type Text.");
+  }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

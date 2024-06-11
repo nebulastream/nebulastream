@@ -19,34 +19,42 @@
 #include <utility>
 namespace NES::RequestProcessor {
 
-AbstractSubRequest::AbstractSubRequest(std::vector<ResourceType> requiredResources)
+AbstractSubRequest::AbstractSubRequest(
+    std::vector<ResourceType> requiredResources)
     : StorageResourceLocker(std::move(requiredResources)) {}
 
-std::future<std::any> AbstractSubRequest::getFuture() { return responsePromise.get_future(); }
-
-void AbstractSubRequest::setStorageHandler(StorageHandlerPtr storageHandler) { this->storageHandler = std::move(storageHandler); }
-
-bool AbstractSubRequest::execute() {
-    auto expected = false;
-    if (!executionStarted.compare_exchange_strong(expected, true)) {
-        return false;
-    }
-    requestId = storageHandler->generateRequestId();
-    if (requestId == INVALID_REQUEST_ID) {
-        NES_THROW_RUNTIME_ERROR("Trying to execute a subrequest before its id has been set");
-    }
-    //acquire locks and perform other tasks to prepare for execution
-    preExecution(storageHandler);
-
-    //execute the request logic
-    responsePromise.set_value(executeSubRequestLogic(storageHandler));
-
-    //release locks
-    postExecution(storageHandler);
-    return true;
+std::future<std::any> AbstractSubRequest::getFuture() {
+  return responsePromise.get_future();
 }
 
-bool AbstractSubRequest::executionHasStarted() { return executionStarted.load(); }
+void AbstractSubRequest::setStorageHandler(StorageHandlerPtr storageHandler) {
+  this->storageHandler = std::move(storageHandler);
+}
+
+bool AbstractSubRequest::execute() {
+  auto expected = false;
+  if (!executionStarted.compare_exchange_strong(expected, true)) {
+    return false;
+  }
+  requestId = storageHandler->generateRequestId();
+  if (requestId == INVALID_REQUEST_ID) {
+    NES_THROW_RUNTIME_ERROR(
+        "Trying to execute a subrequest before its id has been set");
+  }
+  // acquire locks and perform other tasks to prepare for execution
+  preExecution(storageHandler);
+
+  // execute the request logic
+  responsePromise.set_value(executeSubRequestLogic(storageHandler));
+
+  // release locks
+  postExecution(storageHandler);
+  return true;
+}
+
+bool AbstractSubRequest::executionHasStarted() {
+  return executionStarted.load();
+}
 
 RequestId AbstractSubRequest::getResourceLockingId() { return requestId; }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

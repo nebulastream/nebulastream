@@ -21,34 +21,34 @@ namespace NES {
  * @brief This node negates its child expression.
  */
 class NegateExpressionNode : public LogicalUnaryExpressionNode {
-  public:
-    NegateExpressionNode();
-    ~NegateExpressionNode() override = default;
+public:
+  NegateExpressionNode();
+  ~NegateExpressionNode() override = default;
 
-    /**
-     * @brief Create a new negate expression
-     */
-    static ExpressionNodePtr create(ExpressionNodePtr const& child);
+  /**
+   * @brief Create a new negate expression
+   */
+  static ExpressionNodePtr create(ExpressionNodePtr const &child);
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
-    /**
-     * @brief Infers the stamp of this logical negate expression node.
-     * We assume that the children of this expression is a predicate.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] std::string toString() const override;
+  /**
+   * @brief Infers the stamp of this logical negate expression node.
+   * We assume that the children of this expression is a predicate.
+   * @param typeInferencePhaseContext
+   * @param schema the current schema.
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  protected:
-    explicit NegateExpressionNode(NegateExpressionNode* other);
+protected:
+  explicit NegateExpressionNode(NegateExpressionNode *other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_

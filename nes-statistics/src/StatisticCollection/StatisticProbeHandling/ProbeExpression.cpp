@@ -16,7 +16,10 @@
 
 namespace NES::Statistic {
 
-ProbeExpression::ProbeExpression(const ExpressionNodePtr& probeExpression) : probeExpression(probeExpression) {}
+ProbeExpression::ProbeExpression(const ExpressionNodePtr &probeExpression)
+    : probeExpression(probeExpression) {}
 
-const ExpressionNodePtr& ProbeExpression::getProbeExpression() const { return probeExpression; }
-}// namespace NES::Statistic
+const ExpressionNodePtr &ProbeExpression::getProbeExpression() const {
+  return probeExpression;
+}
+} // namespace NES::Statistic

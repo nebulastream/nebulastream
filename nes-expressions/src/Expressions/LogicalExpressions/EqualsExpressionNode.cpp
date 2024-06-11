@@ -17,30 +17,35 @@
 #include <sstream>
 namespace NES {
 
-EqualsExpressionNode::EqualsExpressionNode(EqualsExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+EqualsExpressionNode::EqualsExpressionNode(EqualsExpressionNode *other)
+    : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
-    auto equals = std::make_shared<EqualsExpressionNode>();
-    equals->setChildren(left, right);
-    return equals;
+ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr &left,
+                                               const ExpressionNodePtr &right) {
+  auto equals = std::make_shared<EqualsExpressionNode>();
+  equals->setChildren(left, right);
+  return equals;
 }
 
-bool EqualsExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<EqualsExpressionNode>()) {
-        auto other = rhs->as<EqualsExpressionNode>();
-        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
-    }
-    return false;
+bool EqualsExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<EqualsExpressionNode>()) {
+    auto other = rhs->as<EqualsExpressionNode>();
+    return this->getLeft()->equal(other->getLeft()) &&
+           this->getRight()->equal(other->getRight());
+  }
+  return false;
 }
 
 std::string EqualsExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << children[0]->toString() << "==" << children[1]->toString();
-    return ss.str();
+  std::stringstream ss;
+  ss << children[0]->toString() << "==" << children[1]->toString();
+  return ss.str();
 }
 
 ExpressionNodePtr EqualsExpressionNode::copy() {
-    return EqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+  return EqualsExpressionNode::create(
+      children[0]->as<ExpressionNode>()->copy(),
+      children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

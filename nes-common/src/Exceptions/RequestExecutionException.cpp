@@ -15,9 +15,10 @@
 #include <Exceptions/RequestExecutionException.hpp>
 
 namespace NES::Exceptions {
-RequestExecutionException::RequestExecutionException(const std::string& message)
+RequestExecutionException::RequestExecutionException(const std::string &message)
     : std::runtime_error(message), queryId(INVALID_QUERY_ID) {}
-RequestExecutionException::RequestExecutionException(QueryId queryId, const std::string& message)
+RequestExecutionException::RequestExecutionException(QueryId queryId,
+                                                     const std::string &message)
     : std::runtime_error(message), queryId(queryId) {}
 QueryId RequestExecutionException::getQueryId() const { return queryId; }
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

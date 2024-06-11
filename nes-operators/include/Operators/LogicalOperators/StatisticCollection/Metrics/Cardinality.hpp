@@ -19,39 +19,40 @@
 namespace NES::Statistic {
 
 /**
- * @brief Collectes the cardinality for the fieldName. In a database context, cardinality refers to the number of unique
- * values in a relational table column relative to the total number of rows in the table.
+ * @brief Collectes the cardinality for the fieldName. In a database context,
+ * cardinality refers to the number of unique values in a relational table
+ * column relative to the total number of rows in the table.
  */
 class Cardinality : public StatisticMetric {
-  public:
-    /**
-     * @brief Creates a Cardinality wrapped in a MetricPtr
-     * @param field
-     * @return MetricPtr
-     */
-    static MetricPtr create(const FieldAccessExpressionNodePtr& field);
+public:
+  /**
+   * @brief Creates a Cardinality wrapped in a MetricPtr
+   * @param field
+   * @return MetricPtr
+   */
+  static MetricPtr create(const FieldAccessExpressionNodePtr &field);
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if equal otherwise false
-     */
-    bool operator==(const StatisticMetric& rhs) const override;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if equal otherwise false
+   */
+  bool operator==(const StatisticMetric &rhs) const override;
 
-    /**
-     * @brief Creates a string representation
-     * @return String representation
-     */
-    std::string toString() const override;
+  /**
+   * @brief Creates a string representation
+   * @return String representation
+   */
+  std::string toString() const override;
 
-  private:
-    /**
-     * @brief Private constructor for Cardinality
-     * @param fieldName
-     */
-    explicit Cardinality(const FieldAccessExpressionNodePtr& field);
+private:
+  /**
+   * @brief Private constructor for Cardinality
+   * @param fieldName
+   */
+  explicit Cardinality(const FieldAccessExpressionNodePtr &field);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_CARDINALITY_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_CARDINALITY_HPP_

@@ -18,43 +18,58 @@
 #include <utility>
 namespace NES::Statistic {
 
-CountMinDescriptor::CountMinDescriptor(const FieldAccessExpressionNodePtr& field, const uint64_t width, uint64_t depth)
+CountMinDescriptor::CountMinDescriptor(
+    const FieldAccessExpressionNodePtr &field, const uint64_t width,
+    uint64_t depth)
     : WindowStatisticDescriptor(field, width), depth(depth) {}
 
-WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNodePtr field) {
-    return create(std::move(field), DEFAULT_RELATIVE_ERROR, DEFAULT_ERROR_PROBABILITY);
+WindowStatisticDescriptorPtr
+CountMinDescriptor::create(FieldAccessExpressionNodePtr field) {
+  return create(std::move(field), DEFAULT_RELATIVE_ERROR,
+                DEFAULT_ERROR_PROBABILITY);
 }
 
-WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNodePtr field, double error, double probability) {
-    const auto calcWidth = static_cast<uint64_t>(std::ceil(std::exp(1) / (probability)));
-    const auto calcDepth = static_cast<uint64_t>(std::ceil(std::log(1.0 / error)));
-    return create(std::move(field), calcWidth, calcDepth);
+WindowStatisticDescriptorPtr
+CountMinDescriptor::create(FieldAccessExpressionNodePtr field, double error,
+                           double probability) {
+  const auto calcWidth =
+      static_cast<uint64_t>(std::ceil(std::exp(1) / (probability)));
+  const auto calcDepth =
+      static_cast<uint64_t>(std::ceil(std::log(1.0 / error)));
+  return create(std::move(field), calcWidth, calcDepth);
 }
 
-WindowStatisticDescriptorPtr CountMinDescriptor::create(FieldAccessExpressionNodePtr field, uint64_t width, uint64_t depth) {
-    return std::make_shared<CountMinDescriptor>(CountMinDescriptor(field, width, depth));
+WindowStatisticDescriptorPtr
+CountMinDescriptor::create(FieldAccessExpressionNodePtr field, uint64_t width,
+                           uint64_t depth) {
+  return std::make_shared<CountMinDescriptor>(
+      CountMinDescriptor(field, width, depth));
 }
 
 uint64_t CountMinDescriptor::getDepth() const { return depth; }
 
-void CountMinDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
-    using enum BasicType;
-    outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + DEPTH_FIELD_NAME, UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY, UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, TEXT);
+void CountMinDescriptor::addDescriptorFields(
+    Schema &outputSchema, const std::string &qualifierNameWithSeparator) {
+  using enum BasicType;
+  outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, UINT64);
+  outputSchema.addField(qualifierNameWithSeparator + DEPTH_FIELD_NAME, UINT64);
+  outputSchema.addField(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY,
+                        UINT64);
+  outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME,
+                        TEXT);
 }
 CountMinDescriptor::~CountMinDescriptor() = default;
 
 std::string CountMinDescriptor::toString() { return "CountMinDescriptor"; }
 
-bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
-    if (rhs->instanceOf<CountMinDescriptor>()) {
-        auto rhsCountMinDescriptor = rhs->as<CountMinDescriptor>();
-        return field->equal(rhsCountMinDescriptor->field) && depth == rhsCountMinDescriptor->depth
-            && width == rhsCountMinDescriptor->width;
-    }
-    return false;
+bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr &rhs) const {
+  if (rhs->instanceOf<CountMinDescriptor>()) {
+    auto rhsCountMinDescriptor = rhs->as<CountMinDescriptor>();
+    return field->equal(rhsCountMinDescriptor->field) &&
+           depth == rhsCountMinDescriptor->depth &&
+           width == rhsCountMinDescriptor->width;
+  }
+  return false;
 }
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

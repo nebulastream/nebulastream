@@ -24,14 +24,14 @@ namespace NES::Runtime::Execution::Expressions {
  * @brief This expression atan the Expression
  */
 class AtanExpression : public Expression {
-  public:
-    AtanExpression(const ExpressionPtr& leftSubExpression);
-    Value<> execute(Record& record) const override;
+public:
+  AtanExpression(const ExpressionPtr &leftSubExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
+private:
+  const ExpressionPtr leftSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATANEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATANEXPRESSION_HPP_

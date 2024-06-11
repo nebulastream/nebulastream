@@ -24,31 +24,35 @@ namespace NES::Compiler {
  * Contains a reference to the @DynmaicObject created by the compiler.
  */
 class CompilationResult {
-  public:
-    /**
-     * @brief Constructor for a Compilation result.
-     * @param dynamicObject The dynamic object created by the @LanguageCompiler
-     * @param timer timer object to measure the time it takes to handle the @CompilationRequest
-     */
-    CompilationResult(std::shared_ptr<DynamicObject> dynamicObject, Timer<>&& timer);
+public:
+  /**
+   * @brief Constructor for a Compilation result.
+   * @param dynamicObject The dynamic object created by the @LanguageCompiler
+   * @param timer timer object to measure the time it takes to handle the
+   * @CompilationRequest
+   */
+  CompilationResult(std::shared_ptr<DynamicObject> dynamicObject,
+                    Timer<> &&timer);
 
-    /**
-     * @brief Returns the dynamic object created by the Compiler
-     * @return std::shared_ptr<DynamicObject>
-     */
-    [[nodiscard]] std::shared_ptr<DynamicObject> getDynamicObject() const;
+  /**
+   * @brief Returns the dynamic object created by the Compiler
+   * @return std::shared_ptr<DynamicObject>
+   */
+  [[nodiscard]] std::shared_ptr<DynamicObject> getDynamicObject() const;
 
-    /**
-     * @brief Returns the compilation time
-     * @return compilation time
-     */
-    [[nodiscard]] uint64_t getCompilationTime() const;
+  /**
+   * @brief Returns the compilation time
+   * @return compilation time
+   */
+  [[nodiscard]] uint64_t getCompilationTime() const;
 
-  private:
-    const std::shared_ptr<DynamicObject> dynamicObject;
-    Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock> timer;
+private:
+  const std::shared_ptr<DynamicObject> dynamicObject;
+  Timer<std::chrono::nanoseconds, std::milli, double,
+        std::chrono::high_resolution_clock>
+      timer;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILATIONRESULT_HPP_

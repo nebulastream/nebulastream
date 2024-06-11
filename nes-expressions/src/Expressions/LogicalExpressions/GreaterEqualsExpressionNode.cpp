@@ -16,32 +16,37 @@
 #include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 #include <sstream>
 namespace NES {
-GreaterEqualsExpressionNode::GreaterEqualsExpressionNode(GreaterEqualsExpressionNode* other)
+GreaterEqualsExpressionNode::GreaterEqualsExpressionNode(
+    GreaterEqualsExpressionNode *other)
     : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr GreaterEqualsExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
-    auto greaterThen = std::make_shared<GreaterEqualsExpressionNode>();
-    greaterThen->setChildren(left, right);
-    return greaterThen;
+ExpressionNodePtr
+GreaterEqualsExpressionNode::create(const ExpressionNodePtr &left,
+                                    const ExpressionNodePtr &right) {
+  auto greaterThen = std::make_shared<GreaterEqualsExpressionNode>();
+  greaterThen->setChildren(left, right);
+  return greaterThen;
 }
 
-bool GreaterEqualsExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<GreaterEqualsExpressionNode>()) {
-        auto other = rhs->as<GreaterEqualsExpressionNode>();
-        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
-    }
-    return false;
+bool GreaterEqualsExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<GreaterEqualsExpressionNode>()) {
+    auto other = rhs->as<GreaterEqualsExpressionNode>();
+    return this->getLeft()->equal(other->getLeft()) &&
+           this->getRight()->equal(other->getRight());
+  }
+  return false;
 }
 
 std::string GreaterEqualsExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << children[0]->toString() << ">=" << children[1]->toString();
-    return ss.str();
+  std::stringstream ss;
+  ss << children[0]->toString() << ">=" << children[1]->toString();
+  return ss.str();
 }
 
 ExpressionNodePtr GreaterEqualsExpressionNode::copy() {
-    return GreaterEqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(),
-                                               children[1]->as<ExpressionNode>()->copy());
+  return GreaterEqualsExpressionNode::create(
+      children[0]->as<ExpressionNode>()->copy(),
+      children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

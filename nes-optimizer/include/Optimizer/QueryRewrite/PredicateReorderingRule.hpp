@@ -29,7 +29,7 @@ using OperatorPtr = std::shared_ptr<Operator>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-}// namespace NES
+} // namespace NES
 
 namespace NES::Optimizer {
 
@@ -37,8 +37,9 @@ class PredicateReorderingRule;
 using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
 
 /**
- * @brief This rewrite rule identifies chains of adjacent predicates with various expected cardinalities.
- * The adjacent predicates are sorted and executed such that the predicates with a high selectivity are executed first.
+ * @brief This rewrite rule identifies chains of adjacent predicates with
+ * various expected cardinalities. The adjacent predicates are sorted and
+ * executed such that the predicates with a high selectivity are executed first.
  * This rule can reduce the size of intermediate results.
  *
  * Example:
@@ -51,36 +52,38 @@ using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
  *          AND od.order_date > DATE(NOW() - interval 16 day)
  * GROUP BY ve.vehicle_id, ve.model_name;
  *
- *  The estimated cardinality of the predicate P1 (ve.engine_hp > 70) which selects all vehicles with at least a
- *  basic horsepower of 70 is high with an estimated selectivity of about 0.9.
- *  The estimated cardinality of the predicate P2 (od.order_date > DATE(NOW() - interval 16 day)) which limits the records
- *  fetched to the previous 15 days is low with an estimated selectivity of just 0.1.
- *  The rule will execute the predicate P1 with high selectivity first and potentially reduce the records going
- *  to the P2 significantly.
+ *  The estimated cardinality of the predicate P1 (ve.engine_hp > 70) which
+ * selects all vehicles with at least a basic horsepower of 70 is high with an
+ * estimated selectivity of about 0.9. The estimated cardinality of the
+ * predicate P2 (od.order_date > DATE(NOW() - interval 16 day)) which limits the
+ * records fetched to the previous 15 days is low with an estimated selectivity
+ * of just 0.1. The rule will execute the predicate P1 with high selectivity
+ * first and potentially reduce the records going to the P2 significantly.
  *
  */
 
 class PredicateReorderingRule : public BaseRewriteRule {
 
-  public:
-    static PredicateReorderingRulePtr create();
-    PredicateReorderingRule() = default;
-    virtual ~PredicateReorderingRule() = default;
+public:
+  static PredicateReorderingRulePtr create();
+  PredicateReorderingRule() = default;
+  virtual ~PredicateReorderingRule() = default;
 
-    /**
-     * @brief Apply Predicate Reordering rule on input query plan
-     * @param queryPlan: the original query plan
-     * @return updated logical query plan
-     */
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+  /**
+   * @brief Apply Predicate Reordering rule on input query plan
+   * @param queryPlan: the original query plan
+   * @return updated logical query plan
+   */
+  QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  private:
-    /**
-     * @brief Given a node, check if the parent or the child is a filter.
-     * @param OperatorPtr: the node to be check
-     * @return boolean, true when a consecutive filter is found
-     */
-    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
+private:
+  /**
+   * @brief Given a node, check if the parent or the child is a filter.
+   * @param OperatorPtr: the node to be check
+   * @return boolean, true when a consecutive filter is found
+   */
+  static std::vector<LogicalFilterOperatorPtr>
+  getConsecutiveFilters(const NES::LogicalFilterOperatorPtr &firstFilter);
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_

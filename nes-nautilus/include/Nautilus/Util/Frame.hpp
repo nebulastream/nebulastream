@@ -22,26 +22,28 @@ namespace NES::Nautilus {
  * @tparam K key type
  * @tparam V value type
  */
-template<class K, class V>
-class Frame {
-  public:
-    V getValue(K key) {
-        auto value = frameMap.find(key);
-        if (value == frameMap.end()) {
-            throw Exceptions::RuntimeException("Key " + key + " does not exists in frame.");
-        }
-        return value->second;
+template <class K, class V> class Frame {
+public:
+  V getValue(K key) {
+    auto value = frameMap.find(key);
+    if (value == frameMap.end()) {
+      throw Exceptions::RuntimeException("Key " + key +
+                                         " does not exists in frame.");
     }
+    return value->second;
+  }
 
-    bool contains(K key) { return frameMap.contains(key); }
+  bool contains(K key) { return frameMap.contains(key); }
 
-    void setValue(K key, V value) { frameMap.emplace(std::make_pair(key, value)); }
-    std::unordered_map<K, V>& getContent() { return frameMap; }
+  void setValue(K key, V value) {
+    frameMap.emplace(std::make_pair(key, value));
+  }
+  std::unordered_map<K, V> &getContent() { return frameMap; }
 
-  private:
-    std::unordered_map<K, V> frameMap;
+private:
+  std::unordered_map<K, V> frameMap;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_

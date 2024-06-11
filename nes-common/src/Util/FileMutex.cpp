@@ -26,47 +26,48 @@
 namespace NES::Util {
 
 FileMutex::FileMutex(const std::string filePath) : fileName(filePath) {
-    fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
-    if (fd == -1 && errno == EEXIST) {
-        fd = open(filePath.c_str(), O_RDWR);
-    }
-    NES_ASSERT2_FMT(fd != -1, "Invalid file " << filePath << " " << strerror(errno));
+  fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+  if (fd == -1 && errno == EEXIST) {
+    fd = open(filePath.c_str(), O_RDWR);
+  }
+  NES_ASSERT2_FMT(fd != -1,
+                  "Invalid file " << filePath << " " << strerror(errno));
 }
 
 FileMutex::~FileMutex() {
-    close(fd);
-    unlink(fileName.c_str());
+  close(fd);
+  unlink(fileName.c_str());
 }
 
 void FileMutex::lock() {
-    struct flock lock;
-    lock.l_type = F_WRLCK;
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
-    lock.l_len = 0;
-    NES_ASSERT(-1 != ::fcntl(fd, F_SETLKW, &lock), "Cannot acquire lock");
+  struct flock lock;
+  lock.l_type = F_WRLCK;
+  lock.l_whence = SEEK_SET;
+  lock.l_start = 0;
+  lock.l_len = 0;
+  NES_ASSERT(-1 != ::fcntl(fd, F_SETLKW, &lock), "Cannot acquire lock");
 }
 
 bool FileMutex::try_lock() {
-    struct flock lock;
-    lock.l_type = F_WRLCK;
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
-    lock.l_len = 0;
-    int ret = fcntl(fd, F_SETLK, &lock);
-    if (ret == -1) {
-        return (errno == EAGAIN || errno == EACCES);
-    }
-    return true;
+  struct flock lock;
+  lock.l_type = F_WRLCK;
+  lock.l_whence = SEEK_SET;
+  lock.l_start = 0;
+  lock.l_len = 0;
+  int ret = fcntl(fd, F_SETLK, &lock);
+  if (ret == -1) {
+    return (errno == EAGAIN || errno == EACCES);
+  }
+  return true;
 }
 
 void FileMutex::unlock() {
-    struct flock lock;
-    lock.l_type = F_UNLCK;
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
-    lock.l_len = 0;
-    NES_ASSERT(-1 != fcntl(fd, F_SETLK, &lock), "Cannot acquire lock");
+  struct flock lock;
+  lock.l_type = F_UNLCK;
+  lock.l_whence = SEEK_SET;
+  lock.l_start = 0;
+  lock.l_len = 0;
+  NES_ASSERT(-1 != fcntl(fd, F_SETLK, &lock), "Cannot acquire lock");
 }
 
-}// namespace NES::Util
+} // namespace NES::Util

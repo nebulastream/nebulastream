@@ -19,7 +19,8 @@
 #include <unordered_map>
 
 /**
- * @brief This header provides basic functions that simplify the interaction with a JVM over JNI.
+ * @brief This header provides basic functions that simplify the interaction
+ * with a JVM over JNI.
  */
 namespace NES::jni {
 
@@ -29,11 +30,13 @@ using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
 using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
 
 /**
- * @brief Checks for a pending exception in the JNI environment and throws a runtime error if one is found.
+ * @brief Checks for a pending exception in the JNI environment and throws a
+ * runtime error if one is found.
  *
  * @param source_location source_location of callee
  */
-void jniErrorCheck(const std::source_location location = std::source_location::current());
+void jniErrorCheck(
+    const std::source_location location = std::source_location::current());
 
 /**
  * Free a jvm object
@@ -53,14 +56,15 @@ jobject allocateObject(jclass clazz);
  * @param clazzName
  * @return jclass
  */
-jclass findClass(const std::string_view& clazzName);
+jclass findClass(const std::string_view &clazzName);
 
 /**
  * @brief Finds a method with a given name
  * @param methodName
  * @return jmethodID
  */
-jmethodID getMethod(jclass clazz, const std::string_view& methodName, const std::string_view& signature);
+jmethodID getMethod(jclass clazz, const std::string_view &methodName,
+                    const std::string_view &signature);
 
 /**
  * @brief Creates a java.lang.Boolean object for a given bool.
@@ -116,7 +120,7 @@ jobject createByte(int8_t value);
  * @param value
  * @return jobject
  */
-jstring createString(const std::string_view& value);
+jstring createString(const std::string_view &value);
 
 /**
  * @brief Extracts a bool from a java.lang.Boolean object
@@ -178,8 +182,8 @@ std::string getStringObjectValue(jstring object);
  * @param javaClassName
  * @return std::string
  */
-const std::string convertToJNIName(const std::string& javaClassName);
+const std::string convertToJNIName(const std::string &javaClassName);
 
-}// namespace NES::jni
+} // namespace NES::jni
 
-#endif// NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_

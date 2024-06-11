@@ -25,31 +25,35 @@
 namespace NES::Monitoring {
 
 DiskCollector::DiskCollector()
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+    : MetricCollector(),
+      resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(DiskMetrics::getSchema("")) {
-    NES_INFO("DiskCollector: Init DiskCollector with schema {}", schema->toString());
+  NES_INFO("DiskCollector: Init DiskCollector with schema {}",
+           schema->toString());
 }
 
-MetricCollectorType DiskCollector::getType() { return MetricCollectorType::DISK_COLLECTOR; }
+MetricCollectorType DiskCollector::getType() {
+  return MetricCollectorType::DISK_COLLECTOR;
+}
 
-bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
-    try {
-        DiskMetrics measuredVal = resourceReader->readDiskStats();
-        measuredVal.nodeId = getWorkerId();
-        writeToBuffer(measuredVal, tupleBuffer, 0);
-    } catch (const std::exception& ex) {
-        NES_ERROR("DiskCollector: Error while collecting metrics {}", ex.what());
-        return false;
-    }
-    return true;
+bool DiskCollector::fillBuffer(Runtime::TupleBuffer &tupleBuffer) {
+  try {
+    DiskMetrics measuredVal = resourceReader->readDiskStats();
+    measuredVal.nodeId = getWorkerId();
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+  } catch (const std::exception &ex) {
+    NES_ERROR("DiskCollector: Error while collecting metrics {}", ex.what());
+    return false;
+  }
+  return true;
 }
 
 SchemaPtr DiskCollector::getSchema() { return schema; }
 
 const MetricPtr DiskCollector::readMetric() const {
-    DiskMetrics metrics = resourceReader->readDiskStats();
-    metrics.nodeId = getWorkerId();
-    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
+  DiskMetrics metrics = resourceReader->readDiskStats();
+  metrics.nodeId = getWorkerId();
+  return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

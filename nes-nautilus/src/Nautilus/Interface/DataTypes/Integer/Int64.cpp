@@ -18,63 +18,65 @@
 namespace NES::Nautilus {
 
 Int64::Int64(int64_t value) : Int(&type), value(value){};
-Nautilus::IR::Types::StampPtr Int64::getType() const { return Nautilus::IR::Types::StampFactory::createInt64Stamp(); }
+Nautilus::IR::Types::StampPtr Int64::getType() const {
+  return Nautilus::IR::Types::StampFactory::createInt64Stamp();
+}
 std::shared_ptr<Any> Int64::copy() { return create<Int64>(value); }
-const std::shared_ptr<Int> Int64::add(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value + otherValue.value);
+const std::shared_ptr<Int> Int64::add(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value + otherValue.value);
 }
 
-const std::shared_ptr<Int> Int64::sub(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value - otherValue.value);
+const std::shared_ptr<Int> Int64::sub(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value - otherValue.value);
 }
-const std::shared_ptr<Int> Int64::div(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value / otherValue.value);
+const std::shared_ptr<Int> Int64::div(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value / otherValue.value);
 }
-const std::shared_ptr<Int> Int64::mod(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value % otherValue.value);
+const std::shared_ptr<Int> Int64::mod(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value % otherValue.value);
 }
-const std::shared_ptr<Int> Int64::mul(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value * otherValue.value);
+const std::shared_ptr<Int> Int64::mul(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value * otherValue.value);
 }
-const std::shared_ptr<Boolean> Int64::equals(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Boolean>(value == otherValue.value);
+const std::shared_ptr<Boolean> Int64::equals(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Boolean>(value == otherValue.value);
 }
-const std::shared_ptr<Boolean> Int64::lessThan(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Boolean>(value < otherValue.value);
+const std::shared_ptr<Boolean> Int64::lessThan(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Boolean>(value < otherValue.value);
 }
-const std::shared_ptr<Boolean> Int64::greaterThan(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Boolean>(value > otherValue.value);
+const std::shared_ptr<Boolean> Int64::greaterThan(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Boolean>(value > otherValue.value);
 }
-const std::shared_ptr<Int> Int64::bitWiseAnd(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value & otherValue.value);
+const std::shared_ptr<Int> Int64::bitWiseAnd(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value & otherValue.value);
 }
-const std::shared_ptr<Int> Int64::bitWiseOr(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value | otherValue.value);
+const std::shared_ptr<Int> Int64::bitWiseOr(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value | otherValue.value);
 }
-const std::shared_ptr<Int> Int64::bitWiseXor(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value ^ otherValue.value);
+const std::shared_ptr<Int> Int64::bitWiseXor(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value ^ otherValue.value);
 }
-const std::shared_ptr<Int> Int64::bitWiseLeftShift(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value << otherValue.value);
+const std::shared_ptr<Int> Int64::bitWiseLeftShift(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value << otherValue.value);
 }
-const std::shared_ptr<Int> Int64::bitWiseRightShift(const Int& other) const {
-    auto& otherValue = other.staticCast<Int64>();
-    return create<Int64>(value >> otherValue.value);
+const std::shared_ptr<Int> Int64::bitWiseRightShift(const Int &other) const {
+  auto &otherValue = other.staticCast<Int64>();
+  return create<Int64>(value >> otherValue.value);
 }
 
 int64_t Int64::getValue() const { return value; }
 int64_t Int64::getRawInt() const { return value; }
 std::string Int64::toString() { return std::to_string(value); }
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

@@ -28,34 +28,40 @@ class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 class Node;
 using NodePtr = std::shared_ptr<Node>;
-}// namespace NES
+} // namespace NES
 
 namespace NES::Optimizer {
 class DistributedMatrixJoinRule;
 using DistributedMatrixJoinRulePtr = std::shared_ptr<DistributedMatrixJoinRule>;
 
 /**
- * @brief DistributedMatrixJoinRule which is rewriting a central to a distributed grid-partitioned join based on the physical streams.
+ * @brief DistributedMatrixJoinRule which is rewriting a central to a
+ * distributed grid-partitioned join based on the physical streams.
  */
 class DistributedMatrixJoinRule : public BaseRewriteRule {
-  public:
-    static DistributedMatrixJoinRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
-    virtual ~DistributedMatrixJoinRule() = default;
+public:
+  static DistributedMatrixJoinRulePtr
+  create(Configurations::OptimizerConfiguration configuration,
+         TopologyPtr topology);
+  virtual ~DistributedMatrixJoinRule() = default;
 
-    /**
-     * @brief Searches query plan for a join operator and replicates the join operators across physical sources equal
-     * to the distributed grid-based partitioning scheme
-     * @param queryPlan: the original non-expanded query plan
-     * @return expanded logical query plan
-     */
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+  /**
+   * @brief Searches query plan for a join operator and replicates the join
+   * operators across physical sources equal to the distributed grid-based
+   * partitioning scheme
+   * @param queryPlan: the original non-expanded query plan
+   * @return expanded logical query plan
+   */
+  QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  private:
-    explicit DistributedMatrixJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+private:
+  explicit DistributedMatrixJoinRule(
+      Configurations::OptimizerConfiguration configuration,
+      TopologyPtr topology);
 
-  private:
-    TopologyPtr topology;
-    Configurations::OptimizerConfiguration configuration;
+private:
+  TopologyPtr topology;
+  Configurations::OptimizerConfiguration configuration;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_

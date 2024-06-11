@@ -18,18 +18,21 @@
 namespace NES {
 
 /*
-* Defines the cos function and registers it to the FunctionRegistry.
-*/
+ * Defines the cos function and registers it to the FunctionRegistry.
+ */
 class CosFunction : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
-            NES_THROW_RUNTIME_ERROR("CosExpressions can only be evaluated on numeric values.");
-        }
-        return DataTypeFactory::createDouble();
+public:
+  [[nodiscard]] DataTypePtr
+  inferUnary(const DataTypePtr &input) const override {
+    if (!input->isNumeric()) {
+      NES_THROW_RUNTIME_ERROR(
+          "CosExpressions can only be evaluated on numeric values.");
     }
+    return DataTypeFactory::createDouble();
+  }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<CosFunction> cosFunction("cos");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<CosFunction>
+    cosFunction("cos");
 
-}// namespace NES
+} // namespace NES

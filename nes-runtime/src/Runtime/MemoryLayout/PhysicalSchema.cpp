@@ -24,40 +24,48 @@
 
 namespace NES::Runtime {
 
-PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(std::move(schemaPtr)){};
+PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr)
+    : schema(std::move(schemaPtr)){};
 
-PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(const SchemaPtr& schema) {
-    return std::make_shared<PhysicalSchema>(schema);
+PhysicalSchemaPtr
+PhysicalSchema::createPhysicalSchema(const SchemaPtr &schema) {
+  return std::make_shared<PhysicalSchema>(schema);
 }
 
-PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex, uint64_t bufferOffset) {
-    NES_ASSERT(validFieldIndex(fieldIndex), "field index invalid");
-    auto logicalFieldsInSchema = schema->fields;
-    auto logicalField = logicalFieldsInSchema[fieldIndex];
-    auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(logicalField->getDataType());
-    return PhysicalFieldUtil::createPhysicalField(physicalType, bufferOffset);
+PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex,
+                                                     uint64_t bufferOffset) {
+  NES_ASSERT(validFieldIndex(fieldIndex), "field index invalid");
+  auto logicalFieldsInSchema = schema->fields;
+  auto logicalField = logicalFieldsInSchema[fieldIndex];
+  auto physicalType =
+      DefaultPhysicalTypeFactory().getPhysicalType(logicalField->getDataType());
+  return PhysicalFieldUtil::createPhysicalField(physicalType, bufferOffset);
 }
 
 uint64_t PhysicalSchema::getFieldOffset(uint64_t fieldIndex) {
-    NES_ASSERT(validFieldIndex(fieldIndex), "field value invalid");
-    uint64_t offset = 0;
-    auto physicalDataFactory = DefaultPhysicalTypeFactory();
-    for (uint64_t index = 0; index < fieldIndex; index++) {
-        offset += physicalDataFactory.getPhysicalType(schema->get(index)->getDataType())->size();
-    }
-    return offset;
+  NES_ASSERT(validFieldIndex(fieldIndex), "field value invalid");
+  uint64_t offset = 0;
+  auto physicalDataFactory = DefaultPhysicalTypeFactory();
+  for (uint64_t index = 0; index < fieldIndex; index++) {
+    offset +=
+        physicalDataFactory.getPhysicalType(schema->get(index)->getDataType())
+            ->size();
+  }
+  return offset;
 }
 
 bool PhysicalSchema::validFieldIndex(uint64_t fieldIndex) {
-    auto fields = schema->fields;
-    if (fieldIndex > fields.size()) {
-        NES_FATAL_ERROR("PhysicalSchema: field index {} is out of bound. Schema only contains {} fields.",
-                        fieldIndex,
-                        fields.size());
-        throw IllegalArgumentException("Field index out of bound");
-    }
-    return true;
+  auto fields = schema->fields;
+  if (fieldIndex > fields.size()) {
+    NES_FATAL_ERROR("PhysicalSchema: field index {} is out of bound. Schema "
+                    "only contains {} fields.",
+                    fieldIndex, fields.size());
+    throw IllegalArgumentException("Field index out of bound");
+  }
+  return true;
 }
 
-uint64_t PhysicalSchema::getRecordSize() { return this->schema->getSchemaSizeInBytes(); }
-}// namespace NES::Runtime
+uint64_t PhysicalSchema::getRecordSize() {
+  return this->schema->getSchemaSizeInBytes();
+}
+} // namespace NES::Runtime

@@ -23,37 +23,39 @@ namespace NES::Windowing {
  * A TumblingWindow assigns records to non-overlapping windows.
  */
 class TumblingWindow : public TimeBasedWindowType {
-  public:
-    /**
-    * Creates a new TumblingWindow that assigns
-    * elements to time windows based on the element timestamp and multiplier.
-    * For example, if you want window a stream by hour,but window begins at the 15th minutes
-    * of each hour, you can use {@code of(Time.hours(1),Time.minutes(15))},then you will get
-    * time windows start at 0:15:00,1:15:00,2:15:00,etc.
-    * @param size
-    * @return WindowTypePtr
-    */
-    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
+public:
+  /**
+   * Creates a new TumblingWindow that assigns
+   * elements to time windows based on the element timestamp and multiplier.
+   * For example, if you want window a stream by hour,but window begins at the
+   * 15th minutes of each hour, you can use {@code
+   * of(Time.hours(1),Time.minutes(15))},then you will get time windows start at
+   * 0:15:00,1:15:00,2:15:00,etc.
+   * @param size
+   * @return WindowTypePtr
+   */
+  static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic,
+                          TimeMeasure size);
 
-    /**
-    * @brief return size of the window
-    * @return size of the window
-    */
-    TimeMeasure getSize() override;
+  /**
+   * @brief return size of the window
+   * @return size of the window
+   */
+  TimeMeasure getSize() override;
 
-    TimeMeasure getSlide() override;
+  TimeMeasure getSlide() override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    bool equal(WindowTypePtr otherWindowType) override;
+  bool equal(WindowTypePtr otherWindowType) override;
 
-    uint64_t hash() const override;
+  uint64_t hash() const override;
 
-  private:
-    TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
-    const TimeMeasure size;
+private:
+  TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
+  const TimeMeasure size;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_TUMBLINGWINDOW_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_TUMBLINGWINDOW_HPP_

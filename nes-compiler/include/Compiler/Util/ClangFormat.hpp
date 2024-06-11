@@ -22,23 +22,23 @@ namespace NES::Compiler {
  * @brief Utility, which leverages clang format to
  */
 class ClangFormat {
-  public:
-    /**
-     * @brief Create a new clang format instance for a specific language
-     * @param language
-     */
-    explicit ClangFormat(std::string language);
-    /**
-     * @brief Format a particular file with code
-     * @param file
-     */
-    void formatFile(std::shared_ptr<File> file);
+public:
+  /**
+   * @brief Create a new clang format instance for a specific language
+   * @param language
+   */
+  explicit ClangFormat(std::string language);
+  /**
+   * @brief Format a particular file with code
+   * @param file
+   */
+  void formatFile(std::shared_ptr<File> file);
 
-  private:
-    const std::string language;
-    std::mutex clangFormatMutex;
+private:
+  const std::string language;
+  std::mutex clangFormatMutex;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_

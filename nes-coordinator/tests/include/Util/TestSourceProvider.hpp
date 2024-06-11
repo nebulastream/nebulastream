@@ -18,28 +18,28 @@
 namespace NES::TestUtils {
 
 class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
-  public:
-    /**
-     * @brief Constructor of a TestSourceProvider
-     * @param options
-     */
-    explicit TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options);
+public:
+  /**
+   * @brief Constructor of a TestSourceProvider
+   * @param options
+   */
+  explicit TestSourceProvider(
+      QueryCompilation::QueryCompilerOptionsPtr options);
 
-    /**
-     * @brief Lowers a source descriptor to a executable data source.
-     * @param operatorId id of the data source
-     * @param originId
-     * @param sourceDescriptor
-     * @param nodeEngine
-     * @param successors
-     * @return DataSourcePtr
-     */
-    DataSourcePtr lower(OperatorId operatorId,
-                        OriginId originId,
-                        StatisticId statisticId,
-                        SourceDescriptorPtr sourceDescriptor,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override;
+  /**
+   * @brief Lowers a source descriptor to a executable data source.
+   * @param operatorId id of the data source
+   * @param originId
+   * @param sourceDescriptor
+   * @param nodeEngine
+   * @param successors
+   * @return DataSourcePtr
+   */
+  DataSourcePtr
+  lower(OperatorId operatorId, OriginId originId, StatisticId statisticId,
+        SourceDescriptorPtr sourceDescriptor, Runtime::NodeEnginePtr nodeEngine,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+      override;
 };
-}// namespace NES::TestUtils
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
+} // namespace NES::TestUtils
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_

@@ -22,18 +22,20 @@
 
 namespace NES::Runtime::Execution::Operators {
 /**
- * @brief This handler stores states of a keyed threshold window during its execution
+ * @brief This handler stores states of a keyed threshold window during its
+ * execution
  */
 class KeyedThresholdWindowOperatorHandler : public OperatorHandler {
-  public:
-    explicit KeyedThresholdWindowOperatorHandler() = default;
+public:
+  explicit KeyedThresholdWindowOperatorHandler() = default;
 
-    void start(PipelineExecutionContextPtr, uint32_t) override {}
+  void start(PipelineExecutionContextPtr, uint32_t) override {}
 
-    void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
+  void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
-    std::unordered_map<uint32_t, KeyedThresholdWindowState> keyedAggregationStates{};
+  std::unordered_map<uint32_t, KeyedThresholdWindowState>
+      keyedAggregationStates{};
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWOPERATORHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWOPERATORHANDLER_HPP_

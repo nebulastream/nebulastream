@@ -23,15 +23,25 @@
 
 namespace NES::QueryCompilation {
 
-OperatorFusionPolicyPtr FuseNonPipelineBreakerPolicy::create() { return std::make_shared<FuseNonPipelineBreakerPolicy>(); }
-
-bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) {
-    return (physicalOperator->instanceOf<PhysicalOperators::PhysicalMapOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalFilterOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalProjectOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>());
+OperatorFusionPolicyPtr FuseNonPipelineBreakerPolicy::create() {
+  return std::make_shared<FuseNonPipelineBreakerPolicy>();
 }
-}// namespace NES::QueryCompilation
+
+bool FuseNonPipelineBreakerPolicy::isFusible(
+    PhysicalOperators::PhysicalOperatorPtr physicalOperator) {
+  return (
+      physicalOperator->instanceOf<PhysicalOperators::PhysicalMapOperator>() ||
+      physicalOperator
+          ->instanceOf<PhysicalOperators::PhysicalFilterOperator>() ||
+      physicalOperator
+          ->instanceOf<PhysicalOperators::PhysicalProjectOperator>() ||
+      physicalOperator->instanceOf<
+          PhysicalOperators::PhysicalWatermarkAssignmentOperator>() ||
+      physicalOperator
+          ->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>() ||
+      physicalOperator
+          ->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>() ||
+      physicalOperator->instanceOf<
+          PhysicalOperators::PhysicalSlicePreAggregationOperator>());
+}
+} // namespace NES::QueryCompilation

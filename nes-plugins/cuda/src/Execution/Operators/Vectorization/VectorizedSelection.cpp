@@ -24,52 +24,58 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-VectorizedSelection::VectorizedSelection(const Expressions::ExpressionPtr& expression,
-                                         std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-                                         std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
-    : expression(expression), memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
+VectorizedSelection::VectorizedSelection(
+    const Expressions::ExpressionPtr &expression,
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+    std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
+    : expression(expression), memoryProvider(std::move(memoryProvider)),
+      projections(std::move(projections)) {}
 
-// TODO #4829: Move this method out of this source file to a more sensible place.
-static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
-    auto ref = createNextValueReference(builtInVariable->getType());
-    Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
-    auto value = builtInVariable->getAsValue();
-    value.ref = ref;
-    return value;
+// TODO #4829: Move this method out of this source file to a more sensible
+// place.
+static Value<> getCompilerBuiltInVariable(
+    const std::shared_ptr<BuiltInVariable> &builtInVariable) {
+  auto ref = createNextValueReference(builtInVariable->getType());
+  Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
+  auto value = builtInVariable->getAsValue();
+  value.ref = ref;
+  return value;
 }
 
 void setAsValidInMetadata(uint64_t /*recordIndex*/) {}
 
-void VectorizedSelection::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto blockDim = std::make_shared<BlockDim>();
-    auto blockDim_x = getCompilerBuiltInVariable(blockDim->x());
+void VectorizedSelection::execute(ExecutionContext &ctx,
+                                  RecordBuffer &recordBuffer) const {
+  auto blockDim = std::make_shared<BlockDim>();
+  auto blockDim_x = getCompilerBuiltInVariable(blockDim->x());
 
-    auto blockIdx = std::make_shared<BlockIdx>();
-    auto blockIdx_x = getCompilerBuiltInVariable(blockIdx->x());
+  auto blockIdx = std::make_shared<BlockIdx>();
+  auto blockIdx_x = getCompilerBuiltInVariable(blockIdx->x());
 
-    auto threadIdx = std::make_shared<ThreadIdx>();
-    auto threadIdx_x = getCompilerBuiltInVariable(threadIdx->x());
+  auto threadIdx = std::make_shared<ThreadIdx>();
+  auto threadIdx_x = getCompilerBuiltInVariable(threadIdx->x());
 
-    auto threadId = blockIdx_x * blockDim_x + threadIdx_x;
+  auto threadId = blockIdx_x * blockDim_x + threadIdx_x;
 
-    auto bufferAddress = recordBuffer.getBuffer();
-    auto recordIndex = threadId.as<UInt64>();
+  auto bufferAddress = recordBuffer.getBuffer();
+  auto recordIndex = threadId.as<UInt64>();
 
-    auto numberOfRecords = recordBuffer.getNumRecords();
+  auto numberOfRecords = recordBuffer.getNumRecords();
 
-    if (recordIndex < numberOfRecords) {
-        auto record = memoryProvider->read(projections, bufferAddress, recordIndex);
-        if (expression->execute(record)) {
-            // TODO #4831: Investigate if this method still needed
-            FunctionCall("setAsValidInMetadata", setAsValidInMetadata, recordIndex);
-            memoryProvider->write(recordIndex, bufferAddress, record);
-        }
+  if (recordIndex < numberOfRecords) {
+    auto record = memoryProvider->read(projections, bufferAddress, recordIndex);
+    if (expression->execute(record)) {
+      // TODO #4831: Investigate if this method still needed
+      FunctionCall("setAsValidInMetadata", setAsValidInMetadata, recordIndex);
+      memoryProvider->write(recordIndex, bufferAddress, record);
     }
+  }
 
-    if (hasChild()) {
-        auto vectorizedChild = std::dynamic_pointer_cast<const VectorizableOperator>(child);
-        vectorizedChild->execute(ctx, recordBuffer);
-    }
+  if (hasChild()) {
+    auto vectorizedChild =
+        std::dynamic_pointer_cast<const VectorizableOperator>(child);
+    vectorizedChild->execute(ctx, recordBuffer);
+  }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

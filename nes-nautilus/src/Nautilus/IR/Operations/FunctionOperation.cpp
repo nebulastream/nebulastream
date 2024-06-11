@@ -21,31 +21,41 @@ FunctionOperation::FunctionOperation(std::string name,
                                      std::vector<PrimitiveStamp> inputArgs,
                                      std::vector<std::string> inputArgNames,
                                      Types::StampPtr outputArg)
-    : Operation(OperationType::FunctionOp, outputArg), name(std::move(name)), inputArgs(std::move(inputArgs)),
-      inputArgNames(std::move(inputArgNames)) {}
-
-const std::string& FunctionOperation::getName() const { return name; }
-
-BasicBlockPtr FunctionOperation::addFunctionBasicBlock(BasicBlockPtr functionBasicBlock) {
-    this->functionBasicBlock = functionBasicBlock;
-    return this->functionBasicBlock;
+    : Operation(OperationType::FunctionOp, outputArg), name(std::move(name)),
+      inputArgs(std::move(inputArgs)), inputArgNames(std::move(inputArgNames)) {
 }
 
-BasicBlockPtr FunctionOperation::getFunctionBasicBlock() { return functionBasicBlock; }
-const std::vector<PrimitiveStamp>& FunctionOperation::getInputArgs() const { return inputArgs; }
+const std::string &FunctionOperation::getName() const { return name; }
+
+BasicBlockPtr
+FunctionOperation::addFunctionBasicBlock(BasicBlockPtr functionBasicBlock) {
+  this->functionBasicBlock = functionBasicBlock;
+  return this->functionBasicBlock;
+}
+
+BasicBlockPtr FunctionOperation::getFunctionBasicBlock() {
+  return functionBasicBlock;
+}
+const std::vector<PrimitiveStamp> &FunctionOperation::getInputArgs() const {
+  return inputArgs;
+}
 Types::StampPtr FunctionOperation::getOutputArg() const { return getStamp(); }
 
 std::string FunctionOperation::toString() {
-    std::string baseString = name + '(';
-    if (inputArgNames.size() > 0) {
-        baseString += inputArgNames[0];
-        for (int i = 1; i < (int) inputArgNames.size(); ++i) {
-            baseString += ", " + inputArgNames.at(i);
-        }
+  std::string baseString = name + '(';
+  if (inputArgNames.size() > 0) {
+    baseString += inputArgNames[0];
+    for (int i = 1; i < (int)inputArgNames.size(); ++i) {
+      baseString += ", " + inputArgNames.at(i);
     }
-    return baseString + ')';
+  }
+  return baseString + ')';
 }
-bool FunctionOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::FunctionOp; }
-const std::vector<std::string>& FunctionOperation::getInputArgNames() const { return inputArgNames; }
+bool FunctionOperation::classof(const Operation *Op) {
+  return Op->getOperationType() == OperationType::FunctionOp;
+}
+const std::vector<std::string> &FunctionOperation::getInputArgNames() const {
+  return inputArgNames;
+}
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

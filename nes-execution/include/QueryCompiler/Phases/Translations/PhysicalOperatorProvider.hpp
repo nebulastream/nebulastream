@@ -17,22 +17,24 @@
 
 namespace NES::QueryCompilation {
 /**
- * @brief This is a general interface, which provides the functionality to replace a logical
- * operator with corresponding physical operators.
+ * @brief This is a general interface, which provides the functionality to
+ * replace a logical operator with corresponding physical operators.
  */
 class PhysicalOperatorProvider {
-  public:
-    PhysicalOperatorProvider(QueryCompilerOptionsPtr options);
-    /**
-     * @brief Replaces this node with physical operators that express the same semantics.
-     * @param decomposedQueryPlan the current decomposed query plan.
-     * @param operatorNode the operator that should be replaced.
-     */
-    virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) = 0;
+public:
+  PhysicalOperatorProvider(QueryCompilerOptionsPtr options);
+  /**
+   * @brief Replaces this node with physical operators that express the same
+   * semantics.
+   * @param decomposedQueryPlan the current decomposed query plan.
+   * @param operatorNode the operator that should be replaced.
+   */
+  virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan,
+                     LogicalOperatorPtr operatorNode) = 0;
 
-  protected:
-    QueryCompilerOptionsPtr options;
+protected:
+  QueryCompilerOptionsPtr options;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_PHYSICALOPERATORPROVIDER_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_PHYSICALOPERATORPROVIDER_HPP_

@@ -23,33 +23,37 @@
 namespace NES::Configurations {
 
 struct SchemaFieldDetail {
-  public:
-    SchemaFieldDetail(std::string fieldName, std::string fieldType, std::string variableLengthInBytes = "0")
-        : fieldName(std::move(fieldName)), fieldType(std::move(fieldType)),
-          variableLengthInBytes(std::move(variableLengthInBytes)){};
-    std::string fieldName;
-    std::string fieldType;
-    std::string variableLengthInBytes;
+public:
+  SchemaFieldDetail(std::string fieldName, std::string fieldType,
+                    std::string variableLengthInBytes = "0")
+      : fieldName(std::move(fieldName)), fieldType(std::move(fieldType)),
+        variableLengthInBytes(std::move(variableLengthInBytes)){};
+  std::string fieldName;
+  std::string fieldType;
+  std::string variableLengthInBytes;
 };
 
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
 
 /**
- * @brief This class is a wrapper for storing the schema related configurations supplied by user and then later using it to create the actual schema
+ * @brief This class is a wrapper for storing the schema related configurations
+ * supplied by user and then later using it to create the actual schema
  */
 class SchemaType {
-  public:
-    static SchemaTypePtr create(const std::vector<SchemaFieldDetail>& schemaFieldDetails);
+public:
+  static SchemaTypePtr
+  create(const std::vector<SchemaFieldDetail> &schemaFieldDetails);
 
-    [[nodiscard]] const std::vector<SchemaFieldDetail>& getSchemaFieldDetails() const;
+  [[nodiscard]] const std::vector<SchemaFieldDetail> &
+  getSchemaFieldDetails() const;
 
-    bool contains(const std::string& fieldName);
+  bool contains(const std::string &fieldName);
 
-  private:
-    explicit SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails);
-    std::vector<SchemaFieldDetail> schemaFieldDetails;
+private:
+  explicit SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails);
+  std::vector<SchemaFieldDetail> schemaFieldDetails;
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_SCHEMATYPE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_SCHEMATYPE_HPP_

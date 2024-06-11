@@ -31,71 +31,70 @@ using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
 class DeploymentContext {
 
-  public:
-    static DeploymentContextPtr
-    create(const std::string& ipAddress, uint32_t grpcPort, const DecomposedQueryPlanPtr& decomposedQueryPlan);
+public:
+  static DeploymentContextPtr
+  create(const std::string &ipAddress, uint32_t grpcPort,
+         const DecomposedQueryPlanPtr &decomposedQueryPlan);
 
-    DeploymentContext(const std::string& ipAddress,
-                      uint32_t grpcPort,
-                      SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
-                      DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                      WorkerId workerId,
-                      QueryState decomposedQueryState,
-                      const DecomposedQueryPlanPtr& decomposedQueryPlan);
+  DeploymentContext(const std::string &ipAddress, uint32_t grpcPort,
+                    SharedQueryId sharedQueryId,
+                    DecomposedQueryPlanId decomposedQueryPlanId,
+                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                    WorkerId workerId, QueryState decomposedQueryState,
+                    const DecomposedQueryPlanPtr &decomposedQueryPlan);
 
-    /**
-     * @brief Get the id of the shared query plan
-     * @return the shared query id
-     */
-    SharedQueryId getSharedQueryId();
+  /**
+   * @brief Get the id of the shared query plan
+   * @return the shared query id
+   */
+  SharedQueryId getSharedQueryId();
 
-    /**
-     * @brief Get the id of the decomposed query plan
-     * @return decomposed query plan id
-     */
-    DecomposedQueryPlanId getDecomposedQueryPlanId();
+  /**
+   * @brief Get the id of the decomposed query plan
+   * @return decomposed query plan id
+   */
+  DecomposedQueryPlanId getDecomposedQueryPlanId();
 
-    /**
-     * @brief Get the decomposed query plan version
-     * @return get the version
-     */
-    DecomposedQueryPlanVersion getDecomposedQueryPlanVersion() const;
+  /**
+   * @brief Get the decomposed query plan version
+   * @return get the version
+   */
+  DecomposedQueryPlanVersion getDecomposedQueryPlanVersion() const;
 
-    /**
-     * @brief Get the worker id
-     * @return get the worker id
-     */
-    WorkerId getWorkerId() const;
+  /**
+   * @brief Get the worker id
+   * @return get the worker id
+   */
+  WorkerId getWorkerId() const;
 
-    /**
-     * @brief Get the decomposed query plan state
-     * @return query plan state
-     */
-    QueryState getDecomposedQueryPlanState();
+  /**
+   * @brief Get the decomposed query plan state
+   * @return query plan state
+   */
+  QueryState getDecomposedQueryPlanState();
 
-    /**
-     * @brief Get decomposed query plan to deploy
-     * @return decomposed query plan
-     */
-    DecomposedQueryPlanPtr getDecomposedQueryPlan();
+  /**
+   * @brief Get decomposed query plan to deploy
+   * @return decomposed query plan
+   */
+  DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
-    /**
-     * @brief GRPC address of the worker
-     * @return string representing the grpc address of the worker
-     */
-    std::string getGrpcAddress() const;
+  /**
+   * @brief GRPC address of the worker
+   * @return string representing the grpc address of the worker
+   */
+  std::string getGrpcAddress() const;
 
-  private:
-    std::string ipAddress;
-    uint32_t grpcPort;
-    SharedQueryId sharedQueryId;
-    DecomposedQueryPlanId decomposedQueryPlanId;
-    DecomposedQueryPlanVersion decomposedQueryPlanVersion;
-    WorkerId workerId;
-    QueryState decomposedQueryState;
-    DecomposedQueryPlanPtr decomposedQueryPlan;
+private:
+  std::string ipAddress;
+  uint32_t grpcPort;
+  SharedQueryId sharedQueryId;
+  DecomposedQueryPlanId decomposedQueryPlanId;
+  DecomposedQueryPlanVersion decomposedQueryPlanVersion;
+  WorkerId workerId;
+  QueryState decomposedQueryState;
+  DecomposedQueryPlanPtr decomposedQueryPlan;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_

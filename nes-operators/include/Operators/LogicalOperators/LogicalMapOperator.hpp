@@ -21,37 +21,40 @@
 namespace NES {
 
 /**
- * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
+ * @brief Map operator, which contains an field assignment expression that
+ * manipulates a field of the record.
  */
 class LogicalMapOperator : public LogicalUnaryOperator {
-  public:
-    LogicalMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression, OperatorId id);
+public:
+  LogicalMapOperator(FieldAssignmentExpressionNodePtr const &mapExpression,
+                     OperatorId id);
 
-    /**
-    * @brief Returns the expression of this map operator
-    * @return FieldAssignmentExpressionNodePtr
-    */
-    FieldAssignmentExpressionNodePtr getMapExpression() const;
+  /**
+   * @brief Returns the expression of this map operator
+   * @return FieldAssignmentExpressionNodePtr
+   */
+  FieldAssignmentExpressionNodePtr getMapExpression() const;
 
-    /**
-     * @brief Infers the schema of the map operator. We support two cases:
-     * 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
-     * 2. the assignment statement creates a new field with an inferred data type.
-     * @throws throws exception if inference was not possible.
-     * @param typeInferencePhaseContext needed for stamp inferring
-     * @return true if inference was possible
-     */
-    bool inferSchema() override;
-    void inferStringSignature() override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
-    OperatorPtr copy() override;
+  /**
+   * @brief Infers the schema of the map operator. We support two cases:
+   * 1. the assignment statement manipulates a already existing field. In this
+   * case the data type of the field can change.
+   * 2. the assignment statement creates a new field with an inferred data type.
+   * @throws throws exception if inference was not possible.
+   * @param typeInferencePhaseContext needed for stamp inferring
+   * @return true if inference was possible
+   */
+  bool inferSchema() override;
+  void inferStringSignature() override;
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+  std::string toString() const override;
+  OperatorPtr copy() override;
 
-  private:
-    const FieldAssignmentExpressionNodePtr mapExpression;
+private:
+  const FieldAssignmentExpressionNodePtr mapExpression;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALMAPOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALMAPOPERATOR_HPP_

@@ -16,9 +16,11 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-KeyedSlice::KeyedSlice(std::unique_ptr<Nautilus::Interface::ChainedHashMap> hashMap, uint64_t start, uint64_t end)
+KeyedSlice::KeyedSlice(
+    std::unique_ptr<Nautilus::Interface::ChainedHashMap> hashMap,
+    uint64_t start, uint64_t end)
     : start(start), end(end), state(std::move(hashMap)) {}
 
 KeyedSlice::~KeyedSlice() { NES_DEBUG("~KeyedSlice {}-{}", start, end); }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

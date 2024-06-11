@@ -20,34 +20,35 @@ namespace NES {
  * @brief A binary expression is represents expressions with two children.
  */
 class BinaryExpressionNode : public ExpressionNode {
-  public:
-    ~BinaryExpressionNode() noexcept override = default;
+public:
+  ~BinaryExpressionNode() noexcept override = default;
 
-    /**
-     * @brief set the children node of this expression.
-     */
-    void setChildren(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
+  /**
+   * @brief set the children node of this expression.
+   */
+  void setChildren(ExpressionNodePtr const &left,
+                   ExpressionNodePtr const &right);
 
-    /**
-     * @brief gets the left children.
-     */
-    ExpressionNodePtr getLeft() const;
+  /**
+   * @brief gets the left children.
+   */
+  ExpressionNodePtr getLeft() const;
 
-    /**
-     * @brief gets the right children.
-     */
-    ExpressionNodePtr getRight() const;
+  /**
+   * @brief gets the right children.
+   */
+  ExpressionNodePtr getRight() const;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override = 0;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override = 0;
 
-  protected:
-    explicit BinaryExpressionNode(DataTypePtr stamp);
-    explicit BinaryExpressionNode(BinaryExpressionNode* other);
+protected:
+  explicit BinaryExpressionNode(DataTypePtr stamp);
+  explicit BinaryExpressionNode(BinaryExpressionNode *other);
 };
 
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_BINARYEXPRESSIONNODE_HPP_
+} // namespace NES
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_BINARYEXPRESSIONNODE_HPP_

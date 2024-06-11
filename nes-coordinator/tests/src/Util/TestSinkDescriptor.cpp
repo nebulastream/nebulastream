@@ -15,12 +15,13 @@
 
 namespace NES::TestUtils {
 
-TestSinkDescriptor::TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(dataSink)) {}
+TestSinkDescriptor::TestSinkDescriptor(DataSinkPtr dataSink)
+    : sink(std::move(dataSink)) {}
 
 DataSinkPtr TestSinkDescriptor::getSink() { return sink; }
 
 std::string TestSinkDescriptor::toString() const { return std::string(); }
 
-bool TestSinkDescriptor::equal(const SinkDescriptorPtr&) { return false; }
+bool TestSinkDescriptor::equal(const SinkDescriptorPtr &) { return false; }
 
-}// namespace NES::TestUtils
+} // namespace NES::TestUtils

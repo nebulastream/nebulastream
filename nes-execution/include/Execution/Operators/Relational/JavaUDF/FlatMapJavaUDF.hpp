@@ -26,26 +26,27 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This operator evaluates a flat map expression defined as java function on input records.
- * Its state is managed inside a JavaUDFOperatorHandler.
+ * @brief This operator evaluates a flat map expression defined as java function
+ * on input records. Its state is managed inside a JavaUDFOperatorHandler.
  */
 class FlatMapJavaUDF : public AbstractJavaUDFOperator {
-  public:
-    /**
-     * @brief Creates a FlatMapJavaUDF operator
-     * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
-     * @param operatorInputSchema The input schema of the flat map operator.
-     * @param operatorOutputSchema The output schema of the flat map operator.
-     */
-    FlatMapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema);
-    /**
-     * Operator execution function
-     * @param ctx operator context
-     * @param record input record
-     */
-    void execute(ExecutionContext& ctx, Record& record) const override;
+public:
+  /**
+   * @brief Creates a FlatMapJavaUDF operator
+   * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
+   * @param operatorInputSchema The input schema of the flat map operator.
+   * @param operatorOutputSchema The output schema of the flat map operator.
+   */
+  FlatMapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema,
+                 SchemaPtr operatorOutputSchema);
+  /**
+   * Operator execution function
+   * @param ctx operator context
+   * @param record input record
+   */
+  void execute(ExecutionContext &ctx, Record &record) const override;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_FLATMAPJAVAUDF_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_FLATMAPJAVAUDF_HPP_

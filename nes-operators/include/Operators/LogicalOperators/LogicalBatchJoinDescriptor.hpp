@@ -24,84 +24,86 @@ namespace NES::Join::Experimental {
  * @brief Runtime definition of a join operator
  * @experimental
  */
-class LogicalBatchJoinDescriptor {// todo jm its dumb that this is in the windowing dir
+class LogicalBatchJoinDescriptor { // todo jm its dumb that this is in the
+                                   // windowing dir
 
-  public:
-    static LogicalBatchJoinDescriptorPtr create(const FieldAccessExpressionNodePtr& keyTypeBuild,
-                                                const FieldAccessExpressionNodePtr& keyTypeProbe,
-                                                uint64_t numberOfInputEdgesLeft,
-                                                uint64_t numberOfInputEdgesRight);
+public:
+  static LogicalBatchJoinDescriptorPtr
+  create(const FieldAccessExpressionNodePtr &keyTypeBuild,
+         const FieldAccessExpressionNodePtr &keyTypeProbe,
+         uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
 
-    explicit LogicalBatchJoinDescriptor(FieldAccessExpressionNodePtr keyTypeBuild,
-                                        FieldAccessExpressionNodePtr keyTypeProbe,
-                                        uint64_t numberOfInputEdgesLeft,
-                                        uint64_t numberOfInputEdgesRight);
+  explicit LogicalBatchJoinDescriptor(FieldAccessExpressionNodePtr keyTypeBuild,
+                                      FieldAccessExpressionNodePtr keyTypeProbe,
+                                      uint64_t numberOfInputEdgesLeft,
+                                      uint64_t numberOfInputEdgesRight);
 
-    /**
-    * @brief getter/setter for on build join key
-    */
-    FieldAccessExpressionNodePtr getBuildJoinKey() const;
+  /**
+   * @brief getter/setter for on build join key
+   */
+  FieldAccessExpressionNodePtr getBuildJoinKey() const;
 
-    /**
+  /**
    * @brief getter/setter for on probe join key
    */
-    FieldAccessExpressionNodePtr getProbeJoinKey() const;
+  FieldAccessExpressionNodePtr getProbeJoinKey() const;
 
-    /**
+  /**
    * @brief getter build schema
    */
-    SchemaPtr getBuildSchema() const;
+  SchemaPtr getBuildSchema() const;
 
-    /**
+  /**
    * @brief getter probe schema
    */
-    SchemaPtr getProbeSchema() const;
+  SchemaPtr getProbeSchema() const;
 
-    /**
-     * @brief number of input edges. Need to define a clear concept for this
-     * @experimental This is experimental API
-     * @return
-     */
-    uint64_t getNumberOfInputEdgesBuild() const;
+  /**
+   * @brief number of input edges. Need to define a clear concept for this
+   * @experimental This is experimental API
+   * @return
+   */
+  uint64_t getNumberOfInputEdgesBuild() const;
 
-    /**
-     * @brief number of input edges. Need to define a clear concept for this
-     * @return
-     */
-    uint64_t getNumberOfInputEdgesProbe() const;
+  /**
+   * @brief number of input edges. Need to define a clear concept for this
+   * @return
+   */
+  uint64_t getNumberOfInputEdgesProbe() const;
 
-    /**
-     * @brief Update the left and right stream types upon type inference
-     * @param buildSchema
-     * @param probeSchema
-     */
-    void updateInputSchemas(SchemaPtr buildSchema, SchemaPtr probeSchema);
+  /**
+   * @brief Update the left and right stream types upon type inference
+   * @param buildSchema
+   * @param probeSchema
+   */
+  void updateInputSchemas(SchemaPtr buildSchema, SchemaPtr probeSchema);
 
-    /**
-     * @brief Update the output stream type upon type inference
-     * @param outputSchema the type of the output stream
-     */
-    void updateOutputDefinition(SchemaPtr outputSchema);
+  /**
+   * @brief Update the output stream type upon type inference
+   * @param outputSchema the type of the output stream
+   */
+  void updateOutputDefinition(SchemaPtr outputSchema);
 
-    /**
-     * @brief Getter of the output stream schema
-     * @return the output stream schema
-     */
-    [[nodiscard]] SchemaPtr getOutputSchema() const;
+  /**
+   * @brief Getter of the output stream schema
+   * @return the output stream schema
+   */
+  [[nodiscard]] SchemaPtr getOutputSchema() const;
 
-    void setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft);
-    void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
+  void setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft);
+  void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
 
-  private:
-    FieldAccessExpressionNodePtr keyTypeBuild;
-    FieldAccessExpressionNodePtr keyTypeProbe;
-    SchemaPtr buildSchema{nullptr};
-    SchemaPtr probeSchema{nullptr};
-    SchemaPtr outputSchema{nullptr};
-    uint64_t numberOfInputEdgesBuild;
-    uint64_t numberOfInputEdgesProbe;
+private:
+  FieldAccessExpressionNodePtr keyTypeBuild;
+  FieldAccessExpressionNodePtr keyTypeProbe;
+  SchemaPtr buildSchema{nullptr};
+  SchemaPtr probeSchema{nullptr};
+  SchemaPtr outputSchema{nullptr};
+  uint64_t numberOfInputEdgesBuild;
+  uint64_t numberOfInputEdgesProbe;
 };
 
-using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
-}// namespace NES::Join::Experimental
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_
+using LogicalBatchJoinDescriptorPtr =
+    std::shared_ptr<LogicalBatchJoinDescriptor>;
+} // namespace NES::Join::Experimental
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_

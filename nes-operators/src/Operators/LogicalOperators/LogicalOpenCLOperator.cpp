@@ -19,50 +19,65 @@
 
 namespace NES {
 
-LogicalOpenCLOperator::LogicalOpenCLOperator(Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id)
+LogicalOpenCLOperator::LogicalOpenCLOperator(
+    Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id)
     : Operator(id), UDFLogicalOperator(javaUDFDescriptor, id) {}
 
 std::string LogicalOpenCLOperator::toString() const {
-    auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
-    return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." + javaUDFDescriptor->getMethodName()
-        + "; openCLCode : " + openCLCode + " )";
+  auto javaUDFDescriptor =
+      Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(
+          getUDFDescriptor());
+  return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." +
+         javaUDFDescriptor->getMethodName() + "; openCLCode : " + openCLCode +
+         " )";
 }
 
 OperatorPtr LogicalOpenCLOperator::copy() {
-    auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
-    auto copy = std::make_shared<LogicalOpenCLOperator>(javaUDFDescriptor, id);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
-    copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
-        copy->addProperty(key, value);
-    }
-    return copy;
+  auto javaUDFDescriptor =
+      Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(
+          getUDFDescriptor());
+  auto copy = std::make_shared<LogicalOpenCLOperator>(javaUDFDescriptor, id);
+  copy->setInputOriginIds(inputOriginIds);
+  copy->setInputSchema(inputSchema);
+  copy->setOutputSchema(outputSchema);
+  copy->setHashBasedSignature(hashBasedSignature);
+  copy->setZ3Signature(z3Signature);
+  copy->setOperatorState(operatorState);
+  copy->setStatisticId(statisticId);
+  for (const auto &[key, value] : properties) {
+    copy->addProperty(key, value);
+  }
+  return copy;
 }
 
-bool LogicalOpenCLOperator::equal(const NodePtr& other) const {
-    return other->instanceOf<LogicalOpenCLOperator>()
-        && *getUDFDescriptor() == *other->as<LogicalOpenCLOperator>()->getUDFDescriptor();
+bool LogicalOpenCLOperator::equal(const NodePtr &other) const {
+  return other->instanceOf<LogicalOpenCLOperator>() &&
+         *getUDFDescriptor() ==
+             *other->as<LogicalOpenCLOperator>()->getUDFDescriptor();
 }
 
-bool LogicalOpenCLOperator::isIdentical(const NodePtr& other) const {
-    return equal(other) && id == other->as<LogicalOpenCLOperator>()->id;
+bool LogicalOpenCLOperator::isIdentical(const NodePtr &other) const {
+  return equal(other) && id == other->as<LogicalOpenCLOperator>()->id;
 }
 
-const std::string& LogicalOpenCLOperator::getOpenClCode() const { return openCLCode; }
+const std::string &LogicalOpenCLOperator::getOpenClCode() const {
+  return openCLCode;
+}
 
-void LogicalOpenCLOperator::setOpenClCode(const std::string& openClCode) { openCLCode = openClCode; }
+void LogicalOpenCLOperator::setOpenClCode(const std::string &openClCode) {
+  openCLCode = openClCode;
+}
 
 size_t LogicalOpenCLOperator::getDeviceId() const { return deviceId; }
 
-void LogicalOpenCLOperator::setDeviceId(const size_t deviceId) { LogicalOpenCLOperator::deviceId = deviceId; }
-
-Catalogs::UDF::JavaUDFDescriptorPtr LogicalOpenCLOperator::getJavaUDFDescriptor() const {
-    return Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+void LogicalOpenCLOperator::setDeviceId(const size_t deviceId) {
+  LogicalOpenCLOperator::deviceId = deviceId;
 }
 
-}// namespace NES
+Catalogs::UDF::JavaUDFDescriptorPtr
+LogicalOpenCLOperator::getJavaUDFDescriptor() const {
+  return Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(
+      udfDescriptor);
+}
+
+} // namespace NES

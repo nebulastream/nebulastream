@@ -22,32 +22,43 @@
 
 namespace NES::Monitoring {
 
-MonitoringCatalog::MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors)
+MonitoringCatalog::MonitoringCatalog(
+    const std::unordered_map<MetricType, MetricCollectorPtr> &metricCollectors)
     : metricMap(metricCollectors) {
-    NES_DEBUG("MonitoringCatalog: Init with collector map of size {}", metricCollectors.size());
+  NES_DEBUG("MonitoringCatalog: Init with collector map of size {}",
+            metricCollectors.size());
 }
 
-MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors) {
-    return std::make_shared<MonitoringCatalog>(MonitoringCatalog(metricCollectors));
+MonitoringCatalogPtr MonitoringCatalog::create(
+    const std::unordered_map<MetricType, MetricCollectorPtr>
+        &metricCollectors) {
+  return std::make_shared<MonitoringCatalog>(
+      MonitoringCatalog(metricCollectors));
 }
 
 MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
-    NES_DEBUG("MonitoringCatalog: Init default catalog");
+  NES_DEBUG("MonitoringCatalog: Init default catalog");
 
-    std::unordered_map<MetricType, MetricCollectorPtr> metrics(
-        {{MetricType::WrappedCpuMetrics, std::shared_ptr<MetricCollector>(new CpuCollector())},
-         {MetricType::DiskMetric, std::shared_ptr<MetricCollector>(new DiskCollector())},
-         {MetricType::MemoryMetric, std::shared_ptr<MetricCollector>(new MemoryCollector())},
-         {MetricType::WrappedNetworkMetrics, std::shared_ptr<MetricCollector>(new NetworkCollector())}});
-    return create(metrics);
+  std::unordered_map<MetricType, MetricCollectorPtr> metrics(
+      {{MetricType::WrappedCpuMetrics,
+        std::shared_ptr<MetricCollector>(new CpuCollector())},
+       {MetricType::DiskMetric,
+        std::shared_ptr<MetricCollector>(new DiskCollector())},
+       {MetricType::MemoryMetric,
+        std::shared_ptr<MetricCollector>(new MemoryCollector())},
+       {MetricType::WrappedNetworkMetrics,
+        std::shared_ptr<MetricCollector>(new NetworkCollector())}});
+  return create(metrics);
 }
 
-MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) {
-    if (metricMap.contains(metricType)) {
-        return metricMap[metricType];
-    }
-    NES_ERROR("MonitoringCatalog: MetricType {} is not in catalog.", std::string(magic_enum::enum_name(metricType)));
-    return nullptr;
+MetricCollectorPtr
+MonitoringCatalog::getMetricCollector(MetricType metricType) {
+  if (metricMap.contains(metricType)) {
+    return metricMap[metricType];
+  }
+  NES_ERROR("MonitoringCatalog: MetricType {} is not in catalog.",
+            std::string(magic_enum::enum_name(metricType)));
+  return nullptr;
 }
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

@@ -19,17 +19,18 @@
 namespace NES::Configurations {
 
 /**
- * @brief This class provides a general implementation for validation of configurations options.
+ * @brief This class provides a general implementation for validation of
+ * configurations options.
  */
 class ConfigurationValidation {
-  public:
-    virtual ~ConfigurationValidation() = default;
-    /**
-     * @brief Method to check the validity of a configuration option
-     * @param configuration option
-     * @return success if validated
-     */
-    virtual bool isValid(const std::string&) const = 0;
+public:
+  virtual ~ConfigurationValidation() = default;
+  /**
+   * @brief Method to check the validity of a configuration option
+   * @param configuration option
+   * @return success if validated
+   */
+  virtual bool isValid(const std::string &) const = 0;
 };
-}// namespace NES::Configurations
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_CONFIGURATIONVALIDATION_HPP_
+} // namespace NES::Configurations
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_CONFIGURATIONVALIDATION_HPP_

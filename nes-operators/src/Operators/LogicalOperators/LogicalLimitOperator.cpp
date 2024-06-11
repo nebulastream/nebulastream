@@ -23,62 +23,66 @@ LogicalLimitOperator::LogicalLimitOperator(uint64_t limit, OperatorId id)
 
 uint64_t LogicalLimitOperator::getLimit() const { return limit; }
 
-bool LogicalLimitOperator::isIdentical(NodePtr const& rhs) const {
-    return equal(rhs) && rhs->as<LogicalLimitOperator>()->getId() == id;
+bool LogicalLimitOperator::isIdentical(NodePtr const &rhs) const {
+  return equal(rhs) && rhs->as<LogicalLimitOperator>()->getId() == id;
 }
 
-bool LogicalLimitOperator::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalLimitOperator>()) {
-        auto limitOperator = rhs->as<LogicalLimitOperator>();
-        return limit == limitOperator->limit;
-    }
-    return false;
+bool LogicalLimitOperator::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<LogicalLimitOperator>()) {
+    auto limitOperator = rhs->as<LogicalLimitOperator>();
+    return limit == limitOperator->limit;
+  }
+  return false;
 };
 
 std::string LogicalLimitOperator::toString() const {
-    std::stringstream ss;
-    ss << "LIMIT" << id << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "LIMIT" << id << ")";
+  return ss.str();
 }
 
 bool LogicalLimitOperator::inferSchema() {
-    if (!LogicalUnaryOperator::inferSchema()) {
-        return false;
-    }
-    return true;
+  if (!LogicalUnaryOperator::inferSchema()) {
+    return false;
+  }
+  return true;
 }
 
 OperatorPtr LogicalLimitOperator::copy() {
-    auto copy = LogicalOperatorFactory::createLimitOperator(limit, id);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setZ3Signature(z3Signature);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
-        copy->addProperty(key, value);
-    }
-    return copy;
+  auto copy = LogicalOperatorFactory::createLimitOperator(limit, id);
+  copy->setInputOriginIds(inputOriginIds);
+  copy->setInputSchema(inputSchema);
+  copy->setOutputSchema(outputSchema);
+  copy->setZ3Signature(z3Signature);
+  copy->setHashBasedSignature(hashBasedSignature);
+  copy->setStatisticId(statisticId);
+  for (const auto &[key, value] : properties) {
+    copy->addProperty(key, value);
+  }
+  return copy;
 }
 
 void LogicalLimitOperator::inferStringSignature() {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
-    NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", operatorNode->toString());
-    NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
+  OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+  NES_TRACE("LogicalLimitOperator: Inferring String signature for {}",
+            operatorNode->toString());
+  NES_ASSERT(!children.empty(),
+             "LogicalLimitOperator: Limit should have children");
 
-    //Infer query signatures for child operators
-    for (const auto& child : children) {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-        childOperator->inferStringSignature();
-    }
+  // Infer query signatures for child operators
+  for (const auto &child : children) {
+    const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+    childOperator->inferStringSignature();
+  }
 
-    std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
-    signatureStream << "LIMIT(" << limit << ")." << *childSignature.begin()->second.begin();
+  std::stringstream signatureStream;
+  auto childSignature =
+      children[0]->as<LogicalOperator>()->getHashBasedSignature();
+  signatureStream << "LIMIT(" << limit << ")."
+                  << *childSignature.begin()->second.begin();
 
-    //Update the signature
-    auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
+  // Update the signature
+  auto hashCode = hashGenerator(signatureStream.str());
+  hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-}// namespace NES
+} // namespace NES

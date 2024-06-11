@@ -18,17 +18,18 @@
 namespace NES::Benchmark::DataGeneration {
 
 class ClusterMonitoringDataGenerator : public DataGenerator {
-  public:
-    explicit ClusterMonitoringDataGenerator();
+public:
+  explicit ClusterMonitoringDataGenerator();
 
-    std::string getName() override;
-    std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
+  std::string getName() override;
+  std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers,
+                                               size_t bufferSize) override;
 
-    SchemaPtr getSchema() override;
-    Configurations::SchemaTypePtr getSchemaType() override;
-    std::string toString() override;
+  SchemaPtr getSchema() override;
+  Configurations::SchemaTypePtr getSchemaType() override;
+  std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_CLUSTERMONITORINGDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_CLUSTERMONITORINGDATAGENERATOR_HPP_

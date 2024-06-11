@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution {
 class ExecutionContext;
 class RecordBuffer;
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 namespace NES::Runtime::Execution::Operators {
 using namespace Nautilus;
 class ExecutableOperator;
@@ -35,57 +35,63 @@ using OperatorPtr = std::shared_ptr<Operators::Operator>;
  * Each operator can implement setup, open, close, and terminate.
  */
 class Operator {
-  public:
-    /**
-     * @brief Setup initializes this operator for execution.
-     * Operators can implement this class to initialize some state that exists over the whole life time of this operator.
-     * @param executionCtx the RuntimeExecutionContext
-     */
-    virtual void setup(ExecutionContext& executionCtx) const;
+public:
+  /**
+   * @brief Setup initializes this operator for execution.
+   * Operators can implement this class to initialize some state that exists
+   * over the whole life time of this operator.
+   * @param executionCtx the RuntimeExecutionContext
+   */
+  virtual void setup(ExecutionContext &executionCtx) const;
 
-    /**
-     * @brief Open is called for each record buffer and is used to initializes execution local state.
-     * @param recordBuffer
-     */
-    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+  /**
+   * @brief Open is called for each record buffer and is used to initializes
+   * execution local state.
+   * @param recordBuffer
+   */
+  virtual void open(ExecutionContext &executionCtx,
+                    RecordBuffer &recordBuffer) const;
 
-    /**
-     * @brief Close is called for each record buffer and clears execution local state.
-     * @param executionCtx
-     * @param recordBuffer
-     */
-    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+  /**
+   * @brief Close is called for each record buffer and clears execution local
+   * state.
+   * @param executionCtx
+   * @param recordBuffer
+   */
+  virtual void close(ExecutionContext &executionCtx,
+                     RecordBuffer &recordBuffer) const;
 
-    /**
-     * @brief Terminates the operator and clears all operator state.
-     * @param executionCtx the RuntimeExecutionContext
-     */
-    virtual void terminate(ExecutionContext& executionCtx) const;
+  /**
+   * @brief Terminates the operator and clears all operator state.
+   * @param executionCtx the RuntimeExecutionContext
+   */
+  virtual void terminate(ExecutionContext &executionCtx) const;
 
-    /**
-     * @return Returns true if the operator has a child.
-     */
-    bool hasChild() const;
+  /**
+   * @return Returns true if the operator has a child.
+   */
+  bool hasChild() const;
 
-    /**
-     * @brief Sets a child operator to this operator.
-     * @param child
-     */
-    void setChild(ExecuteOperatorPtr child);
+  /**
+   * @brief Sets a child operator to this operator.
+   * @param child
+   */
+  void setChild(ExecuteOperatorPtr child);
 
-    /**
-     * @brief Sets the statisticId of this operator
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     */
-    void setStatisticId(StatisticId statisticId);
+  /**
+   * @brief Sets the statisticId of this operator
+   * @param statisticId: represents the unique identifier of components that we
+   * can track statistics for
+   */
+  void setStatisticId(StatisticId statisticId);
 
-    virtual ~Operator();
+  virtual ~Operator();
 
-  protected:
-    mutable ExecuteOperatorPtr child;
-    StatisticId statisticId;
+protected:
+  mutable ExecuteOperatorPtr child;
+  StatisticId statisticId;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_

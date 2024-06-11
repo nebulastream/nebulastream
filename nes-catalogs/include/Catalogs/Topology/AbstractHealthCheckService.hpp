@@ -40,64 +40,66 @@ namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
-}// namespace Configurations
+} // namespace Configurations
 
 /**
- * @brief: This class is responsible for handling requests related to monitor the alive status of nodes.
+ * @brief: This class is responsible for handling requests related to monitor
+ * the alive status of nodes.
  */
 class AbstractHealthCheckService {
-  public:
-    AbstractHealthCheckService();
+public:
+  AbstractHealthCheckService();
 
-    virtual ~AbstractHealthCheckService(){};
+  virtual ~AbstractHealthCheckService(){};
 
-    /**
-     * Method to start the health checking
-     */
-    virtual void startHealthCheck() = 0;
+  /**
+   * Method to start the health checking
+   */
+  virtual void startHealthCheck() = 0;
 
-    /**
-     * Method to stop the health checking
-     */
-    void stopHealthCheck();
+  /**
+   * Method to stop the health checking
+   */
+  void stopHealthCheck();
 
-    /**
-     * Method to add a node for health checking
-     * @param node pointer to the node in the topology
-     */
-    void addNodeToHealthCheck(WorkerId workerId, const std::string& rpcAddress);
+  /**
+   * Method to add a node for health checking
+   * @param node pointer to the node in the topology
+   */
+  void addNodeToHealthCheck(WorkerId workerId, const std::string &rpcAddress);
 
-    /**
-     * Method to remove a node from the health checking
-     * @param workerId id to the node in the topology
-     */
-    void removeNodeFromHealthCheck(WorkerId workerId);
+  /**
+   * Method to remove a node from the health checking
+   * @param workerId id to the node in the topology
+   */
+  void removeNodeFromHealthCheck(WorkerId workerId);
 
-    /**
-     * Method to return if the health server is still running
-     * @return
-     */
-    bool getRunning();
+  /**
+   * Method to return if the health server is still running
+   * @return
+   */
+  bool getRunning();
 
-    /**
-     * Method to check if a worker is inactive
-     * @param workerId id of the worker
-     * @return true if worker is active otherwise false
-     */
-    bool isWorkerInactive(WorkerId workerId);
+  /**
+   * Method to check if a worker is inactive
+   * @param workerId id of the worker
+   * @return true if worker is active otherwise false
+   */
+  bool isWorkerInactive(WorkerId workerId);
 
-  protected:
-    std::shared_ptr<std::thread> healthCheckingThread;
-    std::atomic<bool> isRunning = false;
-    std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
-    cuckoohash_map<WorkerId, std::string> topologyIdToRPCAddressMap;
-    uint64_t id;
-    std::string healthServiceName;
-    std::condition_variable cv;
-    std::mutex cvMutex;
-    std::set<WorkerId> inactiveWorkers;
+protected:
+  std::shared_ptr<std::thread> healthCheckingThread;
+  std::atomic<bool> isRunning = false;
+  std::shared_ptr<std::promise<bool>> shutdownRPC =
+      std::make_shared<std::promise<bool>>();
+  cuckoohash_map<WorkerId, std::string> topologyIdToRPCAddressMap;
+  uint64_t id;
+  std::string healthServiceName;
+  std::condition_variable cv;
+  std::mutex cvMutex;
+  std::set<WorkerId> inactiveWorkers;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_

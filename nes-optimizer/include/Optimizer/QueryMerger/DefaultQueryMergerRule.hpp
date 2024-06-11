@@ -23,20 +23,21 @@ class DefaultQueryMergerRule;
 using DefaultQueryMergerRulePtr = std::shared_ptr<DefaultQueryMergerRule>;
 
 /**
- * @brief The default query merger rule creates a new Shared Query Plan in the global query plan for each new query
+ * @brief The default query merger rule creates a new Shared Query Plan in the
+ * global query plan for each new query
  */
 class DefaultQueryMergerRule final : public BaseQueryMergerRule {
 
-  public:
-    static DefaultQueryMergerRulePtr create();
+public:
+  static DefaultQueryMergerRulePtr create();
 
-    bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
+  bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-    ~DefaultQueryMergerRule() noexcept override = default;
+  ~DefaultQueryMergerRule() noexcept override = default;
 
-  private:
-    DefaultQueryMergerRule() noexcept = default;
+private:
+  DefaultQueryMergerRule() noexcept = default;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_DEFAULTQUERYMERGERRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_DEFAULTQUERYMERGERRULE_HPP_

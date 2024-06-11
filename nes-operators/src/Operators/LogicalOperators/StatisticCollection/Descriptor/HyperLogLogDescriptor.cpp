@@ -17,41 +17,58 @@
 #include <cmath>
 namespace NES::Statistic {
 
-WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field) {
-    return create(std::move(field), DEFAULT_RELATIVE_ERROR);
+WindowStatisticDescriptorPtr
+HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field) {
+  return create(std::move(field), DEFAULT_RELATIVE_ERROR);
 }
 
-WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field, double error) {
-    // Calculating 1.04/(error * error), then rounding up to the next highest power of 2, and then taking the log2 of that
-    const auto numberOfBits = 1.04 / (error * error);
-    const auto nextHigherPowerOf2 = std::pow(2, std::ceil(log(numberOfBits) / log(2)));
-    const auto bitWidth = (uint64_t) std::ceil(log2(nextHigherPowerOf2));
-    return create(std::move(field), bitWidth);
+WindowStatisticDescriptorPtr
+HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field,
+                              double error) {
+  // Calculating 1.04/(error * error), then rounding up to the next highest
+  // power of 2, and then taking the log2 of that
+  const auto numberOfBits = 1.04 / (error * error);
+  const auto nextHigherPowerOf2 =
+      std::pow(2, std::ceil(log(numberOfBits) / log(2)));
+  const auto bitWidth = (uint64_t)std::ceil(log2(nextHigherPowerOf2));
+  return create(std::move(field), bitWidth);
 }
 
-WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field, uint64_t width) {
-    return std::make_shared<HyperLogLogDescriptor>(HyperLogLogDescriptor(field, width));
+WindowStatisticDescriptorPtr
+HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field,
+                              uint64_t width) {
+  return std::make_shared<HyperLogLogDescriptor>(
+      HyperLogLogDescriptor(field, width));
 }
 
-HyperLogLogDescriptor::HyperLogLogDescriptor(const FieldAccessExpressionNodePtr& field, const uint64_t width)
+HyperLogLogDescriptor::HyperLogLogDescriptor(
+    const FieldAccessExpressionNodePtr &field, const uint64_t width)
     : WindowStatisticDescriptor(field, width) {}
 
-void HyperLogLogDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
-    outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, BasicType::UINT64);
-    outputSchema.addField(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME, BasicType::FLOAT64);
-    outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
+void HyperLogLogDescriptor::addDescriptorFields(
+    Schema &outputSchema, const std::string &qualifierNameWithSeparator) {
+  outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME,
+                        BasicType::UINT64);
+  outputSchema.addField(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME,
+                        BasicType::FLOAT64);
+  outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME,
+                        BasicType::TEXT);
 }
 
 HyperLogLogDescriptor::~HyperLogLogDescriptor() = default;
 
-std::string HyperLogLogDescriptor::toString() { return "HyperLogLogDescriptor"; }
-
-bool HyperLogLogDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
-    if (rhs->instanceOf<HyperLogLogDescriptor>()) {
-        auto rhsHyperLogLogDescriptor = rhs->as<HyperLogLogDescriptor>();
-        return field->equal(rhsHyperLogLogDescriptor->field) && width == rhsHyperLogLogDescriptor->width;
-    }
-    return false;
+std::string HyperLogLogDescriptor::toString() {
+  return "HyperLogLogDescriptor";
 }
 
-}// namespace NES::Statistic
+bool HyperLogLogDescriptor::equal(
+    const WindowStatisticDescriptorPtr &rhs) const {
+  if (rhs->instanceOf<HyperLogLogDescriptor>()) {
+    auto rhsHyperLogLogDescriptor = rhs->as<HyperLogLogDescriptor>();
+    return field->equal(rhsHyperLogLogDescriptor->field) &&
+           width == rhsHyperLogLogDescriptor->width;
+  }
+  return false;
+}
+
+} // namespace NES::Statistic

@@ -20,10 +20,11 @@ class RecordBatch;
 }
 namespace NES::Runtime::Execution::Operators {
 struct RecordBufferWrapper {
-    RecordBufferWrapper(std::shared_ptr<arrow::RecordBatch> batch) : batch(batch) {}
-    std::shared_ptr<arrow::RecordBatch> batch;
+  RecordBufferWrapper(std::shared_ptr<arrow::RecordBatch> batch)
+      : batch(batch) {}
+  std::shared_ptr<arrow::RecordBatch> batch;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_RECORDBUFFERWRAPPER_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_RECORDBUFFERWRAPPER_HPP_

@@ -29,22 +29,24 @@ using TopologyPtr = std::shared_ptr<Topology>;
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
+} // namespace Catalogs::Source
 
 namespace Statistic {
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-}// namespace Statistic
+} // namespace Statistic
 
-}// namespace NES
+} // namespace NES
 
 namespace NES::Optimizer {
 
 class TopologySpecificQueryRewritePhase;
-using TopologySpecificQueryRewritePhasePtr = std::shared_ptr<TopologySpecificQueryRewritePhase>;
+using TopologySpecificQueryRewritePhasePtr =
+    std::shared_ptr<TopologySpecificQueryRewritePhase>;
 
 class LogicalSourceExpansionRule;
-using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
+using LogicalSourceExpansionRulePtr =
+    std::shared_ptr<LogicalSourceExpansionRule>;
 
 class DistributedWindowRule;
 using DistributeWindowRulePtr = std::shared_ptr<DistributedWindowRule>;
@@ -53,38 +55,41 @@ class DistributedMatrixJoinRule;
 using DistributedMatrixJoinRulePtr = std::shared_ptr<DistributedMatrixJoinRule>;
 
 /**
- * @brief This phase is responsible for re-writing the query plan based on the topology information.
+ * @brief This phase is responsible for re-writing the query plan based on the
+ * topology information.
  */
 class TopologySpecificQueryRewritePhase {
-  public:
-    /**
-     * @brief Create the TopologySpecificQueryRewritePhase with a specific optimizer configuration
-     * @param sourceCatalog the catalog of all registered sources
-     * @param optimizerConfiguration configuration of the optimizer
-     * @return TopologySpecificQueryRewritePhasePtr
-     */
-    static TopologySpecificQueryRewritePhasePtr create(TopologyPtr topology,
-                                                       Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                       Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                       Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
+public:
+  /**
+   * @brief Create the TopologySpecificQueryRewritePhase with a specific
+   * optimizer configuration
+   * @param sourceCatalog the catalog of all registered sources
+   * @param optimizerConfiguration configuration of the optimizer
+   * @return TopologySpecificQueryRewritePhasePtr
+   */
+  static TopologySpecificQueryRewritePhasePtr
+  create(TopologyPtr topology, Catalogs::Source::SourceCatalogPtr sourceCatalog,
+         Configurations::OptimizerConfiguration optimizerConfiguration,
+         Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
 
-    /**
-     * @brief Perform query plan re-write for the input query plan
-     * @param queryPlan : the input query plan
-     * @return updated query plan
-     */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+  /**
+   * @brief Perform query plan re-write for the input query plan
+   * @param queryPlan : the input query plan
+   * @return updated query plan
+   */
+  QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-  private:
-    explicit TopologySpecificQueryRewritePhase(TopologyPtr topology,
-                                               const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                               Configurations::OptimizerConfiguration optimizerConfiguration,
-                                               Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
-    TopologyPtr topology;
-    LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
-    Configurations::OptimizerConfiguration optimizerConfiguration;
-    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+private:
+  explicit TopologySpecificQueryRewritePhase(
+      TopologyPtr topology,
+      const Catalogs::Source::SourceCatalogPtr &sourceCatalog,
+      Configurations::OptimizerConfiguration optimizerConfiguration,
+      Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
+  TopologyPtr topology;
+  LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
+  Configurations::OptimizerConfiguration optimizerConfiguration;
+  Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_

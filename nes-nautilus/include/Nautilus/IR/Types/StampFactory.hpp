@@ -19,23 +19,23 @@ namespace NES::Nautilus::IR::Types {
 class Stamp;
 using StampPtr = std::shared_ptr<Stamp>;
 class StampFactory {
-  public:
-    static StampPtr createVoidStamp();
-    static StampPtr createUInt8Stamp();
-    static StampPtr createUInt16Stamp();
-    static StampPtr createUInt32Stamp();
-    static StampPtr createUInt64Stamp();
-    static StampPtr createInt8Stamp();
-    static StampPtr createInt16Stamp();
-    static StampPtr createInt32Stamp();
-    static StampPtr createInt64Stamp();
-    static StampPtr createBooleanStamp();
-    static StampPtr createFloatStamp();
-    static StampPtr createDoubleStamp();
-    static StampPtr createAddressStamp();
-    static StampPtr createArrayStamp(uint64_t size, StampPtr component);
+public:
+  static StampPtr createVoidStamp();
+  static StampPtr createUInt8Stamp();
+  static StampPtr createUInt16Stamp();
+  static StampPtr createUInt32Stamp();
+  static StampPtr createUInt64Stamp();
+  static StampPtr createInt8Stamp();
+  static StampPtr createInt16Stamp();
+  static StampPtr createInt32Stamp();
+  static StampPtr createInt64Stamp();
+  static StampPtr createBooleanStamp();
+  static StampPtr createFloatStamp();
+  static StampPtr createDoubleStamp();
+  static StampPtr createAddressStamp();
+  static StampPtr createArrayStamp(uint64_t size, StampPtr component);
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_

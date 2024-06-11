@@ -23,37 +23,42 @@ enum class ResourceType : uint8_t;
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
-//todo #4433: add template parameter, move execute functions from subclasses here and rename this class accordingly
+// todo #4433: add template parameter, move execute functions from subclasses
+// here and rename this class accordingly
 /**
- * This is the common base class of objects that use a storage handler to lock resources before manipulating them
+ * This is the common base class of objects that use a storage handler to lock
+ * resources before manipulating them
  */
 class StorageResourceLocker {
-  protected:
-    /**
-     * @brief Constructor
-     * @param requiredResources a list of the resources to be locked
-     */
-    explicit StorageResourceLocker(std::vector<ResourceType> requiredResources);
+protected:
+  /**
+   * @brief Constructor
+   * @param requiredResources a list of the resources to be locked
+   */
+  explicit StorageResourceLocker(std::vector<ResourceType> requiredResources);
 
-    /**
-     * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
-     * @param storageHandle: The storage access handle used by the request
-     */
-    virtual void preExecution(const StorageHandlerPtr& storageHandle);
-    /**
-     * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
-     * @param storageHandle: The storage access handle used by the request
-     */
-    virtual void postExecution(const StorageHandlerPtr& storageHandle);
+  /**
+   * @brief Performs steps to be done before execution of the request logic,
+   * e.g. locking the required data structures
+   * @param storageHandle: The storage access handle used by the request
+   */
+  virtual void preExecution(const StorageHandlerPtr &storageHandle);
+  /**
+   * @brief Performs steps to be done after execution of the request logic, e.g.
+   * unlocking the required data structures
+   * @param storageHandle: The storage access handle used by the request
+   */
+  virtual void postExecution(const StorageHandlerPtr &storageHandle);
 
-    /**
-     * @brief get an id that identifies this object to lock resources for exclusive use by this object
-     * @return the id
-     */
-    virtual RequestId getResourceLockingId() = 0;
+  /**
+   * @brief get an id that identifies this object to lock resources for
+   * exclusive use by this object
+   * @return the id
+   */
+  virtual RequestId getResourceLockingId() = 0;
 
-  private:
-    std::vector<ResourceType> requiredResources;
+private:
+  std::vector<ResourceType> requiredResources;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_

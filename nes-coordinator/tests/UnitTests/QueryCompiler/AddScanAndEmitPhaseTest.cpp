@@ -43,13 +43,14 @@ using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
 class AddScanAndEmitPhaseTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("AddScanAndEmitPhase.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddScanAndEmitPhase test class.");
-    }
+public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("AddScanAndEmitPhase.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup AddScanAndEmitPhase test class.");
+  }
 
-    StatisticId statisticId = 1;
+  StatisticId statisticId = 1;
 };
 
 /**
@@ -62,23 +63,25 @@ class AddScanAndEmitPhaseTest : public Testing::BaseUnitTest {
  *
  */
 TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
-    auto pipelineQueryPlan = QueryCompilation::PipelineQueryPlan::create();
-    auto operatorPlan = QueryCompilation::OperatorPipeline::createSourcePipeline();
+  auto pipelineQueryPlan = QueryCompilation::PipelineQueryPlan::create();
+  auto operatorPlan =
+      QueryCompilation::OperatorPipeline::createSourcePipeline();
 
-    auto source = QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(statisticId,
-                                                                                      SchemaPtr(),
-                                                                                      SchemaPtr(),
-                                                                                      SourceDescriptorPtr());
-    operatorPlan->prependOperator(source);
-    pipelineQueryPlan->addPipeline(operatorPlan);
+  auto source =
+      QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(
+          statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
+  operatorPlan->prependOperator(source);
+  pipelineQueryPlan->addPipeline(operatorPlan);
 
-    auto phase = QueryCompilation::AddScanAndEmitPhase::create();
-    pipelineQueryPlan = phase->apply(pipelineQueryPlan);
+  auto phase = QueryCompilation::AddScanAndEmitPhase::create();
+  pipelineQueryPlan = phase->apply(pipelineQueryPlan);
 
-    auto pipelineRootOperator = pipelineQueryPlan->getSourcePipelines()[0]->getDecomposedQueryPlan()->getRootOperators()[0];
+  auto pipelineRootOperator = pipelineQueryPlan->getSourcePipelines()[0]
+                                  ->getDecomposedQueryPlan()
+                                  ->getRootOperators()[0];
 
-    ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSourceOperator);
-    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
+  ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSourceOperator);
+  ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
 }
 
 /**
@@ -91,20 +94,19 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
  *
  */
 TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
-    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    auto sink = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(statisticId,
-                                                                                  SchemaPtr(),
-                                                                                  SchemaPtr(),
-                                                                                  SinkDescriptorPtr());
-    operatorPlan->prependOperator(sink);
+  auto operatorPlan = QueryCompilation::OperatorPipeline::create();
+  auto sink = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(
+      statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+  operatorPlan->prependOperator(sink);
 
-    auto phase = QueryCompilation::AddScanAndEmitPhase::create();
-    operatorPlan = phase->process(operatorPlan);
+  auto phase = QueryCompilation::AddScanAndEmitPhase::create();
+  operatorPlan = phase->process(operatorPlan);
 
-    auto pipelineRootOperator = operatorPlan->getDecomposedQueryPlan()->getRootOperators()[0];
+  auto pipelineRootOperator =
+      operatorPlan->getDecomposedQueryPlan()->getRootOperators()[0];
 
-    ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSinkOperator);
-    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
+  ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSinkOperator);
+  ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
 }
 
 /**
@@ -118,18 +120,20 @@ TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
  */
 TEST_F(AddScanAndEmitPhaseTest, pipelineFilterQuery) {
 
-    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    operatorPlan->prependOperator(PhysicalFilterOperator::create(statisticId, SchemaPtr(), SchemaPtr(), ExpressionNodePtr()));
+  auto operatorPlan = QueryCompilation::OperatorPipeline::create();
+  operatorPlan->prependOperator(PhysicalFilterOperator::create(
+      statisticId, SchemaPtr(), SchemaPtr(), ExpressionNodePtr()));
 
-    auto phase = QueryCompilation::AddScanAndEmitPhase::create();
-    operatorPlan = phase->process(operatorPlan);
+  auto phase = QueryCompilation::AddScanAndEmitPhase::create();
+  operatorPlan = phase->process(operatorPlan);
 
-    auto pipelineRootOperator = operatorPlan->getDecomposedQueryPlan()->getRootOperators()[0];
+  auto pipelineRootOperator =
+      operatorPlan->getDecomposedQueryPlan()->getRootOperators()[0];
 
-    ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalScanOperator);
-    auto filter = pipelineRootOperator->getChildren()[0];
-    ASSERT_INSTANCE_OF(filter, PhysicalFilterOperator);
-    auto emit = filter->getChildren()[0];
-    ASSERT_INSTANCE_OF(emit, PhysicalEmitOperator);
+  ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalScanOperator);
+  auto filter = pipelineRootOperator->getChildren()[0];
+  ASSERT_INSTANCE_OF(filter, PhysicalFilterOperator);
+  auto emit = filter->getChildren()[0];
+  ASSERT_INSTANCE_OF(emit, PhysicalEmitOperator);
 }
-}// namespace NES
+} // namespace NES

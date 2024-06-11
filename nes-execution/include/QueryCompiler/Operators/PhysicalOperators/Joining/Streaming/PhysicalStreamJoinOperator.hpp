@@ -21,37 +21,42 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
- * @brief Abstract class that represents a physical stream join build or probe operator
+ * @brief Abstract class that represents a physical stream join build or probe
+ * operator
  */
 class PhysicalStreamJoinOperator {
-  public:
-    /**
-     * @brief Constructor for a PhysicalStreamJoinOperator
-     * @param joinOperatorHandler
-     * @param joinStrategy
-     * @param windowingStrategy
-     */
-    PhysicalStreamJoinOperator(const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& joinOperatorHandler,
-                               QueryCompilation::StreamJoinStrategy joinStrategy,
-                               QueryCompilation::WindowingStrategy windowingStrategy);
+public:
+  /**
+   * @brief Constructor for a PhysicalStreamJoinOperator
+   * @param joinOperatorHandler
+   * @param joinStrategy
+   * @param windowingStrategy
+   */
+  PhysicalStreamJoinOperator(
+      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
+          &joinOperatorHandler,
+      QueryCompilation::StreamJoinStrategy joinStrategy,
+      QueryCompilation::WindowingStrategy windowingStrategy);
 
-    /**
-     * @brief Getter for the join strategy
-     * @return StreamJoinStrategy
-     */
-    StreamJoinStrategy getJoinStrategy() const;
+  /**
+   * @brief Getter for the join strategy
+   * @return StreamJoinStrategy
+   */
+  StreamJoinStrategy getJoinStrategy() const;
 
-    /**
-     * @brief Getter for the window strategy
-     * @return WindowingStrategy
-     */
-    WindowingStrategy getWindowingStrategy() const;
+  /**
+   * @brief Getter for the window strategy
+   * @return WindowingStrategy
+   */
+  WindowingStrategy getWindowingStrategy() const;
 
-    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& getJoinOperatorHandler() const;
+  const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr &
+  getJoinOperatorHandler() const;
 
-  protected:
-    Runtime::Execution::Operators::StreamJoinOperator streamJoinOperator;
-    Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr joinOperatorHandler;
+protected:
+  Runtime::Execution::Operators::StreamJoinOperator streamJoinOperator;
+  Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
+      joinOperatorHandler;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_
+} // namespace NES::QueryCompilation::PhysicalOperators
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_

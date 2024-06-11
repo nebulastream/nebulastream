@@ -15,19 +15,24 @@
 #include <sstream>
 namespace NES {
 std::string TopologyLinkInformation::toString() const {
-    std::stringstream ss;
-    ss << upstreamTopologyNode << "->" << downstreamTopologyNode;
-    return ss.str();
+  std::stringstream ss;
+  ss << upstreamTopologyNode << "->" << downstreamTopologyNode;
+  return ss.str();
 }
 
-TopologyLinkInformation::TopologyLinkInformation(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode)
-    : upstreamTopologyNode(upstreamTopologyNode), downstreamTopologyNode(downstreamTopologyNode) {}
-TopologyLinkInformation::TopologyLinkInformation(WorkerId::Underlying upstreamTopologyNode,
-                                                 WorkerId::Underlying downstreamTopologyNode)
-    : upstreamTopologyNode(WorkerId(upstreamTopologyNode)), downstreamTopologyNode(WorkerId(downstreamTopologyNode)) {}
+TopologyLinkInformation::TopologyLinkInformation(
+    WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode)
+    : upstreamTopologyNode(upstreamTopologyNode),
+      downstreamTopologyNode(downstreamTopologyNode) {}
+TopologyLinkInformation::TopologyLinkInformation(
+    WorkerId::Underlying upstreamTopologyNode,
+    WorkerId::Underlying downstreamTopologyNode)
+    : upstreamTopologyNode(WorkerId(upstreamTopologyNode)),
+      downstreamTopologyNode(WorkerId(downstreamTopologyNode)) {}
 
-bool TopologyLinkInformation::operator==(const TopologyLinkInformation& other) const {
-    return this->downstreamTopologyNode == other.downstreamTopologyNode
-        && this->upstreamTopologyNode == other.upstreamTopologyNode;
+bool TopologyLinkInformation::operator==(
+    const TopologyLinkInformation &other) const {
+  return this->downstreamTopologyNode == other.downstreamTopologyNode &&
+         this->upstreamTopologyNode == other.upstreamTopologyNode;
 }
-}// namespace NES
+} // namespace NES

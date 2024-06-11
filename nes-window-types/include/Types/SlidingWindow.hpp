@@ -21,33 +21,35 @@ namespace NES::Windowing {
  * A SlidingWindow assigns records to multiple overlapping windows.
  */
 class SlidingWindow : public TimeBasedWindowType {
-  public:
-    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+public:
+  static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic,
+                          TimeMeasure size, TimeMeasure slide);
 
-    /**
-    * @brief return size of the window
-    * @return size of the window
-    */
-    TimeMeasure getSize() override;
+  /**
+   * @brief return size of the window
+   * @return size of the window
+   */
+  TimeMeasure getSize() override;
 
-    /**
-    * @brief return size of the slide
-    * @return size of the slide
-    */
-    TimeMeasure getSlide() override;
+  /**
+   * @brief return size of the slide
+   * @return size of the slide
+   */
+  TimeMeasure getSlide() override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    bool equal(WindowTypePtr otherWindowType) override;
+  bool equal(WindowTypePtr otherWindowType) override;
 
-    uint64_t hash() const override;
+  uint64_t hash() const override;
 
-  private:
-    SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
-    const TimeMeasure size;
-    const TimeMeasure slide;
+private:
+  SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size,
+                TimeMeasure slide);
+  const TimeMeasure size;
+  const TimeMeasure slide;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_

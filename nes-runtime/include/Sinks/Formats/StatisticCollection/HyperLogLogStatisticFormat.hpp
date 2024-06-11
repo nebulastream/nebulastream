@@ -20,30 +20,35 @@
 namespace NES::Statistic {
 
 /**
-* @brief StatisticSinkFormat that creates/builds HyperLogLog-Sketches from a tuple buffer
+ * @brief StatisticSinkFormat that creates/builds HyperLogLog-Sketches from a
+ * tuple buffer
  */
 class HyperLogLogStatisticFormat : public AbstractStatisticFormat {
-  public:
-    static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                     std::function<std::string(const std::string&)> postProcessingData,
-                                     std::function<std::string(const std::string&)> preProcessingData);
-    std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) override;
-    [[nodiscard]] std::string toString() const override;
-    std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                                                                 Runtime::BufferManager& bufferManager) override;
-    ~HyperLogLogStatisticFormat() override;
+public:
+  static StatisticFormatPtr
+  create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+         std::function<std::string(const std::string &)> postProcessingData,
+         std::function<std::string(const std::string &)> preProcessingData);
+  std::vector<std::pair<StatisticHash, StatisticPtr>>
+  readStatisticsFromBuffer(Runtime::TupleBuffer &buffer) override;
+  [[nodiscard]] std::string toString() const override;
+  std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(
+      const std::vector<HashStatisticPair> &statisticsPlusHashes,
+      Runtime::BufferManager &bufferManager) override;
+  ~HyperLogLogStatisticFormat() override;
 
-  private:
-    HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
-                               Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                               std::function<std::string(const std::string&)> postProcessingData,
-                               std::function<std::string(const std::string&)> preProcessingData);
+private:
+  HyperLogLogStatisticFormat(
+      const std::string &qualifierNameWithSeparator,
+      Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+      std::function<std::string(const std::string &)> postProcessingData,
+      std::function<std::string(const std::string &)> preProcessingData);
 
-    const std::string widthFieldName;
-    const std::string estimateFieldName;
-    const std::string hyperLogLogDataFieldName;
+  const std::string widthFieldName;
+  const std::string estimateFieldName;
+  const std::string hyperLogLogDataFieldName;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_HYPERLOGLOGSTATISTICFORMAT_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_HYPERLOGLOGSTATISTICFORMAT_HPP_

@@ -19,36 +19,37 @@
 
 namespace NES::Nautilus::IR::Operations {
 class CompareOperation : public Operation {
-  public:
-    enum Comparator {
-        EQ = 0,
-        NE = 1,
-        LT = 2,
-        LE = 3,
-        GT = 4,
-        GE = 5,
-    };
-    CompareOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
-    ~CompareOperation() override = default;
+public:
+  enum Comparator {
+    EQ = 0,
+    NE = 1,
+    LT = 2,
+    LE = 3,
+    GT = 4,
+    GE = 5,
+  };
+  CompareOperation(OperationIdentifier identifier, OperationPtr leftInput,
+                   OperationPtr rightInput, Comparator comparator);
+  ~CompareOperation() override = default;
 
-    OperationPtr getLeftInput();
-    OperationPtr getRightInput();
-    Comparator getComparator();
-    bool isLessThan();
-    bool isLessEqual();
-    bool isGreaterThan();
-    bool isGreaterEqual();
-    bool isEquals();
-    bool isLessThanOrGreaterThan();
-    bool isLess();
-    bool isGreater();
+  OperationPtr getLeftInput();
+  OperationPtr getRightInput();
+  Comparator getComparator();
+  bool isLessThan();
+  bool isLessEqual();
+  bool isGreaterThan();
+  bool isGreaterEqual();
+  bool isEquals();
+  bool isLessThanOrGreaterThan();
+  bool isLess();
+  bool isGreater();
 
-    std::string toString() override;
+  std::string toString() override;
 
-  private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
-    Comparator comparator;
+private:
+  OperationWPtr leftInput;
+  OperationWPtr rightInput;
+  Comparator comparator;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_COMPAREOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_COMPAREOPERATION_HPP_

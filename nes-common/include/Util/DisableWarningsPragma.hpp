@@ -15,7 +15,8 @@
 #define NES_COMMON_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
 
 /**
- * @brief The following pragma disables particular compiler warnings for a particular code fragment.
+ * @brief The following pragma disables particular compiler warnings for a
+ particular code fragment.
  * For example:
  *
  *  DISABLE_WARNING_PUSH
@@ -29,7 +30,8 @@
  *  Disables unreferenced function warning.
  *
  *  The macro works for GCC, CLANG, and Visual Studio.
- *  Details here: https://www.fluentcpp.com/2019/08/30/how-to-disable-a-warning-in-cpp
+ *  Details here:
+ https://www.fluentcpp.com/2019/08/30/how-to-disable-a-warning-in-cpp
  *
  */
 // clang-format off
@@ -61,4 +63,4 @@
 
 #endif
 // clang-format on
-#endif// NES_COMMON_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_

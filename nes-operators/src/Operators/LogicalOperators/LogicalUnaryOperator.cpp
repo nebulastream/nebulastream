@@ -17,52 +17,58 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), UnaryOperator(id) {}
+LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id)
+    : Operator(id), LogicalOperator(id), UnaryOperator(id) {}
 
 bool LogicalUnaryOperator::inferSchema() {
 
-    // We assume that all children operators have the same output schema otherwise this plan is not valid
-    for (const auto& child : children) {
-        if (!child->as<LogicalOperator>()->inferSchema()) {
-            return false;
-        }
+  // We assume that all children operators have the same output schema otherwise
+  // this plan is not valid
+  for (const auto &child : children) {
+    if (!child->as<LogicalOperator>()->inferSchema()) {
+      return false;
     }
+  }
 
-    if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("UnaryOperator: this operator should have at least one child operator");
+  if (children.empty()) {
+    NES_THROW_RUNTIME_ERROR(
+        "UnaryOperator: this operator should have at least one child operator");
+  }
+
+  auto childSchema = children[0]->as<Operator>()->getOutputSchema();
+  for (const auto &child : children) {
+    if (!child->as<Operator>()->getOutputSchema()->equals(childSchema)) {
+      NES_ERROR("UnaryOperator: infer schema failed. The schema has to be the "
+                "same across all child operators."
+                "this op schema= {} child schema={}",
+                child->as<Operator>()->getOutputSchema()->toString(),
+                childSchema->toString());
+      return false;
     }
+  }
 
-    auto childSchema = children[0]->as<Operator>()->getOutputSchema();
-    for (const auto& child : children) {
-        if (!child->as<Operator>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("UnaryOperator: infer schema failed. The schema has to be the same across all child operators."
-                      "this op schema= {} child schema={}",
-                      child->as<Operator>()->getOutputSchema()->toString(),
-                      childSchema->toString());
-            return false;
-        }
-    }
-
-    //Reset and reinitialize the input and output schemas
-    inputSchema->clear();
-    inputSchema = inputSchema->copyFields(childSchema);
-    inputSchema->setLayoutType(childSchema->getLayoutType());
-    outputSchema->clear();
-    outputSchema = outputSchema->copyFields(childSchema);
-    outputSchema->setLayoutType(childSchema->getLayoutType());
-    return true;
+  // Reset and reinitialize the input and output schemas
+  inputSchema->clear();
+  inputSchema = inputSchema->copyFields(childSchema);
+  inputSchema->setLayoutType(childSchema->getLayoutType());
+  outputSchema->clear();
+  outputSchema = outputSchema->copyFields(childSchema);
+  outputSchema->setLayoutType(childSchema->getLayoutType());
+  return true;
 }
 
 void LogicalUnaryOperator::inferInputOrigins() {
-    // in the default case we collect all input origins from the children/upstream operators
-    std::vector<OriginId> inputOriginIds;
-    for (auto child : this->children) {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-        childOperator->inferInputOrigins();
-        auto childInputOriginIds = childOperator->getOutputOriginIds();
-        inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
-    }
-    this->inputOriginIds = inputOriginIds;
+  // in the default case we collect all input origins from the children/upstream
+  // operators
+  std::vector<OriginId> inputOriginIds;
+  for (auto child : this->children) {
+    const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+    childOperator->inferInputOrigins();
+    auto childInputOriginIds = childOperator->getOutputOriginIds();
+    inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(),
+                          childInputOriginIds.end());
+  }
+  this->inputOriginIds = inputOriginIds;
 }
 
-}// namespace NES
+} // namespace NES

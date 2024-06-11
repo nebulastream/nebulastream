@@ -21,21 +21,23 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This exception is thrown when an error occurs during window processing.
+ * @brief This exception is thrown when an error occurs during window
+ * processing.
  */
 class WindowProcessingException : public Exceptions::RuntimeException {
-  public:
-    /**
-     * @brief Construct a WindowProcessingException exception from a message.
-     * @param message The exception message.
-     * @param location The location of this message.
-     */
-    explicit WindowProcessingException(const std::string& message,
-                                       const std::source_location location = std::source_location::current());
+public:
+  /**
+   * @brief Construct a WindowProcessingException exception from a message.
+   * @param message The exception message.
+   * @param location The location of this message.
+   */
+  explicit WindowProcessingException(
+      const std::string &message,
+      const std::source_location location = std::source_location::current());
 
-  private:
-    const std::string message;
+private:
+  const std::string message;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGEXCEPTION_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGEXCEPTION_HPP_

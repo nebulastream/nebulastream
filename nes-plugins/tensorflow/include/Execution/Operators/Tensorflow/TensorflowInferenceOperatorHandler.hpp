@@ -22,36 +22,42 @@
 namespace NES::Runtime::Execution::Operators {
 
 class TensorflowInferenceOperatorHandler;
-using TensorflowInferenceOperatorHandlerPtr = std::shared_ptr<TensorflowInferenceOperatorHandler>;
+using TensorflowInferenceOperatorHandlerPtr =
+    std::shared_ptr<TensorflowInferenceOperatorHandler>;
 
 /**
  * @brief Operator handler for inferModel.
  */
 class TensorflowInferenceOperatorHandler : public OperatorHandler {
-  public:
-    explicit TensorflowInferenceOperatorHandler(const std::string& model);
+public:
+  explicit TensorflowInferenceOperatorHandler(const std::string &model);
 
-    static TensorflowInferenceOperatorHandlerPtr create(const std::string& model);
+  static TensorflowInferenceOperatorHandlerPtr create(const std::string &model);
 
-    ~TensorflowInferenceOperatorHandler() override = default;
+  ~TensorflowInferenceOperatorHandler() override = default;
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
+  void start(
+      Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+      uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+  void stop(Runtime::QueryTerminationType queryTerminationType,
+            Runtime::Execution::PipelineExecutionContextPtr
+                pipelineExecutionContext) override;
 
-    void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
+  void reconfigure(Runtime::ReconfigurationMessage &task,
+                   Runtime::WorkerContext &context) override;
 
-    void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
+  void
+  postReconfigurationCallback(Runtime::ReconfigurationMessage &task) override;
 
-    const std::string& getModel() const;
+  const std::string &getModel() const;
 
-    const TensorflowAdapterPtr& getTensorflowAdapter() const;
+  const TensorflowAdapterPtr &getTensorflowAdapter() const;
 
-  private:
-    std::string model;
-    TensorflowAdapterPtr tfAdapter;
+private:
+  std::string model;
+  TensorflowAdapterPtr tfAdapter;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWINFERENCEOPERATORHANDLER_HPP_
+#endif // NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWINFERENCEOPERATORHANDLER_HPP_

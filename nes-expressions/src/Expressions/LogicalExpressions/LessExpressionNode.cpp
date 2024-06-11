@@ -16,30 +16,34 @@
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
-LessExpressionNode::LessExpressionNode(LessExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+LessExpressionNode::LessExpressionNode(LessExpressionNode *other)
+    : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
-    auto lessThen = std::make_shared<LessExpressionNode>();
-    lessThen->setChildren(left, right);
-    return lessThen;
+ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr &left,
+                                             const ExpressionNodePtr &right) {
+  auto lessThen = std::make_shared<LessExpressionNode>();
+  lessThen->setChildren(left, right);
+  return lessThen;
 }
 
-bool LessExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LessExpressionNode>()) {
-        auto other = rhs->as<LessExpressionNode>();
-        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
-    }
-    return false;
+bool LessExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<LessExpressionNode>()) {
+    auto other = rhs->as<LessExpressionNode>();
+    return this->getLeft()->equal(other->getLeft()) &&
+           this->getRight()->equal(other->getRight());
+  }
+  return false;
 }
 
 std::string LessExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << children[0]->toString() << "<" << children[1]->toString();
-    return ss.str();
+  std::stringstream ss;
+  ss << children[0]->toString() << "<" << children[1]->toString();
+  return ss.str();
 }
 
 ExpressionNodePtr LessExpressionNode::copy() {
-    return LessExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+  return LessExpressionNode::create(children[0]->as<ExpressionNode>()->copy(),
+                                    children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

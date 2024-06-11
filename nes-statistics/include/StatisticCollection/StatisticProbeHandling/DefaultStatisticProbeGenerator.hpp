@@ -20,31 +20,34 @@
 namespace NES::Statistic {
 
 /**
- * @brief Default implementation of the AbstractStatisticProbeHandler. It simply returns a vector of StatisticProbeRequestGRPC
- * that will then ask EVERY worker node for the statistics.
+ * @brief Default implementation of the AbstractStatisticProbeHandler. It simply
+ * returns a vector of StatisticProbeRequestGRPC that will then ask EVERY worker
+ * node for the statistics.
  */
 class DefaultStatisticProbeGenerator : public AbstractStatisticProbeGenerator {
-  public:
-    /**
-     * @brief Creates a new instance of the DefaultStatisticProbeHandler
-     * @return AbstractStatisticProbeHandlerPtr
-     */
-    static StatisticProbeGeneratorPtr create();
+public:
+  /**
+   * @brief Creates a new instance of the DefaultStatisticProbeHandler
+   * @return AbstractStatisticProbeHandlerPtr
+   */
+  static StatisticProbeGeneratorPtr create();
 
-    /**
-     * @brief Creates one probe request per worker node, regardless if the statistic cache contains the requested statistic already
-     * @param registry
-     * @param cache
-     * @param probeRequest
-     * @param allWorkerIds
-     * @return Vector of StatisticProbeRequestGRPC
-     */
-    std::vector<StatisticProbeRequestGRPC> generateProbeRequests(const StatisticRegistry&,
-                                                                 const AbstractStatisticCache&,
-                                                                 const StatisticProbeRequest& probeRequest,
-                                                                 const std::vector<WorkerId>& allWorkerIds) override;
+  /**
+   * @brief Creates one probe request per worker node, regardless if the
+   * statistic cache contains the requested statistic already
+   * @param registry
+   * @param cache
+   * @param probeRequest
+   * @param allWorkerIds
+   * @return Vector of StatisticProbeRequestGRPC
+   */
+  std::vector<StatisticProbeRequestGRPC>
+  generateProbeRequests(const StatisticRegistry &,
+                        const AbstractStatisticCache &,
+                        const StatisticProbeRequest &probeRequest,
+                        const std::vector<WorkerId> &allWorkerIds) override;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_DEFAULTSTATISTICPROBEGENERATOR_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_DEFAULTSTATISTICPROBEGENERATOR_HPP_

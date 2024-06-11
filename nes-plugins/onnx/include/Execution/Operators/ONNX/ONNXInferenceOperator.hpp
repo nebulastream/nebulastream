@@ -20,42 +20,49 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief this is the nautilus implementation of infer model operator. This operator allows for inferring  machine learning model
- * over incoming data stream, using the ONNX Runtime.
- * @details Creation of the Operator is handled by the ONNXOperatorLoweringPlugin, which when given a PhysicalModelInferenceOperator
- * with a ONNX model (determined by the .onnx suffix) will create a Nautilus ONNXInferenceOperator
+ * @brief this is the nautilus implementation of infer model operator. This
+ * operator allows for inferring  machine learning model over incoming data
+ * stream, using the ONNX Runtime.
+ * @details Creation of the Operator is handled by the
+ * ONNXOperatorLoweringPlugin, which when given a PhysicalModelInferenceOperator
+ * with a ONNX model (determined by the .onnx suffix) will create a Nautilus
+ * ONNXInferenceOperator
  */
 class ONNXInferenceOperator : public ExecutableOperator {
 
-  public:
-    /**
-     * Nautilus Operator for Model Inference using the ONNX Runtime.
-     * @param inferModelHandlerIndex Index of the ONNXInferenceOperatorHandler
-     * @param inputFieldNames vector of strings for the input field names
-     * @param outputFieldNames  vector of string for the output field names
-     */
-    ONNXInferenceOperator(const uint32_t inferModelHandlerIndex,
-                          const std::vector<std::string>& inputFieldNames,
-                          const std::vector<std::string>& outputFieldNames)
-        : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
+public:
+  /**
+   * Nautilus Operator for Model Inference using the ONNX Runtime.
+   * @param inferModelHandlerIndex Index of the ONNXInferenceOperatorHandler
+   * @param inputFieldNames vector of strings for the input field names
+   * @param outputFieldNames  vector of string for the output field names
+   */
+  ONNXInferenceOperator(const uint32_t inferModelHandlerIndex,
+                        const std::vector<std::string> &inputFieldNames,
+                        const std::vector<std::string> &outputFieldNames)
+      : inferModelHandlerIndex(inferModelHandlerIndex),
+        inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
 
-    /**
-     * @brief Copies tuples into the input tensor, runs the model, copies data out of the output tensor
-     * @details The operator behaves differently based on the output records schema:
-     *  - IFF the output schema contains a single TEXT field, named "data", the entire output tensor will be encoded as base64
-     *    and written to the output records "data" field.
-     *  - Otherwise data is read value by value from the output tensor and written to the output records, which might drop some
-     *    trailing values.
-     * @param ctx Nautilus Execution Context
-     * @param record Record
-     */
-    void execute(ExecutionContext& ctx, Record& record) const override;
+  /**
+   * @brief Copies tuples into the input tensor, runs the model, copies data out
+   * of the output tensor
+   * @details The operator behaves differently based on the output records
+   * schema:
+   *  - IFF the output schema contains a single TEXT field, named "data", the
+   * entire output tensor will be encoded as base64 and written to the output
+   * records "data" field.
+   *  - Otherwise data is read value by value from the output tensor and written
+   * to the output records, which might drop some trailing values.
+   * @param ctx Nautilus Execution Context
+   * @param record Record
+   */
+  void execute(ExecutionContext &ctx, Record &record) const override;
 
-  private:
-    const uint32_t inferModelHandlerIndex;
-    const std::vector<std::string> inputFieldNames;
-    const std::vector<std::string> outputFieldNames;
+private:
+  const uint32_t inferModelHandlerIndex;
+  const std::vector<std::string> inputFieldNames;
+  const std::vector<std::string> outputFieldNames;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATOR_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATOR_HPP_

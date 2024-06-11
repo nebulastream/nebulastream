@@ -22,26 +22,26 @@ namespace NES::Nautilus {
  * @brief Float data type.
  */
 class Float : public TraceableType {
-  public:
-    using RawType = float;
-    static const inline auto type = TypeIdentifier::create<Float>();
-    Float(float value);
-    Nautilus::IR::Types::StampPtr getType() const override;
-    std::shared_ptr<Any> copy() override;
-    std::shared_ptr<Float> add(const Float& otherValue) const;
-    std::shared_ptr<Float> sub(const Float& otherValue) const;
-    std::shared_ptr<Float> mul(const Float& otherValue) const;
-    std::shared_ptr<Float> div(const Float& otherValue) const;
-    std::shared_ptr<Boolean> equals(const Float& otherValue) const;
-    std::shared_ptr<Boolean> lessThan(const Float& otherValue) const;
-    std::shared_ptr<Boolean> greaterThan(const Float& otherValue) const;
-    float getValue() const;
-    std::string toString() override;
+public:
+  using RawType = float;
+  static const inline auto type = TypeIdentifier::create<Float>();
+  Float(float value);
+  Nautilus::IR::Types::StampPtr getType() const override;
+  std::shared_ptr<Any> copy() override;
+  std::shared_ptr<Float> add(const Float &otherValue) const;
+  std::shared_ptr<Float> sub(const Float &otherValue) const;
+  std::shared_ptr<Float> mul(const Float &otherValue) const;
+  std::shared_ptr<Float> div(const Float &otherValue) const;
+  std::shared_ptr<Boolean> equals(const Float &otherValue) const;
+  std::shared_ptr<Boolean> lessThan(const Float &otherValue) const;
+  std::shared_ptr<Boolean> greaterThan(const Float &otherValue) const;
+  float getValue() const;
+  std::string toString() override;
 
-  private:
-    const float value;
+private:
+  const float value;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_FLOAT_FLOAT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_FLOAT_FLOAT_HPP_

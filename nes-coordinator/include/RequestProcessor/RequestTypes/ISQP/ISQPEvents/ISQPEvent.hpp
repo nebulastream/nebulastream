@@ -25,8 +25,8 @@ class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
 
 /**
-* @brief base class of ISQP response type
-*/
+ * @brief base class of ISQP response type
+ */
 struct ISQPResponse {};
 using ISQPResponsePtr = std::shared_ptr<ISQPResponse>;
 
@@ -35,54 +35,54 @@ using ISQPResponsePtr = std::shared_ptr<ISQPResponse>;
  */
 class ISQPEvent : public std::enable_shared_from_this<ISQPEvent> {
 
-  public:
-    /**
-     * @brief Ctor
-     * @param priority: priority of the external event
-     */
-    explicit ISQPEvent(uint8_t priority);
+public:
+  /**
+   * @brief Ctor
+   * @param priority: priority of the external event
+   */
+  explicit ISQPEvent(uint8_t priority);
 
-    /**
-     * @brief Get the response after applying the event
-     */
-    std::future<ISQPResponsePtr> getResponse();
+  /**
+   * @brief Get the response after applying the event
+   */
+  std::future<ISQPResponsePtr> getResponse();
 
-    std::promise<ISQPResponsePtr> response;
+  std::promise<ISQPResponsePtr> response;
 
-    /**
-     * @brief Checks if the current event is of type ISQPExternalEvent
-     * @tparam ISQPExternalEvent
-     * @return bool true if node is of specific event type
-     */
-    template<class ISQPEventType>
-    bool instanceOf() {
-        if (dynamic_cast<ISQPEventType*>(this)) {
-            return true;
-        }
-        return false;
-    };
+  /**
+   * @brief Checks if the current event is of type ISQPExternalEvent
+   * @tparam ISQPExternalEvent
+   * @return bool true if node is of specific event type
+   */
+  template <class ISQPEventType> bool instanceOf() {
+    if (dynamic_cast<ISQPEventType *>(this)) {
+      return true;
+    }
+    return false;
+  };
 
-    /**
-     * @brief Typecast into shared object of type ISQPExternalEvent
-     * @tparam ISQPExternalEvent
-     * @return shared object of specific event type
-     */
-    template<class ISQPEventType>
-    std::shared_ptr<ISQPEventType> as() {
-        if (instanceOf<ISQPEventType>()) {
-            return std::dynamic_pointer_cast<ISQPEventType>(this->shared_from_this());
-        }
-        std::string className = typeid(ISQPEventType).name();
-        throw std::logic_error("We performed an invalid cast of ISQPExternalEvent to type " + className);
-    };
+  /**
+   * @brief Typecast into shared object of type ISQPExternalEvent
+   * @tparam ISQPExternalEvent
+   * @return shared object of specific event type
+   */
+  template <class ISQPEventType> std::shared_ptr<ISQPEventType> as() {
+    if (instanceOf<ISQPEventType>()) {
+      return std::dynamic_pointer_cast<ISQPEventType>(this->shared_from_this());
+    }
+    std::string className = typeid(ISQPEventType).name();
+    throw std::logic_error(
+        "We performed an invalid cast of ISQPExternalEvent to type " +
+        className);
+  };
 
-    uint8_t getPriority() const;
+  uint8_t getPriority() const;
 
-    virtual ~ISQPEvent() = default;
+  virtual ~ISQPEvent() = default;
 
-  private:
-    uint8_t priority;
+private:
+  uint8_t priority;
 };
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENT_HPP_

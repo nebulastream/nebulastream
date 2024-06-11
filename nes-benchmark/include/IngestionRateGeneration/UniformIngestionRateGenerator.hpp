@@ -19,27 +19,30 @@
 
 namespace NES::Benchmark::IngestionRateGeneration {
 /**
- * @brief This class inherits from IngestionRateGenerator and allows for the generation of uniform distributed ingestion rates.
+ * @brief This class inherits from IngestionRateGenerator and allows for the
+ * generation of uniform distributed ingestion rates.
  */
 class UniformIngestionRateGenerator : public IngestionRateGenerator {
-  public:
-    /**
-     * @brief constructor for a uniform ingestion rate generator
-     * @param ingestionRateInBuffers
-     * @param ingestionRateCount
-     */
-    explicit UniformIngestionRateGenerator(uint64_t ingestionRateInBuffers, uint64_t ingestionRateCount);
+public:
+  /**
+   * @brief constructor for a uniform ingestion rate generator
+   * @param ingestionRateInBuffers
+   * @param ingestionRateCount
+   */
+  explicit UniformIngestionRateGenerator(uint64_t ingestionRateInBuffers,
+                                         uint64_t ingestionRateCount);
 
-    /**
-     * @brief creates a vector of length ingestionRateCount and fills it with value ingestionRateInBuffers
-     * @return predefinedIngestionRates
-     */
-    std::vector<std::uint64_t> generateIngestionRates() override;
+  /**
+   * @brief creates a vector of length ingestionRateCount and fills it with
+   * value ingestionRateInBuffers
+   * @return predefinedIngestionRates
+   */
+  std::vector<std::uint64_t> generateIngestionRates() override;
 
-  private:
-    uint64_t ingestionRateInBuffers;
-    std::vector<uint64_t> predefinedIngestionRates;
+private:
+  uint64_t ingestionRateInBuffers;
+  std::vector<uint64_t> predefinedIngestionRates;
 };
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_UNIFORMINGESTIONRATEGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_UNIFORMINGESTIONRATEGENERATOR_HPP_

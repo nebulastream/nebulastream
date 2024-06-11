@@ -21,64 +21,61 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class combines the HJOperatorHandler and StreamJoinOperatorHandlerSlicing, so that a HJBuildBucketing operator can
- * use the implemented methods from both parent classes.
+ * @brief This class combines the HJOperatorHandler and
+ * StreamJoinOperatorHandlerSlicing, so that a HJBuildBucketing operator can use
+ * the implemented methods from both parent classes.
  */
-class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOperatorHandlerSlicing {
-  public:
-    /**
-     * @brief Constructor for a HJOperatorHandlerSlicing
-     * @param inputOrigins
-     * @param outputOriginId
-     * @param windowSize
-     * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
-     * @param joinStrategy
-     * @param totalSizeForDataStructures
-     * @param preAllocPageSizeCnt
-     * @param pageSize
-     * @param numPartitions
-     */
-    HJOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
-                             const OriginId outputOriginId,
-                             const uint64_t windowSize,
-                             const uint64_t windowSlide,
-                             const SchemaPtr& leftSchema,
-                             const SchemaPtr& rightSchema,
-                             const QueryCompilation::StreamJoinStrategy joinStrategy,
-                             const uint64_t totalSizeForDataStructures,
-                             const uint64_t preAllocPageSizeCnt,
-                             const uint64_t pageSize,
-                             const uint64_t numPartitions);
+class HJOperatorHandlerSlicing : public HJOperatorHandler,
+                                 public StreamJoinOperatorHandlerSlicing {
+public:
+  /**
+   * @brief Constructor for a HJOperatorHandlerSlicing
+   * @param inputOrigins
+   * @param outputOriginId
+   * @param windowSize
+   * @param windowSlide
+   * @param sizeOfRecordLeft
+   * @param sizeOfRecordRight
+   * @param joinStrategy
+   * @param totalSizeForDataStructures
+   * @param preAllocPageSizeCnt
+   * @param pageSize
+   * @param numPartitions
+   */
+  HJOperatorHandlerSlicing(
+      const std::vector<OriginId> &inputOrigins, const OriginId outputOriginId,
+      const uint64_t windowSize, const uint64_t windowSlide,
+      const SchemaPtr &leftSchema, const SchemaPtr &rightSchema,
+      const QueryCompilation::StreamJoinStrategy joinStrategy,
+      const uint64_t totalSizeForDataStructures,
+      const uint64_t preAllocPageSizeCnt, const uint64_t pageSize,
+      const uint64_t numPartitions);
 
-    /**
-     * @brief Creates a HJOperatorHandler
-     * @param inputOrigins
-     * @param outputOriginId
-     * @param windowSize
-     * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
-     * @param joinStrategy
-     * @param totalSizeForDataStructures
-     * @param preAllocPageSizeCnt
-     * @param pageSize
-     * @param numPartitions
-     * @return HJOperatorHandlerPtr
-     */
-    static HJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
-                                       const OriginId outputOriginId,
-                                       const uint64_t windowSize,
-                                       const uint64_t windowSlide,
-                                       const SchemaPtr& leftSchema,
-                                       const SchemaPtr& rightSchema,
-                                       const QueryCompilation::StreamJoinStrategy joinStrategy,
-                                       const uint64_t totalSizeForDataStructures,
-                                       const uint64_t preAllocPageSizeCnt,
-                                       const uint64_t pageSize,
-                                       const uint64_t numPartitions);
+  /**
+   * @brief Creates a HJOperatorHandler
+   * @param inputOrigins
+   * @param outputOriginId
+   * @param windowSize
+   * @param windowSlide
+   * @param sizeOfRecordLeft
+   * @param sizeOfRecordRight
+   * @param joinStrategy
+   * @param totalSizeForDataStructures
+   * @param preAllocPageSizeCnt
+   * @param pageSize
+   * @param numPartitions
+   * @return HJOperatorHandlerPtr
+   */
+  static HJOperatorHandlerPtr
+  create(const std::vector<OriginId> &inputOrigins,
+         const OriginId outputOriginId, const uint64_t windowSize,
+         const uint64_t windowSlide, const SchemaPtr &leftSchema,
+         const SchemaPtr &rightSchema,
+         const QueryCompilation::StreamJoinStrategy joinStrategy,
+         const uint64_t totalSizeForDataStructures,
+         const uint64_t preAllocPageSizeCnt, const uint64_t pageSize,
+         const uint64_t numPartitions);
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJOPERATORHANDLERSLICING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJOPERATORHANDLERSLICING_HPP_

@@ -24,24 +24,24 @@ namespace NES {
  */
 class PlanIdGenerator {
 
-  public:
-    /**
-     * @brief Returns the next free global query Id
-     * @return global query id
-     */
-    static SharedQueryId getNextSharedQueryId();
+public:
+  /**
+   * @brief Returns the next free global query Id
+   * @return global query id
+   */
+  static SharedQueryId getNextSharedQueryId();
 
-    /**
-     * @brief Returns the next free query Sub Plan Id
-     * @return query sub plan id
-     */
-    static DecomposedQueryPlanId getNextDecomposedQueryPlanId();
+  /**
+   * @brief Returns the next free query Sub Plan Id
+   * @return query sub plan id
+   */
+  static DecomposedQueryPlanId getNextDecomposedQueryPlanId();
 
-    /**
-     * @brief Returns the next free Query id
-     * @return query id
-     */
-    static QueryId getNextQueryId();
+  /**
+   * @brief Returns the next free Query id
+   * @return query id
+   */
+  static QueryId getNextQueryId();
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_

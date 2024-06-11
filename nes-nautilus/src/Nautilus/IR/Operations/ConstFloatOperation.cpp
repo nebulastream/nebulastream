@@ -20,12 +20,19 @@
 
 namespace NES::Nautilus::IR::Operations {
 
-ConstFloatOperation::ConstFloatOperation(OperationIdentifier identifier, double constantValue, Types::StampPtr stamp)
-    : Operation(OperationType::ConstFloatOp, identifier, stamp), constantValue(constantValue) {}
+ConstFloatOperation::ConstFloatOperation(OperationIdentifier identifier,
+                                         double constantValue,
+                                         Types::StampPtr stamp)
+    : Operation(OperationType::ConstFloatOp, identifier, stamp),
+      constantValue(constantValue) {}
 
 double ConstFloatOperation::getValue() { return constantValue; }
-bool ConstFloatOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }
+bool ConstFloatOperation::classof(const Operation *Op) {
+  return Op->getOperationType() == OperationType::ConstIntOp;
+}
 
-std::string ConstFloatOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstFloatOperation::toString() {
+  return identifier + " = " + std::to_string(constantValue);
+}
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

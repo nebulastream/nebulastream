@@ -16,8 +16,9 @@
 
 namespace NES::Client {
 
-ClientException::ClientException(const std::string& message) : RuntimeException(message, NES::collectStacktrace()) {
-    NES_ERROR("{}", message);
+ClientException::ClientException(const std::string &message)
+    : RuntimeException(message, NES::collectStacktrace()) {
+  NES_ERROR("{}", message);
 }
 
-}// namespace NES::Client
+} // namespace NES::Client

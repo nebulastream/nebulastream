@@ -26,14 +26,14 @@ namespace NES::Exceptions {
  * @brief Exception is raised when the operator is in an Invalid status
  */
 class InvalidOperatorStateException : public RequestExecutionException {
-  public:
-    explicit InvalidOperatorStateException(OperatorId operatorId,
-                                           const std::vector<OperatorState>& expectedState,
-                                           OperatorState actualState);
-    [[nodiscard]] const char* what() const noexcept override;
+public:
+  explicit InvalidOperatorStateException(
+      OperatorId operatorId, const std::vector<OperatorState> &expectedState,
+      OperatorState actualState);
+  [[nodiscard]] const char *what() const noexcept override;
 
-  private:
-    std::string message;
+private:
+  std::string message;
 };
-}// namespace NES::Exceptions
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_

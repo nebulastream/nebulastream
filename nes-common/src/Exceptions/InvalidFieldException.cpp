@@ -15,5 +15,6 @@
 #include <Exceptions/InvalidFieldException.hpp>
 
 namespace NES {
-InvalidFieldException::InvalidFieldException(const std::string& msg) : std::runtime_error(msg) {}
-}// namespace NES
+InvalidFieldException::InvalidFieldException(const std::string &msg)
+    : std::runtime_error(msg) {}
+} // namespace NES

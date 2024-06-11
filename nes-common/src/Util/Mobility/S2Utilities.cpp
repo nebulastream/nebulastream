@@ -19,13 +19,16 @@
 
 namespace NES::Spatial::Util {
 
-S2Point S2Utilities::geoLocationToS2Point(DataTypes::Experimental::GeoLocation location) {
-    return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
+S2Point S2Utilities::geoLocationToS2Point(
+    DataTypes::Experimental::GeoLocation location) {
+  return {
+      S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
 }
 
-NES::Spatial::DataTypes::Experimental::GeoLocation S2Utilities::s2pointToLocation(S2Point point) {
-    S2LatLng latLng(point);
-    return {latLng.lat().degrees(), latLng.lng().degrees()};
+NES::Spatial::DataTypes::Experimental::GeoLocation
+S2Utilities::s2pointToLocation(S2Point point) {
+  S2LatLng latLng(point);
+  return {latLng.lat().degrees(), latLng.lng().degrees()};
 }
-}// namespace NES::Spatial::Util
+} // namespace NES::Spatial::Util
 #endif

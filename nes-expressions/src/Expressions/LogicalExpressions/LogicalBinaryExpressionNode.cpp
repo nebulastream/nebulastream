@@ -18,17 +18,20 @@
 
 namespace NES {
 LogicalBinaryExpressionNode::LogicalBinaryExpressionNode()
-    : BinaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
+    : BinaryExpressionNode(DataTypeFactory::createBoolean()),
+      LogicalExpressionNode() {}
 
-LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other)
+LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(
+    LogicalBinaryExpressionNode *other)
     : BinaryExpressionNode(other), LogicalExpressionNode() {}
 
-bool LogicalBinaryExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalBinaryExpressionNode>()) {
-        auto other = rhs->as<LogicalBinaryExpressionNode>();
-        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
-    }
-    return false;
+bool LogicalBinaryExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<LogicalBinaryExpressionNode>()) {
+    auto other = rhs->as<LogicalBinaryExpressionNode>();
+    return this->getLeft()->equal(other->getLeft()) &&
+           this->getRight()->equal(other->getRight());
+  }
+  return false;
 }
 
-}// namespace NES
+} // namespace NES

@@ -21,12 +21,14 @@
 
 namespace NES::Exceptions {
 /**
- * @brief This Exception is thrown if a logical operator node is found to have invalid format or has a logical error.
+ * @brief This Exception is thrown if a logical operator node is found to have
+ * invalid format or has a logical error.
  */
-class InvalidLogicalOperatorException : public Exceptions::RequestExecutionException {
-  public:
-    explicit InvalidLogicalOperatorException(const std::string& message);
+class InvalidLogicalOperatorException
+    : public Exceptions::RequestExecutionException {
+public:
+  explicit InvalidLogicalOperatorException(const std::string &message);
 };
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDLOGICALOPERATOREXCEPTION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDLOGICALOPERATOREXCEPTION_HPP_

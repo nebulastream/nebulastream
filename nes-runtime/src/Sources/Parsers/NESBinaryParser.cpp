@@ -31,25 +31,30 @@ NESBinaryParser::NESBinaryParser() : Parser({}) {}
 /**
  * NES Binary Format is only implemented for schemas without any varsized fields
  */
-static void assertValidMemoryLayout(const Runtime::MemoryLayouts::MemoryLayout& layout) {
-    for (const auto& type : layout.getPhysicalTypes()) {
-        NES_ASSERT(!type->type->isText(), "NES Binary Parser is not implemented for Text Data");
-    }
+static void
+assertValidMemoryLayout(const Runtime::MemoryLayouts::MemoryLayout &layout) {
+  for (const auto &type : layout.getPhysicalTypes()) {
+    NES_ASSERT(!type->type->isText(),
+               "NES Binary Parser is not implemented for Text Data");
+  }
 }
 #endif
 
-bool NESBinaryParser::writeInputTupleToTupleBuffer(std::string_view binaryBuffer,
-                                                   uint64_t,
-                                                   Runtime::MemoryLayouts::TestTupleBuffer& dynamicBuffer,
-                                                   const SchemaPtr& schema,
-                                                   const Runtime::BufferManagerPtr&) {
+bool NESBinaryParser::writeInputTupleToTupleBuffer(
+    std::string_view binaryBuffer, uint64_t,
+    Runtime::MemoryLayouts::TestTupleBuffer &dynamicBuffer,
+    const SchemaPtr &schema, const Runtime::BufferManagerPtr &) {
 #ifdef NES_DEBUG_MODE
-    NES_ASSERT(binaryBuffer.size() % schema->getSchemaSizeInBytes() == 0, "Buffer size does not match expected buffer size");
-    NES_ASSERT(binaryBuffer.size() <= dynamicBuffer.getBuffer().getBufferSize(), "Buffer size missmatch");
-    assertValidMemoryLayout(*dynamicBuffer.getMemoryLayout());
+  NES_ASSERT(binaryBuffer.size() % schema->getSchemaSizeInBytes() == 0,
+             "Buffer size does not match expected buffer size");
+  NES_ASSERT(binaryBuffer.size() <= dynamicBuffer.getBuffer().getBufferSize(),
+             "Buffer size missmatch");
+  assertValidMemoryLayout(*dynamicBuffer.getMemoryLayout());
 #endif
-    std::memcpy(dynamicBuffer.getBuffer().getBuffer(), binaryBuffer.data(), binaryBuffer.size());
-    dynamicBuffer.getBuffer().setNumberOfTuples(binaryBuffer.size() / schema->getSchemaSizeInBytes());
-    return true;
+  std::memcpy(dynamicBuffer.getBuffer().getBuffer(), binaryBuffer.data(),
+              binaryBuffer.size());
+  dynamicBuffer.getBuffer().setNumberOfTuples(binaryBuffer.size() /
+                                              schema->getSchemaSizeInBytes());
+  return true;
 }
-}// namespace NES
+} // namespace NES

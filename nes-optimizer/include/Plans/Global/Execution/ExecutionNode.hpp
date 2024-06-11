@@ -35,110 +35,124 @@ namespace Optimizer {
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
-using PlacedDecomposedQueryPlans = std::map<SharedQueryId, std::map<DecomposedQueryPlanId, DecomposedQueryPlanPtr>>;
+using PlacedDecomposedQueryPlans =
+    std::map<SharedQueryId,
+             std::map<DecomposedQueryPlanId, DecomposedQueryPlanPtr>>;
 
 /**
- * This class contains information about the physical node, a map of decomposed query plans that need to be executed
- * on the physical node, and some additional configurations.
+ * This class contains information about the physical node, a map of decomposed
+ * query plans that need to be executed on the physical node, and some
+ * additional configurations.
  */
 class ExecutionNode : public Node {
 
-  public:
-    static ExecutionNodePtr create(WorkerId WorkerId);
+public:
+  static ExecutionNodePtr create(WorkerId WorkerId);
 
-    explicit ExecutionNode(WorkerId WorkerId);
+  explicit ExecutionNode(WorkerId WorkerId);
 
-    virtual ~ExecutionNode() = default;
+  virtual ~ExecutionNode() = default;
 
-    /**
-     * Get execution node id
-     * @return id of the execution node
-     */
-    WorkerId getId() const;
+  /**
+   * Get execution node id
+   * @return id of the execution node
+   */
+  WorkerId getId() const;
 
-    /**
-     * Register a new decomposed query plan
-     * @param decomposedQueryPlan : the decomposed query plan
-     * @return true if operation is successful
-     */
-    bool registerDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
+  /**
+   * Register a new decomposed query plan
+   * @param decomposedQueryPlan : the decomposed query plan
+   * @return true if operation is successful
+   */
+  bool registerDecomposedQueryPlan(
+      const DecomposedQueryPlanPtr &decomposedQueryPlan);
 
-    /**
-     * Update decomposed query plans for the given shared query plan id
-     * @note: We store a copy of the supplied decomposed query plans
-     * @param sharedQueryId : the shared query id
-     * @param decomposedQueryPlans : the decomposed query plans
-     */
-    void updateDecomposedQueryPlans(SharedQueryId sharedQueryId, std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans);
+  /**
+   * Update decomposed query plans for the given shared query plan id
+   * @note: We store a copy of the supplied decomposed query plans
+   * @param sharedQueryId : the shared query id
+   * @param decomposedQueryPlans : the decomposed query plans
+   */
+  void updateDecomposedQueryPlans(
+      SharedQueryId sharedQueryId,
+      std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans);
 
-    /**
-     * @brief Get decomposed query plans belonging to the given shared query Id
-     * @param sharedQueryId: the shared query id
-     * @return vector containing placed decomposed query plans
-     */
-    std::vector<DecomposedQueryPlanPtr> getAllDecomposedQueryPlans(SharedQueryId sharedQueryId) const;
+  /**
+   * @brief Get decomposed query plans belonging to the given shared query Id
+   * @param sharedQueryId: the shared query id
+   * @return vector containing placed decomposed query plans
+   */
+  std::vector<DecomposedQueryPlanPtr>
+  getAllDecomposedQueryPlans(SharedQueryId sharedQueryId) const;
 
-    /**
-      * @brief Get the decomposed query plan belonging to a given shared query id and has the provided decomposed query plan id
-      * @param sharedQueryId: shared query id
-      * @param decomposedQueryPlanId: decomposed query plan id
-      * @return the decomposed query plan
-      */
-    DecomposedQueryPlanPtr getDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) const;
+  /**
+   * @brief Get the decomposed query plan belonging to a given shared query id
+   * and has the provided decomposed query plan id
+   * @param sharedQueryId: shared query id
+   * @param decomposedQueryPlanId: decomposed query plan id
+   * @return the decomposed query plan
+   */
+  DecomposedQueryPlanPtr
+  getDecomposedQueryPlan(SharedQueryId sharedQueryId,
+                         DecomposedQueryPlanId decomposedQueryPlanId) const;
 
-    /**
-     * Remove existing decomposed query plans belonging to a shared query plan
-     * @param sharedQueryId: the shared query plans
-     * @return true if operation succeeds
-     */
-    bool removeDecomposedQueryPlans(SharedQueryId sharedQueryId);
+  /**
+   * Remove existing decomposed query plans belonging to a shared query plan
+   * @param sharedQueryId: the shared query plans
+   * @return true if operation succeeds
+   */
+  bool removeDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
-    /**
-     * Check if there are registered decomposed query plans hosted on the execution node
-     * @param sharedQueryId: the shared query plans
-     * @return true if operation succeeds
-     */
-    bool hasRegisteredDecomposedQueryPlans(SharedQueryId sharedQueryId);
+  /**
+   * Check if there are registered decomposed query plans hosted on the
+   * execution node
+   * @param sharedQueryId: the shared query plans
+   * @return true if operation succeeds
+   */
+  bool hasRegisteredDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
-    /**
-     * Remove a decomposed query plan belonging to a shared query plan with given decomposed query plan id
-     * @param sharedQueryId the id of the shared query
-     * @param decomposedQueryPlanId the id of the decomposed query plan to remove
-     * @return true if operation succeeds
-     */
-    bool removeDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+  /**
+   * Remove a decomposed query plan belonging to a shared query plan with given
+   * decomposed query plan id
+   * @param sharedQueryId the id of the shared query
+   * @param decomposedQueryPlanId the id of the decomposed query plan to remove
+   * @return true if operation succeeds
+   */
+  bool removeDecomposedQueryPlan(SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId);
 
-    /**
-     * Get the map of all decomposed query plans
-     * @return map of shared query plan id to decomposed query plans
-     */
-    PlacedDecomposedQueryPlans getAllQuerySubPlans();
+  /**
+   * Get the map of all decomposed query plans
+   * @return map of shared query plan id to decomposed query plans
+   */
+  PlacedDecomposedQueryPlans getAllQuerySubPlans();
 
-    /**
-     * @brief Get identifier of all shared query plans placed on the execution node
-     * @return set of shared query plan ids
-     */
-    std::set<SharedQueryId> getPlacedSharedQueryPlanIds() const;
+  /**
+   * @brief Get identifier of all shared query plans placed on the execution
+   * node
+   * @return set of shared query plan ids
+   */
+  std::set<SharedQueryId> getPlacedSharedQueryPlanIds() const;
 
-    bool equal(NodePtr const& rhs) const override;
+  bool equal(NodePtr const &rhs) const override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    std::vector<std::string> toMultilineString() override;
+  std::vector<std::string> toMultilineString() override;
 
-  private:
-    /**
-     * Execution node id.
-     * Same as physical node id.
-     */
-    const WorkerId workerId;
+private:
+  /**
+   * Execution node id.
+   * Same as physical node id.
+   */
+  const WorkerId workerId;
 
-    /**
-     * a map of placed decomposed query plans
-     */
-    PlacedDecomposedQueryPlans mapOfSharedQueryToDecomposedQueryPlans;
+  /**
+   * a map of placed decomposed query plans
+   */
+  PlacedDecomposedQueryPlans mapOfSharedQueryToDecomposedQueryPlans;
 };
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_

@@ -21,16 +21,20 @@ namespace NES {
  * Defines the ln function and registers it to the FunctionRegistry.
  */
 class LnFunction : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
-            NES_THROW_RUNTIME_ERROR("LogExpressions can only be evaluated on numeric values.");
-        }
-        // Output values can become highly negative for inputs close to +0. Set Double as output stamp.
-        return DataTypeFactory::createDouble();
+public:
+  [[nodiscard]] DataTypePtr
+  inferUnary(const DataTypePtr &input) const override {
+    if (!input->isNumeric()) {
+      NES_THROW_RUNTIME_ERROR(
+          "LogExpressions can only be evaluated on numeric values.");
     }
+    // Output values can become highly negative for inputs close to +0. Set
+    // Double as output stamp.
+    return DataTypeFactory::createDouble();
+  }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<LnFunction> logFunction("ln");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<LnFunction>
+    logFunction("ln");
 
-}// namespace NES
+} // namespace NES

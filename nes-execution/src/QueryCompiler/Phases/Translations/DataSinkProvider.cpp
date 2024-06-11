@@ -18,26 +18,26 @@
 
 namespace NES::QueryCompilation {
 
-DataSinkProviderPtr DataSinkProvider::create() { return std::make_shared<DataSinkProvider>(); }
-
-DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
-                                    SinkDescriptorPtr sinkDescriptor,
-                                    SchemaPtr schema,
-                                    Runtime::NodeEnginePtr nodeEngine,
-                                    const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                    size_t numOfProducers) {
-    for (const auto& plugin : SinkPluginRegistry::getPlugins()) {
-        auto dataSink = plugin->createDataSink(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers);
-        if (dataSink.has_value()) {
-            return dataSink.value();
-        }
-    }
-    return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
-                                                        std::move(sinkDescriptor),
-                                                        std::move(schema),
-                                                        std::move(nodeEngine),
-                                                        querySubPlan,
-                                                        numOfProducers);
+DataSinkProviderPtr DataSinkProvider::create() {
+  return std::make_shared<DataSinkProvider>();
 }
 
-}// namespace NES::QueryCompilation
+DataSinkPtr DataSinkProvider::lower(
+    OperatorId sinkId, SinkDescriptorPtr sinkDescriptor, SchemaPtr schema,
+    Runtime::NodeEnginePtr nodeEngine,
+    const QueryCompilation::PipelineQueryPlanPtr &querySubPlan,
+    size_t numOfProducers) {
+  for (const auto &plugin : SinkPluginRegistry::getPlugins()) {
+    auto dataSink =
+        plugin->createDataSink(sinkId, sinkDescriptor, schema, nodeEngine,
+                               querySubPlan, numOfProducers);
+    if (dataSink.has_value()) {
+      return dataSink.value();
+    }
+  }
+  return ConvertLogicalToPhysicalSink::createDataSink(
+      sinkId, std::move(sinkDescriptor), std::move(schema),
+      std::move(nodeEngine), querySubPlan, numOfProducers);
+}
+
+} // namespace NES::QueryCompilation

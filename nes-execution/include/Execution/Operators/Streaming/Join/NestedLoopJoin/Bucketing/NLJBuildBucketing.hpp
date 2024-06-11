@@ -20,40 +20,39 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class implements how the nested loop join inserts records into the multiple buckets by implementing insertRecordForWindow.
- * It iterates over all windows, it has to fill and then inserts the record into each PagedVector of each window.
+ * @brief This class implements how the nested loop join inserts records into
+ * the multiple buckets by implementing insertRecordForWindow. It iterates over
+ * all windows, it has to fill and then inserts the record into each PagedVector
+ * of each window.
  */
 class NLJBuildBucketing : public StreamJoinBuildBucketing {
-  public:
-    /**
-     * @brief Constructor for a NLJBuildBucketing
-     * @param operatorHandlerIndex
-     * @param schema
-     * @param joinFieldName
-     * @param joinBuildSide
-     * @param entrySize
-     * @param timeFunction
-     * @param joinStrategy
-     * @param windowingStrategy
-     * @param windowSize
-     * @param windowSlide
-     */
-    NLJBuildBucketing(const uint64_t operatorHandlerIndex,
-                      const SchemaPtr& schema,
-                      const std::string& joinFieldName,
-                      const QueryCompilation::JoinBuildSideType joinBuildSide,
-                      const uint64_t entrySize,
-                      TimeFunctionPtr timeFunction,
-                      QueryCompilation::StreamJoinStrategy joinStrategy,
-                      QueryCompilation::WindowingStrategy windowingStrategy,
-                      const uint64_t windowSize,
-                      const uint64_t windowSlide);
+public:
+  /**
+   * @brief Constructor for a NLJBuildBucketing
+   * @param operatorHandlerIndex
+   * @param schema
+   * @param joinFieldName
+   * @param joinBuildSide
+   * @param entrySize
+   * @param timeFunction
+   * @param joinStrategy
+   * @param windowingStrategy
+   * @param windowSize
+   * @param windowSlide
+   */
+  NLJBuildBucketing(const uint64_t operatorHandlerIndex,
+                    const SchemaPtr &schema, const std::string &joinFieldName,
+                    const QueryCompilation::JoinBuildSideType joinBuildSide,
+                    const uint64_t entrySize, TimeFunctionPtr timeFunction,
+                    QueryCompilation::StreamJoinStrategy joinStrategy,
+                    QueryCompilation::WindowingStrategy windowingStrategy,
+                    const uint64_t windowSize, const uint64_t windowSlide);
 
-    void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
-                               Value<UInt64>& curIndex,
-                               ValueId<WorkerThreadId>& workerThreadId,
-                               Record& record) const override;
+  void insertRecordForWindow(Value<MemRef> &allWindowsToFill,
+                             Value<UInt64> &curIndex,
+                             ValueId<WorkerThreadId> &workerThreadId,
+                             Record &record) const override;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_BUCKETING_NLJBUILDBUCKETING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_BUCKETING_NLJBUILDBUCKETING_HPP_

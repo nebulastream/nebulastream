@@ -21,27 +21,28 @@ namespace NES {
  * @brief This node represents a subtraction expression.
  */
 class SubExpressionNode final : public ArithmeticalBinaryExpressionNode {
-  public:
-    explicit SubExpressionNode(DataTypePtr stamp);
-    ~SubExpressionNode() noexcept override = default;
+public:
+  explicit SubExpressionNode(DataTypePtr stamp);
+  ~SubExpressionNode() noexcept override = default;
 
-    /**
-     * @brief Create a new SUB expression
-     */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+  /**
+   * @brief Create a new SUB expression
+   */
+  static ExpressionNodePtr create(ExpressionNodePtr const &left,
+                                  ExpressionNodePtr const &right);
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  private:
-    explicit SubExpressionNode(SubExpressionNode* other);
+private:
+  explicit SubExpressionNode(SubExpressionNode *other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_

@@ -24,7 +24,7 @@
 #include <experimental/memory_resource>
 namespace std::pmr {
 using memory_resource = std::experimental::pmr::memory_resource;
-}// namespace std::pmr
+} // namespace std::pmr
 #endif
 
 namespace NES::Runtime {
@@ -32,26 +32,29 @@ namespace NES::Runtime {
  * @brief A numa aware memory resource
  */
 class NumaRegionMemoryAllocator : public std::pmr::memory_resource {
-  public:
-    /**
-     * @brief creates an allocator for a given numa region
-     * @param numaNodeIndex
-     */
-    explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex) : numaNodeIndex(numaNodeIndex){};
+public:
+  /**
+   * @brief creates an allocator for a given numa region
+   * @param numaNodeIndex
+   */
+  explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex)
+      : numaNodeIndex(numaNodeIndex){};
 
-    ~NumaRegionMemoryAllocator() override {}
+  ~NumaRegionMemoryAllocator() override {}
 
-  private:
-    void* do_allocate(size_t sizeInBytes, size_t) override;
+private:
+  void *do_allocate(size_t sizeInBytes, size_t) override;
 
-    void do_deallocate(void* pointer, size_t sizeInBytes, size_t) override;
+  void do_deallocate(void *pointer, size_t sizeInBytes, size_t) override;
 
-    bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
+  bool do_is_equal(const memory_resource &other) const noexcept override {
+    return this == &other;
+  }
 
-  private:
-    const uint32_t numaNodeIndex;
+private:
+  const uint32_t numaNodeIndex;
 };
 using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 #endif
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_

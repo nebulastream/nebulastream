@@ -27,21 +27,21 @@
 namespace NES::Nautilus::Backends::MLIR {
 
 /**
- * @brief The JITCompiler takes a generated MLIR module, 
+ * @brief The JITCompiler takes a generated MLIR module,
  * and applies configured lowering & optimization passes to it.
  */
 class JITCompiler {
-  public:
-    JITCompiler(); // Disable default constructor
-    ~JITCompiler();// Disable default destructor
+public:
+  JITCompiler();  // Disable default constructor
+  ~JITCompiler(); // Disable default destructor
 
-    static std::unique_ptr<mlir::ExecutionEngine>
-    jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
-                     const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
-                     const std::vector<std::string>& jitProxyFunctionSymbols,
-                     const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses,
-                     const CompilationOptions& options,
-                     const DumpHelper& dumpHelper);
+  static std::unique_ptr<mlir::ExecutionEngine> jitCompileModule(
+      mlir::OwningOpRef<mlir::ModuleOp> &mlirModule,
+      const llvm::function_ref<llvm::Error(llvm::Module *)> optPipeline,
+      const std::vector<std::string> &jitProxyFunctionSymbols,
+      const std::vector<llvm::JITTargetAddress>
+          &jitProxyFunctionTargetAddresses,
+      const CompilationOptions &options, const DumpHelper &dumpHelper);
 };
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_

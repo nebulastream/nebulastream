@@ -23,46 +23,50 @@ namespace NES {
 /**
  * @brief Node representing logical source operator
  */
-class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator {
-  public:
-    explicit SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id);
-    explicit SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, OriginId originId);
+class SourceLogicalOperator : public LogicalUnaryOperator,
+                              public OriginIdAssignmentOperator {
+public:
+  explicit SourceLogicalOperator(SourceDescriptorPtr const &sourceDescriptor,
+                                 OperatorId id);
+  explicit SourceLogicalOperator(SourceDescriptorPtr const &sourceDescriptor,
+                                 OperatorId id, OriginId originId);
 
-    /**
-     * @brief Returns the source descriptor of the source operators.
-     * @return SourceDescriptorPtr
-     */
-    SourceDescriptorPtr getSourceDescriptor() const;
+  /**
+   * @brief Returns the source descriptor of the source operators.
+   * @return SourceDescriptorPtr
+   */
+  SourceDescriptorPtr getSourceDescriptor() const;
 
-    /**
-     * @brief Sets a new source descriptor for this operator.
-     * This can happen during query optimization.
-     * @param sourceDescriptor
-     */
-    void setSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
+  /**
+   * @brief Sets a new source descriptor for this operator.
+   * This can happen during query optimization.
+   * @param sourceDescriptor
+   */
+  void setSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
-    /**
-     * @brief Returns the result schema of a source operator, which is defined by the source descriptor.
-     * @param typeInferencePhaseContext needed for stamp inferring
-     * @return true if schema was correctly inferred
-     */
-    bool inferSchema() override;
+  /**
+   * @brief Returns the result schema of a source operator, which is defined by
+   * the source descriptor.
+   * @param typeInferencePhaseContext needed for stamp inferring
+   * @return true if schema was correctly inferred
+   */
+  bool inferSchema() override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
-    void inferStringSignature() override;
-    OperatorPtr copy() override;
-    void setProjectSchema(SchemaPtr schema);
-    void inferInputOrigins() override;
-    std::vector<OriginId> getOutputOriginIds() const override;
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+  [[nodiscard]] std::string toString() const override;
+  void inferStringSignature() override;
+  OperatorPtr copy() override;
+  void setProjectSchema(SchemaPtr schema);
+  void inferInputOrigins() override;
+  std::vector<OriginId> getOutputOriginIds() const override;
 
-  private:
-    SourceDescriptorPtr sourceDescriptor;
-    SchemaPtr projectSchema;
+private:
+  SourceDescriptorPtr sourceDescriptor;
+  SchemaPtr projectSchema;
 };
 
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATOR_HPP_

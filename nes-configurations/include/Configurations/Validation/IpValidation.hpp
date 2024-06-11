@@ -24,14 +24,14 @@ namespace NES::Configurations {
  * @brief This class implements ip validation for ip configuration options.
  */
 class IpValidation : public ConfigurationValidation {
-  public:
-    /**
-     * @brief Method to check the validity of an ip address
-     * @param ip ip address
-     * @return success if validated
-     */
-    bool isValid(const std::string& ip) const override;
+public:
+  /**
+   * @brief Method to check the validity of an ip address
+   * @param ip ip address
+   * @return success if validated
+   */
+  bool isValid(const std::string &ip) const override;
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_IPVALIDATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_IPVALIDATION_HPP_

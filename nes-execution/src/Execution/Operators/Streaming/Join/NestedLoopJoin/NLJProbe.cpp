@@ -30,122 +30,134 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getNLJSliceRefFromIdProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    const auto opHandler = static_cast<NLJOperatorHandlerSlicing*>(ptrOpHandler);
-    auto slice = opHandler->getSliceBySliceIdentifier(sliceIdentifier);
-    if (slice.has_value()) {
-        return slice.value().get();
+void *getNLJSliceRefFromIdProxy(void *ptrOpHandler, uint64_t sliceIdentifier) {
+  NES_ASSERT2_FMT(ptrOpHandler != nullptr,
+                  "op handler context should not be null");
+  const auto opHandler = static_cast<NLJOperatorHandlerSlicing *>(ptrOpHandler);
+  auto slice = opHandler->getSliceBySliceIdentifier(sliceIdentifier);
+  if (slice.has_value()) {
+    return slice.value().get();
+  }
+  // For now this is fine. We should handle this as part of issue #4016
+  NES_ERROR("Could not find a slice with the id: {}", sliceIdentifier);
+  return nullptr;
+}
+
+uint64_t getNLJWindowStartProxy(void *ptrNLJWindowTriggerTask) {
+  NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr,
+                  "ptrNLJWindowTriggerTask should not be null");
+  return static_cast<EmittedNLJWindowTriggerTask *>(ptrNLJWindowTriggerTask)
+      ->windowInfo.windowStart;
+}
+
+uint64_t getNLJWindowEndProxy(void *ptrNLJWindowTriggerTask) {
+  NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr,
+                  "ptrNLJWindowTriggerTask should not be null");
+  return static_cast<EmittedNLJWindowTriggerTask *>(ptrNLJWindowTriggerTask)
+      ->windowInfo.windowEnd;
+}
+
+uint64_t getSliceIdNLJProxy(void *ptrNLJWindowTriggerTask,
+                            uint64_t joinBuildSideInt) {
+  NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr,
+                  "ptrNLJWindowTriggerTask should not be null");
+  auto joinBuildSide =
+      magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(
+          joinBuildSideInt)
+          .value();
+
+  if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
+    return static_cast<EmittedNLJWindowTriggerTask *>(ptrNLJWindowTriggerTask)
+        ->leftSliceIdentifier;
+  } else if (joinBuildSide == QueryCompilation::JoinBuildSideType::Right) {
+    return static_cast<EmittedNLJWindowTriggerTask *>(ptrNLJWindowTriggerTask)
+        ->rightSliceIdentifier;
+  } else {
+    NES_NOT_IMPLEMENTED();
+  }
+}
+
+void NLJProbe::open(ExecutionContext &ctx, RecordBuffer &recordBuffer) const {
+  // As this operator functions as a scan, we have to set the execution context
+  // for this pipeline
+  ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
+  ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+  ctx.setChunkNumber(recordBuffer.getChunkNr());
+  ctx.setLastChunk(recordBuffer.isLastChunk());
+  ctx.setOrigin(recordBuffer.getOriginId());
+  Operator::open(ctx, recordBuffer);
+
+  // Getting all needed info from the recordBuffer
+  const auto operatorHandlerMemRef =
+      ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+  const auto nljWindowTriggerTaskRef = recordBuffer.getBuffer();
+  const Value<UInt64> sliceIdLeft = Nautilus::FunctionCall(
+      "getSliceIdNLJProxy", getSliceIdNLJProxy, nljWindowTriggerTaskRef,
+      Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+  const Value<UInt64> sliceIdRight = Nautilus::FunctionCall(
+      "getSliceIdNLJProxy", getSliceIdNLJProxy, nljWindowTriggerTaskRef,
+      Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+  const auto windowStart =
+      Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy,
+                             nljWindowTriggerTaskRef);
+  const auto windowEnd = Nautilus::FunctionCall(
+      "getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
+
+  // During triggering the slice, we append all pages of all local copies to a
+  // single PagedVector located at position 0
+  const ValueId<WorkerThreadId> workerThreadIdForPages = WorkerThreadId(0);
+
+  // Getting the left and right paged vector
+  const auto sliceRefLeft = Nautilus::FunctionCall(
+      "getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy,
+      operatorHandlerMemRef, sliceIdLeft);
+  const auto sliceRefRight = Nautilus::FunctionCall(
+      "getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy,
+      operatorHandlerMemRef, sliceIdRight);
+  const auto leftPagedVectorRef = Nautilus::FunctionCall(
+      "getNLJPagedVectorProxy", getNLJPagedVectorProxy, sliceRefLeft,
+      workerThreadIdForPages,
+      Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+  const auto rightPagedVectorRef = Nautilus::FunctionCall(
+      "getNLJPagedVectorProxy", getNLJPagedVectorProxy, sliceRefRight,
+      workerThreadIdForPages,
+      Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+
+  Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(
+      leftPagedVectorRef, leftSchema);
+  Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(
+      rightPagedVectorRef, rightSchema);
+
+  const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
+  const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
+  for (Value<UInt64> leftCnt = 0_u64; leftCnt < leftNumberOfEntries;
+       leftCnt = leftCnt + 1) {
+    for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries;
+         rightCnt = rightCnt + 1) {
+      auto leftRecord = leftPagedVector.readRecord(leftCnt);
+      auto rightRecord = rightPagedVector.readRecord(rightCnt);
+      Record joinedRecord;
+      createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart,
+                         windowEnd);
+      if (joinExpression->execute(joinedRecord).as<Boolean>()) {
+        // Calling the child operator for this joinedRecord
+        child->execute(ctx, joinedRecord);
+      }
     }
-    // For now this is fine. We should handle this as part of issue #4016
-    NES_ERROR("Could not find a slice with the id: {}", sliceIdentifier);
-    return nullptr;
-}
-
-uint64_t getNLJWindowStartProxy(void* ptrNLJWindowTriggerTask) {
-    NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
-    return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->windowInfo.windowStart;
-}
-
-uint64_t getNLJWindowEndProxy(void* ptrNLJWindowTriggerTask) {
-    NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
-    return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->windowInfo.windowEnd;
-}
-
-uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSideInt) {
-    NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
-    auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
-
-    if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
-        return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->leftSliceIdentifier;
-    } else if (joinBuildSide == QueryCompilation::JoinBuildSideType::Right) {
-        return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->rightSliceIdentifier;
-    } else {
-        NES_NOT_IMPLEMENTED();
-    }
-}
-
-void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    // As this operator functions as a scan, we have to set the execution context for this pipeline
-    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
-    ctx.setSequenceNumber(recordBuffer.getSequenceNr());
-    ctx.setChunkNumber(recordBuffer.getChunkNr());
-    ctx.setLastChunk(recordBuffer.isLastChunk());
-    ctx.setOrigin(recordBuffer.getOriginId());
-    Operator::open(ctx, recordBuffer);
-
-    // Getting all needed info from the recordBuffer
-    const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    const auto nljWindowTriggerTaskRef = recordBuffer.getBuffer();
-    const Value<UInt64> sliceIdLeft =
-        Nautilus::FunctionCall("getSliceIdNLJProxy",
-                               getSliceIdNLJProxy,
-                               nljWindowTriggerTaskRef,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const Value<UInt64> sliceIdRight =
-        Nautilus::FunctionCall("getSliceIdNLJProxy",
-                               getSliceIdNLJProxy,
-                               nljWindowTriggerTaskRef,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
-    const auto windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, nljWindowTriggerTaskRef);
-    const auto windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
-
-    // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const ValueId<WorkerThreadId> workerThreadIdForPages = WorkerThreadId(0);
-
-    // Getting the left and right paged vector
-    const auto sliceRefLeft =
-        Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdLeft);
-    const auto sliceRefRight =
-        Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdRight);
-    const auto leftPagedVectorRef =
-        Nautilus::FunctionCall("getNLJPagedVectorProxy",
-                               getNLJPagedVectorProxy,
-                               sliceRefLeft,
-                               workerThreadIdForPages,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const auto rightPagedVectorRef =
-        Nautilus::FunctionCall("getNLJPagedVectorProxy",
-                               getNLJPagedVectorProxy,
-                               sliceRefRight,
-                               workerThreadIdForPages,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
-
-    Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
-    Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
-
-    const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
-    const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
-    for (Value<UInt64> leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
-        for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
-            auto leftRecord = leftPagedVector.readRecord(leftCnt);
-            auto rightRecord = rightPagedVector.readRecord(rightCnt);
-            Record joinedRecord;
-            createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-            if (joinExpression->execute(joinedRecord).as<Boolean>()) {
-                // Calling the child operator for this joinedRecord
-                child->execute(ctx, joinedRecord);
-            }
-        }
-    }
+  }
 }
 
 NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
-                   const JoinSchema& joinSchema,
+                   const JoinSchema &joinSchema,
                    const Expressions::ExpressionPtr joinExpression,
-                   const WindowMetaData& windowMetaData,
-                   const SchemaPtr& leftSchema,
-                   const SchemaPtr& rightSchema,
+                   const WindowMetaData &windowMetaData,
+                   const SchemaPtr &leftSchema, const SchemaPtr &rightSchema,
                    QueryCompilation::StreamJoinStrategy joinStrategy,
                    QueryCompilation::WindowingStrategy windowingStrategy,
                    bool withDeletion)
-    : StreamJoinProbe(operatorHandlerIndex,
-                      joinSchema,
-                      std::move(joinExpression),
-                      windowMetaData,
-                      joinStrategy,
-                      windowingStrategy,
-                      withDeletion),
+    : StreamJoinProbe(operatorHandlerIndex, joinSchema,
+                      std::move(joinExpression), windowMetaData, joinStrategy,
+                      windowingStrategy, withDeletion),
       leftSchema(leftSchema), rightSchema(rightSchema) {}
 
-};// namespace NES::Runtime::Execution::Operators
+}; // namespace NES::Runtime::Execution::Operators

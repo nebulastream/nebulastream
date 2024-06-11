@@ -24,15 +24,17 @@
 namespace NES {
 
 class NesNetworkException : public Exceptions::RuntimeException {
-  public:
-    explicit NesNetworkException(NES::Network::Messages::ErrMessage& msg)
-        : msg(msg), Exceptions::RuntimeException("Network error") {}
+public:
+  explicit NesNetworkException(NES::Network::Messages::ErrMessage &msg)
+      : msg(msg), Exceptions::RuntimeException("Network error") {}
 
-    const NES::Network::Messages::ErrMessage& getErrorMessage() const { return msg; }
+  const NES::Network::Messages::ErrMessage &getErrorMessage() const {
+    return msg;
+  }
 
-  private:
-    const NES::Network::Messages::ErrMessage msg;
+private:
+  const NES::Network::Messages::ErrMessage msg;
 };
 
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_

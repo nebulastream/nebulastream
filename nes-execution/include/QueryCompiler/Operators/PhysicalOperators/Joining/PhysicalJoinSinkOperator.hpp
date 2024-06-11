@@ -20,30 +20,29 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief Physical operator for the join sink.
- * This operator queryIdAndCatalogEntryMapping the operator state and computes final join results.
+ * This operator queryIdAndCatalogEntryMapping the operator state and computes
+ * final join results.
  */
-class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
-  public:
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& leftInputSchema,
-                                      const SchemaPtr& rightInputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Join::JoinOperatorHandlerPtr& operatorHandler);
-    static PhysicalOperatorPtr create(StatisticId statisticId,
-                                      const SchemaPtr& leftInputSchema,
-                                      const SchemaPtr& rightInputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Join::JoinOperatorHandlerPtr& operatorHandler);
-    PhysicalJoinSinkOperator(OperatorId id,
-                             StatisticId statisticId,
-                             SchemaPtr leftInputSchema,
-                             SchemaPtr rightInputSchema,
-                             SchemaPtr outputSchema,
-                             Join::JoinOperatorHandlerPtr operatorHandler);
-    [[nodiscard]] std::string toString() const override;
-    OperatorPtr copy() override;
+class PhysicalJoinSinkOperator : public PhysicalJoinOperator,
+                                 public PhysicalBinaryOperator,
+                                 public AbstractScanOperator {
+public:
+  static PhysicalOperatorPtr
+  create(OperatorId id, StatisticId statisticId,
+         const SchemaPtr &leftInputSchema, const SchemaPtr &rightInputSchema,
+         const SchemaPtr &outputSchema,
+         const Join::JoinOperatorHandlerPtr &operatorHandler);
+  static PhysicalOperatorPtr
+  create(StatisticId statisticId, const SchemaPtr &leftInputSchema,
+         const SchemaPtr &rightInputSchema, const SchemaPtr &outputSchema,
+         const Join::JoinOperatorHandlerPtr &operatorHandler);
+  PhysicalJoinSinkOperator(OperatorId id, StatisticId statisticId,
+                           SchemaPtr leftInputSchema,
+                           SchemaPtr rightInputSchema, SchemaPtr outputSchema,
+                           Join::JoinOperatorHandlerPtr operatorHandler);
+  [[nodiscard]] std::string toString() const override;
+  OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_

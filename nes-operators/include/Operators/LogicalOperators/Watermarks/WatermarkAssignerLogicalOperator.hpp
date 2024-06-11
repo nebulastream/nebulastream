@@ -22,33 +22,39 @@
 namespace NES {
 
 /**
- * @brief Watermark assignment operator, creates a watermark timestamp per input buffer.
+ * @brief Watermark assignment operator, creates a watermark timestamp per input
+ * buffer.
  */
 class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator {
-  public:
-    WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id);
-    /**
-    * @brief Returns the watermark strategy.
-    * @return  Windowing::WatermarkStrategyDescriptorPtr
-    */
-    Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
+public:
+  WatermarkAssignerLogicalOperator(
+      Windowing::WatermarkStrategyDescriptorPtr const
+          &watermarkStrategyDescriptor,
+      OperatorId id);
+  /**
+   * @brief Returns the watermark strategy.
+   * @return  Windowing::WatermarkStrategyDescriptorPtr
+   */
+  Windowing::WatermarkStrategyDescriptorPtr
+  getWatermarkStrategyDescriptor() const;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
 
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+  [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
 
-    [[nodiscard]] std::string toString() const override;
+  [[nodiscard]] std::string toString() const override;
 
-    OperatorPtr copy() override;
-    bool inferSchema() override;
-    void inferStringSignature() override;
+  OperatorPtr copy() override;
+  bool inferSchema() override;
+  void inferStringSignature() override;
 
-  private:
-    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
+private:
+  Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 
-using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
+using WatermarkAssignerLogicalOperatorPtr =
+    std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_

@@ -16,48 +16,56 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace fmt {
-template<>
-struct formatter<std::source_location> : formatter<std::string> {
-    auto format(const std::source_location& loc, format_context& ctx) -> decltype(ctx.out()) {
-        return fmt::format_to(ctx.out(), "{}:{} {}", loc.file_name(), loc.line(), loc.function_name());
-    }
+template <> struct formatter<std::source_location> : formatter<std::string> {
+  auto format(const std::source_location &loc, format_context &ctx)
+      -> decltype(ctx.out()) {
+    return fmt::format_to(ctx.out(), "{}:{} {}", loc.file_name(), loc.line(),
+                          loc.function_name());
+  }
 };
-}// namespace fmt
+} // namespace fmt
 
 namespace NES::Exceptions {
 
-RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location)
+RuntimeException::RuntimeException(std::string msg, std::string &&stacktrace,
+                                   const std::source_location location)
     : errorMessage(std::move(msg)) {
-    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
-    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
-    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
-        if (stacktrace.empty()) {
-            errorMessage.append(" (no stacktrace available) ");
-        } else {
-            errorMessage.append(":: callstack:\n");
-            errorMessage.append(stacktrace);
-        }
+  auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+  auto currentlevel =
+      NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+  if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
+    if (stacktrace.empty()) {
+      errorMessage.append(" (no stacktrace available) ");
     } else {
-        errorMessage.append(" (enable NES_DEBUG to view stacktrace) ");
+      errorMessage.append(":: callstack:\n");
+      errorMessage.append(stacktrace);
     }
-    NES_ERROR("{} at {}", errorMessage, location);
+  } else {
+    errorMessage.append(" (enable NES_DEBUG to view stacktrace) ");
+  }
+  NES_ERROR("{} at {}", errorMessage, location);
 }
 
-RuntimeException::RuntimeException(std::string msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {
-    auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
-    auto currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
-    if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
-        if (stacktrace.empty()) {
-            errorMessage.append(" (no stacktrace available) ");
-        } else {
-            errorMessage.append(":: callstack:\n");
-            errorMessage.append(stacktrace);
-        }
+RuntimeException::RuntimeException(std::string msg,
+                                   const std::string &stacktrace)
+    : errorMessage(std::move(msg)) {
+  auto level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG);
+  auto currentlevel =
+      NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel());
+  if (currentlevel >= level && NES_COMPILE_TIME_LOG_LEVEL >= level) {
+    if (stacktrace.empty()) {
+      errorMessage.append(" (no stacktrace available) ");
     } else {
-        errorMessage.append(" (enable NES_DEBUG to view stacktrace) ");
+      errorMessage.append(":: callstack:\n");
+      errorMessage.append(stacktrace);
     }
+  } else {
+    errorMessage.append(" (enable NES_DEBUG to view stacktrace) ");
+  }
 }
 
-const char* RuntimeException::what() const noexcept { return errorMessage.c_str(); }
+const char *RuntimeException::what() const noexcept {
+  return errorMessage.c_str();
+}
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

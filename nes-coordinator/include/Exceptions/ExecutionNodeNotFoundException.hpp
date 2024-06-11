@@ -19,31 +19,34 @@
 namespace NES::Exceptions {
 
 /**
- * @brief This exception indicates, that a lookup for an execution node in the global execution plan failed
+ * @brief This exception indicates, that a lookup for an execution node in the
+ * global execution plan failed
  */
 class ExecutionNodeNotFoundException : public RequestExecutionException {
-  public:
-    /**
-     * @brief construct an exception containing a human readable message
-     * @param message: A string to indicate to the user what caused the exception
-     */
-    explicit ExecutionNodeNotFoundException(const std::string& message);
+public:
+  /**
+   * @brief construct an exception containing a human readable message
+   * @param message: A string to indicate to the user what caused the exception
+   */
+  explicit ExecutionNodeNotFoundException(const std::string &message);
 
-    /**
-     * @brief construct an exception containing a human readable message and a node id
-     * @param message: A string to indicate to the user what caused the exception
-     * @param id: the id of the execution node that was looked up but not found (execution node ids correspond to topology
-     * node ids and therefore have the same type)
-     */
-    ExecutionNodeNotFoundException(const std::string& message, WorkerId id);
+  /**
+   * @brief construct an exception containing a human readable message and a
+   * node id
+   * @param message: A string to indicate to the user what caused the exception
+   * @param id: the id of the execution node that was looked up but not found
+   * (execution node ids correspond to topology node ids and therefore have the
+   * same type)
+   */
+  ExecutionNodeNotFoundException(const std::string &message, WorkerId id);
 
-    /**
-     * @brief get the id of the execution node that could not be found
-     */
-    [[nodiscard]] WorkerId getWorkerId() const;
+  /**
+   * @brief get the id of the execution node that could not be found
+   */
+  [[nodiscard]] WorkerId getWorkerId() const;
 
-  private:
-    WorkerId id;
+private:
+  WorkerId id;
 };
-}// namespace NES::Exceptions
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

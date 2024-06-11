@@ -22,19 +22,22 @@ namespace NES::Nautilus {
 BlockDim::BlockDim()
     : BuiltInVariable(&type){
 
-    };
+      };
 
 const std::string BlockDim::getIdentifier() const { return "blockDim"; }
 
 IR::Types::StampPtr BlockDim::getType() const {
-    // TODO #4832 https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#built-in-vector-types
-    NES_NOT_IMPLEMENTED();
+  // TODO #4832
+  // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#built-in-vector-types
+  NES_NOT_IMPLEMENTED();
 }
 
 std::shared_ptr<Any> BlockDim::copy() { return create<BlockDim>(); }
 
 const Value<> BlockDim::getAsValue() const { NES_NOT_IMPLEMENTED(); }
 
-std::shared_ptr<FieldAccess> BlockDim::x() { return std::make_shared<FieldAccess>(create<BlockDim>(), "x"); }
+std::shared_ptr<FieldAccess> BlockDim::x() {
+  return std::make_shared<FieldAccess>(create<BlockDim>(), "x");
+}
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

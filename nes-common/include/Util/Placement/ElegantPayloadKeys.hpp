@@ -19,7 +19,7 @@
 
 namespace NES {
 
-//Query payload constants
+// Query payload constants
 const std::string OPERATOR_GRAPH_KEY = "operatorGraph";
 const std::string OPERATOR_ID_KEY = "operatorId";
 const std::string CHILDREN_KEY = "children";
@@ -27,22 +27,22 @@ const std::string CONSTRAINT_KEY = "constraint";
 const std::string INPUT_DATA_KEY = "inputData";
 const std::string JAVA_UDF_FIELD_KEY = "javaUdfField";
 
-//Topology payload constants
+// Topology payload constants
 const std::string DEVICE_ID_KEY = "deviceID";
 const std::string DEVICES_KEY = "devices";
 const std::string NODE_ID_KEY = "nodeId";
 const std::string NODE_TYPE_KEY = "nodeType";
 
-//Network delay payload constants
+// Network delay payload constants
 const std::string NETWORK_DELAYS_KEY = "networkDelays";
 const std::string LINK_ID_KEY = "linkID";
 const std::string TRANSFER_RATE_KEY = "transferRate";
 const std::string TIME_WEIGHT_KEY = "time_weight";
 
-//Response payload constants
+// Response payload constants
 const std::string AVAILABLE_NODES_KEY = "availNodes";
 const std::string PLACEMENT_KEY = "placement";
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENT_ELEGANTPAYLOADKEYS_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_PLACEMENT_ELEGANTPAYLOADKEYS_HPP_

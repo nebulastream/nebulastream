@@ -19,43 +19,48 @@
 #include <cmath>
 namespace NES::Runtime::Execution::Expressions {
 
-CotExpression::CotExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& radians) : radians(radians) {}
+CotExpression::CotExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr &radians)
+    : radians(radians) {}
 
 /**
-* @brief This method calculates the cotangent of X.
-* This function is basically a wrapper for std::cos(x)/sin(x) and enables us to use it in our execution engine framework.
-* @param x double
-* @return double
-*/
+ * @brief This method calculates the cotangent of X.
+ * This function is basically a wrapper for std::cos(x)/sin(x) and enables us to
+ * use it in our execution engine framework.
+ * @param x double
+ * @return double
+ */
 double calculateCot(double x) { return std::cos(x) / std::sin(x); }
 
-Value<> CotExpression::execute(NES::Nautilus::Record& record) const {
-    Value subValue = radians->execute(record);
-    if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateCot", calculateCot, subValue.as<Double>());
-    } else {
-        // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on a numeric input argument that is ether Integer or Float.");
-    }
+Value<> CotExpression::execute(NES::Nautilus::Record &record) const {
+  Value subValue = radians->execute(record);
+  if (subValue->isType<Int8>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int8>());
+  } else if (subValue->isType<Int16>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int16>());
+  } else if (subValue->isType<Int32>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int32>());
+  } else if (subValue->isType<Int64>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int64>());
+  } else if (subValue->isType<UInt8>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt8>());
+  } else if (subValue->isType<UInt16>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt16>());
+  } else if (subValue->isType<UInt32>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt32>());
+  } else if (subValue->isType<UInt64>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<UInt64>());
+  } else if (subValue->isType<Float>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<Float>());
+  } else if (subValue->isType<Double>()) {
+    return FunctionCall<>("calculateCot", calculateCot, subValue.as<Double>());
+  } else {
+    // If no type was applicable we throw an exception.
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on a numeric input argument that is "
+        "ether Integer or Float.");
+  }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CotExpression>> cotFunction("cot");
-}// namespace NES::Runtime::Execution::Expressions
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CotExpression>>
+    cotFunction("cot");
+} // namespace NES::Runtime::Execution::Expressions

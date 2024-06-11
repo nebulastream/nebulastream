@@ -16,14 +16,17 @@
 #include <utility>
 namespace NES::RequestProcessor {
 
-StorageResourceLocker::StorageResourceLocker(std::vector<ResourceType> requiredResources)
+StorageResourceLocker::StorageResourceLocker(
+    std::vector<ResourceType> requiredResources)
     : requiredResources(std::move(requiredResources)) {}
 
-void StorageResourceLocker::preExecution(const StorageHandlerPtr& storageHandle) {
-    storageHandle->acquireResources(getResourceLockingId(), requiredResources);
+void StorageResourceLocker::preExecution(
+    const StorageHandlerPtr &storageHandle) {
+  storageHandle->acquireResources(getResourceLockingId(), requiredResources);
 }
 
-void StorageResourceLocker::postExecution(const StorageHandlerPtr& storageHandler) {
-    storageHandler->releaseResources(getResourceLockingId());
+void StorageResourceLocker::postExecution(
+    const StorageHandlerPtr &storageHandler) {
+  storageHandler->releaseResources(getResourceLockingId());
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

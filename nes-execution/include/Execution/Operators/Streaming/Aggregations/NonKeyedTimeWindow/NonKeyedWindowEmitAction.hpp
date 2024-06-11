@@ -18,30 +18,30 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief The KeyedWindowEmitAction emits non-keyed slices as individual windows.
+ * @brief The KeyedWindowEmitAction emits non-keyed slices as individual
+ * windows.
  */
 class NonKeyedWindowEmitAction : public SliceMergingAction {
-  public:
-    NonKeyedWindowEmitAction(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                             const std::string& startTsFieldName,
-                             const std::string& endTsFieldName,
-                             OriginId resultOriginId);
+public:
+  NonKeyedWindowEmitAction(
+      const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>
+          &aggregationFunctions,
+      const std::string &startTsFieldName, const std::string &endTsFieldName,
+      OriginId resultOriginId);
 
-    void emitSlice(ExecutionContext& ctx,
-                   ExecuteOperatorPtr& child,
-                   Value<UInt64>& windowStart,
-                   Value<UInt64>& windowEnd,
-                   Value<UInt64>& sequenceNumber,
-                   Value<UInt64>& chunkNumber,
-                   Value<Boolean>& lastChunk,
-                   Value<MemRef>& globalSlice) const override;
+  void emitSlice(ExecutionContext &ctx, ExecuteOperatorPtr &child,
+                 Value<UInt64> &windowStart, Value<UInt64> &windowEnd,
+                 Value<UInt64> &sequenceNumber, Value<UInt64> &chunkNumber,
+                 Value<Boolean> &lastChunk,
+                 Value<MemRef> &globalSlice) const override;
 
-  private:
-    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    const std::string startTsFieldName;
-    const std::string endTsFieldName;
-    const OriginId resultOriginId;
+private:
+  const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>
+      aggregationFunctions;
+  const std::string startTsFieldName;
+  const std::string endTsFieldName;
+  const OriginId resultOriginId;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDWINDOWEMITACTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDWINDOWEMITACTION_HPP_

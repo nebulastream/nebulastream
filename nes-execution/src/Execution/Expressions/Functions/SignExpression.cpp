@@ -18,49 +18,56 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-SignExpression::SignExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+SignExpression::SignExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr &subExpression)
     : subExpression(subExpression) {}
 
 /**
- * @brief This method returns a 1 if the given number is positive,  a -1 if negative and a 0 if 0.
+ * @brief This method returns a 1 if the given number is positive,  a -1 if
+ * negative and a 0 if 0.
  * @param x double
  * @return double
  */
 double calculateSign(double x) {
-    if (x > 0)
-        return 1;
-    if (x < 0)
-        return -1;
-    return 0;
+  if (x > 0)
+    return 1;
+  if (x < 0)
+    return -1;
+  return 0;
 }
 
-Value<> SignExpression::execute(NES::Nautilus::Record& record) const {
-    Value subValue = subExpression->execute(record);
+Value<> SignExpression::execute(NES::Nautilus::Record &record) const {
+  Value subValue = subExpression->execute(record);
 
-    if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateSign", calculateSign, subValue.as<Double>());
-    } else {
-        // Throw an exception if no type is applicable
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
-    }
+  if (subValue->isType<Int8>()) {
+    return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int8>());
+  } else if (subValue->isType<Int16>()) {
+    return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int16>());
+  } else if (subValue->isType<Int32>()) {
+    return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int32>());
+  } else if (subValue->isType<Int64>()) {
+    return FunctionCall<>("calculateSign", calculateSign, subValue.as<Int64>());
+  } else if (subValue->isType<UInt8>()) {
+    return FunctionCall<>("calculateSign", calculateSign, subValue.as<UInt8>());
+  } else if (subValue->isType<UInt16>()) {
+    return FunctionCall<>("calculateSign", calculateSign,
+                          subValue.as<UInt16>());
+  } else if (subValue->isType<UInt32>()) {
+    return FunctionCall<>("calculateSign", calculateSign,
+                          subValue.as<UInt32>());
+  } else if (subValue->isType<UInt64>()) {
+    return FunctionCall<>("calculateSign", calculateSign,
+                          subValue.as<UInt64>());
+  } else if (subValue->isType<Float>()) {
+    return FunctionCall<>("calculateSign", calculateSign, subValue.as<Float>());
+  } else if (subValue->isType<Double>()) {
+    return FunctionCall<>("calculateSign", calculateSign,
+                          subValue.as<Double>());
+  } else {
+    // Throw an exception if no type is applicable
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on numeric input arguments that are "
+        "either Integer or Float.");
+  }
 }
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

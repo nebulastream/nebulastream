@@ -22,8 +22,8 @@ namespace NES::Nautilus {
  * This exception should never be used, to indicate errors to the runtime.
  */
 class TraceTerminationException final : public std::exception {
-  public:
-    explicit TraceTerminationException() : std::exception(){};
+public:
+  explicit TraceTerminationException() : std::exception(){};
 };
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_

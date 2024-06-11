@@ -20,48 +20,51 @@
 #include <utility>
 
 namespace NES {
-PrintSink::PrintSink(SinkFormatPtr format,
-                     Runtime::NodeEnginePtr nodeEngine,
-                     uint32_t numOfProducers,
-                     SharedQueryId sharedQueryId,
+PrintSink::PrintSink(SinkFormatPtr format, Runtime::NodeEnginePtr nodeEngine,
+                     uint32_t numOfProducers, SharedQueryId sharedQueryId,
                      DecomposedQueryPlanId decomposedQueryPlanId,
-                     std::ostream& pOutputStream,
-                     uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
+                     std::ostream &pOutputStream, uint64_t numberOfOrigins)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers,
+                 sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;
 
-SinkMediumTypes PrintSink::getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
+SinkMediumTypes PrintSink::getSinkMediumType() {
+  return SinkMediumTypes::PRINT_SINK;
+}
 
-bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    std::unique_lock lock(writeMutex);
-    NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());
+bool PrintSink::writeData(Runtime::TupleBuffer &inputBuffer,
+                          Runtime::WorkerContextRef) {
+  std::unique_lock lock(writeMutex);
+  NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(),
+            sinkFormat->toString());
 
-    if (!inputBuffer) {
-        throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
-    }
+  if (!inputBuffer) {
+    throw Exceptions::RuntimeException(
+        "PrintSink::writeData input buffer invalid");
+  }
 
-    NES_TRACE("PrintSink::getData: write data");
-    auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
-    NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
-    outputStream << buffer << std::endl;
-    return true;
+  NES_TRACE("PrintSink::getData: write data");
+  auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
+  NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
+  outputStream << buffer << std::endl;
+  return true;
 }
 
 std::string PrintSink::toString() const {
-    std::stringstream ss;
-    ss << "PRINT_SINK(";
-    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
-    ss << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "PRINT_SINK(";
+  ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
+  ss << ")";
+  return ss.str();
 }
 
 void PrintSink::setup() {
-    // currently not required
+  // currently not required
 }
 void PrintSink::shutdown() {
-    // currently not required
+  // currently not required
 }
 
-}// namespace NES
+} // namespace NES

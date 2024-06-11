@@ -17,26 +17,27 @@
 namespace NES::Runtime::Execution {
 
 /**
- * @brief The physical operator pipeline captures a set of operators within a pipeline.
+ * @brief The physical operator pipeline captures a set of operators within a
+ * pipeline.
  */
 class PhysicalOperatorPipeline {
-  public:
-    /**
-     * @brief Sets the root operator of an pipeline.
-     * @param rootOperator
-     */
-    void setRootOperator(Operators::OperatorPtr rootOperator);
+public:
+  /**
+   * @brief Sets the root operator of an pipeline.
+   * @param rootOperator
+   */
+  void setRootOperator(Operators::OperatorPtr rootOperator);
 
-    /**
-     * @brief Returns the root operator of an pipeline
-     * @return operator
-     */
-    Operators::OperatorPtr getRootOperator() const;
+  /**
+   * @brief Returns the root operator of an pipeline
+   * @return operator
+   */
+  Operators::OperatorPtr getRootOperator() const;
 
-  private:
-    Operators::OperatorPtr rootOperator;
+private:
+  Operators::OperatorPtr rootOperator;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_PHYSICALOPERATORPIPELINE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_PHYSICALOPERATORPIPELINE_HPP_

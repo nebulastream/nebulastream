@@ -18,11 +18,12 @@
 namespace NES::Spatial::Index::Experimental {
 
 /**
- * @brief an exception indicating that the entered string is not of the format "<double>, <double>"
+ * @brief an exception indicating that the entered string is not of the format
+ * "<double>, <double>"
  */
 class InvalidCoordinateFormatException : public std::exception {
-    const char* what() const noexcept;
+  const char *what() const noexcept;
 };
 
-}// namespace NES::Spatial::Index::Experimental
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_
+} // namespace NES::Spatial::Index::Experimental
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_

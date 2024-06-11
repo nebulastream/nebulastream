@@ -21,8 +21,8 @@ namespace NES::Runtime::Execution::Operators {
  * Actual operators should inherit from this.
  */
 class OperatorState {
-  public:
-    virtual ~OperatorState() = default;
+public:
+  virtual ~OperatorState() = default;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_

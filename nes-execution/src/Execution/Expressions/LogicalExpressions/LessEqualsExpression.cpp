@@ -17,13 +17,15 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-LessEqualsExpression::LessEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
+LessEqualsExpression::LessEqualsExpression(ExpressionPtr leftSubExpression,
+                                           ExpressionPtr rightSubExpression)
+    : leftSubExpression(std::move(leftSubExpression)),
+      rightSubExpression(std::move(rightSubExpression)){};
 
-Value<> LessEqualsExpression::execute(Record& record) const {
-    Value<> leftValue = leftSubExpression->execute(record);
-    Value<> rightValue = rightSubExpression->execute(record);
-    return leftValue <= rightValue;
+Value<> LessEqualsExpression::execute(Record &record) const {
+  Value<> leftValue = leftSubExpression->execute(record);
+  Value<> rightValue = rightSubExpression->execute(record);
+  return leftValue <= rightValue;
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

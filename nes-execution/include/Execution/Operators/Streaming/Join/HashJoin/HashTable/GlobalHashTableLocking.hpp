@@ -31,33 +31,32 @@ namespace NES::Runtime::Execution::Operators {
  */
 class GlobalHashTableLocking : public StreamJoinHashTable {
 
-  public:
-    /**
-     * @brief Constructor for a GlobalHashTableLocking that
-     * @param sizeOfRecord
-     * @param numPartitions
-     * @param fixedPagesAllocator
-     * @param pageSize
-     * @param preAllocPageSizeCnt
-     */
-    explicit GlobalHashTableLocking(size_t sizeOfRecord,
-                                    size_t numPartitions,
-                                    FixedPagesAllocator& fixedPagesAllocator,
-                                    size_t pageSize,
-                                    size_t preAllocPageSizeCnt);
+public:
+  /**
+   * @brief Constructor for a GlobalHashTableLocking that
+   * @param sizeOfRecord
+   * @param numPartitions
+   * @param fixedPagesAllocator
+   * @param pageSize
+   * @param preAllocPageSizeCnt
+   */
+  explicit GlobalHashTableLocking(size_t sizeOfRecord, size_t numPartitions,
+                                  FixedPagesAllocator &fixedPagesAllocator,
+                                  size_t pageSize, size_t preAllocPageSizeCnt);
 
-    GlobalHashTableLocking(const GlobalHashTableLocking&) = delete;
+  GlobalHashTableLocking(const GlobalHashTableLocking &) = delete;
 
-    GlobalHashTableLocking& operator=(const GlobalHashTableLocking&) = delete;
+  GlobalHashTableLocking &operator=(const GlobalHashTableLocking &) = delete;
 
-    virtual ~GlobalHashTableLocking() = default;
+  virtual ~GlobalHashTableLocking() = default;
 
-    /**
-     * @brief Inserts the key into this hash table by returning a pointer to a free memory space
-     * @param key
-     * @return Pointer to free memory space where the data shall be written
-     */
-    virtual uint8_t* insert(uint64_t key) const override;
+  /**
+   * @brief Inserts the key into this hash table by returning a pointer to a
+   * free memory space
+   * @param key
+   * @return Pointer to free memory space where the data shall be written
+   */
+  virtual uint8_t *insert(uint64_t key) const override;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKING_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKING_HPP_

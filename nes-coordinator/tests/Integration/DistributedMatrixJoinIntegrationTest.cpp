@@ -34,128 +34,148 @@ static const std::string sourceNameRight = "log_right";
 /**
  * @brief Test of distributed NEMO join
  */
-class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
-    BufferManagerPtr bufferManager;
-    QueryCompilation::StreamJoinStrategy joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
-    QueryCompilation::WindowingStrategy windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
+class DistributedMatrixJoinIntegrationTest
+    : public Testing::BaseIntegrationTest {
+public:
+  BufferManagerPtr bufferManager;
+  QueryCompilation::StreamJoinStrategy joinStrategy =
+      QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
+  QueryCompilation::WindowingStrategy windowingStrategy =
+      QueryCompilation::WindowingStrategy::SLICING;
 
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("DistributedMatrixJoinIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DistributedMatrixJoinIntegrationTest test class.");
-    }
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("DistributedMatrixJoinIntegrationTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup DistributedMatrixJoinIntegrationTest test class.");
+  }
 
-    void SetUp() override {
-        Testing::BaseIntegrationTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>();
-    }
+  void SetUp() override {
+    Testing::BaseIntegrationTest::SetUp();
+    bufferManager = std::make_shared<BufferManager>();
+  }
 
-    static CSVSourceTypePtr createCSVSourceType(const std::string& logicalSourceNAme,
-                                                const std::string& physicalSourceName,
-                                                const std::string& inputPath) {
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create(logicalSourceNAme, physicalSourceName);
-        csvSourceType->setFilePath(inputPath);
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
-        csvSourceType->setNumberOfBuffersToProduce(1);
-        csvSourceType->setSkipHeader(false);
-        csvSourceType->setGatheringInterval(1000);
-        return csvSourceType;
-    }
+  static CSVSourceTypePtr
+  createCSVSourceType(const std::string &logicalSourceNAme,
+                      const std::string &physicalSourceName,
+                      const std::string &inputPath) {
+    CSVSourceTypePtr csvSourceType =
+        CSVSourceType::create(logicalSourceNAme, physicalSourceName);
+    csvSourceType->setFilePath(inputPath);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setSkipHeader(false);
+    csvSourceType->setGatheringInterval(1000);
+    return csvSourceType;
+  }
 
-    /**
-     * Creates a TestHarness with a given query and topology parameters. The leafs of the topology are sources.
-     * @param query the query
-     * @param crdFunctor functor to pass coordinator params
-     * @param layers number of layers of the topology tree
-     * @param nodesPerNode number of children per node
-     * @param leafNodesPerNode number of leaf nodes for the parents of last layer
-     * @return the TestHarness
-     */
-    TestHarness createTestHarness(const Query& query,
-                                  std::function<void(CoordinatorConfigurationPtr)> crdFunctor,
-                                  uint64_t layers,
-                                  uint64_t nodesPerNode,
-                                  uint64_t leafNodesPerNode) {
-        const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
+  /**
+   * Creates a TestHarness with a given query and topology parameters. The leafs
+   * of the topology are sources.
+   * @param query the query
+   * @param crdFunctor functor to pass coordinator params
+   * @param layers number of layers of the topology tree
+   * @param nodesPerNode number of children per node
+   * @param leafNodesPerNode number of leaf nodes for the parents of last layer
+   * @return the TestHarness
+   */
+  TestHarness
+  createTestHarness(const Query &query,
+                    std::function<void(CoordinatorConfigurationPtr)> crdFunctor,
+                    uint64_t layers, uint64_t nodesPerNode,
+                    uint64_t leafNodesPerNode) {
+    const auto inputSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
-        TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                      .setJoinStrategy(joinStrategy)
-                                      .setWindowingStrategy(windowingStrategy)
-                                      .addLogicalSource(sourceNameLeft, inputSchema)
-                                      .addLogicalSource(sourceNameRight, inputSchema);
+    TestHarness testHarness =
+        TestHarness(query, *restPort, *rpcCoordinatorPort,
+                    getTestResourceFolder())
+            .setJoinStrategy(joinStrategy)
+            .setWindowingStrategy(windowingStrategy)
+            .addLogicalSource(sourceNameLeft, inputSchema)
+            .addLogicalSource(sourceNameRight, inputSchema);
 
-        std::vector<uint64_t> nodes;
-        std::vector<uint64_t> parents;
-        auto nodeId = 1;
-        uint64_t leafNodes = 0;
-        nodes.emplace_back(1);
-        parents.emplace_back(1);
+    std::vector<uint64_t> nodes;
+    std::vector<uint64_t> parents;
+    auto nodeId = 1;
+    uint64_t leafNodes = 0;
+    nodes.emplace_back(1);
+    parents.emplace_back(1);
 
-        auto cnt = 1;
-        for (uint64_t i = 2; i <= layers; i++) {
-            std::vector<uint64_t> newParents;
-            std::string sourceName;
-            for (auto parent : parents) {
-                uint64_t nodeCnt = nodesPerNode;
-                if (i == layers) {
-                    nodeCnt = leafNodesPerNode;
-                }
-                for (uint64_t j = 0; j < nodeCnt; j++) {
-                    nodeId++;
-                    nodes.emplace_back(nodeId);
-                    newParents.emplace_back(nodeId);
-
-                    if (i == layers) {
-                        leafNodes++;
-                        if (leafNodes % 2 == 0) {
-                            sourceName = sourceNameLeft;
-                        } else {
-                            sourceName = sourceNameRight;
-                        }
-
-                        auto csvSource = createCSVSourceType(sourceName,
-                                                             "src_" + std::to_string(leafNodes),
-                                                             std::string(TEST_DATA_DIRECTORY) + "window.csv");
-                        testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, WorkerId(parent));
-                        NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding CSV source:{} for node:{}", sourceName, nodeId);
-                        continue;
-                    }
-                    testHarness.attachWorkerToWorkerWithId(WorkerId(parent));
-                    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding worker to worker with ID:{}", parent);
-                }
-            }
-            parents = newParents;
+    auto cnt = 1;
+    for (uint64_t i = 2; i <= layers; i++) {
+      std::vector<uint64_t> newParents;
+      std::string sourceName;
+      for (auto parent : parents) {
+        uint64_t nodeCnt = nodesPerNode;
+        if (i == layers) {
+          nodeCnt = leafNodesPerNode;
         }
-        testHarness.validate().setupTopology(crdFunctor);
-        return testHarness;
+        for (uint64_t j = 0; j < nodeCnt; j++) {
+          nodeId++;
+          nodes.emplace_back(nodeId);
+          newParents.emplace_back(nodeId);
+
+          if (i == layers) {
+            leafNodes++;
+            if (leafNodes % 2 == 0) {
+              sourceName = sourceNameLeft;
+            } else {
+              sourceName = sourceNameRight;
+            }
+
+            auto csvSource = createCSVSourceType(
+                sourceName, "src_" + std::to_string(leafNodes),
+                std::string(TEST_DATA_DIRECTORY) + "window.csv");
+            testHarness.attachWorkerWithCSVSourceToWorkerWithId(
+                csvSource, WorkerId(parent));
+            NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding CSV "
+                      "source:{} for node:{}",
+                      sourceName, nodeId);
+            continue;
+          }
+          testHarness.attachWorkerToWorkerWithId(WorkerId(parent));
+          NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding worker to "
+                    "worker with ID:{}",
+                    parent);
+        }
+      }
+      parents = newParents;
     }
+    testHarness.validate().setupTopology(crdFunctor);
+    return testHarness;
+  }
 };
 
 TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
-    uint64_t sourceNo = 4;
-    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
-        config->optimizer.joinOptimizationMode.setValue(Optimizer::DistributedJoinOptimizationMode::MATRIX);
-    };
-    Query query = Query::from(sourceNameLeft)
-                      .joinWith(Query::from(sourceNameRight))
-                      .where(Attribute("id") == Attribute("id"))
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+  uint64_t sourceNo = 4;
+  std::function<void(CoordinatorConfigurationPtr)> crdFunctor =
+      [](const CoordinatorConfigurationPtr &config) {
+        config->optimizer.joinOptimizationMode.setValue(
+            Optimizer::DistributedJoinOptimizationMode::MATRIX);
+      };
+  Query query = Query::from(sourceNameLeft)
+                    .joinWith(Query::from(sourceNameRight))
+                    .where(Attribute("id") == Attribute("id"))
+                    .window(TumblingWindow::of(
+                        EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    // create flat topology with 1 coordinator and 4 sources
-    auto testHarness = createTestHarness(query, crdFunctor, 2, 2, sourceNo);
-    // 17 join keys
-    uint64_t expectedTuples = 17 * pow(2, sourceNo - 1);
+  // create flat topology with 1 coordinator and 4 sources
+  auto testHarness = createTestHarness(query, crdFunctor, 2, 2, sourceNo);
+  // 17 join keys
+  uint64_t expectedTuples = 17 * pow(2, sourceNo - 1);
 
-    auto actualOutput = testHarness.runQuery(expectedTuples).getOutput();
-    auto outputString = actualOutput[0].toString(testHarness.getOutputSchema(), true);
-    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Output\n{}", outputString);
-    EXPECT_EQ(TestUtils::countTuples(actualOutput), expectedTuples);
+  auto actualOutput = testHarness.runQuery(expectedTuples).getOutput();
+  auto outputString =
+      actualOutput[0].toString(testHarness.getOutputSchema(), true);
+  NES_DEBUG("DistributedMatrixJoinIntegrationTest: Output\n{}", outputString);
+  EXPECT_EQ(TestUtils::countTuples(actualOutput), expectedTuples);
 
-    TopologyPtr topology = testHarness.getTopology();
-    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
-    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Executed with topology \n{}", topology->toString());
-    NES_INFO("DistributedMatrixJoinIntegrationTest: Executed with plan \n{}", queryPlan->toString());
-    EXPECT_EQ(4, countOccurrences("Join", queryPlan->toString()));
+  TopologyPtr topology = testHarness.getTopology();
+  QueryPlanPtr queryPlan = testHarness.getQueryPlan();
+  NES_DEBUG("DistributedMatrixJoinIntegrationTest: Executed with topology \n{}",
+            topology->toString());
+  NES_INFO("DistributedMatrixJoinIntegrationTest: Executed with plan \n{}",
+           queryPlan->toString());
+  EXPECT_EQ(4, countOccurrences("Join", queryPlan->toString()));
 }
 
-}// namespace NES
+} // namespace NES

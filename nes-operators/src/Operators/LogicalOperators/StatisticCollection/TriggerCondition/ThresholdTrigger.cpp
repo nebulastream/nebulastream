@@ -16,8 +16,7 @@
 #include <string>
 
 namespace NES::Statistic {
-template<typename T>
-std::string ThresholdTrigger<T>::toString() const {
-    return "ThresholdTrigger(" << threshold << ")";
+template <typename T> std::string ThresholdTrigger<T>::toString() const {
+  return "ThresholdTrigger(" << threshold << ")";
 }
-}// namespace NES::Statistic
+} // namespace NES::Statistic

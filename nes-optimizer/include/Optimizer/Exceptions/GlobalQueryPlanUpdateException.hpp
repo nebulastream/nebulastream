@@ -22,13 +22,15 @@
 namespace NES {
 
 /**
- * @brief This exception is thrown if some error occurred while performing update on Global query plan
+ * @brief This exception is thrown if some error occurred while performing
+ * update on Global query plan
  */
-class GlobalQueryPlanUpdateException : public Exceptions::RequestExecutionException {
-  public:
-    explicit GlobalQueryPlanUpdateException(const std::string& message);
+class GlobalQueryPlanUpdateException
+    : public Exceptions::RequestExecutionException {
+public:
+  explicit GlobalQueryPlanUpdateException(const std::string &message);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_

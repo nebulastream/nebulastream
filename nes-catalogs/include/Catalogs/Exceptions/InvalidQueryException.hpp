@@ -21,12 +21,13 @@
 
 namespace NES {
 /**
- * @brief This Exception is thrown if the query is found to have invalid format or has a logical error.
+ * @brief This Exception is thrown if the query is found to have invalid format
+ * or has a logical error.
  */
 class InvalidQueryException : public Exceptions::RequestExecutionException {
-  public:
-    explicit InvalidQueryException(const std::string& message);
+public:
+  explicit InvalidQueryException(const std::string &message);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_

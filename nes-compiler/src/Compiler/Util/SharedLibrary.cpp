@@ -19,43 +19,49 @@
 
 namespace NES::Compiler {
 
-SharedLibrary::SharedLibrary(void* shareLib, std::string soAbsolutePath)
+SharedLibrary::SharedLibrary(void *shareLib, std::string soAbsolutePath)
     : DynamicObject(), shareLib(shareLib), soAbsolutePath(soAbsolutePath) {
-    NES_ASSERT(shareLib != nullptr, "Shared lib is null");
+  NES_ASSERT(shareLib != nullptr, "Shared lib is null");
 }
 
 SharedLibrary::~SharedLibrary() {
-    auto returnCode = dlclose(shareLib);
-    if (returnCode != 0) {
-        NES_ERROR("SharedLibrary: error during dlclose. error code:{}", returnCode);
-    }
-    std::filesystem::remove(soAbsolutePath);
+  auto returnCode = dlclose(shareLib);
+  if (returnCode != 0) {
+    NES_ERROR("SharedLibrary: error during dlclose. error code:{}", returnCode);
+  }
+  std::filesystem::remove(soAbsolutePath);
 }
 
-SharedLibraryPtr SharedLibrary::load(const std::string& absoluteFilePath) {
-    auto* shareLib = dlopen(absoluteFilePath.c_str(), RTLD_NOW);
-    auto* error = dlerror();
-    if (error) {
-        NES_ERROR("Could not load shared library: {} Error:{}", absoluteFilePath, error);
-        throw CompilerException("Could not load shared library: " + absoluteFilePath + " Error:" + error);
-    }
-    if (!shareLib) {
-        NES_ERROR("Could not load shared library: {} Error unknown!", absoluteFilePath);
-        throw CompilerException("Could not load shared library: " + absoluteFilePath);
-    }
+SharedLibraryPtr SharedLibrary::load(const std::string &absoluteFilePath) {
+  auto *shareLib = dlopen(absoluteFilePath.c_str(), RTLD_NOW);
+  auto *error = dlerror();
+  if (error) {
+    NES_ERROR("Could not load shared library: {} Error:{}", absoluteFilePath,
+              error);
+    throw CompilerException("Could not load shared library: " +
+                            absoluteFilePath + " Error:" + error);
+  }
+  if (!shareLib) {
+    NES_ERROR("Could not load shared library: {} Error unknown!",
+              absoluteFilePath);
+    throw CompilerException("Could not load shared library: " +
+                            absoluteFilePath);
+  }
 
-    return std::make_shared<SharedLibrary>(shareLib, absoluteFilePath);
+  return std::make_shared<SharedLibrary>(shareLib, absoluteFilePath);
 }
-void* SharedLibrary::getInvocableFunctionPtr(const std::string& mangeldSymbolName) {
-    auto* symbol = dlsym(shareLib, mangeldSymbolName.c_str());
-    auto* error = dlerror();
+void *
+SharedLibrary::getInvocableFunctionPtr(const std::string &mangeldSymbolName) {
+  auto *symbol = dlsym(shareLib, mangeldSymbolName.c_str());
+  auto *error = dlerror();
 
-    if (error) {
-        NES_ERROR("Could not load symbol: {} Error:{}", mangeldSymbolName, error);
-        throw CompilerException("Could not load symbol: " + mangeldSymbolName + " Error:" + error);
-    }
+  if (error) {
+    NES_ERROR("Could not load symbol: {} Error:{}", mangeldSymbolName, error);
+    throw CompilerException("Could not load symbol: " + mangeldSymbolName +
+                            " Error:" + error);
+  }
 
-    return symbol;
+  return symbol;
 }
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

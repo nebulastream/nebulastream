@@ -20,11 +20,11 @@
 namespace NES::QueryCompilation {
 
 enum class QueryCompilerType : uint8_t {
-    // Uses the default query compiler
-    DEFAULT_QUERY_COMPILER,
-    // Uses the nautilus query compiler
-    NAUTILUS_QUERY_COMPILER
+  // Uses the default query compiler
+  DEFAULT_QUERY_COMPILER,
+  // Uses the nautilus query compiler
+  NAUTILUS_QUERY_COMPILER
 };
 
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYCOMPILERTYPE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYCOMPILERTYPE_HPP_

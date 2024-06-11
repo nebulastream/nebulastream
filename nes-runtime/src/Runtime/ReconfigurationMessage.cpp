@@ -19,21 +19,21 @@ namespace NES::Runtime {
 void ReconfigurationMessage::wait() { syncBarrier->wait(); }
 
 void ReconfigurationMessage::postWait() {
-    if (postSyncBarrier != nullptr) {
-        postSyncBarrier->wait();
-    }
+  if (postSyncBarrier != nullptr) {
+    postSyncBarrier->wait();
+  }
 }
 
 void ReconfigurationMessage::postReconfiguration() {
-    //if ref count gets 0, we know all threads did the reconfiguration
-    if (refCnt.fetch_sub(1) == 1) {
-        instance->postReconfigurationCallback(*this);
-    }
+  // if ref count gets 0, we know all threads did the reconfiguration
+  if (refCnt.fetch_sub(1) == 1) {
+    instance->postReconfigurationCallback(*this);
+  }
 }
 
 void ReconfigurationMessage::destroy() {
-    syncBarrier.reset();
-    postSyncBarrier.reset();
+  syncBarrier.reset();
+  postSyncBarrier.reset();
 }
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime

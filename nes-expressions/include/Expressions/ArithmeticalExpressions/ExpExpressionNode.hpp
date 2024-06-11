@@ -20,33 +20,34 @@ namespace NES {
  * @brief This node represents an EXP (exponential of) expression.
  */
 class ExpExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
-    explicit ExpExpressionNode(DataTypePtr stamp);
-    ~ExpExpressionNode() noexcept override = default;
-    /**
-     * @brief Create a new EXP expression
-     */
-    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+public:
+  explicit ExpExpressionNode(DataTypePtr stamp);
+  ~ExpExpressionNode() noexcept override = default;
+  /**
+   * @brief Create a new EXP expression
+   */
+  [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const &child);
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  private:
-    explicit ExpExpressionNode(ExpExpressionNode* other);
+private:
+  explicit ExpExpressionNode(ExpExpressionNode *other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_

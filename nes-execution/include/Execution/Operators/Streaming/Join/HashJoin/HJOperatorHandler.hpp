@@ -23,81 +23,80 @@ class HJOperatorHandler;
 using HJOperatorHandlerPtr = std::shared_ptr<HJOperatorHandler>;
 
 /**
- * @brief This class provides methods that are common for slicing and bucketing HJOperatorHandlers but not common for all join strategies.
+ * @brief This class provides methods that are common for slicing and bucketing
+ * HJOperatorHandlers but not common for all join strategies.
  */
 class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
-  public:
-    /**
-     * @brief Constructor for a HJOperatorHandler
-     * @param inputOrigins
-     * @param outputOriginId
-     * @param windowSize
-     * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
-     * @param joinStrategy
-     * @param totalSizeForDataStructures
-     * @param preAllocPageSizeCnt
-     * @param pageSize
-     * @param numPartitions
-     */
-    HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                      const OriginId outputOriginId,
-                      const uint64_t windowSize,
-                      const uint64_t windowSlide,
-                      const SchemaPtr& leftSchema,
-                      const SchemaPtr& rightSchema,
-                      const QueryCompilation::StreamJoinStrategy joinStrategy,
-                      uint64_t totalSizeForDataStructures,
-                      uint64_t preAllocPageSizeCnt,
-                      uint64_t pageSize,
-                      uint64_t numPartitions);
+public:
+  /**
+   * @brief Constructor for a HJOperatorHandler
+   * @param inputOrigins
+   * @param outputOriginId
+   * @param windowSize
+   * @param windowSlide
+   * @param sizeOfRecordLeft
+   * @param sizeOfRecordRight
+   * @param joinStrategy
+   * @param totalSizeForDataStructures
+   * @param preAllocPageSizeCnt
+   * @param pageSize
+   * @param numPartitions
+   */
+  HJOperatorHandler(const std::vector<OriginId> &inputOrigins,
+                    const OriginId outputOriginId, const uint64_t windowSize,
+                    const uint64_t windowSlide, const SchemaPtr &leftSchema,
+                    const SchemaPtr &rightSchema,
+                    const QueryCompilation::StreamJoinStrategy joinStrategy,
+                    uint64_t totalSizeForDataStructures,
+                    uint64_t preAllocPageSizeCnt, uint64_t pageSize,
+                    uint64_t numPartitions);
 
-    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
-    void emitSliceIdsToProbe(StreamSlice& sliceLeft,
-                             StreamSlice& sliceRight,
-                             const WindowInfo& windowInfo,
-                             PipelineExecutionContext* pipelineCtx) override;
+  StreamSlicePtr createNewSlice(uint64_t sliceStart,
+                                uint64_t sliceEnd) override;
+  void emitSliceIdsToProbe(StreamSlice &sliceLeft, StreamSlice &sliceRight,
+                           const WindowInfo &windowInfo,
+                           PipelineExecutionContext *pipelineCtx) override;
 
-    /**
-     * @brief get the number of pre-allocated pages per bucket
-     * @return
-     */
-    uint64_t getPreAllocPageSizeCnt() const;
+  /**
+   * @brief get the number of pre-allocated pages per bucket
+   * @return
+   */
+  uint64_t getPreAllocPageSizeCnt() const;
 
-    /**
-     * @brief get the page size in the HT
-     * @return
-     */
-    uint64_t getPageSize() const;
+  /**
+   * @brief get the page size in the HT
+   * @return
+   */
+  uint64_t getPageSize() const;
 
-    /**
-     * @brief get the number of partitions in the HT
-     * @return
-     */
-    uint64_t getNumPartitions() const;
+  /**
+   * @brief get the number of partitions in the HT
+   * @return
+   */
+  uint64_t getNumPartitions() const;
 
-    /**
-     * @brief get the maximal total size of the hash table
-     * @return size
-     */
-    uint64_t getTotalSizeForDataStructures() const;
+  /**
+   * @brief get the maximal total size of the hash table
+   * @return size
+   */
+  uint64_t getTotalSizeForDataStructures() const;
 
-  protected:
-    QueryCompilation::StreamJoinStrategy joinStrategy;
-    uint64_t totalSizeForDataStructures;
-    uint64_t preAllocPageSizeCnt;
-    uint64_t pageSize;
-    uint64_t numPartitions;
+protected:
+  QueryCompilation::StreamJoinStrategy joinStrategy;
+  uint64_t totalSizeForDataStructures;
+  uint64_t preAllocPageSizeCnt;
+  uint64_t pageSize;
+  uint64_t numPartitions;
 };
 
 /**
- * @brief Inserts the key into the hash table and returns a pointer to a free memory space
+ * @brief Inserts the key into the hash table and returns a pointer to a free
+ * memory space
  * @param ptrLocalHashTable
  * @param key
  * @return void* / MemRef
  */
-void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key);
-}// namespace NES::Runtime::Execution::Operators
+void *insertFunctionProxy(void *ptrLocalHashTable, uint64_t key);
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_

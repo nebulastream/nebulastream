@@ -28,18 +28,18 @@ using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
  * @brief Node representing logical sink operator
  */
 class SinkLogicalOperator : public LogicalUnaryOperator {
-  public:
-    SinkLogicalOperator(SinkDescriptorPtr const& sinkDescriptor, OperatorId id);
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    std::string toString() const override;
-    SinkDescriptorPtr getSinkDescriptor() const;
-    void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
-    OperatorPtr copy() override;
-    void inferStringSignature() override;
+public:
+  SinkLogicalOperator(SinkDescriptorPtr const &sinkDescriptor, OperatorId id);
+  [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  std::string toString() const override;
+  SinkDescriptorPtr getSinkDescriptor() const;
+  void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
+  OperatorPtr copy() override;
+  void inferStringSignature() override;
 
-  private:
-    SinkDescriptorPtr sinkDescriptor;
+private:
+  SinkDescriptorPtr sinkDescriptor;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKLOGICALOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKLOGICALOPERATOR_HPP_

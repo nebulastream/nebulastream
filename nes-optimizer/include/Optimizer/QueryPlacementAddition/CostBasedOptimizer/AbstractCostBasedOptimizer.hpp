@@ -23,24 +23,26 @@
 
 namespace NES::Optimizer {
 /**
- * A placement optimizer is only responsible for mathematical optimization of a given candidate.
+ * A placement optimizer is only responsible for mathematical optimization of a
+ * given candidate.
  */
 class AbstractCostBasedOptimizer {
-  public:
-    AbstractCostBasedOptimizer(const std::set<LogicalOperatorPtr>& pinnedUpstreamOperators,
-                               const std::set<LogicalOperatorPtr>& pinnedDownstreamOperators);
+public:
+  AbstractCostBasedOptimizer(
+      const std::set<LogicalOperatorPtr> &pinnedUpstreamOperators,
+      const std::set<LogicalOperatorPtr> &pinnedDownstreamOperators);
 
-    /**
-     * @brief search for placement candidate with minimum cost.
-     * @return a placement matrix of a candidate
-     */
-    virtual PlacementMatrix optimize() = 0;
+  /**
+   * @brief search for placement candidate with minimum cost.
+   * @return a placement matrix of a candidate
+   */
+  virtual PlacementMatrix optimize() = 0;
 
-  protected:
-    std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
-    std::set<LogicalOperatorPtr> pinnedDownstreamOperators;
+protected:
+  std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
+  std::set<LogicalOperatorPtr> pinnedDownstreamOperators;
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTBASEDOPTIMIZER_ABSTRACTCOSTBASEDOPTIMIZER_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTBASEDOPTIMIZER_ABSTRACTCOSTBASEDOPTIMIZER_HPP_

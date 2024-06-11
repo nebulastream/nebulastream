@@ -22,15 +22,17 @@ class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 
 class SourceDescriptorPlugin {
-  public:
-    SourceDescriptorPlugin() = default;
-    virtual SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourceTypePtr physicalSource) = 0;
+public:
+  SourceDescriptorPlugin() = default;
+  virtual SourceDescriptorPtr create(SchemaPtr schema,
+                                     PhysicalSourceTypePtr physicalSource) = 0;
 
-    virtual ~SourceDescriptorPlugin() = default;
+  virtual ~SourceDescriptorPlugin() = default;
 };
 
-using SourceDescriptorPluginRegistry = Util::PluginRegistry<SourceDescriptorPlugin>;
+using SourceDescriptorPluginRegistry =
+    Util::PluginRegistry<SourceDescriptorPlugin>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTORPLUGIN_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTORPLUGIN_HPP_

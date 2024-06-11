@@ -18,13 +18,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <memory>
 
-#define FORWARD_DECLARE_CLASS_UP(T)                                                                                              \
-    class T;                                                                                                                     \
-    using T##Ptr = std::unique_ptr<T>
+#define FORWARD_DECLARE_CLASS_UP(T)                                            \
+  class T;                                                                     \
+  using T##Ptr = std::unique_ptr<T>
 
-#define FORWARD_DECLARE_CLASS_SP(T)                                                                                              \
-    class T;                                                                                                                     \
-    using T##Ptr = std::shared_ptr<T>
+#define FORWARD_DECLARE_CLASS_SP(T)                                            \
+  class T;                                                                     \
+  using T##Ptr = std::shared_ptr<T>
 
 namespace NES::Network {
 class ExchangeProtocol;
@@ -36,7 +36,7 @@ FORWARD_DECLARE_CLASS_SP(NetworkSource);
 FORWARD_DECLARE_CLASS_SP(NetworkSink);
 FORWARD_DECLARE_CLASS_SP(NetworkManager);
 FORWARD_DECLARE_CLASS_SP(PartitionManager);
-}// namespace NES::Network
+} // namespace NES::Network
 #undef FORWARD_DECLARE_CLASS_UP
 #undef FORWARD_DECLARE_CLASS_SP
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_

@@ -23,15 +23,16 @@ namespace NES::Runtime::Execution::Expressions {
  * ether the leftSubExpression or rightSubExpression returns true.
  */
 class OrExpression : public Expression {
-  public:
-    OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+public:
+  OrExpression(ExpressionPtr leftSubExpression,
+               ExpressionPtr rightSubExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSION_HPP_

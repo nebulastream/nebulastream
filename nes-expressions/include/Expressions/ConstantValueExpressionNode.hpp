@@ -22,57 +22,59 @@ class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /**
- * @brief This expression node represents a constant value and a fixed data type.
- * Thus the samp of this expression is always fixed.
+ * @brief This expression node represents a constant value and a fixed data
+ * type. Thus the samp of this expression is always fixed.
  */
 class ConstantValueExpressionNode : public ExpressionNode {
-  public:
-    /**
-     * @brief Factory method to create a ConstantValueExpressionNode.
-     */
-    static ExpressionNodePtr create(ValueTypePtr const& constantValue);
-    ~ConstantValueExpressionNode() noexcept override = default;
+public:
+  /**
+   * @brief Factory method to create a ConstantValueExpressionNode.
+   */
+  static ExpressionNodePtr create(ValueTypePtr const &constantValue);
+  ~ConstantValueExpressionNode() noexcept override = default;
 
-    /**
-     * @brief Returns the constant value.
-     */
-    ValueTypePtr getConstantValue() const;
+  /**
+   * @brief Returns the constant value.
+   */
+  ValueTypePtr getConstantValue() const;
 
-    /**
-     * @brief On a constant value expression infer stamp has not to perform any action as its result type is always constant.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief On a constant value expression infer stamp has not to perform any
+   * action as its result type is always constant.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-     * @brief Creates a string of the value and the type.
-     * @return
-     */
-    std::string toString() const override;
+  /**
+   * @brief Creates a string of the value and the type.
+   * @return
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief Compares if another node is equal to this constant value expression.
-     * @param otherNode
-     * @return true if they are equal
-     */
-    bool equal(NodePtr const& rhs) const override;
+  /**
+   * @brief Compares if another node is equal to this constant value expression.
+   * @param otherNode
+   * @return true if they are equal
+   */
+  bool equal(NodePtr const &rhs) const override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  protected:
-    explicit ConstantValueExpressionNode(const ConstantValueExpressionNode* other);
+protected:
+  explicit ConstantValueExpressionNode(
+      const ConstantValueExpressionNode *other);
 
-  private:
-    explicit ConstantValueExpressionNode(ValueTypePtr const& constantValue);
-    // Value of this expression
-    ValueTypePtr constantValue;
+private:
+  explicit ConstantValueExpressionNode(ValueTypePtr const &constantValue);
+  // Value of this expression
+  ValueTypePtr constantValue;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_

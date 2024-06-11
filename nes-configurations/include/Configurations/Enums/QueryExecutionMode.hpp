@@ -18,14 +18,14 @@
 #include <cstdint>
 namespace NES::Runtime {
 enum class QueryExecutionMode : uint8_t {
-    /// MPMC work queue
-    Dynamic,
-    /// operator-to-thread executor
-    Static,
-    /// currently not supported
-    NumaAware,
-    Invalid
+  /// MPMC work queue
+  Dynamic,
+  /// operator-to-thread executor
+  Static,
+  /// currently not supported
+  NumaAware,
+  Invalid
 };
 }
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_

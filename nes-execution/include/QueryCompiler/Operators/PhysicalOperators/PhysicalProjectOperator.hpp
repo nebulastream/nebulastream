@@ -22,31 +22,30 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Physical projection operator.
  */
 class PhysicalProjectOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalProjectOperator(OperatorId id,
-                            StatisticId statisticId,
-                            SchemaPtr inputSchema,
-                            SchemaPtr outputSchema,
-                            std::vector<ExpressionNodePtr> expressions);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const std::vector<ExpressionNodePtr>& expressions);
-    static PhysicalOperatorPtr
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
-    /**
-     * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<ExpressionNodePtr>
-     */
-    std::vector<ExpressionNodePtr> getExpressions();
-    std::string toString() const override;
-    OperatorPtr copy() override;
+public:
+  PhysicalProjectOperator(OperatorId id, StatisticId statisticId,
+                          SchemaPtr inputSchema, SchemaPtr outputSchema,
+                          std::vector<ExpressionNodePtr> expressions);
+  static PhysicalOperatorPtr
+  create(OperatorId id, StatisticId statisticId, const SchemaPtr &inputSchema,
+         const SchemaPtr &outputSchema,
+         const std::vector<ExpressionNodePtr> &expressions);
+  static PhysicalOperatorPtr create(StatisticId statisticId,
+                                    SchemaPtr inputSchema,
+                                    SchemaPtr outputSchema,
+                                    std::vector<ExpressionNodePtr> expressions);
+  /**
+   * @brief returns the list of fields that remain in the output schema.
+   * @return  std::vector<ExpressionNodePtr>
+   */
+  std::vector<ExpressionNodePtr> getExpressions();
+  std::string toString() const override;
+  OperatorPtr copy() override;
 
-  private:
-    std::vector<ExpressionNodePtr> expressions;
+private:
+  std::vector<ExpressionNodePtr> expressions;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_

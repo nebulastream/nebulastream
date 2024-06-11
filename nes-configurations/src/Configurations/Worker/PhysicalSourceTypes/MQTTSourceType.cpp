@@ -19,218 +19,306 @@
 
 namespace NES {
 
+MQTTSourceTypePtr MQTTSourceType::create(const std::string &logicalSourceName,
+                                         const std::string &physicalSourceName,
+                                         Yaml::Node yamlConfig) {
+  return std::make_shared<MQTTSourceType>(MQTTSourceType(
+      logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+}
+
 MQTTSourceTypePtr
-MQTTSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
-    return std::make_shared<MQTTSourceType>(MQTTSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+MQTTSourceType::create(const std::string &logicalSourceName,
+                       const std::string &physicalSourceName,
+                       std::map<std::string, std::string> sourceConfigMap) {
+  return std::make_shared<MQTTSourceType>(MQTTSourceType(
+      logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
-MQTTSourceTypePtr MQTTSourceType::create(const std::string& logicalSourceName,
-                                         const std::string& physicalSourceName,
-                                         std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<MQTTSourceType>(MQTTSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
+MQTTSourceTypePtr
+MQTTSourceType::create(const std::string &logicalSourceName,
+                       const std::string &physicalSourceName) {
+  return std::make_shared<MQTTSourceType>(
+      MQTTSourceType(logicalSourceName, physicalSourceName));
 }
 
-MQTTSourceTypePtr MQTTSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
-    return std::make_shared<MQTTSourceType>(MQTTSourceType(logicalSourceName, physicalSourceName));
-}
-
-MQTTSourceType::MQTTSourceType(const std::string& logicalSourceName,
-                               const std::string& physicalSourceName,
-                               std::map<std::string, std::string> sourceConfigMap)
+MQTTSourceType::MQTTSourceType(
+    const std::string &logicalSourceName, const std::string &physicalSourceName,
+    std::map<std::string, std::string> sourceConfigMap)
     : MQTTSourceType(logicalSourceName, physicalSourceName) {
-    NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from command line args.");
+  NES_INFO("MQTTSourceConfig: Init default MQTT source config object with "
+           "values from command line args.");
 
-    if (sourceConfigMap.find(Configurations::URL_CONFIG) != sourceConfigMap.end()) {
-        url->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
-    }
-    if (sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG) != sourceConfigMap.end()) {
-        clientId->setValue(sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG)->second);
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
-    }
-    if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no UserName defined! Please define a UserName.");
-    }
-    if (sourceConfigMap.find(Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find(Configurations::TOPIC_CONFIG)->second);
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no topic defined! Please define a topic.");
-    }
-    if (sourceConfigMap.find(Configurations::QOS_CONFIG) != sourceConfigMap.end()) {
-        qos->setValue(std::stoi(sourceConfigMap.find(Configurations::QOS_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG) != sourceConfigMap.end()) {
-        cleanSession->setValue((sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG)->second == "true"));
-    }
-    if (sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
-        flushIntervalMS->setValue(std::stof(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
-        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
-    }
+  if (sourceConfigMap.find(Configurations::URL_CONFIG) !=
+      sourceConfigMap.end()) {
+    url->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no Url defined! Please define a Url.");
+  }
+  if (sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG) !=
+      sourceConfigMap.end()) {
+    clientId->setValue(
+        sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG)->second);
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
+  }
+  if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) !=
+      sourceConfigMap.end()) {
+    userName->setValue(
+        sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no UserName defined! Please define a UserName.");
+  }
+  if (sourceConfigMap.find(Configurations::TOPIC_CONFIG) !=
+      sourceConfigMap.end()) {
+    topic->setValue(sourceConfigMap.find(Configurations::TOPIC_CONFIG)->second);
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no topic defined! Please define a topic.");
+  }
+  if (sourceConfigMap.find(Configurations::QOS_CONFIG) !=
+      sourceConfigMap.end()) {
+    qos->setValue(
+        std::stoi(sourceConfigMap.find(Configurations::QOS_CONFIG)->second));
+  }
+  if (sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG) !=
+      sourceConfigMap.end()) {
+    cleanSession->setValue(
+        (sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG)->second ==
+         "true"));
+  }
+  if (sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG) !=
+      sourceConfigMap.end()) {
+    flushIntervalMS->setValue(std::stof(
+        sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)
+            ->second));
+  }
+  if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) !=
+      sourceConfigMap.end()) {
+    inputFormat->setInputFormatEnum(
+        sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
+  }
 }
 
-MQTTSourceType::MQTTSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+MQTTSourceType::MQTTSourceType(const std::string &logicalSourceName,
+                               const std::string &physicalSourceName,
+                               Yaml::Node yamlConfig)
     : MQTTSourceType(logicalSourceName, physicalSourceName) {
-    NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from YAML file.");
+  NES_INFO("MQTTSourceConfig: Init default MQTT source config object with "
+           "values from YAML file.");
 
-    if (!yamlConfig[Configurations::URL_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::URL_CONFIG].As<std::string>() != "\n") {
-        url->setValue(yamlConfig[Configurations::URL_CONFIG].As<std::string>());
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
-    }
-    if (!yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>() != "\n") {
-        clientId->setValue(yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>());
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
-    }
-    if (!yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>() != "\n") {
-        userName->setValue(yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no UserName defined! Please define a UserName.");
-    }
-    if (!yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>() != "\n") {
-        topic->setValue(yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>());
-    } else {
-        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no topic defined! Please define a topic.");
-    }
-    if (!yamlConfig[Configurations::QOS_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::QOS_CONFIG].As<std::string>() != "\n") {
-        qos->setValue(yamlConfig[Configurations::QOS_CONFIG].As<uint16_t>());
-    }
-    if (!yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<std::string>() != "\n") {
-        cleanSession->setValue(yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<bool>());
-    }
-    if (!yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>() != "\n") {
-        flushIntervalMS->setValue(std::stof(yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>()));
-    }
-    if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
-        inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
-    }
+  if (!yamlConfig[Configurations::URL_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::URL_CONFIG].As<std::string>() != "\n") {
+    url->setValue(yamlConfig[Configurations::URL_CONFIG].As<std::string>());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no Url defined! Please define a Url.");
+  }
+  if (!yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>() != "\n") {
+    clientId->setValue(
+        yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
+  }
+  if (!yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>() != "\n") {
+    userName->setValue(
+        yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no UserName defined! Please define a UserName.");
+  }
+  if (!yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>() != "\n") {
+    topic->setValue(yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "MQTTSourceConfig:: no topic defined! Please define a topic.");
+  }
+  if (!yamlConfig[Configurations::QOS_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::QOS_CONFIG].As<std::string>() != "\n") {
+    qos->setValue(yamlConfig[Configurations::QOS_CONFIG].As<uint16_t>());
+  }
+  if (!yamlConfig[Configurations::CLEAN_SESSION_CONFIG]
+           .As<std::string>()
+           .empty() &&
+      yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<std::string>() !=
+          "\n") {
+    cleanSession->setValue(
+        yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<bool>());
+  }
+  if (!yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG]
+           .As<std::string>()
+           .empty() &&
+      yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>() !=
+          "\n") {
+    flushIntervalMS->setValue(
+        std::stof(yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG]
+                      .As<std::string>()));
+  }
+  if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG]
+           .As<std::string>()
+           .empty() &&
+      yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() !=
+          "\n") {
+    inputFormat->setInputFormatEnum(
+        yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
+  }
 }
 
-MQTTSourceType::MQTTSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::MQTT_SOURCE),
+MQTTSourceType::MQTTSourceType(const std::string &logicalSourceName,
+                               const std::string &physicalSourceName)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName,
+                         SourceType::MQTT_SOURCE),
       url(Configurations::ConfigurationOption<std::string>::create(
-          Configurations::URL_CONFIG,
-          "ws://127.0.0.1:9001",
-          "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
+          Configurations::URL_CONFIG, "ws://127.0.0.1:9001",
+          "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, "
+          "KafkaSource")),
       clientId(Configurations::ConfigurationOption<std::string>::create(
-          Configurations::CLIENT_ID_CONFIG,
-          "testClient",
-          "clientId, needed for: MQTTSource (needs to be unique for each connected "
+          Configurations::CLIENT_ID_CONFIG, "testClient",
+          "clientId, needed for: MQTTSource (needs to be unique for each "
+          "connected "
           "MQTTSource), KafkaSource (use this for groupId)")),
       userName(Configurations::ConfigurationOption<std::string>::create(
-          Configurations::USER_NAME_CONFIG,
-          "testUser",
-          "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(Configurations::ConfigurationOption<std::string>::create(Configurations::TOPIC_CONFIG,
-                                                                     "demoTownSensorData",
-                                                                     "topic to listen to, needed for: MQTTSource, KafkaSource")),
-      qos(Configurations::ConfigurationOption<uint32_t>::create(Configurations::QOS_CONFIG,
-                                                                2,
-                                                                "quality of service, needed for: MQTTSource")),
+          Configurations::USER_NAME_CONFIG, "testUser",
+          "userName, needed for: MQTTSource (can be chosen arbitrary), "
+          "OPCSource")),
+      topic(Configurations::ConfigurationOption<std::string>::create(
+          Configurations::TOPIC_CONFIG, "demoTownSensorData",
+          "topic to listen to, needed for: MQTTSource, KafkaSource")),
+      qos(Configurations::ConfigurationOption<uint32_t>::create(
+          Configurations::QOS_CONFIG, 2,
+          "quality of service, needed for: MQTTSource")),
       cleanSession(Configurations::ConfigurationOption<bool>::create(
-          Configurations::CLEAN_SESSION_CONFIG,
-          true,
-          "cleanSession true = clean up session after client loses connection, false = keep data for "
-          "client after connection loss (persistent session), needed for: MQTTSource")),
-      flushIntervalMS(Configurations::ConfigurationOption<float>::create("flushIntervalMS",
-                                                                         -1,
-                                                                         "tupleBuffer flush interval in milliseconds")),
-      inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
-                                                                                           Configurations::InputFormat::JSON,
-                                                                                           "input data format")) {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
+          Configurations::CLEAN_SESSION_CONFIG, true,
+          "cleanSession true = clean up session after client loses connection, "
+          "false = keep data for "
+          "client after connection loss (persistent session), needed for: "
+          "MQTTSource")),
+      flushIntervalMS(Configurations::ConfigurationOption<float>::create(
+          "flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
+      inputFormat(
+          Configurations::ConfigurationOption<Configurations::InputFormat>::
+              create(Configurations::INPUT_FORMAT_CONFIG,
+                     Configurations::InputFormat::JSON, "input data format")) {
+  NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
 std::string MQTTSourceType::toString() {
-    std::stringstream ss;
-    ss << "MQTTSourceType => {\n";
-    ss << Configurations::URL_CONFIG + ":" + url->toStringNameCurrentValue();
-    ss << Configurations::CLIENT_ID_CONFIG + ":" + clientId->toStringNameCurrentValue();
-    ss << Configurations::USER_NAME_CONFIG + ":" + userName->toStringNameCurrentValue();
-    ss << Configurations::TOPIC_CONFIG + ":" + topic->toStringNameCurrentValue();
-    ss << Configurations::QOS_CONFIG + ":" + qos->toStringNameCurrentValue();
-    ss << Configurations::CLEAN_SESSION_CONFIG + ":" + cleanSession->toStringNameCurrentValue();
-    ss << Configurations::FLUSH_INTERVAL_MS_CONFIG + ":" + flushIntervalMS->toStringNameCurrentValue();
-    ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValueEnum();
-    ss << "\n}";
-    return ss.str();
+  std::stringstream ss;
+  ss << "MQTTSourceType => {\n";
+  ss << Configurations::URL_CONFIG + ":" + url->toStringNameCurrentValue();
+  ss << Configurations::CLIENT_ID_CONFIG + ":" +
+            clientId->toStringNameCurrentValue();
+  ss << Configurations::USER_NAME_CONFIG + ":" +
+            userName->toStringNameCurrentValue();
+  ss << Configurations::TOPIC_CONFIG + ":" + topic->toStringNameCurrentValue();
+  ss << Configurations::QOS_CONFIG + ":" + qos->toStringNameCurrentValue();
+  ss << Configurations::CLEAN_SESSION_CONFIG + ":" +
+            cleanSession->toStringNameCurrentValue();
+  ss << Configurations::FLUSH_INTERVAL_MS_CONFIG + ":" +
+            flushIntervalMS->toStringNameCurrentValue();
+  ss << Configurations::INPUT_FORMAT_CONFIG + ":" +
+            inputFormat->toStringNameCurrentValueEnum();
+  ss << "\n}";
+  return ss.str();
 }
 
-bool MQTTSourceType::equal(const PhysicalSourceTypePtr& other) {
-    if (!other->instanceOf<MQTTSourceType>()) {
-        return false;
-    }
-    auto otherSourceConfig = other->as<MQTTSourceType>();
-    return url->getValue() == otherSourceConfig->url->getValue()
-        && clientId->getValue() == otherSourceConfig->clientId->getValue()
-        && userName->getValue() == otherSourceConfig->userName->getValue()
-        && topic->getValue() == otherSourceConfig->topic->getValue() && qos->getValue() == otherSourceConfig->qos->getValue()
-        && cleanSession->getValue() == otherSourceConfig->cleanSession->getValue()
-        && flushIntervalMS->getValue() == otherSourceConfig->flushIntervalMS->getValue()
-        && inputFormat->getValue() == otherSourceConfig->inputFormat->getValue();
+bool MQTTSourceType::equal(const PhysicalSourceTypePtr &other) {
+  if (!other->instanceOf<MQTTSourceType>()) {
+    return false;
+  }
+  auto otherSourceConfig = other->as<MQTTSourceType>();
+  return url->getValue() == otherSourceConfig->url->getValue() &&
+         clientId->getValue() == otherSourceConfig->clientId->getValue() &&
+         userName->getValue() == otherSourceConfig->userName->getValue() &&
+         topic->getValue() == otherSourceConfig->topic->getValue() &&
+         qos->getValue() == otherSourceConfig->qos->getValue() &&
+         cleanSession->getValue() ==
+             otherSourceConfig->cleanSession->getValue() &&
+         flushIntervalMS->getValue() ==
+             otherSourceConfig->flushIntervalMS->getValue() &&
+         inputFormat->getValue() == otherSourceConfig->inputFormat->getValue();
 }
 
-Configurations::StringConfigOption MQTTSourceType::getUrl() const { return url; }
+Configurations::StringConfigOption MQTTSourceType::getUrl() const {
+  return url;
+}
 
-Configurations::StringConfigOption MQTTSourceType::getClientId() const { return clientId; }
+Configurations::StringConfigOption MQTTSourceType::getClientId() const {
+  return clientId;
+}
 
-Configurations::StringConfigOption MQTTSourceType::getUserName() const { return userName; }
+Configurations::StringConfigOption MQTTSourceType::getUserName() const {
+  return userName;
+}
 
-Configurations::StringConfigOption MQTTSourceType::getTopic() const { return topic; }
+Configurations::StringConfigOption MQTTSourceType::getTopic() const {
+  return topic;
+}
 
 Configurations::IntConfigOption MQTTSourceType::getQos() const { return qos; }
 
-Configurations::BoolConfigOption MQTTSourceType::getCleanSession() const { return cleanSession; }
+Configurations::BoolConfigOption MQTTSourceType::getCleanSession() const {
+  return cleanSession;
+}
 
-Configurations::FloatConfigOption MQTTSourceType::getFlushIntervalMS() const { return flushIntervalMS; }
+Configurations::FloatConfigOption MQTTSourceType::getFlushIntervalMS() const {
+  return flushIntervalMS;
+}
 
-Configurations::InputFormatConfigOption MQTTSourceType::getInputFormat() const { return inputFormat; }
+Configurations::InputFormatConfigOption MQTTSourceType::getInputFormat() const {
+  return inputFormat;
+}
 
-void MQTTSourceType::setUrl(std::string urlValue) { url->setValue(std::move(urlValue)); }
+void MQTTSourceType::setUrl(std::string urlValue) {
+  url->setValue(std::move(urlValue));
+}
 
-void MQTTSourceType::setClientId(std::string clientIdValue) { clientId->setValue(std::move(clientIdValue)); }
+void MQTTSourceType::setClientId(std::string clientIdValue) {
+  clientId->setValue(std::move(clientIdValue));
+}
 
-void MQTTSourceType::setUserName(std::string userNameValue) { userName->setValue(std::move(userNameValue)); }
+void MQTTSourceType::setUserName(std::string userNameValue) {
+  userName->setValue(std::move(userNameValue));
+}
 
-void MQTTSourceType::setTopic(std::string topicValue) { topic->setValue(std::move(topicValue)); }
+void MQTTSourceType::setTopic(std::string topicValue) {
+  topic->setValue(std::move(topicValue));
+}
 
 void MQTTSourceType::setQos(uint32_t qosValue) { qos->setValue(qosValue); }
 
-void MQTTSourceType::setCleanSession(bool cleanSessionValue) { cleanSession->setValue(cleanSessionValue); }
-
-void MQTTSourceType::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
-
-void MQTTSourceType::setInputFormat(std::string inputFormatValue) {
-    inputFormat->setInputFormatEnum(std::move(inputFormatValue));
+void MQTTSourceType::setCleanSession(bool cleanSessionValue) {
+  cleanSession->setValue(cleanSessionValue);
 }
 
-void MQTTSourceType::setInputFormat(Configurations::InputFormat inputFormatValue) {
-    inputFormat->setValue(std::move(inputFormatValue));
+void MQTTSourceType::setFlushIntervalMS(float flushIntervalMs) {
+  flushIntervalMS->setValue(flushIntervalMs);
+}
+
+void MQTTSourceType::setInputFormat(std::string inputFormatValue) {
+  inputFormat->setInputFormatEnum(std::move(inputFormatValue));
+}
+
+void MQTTSourceType::setInputFormat(
+    Configurations::InputFormat inputFormatValue) {
+  inputFormat->setValue(std::move(inputFormatValue));
 }
 
 void MQTTSourceType::reset() {
-    setUrl(url->getDefaultValue());
-    setClientId(clientId->getDefaultValue());
-    setUserName(userName->getDefaultValue());
-    setTopic(topic->getDefaultValue());
-    setQos(qos->getDefaultValue());
-    setCleanSession(cleanSession->getDefaultValue());
-    setFlushIntervalMS(flushIntervalMS->getDefaultValue());
-    setInputFormat(inputFormat->getDefaultValue());
+  setUrl(url->getDefaultValue());
+  setClientId(clientId->getDefaultValue());
+  setUserName(userName->getDefaultValue());
+  setTopic(topic->getDefaultValue());
+  setQos(qos->getDefaultValue());
+  setCleanSession(cleanSession->getDefaultValue());
+  setFlushIntervalMS(flushIntervalMS->getDefaultValue());
+  setInputFormat(inputFormat->getDefaultValue());
 }
 
-}// namespace NES
+} // namespace NES

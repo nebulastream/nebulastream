@@ -25,23 +25,28 @@ namespace NES {
 
 NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {
-    serializedSchema = std::make_shared<SerializableSchema>();
+  serializedSchema = std::make_shared<SerializableSchema>();
 }
 
-std::string NesFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
-    std::string out((char*) inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * getSchemaPtr()->getSchemaSizeInBytes());
-    return out;
+std::string NesFormat::getFormattedBuffer(Runtime::TupleBuffer &inputBuffer) {
+  std::string out((char *)inputBuffer.getBuffer(),
+                  inputBuffer.getNumberOfTuples() *
+                      getSchemaPtr()->getSchemaSizeInBytes());
+  return out;
 }
 
 std::string NesFormat::toString() { return "NES_FORMAT"; }
 
 FormatTypes NesFormat::getSinkFormat() { return FormatTypes::NES_FORMAT; }
 
-FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
-
-std::string NesFormat::getFormattedSchema() {
-    SerializableSchemaPtr protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
-    return protoBuff->SerializeAsString();
+FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer &) {
+  NES_NOT_IMPLEMENTED();
 }
 
-}// namespace NES
+std::string NesFormat::getFormattedSchema() {
+  SerializableSchemaPtr protoBuff =
+      SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
+  return protoBuff->SerializeAsString();
+}
+
+} // namespace NES

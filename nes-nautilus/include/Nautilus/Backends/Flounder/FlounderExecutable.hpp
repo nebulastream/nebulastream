@@ -24,21 +24,22 @@ class Executable;
 namespace NES::Nautilus::Backends::Flounder {
 
 /**
- * @brief Executable that calls into a code fragment that is compiled with Flounder.
+ * @brief Executable that calls into a code fragment that is compiled with
+ * Flounder.
  */
 class FlounderExecutable : public Executable {
-  public:
-    explicit FlounderExecutable(std::unique_ptr<flounder::Executable> engine);
-    ~FlounderExecutable() noexcept override;
+public:
+  explicit FlounderExecutable(std::unique_ptr<flounder::Executable> engine);
+  ~FlounderExecutable() noexcept override;
 
-  protected:
-    void* getInvocableFunctionPtr(const std::string& member) override;
+protected:
+  void *getInvocableFunctionPtr(const std::string &member) override;
 
-  public:
-    bool hasInvocableFunctionPtr() override;
+public:
+  bool hasInvocableFunctionPtr() override;
 
-  private:
-    std::unique_ptr<flounder::Executable> engine;
+private:
+  std::unique_ptr<flounder::Executable> engine;
 };
-}// namespace NES::Nautilus::Backends::Flounder
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_
+} // namespace NES::Nautilus::Backends::Flounder
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_

@@ -14,23 +14,26 @@
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::RequestProcessor {
-AbstractUniRequest::AbstractUniRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries)
+AbstractUniRequest::AbstractUniRequest(
+    const std::vector<ResourceType> &requiredResources, uint8_t maxRetries)
     : AbstractRequest(maxRetries), StorageResourceLocker(requiredResources) {}
 
-std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandlerPtr& storageHandle) {
-    if (requestId == INVALID_REQUEST_ID) {
-        NES_THROW_RUNTIME_ERROR("Trying to execute a request before its id has been set");
-    }
-    //acquire locks and perform other tasks to prepare for execution
-    preExecution(storageHandle);
+std::vector<AbstractRequestPtr>
+AbstractUniRequest::execute(const StorageHandlerPtr &storageHandle) {
+  if (requestId == INVALID_REQUEST_ID) {
+    NES_THROW_RUNTIME_ERROR(
+        "Trying to execute a request before its id has been set");
+  }
+  // acquire locks and perform other tasks to prepare for execution
+  preExecution(storageHandle);
 
-    //execute the request logic
-    auto followUpRequests = executeRequestLogic(storageHandle);
+  // execute the request logic
+  auto followUpRequests = executeRequestLogic(storageHandle);
 
-    //release locks
-    postExecution(storageHandle);
-    return followUpRequests;
+  // release locks
+  postExecution(storageHandle);
+  return followUpRequests;
 }
 
 RequestId AbstractUniRequest::getResourceLockingId() { return requestId; }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

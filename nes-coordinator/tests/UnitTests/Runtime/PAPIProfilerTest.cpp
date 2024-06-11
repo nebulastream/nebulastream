@@ -23,24 +23,27 @@ using namespace std;
 namespace NES {
 
 class PapiProfilerTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("PapiProfilerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("SetUpTestCase PapiProfilerTest test case.");
-    }
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("PapiProfilerTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("SetUpTestCase PapiProfilerTest test case.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase PapiProfilerTest test case."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("TearDownTestCase PapiProfilerTest test case.");
+  }
 };
 
 TEST_F(PapiProfilerTest, testSampling) {
-    using namespace Runtime::Profiler;
-    std::ofstream buffer("/dev/null");
-    Runtime::Profiler::PapiCpuProfiler profiler(PapiCpuProfiler::Presets::CachePresets, std::move(buffer), 0, 0);
-    auto startTs = profiler.startSampling();
-    sleep(1);
-    auto stopTs = profiler.stopSampling(1);
-    ASSERT_TRUE(startTs > 0 && stopTs > 0);
+  using namespace Runtime::Profiler;
+  std::ofstream buffer("/dev/null");
+  Runtime::Profiler::PapiCpuProfiler profiler(
+      PapiCpuProfiler::Presets::CachePresets, std::move(buffer), 0, 0);
+  auto startTs = profiler.startSampling();
+  sleep(1);
+  auto stopTs = profiler.stopSampling(1);
+  ASSERT_TRUE(startTs > 0 && stopTs > 0);
 }
-}// namespace NES
+} // namespace NES

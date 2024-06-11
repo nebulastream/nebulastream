@@ -16,24 +16,32 @@
 #include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema) {
-    return std::make_shared<PhysicalDemultiplexOperator>(id, statisticId, inputSchema);
+PhysicalOperatorPtr
+PhysicalDemultiplexOperator::create(OperatorId id, StatisticId statisticId,
+                                    const SchemaPtr &inputSchema) {
+  return std::make_shared<PhysicalDemultiplexOperator>(id, statisticId,
+                                                       inputSchema);
 }
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(StatisticId statisticId, SchemaPtr inputSchema) {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema));
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(StatisticId statisticId,
+                                                        SchemaPtr inputSchema) {
+  return create(getNextOperatorId(), statisticId, std::move(inputSchema));
 }
 
-PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
+PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(
+    OperatorId id, StatisticId statisticId, const SchemaPtr &inputSchema)
+    : Operator(id, statisticId),
+      PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
 
 std::string PhysicalDemultiplexOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalDemultiplexOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalDemultiplexOperator:\n";
+  out << PhysicalUnaryOperator::toString();
+  return out.str();
 }
 
-OperatorPtr PhysicalDemultiplexOperator::copy() { return create(id, statisticId, inputSchema); }
+OperatorPtr PhysicalDemultiplexOperator::copy() {
+  return create(id, statisticId, inputSchema);
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

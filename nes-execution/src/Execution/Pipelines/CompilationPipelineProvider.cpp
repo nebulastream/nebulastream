@@ -19,12 +19,15 @@
 
 namespace NES::Runtime::Execution {
 
-std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pipeline,
-                                                                             const Nautilus::CompilationOptions& options) {
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, "MLIR", options);
+std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(
+    std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+    const Nautilus::CompilationOptions &options) {
+  return std::make_unique<CompiledExecutablePipelineStage>(pipeline, "MLIR",
+                                                           options);
 }
 
-[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<CompilationPipelineProvider>
+[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<
+    CompilationPipelineProvider>
     compilationPipelineProvider("PipelineCompiler");
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

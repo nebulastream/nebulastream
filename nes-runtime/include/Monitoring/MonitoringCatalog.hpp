@@ -26,35 +26,40 @@ class MonitoringCatalog;
 using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
 
 /**
- * The MonitoringCatalog which is responsible for mapping MetricTypes to the corresponding MetricCollector.
+ * The MonitoringCatalog which is responsible for mapping MetricTypes to the
+ * corresponding MetricCollector.
  */
 class MonitoringCatalog {
-  public:
-    /**
-     * Creates a catalog based on a given map.
-     * @param metricCollectors a map from MetricType to MetricCollector
-     * @return the catalog
-     */
-    static MonitoringCatalogPtr create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors);
+public:
+  /**
+   * Creates a catalog based on a given map.
+   * @param metricCollectors a map from MetricType to MetricCollector
+   * @return the catalog
+   */
+  static MonitoringCatalogPtr
+  create(const std::unordered_map<MetricType, MetricCollectorPtr>
+             &metricCollectors);
 
-    /**
-     * Creates a MonitoringCatalog with a pre-initialized map that contains basic MetricTypes and their collectors.
-     * @return the catalog
-     */
-    static MonitoringCatalogPtr defaultCatalog();
+  /**
+   * Creates a MonitoringCatalog with a pre-initialized map that contains basic
+   * MetricTypes and their collectors.
+   * @return the catalog
+   */
+  static MonitoringCatalogPtr defaultCatalog();
 
-    /**
-     * Get the collector for a specific MetricType
-     * @param metricType
-     * @return the ptr to MetricCollector
-     */
-    MetricCollectorPtr getMetricCollector(MetricType metricType);
+  /**
+   * Get the collector for a specific MetricType
+   * @param metricType
+   * @return the ptr to MetricCollector
+   */
+  MetricCollectorPtr getMetricCollector(MetricType metricType);
 
-  private:
-    explicit MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>&);
-    std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
+private:
+  explicit MonitoringCatalog(
+      const std::unordered_map<MetricType, MetricCollectorPtr> &);
+  std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_

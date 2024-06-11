@@ -25,62 +25,63 @@
 namespace NES::Nautilus {
 
 /**
- * @brief Base type for all lists. A list can have different values that all have the same underlying type.
- * LISTs are typically used to store arrays of numbers.
+ * @brief Base type for all lists. A list can have different values that all
+ * have the same underlying type. LISTs are typically used to store arrays of
+ * numbers.
  */
 class List : public Nautilus::Any {
+public:
+  static const inline auto type = TypeIdentifier::create<List>();
+
+  /**
+   * @brief Iterator over all entries in the list.
+   */
+  class ListValueIterator {
   public:
-    static const inline auto type = TypeIdentifier::create<List>();
+    ListValueIterator(List &listRef, Value<UInt32> &currentIndex);
+    ListValueIterator &operator++();
+    bool operator==(const ListValueIterator &other) const;
+    Value<> operator*();
 
-    /**
-     * @brief Iterator over all entries in the list.
-     */
-    class ListValueIterator {
-      public:
-        ListValueIterator(List& listRef, Value<UInt32>& currentIndex);
-        ListValueIterator& operator++();
-        bool operator==(const ListValueIterator& other) const;
-        Value<> operator*();
+  private:
+    List &list;
+    Value<UInt32> currentIndex;
+  };
 
-      private:
-        List& list;
-        Value<UInt32> currentIndex;
-    };
+  explicit List(const TypeIdentifier *childType) : Any(childType){};
 
-    explicit List(const TypeIdentifier* childType) : Any(childType){};
+  /**
+   * @brief Return the length of the list.
+   * @return Value<Int32> as length.
+   */
+  virtual Value<UInt32> length() = 0;
 
-    /**
-     * @brief Return the length of the list.
-     * @return Value<Int32> as length.
-     */
-    virtual Value<UInt32> length() = 0;
+  /**
+   * @brief Checks if this lists is equal to another list.
+   * Two lists are equal if they contain equal elements of the same type.
+   * @param otherList
+   * @return Value<Boolean>
+   */
+  virtual Value<Boolean> equals(const Value<List> &otherList) = 0;
 
-    /**
-     * @brief Checks if this lists is equal to another list.
-     * Two lists are equal if they contain equal elements of the same type.
-     * @param otherList
-     * @return Value<Boolean>
-     */
-    virtual Value<Boolean> equals(const Value<List>& otherList) = 0;
+  /**
+   * @brief Reads one element from the text value at a specific index.
+   * @param index as Value<Int32>
+   * @return Value<>
+   */
+  virtual Value<> read(Value<UInt32> &index) const = 0;
 
-    /**
-    * @brief Reads one element from the text value at a specific index.
-    * @param index as Value<Int32>
-    * @return Value<>
-    */
-    virtual Value<> read(Value<UInt32>& index) const = 0;
+  /**
+   * @brief Writes one element a specific index.
+   * @param index as Value<Int32>
+   * @param value as Value<>
+   */
+  virtual void write(Value<UInt32> &index, const Value<> &value) = 0;
 
-    /**
-     * @brief Writes one element a specific index.
-     * @param index as Value<Int32>
-     * @param value as Value<>
-     */
-    virtual void write(Value<UInt32>& index, const Value<>& value) = 0;
+  ListValueIterator begin();
+  ListValueIterator end();
 
-    ListValueIterator begin();
-    ListValueIterator end();
-
-    ~List() override;
+  ~List() override;
 };
 
 /**
@@ -88,65 +89,67 @@ class List : public Nautilus::Any {
  * Currently, lists are restricted to Ints and Floats.
  * @tparam T
  */
-template<typename T>
-concept IsListComponentType = std::is_base_of_v<Int, T> || std::is_same_v<Float, T> || std::is_same_v<T, Double>;
+template <typename T>
+concept IsListComponentType =
+    std::is_base_of_v<Int, T> || std::is_same_v<Float, T> ||
+    std::is_same_v<T, Double>;
 
 /**
  * @brief A typed list that contains values of a specific nautilus data types.
  * @tparam BaseType
  */
-template<IsListComponentType BaseType>
-class TypedList final : public List {
-  public:
-    static const inline auto type = TypeIdentifier::create<TypedList<BaseType>>();
-    /**
-     * @brief Exposes the component type of this TypedList.
-     */
-    using ComponentType = typename BaseType::RawType;
-    /**
-     * @brief Exposes the raw type of this TypedList.
-     */
-    using RawType = ListValue<ComponentType>;
+template <IsListComponentType BaseType> class TypedList final : public List {
+public:
+  static const inline auto type = TypeIdentifier::create<TypedList<BaseType>>();
+  /**
+   * @brief Exposes the component type of this TypedList.
+   */
+  using ComponentType = typename BaseType::RawType;
+  /**
+   * @brief Exposes the raw type of this TypedList.
+   */
+  using RawType = ListValue<ComponentType>;
 
-    /**
-     * @brief Constructor to create a typed list from a reference to the correct raw type.
-     * @param ref
-     */
-    explicit TypedList(TypedRef<RawType> ref);
+  /**
+   * @brief Constructor to create a typed list from a reference to the correct
+   * raw type.
+   * @param ref
+   */
+  explicit TypedList(TypedRef<RawType> ref);
 
-    /**
-     * @brief Return the length of the list.
-     * @return Value<Int32> as length.
-     */
-    Value<UInt32> length() override;
+  /**
+   * @brief Return the length of the list.
+   * @return Value<Int32> as length.
+   */
+  Value<UInt32> length() override;
 
-    /**
-    * @brief Checks if this lists is equal to another list.
-    * Two lists are equal if they contain equal elements of the same type.
-    * @param otherList
-    * @return Value<Boolean>
-    */
-    Value<Boolean> equals(const Value<List>& otherList) override;
+  /**
+   * @brief Checks if this lists is equal to another list.
+   * Two lists are equal if they contain equal elements of the same type.
+   * @param otherList
+   * @return Value<Boolean>
+   */
+  Value<Boolean> equals(const Value<List> &otherList) override;
 
-    /**
-    * @brief Reads one element from the text value at a specific index.
-    * @param index as Value<Int32>
-    * @return Value<>
-    */
-    Value<> read(Value<UInt32>& index) const override;
+  /**
+   * @brief Reads one element from the text value at a specific index.
+   * @param index as Value<Int32>
+   * @return Value<>
+   */
+  Value<> read(Value<UInt32> &index) const override;
 
-    /**
-     * @brief Writes one element a specific index.
-     * @param index as Value<Int32>
-     * @param value as Value<>
-     */
-    void write(Value<UInt32>& index, const Value<>& value) override;
+  /**
+   * @brief Writes one element a specific index.
+   * @param index as Value<Int32>
+   * @param value as Value<>
+   */
+  void write(Value<UInt32> &index, const Value<> &value) override;
 
-    AnyPtr copy() override;
+  AnyPtr copy() override;
 
-  private:
-    const TypedRef<RawType> rawReference;
+private:
+  const TypedRef<RawType> rawReference;
 };
 
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_

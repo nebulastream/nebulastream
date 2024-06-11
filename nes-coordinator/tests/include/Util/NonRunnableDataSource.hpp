@@ -21,44 +21,41 @@
 namespace NES::Testing {
 
 class NonRunnableDataSource : public NES::DefaultSource {
-  public:
-    explicit NonRunnableDataSource(
-        const SchemaPtr& schema,
-        const Runtime::BufferManagerPtr& bufferManager,
-        const Runtime::QueryManagerPtr& queryManager,
-        uint64_t numbersOfBufferToProduce,
-        uint64_t gatheringInterval,
-        OperatorId operatorId,
-        OriginId originId,
-        StatisticId statisticId,
-        size_t numSourceLocalBuffers,
-        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-        NES::Runtime::QueryTerminationType terminationType = NES::Runtime::QueryTerminationType::HardStop);
+public:
+  explicit NonRunnableDataSource(
+      const SchemaPtr &schema, const Runtime::BufferManagerPtr &bufferManager,
+      const Runtime::QueryManagerPtr &queryManager,
+      uint64_t numbersOfBufferToProduce, uint64_t gatheringInterval,
+      OperatorId operatorId, OriginId originId, StatisticId statisticId,
+      size_t numSourceLocalBuffers,
+      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>
+          &successors,
+      NES::Runtime::QueryTerminationType terminationType =
+          NES::Runtime::QueryTerminationType::HardStop);
 
-    void runningRoutine() override;
+  void runningRoutine() override;
 
-    bool stop(Runtime::QueryTerminationType termination) override;
+  bool stop(Runtime::QueryTerminationType termination) override;
 
-    Runtime::MemoryLayouts::TestTupleBuffer getBuffer();
+  Runtime::MemoryLayouts::TestTupleBuffer getBuffer();
 
-    void emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer, bool addBufferMetaData = true);
+  void emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer &buffer,
+                  bool addBufferMetaData = true);
 
-    void emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true);
+  void emitBuffer(Runtime::TupleBuffer &buffer, bool addBufferMetaData = true);
 
-  private:
-    std::promise<bool> canTerminate;
+private:
+  std::promise<bool> canTerminate;
 };
 
-DataSourcePtr
-createNonRunnableSource(const SchemaPtr& schema,
-                        const Runtime::BufferManagerPtr& bufferManager,
-                        const Runtime::QueryManagerPtr& queryManager,
-                        OperatorId operatorId,
-                        OriginId originId,
-                        StatisticId statisticId,
-                        size_t numSourceLocalBuffers,
-                        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                        NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
-}// namespace NES::Testing
+DataSourcePtr createNonRunnableSource(
+    const SchemaPtr &schema, const Runtime::BufferManagerPtr &bufferManager,
+    const Runtime::QueryManagerPtr &queryManager, OperatorId operatorId,
+    OriginId originId, StatisticId statisticId, size_t numSourceLocalBuffers,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>
+        &successors,
+    NES::Runtime::QueryTerminationType terminationType =
+        Runtime::QueryTerminationType::HardStop);
+} // namespace NES::Testing
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_

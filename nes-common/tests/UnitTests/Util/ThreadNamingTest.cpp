@@ -27,19 +27,19 @@
 
 namespace NES {
 class ThreadNamingTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("ThreadNamingTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("ThreadNamingTest test class SetUpTestCase.");
-    }
+public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("ThreadNamingTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("ThreadNamingTest test class SetUpTestCase.");
+  }
 };
 
 TEST_F(ThreadNamingTest, testThreadNaming) {
-    char threadName[17];
-    setThreadName("NES-%d", 0);
+  char threadName[17];
+  setThreadName("NES-%d", 0);
 #if defined(__GLIBC__) || defined(__APPLE__)
-    pthread_getname_np(pthread_self(), threadName, sizeof(threadName));
-    EXPECT_TRUE(std::strcmp(threadName, "NES-0") == 0);
+  pthread_getname_np(pthread_self(), threadName, sizeof(threadName));
+  EXPECT_TRUE(std::strcmp(threadName, "NES-0") == 0);
 #endif
 }
-}// namespace NES
+} // namespace NES

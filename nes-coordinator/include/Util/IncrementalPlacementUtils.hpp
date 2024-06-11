@@ -25,8 +25,9 @@ namespace Optimizer {
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
-using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
-}// namespace Optimizer
+using ExecutionNodeWLock =
+    std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
+} // namespace Optimizer
 
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
@@ -40,35 +41,43 @@ using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 namespace Experimental {
 
 /**
- * @brief identifies the upstream and downstream operators that can remain deployed on the same nodes as they were
- * before the topology change occurred. These sets can be used as input for an incremental placement. All operators
- * placed upstream of the set of upstream operators or downstream of the downstream operators can remain as is and
- * will not need to be re-placed
- * @param sharedQueryPlan the shared query id for which the up and downstream pinned operators need to be identified
- * @param lockedUpstreamNode the upstream node of the topology link that was removed
- * @param lockedDownstreamNode the downstream node of the topology link that was removed
+ * @brief identifies the upstream and downstream operators that can remain
+ * deployed on the same nodes as they were before the topology change occurred.
+ * These sets can be used as input for an incremental placement. All operators
+ * placed upstream of the set of upstream operators or downstream of the
+ * downstream operators can remain as is and will not need to be re-placed
+ * @param sharedQueryPlan the shared query id for which the up and downstream
+ * pinned operators need to be identified
+ * @param lockedUpstreamNode the upstream node of the topology link that was
+ * removed
+ * @param lockedDownstreamNode the downstream node of the topology link that was
+ * removed
  * @param topology a pointer to the topology
- * @return a pair constaining two sets of operator id in the order {UPSTREAM, DOWNSTREAM}
+ * @return a pair constaining two sets of operator id in the order {UPSTREAM,
+ * DOWNSTREAM}
  */
 std::pair<std::set<OperatorId>, std::set<OperatorId>>
-findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan,
-                                         Optimizer::ExecutionNodeWLock lockedUpstreamNode,
-                                         Optimizer::ExecutionNodeWLock lockedDownstreamNode,
-                                         const TopologyPtr& topology);
+findUpstreamAndDownstreamPinnedOperators(
+    const SharedQueryPlanPtr &sharedQueryPlan,
+    Optimizer::ExecutionNodeWLock lockedUpstreamNode,
+    Optimizer::ExecutionNodeWLock lockedDownstreamNode,
+    const TopologyPtr &topology);
 
 /**
- * @brief find all pairs of network sinks and sources that connect the specified up- and downstream node and belong
- * to the specified shared query
- * @param sharedQueryPlanId the id of the shared query whose decomposed query plan are considered
+ * @brief find all pairs of network sinks and sources that connect the specified
+ * up- and downstream node and belong to the specified shared query
+ * @param sharedQueryPlanId the id of the shared query whose decomposed query
+ * plan are considered
  * @param lockedUpstreamNode the node hosting the network sinks
  * @param lockedDownstreamNode the node hosting the network sources
- * @return a vector source-sink-pairs in the format {SinkOperator, SourceOperator}
+ * @return a vector source-sink-pairs in the format {SinkOperator,
+ * SourceOperator}
  */
 std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>>
-findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
+findNetworkOperatorsForLink(const SharedQueryId &sharedQueryPlanId,
                             Optimizer::ExecutionNodeWLock lockedUpstreamNode,
                             Optimizer::ExecutionNodeWLock lockedDownstreamNode);
 
-}// namespace Experimental
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_
+} // namespace Experimental
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_

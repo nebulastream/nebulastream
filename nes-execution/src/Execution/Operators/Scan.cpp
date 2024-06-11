@@ -23,27 +23,30 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
+Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+           std::vector<Record::RecordFieldIdentifier> projections)
+    : memoryProvider(std::move(memoryProvider)),
+      projections(std::move(projections)) {}
 
-void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    // initialize global state variables to keep track of the watermark ts and the origin id
-    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
-    ctx.setOrigin(recordBuffer.getOriginId());
-    ctx.setCurrentTs(recordBuffer.getCreatingTs());
-    ctx.setSequenceNumber(recordBuffer.getSequenceNr());
-    ctx.setChunkNumber(recordBuffer.getChunkNr());
-    ctx.setLastChunk(recordBuffer.isLastChunk());
-    ctx.setCurrentStatisticId(recordBuffer.getStatisticId());
-    // call open on all child operators
-    child->open(ctx, recordBuffer);
-    // iterate over records in buffer
-    auto numberOfRecords = recordBuffer.getNumRecords();
-    auto bufferAddress = recordBuffer.getBuffer();
-    for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
-        auto record = memoryProvider->read(projections, bufferAddress, i);
-        child->execute(ctx, record);
-    }
+void Scan::open(ExecutionContext &ctx, RecordBuffer &recordBuffer) const {
+  // initialize global state variables to keep track of the watermark ts and the
+  // origin id
+  ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
+  ctx.setOrigin(recordBuffer.getOriginId());
+  ctx.setCurrentTs(recordBuffer.getCreatingTs());
+  ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+  ctx.setChunkNumber(recordBuffer.getChunkNr());
+  ctx.setLastChunk(recordBuffer.isLastChunk());
+  ctx.setCurrentStatisticId(recordBuffer.getStatisticId());
+  // call open on all child operators
+  child->open(ctx, recordBuffer);
+  // iterate over records in buffer
+  auto numberOfRecords = recordBuffer.getNumRecords();
+  auto bufferAddress = recordBuffer.getBuffer();
+  for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
+    auto record = memoryProvider->read(projections, bufferAddress, i);
+    child->execute(ctx, record);
+  }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

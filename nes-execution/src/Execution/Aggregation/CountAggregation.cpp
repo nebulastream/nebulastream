@@ -19,38 +19,44 @@
 
 namespace NES::Runtime::Execution::Aggregation {
 
-CountAggregationFunction::CountAggregationFunction(const PhysicalTypePtr& inputType,
-                                                   const PhysicalTypePtr& resultType,
-                                                   const Expressions::ExpressionPtr& inputExpression,
-                                                   const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
-    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
+CountAggregationFunction::CountAggregationFunction(
+    const PhysicalTypePtr &inputType, const PhysicalTypePtr &resultType,
+    const Expressions::ExpressionPtr &inputExpression,
+    const Nautilus::Record::RecordFieldIdentifier &resultFieldIdentifier)
+    : AggregationFunction(inputType, resultType, inputExpression,
+                          resultFieldIdentifier) {}
 
-void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record&) {
-    // load memref
-    auto oldValue = AggregationFunction::loadFromMemref(state, resultType);
-    // add the value
-    auto newValue = oldValue + 1_u64;
-    // put back to the memref
-    state.store(newValue);
+void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state,
+                                    Nautilus::Record &) {
+  // load memref
+  auto oldValue = AggregationFunction::loadFromMemref(state, resultType);
+  // add the value
+  auto newValue = oldValue + 1_u64;
+  // put back to the memref
+  state.store(newValue);
 }
 
-void CountAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
-    auto left = AggregationFunction::loadFromMemref(state1, resultType);
-    auto right = AggregationFunction::loadFromMemref(state2, resultType);
+void CountAggregationFunction::combine(
+    Nautilus::Value<Nautilus::MemRef> state1,
+    Nautilus::Value<Nautilus::MemRef> state2) {
+  auto left = AggregationFunction::loadFromMemref(state1, resultType);
+  auto right = AggregationFunction::loadFromMemref(state2, resultType);
 
-    auto tmp = left + right;
-    state1.store(tmp);
+  auto tmp = left + right;
+  state1.store(tmp);
 }
 
-void CountAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record) {
-    auto finalVal = AggregationFunction::loadFromMemref(state, resultType);
-    record.write(resultFieldIdentifier, finalVal);
+void CountAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state,
+                                     Nautilus::Record &record) {
+  auto finalVal = AggregationFunction::loadFromMemref(state, resultType);
+  record.write(resultFieldIdentifier, finalVal);
 }
 
 void CountAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto zero = Nautilus::Value<Nautilus::UInt64>(0_u64);// count always use UInt64
-    memref.store(zero);
+  auto zero =
+      Nautilus::Value<Nautilus::UInt64>(0_u64); // count always use UInt64
+  memref.store(zero);
 }
 uint64_t CountAggregationFunction::getSize() { return sizeof(int64_t); }
 
-}// namespace NES::Runtime::Execution::Aggregation
+} // namespace NES::Runtime::Execution::Aggregation

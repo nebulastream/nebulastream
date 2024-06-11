@@ -18,7 +18,8 @@
 #include <cmath>
 namespace NES::Runtime::Execution::Expressions {
 
-LGammaExpression::LGammaExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
+LGammaExpression::LGammaExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr &SubExpression)
     : SubExpression(SubExpression) {}
 
 /**
@@ -28,36 +29,48 @@ LGammaExpression::LGammaExpression(const NES::Runtime::Execution::Expressions::E
  */
 double calculateLGamma(double x) { return std::lgamma(x); }
 
-Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const {
-    // Evaluate the left sub expression and retrieve the value.
-    Value leftValue = SubExpression->execute(record);
+Value<> LGammaExpression::execute(NES::Nautilus::Record &record) const {
+  // Evaluate the left sub expression and retrieve the value.
+  Value leftValue = SubExpression->execute(record);
 
-    // call the calculateLGamma function with the correct type
-    if (leftValue->isType<Int8>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int8>());
-    } else if (leftValue->isType<Int16>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int16>());
-    } else if (leftValue->isType<Int32>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int32>());
-    } else if (leftValue->isType<Int64>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int64>());
-    } else if (leftValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt8>());
-    } else if (leftValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt16>());
-    } else if (leftValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt32>());
-    } else if (leftValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<UInt64>());
-    } else if (leftValue->isType<Float>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
-        return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Double>());
-    } else {
-        // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
-    }
+  // call the calculateLGamma function with the correct type
+  if (leftValue->isType<Int8>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<Int8>());
+  } else if (leftValue->isType<Int16>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<Int16>());
+  } else if (leftValue->isType<Int32>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<Int32>());
+  } else if (leftValue->isType<Int64>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<Int64>());
+  } else if (leftValue->isType<UInt8>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<UInt8>());
+  } else if (leftValue->isType<UInt16>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<UInt16>());
+  } else if (leftValue->isType<UInt32>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<UInt32>());
+  } else if (leftValue->isType<UInt64>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<UInt64>());
+  } else if (leftValue->isType<Float>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<Float>());
+  } else if (leftValue->isType<Double>()) {
+    return FunctionCall<>("calculateLGamma", calculateLGamma,
+                          leftValue.as<Double>());
+  } else {
+    // If no type was applicable we throw an exception.
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on numeric input arguments that are "
+        "either Integer or Float.");
+  }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LGammaExpression>> lgammaFunction("lgamma");
-}// namespace NES::Runtime::Execution::Expressions
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LGammaExpression>>
+    lgammaFunction("lgamma");
+} // namespace NES::Runtime::Execution::Expressions

@@ -15,38 +15,23 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-NLJOperatorHandlerSlicing::NLJOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
-                                                     const OriginId outputOriginId,
-                                                     const uint64_t windowSize,
-                                                     const uint64_t windowSlide,
-                                                     const SchemaPtr& leftSchema,
-                                                     const SchemaPtr& rightSchema,
-                                                     const uint64_t pageSizeLeft,
-                                                     const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
-      NLJOperatorHandler(inputOrigins,
-                         outputOriginId,
-                         windowSize,
-                         windowSlide,
-                         leftSchema,
-                         rightSchema,
-                         pageSizeLeft,
-                         pageSizeRight) {}
-NLJOperatorHandlerPtr NLJOperatorHandlerSlicing::create(const std::vector<OriginId>& inputOrigins,
-                                                        const OriginId outputOriginId,
-                                                        const uint64_t windowSize,
-                                                        const uint64_t windowSlide,
-                                                        const SchemaPtr& leftSchema,
-                                                        const SchemaPtr& rightSchema,
-                                                        const uint64_t pageSizeLeft,
-                                                        const uint64_t pageSizeRight) {
-    return std::make_shared<NLJOperatorHandlerSlicing>(inputOrigins,
-                                                       outputOriginId,
-                                                       windowSize,
-                                                       windowSlide,
-                                                       leftSchema,
-                                                       rightSchema,
-                                                       pageSizeLeft,
-                                                       pageSizeRight);
+NLJOperatorHandlerSlicing::NLJOperatorHandlerSlicing(
+    const std::vector<OriginId> &inputOrigins, const OriginId outputOriginId,
+    const uint64_t windowSize, const uint64_t windowSlide,
+    const SchemaPtr &leftSchema, const SchemaPtr &rightSchema,
+    const uint64_t pageSizeLeft, const uint64_t pageSizeRight)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize,
+                                windowSlide, leftSchema, rightSchema),
+      NLJOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide,
+                         leftSchema, rightSchema, pageSizeLeft, pageSizeRight) {
 }
-}// namespace NES::Runtime::Execution::Operators
+NLJOperatorHandlerPtr NLJOperatorHandlerSlicing::create(
+    const std::vector<OriginId> &inputOrigins, const OriginId outputOriginId,
+    const uint64_t windowSize, const uint64_t windowSlide,
+    const SchemaPtr &leftSchema, const SchemaPtr &rightSchema,
+    const uint64_t pageSizeLeft, const uint64_t pageSizeRight) {
+  return std::make_shared<NLJOperatorHandlerSlicing>(
+      inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema,
+      rightSchema, pageSizeLeft, pageSizeRight);
+}
+} // namespace NES::Runtime::Execution::Operators

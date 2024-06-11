@@ -19,108 +19,109 @@
 namespace NES::RequestProcessor {
 struct StorageDataStructures;
 /**
- * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
- * Not thread safe!
+ * @brief This class is intended for serial access and does not perform any
+ * locking before creating a resource handle. Not thread safe!
  */
 class SerialStorageHandler : public StorageHandler {
-  public:
-    /**
-     * @brief factory to create a serial storage manager object
-     * @param storageDataStructures a struct containing pointers to the following data structures:
-     * -globalExecutionPlan
-     * -topology
-     * -queryCatalogService
-     * -globalQueryPlan
-     * -sourceCatalog
-     * -udfCatalog
-     * -amendmentQueue
-     * -lockManager
-     * -statisticProbeHandler
-     * @return shared pointer to the serial storage manager
-     */
-    static StorageHandlerPtr create(StorageDataStructures storageDataStructures);
+public:
+  /**
+   * @brief factory to create a serial storage manager object
+   * @param storageDataStructures a struct containing pointers to the following
+   * data structures: -globalExecutionPlan -topology -queryCatalogService
+   * -globalQueryPlan
+   * -sourceCatalog
+   * -udfCatalog
+   * -amendmentQueue
+   * -lockManager
+   * -statisticProbeHandler
+   * @return shared pointer to the serial storage manager
+   */
+  static StorageHandlerPtr create(StorageDataStructures storageDataStructures);
 
-    /**
-     * @brief Obtain a mutable topology handle.
-     * @param requestId The id of the request making the call
-     * @return a handle to the topology
-     */
-    TopologyHandle getTopologyHandle(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable topology handle.
+   * @param requestId The id of the request making the call
+   * @return a handle to the topology
+   */
+  TopologyHandle getTopologyHandle(RequestId requestId) override;
 
-    /**
-     * @brief Obtain a mutable query catalog handle.
-     * @param requestId The id of the request making the call
-     * @return a handle to the query catalog.
-     */
-    QueryCatalogHandle getQueryCatalogHandle(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable query catalog handle.
+   * @param requestId The id of the request making the call
+   * @return a handle to the query catalog.
+   */
+  QueryCatalogHandle getQueryCatalogHandle(RequestId requestId) override;
 
-    /**
-     * @brief Obtain a mutable source catalog handle.
-     * @param requestId The id of the request making the call
-     * @return a handle to the source catalog.
-     */
-    Catalogs::Source::SourceCatalogPtr getSourceCatalogHandle(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable source catalog handle.
+   * @param requestId The id of the request making the call
+   * @return a handle to the source catalog.
+   */
+  Catalogs::Source::SourceCatalogPtr
+  getSourceCatalogHandle(RequestId requestId) override;
 
-    /**
-     * @brief Obtain a mutable global execution plan handle.
-     * @param requestId The id of the request making the call
-     * @return a handle to the global execution plan.
-     */
-    Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlanHandle(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable global execution plan handle.
+   * @param requestId The id of the request making the call
+   * @return a handle to the global execution plan.
+   */
+  Optimizer::GlobalExecutionPlanPtr
+  getGlobalExecutionPlanHandle(RequestId requestId) override;
 
-    /**
-     * @brief Obtain a mutable global query plan handle.
-     * @param requestId The id of the request making the call
-     * @return a handle to the global query plan.
-     */
-    GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable global query plan handle.
+   * @param requestId The id of the request making the call
+   * @return a handle to the global query plan.
+   */
+  GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) override;
 
-    /**
-     * @brief Obtain a mutable udf catalog handle.
-     * @param requestId The id of the request making the call
-     * @return a handle to the udf catalog.
-     */
-    Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable udf catalog handle.
+   * @param requestId The id of the request making the call
+   * @return a handle to the udf catalog.
+   */
+  Catalogs::UDF::UDFCatalogPtr
+  getUDFCatalogHandle(RequestId requestId) override;
 
-    /**
-     * @brief Obtain a mutable Coordinator configuration
-     * @param requestId The id of the request making the call
-     * @return a handle to the coordinator configuration
-     */
-    Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable Coordinator configuration
+   * @param requestId The id of the request making the call
+   * @return a handle to the coordinator configuration
+   */
+  Configurations::CoordinatorConfigurationPtr
+  getCoordinatorConfiguration(RequestId requestId) override;
 
-    Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override;
+  Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override;
 
-    /**
-     * @brief Obtain a mutable Statistic probe handler
-     * @param requestId The id of the request making the call
-     * @return a handle to the statistic probe handler
-     */
-    Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler(RequestId requestId) override;
+  /**
+   * @brief Obtain a mutable Statistic probe handler
+   * @param requestId The id of the request making the call
+   * @return a handle to the statistic probe handler
+   */
+  Statistic::StatisticProbeHandlerPtr
+  getStatisticProbeHandler(RequestId requestId) override;
 
-    /**
-     * @brief constructor
-     * @param storageDataStructures a struct containing pointers to the following data structures:
-     * -globalExecutionPlan
-     * -topology
-     * -queryCatalogService
-     * -globalQueryPlan
-     * -sourceCatalog
-     * -udfCatalog
-     * -lockManager
-     */
-    explicit SerialStorageHandler(StorageDataStructures& storageDataStructures);
+  /**
+   * @brief constructor
+   * @param storageDataStructures a struct containing pointers to the following
+   * data structures: -globalExecutionPlan -topology -queryCatalogService
+   * -globalQueryPlan
+   * -sourceCatalog
+   * -udfCatalog
+   * -lockManager
+   */
+  explicit SerialStorageHandler(StorageDataStructures &storageDataStructures);
 
-  private:
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    TopologyPtr topology;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    GlobalQueryPlanPtr globalQueryPlan;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
-    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
+private:
+  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+  TopologyPtr topology;
+  Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+  GlobalQueryPlanPtr globalQueryPlan;
+  Catalogs::Query::QueryCatalogPtr queryCatalog;
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
+  Catalogs::UDF::UDFCatalogPtr udfCatalog;
+  Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
+  Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_

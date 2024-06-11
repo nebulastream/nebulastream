@@ -16,19 +16,21 @@
 namespace NES ::RequestProcessor {
 UnlockDeleter::UnlockDeleter() = default;
 
-UnlockDeleter::UnlockDeleter(std::mutex& mutex) : lock(mutex) {}
+UnlockDeleter::UnlockDeleter(std::mutex &mutex) : lock(mutex) {}
 
-UnlockDeleter::UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock) : lock{mutex, tryToLock} {
-    if (!lock.owns_lock()) {
-        //todo #3611: write custom exception for this case
-        throw std::exception();
-    }
+UnlockDeleter::UnlockDeleter(std::mutex &mutex, std::try_to_lock_t tryToLock)
+    : lock{mutex, tryToLock} {
+  if (!lock.owns_lock()) {
+    // todo #3611: write custom exception for this case
+    throw std::exception();
+  }
 }
 
-UnlockDeleter::UnlockDeleter(std::unique_lock<std::mutex> lock) : lock(std::move(lock)) {
-    if (!this->lock.owns_lock()) {
-        //todo #3611: write custom exception for this case
-        throw std::exception();
-    }
+UnlockDeleter::UnlockDeleter(std::unique_lock<std::mutex> lock)
+    : lock(std::move(lock)) {
+  if (!this->lock.owns_lock()) {
+    // todo #3611: write custom exception for this case
+    throw std::exception();
+  }
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

@@ -23,28 +23,28 @@
 namespace NES::Nautilus {
 
 /**
- * @brief A record is the primitive abstraction of a single entry/tuple in a data set.
- * Operators receive records can read and write fields.
+ * @brief A record is the primitive abstraction of a single entry/tuple in a
+ * data set. Operators receive records can read and write fields.
  */
 class Record {
-  public:
-    using RecordFieldIdentifier = std::string;
-    explicit Record();
-    explicit Record(std::map<RecordFieldIdentifier, Value<>>&& fields);
-    ~Record() = default;
-    Value<>& read(RecordFieldIdentifier fieldName);
-    void write(RecordFieldIdentifier fieldName, const Value<>& value);
-    uint64_t numberOfFields();
-    bool hasField(RecordFieldIdentifier fieldName);
-    std::vector<RecordFieldIdentifier> getAllFields();
-    std::string toString();
-    bool operator==(const Record& rhs) const;
-    bool operator!=(const Record& rhs) const;
+public:
+  using RecordFieldIdentifier = std::string;
+  explicit Record();
+  explicit Record(std::map<RecordFieldIdentifier, Value<>> &&fields);
+  ~Record() = default;
+  Value<> &read(RecordFieldIdentifier fieldName);
+  void write(RecordFieldIdentifier fieldName, const Value<> &value);
+  uint64_t numberOfFields();
+  bool hasField(RecordFieldIdentifier fieldName);
+  std::vector<RecordFieldIdentifier> getAllFields();
+  std::string toString();
+  bool operator==(const Record &rhs) const;
+  bool operator!=(const Record &rhs) const;
 
-  private:
-    std::map<RecordFieldIdentifier, Value<>> fields;
+private:
+  std::map<RecordFieldIdentifier, Value<>> fields;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_

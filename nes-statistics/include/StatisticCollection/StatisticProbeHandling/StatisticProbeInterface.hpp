@@ -22,24 +22,26 @@
 namespace NES::Statistic {
 
 class StatisticProbeInterface {
-  public:
-    /**
-     * @brief Creates a request to probe a specific statistic and returns the statistic in a ProbeResult
-     * @param probeRequest
-     * @param estimationAllowed
-     * @param aggFunction
-     * @return ProbeResult<> containing at least one StatisticValue
-     */
-    virtual ProbeResult<> probeStatistic(const StatisticProbeRequest& probeRequest,
-                                         const bool& estimationAllowed,
-                                         std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) = 0;
+public:
+  /**
+   * @brief Creates a request to probe a specific statistic and returns the
+   * statistic in a ProbeResult
+   * @param probeRequest
+   * @param estimationAllowed
+   * @param aggFunction
+   * @return ProbeResult<> containing at least one StatisticValue
+   */
+  virtual ProbeResult<>
+  probeStatistic(const StatisticProbeRequest &probeRequest,
+                 const bool &estimationAllowed,
+                 std::function<ProbeResult<>(ProbeResult<>)> &&aggFunction) = 0;
 
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~StatisticProbeInterface() = default;
+  /**
+   * @brief Virtual destructor
+   */
+  virtual ~StatisticProbeInterface() = default;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEINTERFACE_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEINTERFACE_HPP_

@@ -20,36 +20,39 @@
 
 namespace NES {
 
-FlatMapUDFLogicalOperator::FlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id)
+FlatMapUDFLogicalOperator::FlatMapUDFLogicalOperator(
+    const Catalogs::UDF::UDFDescriptorPtr &udfDescriptor, OperatorId id)
     : Operator(id), UDFLogicalOperator(udfDescriptor, id) {}
 
 std::string FlatMapUDFLogicalOperator::toString() const {
-    std::stringstream ss;
-    ss << "FLATMAP_UDF(" << id << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "FLATMAP_UDF(" << id << ")";
+  return ss.str();
 }
 
 OperatorPtr FlatMapUDFLogicalOperator::copy() {
-    auto copy = std::make_shared<FlatMapUDFLogicalOperator>(this->getUDFDescriptor(), id);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
-    copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
-        copy->addProperty(key, value);
-    }
-    return copy;
+  auto copy =
+      std::make_shared<FlatMapUDFLogicalOperator>(this->getUDFDescriptor(), id);
+  copy->setInputOriginIds(inputOriginIds);
+  copy->setInputSchema(inputSchema);
+  copy->setOutputSchema(outputSchema);
+  copy->setHashBasedSignature(hashBasedSignature);
+  copy->setZ3Signature(z3Signature);
+  copy->setOperatorState(operatorState);
+  copy->setStatisticId(statisticId);
+  for (const auto &[key, value] : properties) {
+    copy->addProperty(key, value);
+  }
+  return copy;
 }
 
-bool FlatMapUDFLogicalOperator::equal(const NodePtr& other) const {
-    return other->instanceOf<FlatMapUDFLogicalOperator>() && UDFLogicalOperator::equal(other);
+bool FlatMapUDFLogicalOperator::equal(const NodePtr &other) const {
+  return other->instanceOf<FlatMapUDFLogicalOperator>() &&
+         UDFLogicalOperator::equal(other);
 }
 
-bool FlatMapUDFLogicalOperator::isIdentical(const NodePtr& other) const {
-    return equal(other) && id == other->as<FlatMapUDFLogicalOperator>()->id;
+bool FlatMapUDFLogicalOperator::isIdentical(const NodePtr &other) const {
+  return equal(other) && id == other->as<FlatMapUDFLogicalOperator>()->id;
 }
 
-}// namespace NES
+} // namespace NES

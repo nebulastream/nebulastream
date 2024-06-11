@@ -25,80 +25,107 @@
 
 namespace NES::Join {
 
-LogicalJoinDescriptor::LogicalJoinDescriptor(ExpressionNodePtr joinExpression,
-                                             Windowing::WindowTypePtr windowType,
-                                             uint64_t numberOfInputEdgesLeft,
-                                             uint64_t numberOfInputEdgesRight,
-                                             JoinType joinType,
-                                             OriginId originId)
-    : joinExpression(joinExpression), leftSourceType(Schema::create()), rightSourceType(Schema::create()),
-      outputSchema(Schema::create()), windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
-      numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType), originId(originId) {
-    NES_ASSERT(this->windowType, "Invalid window type");
-    NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
-    NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
-    NES_ASSERT((this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT), "Invalid Join Type");
+LogicalJoinDescriptor::LogicalJoinDescriptor(
+    ExpressionNodePtr joinExpression, Windowing::WindowTypePtr windowType,
+    uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight,
+    JoinType joinType, OriginId originId)
+    : joinExpression(joinExpression), leftSourceType(Schema::create()),
+      rightSourceType(Schema::create()), outputSchema(Schema::create()),
+      windowType(std::move(windowType)),
+      numberOfInputEdgesLeft(numberOfInputEdgesLeft),
+      numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType),
+      originId(originId) {
+  NES_ASSERT(this->windowType, "Invalid window type");
+  NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
+  NES_ASSERT(this->numberOfInputEdgesRight > 0,
+             "Invalid number of right edges");
+  NES_ASSERT((this->joinType == JoinType::INNER_JOIN ||
+              this->joinType == JoinType::CARTESIAN_PRODUCT),
+             "Invalid Join Type");
 }
 
-LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(ExpressionNodePtr joinExpressions,
-                                                       const Windowing::WindowTypePtr& windowType,
-                                                       uint64_t numberOfInputEdgesLeft,
-                                                       uint64_t numberOfInputEdgesRight,
-                                                       JoinType joinType) {
-    return std::make_shared<Join::LogicalJoinDescriptor>(joinExpressions,
-                                                         windowType,
-                                                         numberOfInputEdgesLeft,
-                                                         numberOfInputEdgesRight,
-                                                         joinType);
+LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(
+    ExpressionNodePtr joinExpressions,
+    const Windowing::WindowTypePtr &windowType, uint64_t numberOfInputEdgesLeft,
+    uint64_t numberOfInputEdgesRight, JoinType joinType) {
+  return std::make_shared<Join::LogicalJoinDescriptor>(
+      joinExpressions, windowType, numberOfInputEdgesLeft,
+      numberOfInputEdgesRight, joinType);
 }
 
-SchemaPtr LogicalJoinDescriptor::getLeftSourceType() const { return leftSourceType; }
+SchemaPtr LogicalJoinDescriptor::getLeftSourceType() const {
+  return leftSourceType;
+}
 
-SchemaPtr LogicalJoinDescriptor::getRightSourceType() const { return rightSourceType; }
+SchemaPtr LogicalJoinDescriptor::getRightSourceType() const {
+  return rightSourceType;
+}
 
-Windowing::WindowTypePtr LogicalJoinDescriptor::getWindowType() const { return windowType; }
+Windowing::WindowTypePtr LogicalJoinDescriptor::getWindowType() const {
+  return windowType;
+}
 
-Join::LogicalJoinDescriptor::JoinType LogicalJoinDescriptor::getJoinType() const { return joinType; }
+Join::LogicalJoinDescriptor::JoinType
+LogicalJoinDescriptor::getJoinType() const {
+  return joinType;
+}
 
-uint64_t LogicalJoinDescriptor::getNumberOfInputEdgesLeft() const { return numberOfInputEdgesLeft; }
+uint64_t LogicalJoinDescriptor::getNumberOfInputEdgesLeft() const {
+  return numberOfInputEdgesLeft;
+}
 
-uint64_t LogicalJoinDescriptor::getNumberOfInputEdgesRight() const { return numberOfInputEdgesRight; }
+uint64_t LogicalJoinDescriptor::getNumberOfInputEdgesRight() const {
+  return numberOfInputEdgesRight;
+}
 
-void LogicalJoinDescriptor::updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType) {
-    if (leftSourceType) {
-        this->leftSourceType = std::move(leftSourceType);
-    }
-    if (rightSourceType) {
-        this->rightSourceType = std::move(rightSourceType);
-    }
+void LogicalJoinDescriptor::updateSourceTypes(SchemaPtr leftSourceType,
+                                              SchemaPtr rightSourceType) {
+  if (leftSourceType) {
+    this->leftSourceType = std::move(leftSourceType);
+  }
+  if (rightSourceType) {
+    this->rightSourceType = std::move(rightSourceType);
+  }
 }
 
 void LogicalJoinDescriptor::updateOutputDefinition(SchemaPtr outputSchema) {
-    if (outputSchema) {
-        this->outputSchema = std::move(outputSchema);
-    }
+  if (outputSchema) {
+    this->outputSchema = std::move(outputSchema);
+  }
 }
 
-SchemaPtr LogicalJoinDescriptor::getOutputSchema() const { return outputSchema; }
-
-void LogicalJoinDescriptor::setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft) {
-    LogicalJoinDescriptor::numberOfInputEdgesLeft = numberOfInputEdgesLeft;
+SchemaPtr LogicalJoinDescriptor::getOutputSchema() const {
+  return outputSchema;
 }
 
-void LogicalJoinDescriptor::setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight) {
-    LogicalJoinDescriptor::numberOfInputEdgesRight = numberOfInputEdgesRight;
+void LogicalJoinDescriptor::setNumberOfInputEdgesLeft(
+    uint64_t numberOfInputEdgesLeft) {
+  LogicalJoinDescriptor::numberOfInputEdgesLeft = numberOfInputEdgesLeft;
+}
+
+void LogicalJoinDescriptor::setNumberOfInputEdgesRight(
+    uint64_t numberOfInputEdgesRight) {
+  LogicalJoinDescriptor::numberOfInputEdgesRight = numberOfInputEdgesRight;
 }
 
 OriginId LogicalJoinDescriptor::getOriginId() const { return originId; }
-void LogicalJoinDescriptor::setOriginId(OriginId originId) { this->originId = originId; }
-
-ExpressionNodePtr LogicalJoinDescriptor::getJoinExpression() { return this->joinExpression; }
-
-bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const {
-    return leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
-        && outputSchema->equals(other.outputSchema) && windowType->equal(other.windowType)
-        && joinExpression->equal(other.joinExpression) && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft
-        && numberOfInputEdgesRight == other.numberOfInputEdgesRight && joinType == other.joinType && originId == other.originId;
+void LogicalJoinDescriptor::setOriginId(OriginId originId) {
+  this->originId = originId;
 }
 
-};// namespace NES::Join
+ExpressionNodePtr LogicalJoinDescriptor::getJoinExpression() {
+  return this->joinExpression;
+}
+
+bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor &other) const {
+  return leftSourceType->equals(other.leftSourceType) &&
+         rightSourceType->equals(other.rightSourceType) &&
+         outputSchema->equals(other.outputSchema) &&
+         windowType->equal(other.windowType) &&
+         joinExpression->equal(other.joinExpression) &&
+         numberOfInputEdgesLeft == other.numberOfInputEdgesLeft &&
+         numberOfInputEdgesRight == other.numberOfInputEdgesRight &&
+         joinType == other.joinType && originId == other.originId;
+}
+
+}; // namespace NES::Join

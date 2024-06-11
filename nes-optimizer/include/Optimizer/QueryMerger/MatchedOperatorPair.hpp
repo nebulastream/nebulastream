@@ -27,24 +27,25 @@ class MatchedOperatorPair;
 using MatchedOperatorPairPtr = std::unique_ptr<MatchedOperatorPair>;
 
 /**
- * @brief this class stores a pair of matched operators. One from the host shared query plan and one from the target shared query plan.
- * Addionally, it stores the containment relationship between the two operators.
-*/
+ * @brief this class stores a pair of matched operators. One from the host
+ * shared query plan and one from the target shared query plan. Addionally, it
+ * stores the containment relationship between the two operators.
+ */
 class MatchedOperatorPair {
 
-  public:
-    static MatchedOperatorPairPtr create(LogicalOperatorPtr hostOperator,
-                                         LogicalOperatorPtr targetOperator,
-                                         Optimizer::ContainmentRelationship containmentRelationship);
+public:
+  static MatchedOperatorPairPtr
+  create(LogicalOperatorPtr hostOperator, LogicalOperatorPtr targetOperator,
+         Optimizer::ContainmentRelationship containmentRelationship);
 
-    LogicalOperatorPtr hostOperator;
-    LogicalOperatorPtr targetOperator;
-    Optimizer::ContainmentRelationship containmentRelationship;
+  LogicalOperatorPtr hostOperator;
+  LogicalOperatorPtr targetOperator;
+  Optimizer::ContainmentRelationship containmentRelationship;
 
-  private:
-    explicit MatchedOperatorPair(LogicalOperatorPtr hostOperator,
-                                 LogicalOperatorPtr targetOperator,
-                                 Optimizer::ContainmentRelationship containmentRelationship);
+private:
+  explicit MatchedOperatorPair(
+      LogicalOperatorPtr hostOperator, LogicalOperatorPtr targetOperator,
+      Optimizer::ContainmentRelationship containmentRelationship);
 };
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES

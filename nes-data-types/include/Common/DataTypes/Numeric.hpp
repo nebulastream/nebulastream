@@ -21,26 +21,26 @@ namespace NES {
  * @brief The Numeric type represents integers and floats.
  */
 class Numeric : public DataType {
-  public:
-    explicit Numeric(int8_t bits);
-    ~Numeric() override = default;
+public:
+  explicit Numeric(int8_t bits);
+  ~Numeric() override = default;
 
-    /**
-    * @brief Checks if this data type is Numeric.
-    * @return bool
-    */
-    [[nodiscard]] bool isNumeric() const final { return true; }
+  /**
+   * @brief Checks if this data type is Numeric.
+   * @return bool
+   */
+  [[nodiscard]] bool isNumeric() const final { return true; }
 
-    /**
-     * @brief Gets the bit size of this type.
-     * @return int8_t
-     */
-    [[nodiscard]] int8_t getBits() const;
+  /**
+   * @brief Gets the bit size of this type.
+   * @return int8_t
+   */
+  [[nodiscard]] int8_t getBits() const;
 
-  protected:
-    const int8_t bits;
+protected:
+  const int8_t bits;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_

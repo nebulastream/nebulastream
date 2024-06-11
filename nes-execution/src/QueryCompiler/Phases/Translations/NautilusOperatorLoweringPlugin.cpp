@@ -17,9 +17,10 @@
 namespace NES::QueryCompilation {
 
 std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
-NautilusOperatorLoweringPlugin::lower(const PhysicalOperators::PhysicalOperatorPtr&,
-                                      std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
-    return {};
+NautilusOperatorLoweringPlugin::lower(
+    const PhysicalOperators::PhysicalOperatorPtr &,
+    std::vector<Runtime::Execution::OperatorHandlerPtr> &) {
+  return {};
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

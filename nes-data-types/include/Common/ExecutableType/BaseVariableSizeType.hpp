@@ -22,9 +22,10 @@ namespace NES {
  */
 class BaseVariableSizeType {};
 
-template<class Type>
+template <class Type>
 concept IsVariableSizeType =
-    std::is_base_of_v<BaseVariableSizeType, Type> || std::is_base_of_v<BaseVariableSizeType, std::remove_pointer_t<Type>>;
+    std::is_base_of_v<BaseVariableSizeType, Type> ||
+    std::is_base_of_v<BaseVariableSizeType, std::remove_pointer_t<Type>>;
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_BASEVARIABLESIZETYPE_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_BASEVARIABLESIZETYPE_HPP_

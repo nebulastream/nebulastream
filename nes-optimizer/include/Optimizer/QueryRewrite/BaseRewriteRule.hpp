@@ -21,46 +21,45 @@
 namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-}// namespace NES
+} // namespace NES
 
 namespace NES::Optimizer {
 
 class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
 
-  public:
-    /**
-     * @brief Apply the rule to the Query plan
-     * @param queryPlanPtr : The original query plan
-     * @return The updated query plan
-     */
-    virtual QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) = 0;
+public:
+  /**
+   * @brief Apply the rule to the Query plan
+   * @param queryPlanPtr : The original query plan
+   * @return The updated query plan
+   */
+  virtual QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) = 0;
 
-    /**
-     * @brief Checks if the current node is of type RuleType
-     * @tparam RefinementType
-     * @return bool true if node is of RuleType
-     */
-    template<class RefinementType>
-    bool instanceOf() {
-        if (dynamic_cast<RefinementType*>(this)) {
-            return true;
-        };
-        return false;
+  /**
+   * @brief Checks if the current node is of type RuleType
+   * @tparam RefinementType
+   * @return bool true if node is of RuleType
+   */
+  template <class RefinementType> bool instanceOf() {
+    if (dynamic_cast<RefinementType *>(this)) {
+      return true;
     };
+    return false;
+  };
 
-    /**
-    * @brief Dynamically casts the node to a RuleType
-    * @tparam RefinementType
-    * @return returns a shared pointer of the RuleType
-    */
-    template<class RefinementType>
-    std::shared_ptr<RefinementType> as() {
-        if (instanceOf<RefinementType>()) {
-            return std::dynamic_pointer_cast<RefinementType>(this->shared_from_this());
-        }
-        throw Exceptions::RuntimeException("We performed an invalid cast");
+  /**
+   * @brief Dynamically casts the node to a RuleType
+   * @tparam RefinementType
+   * @return returns a shared pointer of the RuleType
+   */
+  template <class RefinementType> std::shared_ptr<RefinementType> as() {
+    if (instanceOf<RefinementType>()) {
+      return std::dynamic_pointer_cast<RefinementType>(
+          this->shared_from_this());
     }
+    throw Exceptions::RuntimeException("We performed an invalid cast");
+  }
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_

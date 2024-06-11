@@ -17,14 +17,23 @@
 
 namespace NES::Configurations {
 
-LogicalSourceType::LogicalSourceType(std::string logicalSourceName, SchemaTypePtr schemaType)
-    : logicalSourceName(std::move(logicalSourceName)), schemaType(std::move(schemaType)) {}
+LogicalSourceType::LogicalSourceType(std::string logicalSourceName,
+                                     SchemaTypePtr schemaType)
+    : logicalSourceName(std::move(logicalSourceName)),
+      schemaType(std::move(schemaType)) {}
 
-LogicalSourceTypePtr LogicalSourceType::create(const std::string& logicalSourceName, const SchemaTypePtr& schemaType) {
-    return std::make_shared<LogicalSourceType>(LogicalSourceType(logicalSourceName, schemaType));
+LogicalSourceTypePtr
+LogicalSourceType::create(const std::string &logicalSourceName,
+                          const SchemaTypePtr &schemaType) {
+  return std::make_shared<LogicalSourceType>(
+      LogicalSourceType(logicalSourceName, schemaType));
 }
 
-const std::string& LogicalSourceType::getLogicalSourceName() const { return logicalSourceName; }
+const std::string &LogicalSourceType::getLogicalSourceName() const {
+  return logicalSourceName;
+}
 
-const SchemaTypePtr& LogicalSourceType::getSchemaType() const { return schemaType; }
-}// namespace NES::Configurations
+const SchemaTypePtr &LogicalSourceType::getSchemaType() const {
+  return schemaType;
+}
+} // namespace NES::Configurations

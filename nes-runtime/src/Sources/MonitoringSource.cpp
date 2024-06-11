@@ -25,64 +25,61 @@
 
 namespace NES {
 
-MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
-                                   std::chrono::milliseconds waitTime,
-                                   Runtime::BufferManagerPtr bufferManager,
-                                   Runtime::QueryManagerPtr queryManager,
-                                   OperatorId operatorId,
-                                   OriginId originId,
-                                   StatisticId statisticId,
-                                   size_t numSourceLocalBuffers,
-                                   const std::string& physicalSourceName,
-                                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(Schema::create(),
-                 bufferManager,
-                 queryManager,
-                 operatorId,
-                 originId,
-                 statisticId,
-                 numSourceLocalBuffers,
-                 GatheringMode::INTERVAL_MODE,
-                 physicalSourceName,
-                 successors),
+MonitoringSource::MonitoringSource(
+    Monitoring::MetricCollectorPtr metricCollector,
+    std::chrono::milliseconds waitTime, Runtime::BufferManagerPtr bufferManager,
+    Runtime::QueryManagerPtr queryManager, OperatorId operatorId,
+    OriginId originId, StatisticId statisticId, size_t numSourceLocalBuffers,
+    const std::string &physicalSourceName,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+    : DataSource(Schema::create(), bufferManager, queryManager, operatorId,
+                 originId, statisticId, numSourceLocalBuffers,
+                 GatheringMode::INTERVAL_MODE, physicalSourceName, successors),
       metricCollector(metricCollector), waitTime(waitTime) {
-    schema = metricCollector->getSchema();
-    NES_INFO("MonitoringSources: Created with wait time {} and schema:{}\n", waitTime.count(), schema->toString());
+  schema = metricCollector->getSchema();
+  NES_INFO("MonitoringSources: Created with wait time {} and schema:{}\n",
+           waitTime.count(), schema->toString());
 }
 
 std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
-    auto buf = this->bufferManager->getBufferBlocking();
-    metricCollector->fillBuffer(buf);
-    NES_TRACE("MonitoringSource: Generated buffer with{} tuple and size {}",
-              buf.getNumberOfTuples(),
-              schema->getSchemaSizeInBytes());
+  auto buf = this->bufferManager->getBufferBlocking();
+  metricCollector->fillBuffer(buf);
+  NES_TRACE("MonitoringSource: Generated buffer with{} tuple and size {}",
+            buf.getNumberOfTuples(), schema->getSchemaSizeInBytes());
 
-    //update statistics
-    generatedTuples += buf.getNumberOfTuples();
-    generatedBuffers++;
+  // update statistics
+  generatedTuples += buf.getNumberOfTuples();
+  generatedBuffers++;
 
-    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
-        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-        auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
+  if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+    auto layout =
+        Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
-        NES_TRACE("MonitoringSource::Buffer content:  {}", buffer.toString(schema));
-    }
+    NES_TRACE("MonitoringSource::Buffer content:  {}", buffer.toString(schema));
+  }
 
-    std::this_thread::sleep_for(waitTime);
+  std::this_thread::sleep_for(waitTime);
 
-    return buf;
+  return buf;
 }
 
-Monitoring::MetricCollectorType MonitoringSource::getCollectorType() { return metricCollector->getType(); }
+Monitoring::MetricCollectorType MonitoringSource::getCollectorType() {
+  return metricCollector->getType();
+}
 
-SourceType MonitoringSource::getType() const { return SourceType::MONITORING_SOURCE; }
+SourceType MonitoringSource::getType() const {
+  return SourceType::MONITORING_SOURCE;
+}
 
 std::string MonitoringSource::toString() const {
-    std::stringstream ss;
-    ss << "MonitoringSource(SCHEMA(" << schema->toString() << ")"
-       << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "MonitoringSource(SCHEMA(" << schema->toString() << ")"
+     << ")";
+  return ss.str();
 }
-std::chrono::milliseconds MonitoringSource::getWaitTime() const { return waitTime; }
+std::chrono::milliseconds MonitoringSource::getWaitTime() const {
+  return waitTime;
+}
 
-}// namespace NES
+} // namespace NES

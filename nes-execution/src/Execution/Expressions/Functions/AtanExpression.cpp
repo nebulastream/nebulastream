@@ -19,30 +19,37 @@
 #include <cmath>
 namespace NES::Runtime::Execution::Expressions {
 
-AtanExpression::AtanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)
+AtanExpression::AtanExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr
+        &leftSubExpression)
     : leftSubExpression(leftSubExpression) {}
 
 /**
  * @brief This method calculates the atan of x.
- * This function is basically a wrapper for std::atan and enables us to use it in our execution engine framework.
+ * This function is basically a wrapper for std::atan and enables us to use it
+ * in our execution engine framework.
  * @param x double
  * @return double
  */
 double calculateAtanDouble(double x) { return std::atan(x); }
 double calculateAtanFloat(float x) { return std::atan(x); }
 
-Value<> AtanExpression::execute(NES::Nautilus::Record& record) const {
-    // Evaluate the left sub expression and retrieve the value.
-    Value leftValue = leftSubExpression->execute(record);
-    if (leftValue->isType<Float>()) {
-        return FunctionCall<>("calculateAtanFloat", calculateAtanFloat, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
-        return FunctionCall<>("calculateAtanDouble", calculateAtanDouble, leftValue.as<Double>());
-    } else {
-        // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Double or Float.");
-    }
+Value<> AtanExpression::execute(NES::Nautilus::Record &record) const {
+  // Evaluate the left sub expression and retrieve the value.
+  Value leftValue = leftSubExpression->execute(record);
+  if (leftValue->isType<Float>()) {
+    return FunctionCall<>("calculateAtanFloat", calculateAtanFloat,
+                          leftValue.as<Float>());
+  } else if (leftValue->isType<Double>()) {
+    return FunctionCall<>("calculateAtanDouble", calculateAtanDouble,
+                          leftValue.as<Double>());
+  } else {
+    // If no type was applicable we throw an exception.
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on numeric input arguments that are "
+        "either Double or Float.");
+  }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AtanExpression>> atanFunction("atan");
-}// namespace NES::Runtime::Execution::Expressions
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AtanExpression>>
+    atanFunction("atan");
+} // namespace NES::Runtime::Execution::Expressions

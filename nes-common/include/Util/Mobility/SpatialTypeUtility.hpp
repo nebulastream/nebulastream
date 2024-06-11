@@ -21,20 +21,24 @@
 namespace NES::Spatial::Util {
 
 /**
- * @brief this class contains functions to convert a spatial type enum to its equivalent protobuf type and vice versa
- * as well as functions to convert the node type enum to/from string
+ * @brief this class contains functions to convert a spatial type enum to its
+ * equivalent protobuf type and vice versa as well as functions to convert the
+ * node type enum to/from string
  */
 class SpatialTypeUtility {
-  public:
-    static Experimental::SpatialType stringToNodeType(const std::string spatialTypeString);
+public:
+  static Experimental::SpatialType
+  stringToNodeType(const std::string spatialTypeString);
 
-    static Experimental::SpatialType protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType spatialType);
+  static Experimental::SpatialType
+  protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType spatialType);
 
-    static std::string toString(Experimental::SpatialType spatialType);
+  static std::string toString(Experimental::SpatialType spatialType);
 
-    static NES::Spatial::Protobuf::SpatialType toProtobufEnum(Experimental::SpatialType spatialType);
+  static NES::Spatial::Protobuf::SpatialType
+  toProtobufEnum(Experimental::SpatialType spatialType);
 };
 
-}// namespace NES::Spatial::Util
+} // namespace NES::Spatial::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPEUTILITY_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPEUTILITY_HPP_

@@ -27,43 +27,45 @@ class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
 
 class StatisticProbeHandler : public StatisticProbeInterface {
-  public:
-    static StatisticProbeHandlerPtr create(const StatisticRegistryPtr& statisticRegistry,
-                                           const StatisticProbeGeneratorPtr& statisticProbeGenerator,
-                                           const StatisticCachePtr& statisticCache,
-                                           const TopologyPtr& topology);
+public:
+  static StatisticProbeHandlerPtr
+  create(const StatisticRegistryPtr &statisticRegistry,
+         const StatisticProbeGeneratorPtr &statisticProbeGenerator,
+         const StatisticCachePtr &statisticCache, const TopologyPtr &topology);
 
-    ProbeResult<> probeStatistic(const StatisticProbeRequest& probeRequest,
-                                 const bool& estimationAllowed,
-                                 std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) override;
+  ProbeResult<> probeStatistic(
+      const StatisticProbeRequest &probeRequest, const bool &estimationAllowed,
+      std::function<ProbeResult<>(ProbeResult<>)> &&aggFunction) override;
 
-    /**
-     * @brief Calls the probeStatistic function with estimationAllowed set to false
-     * @param probeRequest
-     * @return ProbeResult<>
-     */
-    ProbeResult<> probeStatistic(const StatisticProbeRequest& probeRequest);
+  /**
+   * @brief Calls the probeStatistic function with estimationAllowed set to
+   * false
+   * @param probeRequest
+   * @return ProbeResult<>
+   */
+  ProbeResult<> probeStatistic(const StatisticProbeRequest &probeRequest);
 
-    /**
-     * @brief Returns the queryId for a given StatisticKey. THIS SHOULD BE ONLY USED FOR TESTING!!!
-     * @param statisticKey
-     * @return QueryId
-     */
-    QueryId getStatisticQueryId(const StatisticKey& statisticKey) const;
+  /**
+   * @brief Returns the queryId for a given StatisticKey. THIS SHOULD BE ONLY
+   * USED FOR TESTING!!!
+   * @param statisticKey
+   * @return QueryId
+   */
+  QueryId getStatisticQueryId(const StatisticKey &statisticKey) const;
 
-  private:
-    StatisticProbeHandler(const StatisticRegistryPtr statisticRegistry,
-                          const StatisticProbeGeneratorPtr statisticProbeGenerator,
-                          const StatisticCachePtr statisticCache,
-                          const TopologyPtr topology);
+private:
+  StatisticProbeHandler(
+      const StatisticRegistryPtr statisticRegistry,
+      const StatisticProbeGeneratorPtr statisticProbeGenerator,
+      const StatisticCachePtr statisticCache, const TopologyPtr topology);
 
-    StatisticRegistryPtr statisticRegistry;
-    StatisticProbeGeneratorPtr statisticProbeGenerator;
-    StatisticCachePtr statisticCache;
-    TopologyPtr topology;
-    WorkerStatisticRPCClientPtr workerRpcClientPtr;
+  StatisticRegistryPtr statisticRegistry;
+  StatisticProbeGeneratorPtr statisticProbeGenerator;
+  StatisticCachePtr statisticCache;
+  TopologyPtr topology;
+  WorkerStatisticRPCClientPtr workerRpcClientPtr;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEHANDLER_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEHANDLER_HPP_

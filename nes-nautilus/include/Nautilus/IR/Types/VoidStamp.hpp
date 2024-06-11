@@ -22,16 +22,16 @@ namespace NES::Nautilus::IR::Types {
  * @brief A void stamp, which represents a data type without a value.
  */
 class VoidStamp : public Stamp {
-  public:
-    static const inline auto type = TypeIdentifier::create<VoidStamp>();
+public:
+  static const inline auto type = TypeIdentifier::create<VoidStamp>();
 
-    /**
-     * @brief Constructor to create a void stamp.
-     */
-    VoidStamp();
-    const std::string toString() const override;
+  /**
+   * @brief Constructor to create a void stamp.
+   */
+  VoidStamp();
+  const std::string toString() const override;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_

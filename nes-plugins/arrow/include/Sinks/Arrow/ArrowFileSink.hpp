@@ -30,101 +30,105 @@ namespace NES {
  * @brief this class implements the File sink that uses arrow.
  */
 class ArrowFileSink : public SinkMedium {
-  public:
-    /**
-     * @brief constructor that creates an empty file sink using a schema
-     * @param schema of the print sink
-     * @param format in which the data is written
-     * @param filePath location of file on sink server
-     * @param modus of writting (overwrite or append)
-     * @param numberOfOrigins: number of origins of a given query
-     */
-    explicit ArrowFileSink(SinkFormatPtr format,
-                           Runtime::NodeEnginePtr nodeEngine,
-                           uint32_t numOfProducers,
-                           const std::string& filePath,
-                           bool append,
-                           SharedQueryId sharedQueryId,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
-                           uint64_t numberOfOrigins = 1);
+public:
+  /**
+   * @brief constructor that creates an empty file sink using a schema
+   * @param schema of the print sink
+   * @param format in which the data is written
+   * @param filePath location of file on sink server
+   * @param modus of writting (overwrite or append)
+   * @param numberOfOrigins: number of origins of a given query
+   */
+  explicit ArrowFileSink(SinkFormatPtr format,
+                         Runtime::NodeEnginePtr nodeEngine,
+                         uint32_t numOfProducers, const std::string &filePath,
+                         bool append, SharedQueryId sharedQueryId,
+                         DecomposedQueryPlanId decomposedQueryPlanId,
+                         uint64_t numberOfOrigins = 1);
 
-    /**
-     * @brief dtor
-     */
-    ~ArrowFileSink() override;
+  /**
+   * @brief dtor
+   */
+  ~ArrowFileSink() override;
 
-    /**
-     * @brief method to override virtual setup function
-     * @Note currently the method does nothing
-     */
-    void setup() override;
+  /**
+   * @brief method to override virtual setup function
+   * @Note currently the method does nothing
+   */
+  void setup() override;
 
-    /**
-     * @brief method to override virtual shutdown function
-     * @Note currently the method does nothing
-     */
-    void shutdown() override;
+  /**
+   * @brief method to override virtual shutdown function
+   * @Note currently the method does nothing
+   */
+  void shutdown() override;
 
-    /**
-     * @brief method to write a TupleBuffer
-     * @param a tuple buffers pointer
-     * @return bool indicating if the write was complete
-     */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+  /**
+   * @brief method to write a TupleBuffer
+   * @param a tuple buffers pointer
+   * @return bool indicating if the write was complete
+   */
+  bool writeData(Runtime::TupleBuffer &inputBuffer,
+                 Runtime::WorkerContextRef) override;
 
-    /**
-     * @brief override the toString method for the file output sink
-     * @return returns string describing the file output sink
-     */
-    std::string toString() const override;
+  /**
+   * @brief override the toString method for the file output sink
+   * @return returns string describing the file output sink
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief get file path
-     */
-    std::string getFilePath() const;
+  /**
+   * @brief get file path
+   */
+  std::string getFilePath() const;
 
-    /**
-    * @brief method to return the type of medium
-    * @return type of medium
-    */
-    SinkMediumTypes getSinkMediumType() override;
+  /**
+   * @brief method to return the type of medium
+   * @return type of medium
+   */
+  SinkMediumTypes getSinkMediumType() override;
 
-    /**
-     * @brief method to return if the sink is appended
-     * @return bool indicating append
-     */
-    bool getAppend() const;
+  /**
+   * @brief method to return if the sink is appended
+   * @return bool indicating append
+   */
+  bool getAppend() const;
 
-    /**
-     * @brief method to return if the sink is append or overwrite
-     * @return string of mode
-     */
-    std::string getAppendAsString() const;
+  /**
+   * @brief method to return if the sink is append or overwrite
+   * @return string of mode
+   */
+  std::string getAppendAsString() const;
 
-  protected:
-    std::string filePath;
-    std::ofstream outputFile;
-    bool append{false};
+protected:
+  std::string filePath;
+  std::ofstream outputFile;
+  bool append{false};
 
-    /**
-     * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own filestream to write the file and therefore
-     * we require and abstraction to be able to obtain this object, or otherwise we need to write our own Arrow writer.
-     * @param a tuple buffers pointer
-     * @return bool indicating if the write was complete
-     */
-    bool writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer);
+  /**
+   * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own
+   * filestream to write the file and therefore we require and abstraction to be
+   * able to obtain this object, or otherwise we need to write our own Arrow
+   * writer.
+   * @param a tuple buffers pointer
+   * @return bool indicating if the write was complete
+   */
+  bool writeDataToArrowFile(Runtime::TupleBuffer &inputBuffer);
 
-    /**
-     * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own filestream to write the file and therefore
-     * we require and abstraction to be able to obtain this object, or otherwise we need to write our own Arrow writer.
-     * @param a tuple buffers pointer
-     * @return bool indicating if the write was complete
-     */
-    arrow::Status openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
-                                std::shared_ptr<arrow::Schema> arrowSchema,
-                                std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
+  /**
+   * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own
+   * filestream to write the file and therefore we require and abstraction to be
+   * able to obtain this object, or otherwise we need to write our own Arrow
+   * writer.
+   * @param a tuple buffers pointer
+   * @return bool indicating if the write was complete
+   */
+  arrow::Status openArrowFile(
+      std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
+      std::shared_ptr<arrow::Schema> arrowSchema,
+      std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
 };
 using ArrowFileSinkPtr = std::shared_ptr<ArrowFileSink>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_

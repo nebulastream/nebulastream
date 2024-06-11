@@ -18,20 +18,26 @@
 namespace NES::Statistic {
 
 StatisticManagerPtr StatisticManager::create(StatisticStorePtr statisticStore) {
-    return std::make_shared<StatisticManager>(StatisticManager(statisticStore));
+  return std::make_shared<StatisticManager>(StatisticManager(statisticStore));
 }
 
-std::vector<StatisticValue<>> StatisticManager::getStatistics(const StatisticProbeRequest& probeRequest) {
-    auto statistics = statisticStore->getStatistics(probeRequest.statisticHash, probeRequest.startTs, probeRequest.endTs);
-    std::vector<StatisticValue<>> statisticValues;
-    for (const auto& statistic : statistics) {
-        statisticValues.emplace_back(statistic->getStatisticValue(probeRequest.probeExpression));
-    }
+std::vector<StatisticValue<>>
+StatisticManager::getStatistics(const StatisticProbeRequest &probeRequest) {
+  auto statistics = statisticStore->getStatistics(
+      probeRequest.statisticHash, probeRequest.startTs, probeRequest.endTs);
+  std::vector<StatisticValue<>> statisticValues;
+  for (const auto &statistic : statistics) {
+    statisticValues.emplace_back(
+        statistic->getStatisticValue(probeRequest.probeExpression));
+  }
 
-    return statisticValues;
+  return statisticValues;
 }
 
-StatisticManager::StatisticManager(const StatisticStorePtr& statisticStore) : statisticStore(statisticStore) {}
+StatisticManager::StatisticManager(const StatisticStorePtr &statisticStore)
+    : statisticStore(statisticStore) {}
 
-StatisticStorePtr StatisticManager::getStatisticStore() const { return statisticStore; }
-}// namespace NES::Statistic
+StatisticStorePtr StatisticManager::getStatisticStore() const {
+  return statisticStore;
+}
+} // namespace NES::Statistic

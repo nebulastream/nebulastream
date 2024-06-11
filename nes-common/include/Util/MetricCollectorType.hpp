@@ -19,8 +19,14 @@
 #include <string>
 
 namespace NES::Monitoring {
-enum class MetricCollectorType : uint8_t { CPU_COLLECTOR, DISK_COLLECTOR, MEMORY_COLLECTOR, NETWORK_COLLECTOR, INVALID };
+enum class MetricCollectorType : uint8_t {
+  CPU_COLLECTOR,
+  DISK_COLLECTOR,
+  MEMORY_COLLECTOR,
+  NETWORK_COLLECTOR,
+  INVALID
+};
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_COMMON_INCLUDE_UTIL_METRICCOLLECTORTYPE_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_METRICCOLLECTORTYPE_HPP_

@@ -25,75 +25,77 @@
 namespace NES::Runtime::Execution {
 
 /**
- * @brief This class represents a single slice for the nested loop join. It stores all values for the left and right stream.
- * Later on this class can be reused for a slice.
+ * @brief This class represents a single slice for the nested loop join. It
+ * stores all values for the left and right stream. Later on this class can be
+ * reused for a slice.
  */
 class NLJSlice : public StreamSlice {
-  public:
-    /**
-     * @brief Constructor for creating a slice
-     * @param sliceStart: Start timestamp of this slice
-     * @param sliceEnd: End timestamp of this slice
-     * @param numWorkerThreads: The number of worker threads that will operate on this slice
-     * @param bufferManager: Allocates pages for both pagedVectorVarSized
-     * @param leftSchema: schema of the tuple on the left
-     * @param rightSchema: schema of the tuple on the right
-     * @param leftPageSize: Size of a single page for the left paged vectors
-     * @param rightPageSize: Size of a singe page for the right paged vectors
-     */
-    explicit NLJSlice(uint64_t sliceStart,
-                      uint64_t sliceEnd,
-                      uint64_t numWorkerThreads,
-                      BufferManagerPtr& bufferManager,
-                      SchemaPtr& leftSchema,
-                      uint64_t leftPageSize,
-                      SchemaPtr& rightSchema,
-                      uint64_t rightPageSize);
+public:
+  /**
+   * @brief Constructor for creating a slice
+   * @param sliceStart: Start timestamp of this slice
+   * @param sliceEnd: End timestamp of this slice
+   * @param numWorkerThreads: The number of worker threads that will operate on
+   * this slice
+   * @param bufferManager: Allocates pages for both pagedVectorVarSized
+   * @param leftSchema: schema of the tuple on the left
+   * @param rightSchema: schema of the tuple on the right
+   * @param leftPageSize: Size of a single page for the left paged vectors
+   * @param rightPageSize: Size of a singe page for the right paged vectors
+   */
+  explicit NLJSlice(uint64_t sliceStart, uint64_t sliceEnd,
+                    uint64_t numWorkerThreads, BufferManagerPtr &bufferManager,
+                    SchemaPtr &leftSchema, uint64_t leftPageSize,
+                    SchemaPtr &rightSchema, uint64_t rightPageSize);
 
-    ~NLJSlice() override = default;
+  ~NLJSlice() override = default;
 
-    /**
-     * @brief Retrieves the pointer to paged vector for the left or right side
-     * @param workerThreadId: The id of the worker, which request the PagedVectorRef
-     * @return Void pointer to the pagedVector
-     */
-    void* getPagedVectorRefLeft(WorkerThreadId workerThreadId);
+  /**
+   * @brief Retrieves the pointer to paged vector for the left or right side
+   * @param workerThreadId: The id of the worker, which request the
+   * PagedVectorRef
+   * @return Void pointer to the pagedVector
+   */
+  void *getPagedVectorRefLeft(WorkerThreadId workerThreadId);
 
-    /**
-     * @brief Retrieves the pointer to paged vector for the left or right side
-     * @param workerThreadId: The id of the worker, which request the PagedVectorRef
-     * @return Void pointer to the pagedVector
-     */
-    void* getPagedVectorRefRight(WorkerThreadId workerThreadId);
+  /**
+   * @brief Retrieves the pointer to paged vector for the left or right side
+   * @param workerThreadId: The id of the worker, which request the
+   * PagedVectorRef
+   * @return Void pointer to the pagedVector
+   */
+  void *getPagedVectorRefRight(WorkerThreadId workerThreadId);
 
-    /**
-     * @brief combines the PagedVectors for the left and right side. Afterwards, all tuples are stored in the first
-     * index of the vectors
-     */
-    void combinePagedVectors();
+  /**
+   * @brief combines the PagedVectors for the left and right side. Afterwards,
+   * all tuples are stored in the first index of the vectors
+   */
+  void combinePagedVectors();
 
-    /**
-     * @brief Returns the number of tuples in this slice for the left side
-     * @return uint64_t
-     */
-    uint64_t getNumberOfTuplesLeft() override;
+  /**
+   * @brief Returns the number of tuples in this slice for the left side
+   * @return uint64_t
+   */
+  uint64_t getNumberOfTuplesLeft() override;
 
-    /**
-     * @brief Returns the number of tuples in this slice for the right side
-     * @return uint64_t
-     */
-    uint64_t getNumberOfTuplesRight() override;
+  /**
+   * @brief Returns the number of tuples in this slice for the right side
+   * @return uint64_t
+   */
+  uint64_t getNumberOfTuplesRight() override;
 
-    /**
-     * @brief Creates a string representation of this slice
-     * @return String
-     */
-    std::string toString() override;
+  /**
+   * @brief Creates a string representation of this slice
+   * @return String
+   */
+  std::string toString() override;
 
-  private:
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftTuples;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> rightTuples;
+private:
+  std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>>
+      leftTuples;
+  std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>>
+      rightTuples;
 };
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_

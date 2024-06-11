@@ -20,46 +20,47 @@
 
 namespace NES::Benchmark::DataProvision {
 class TupleBufferHolder {
-  public:
-    /**
-         * @brief default constructor
-    */
-    TupleBufferHolder() = default;
+public:
+  /**
+   * @brief default constructor
+   */
+  TupleBufferHolder() = default;
 
-    /**
-         * @brief constructor via an reference to the buffer to be hold
-         * @param ref
-    */
-    TupleBufferHolder(const Runtime::TupleBuffer& ref) : bufferToHold(ref) {}
+  /**
+   * @brief constructor via an reference to the buffer to be hold
+   * @param ref
+   */
+  TupleBufferHolder(const Runtime::TupleBuffer &ref) : bufferToHold(ref) {}
 
-    /**
-     * @brief constructor via && reference to the buffer to be hold
-     * @param ref
-     */
-    TupleBufferHolder(TupleBufferHolder&& rhs) noexcept : bufferToHold(std::move(rhs.bufferToHold)) {}
+  /**
+   * @brief constructor via && reference to the buffer to be hold
+   * @param ref
+   */
+  TupleBufferHolder(TupleBufferHolder &&rhs) noexcept
+      : bufferToHold(std::move(rhs.bufferToHold)) {}
 
-    /**
-     * @brief equal sign operator via a reference
-     * @param other
-     * @return
-     */
-    TupleBufferHolder& operator=(const TupleBufferHolder& other) {
-        bufferToHold = other.bufferToHold;
-        return *this;
-    }
+  /**
+   * @brief equal sign operator via a reference
+   * @param other
+   * @return
+   */
+  TupleBufferHolder &operator=(const TupleBufferHolder &other) {
+    bufferToHold = other.bufferToHold;
+    return *this;
+  }
 
-    /**
-     * @brief equal sign operator via a reference/reference
-     * @param other
-     * @return
-     */
-    TupleBufferHolder& operator=(TupleBufferHolder&& other) {
-        bufferToHold = std::move(other.bufferToHold);
-        return *this;
-    }
+  /**
+   * @brief equal sign operator via a reference/reference
+   * @param other
+   * @return
+   */
+  TupleBufferHolder &operator=(TupleBufferHolder &&other) {
+    bufferToHold = std::move(other.bufferToHold);
+    return *this;
+  }
 
-    Runtime::TupleBuffer bufferToHold;
+  Runtime::TupleBuffer bufferToHold;
 };
-}// namespace NES::Benchmark::DataProvision
+} // namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_

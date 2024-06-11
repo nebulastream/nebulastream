@@ -18,44 +18,47 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-ExpExpression::ExpExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+ExpExpression::ExpExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr &subExpression)
     : subExpression(subExpression) {}
 
 /**
- * @brief This method computes returns the exponential (Euler's number) e raised to the given subExpression.
- * This function is basically a wrapper for std::exp() and enables us to use it in our execution engine framework.
+ * @brief This method computes returns the exponential (Euler's number) e raised
+ * to the given subExpression. This function is basically a wrapper for
+ * std::exp() and enables us to use it in our execution engine framework.
  * @param x double
  * @return double
  */
 double calculateExp(double x) { return std::exp(x); }
 
-Value<> ExpExpression::execute(NES::Nautilus::Record& record) const {
-    Value subValue = subExpression->execute(record);
+Value<> ExpExpression::execute(NES::Nautilus::Record &record) const {
+  Value subValue = subExpression->execute(record);
 
-    if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateExp", calculateExp, subValue.as<Double>());
-    } else {
-        // Throw an exception if no type is applicable
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
-    }
+  if (subValue->isType<Int8>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int8>());
+  } else if (subValue->isType<Int16>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int16>());
+  } else if (subValue->isType<Int32>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int32>());
+  } else if (subValue->isType<Int64>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<Int64>());
+  } else if (subValue->isType<UInt8>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt8>());
+  } else if (subValue->isType<UInt16>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt16>());
+  } else if (subValue->isType<UInt32>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt32>());
+  } else if (subValue->isType<UInt64>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<UInt64>());
+  } else if (subValue->isType<Float>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<Float>());
+  } else if (subValue->isType<Double>()) {
+    return FunctionCall<>("calculateExp", calculateExp, subValue.as<Double>());
+  } else {
+    // Throw an exception if no type is applicable
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on numeric input arguments that are "
+        "either Integer or Float.");
+  }
 }
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

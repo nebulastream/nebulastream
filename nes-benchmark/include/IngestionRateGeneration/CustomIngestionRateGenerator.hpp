@@ -19,27 +19,30 @@
 
 namespace NES::Benchmark::IngestionRateGeneration {
 /**
- * @brief This class inherits from IngestionRateGenerator and allows for the generation of M1, M2, D1 and D2 distributed ingestion rates.
+ * @brief This class inherits from IngestionRateGenerator and allows for the
+ * generation of M1, M2, D1 and D2 distributed ingestion rates.
  */
 class CustomIngestionRateGenerator : public IngestionRateGenerator {
-  public:
-    /**
-     * @brief constructor for a uniform ingestion rate generator
-     * @param ingestionRateDistribution
-     * @param ingestionRateCount
-     */
-    explicit CustomIngestionRateGenerator(uint64_t ingestionRateCount, std::vector<uint64_t>& customValues);
+public:
+  /**
+   * @brief constructor for a uniform ingestion rate generator
+   * @param ingestionRateDistribution
+   * @param ingestionRateCount
+   */
+  explicit CustomIngestionRateGenerator(uint64_t ingestionRateCount,
+                                        std::vector<uint64_t> &customValues);
 
-    /**
-      * @brief creates a vector of length ingestionRateCount and fills it with values of m1Values, m2Values, d1Values or d2Values
-      * @return predefinedIngestionRates
-      */
-    std::vector<std::uint64_t> generateIngestionRates() override;
+  /**
+   * @brief creates a vector of length ingestionRateCount and fills it with
+   * values of m1Values, m2Values, d1Values or d2Values
+   * @return predefinedIngestionRates
+   */
+  std::vector<std::uint64_t> generateIngestionRates() override;
 
-  private:
-    std::vector<uint64_t> customValues;
-    std::vector<uint64_t> predefinedIngestionRates;
+private:
+  std::vector<uint64_t> customValues;
+  std::vector<uint64_t> predefinedIngestionRates;
 };
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_CUSTOMINGESTIONRATEGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_CUSTOMINGESTIONRATEGENERATOR_HPP_

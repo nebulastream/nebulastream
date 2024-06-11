@@ -25,49 +25,54 @@
 namespace NES::Runtime {
 
 /**
- * @brief The Lineage Manager class stores map of all tuples that got their sequence number changed
- * by stateful operators
+ * @brief The Lineage Manager class stores map of all tuples that got their
+ * sequence number changed by stateful operators
  */
 class InMemoryLineageManager : public AbstractLineageManager {
-  public:
-    InMemoryLineageManager() = default;
+public:
+  InMemoryLineageManager() = default;
 
-    /**
-     * @brief Inserts a pair newId, oldId into bufferAncestorMapping, where newId is a key
-     * @param newId new sequence number that was created by a stateful operator
-     * @param oldId old sequence number that the tuple had
-     */
-    void insert(BufferSequenceNumber newBufferSequenceNumber, BufferSequenceNumber oldBufferSequenceNumber) override;
+  /**
+   * @brief Inserts a pair newId, oldId into bufferAncestorMapping, where newId
+   * is a key
+   * @param newId new sequence number that was created by a stateful operator
+   * @param oldId old sequence number that the tuple had
+   */
+  void insert(BufferSequenceNumber newBufferSequenceNumber,
+              BufferSequenceNumber oldBufferSequenceNumber) override;
 
-    /**
-     * @brief Deletes a pair<newId,oldId> from bufferAncestorMapping manager
-     * @param id newId of the tuple
-     * @return true in case of a success trimming
-     */
-    bool trim(BufferSequenceNumber bufferSequenceNumber) override;
+  /**
+   * @brief Deletes a pair<newId,oldId> from bufferAncestorMapping manager
+   * @param id newId of the tuple
+   * @return true in case of a success trimming
+   */
+  bool trim(BufferSequenceNumber bufferSequenceNumber) override;
 
-    /**
-     * @brief Finds an old id for the tuple with a given id
-     * @param id new id of the tuple
-     * @return old id of the tuple
-     */
-    std::vector<BufferSequenceNumber> findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber);
+  /**
+   * @brief Finds an old id for the tuple with a given id
+   * @param id new id of the tuple
+   * @return old id of the tuple
+   */
+  std::vector<BufferSequenceNumber>
+  findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber);
 
-    /**
-     * @brief Return current bufferAncestorMapping size
-     * @return Current bufferAncestorMapping size
-     */
-    size_t getLineageSize() const override;
+  /**
+   * @brief Return current bufferAncestorMapping size
+   * @return Current bufferAncestorMapping size
+   */
+  size_t getLineageSize() const override;
 
-  private:
-    ///this unordered map maps new buffer sequence numbers to old ones, which tuple buffer had before a statefull operator
+private:
+  /// this unordered map maps new buffer sequence numbers to old ones, which
+  /// tuple buffer had before a statefull operator
 
-    std::unordered_map<BufferSequenceNumber, std::vector<BufferSequenceNumber>> bufferAncestorMapping;
-    mutable std::mutex mutex;
+  std::unordered_map<BufferSequenceNumber, std::vector<BufferSequenceNumber>>
+      bufferAncestorMapping;
+  mutable std::mutex mutex;
 };
 
 using LineageManagerPtr = std::shared_ptr<Runtime::InMemoryLineageManager>;
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_

@@ -25,37 +25,39 @@ namespace NES::Runtime {
  */
 class alignas(64) BloomFilter {
 
-  public:
-    /**
-     * @brief Creates a bloom filter for the expected no. entries and the false positive rate
-     * @param entries
-     * @param falsePositiveRate
-     */
-    explicit BloomFilter(uint64_t entries, double falsePositiveRate);
+public:
+  /**
+   * @brief Creates a bloom filter for the expected no. entries and the false
+   * positive rate
+   * @param entries
+   * @param falsePositiveRate
+   */
+  explicit BloomFilter(uint64_t entries, double falsePositiveRate);
 
-    /**
-     * @brief adds a hash to the bloom filter
-     * @param hash
-     */
-    void add(uint64_t hash);
+  /**
+   * @brief adds a hash to the bloom filter
+   * @param hash
+   */
+  void add(uint64_t hash);
 
-    /**
-     * @brief checks if the key is in the bloom filter. If false, one can be sure that the key has not been seen
-     * @param hash
-     * @return true or false
-     */
-    bool checkContains(uint64_t hash);
+  /**
+   * @brief checks if the key is in the bloom filter. If false, one can be sure
+   * that the key has not been seen
+   * @param hash
+   * @return true or false
+   */
+  bool checkContains(uint64_t hash);
 
-    /**
-     * @brief destructs the BloomFilter
-     */
-    ~BloomFilter();
+  /**
+   * @brief destructs the BloomFilter
+   */
+  ~BloomFilter();
 
-  private:
-    uint32_t noBits;
-    uint16_t noHashes;
-    uint8_t* bitField;
+private:
+  uint32_t noBits;
+  uint16_t noHashes;
+  uint8_t *bitField;
 };
 
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_

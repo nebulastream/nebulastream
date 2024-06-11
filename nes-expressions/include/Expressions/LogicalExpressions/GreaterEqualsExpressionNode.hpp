@@ -21,25 +21,26 @@ namespace NES {
  * @brief This node represents a greater comparison between the two children.
  */
 class GreaterEqualsExpressionNode : public LogicalBinaryExpressionNode {
-  public:
-    GreaterEqualsExpressionNode() noexcept = default;
-    ~GreaterEqualsExpressionNode() override = default;
-    /**
-    * @brief Create a new greater then expression
-    */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+public:
+  GreaterEqualsExpressionNode() noexcept = default;
+  ~GreaterEqualsExpressionNode() override = default;
+  /**
+   * @brief Create a new greater then expression
+   */
+  static ExpressionNodePtr create(ExpressionNodePtr const &left,
+                                  ExpressionNodePtr const &right);
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  protected:
-    explicit GreaterEqualsExpressionNode(GreaterEqualsExpressionNode* other);
+protected:
+  explicit GreaterEqualsExpressionNode(GreaterEqualsExpressionNode *other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_

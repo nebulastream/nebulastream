@@ -21,17 +21,20 @@
 namespace NES::Configurations {
 
 /**
-* @brief This class implements validation for parameters that should represent non-negative non-zero integers
-*/
+ * @brief This class implements validation for parameters that should represent
+ * non-negative non-zero integers
+ */
 class NonZeroValidation : public ConfigurationValidation {
-  public:
-    /**
-     * @brief Method to check the validity of a parameter as a non-negative non-zero integer
-     * @param number number to validate
-     * @return true if the parameter is a valid non-negative non-zero integer, false otherwise
-     */
-    bool isValid(const std::string& number) const override;
+public:
+  /**
+   * @brief Method to check the validity of a parameter as a non-negative
+   * non-zero integer
+   * @param number number to validate
+   * @return true if the parameter is a valid non-negative non-zero integer,
+   * false otherwise
+   */
+  bool isValid(const std::string &number) const override;
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NONZEROVALIDATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NONZEROVALIDATION_HPP_

@@ -17,20 +17,24 @@
 namespace NES::Nautilus::Tracing {
 void SymbolicExecutionPath::append(bool outcome) { path.emplace_back(outcome); }
 
-std::tuple<bool> SymbolicExecutionPath::operator[](uint64_t size) { return path[size]; }
+std::tuple<bool> SymbolicExecutionPath::operator[](uint64_t size) {
+  return path[size];
+}
 
 uint64_t SymbolicExecutionPath::getSize() { return path.size(); }
-std::ostream& operator<<(std::ostream& os, const SymbolicExecutionPath& path) {
-    os << "[";
-    for (auto p : path.path) {
-        os << p << ",";
-    }
-    os << "]";
-    return os;
+std::ostream &operator<<(std::ostream &os, const SymbolicExecutionPath &path) {
+  os << "[";
+  for (auto p : path.path) {
+    os << p << ",";
+  }
+  os << "]";
+  return os;
 }
-const Tag* SymbolicExecutionPath::getFinalTag() const { return this->finalTag; }
-void SymbolicExecutionPath::setFinalTag(const Tag* finalTag) { this->finalTag = finalTag; };
+const Tag *SymbolicExecutionPath::getFinalTag() const { return this->finalTag; }
+void SymbolicExecutionPath::setFinalTag(const Tag *finalTag) {
+  this->finalTag = finalTag;
+};
 
-std::vector<bool>& SymbolicExecutionPath::getPath() { return path; }
+std::vector<bool> &SymbolicExecutionPath::getPath() { return path; }
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

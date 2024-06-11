@@ -17,39 +17,44 @@
 namespace NES::Nautilus {
 
 class MemRefInvocationPlugin : public InvocationPlugin {
-  public:
-    MemRefInvocationPlugin() = default;
+public:
+  MemRefInvocationPlugin() = default;
 
-    std::optional<Value<>> Add(const Value<>& left, const Value<>& right) const override {
-        if (isa<MemRef>(left.getValue()) && (isa<Int64>(right.getValue()) || isa<UInt64>(right.getValue()))) {
+  std::optional<Value<>> Add(const Value<> &left,
+                             const Value<> &right) const override {
+    if (isa<MemRef>(left.getValue()) &&
+        (isa<Int64>(right.getValue()) || isa<UInt64>(right.getValue()))) {
 
-            auto leftVal = cast<MemRef>(left.getValue());
-            if (leftVal->value == nullptr) {
-                return Value<>(std::make_shared<MemRef>(nullptr));
-            }
+      auto leftVal = cast<MemRef>(left.getValue());
+      if (leftVal->value == nullptr) {
+        return Value<>(std::make_shared<MemRef>(nullptr));
+      }
 
-            if (auto rightVal = cast_if<Int64>(&right.getValue())) {
-                int8_t* result = leftVal->value + rightVal->getValue();
-                return Value<>(std::make_shared<MemRef>(result));
-            } else if (auto rightVal = cast_if<UInt64>(&right.getValue())) {
-                int8_t* result = leftVal->value + rightVal->getValue();
-                return Value<>(std::make_shared<MemRef>(result));
-            }
-        }
-        return std::nullopt;
+      if (auto rightVal = cast_if<Int64>(&right.getValue())) {
+        int8_t *result = leftVal->value + rightVal->getValue();
+        return Value<>(std::make_shared<MemRef>(result));
+      } else if (auto rightVal = cast_if<UInt64>(&right.getValue())) {
+        int8_t *result = leftVal->value + rightVal->getValue();
+        return Value<>(std::make_shared<MemRef>(result));
+      }
     }
+    return std::nullopt;
+  }
 
-    std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
-        if (left->isType<MemRef>() && right->isType<Int32>()) {
-            auto result = left.getValue().staticCast<MemRef>().value == nullptr;
-            return Value(std::make_shared<Boolean>(result));
-        } else if (left->isType<MemRef>() && right->isType<MemRef>()) {
-            auto result = left.getValue().staticCast<MemRef>().value == right.getValue().staticCast<MemRef>().value;
-            return Value(std::make_shared<Boolean>(result));
-        }
-        return InvocationPlugin::Equals(left, right);
+  std::optional<Value<>> Equals(const Value<> &left,
+                                const Value<> &right) const override {
+    if (left->isType<MemRef>() && right->isType<Int32>()) {
+      auto result = left.getValue().staticCast<MemRef>().value == nullptr;
+      return Value(std::make_shared<Boolean>(result));
+    } else if (left->isType<MemRef>() && right->isType<MemRef>()) {
+      auto result = left.getValue().staticCast<MemRef>().value ==
+                    right.getValue().staticCast<MemRef>().value;
+      return Value(std::make_shared<Boolean>(result));
     }
+    return InvocationPlugin::Equals(left, right);
+  }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<MemRefInvocationPlugin> memRefInvocationPlugin;
-}// namespace NES::Nautilus
+[[maybe_unused]] static InvocationPluginRegistry::Add<MemRefInvocationPlugin>
+    memRefInvocationPlugin;
+} // namespace NES::Nautilus

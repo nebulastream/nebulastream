@@ -38,10 +38,10 @@ class NetworkSink;
 namespace NES::Runtime::Execution {
 
 enum class ExecutableQueryPlanResult : uint8_t {
-    /// query was completed successfully
-    Ok,
-    /// query failed
-    Fail
+  /// query was completed successfully
+  Ok,
+  /// query failed
+  Fail
 };
 
 /**
@@ -51,183 +51,188 @@ enum class ExecutableQueryPlanResult : uint8_t {
  * This class is thread-safe.
  */
 class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
-    friend class NES::Network::NetworkSink;
+  friend class NES::Network::NetworkSink;
 
-  public:
-    /**
-     * @brief Constructor for an executable query plan.
-     * @param sharedQueryId id of the overall query
-     * @param decomposedQueryPlanId id of the sub query plan
-     * @param sources vector of data sources
-     * @param sinks vector of data sinks
-     * @param pipelines vector of pipelines
-     * @param queryManager shared pointer to the query manager
-     * @param bufferManager shared pointer to the buffer manager
-     */
-    explicit ExecutableQueryPlan(SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId,
-                                 std::vector<DataSourcePtr>&& sources,
-                                 std::vector<DataSinkPtr>&& sinks,
-                                 std::vector<ExecutablePipelinePtr>&& pipelines,
-                                 QueryManagerPtr&& queryManager,
-                                 BufferManagerPtr&& bufferManager);
+public:
+  /**
+   * @brief Constructor for an executable query plan.
+   * @param sharedQueryId id of the overall query
+   * @param decomposedQueryPlanId id of the sub query plan
+   * @param sources vector of data sources
+   * @param sinks vector of data sinks
+   * @param pipelines vector of pipelines
+   * @param queryManager shared pointer to the query manager
+   * @param bufferManager shared pointer to the buffer manager
+   */
+  explicit ExecutableQueryPlan(SharedQueryId sharedQueryId,
+                               DecomposedQueryPlanId decomposedQueryPlanId,
+                               std::vector<DataSourcePtr> &&sources,
+                               std::vector<DataSinkPtr> &&sinks,
+                               std::vector<ExecutablePipelinePtr> &&pipelines,
+                               QueryManagerPtr &&queryManager,
+                               BufferManagerPtr &&bufferManager);
 
-    /**
-     * @brief Factory to create an new executable query plan.
-     * @param sharedQueryId id of the overall query
-     * @param decomposedQueryPlanId id of the sub query plan
-     * @param sources vector of data sources
-     * @param sinks vector of data sinks
-     * @param pipelines vector of pipelines
-     * @param queryManager shared pointer to the query manager
-     * @param bufferManager shared pointer to the buffer manager
-     */
-    static ExecutableQueryPlanPtr create(SharedQueryId sharedQueryId,
-                                         DecomposedQueryPlanId decomposedQueryPlanId,
-                                         std::vector<DataSourcePtr> sources,
-                                         std::vector<DataSinkPtr> sinks,
-                                         std::vector<ExecutablePipelinePtr> pipelines,
-                                         QueryManagerPtr queryManager,
-                                         BufferManagerPtr bufferManager);
-    ~ExecutableQueryPlan() override;
+  /**
+   * @brief Factory to create an new executable query plan.
+   * @param sharedQueryId id of the overall query
+   * @param decomposedQueryPlanId id of the sub query plan
+   * @param sources vector of data sources
+   * @param sinks vector of data sinks
+   * @param pipelines vector of pipelines
+   * @param queryManager shared pointer to the query manager
+   * @param bufferManager shared pointer to the buffer manager
+   */
+  static ExecutableQueryPlanPtr
+  create(SharedQueryId sharedQueryId,
+         DecomposedQueryPlanId decomposedQueryPlanId,
+         std::vector<DataSourcePtr> sources, std::vector<DataSinkPtr> sinks,
+         std::vector<ExecutablePipelinePtr> pipelines,
+         QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
+  ~ExecutableQueryPlan() override;
 
-    /**
-     * @brief
-     * @param source
-     */
-    void notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType);
+  /**
+   * @brief
+   * @param source
+   */
+  void notifySourceCompletion(DataSourcePtr source,
+                              QueryTerminationType terminationType);
 
-    /**
-     * @brief
-     * @param pipeline
-     */
-    void notifyPipelineCompletion(ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
+  /**
+   * @brief
+   * @param pipeline
+   */
+  void notifyPipelineCompletion(ExecutablePipelinePtr pipeline,
+                                QueryTerminationType terminationType);
 
-    /**
-     * @brief
-     * @param sink
-     */
-    void notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType);
+  /**
+   * @brief
+   * @param sink
+   */
+  void notifySinkCompletion(DataSinkPtr sink,
+                            QueryTerminationType terminationType);
 
-    /**
-     * @brief Setup the query plan, e.g., instantiate state variables.
-     */
-    bool setup();
+  /**
+   * @brief Setup the query plan, e.g., instantiate state variables.
+   */
+  bool setup();
 
-    /**
-     * @brief Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
-     * @return Success if the query plan started
-     */
-    bool start();
+  /**
+   * @brief Start the query plan, e.g., start window thread, passes stateManager
+   * further to the pipeline
+   * @return Success if the query plan started
+   */
+  bool start();
 
-    /**
-     * @brief Stop the query plan and free all associated resources.
-     */
-    bool stop();
+  /**
+   * @brief Stop the query plan and free all associated resources.
+   */
+  bool stop();
 
-    /**
-     * @brief returns a future that will tell us if the plan was terminated with no errors or with error.
-     * @return a shared future that eventually indicates how the qep terminated
-     */
-    std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
+  /**
+   * @brief returns a future that will tell us if the plan was terminated with
+   * no errors or with error.
+   * @return a shared future that eventually indicates how the qep terminated
+   */
+  std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
 
-    /**
-     * @brief Fail the query plan and free all associated resources.
-     * @return not defined yet
-     */
-    bool fail();
+  /**
+   * @brief Fail the query plan and free all associated resources.
+   * @return not defined yet
+   */
+  bool fail();
 
-    ExecutableQueryPlanStatus getStatus();
+  ExecutableQueryPlanStatus getStatus();
 
-    /**
-     * @brief Get data sources.
-     */
-    const std::vector<DataSourcePtr>& getSources() const;
+  /**
+   * @brief Get data sources.
+   */
+  const std::vector<DataSourcePtr> &getSources() const;
 
-    /**
-     * @brief Get data sinks.
-     */
-    const std::vector<DataSinkPtr>& getSinks() const;
+  /**
+   * @brief Get data sinks.
+   */
+  const std::vector<DataSinkPtr> &getSinks() const;
 
-    /**
-     * @brief Get pipelines.
-     * @return
-     */
-    const std::vector<ExecutablePipelinePtr>& getPipelines() const;
+  /**
+   * @brief Get pipelines.
+   * @return
+   */
+  const std::vector<ExecutablePipelinePtr> &getPipelines() const;
 
-    /**
-     * @brief Returns a reference to the query manager
-     * @return QueryManagerPtr
-     */
-    QueryManagerPtr getQueryManager();
+  /**
+   * @brief Returns a reference to the query manager
+   * @return QueryManagerPtr
+   */
+  QueryManagerPtr getQueryManager();
 
-    /**
-     * @brief Returns a reference to the buffer manager
-     * @return BufferManagerPtr
-     */
-    BufferManagerPtr getBufferManager();
+  /**
+   * @brief Returns a reference to the buffer manager
+   * @return BufferManagerPtr
+   */
+  BufferManagerPtr getBufferManager();
 
-    /**
-     * @brief Get the query id
-     * @return the query id
-     */
-    SharedQueryId getSharedQueryId() const;
+  /**
+   * @brief Get the query id
+   * @return the query id
+   */
+  SharedQueryId getSharedQueryId() const;
 
-    /**
-     * @brief Get the query execution plan id
-     * @return the query execution plan id
-     */
-    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
+  /**
+   * @brief Get the query execution plan id
+   * @return the query execution plan id
+   */
+  DecomposedQueryPlanId getDecomposedQueryPlanId() const;
 
-    /**
-     * @brief final reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     */
-    void postReconfigurationCallback(ReconfigurationMessage& task) override;
+  /**
+   * @brief final reconfigure callback called upon a reconfiguration
+   * @param task the reconfig descriptor
+   */
+  void postReconfigurationCallback(ReconfigurationMessage &task) override;
 
-    /**
-     * @brief destroy resources allocated to the EQP. Used
-     * to explicitly destroy them outside the allocated
-     * destructor.
-     */
-    void destroy();
+  /**
+   * @brief destroy resources allocated to the EQP. Used
+   * to explicitly destroy them outside the allocated
+   * destructor.
+   */
+  void destroy();
 
-  protected:
-    /**
-     * @brief API method called upon receiving an event.
-     * @note Add handling for different event types here.
-     * @param event
-     */
-    void onEvent(BaseEvent& event) override;
+protected:
+  /**
+   * @brief API method called upon receiving an event.
+   * @note Add handling for different event types here.
+   * @param event
+   */
+  void onEvent(BaseEvent &event) override;
 
-  private:
-    /**
-     * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
-     * @tparam Derived the class type that we want to cast the shared ptr
-     * @return this instance casted to the desired shared_ptr<Derived> type
-     */
-    template<typename Derived>
-    std::shared_ptr<Derived> shared_from_base() {
-        return std::static_pointer_cast<Derived>(Reconfigurable::shared_from_this());
-    }
+private:
+  /**
+   * @brief This method is necessary to avoid problems with the shared_from_this
+   * machinery combined with multi-inheritance
+   * @tparam Derived the class type that we want to cast the shared ptr
+   * @return this instance casted to the desired shared_ptr<Derived> type
+   */
+  template <typename Derived> std::shared_ptr<Derived> shared_from_base() {
+    return std::static_pointer_cast<Derived>(
+        Reconfigurable::shared_from_this());
+  }
 
-  private:
-    const SharedQueryId sharedQueryId;
-    const DecomposedQueryPlanId decomposedQueryPlanId;
-    std::vector<DataSourcePtr> sources;
-    std::vector<DataSinkPtr> sinks;
-    std::vector<ExecutablePipelinePtr> pipelines;
-    QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
-    std::atomic<ExecutableQueryPlanStatus> qepStatus;
-    /// number of producers that provide data to this qep
-    std::atomic<uint32_t> numOfTerminationTokens;
-    /// promise that indicates how a qep terminates
-    std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
-    /// future that indicates how a qep terminates
-    std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
+private:
+  const SharedQueryId sharedQueryId;
+  const DecomposedQueryPlanId decomposedQueryPlanId;
+  std::vector<DataSourcePtr> sources;
+  std::vector<DataSinkPtr> sinks;
+  std::vector<ExecutablePipelinePtr> pipelines;
+  QueryManagerPtr queryManager;
+  BufferManagerPtr bufferManager;
+  std::atomic<ExecutableQueryPlanStatus> qepStatus;
+  /// number of producers that provide data to this qep
+  std::atomic<uint32_t> numOfTerminationTokens;
+  /// promise that indicates how a qep terminates
+  std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
+  /// future that indicates how a qep terminates
+  std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_

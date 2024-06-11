@@ -15,8 +15,11 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-ReadFieldExpression::ReadFieldExpression(Record::RecordFieldIdentifier field) : field(field) {}
+ReadFieldExpression::ReadFieldExpression(Record::RecordFieldIdentifier field)
+    : field(field) {}
 
-Value<> ReadFieldExpression::execute(Record& record) const { return record.read(field); }
+Value<> ReadFieldExpression::execute(Record &record) const {
+  return record.read(field);
+}
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

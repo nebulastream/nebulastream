@@ -34,53 +34,58 @@ using namespace Configurations;
 using namespace Runtime;
 
 class UserDefinedMonitoringTest : public Testing::BaseUnitTest {
-  public:
-    Runtime::BufferManagerPtr bufferManager;
-    uint64_t bufferSize = 0;
+public:
+  Runtime::BufferManagerPtr bufferManager;
+  uint64_t bufferSize = 0;
 
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("UserDefinedMonitoringTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
-    }
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("UserDefinedMonitoringTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO(
+        "ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
+  }
 
-    /* Will be called before a  test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        NES_DEBUG("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case.");
+  /* Will be called before a  test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    NES_DEBUG("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test "
+              "case.");
 
-        unsigned int numCPU = std::thread::hardware_concurrency();
-        bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);
-        bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
-    }
+    unsigned int numCPU = std::thread::hardware_concurrency();
+    bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) +
+                 sizeof(Monitoring::CpuMetricsWrapper);
+    bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
+  }
 };
 
 TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
-    nlohmann::json metricsJson{};
-    std::vector<Monitoring::Metric> metrics;
+  nlohmann::json metricsJson{};
+  std::vector<Monitoring::Metric> metrics;
 
-    uint64_t myInt = 12345;
-    metrics.emplace_back(myInt);
-    std::string myString = "testString";
-    metrics.emplace_back(myString);
+  uint64_t myInt = 12345;
+  metrics.emplace_back(myInt);
+  std::string myString = "testString";
+  metrics.emplace_back(myString);
 
-    for (unsigned int i = 0; i < metrics.size(); i++) {
-        metricsJson[i] = asJson(metrics[i]);
-    }
+  for (unsigned int i = 0; i < metrics.size(); i++) {
+    metricsJson[i] = asJson(metrics[i]);
+  }
 
-    NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
+  NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
 }
 
 TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
-    auto monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
-    auto monitoringCatalog = Monitoring::MonitoringCatalog::defaultCatalog();
-    nlohmann::json metricsJson{};
+  auto monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
+  auto monitoringCatalog = Monitoring::MonitoringCatalog::defaultCatalog();
+  nlohmann::json metricsJson{};
 
-    for (auto type : monitoringPlan->getMetricTypes()) {
-        auto collector = monitoringCatalog->getMetricCollector(type);
-        Monitoring::MetricPtr metric = collector->readMetric();
-        metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = asJson(metric);
-    }
-    NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
+  for (auto type : monitoringPlan->getMetricTypes()) {
+    auto collector = monitoringCatalog->getMetricCollector(type);
+    Monitoring::MetricPtr metric = collector->readMetric();
+    metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] =
+        asJson(metric);
+  }
+  NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
 }
 
-}// namespace NES
+} // namespace NES

@@ -18,34 +18,35 @@
 namespace NES::Nautilus::IR::Types {
 
 class FloatStamp : public Stamp {
-  public:
-    // Bit width for the float
-    enum class BitWidth : uint32_t { F32, F64 };
+public:
+  // Bit width for the float
+  enum class BitWidth : uint32_t { F32, F64 };
 
-    static const inline auto type = TypeIdentifier::create<FloatStamp>();
-    /**
-     * @brief Constructor to create a float stamp.
-     * @param bitWidth defines the width of the float, can be 32, and 64bit.
-     */
-    FloatStamp(BitWidth bitWidth);
+  static const inline auto type = TypeIdentifier::create<FloatStamp>();
+  /**
+   * @brief Constructor to create a float stamp.
+   * @param bitWidth defines the width of the float, can be 32, and 64bit.
+   */
+  FloatStamp(BitWidth bitWidth);
 
-    /**
-     * @brief Returns the bit width of the float.
-     * @return BitWidth
-     */
-    BitWidth getBitWidth() const;
+  /**
+   * @brief Returns the bit width of the float.
+   * @return BitWidth
+   */
+  BitWidth getBitWidth() const;
 
-    /**
-     * @brief Returns the number of bit as a uint32_t a value of this stamp will occupy.
-     * @return uint32_t
-     */
-    uint32_t getNumberOfBits() const;
-    const std::string toString() const override;
+  /**
+   * @brief Returns the number of bit as a uint32_t a value of this stamp will
+   * occupy.
+   * @return uint32_t
+   */
+  uint32_t getNumberOfBits() const;
+  const std::string toString() const override;
 
-  private:
-    const BitWidth bitWidth;
+private:
+  const BitWidth bitWidth;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_

@@ -15,6 +15,6 @@
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 
 namespace NES::Exceptions {
-OperatorNotFoundException::OperatorNotFoundException(const std::string& message)
+OperatorNotFoundException::OperatorNotFoundException(const std::string &message)
     : Exceptions::RequestExecutionException(message) {}
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

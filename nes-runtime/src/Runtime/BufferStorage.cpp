@@ -19,24 +19,28 @@
 
 namespace NES::Runtime {
 
-void BufferStorage::insertBuffer(NES::Runtime::TupleBuffer buffer) { this->storage.push(buffer); }
+void BufferStorage::insertBuffer(NES::Runtime::TupleBuffer buffer) {
+  this->storage.push(buffer);
+}
 
 void BufferStorage::trimBuffer(uint64_t timestamp) {
-    while (!this->storage.empty() && this->storage.top().getWatermark() < timestamp) {
-        NES_TRACE("BufferStorage: Delete tuple with watermark {}", this->storage.top().getWatermark());
-        this->storage.pop();
-    }
+  while (!this->storage.empty() &&
+         this->storage.top().getWatermark() < timestamp) {
+    NES_TRACE("BufferStorage: Delete tuple with watermark {}",
+              this->storage.top().getWatermark());
+    this->storage.pop();
+  }
 }
 
 size_t BufferStorage::getStorageSize() const { return this->storage.size(); }
 
 std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue() const {
-    if (storage.empty()) {
-        return {};
-    }
-    return this->storage.top();
+  if (storage.empty()) {
+    return {};
+  }
+  return this->storage.top();
 }
 
 void BufferStorage::removeTopElementFromQueue() { this->storage.pop(); }
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime

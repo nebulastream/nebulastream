@@ -29,32 +29,35 @@ class ClangFormat;
  * Relies on clang++ for compilation.
  */
 class CPPCompiler : public LanguageCompiler {
-  public:
-    CPPCompiler();
-    ~CPPCompiler() noexcept;
+public:
+  CPPCompiler();
+  ~CPPCompiler() noexcept;
 
-    /**
-     * @brief Creates a new instance of the cpp compiler.
-     * @return std::shared_ptr<LanguageCompiler>
-     */
-    static std::shared_ptr<LanguageCompiler> create();
-    /**
-     * @brief Handles a compilation request. Implementations have to be thread safe.
-     * @param request CompilationRequest
-     * @return CompilationResult
-     */
-    [[nodiscard]] CompilationResult compile(std::shared_ptr<const CompilationRequest> request) const override;
-    /**
-    * @brief Returns the language for, which this compiler can handle compilation requests
-    * @return language
-    */
-    [[nodiscard]] Language getLanguage() const override;
+  /**
+   * @brief Creates a new instance of the cpp compiler.
+   * @return std::shared_ptr<LanguageCompiler>
+   */
+  static std::shared_ptr<LanguageCompiler> create();
+  /**
+   * @brief Handles a compilation request. Implementations have to be thread
+   * safe.
+   * @param request CompilationRequest
+   * @return CompilationResult
+   */
+  [[nodiscard]] CompilationResult
+  compile(std::shared_ptr<const CompilationRequest> request) const override;
+  /**
+   * @brief Returns the language for, which this compiler can handle compilation
+   * requests
+   * @return language
+   */
+  [[nodiscard]] Language getLanguage() const override;
 
-  private:
-    std::unique_ptr<ClangFormat> format;
-    ExecutablePath::RuntimePathConfig runtimePathConfig;
+private:
+  std::unique_ptr<ClangFormat> format;
+  ExecutablePath::RuntimePathConfig runtimePathConfig;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_

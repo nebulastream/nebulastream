@@ -16,12 +16,14 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-Value<> AddExpression::execute(Record& record) const {
-    Value leftValue = leftSubExpression->execute(record);
-    Value rightValue = rightSubExpression->execute(record);
-    return leftValue + rightValue;
+Value<> AddExpression::execute(Record &record) const {
+  Value leftValue = leftSubExpression->execute(record);
+  Value rightValue = rightSubExpression->execute(record);
+  return leftValue + rightValue;
 }
-AddExpression::AddExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}
+AddExpression::AddExpression(ExpressionPtr leftSubExpression,
+                             ExpressionPtr rightSubExpression)
+    : leftSubExpression(std::move(leftSubExpression)),
+      rightSubExpression(std::move(rightSubExpression)) {}
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

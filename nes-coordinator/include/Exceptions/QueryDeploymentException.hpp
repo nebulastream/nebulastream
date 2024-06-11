@@ -23,17 +23,19 @@
 namespace NES {
 
 /**
- * @brief This exception is thrown if some error occurred while deploying the query
+ * @brief This exception is thrown if some error occurred while deploying the
+ * query
  */
 class QueryDeploymentException : public Exceptions::RequestExecutionException {
 
-  public:
-    /**
-     * @brief c-tor deployment exception
-     * @param sharedQueryId: the shared query id that failed
-     * @param message : the reason for failure
-     */
-    explicit QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message);
+public:
+  /**
+   * @brief c-tor deployment exception
+   * @param sharedQueryId: the shared query id that failed
+   * @param message : the reason for failure
+   */
+  explicit QueryDeploymentException(SharedQueryId sharedQueryId,
+                                    const std::string &message);
 };
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_

@@ -29,110 +29,125 @@ namespace NES {
 using namespace Configurations;
 
 class KTMDeploymentTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("KTMDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup KTMDeploymentTest test class.");
-    }
+public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("KTMDeploymentTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup KTMDeploymentTest test class.");
+  }
 };
 
 /**
  * @brief test tumbling window with multiple aggregations
  */
 TEST_F(KTMDeploymentTest, ktmQuery) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+  CoordinatorConfigurationPtr coordinatorConfig =
+      CoordinatorConfiguration::createDefault();
+  coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+  coordinatorConfig->restPort = *restPort;
+  coordinatorConfig->worker.queryCompiler.queryCompilerType =
+      QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
-    //register logical source qnv
-    auto ktmSchema = Schema::create()
-                         ->addField(createField("Time", BasicType::UINT64))
-                         ->addField(createField("Dist", BasicType::UINT64))
-                         ->addField(createField("ABS_Front_Wheel_Press", BasicType::FLOAT64))
-                         ->addField(createField("ABS_Rear_Wheel_Press", BasicType::FLOAT64))
-                         ->addField(createField("ABS_Front_Wheel_Speed", BasicType::FLOAT64))
-                         ->addField(createField("ABS_Rear_Wheel_Speed", BasicType::FLOAT64))
-                         ->addField(createField("V_GPS", BasicType::FLOAT64))
-                         ->addField(createField("MMDD", BasicType::FLOAT64))
-                         ->addField(createField("HHMM", BasicType::FLOAT64))
-                         ->addField(createField("LAS_Ax1", BasicType::FLOAT64))
-                         ->addField(createField("LAS_Ay1", BasicType::FLOAT64))
-                         ->addField(createField("LAS_Az_Vertical_Acc", BasicType::FLOAT64))
-                         ->addField(createField("ABS_Lean_Angle", BasicType::FLOAT64))
-                         ->addField(createField("ABS_Pitch_Info", BasicType::FLOAT64))
-                         ->addField(createField("ECU_Gear_Position", BasicType::FLOAT64))
-                         ->addField(createField("ECU_Accel_Position", BasicType::FLOAT64))
-                         ->addField(createField("ECU_Engine_Rpm", BasicType::FLOAT64))
-                         ->addField(createField("ECU_Water_Temperature", BasicType::FLOAT64))
-                         ->addField(createField("ECU_Oil_Temp_Sensor_Data", BasicType::UINT64))
-                         ->addField(createField("ECU_Side_StanD", BasicType::UINT64))
-                         ->addField(createField("Longitude", BasicType::FLOAT64))
-                         ->addField(createField("Latitude", BasicType::FLOAT64))
-                         ->addField(createField("Altitude", BasicType::FLOAT64));
+  // register logical source qnv
+  auto ktmSchema =
+      Schema::create()
+          ->addField(createField("Time", BasicType::UINT64))
+          ->addField(createField("Dist", BasicType::UINT64))
+          ->addField(createField("ABS_Front_Wheel_Press", BasicType::FLOAT64))
+          ->addField(createField("ABS_Rear_Wheel_Press", BasicType::FLOAT64))
+          ->addField(createField("ABS_Front_Wheel_Speed", BasicType::FLOAT64))
+          ->addField(createField("ABS_Rear_Wheel_Speed", BasicType::FLOAT64))
+          ->addField(createField("V_GPS", BasicType::FLOAT64))
+          ->addField(createField("MMDD", BasicType::FLOAT64))
+          ->addField(createField("HHMM", BasicType::FLOAT64))
+          ->addField(createField("LAS_Ax1", BasicType::FLOAT64))
+          ->addField(createField("LAS_Ay1", BasicType::FLOAT64))
+          ->addField(createField("LAS_Az_Vertical_Acc", BasicType::FLOAT64))
+          ->addField(createField("ABS_Lean_Angle", BasicType::FLOAT64))
+          ->addField(createField("ABS_Pitch_Info", BasicType::FLOAT64))
+          ->addField(createField("ECU_Gear_Position", BasicType::FLOAT64))
+          ->addField(createField("ECU_Accel_Position", BasicType::FLOAT64))
+          ->addField(createField("ECU_Engine_Rpm", BasicType::FLOAT64))
+          ->addField(createField("ECU_Water_Temperature", BasicType::FLOAT64))
+          ->addField(createField("ECU_Oil_Temp_Sensor_Data", BasicType::UINT64))
+          ->addField(createField("ECU_Side_StanD", BasicType::UINT64))
+          ->addField(createField("Longitude", BasicType::FLOAT64))
+          ->addField(createField("Latitude", BasicType::FLOAT64))
+          ->addField(createField("Altitude", BasicType::FLOAT64));
 
-    NES_INFO("KTMDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("ktm", ktmSchema);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    ASSERT_EQ(port, *rpcCoordinatorPort);
-    NES_DEBUG("KTMDeploymentTest: Coordinator started successfully");
+  NES_INFO("KTMDeploymentTest: Start coordinator");
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+  crd->getSourceCatalogService()->registerLogicalSource("ktm", ktmSchema);
+  uint64_t port = crd->startCoordinator(/**blocking**/ false); // id=1
+  ASSERT_EQ(port, *rpcCoordinatorPort);
+  NES_DEBUG("KTMDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("KTMDeploymentTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    QueryCompilerConfiguration queryCompilerConfiguration;
-    queryCompilerConfiguration.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-    workerConfig1->queryCompiler = queryCompilerConfiguration;
-    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    // create source
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("ktm", "test_stream");
-    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv");
-    csvSourceType1->setGatheringInterval(1);
-    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType1->setNumberOfBuffersToProduce(1);
-    workerConfig1->physicalSourceTypes.add(csvSourceType1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart2 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=3
-    ASSERT_TRUE(retStart2);
-    NES_INFO("KTMDeploymentTest: Worker 2 started successfully");
+  NES_INFO("KTMDeploymentTest: Start worker 1");
+  WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+  QueryCompilerConfiguration queryCompilerConfiguration;
+  queryCompilerConfiguration.windowingStrategy =
+      QueryCompilation::WindowingStrategy::SLICING;
+  workerConfig1->queryCompiler = queryCompilerConfiguration;
+  workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+  workerConfig1->queryCompiler.queryCompilerType =
+      QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+  // create source
+  CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("ktm", "test_stream");
+  csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) /
+                              "ktm.csv");
+  csvSourceType1->setGatheringInterval(1);
+  csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+  csvSourceType1->setNumberOfBuffersToProduce(1);
+  workerConfig1->physicalSourceTypes.add(csvSourceType1);
+  NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+  bool retStart2 =
+      wrk1->start(/**blocking**/ false, /**withConnect**/ true); // id=3
+  ASSERT_TRUE(retStart2);
+  NES_INFO("KTMDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = "ktm-results.csv";
-    remove(outputFilePath.c_str());
+  std::string outputFilePath = "ktm-results.csv";
+  remove(outputFilePath.c_str());
 
-    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalog();
+  RequestHandlerServicePtr requestHandlerService =
+      crd->getRequestHandlerService();
+  auto queryCatalog = crd->getQueryCatalog();
 
-    NES_INFO("KTMDeploymentTest: Submit query");
-    auto query = Query::from("ktm")
-                     .window(TumblingWindow::of(EventTime(Attribute("Time")), Seconds(1)))
-                     .apply(Avg(Attribute("ABS_Lean_Angle"))->as(Attribute("avg_value_1")),
-                            Avg(Attribute("ABS_Pitch_Info"))->as(Attribute("avg_value_2")),
-                            Avg(Attribute("ABS_Front_Wheel_Speed"))->as(Attribute("avg_value_3")),
-                            Count()->as(Attribute("count_value")))
-                     .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+  NES_INFO("KTMDeploymentTest: Submit query");
+  auto query =
+      Query::from("ktm")
+          .window(TumblingWindow::of(EventTime(Attribute("Time")), Seconds(1)))
+          .apply(Avg(Attribute("ABS_Lean_Angle"))->as(Attribute("avg_value_1")),
+                 Avg(Attribute("ABS_Pitch_Info"))->as(Attribute("avg_value_2")),
+                 Avg(Attribute("ABS_Front_Wheel_Speed"))
+                     ->as(Attribute("avg_value_3")),
+                 Count()->as(Attribute("count_value")))
+          .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT",
+                                           "APPEND"));
 
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+  QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(
+      query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+  GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+  EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "ktm$start:INTEGER(64 bits),ktm$end:INTEGER(64 bits),ktm$avg_value_1:Float(64 bits),ktm$avg_value_2:"
-                             "Float(64 bits),ktm$avg_value_3:Float(64 bits),ktm$count_value:INTEGER(64 bits)\n"
-                             "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+  string expectedContent =
+      "ktm$start:INTEGER(64 bits),ktm$end:INTEGER(64 "
+      "bits),ktm$avg_value_1:Float(64 bits),ktm$avg_value_2:"
+      "Float(64 bits),ktm$avg_value_3:Float(64 "
+      "bits),ktm$count_value:INTEGER(64 bits)\n"
+      "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
+  EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO("KTMDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+  NES_INFO("KTMDeploymentTest: Remove query");
+  EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("KTMDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
+  NES_INFO("KTMDeploymentTest: Stop worker 1");
+  bool retStopWrk1 = wrk1->stop(true);
+  EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("KTMDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    remove(outputFilePath.c_str());
-    NES_INFO("KTMDeploymentTest: Test finished");
+  NES_INFO("KTMDeploymentTest: Stop Coordinator");
+  bool retStopCord = crd->stopCoordinator(true);
+  EXPECT_TRUE(retStopCord);
+  remove(outputFilePath.c_str());
+  NES_INFO("KTMDeploymentTest: Test finished");
 }
-}// namespace NES
+} // namespace NES

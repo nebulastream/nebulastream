@@ -18,32 +18,37 @@
 #include <utility>
 namespace NES {
 
-AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
+AddExpressionNode::AddExpressionNode(DataTypePtr stamp)
+    : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-AddExpressionNode::AddExpressionNode(AddExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
+AddExpressionNode::AddExpressionNode(AddExpressionNode *other)
+    : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr AddExpressionNode::create(ExpressionNodePtr const& left, ExpressionNodePtr const& right) {
-    auto addNode = std::make_shared<AddExpressionNode>(left->getStamp());
-    addNode->setChildren(left, right);
-    return addNode;
+ExpressionNodePtr AddExpressionNode::create(ExpressionNodePtr const &left,
+                                            ExpressionNodePtr const &right) {
+  auto addNode = std::make_shared<AddExpressionNode>(left->getStamp());
+  addNode->setChildren(left, right);
+  return addNode;
 }
 
-bool AddExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<AddExpressionNode>()) {
-        auto otherAddNode = rhs->as<AddExpressionNode>();
-        return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
-    }
-    return false;
+bool AddExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<AddExpressionNode>()) {
+    auto otherAddNode = rhs->as<AddExpressionNode>();
+    return getLeft()->equal(otherAddNode->getLeft()) &&
+           getRight()->equal(otherAddNode->getRight());
+  }
+  return false;
 }
 
 std::string AddExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << children[0]->toString() << "+" << children[1]->toString();
-    return ss.str();
+  std::stringstream ss;
+  ss << children[0]->toString() << "+" << children[1]->toString();
+  return ss.str();
 }
 
 ExpressionNodePtr AddExpressionNode::copy() {
-    return AddExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+  return AddExpressionNode::create(children[0]->as<ExpressionNode>()->copy(),
+                                   children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

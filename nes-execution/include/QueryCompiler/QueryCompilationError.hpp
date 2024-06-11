@@ -19,9 +19,9 @@
 namespace NES::QueryCompilation {
 
 class QueryCompilationError {
-  public:
-    QueryCompilationError();
+public:
+  QueryCompilationError();
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONERROR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONERROR_HPP_

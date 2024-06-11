@@ -17,15 +17,19 @@
 namespace NES::Optimizer {
 
 ContainmentRelationshipAndOperatorChainPtr
-ContainmentRelationshipAndOperatorChain::create(ContainmentRelationship containmentRelationship,
-                                                std::vector<LogicalOperatorPtr> containedOperatorChain) {
-    return std::make_unique<ContainmentRelationshipAndOperatorChain>(
-        ContainmentRelationshipAndOperatorChain(containmentRelationship, containedOperatorChain));
+ContainmentRelationshipAndOperatorChain::create(
+    ContainmentRelationship containmentRelationship,
+    std::vector<LogicalOperatorPtr> containedOperatorChain) {
+  return std::make_unique<ContainmentRelationshipAndOperatorChain>(
+      ContainmentRelationshipAndOperatorChain(containmentRelationship,
+                                              containedOperatorChain));
 }
 
-ContainmentRelationshipAndOperatorChain::ContainmentRelationshipAndOperatorChain(
-    ContainmentRelationship containmentRelationship,
-    std::vector<LogicalOperatorPtr> containedOperatorChain)
-    : containmentRelationship(containmentRelationship), containedOperatorChain(containedOperatorChain) {}
+ContainmentRelationshipAndOperatorChain::
+    ContainmentRelationshipAndOperatorChain(
+        ContainmentRelationship containmentRelationship,
+        std::vector<LogicalOperatorPtr> containedOperatorChain)
+    : containmentRelationship(containmentRelationship),
+      containedOperatorChain(containedOperatorChain) {}
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

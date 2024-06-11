@@ -29,23 +29,21 @@
 namespace NES::TestUtils {
 
 class TestSinkProvider : public QueryCompilation::DataSinkProvider {
-  public:
-    /**
-     * @brief Lowers a sink descriptor to a executable data sink.
-     * @param operatorId id of this sink
-     * @param sinkDescriptor the sink descriptor
-     * @param schema the schema of the sink
-     * @param nodeEngine the node engine
-     * @param querySubPlanId
-     * @param numOfProducers
-     * @return DataSinkPtr
-     */
-    DataSinkPtr lower(OperatorId sinkId,
-                      SinkDescriptorPtr sinkDescriptor,
-                      SchemaPtr schema,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                      size_t numOfProducers) override;
+public:
+  /**
+   * @brief Lowers a sink descriptor to a executable data sink.
+   * @param operatorId id of this sink
+   * @param sinkDescriptor the sink descriptor
+   * @param schema the schema of the sink
+   * @param nodeEngine the node engine
+   * @param querySubPlanId
+   * @param numOfProducers
+   * @return DataSinkPtr
+   */
+  DataSinkPtr lower(OperatorId sinkId, SinkDescriptorPtr sinkDescriptor,
+                    SchemaPtr schema, Runtime::NodeEnginePtr nodeEngine,
+                    const QueryCompilation::PipelineQueryPlanPtr &querySubPlan,
+                    size_t numOfProducers) override;
 };
-}// namespace NES::TestUtils
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
+} // namespace NES::TestUtils
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_

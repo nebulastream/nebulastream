@@ -30,47 +30,57 @@
 
 namespace NES::RequestProcessor::Experimental {
 class SerialStorageHandlerTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("SerialStorageHandlerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SerialAccessHandle test class.");
-    }
+public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("SerialStorageHandlerTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup SerialAccessHandle test class.");
+  }
 };
 
 TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
-    constexpr auto requestId = RequestId(1);
-    //create access handle
-    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-    auto topology = Topology::create();
-    auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                          Statistic::DefaultStatisticCache::create(),
-                                                                          topology);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
-    StorageDataStructures storageDataStructures = {coordinatorConfiguration,
-                                                   topology,
-                                                   globalExecutionPlan,
-                                                   globalQueryPlan,
-                                                   queryCatalog,
-                                                   sourceCatalog,
-                                                   udfCatalog,
-                                                   amendmentQueue,
-                                                   statisticProbeHandler};
-    auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
+  constexpr auto requestId = RequestId(1);
+  // create access handle
+  auto coordinatorConfiguration =
+      Configurations::CoordinatorConfiguration::createDefault();
+  auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
+  auto topology = Topology::create();
+  auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+  auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
+  auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+      Statistic::StatisticRegistry::create(),
+      Statistic::DefaultStatisticProbeGenerator::create(),
+      Statistic::DefaultStatisticCache::create(), topology);
+  auto amendmentQueue = std::make_shared<
+      folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
+  StorageDataStructures storageDataStructures = {coordinatorConfiguration,
+                                                 topology,
+                                                 globalExecutionPlan,
+                                                 globalQueryPlan,
+                                                 queryCatalog,
+                                                 sourceCatalog,
+                                                 udfCatalog,
+                                                 amendmentQueue,
+                                                 statisticProbeHandler};
+  auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
 
-    //test if we can obtain the resource we passed to the constructor
-    ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle(requestId).get());
-    ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle(requestId).get());
-    ASSERT_EQ(queryCatalog.get(), serialAccessHandle->getQueryCatalogHandle(requestId).get());
-    ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle(requestId).get());
-    ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle(requestId).get());
-    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle(requestId).get());
-    ASSERT_EQ(statisticProbeHandler.get(), serialAccessHandle->getStatisticProbeHandler(requestId).get());
+  // test if we can obtain the resource we passed to the constructor
+  ASSERT_EQ(globalExecutionPlan.get(),
+            serialAccessHandle->getGlobalExecutionPlanHandle(requestId).get());
+  ASSERT_EQ(topology.get(),
+            serialAccessHandle->getTopologyHandle(requestId).get());
+  ASSERT_EQ(queryCatalog.get(),
+            serialAccessHandle->getQueryCatalogHandle(requestId).get());
+  ASSERT_EQ(globalQueryPlan.get(),
+            serialAccessHandle->getGlobalQueryPlanHandle(requestId).get());
+  ASSERT_EQ(sourceCatalog.get(),
+            serialAccessHandle->getSourceCatalogHandle(requestId).get());
+  ASSERT_EQ(udfCatalog.get(),
+            serialAccessHandle->getUDFCatalogHandle(requestId).get());
+  ASSERT_EQ(statisticProbeHandler.get(),
+            serialAccessHandle->getStatisticProbeHandler(requestId).get());
 }
 
-}// namespace NES::RequestProcessor::Experimental
+} // namespace NES::RequestProcessor::Experimental

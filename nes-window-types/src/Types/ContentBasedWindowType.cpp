@@ -20,12 +20,16 @@ namespace NES::Windowing {
 
 ContentBasedWindowType::ContentBasedWindowType() = default;
 
-ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType) {
-    if (auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType)) {
-        return thresholdWindow;
-    } else {
-        NES_ERROR("Can not cast the content based window type to a threshold window");
-        NES_THROW_RUNTIME_ERROR("Can not cast the content based window type to a threshold window");
-    }
+ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(
+    ContentBasedWindowTypePtr contentBasedWindowType) {
+  if (auto thresholdWindow =
+          std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType)) {
+    return thresholdWindow;
+  } else {
+    NES_ERROR(
+        "Can not cast the content based window type to a threshold window");
+    NES_THROW_RUNTIME_ERROR(
+        "Can not cast the content based window type to a threshold window");
+  }
 }
-}// namespace NES::Windowing
+} // namespace NES::Windowing

@@ -22,19 +22,22 @@ namespace NES::Nautilus {
 BlockIdx::BlockIdx()
     : BuiltInVariable(&type){
 
-    };
+      };
 
 const std::string BlockIdx::getIdentifier() const { return "blockIdx"; }
 
 IR::Types::StampPtr BlockIdx::getType() const {
-    // TODO #4832 https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#built-in-vector-types
-    NES_NOT_IMPLEMENTED();
+  // TODO #4832
+  // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#built-in-vector-types
+  NES_NOT_IMPLEMENTED();
 }
 
 std::shared_ptr<Any> BlockIdx::copy() { return create<BlockIdx>(); }
 
 const Value<> BlockIdx::getAsValue() const { NES_NOT_IMPLEMENTED(); }
 
-std::shared_ptr<FieldAccess> BlockIdx::x() { return std::make_shared<FieldAccess>(create<BlockIdx>(), "x"); }
+std::shared_ptr<FieldAccess> BlockIdx::x() {
+  return std::make_shared<FieldAccess>(create<BlockIdx>(), "x");
+}
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

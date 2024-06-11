@@ -23,23 +23,25 @@ namespace NES {
 static std::condition_variable condition;
 static std::mutex mutex;
 
-void RestServerInterruptHandler::hookUserInterruptHandler() { signal(SIGTERM, handleUserInterrupt); }
+void RestServerInterruptHandler::hookUserInterruptHandler() {
+  signal(SIGTERM, handleUserInterrupt);
+}
 
 void RestServerInterruptHandler::handleUserInterrupt(int signal) {
-    NES_DEBUG("handleUserInterrupt");
-    if (signal == SIGTERM) {
-        NES_DEBUG("SIGINT trapped ...");
-        condition.notify_all();
-    }
+  NES_DEBUG("handleUserInterrupt");
+  if (signal == SIGTERM) {
+    NES_DEBUG("SIGINT trapped ...");
+    condition.notify_all();
+  }
 }
 
 void RestServerInterruptHandler::waitForUserInterrupt() {
-    NES_DEBUG("Wait for interrupt of RestServer");
-    std::unique_lock<std::mutex> lock{mutex};
-    NES_TRACE("Wait for interrupt: got lock");
-    condition.wait(lock);
-    NES_DEBUG("User has signaled to interrupt program");
-    lock.unlock();
+  NES_DEBUG("Wait for interrupt of RestServer");
+  std::unique_lock<std::mutex> lock{mutex};
+  NES_TRACE("Wait for interrupt: got lock");
+  condition.wait(lock);
+  NES_DEBUG("User has signaled to interrupt program");
+  lock.unlock();
 }
 
-}// namespace NES
+} // namespace NES

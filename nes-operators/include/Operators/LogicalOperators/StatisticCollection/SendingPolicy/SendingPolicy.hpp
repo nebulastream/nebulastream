@@ -28,56 +28,58 @@ using SendingPolicyPtr = std::shared_ptr<SendingPolicy>;
  * @brief This class acts as an abstract class for all possible SendingPolicies
  */
 class SendingPolicy {
-  public:
-    explicit SendingPolicy(StatisticDataCodec sinkDataCodec) : sinkDataCodec(sinkDataCodec) {}
+public:
+  explicit SendingPolicy(StatisticDataCodec sinkDataCodec)
+      : sinkDataCodec(sinkDataCodec) {}
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if equal otherwise false
-     */
-    virtual bool operator==(const SendingPolicy& rhs) const = 0;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if equal otherwise false
+   */
+  virtual bool operator==(const SendingPolicy &rhs) const = 0;
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    virtual bool operator!=(const SendingPolicy& rhs) const { return !(*this == rhs); };
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if NOT equal otherwise false
+   */
+  virtual bool operator!=(const SendingPolicy &rhs) const {
+    return !(*this == rhs);
+  };
 
-    /**
-     * @brief Returns the data type of the statistic sink.
-     * @return Statistic::StatisticDataCodec
-     */
-    virtual StatisticDataCodec getSinkDataCodec() const { return sinkDataCodec; };
+  /**
+   * @brief Returns the data type of the statistic sink.
+   * @return Statistic::StatisticDataCodec
+   */
+  virtual StatisticDataCodec getSinkDataCodec() const { return sinkDataCodec; };
 
-    /**
-     * @brief Checks if the current SendingPolicy is of type SendingPolicyType
-     * @tparam SendingPolicyType
-     * @return bool true if node is of SendingPolicyType
-     */
-    template<class SendingPolicyType>
-    bool instanceOf() const {
-        if (dynamic_cast<SendingPolicyType*>(this)) {
-            return true;
-        }
-        return false;
-    };
+  /**
+   * @brief Checks if the current SendingPolicy is of type SendingPolicyType
+   * @tparam SendingPolicyType
+   * @return bool true if node is of SendingPolicyType
+   */
+  template <class SendingPolicyType> bool instanceOf() const {
+    if (dynamic_cast<SendingPolicyType *>(this)) {
+      return true;
+    }
+    return false;
+  };
 
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    [[nodiscard]] virtual std::string toString() const = 0;
+  /**
+   * @brief Creates a string representation
+   * @return std::string
+   */
+  [[nodiscard]] virtual std::string toString() const = 0;
 
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~SendingPolicy() = default;
+  /**
+   * @brief Virtual destructor
+   */
+  virtual ~SendingPolicy() = default;
 
-  protected:
-    StatisticDataCodec sinkDataCodec;
+protected:
+  StatisticDataCodec sinkDataCodec;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICY_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICY_HPP_

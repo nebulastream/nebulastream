@@ -19,47 +19,56 @@
 #include <utility>
 namespace NES {
 
-PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
+PowExpressionNode::PowExpressionNode(DataTypePtr stamp)
+    : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-PowExpressionNode::PowExpressionNode(PowExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
+PowExpressionNode::PowExpressionNode(PowExpressionNode *other)
+    : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr PowExpressionNode::create(ExpressionNodePtr const& left, ExpressionNodePtr const& right) {
-    auto powNode = std::make_shared<PowExpressionNode>(DataTypeFactory::createFloat());
-    powNode->setChildren(left, right);
-    return powNode;
+ExpressionNodePtr PowExpressionNode::create(ExpressionNodePtr const &left,
+                                            ExpressionNodePtr const &right) {
+  auto powNode =
+      std::make_shared<PowExpressionNode>(DataTypeFactory::createFloat());
+  powNode->setChildren(left, right);
+  return powNode;
 }
 
 void PowExpressionNode::inferStamp(SchemaPtr schema) {
-    // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalBinaryExpressionNode::inferStamp(schema);
+  // infer stamp of child, check if its numerical, assume same stamp
+  ArithmeticalBinaryExpressionNode::inferStamp(schema);
 
-    // Extend range for POW operation:
-    if (stamp->isInteger()) {
-        stamp = DataTypeFactory::createInt64();
-        NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to Int64.");
-    } else if (stamp->isFloat()) {
-        stamp = DataTypeFactory::createDouble();
-        NES_TRACE("PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: {}",
-                  toString());
-    }
+  // Extend range for POW operation:
+  if (stamp->isInteger()) {
+    stamp = DataTypeFactory::createInt64();
+    NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in "
+              "ArithmeticalBinaryExpressionNode) to Int64.");
+  } else if (stamp->isFloat()) {
+    stamp = DataTypeFactory::createDouble();
+    NES_TRACE("PowExpressionNode: Update Float stamp (assigned in "
+              "ArithmeticalBinaryExpressionNode) to Double: {}",
+              toString());
+  }
 }
 
-bool PowExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<PowExpressionNode>()) {
-        auto otherAddNode = rhs->as<PowExpressionNode>();
-        return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
-    }
-    return false;
+bool PowExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<PowExpressionNode>()) {
+    auto otherAddNode = rhs->as<PowExpressionNode>();
+    return getLeft()->equal(otherAddNode->getLeft()) &&
+           getRight()->equal(otherAddNode->getRight());
+  }
+  return false;
 }
 
 std::string PowExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << "POWER(" << children[0]->toString() << ", " << children[1]->toString() << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "POWER(" << children[0]->toString() << ", " << children[1]->toString()
+     << ")";
+  return ss.str();
 }
 
 ExpressionNodePtr PowExpressionNode::copy() {
-    return PowExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+  return PowExpressionNode::create(children[0]->as<ExpressionNode>()->copy(),
+                                   children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

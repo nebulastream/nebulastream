@@ -25,103 +25,104 @@
 #include <thread>
 namespace NES {
 
-template<typename T>
+template <typename T>
 
 class BlockingQueue {
-  private:
-    uint64_t capacity;
-    std::queue<T> bufferQueue;
-    std::mutex queueMutex;
-    std::condition_variable notFull;
-    std::condition_variable notEmpty;
+private:
+  uint64_t capacity;
+  std::queue<T> bufferQueue;
+  std::mutex queueMutex;
+  std::condition_variable notFull;
+  std::condition_variable notEmpty;
 
-  public:
-    BlockingQueue() : capacity(0){};
+public:
+  BlockingQueue() : capacity(0){};
 
-    inline BlockingQueue(uint64_t capacity) : capacity(capacity) {}
+  inline BlockingQueue(uint64_t capacity) : capacity(capacity) {}
 
-    inline void setCapacity(uint64_t capacityParam) {
-        std::unique_lock<std::mutex> lock(queueMutex);
-        this->capacity = capacityParam;
+  inline void setCapacity(uint64_t capacityParam) {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    this->capacity = capacityParam;
+  }
+
+  inline uint64_t getCapacity() {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    return capacity;
+  }
+
+  inline uint64_t size() {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    return bufferQueue.size();
+  }
+
+  inline bool empty() {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    return bufferQueue.empty();
+  }
+
+  inline void reset() {
+    std::unique_lock<std::mutex> lock(queueMutex);
+
+    // TODO: I am not sure if this is the right way to go
+    while (!bufferQueue.empty()) {
+      NES_TRACE("reset pop={}", bufferQueue.front())
+      bufferQueue.pop();
     }
+    bufferQueue = std::queue<T>();
+  }
 
-    inline uint64_t getCapacity() {
-        std::unique_lock<std::mutex> lock(queueMutex);
-        return capacity;
+  inline void push(const T &elem) {
+    {
+      std::unique_lock<std::mutex> lock(queueMutex);
+
+      // wait while the queue is full
+      while (bufferQueue.size() >= capacity) {
+        notFull.wait(lock);
+      }
+      NES_TRACE("BlockingQueue: pushing element {}", elem)
+      bufferQueue.push(elem);
     }
+    notEmpty.notify_all();
+  }
 
-    inline uint64_t size() {
-        std::unique_lock<std::mutex> lock(queueMutex);
-        return bufferQueue.size();
+  inline const T pop() {
+    {
+      std::unique_lock<std::mutex> lock(queueMutex);
+
+      // wait while the queue is empty
+      while (bufferQueue.size() == 0) {
+        notEmpty.wait(lock);
+      }
+      T retVal = bufferQueue.front();
+      //      NES_DEBUG("BlockingQueue: popping element {}",
+      //      bufferQueue.front());
+      bufferQueue.pop();
+
+      notFull.notify_one();
+      return retVal;
     }
+  }
 
-    inline bool empty() {
-        std::unique_lock<std::mutex> lock(queueMutex);
-        return bufferQueue.empty();
+  inline const std::optional<T> popTimeout(uint64_t timeout_ms) {
+    {
+      auto timeout = std::chrono::milliseconds(timeout_ms);
+      std::unique_lock<std::mutex> lock(queueMutex);
+
+      // wait while the queue is empty
+      auto ret = notEmpty.wait_for(
+          lock, timeout, [=, this]() { return bufferQueue.size() > 0; });
+      if (!ret) {
+        return std::nullopt;
+      }
+      T retVal = bufferQueue.front();
+      //        NES_DEBUG("BlockingQueue: popping element timeout {}",
+      //        bufferQueue.front());
+      bufferQueue.pop();
+
+      notFull.notify_one();
+      return retVal;
     }
-
-    inline void reset() {
-        std::unique_lock<std::mutex> lock(queueMutex);
-
-        //TODO: I am not sure if this is the right way to go
-        while (!bufferQueue.empty()) {
-            NES_TRACE("reset pop={}", bufferQueue.front())
-            bufferQueue.pop();
-        }
-        bufferQueue = std::queue<T>();
-    }
-
-    inline void push(const T& elem) {
-        {
-            std::unique_lock<std::mutex> lock(queueMutex);
-
-            // wait while the queue is full
-            while (bufferQueue.size() >= capacity) {
-                notFull.wait(lock);
-            }
-            NES_TRACE("BlockingQueue: pushing element {}", elem)
-            bufferQueue.push(elem);
-        }
-        notEmpty.notify_all();
-    }
-
-    inline const T pop() {
-        {
-            std::unique_lock<std::mutex> lock(queueMutex);
-
-            // wait while the queue is empty
-            while (bufferQueue.size() == 0) {
-                notEmpty.wait(lock);
-            }
-            T retVal = bufferQueue.front();
-            //      NES_DEBUG("BlockingQueue: popping element {}", bufferQueue.front());
-            bufferQueue.pop();
-
-            notFull.notify_one();
-            return retVal;
-        }
-    }
-
-    inline const std::optional<T> popTimeout(uint64_t timeout_ms) {
-        {
-            auto timeout = std::chrono::milliseconds(timeout_ms);
-            std::unique_lock<std::mutex> lock(queueMutex);
-
-            // wait while the queue is empty
-            auto ret = notEmpty.wait_for(lock, timeout, [=, this]() {
-                return bufferQueue.size() > 0;
-            });
-            if (!ret) {
-                return std::nullopt;
-            }
-            T retVal = bufferQueue.front();
-            //        NES_DEBUG("BlockingQueue: popping element timeout {}", bufferQueue.front());
-            bufferQueue.pop();
-
-            notFull.notify_one();
-            return retVal;
-        }
-    }
+  }
 };
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
+} // namespace NES
+#endif // NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_

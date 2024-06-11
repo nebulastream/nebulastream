@@ -47,280 +47,325 @@ using namespace Configurations;
  * @brief In this test we assess the correctness of the non-keyed sliding window
  */
 class NonKeyedSlidingWindowTests : public Testing::BaseIntegrationTest {
-  public:
-    WorkerConfigurationPtr workerConfiguration;
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("NonKeyedSlidingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup NonKeyedSlidingWindowTests test class.");
-    }
+public:
+  WorkerConfigurationPtr workerConfiguration;
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("NonKeyedSlidingWindowTests.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup NonKeyedSlidingWindowTests test class.");
+  }
 
-    void SetUp() override {
-        Testing::BaseIntegrationTest::SetUp();
-        workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-        workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::DEBUG;
-    }
+  void SetUp() override {
+    Testing::BaseIntegrationTest::SetUp();
+    workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->queryCompiler.windowingStrategy =
+        QueryCompilation::WindowingStrategy::SLICING;
+    workerConfiguration->queryCompiler.compilationStrategy =
+        QueryCompilation::CompilationStrategy::DEBUG;
+  }
 };
 
 struct InputValue {
-    uint64_t id;
-    uint64_t value;
-    uint64_t timestamp;
+  uint64_t id;
+  uint64_t value;
+  uint64_t timestamp;
 };
 
 PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
                                               std::string physicalSourceName,
                                               uint64_t numberOfBuffers,
                                               uint64_t numberOfKeys = 1) {
-    return LambdaSourceType::create(
-        logicalSourceName,
-        physicalSourceName,
-        [numberOfKeys](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            auto inputValue = (InputValue*) buffer.getBuffer();
-            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-                inputValue[i].value = 1;
-                inputValue[i].id = i % numberOfKeys;
-                inputValue[i].timestamp = 1;
-            }
-            buffer.setNumberOfTuples(numberOfTuplesToProduce);
-        },
-        numberOfBuffers,
-        0,
-        GatheringMode::INTERVAL_MODE);
+  return LambdaSourceType::create(
+      logicalSourceName, physicalSourceName,
+      [numberOfKeys](Runtime::TupleBuffer &buffer,
+                     uint64_t numberOfTuplesToProduce) {
+        auto inputValue = (InputValue *)buffer.getBuffer();
+        for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+          inputValue[i].value = 1;
+          inputValue[i].id = i % numberOfKeys;
+          inputValue[i].timestamp = 1;
+        }
+        buffer.setNumberOfTuples(numberOfTuplesToProduce);
+      },
+      numberOfBuffers, 0, GatheringMode::INTERVAL_MODE);
 }
 
 class DataGenerator {
-  public:
-    DataGenerator(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers)
-        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-          numberOfBuffers(numberOfBuffers){};
-    PhysicalSourceTypePtr getSource() {
-        return LambdaSourceType::create(
-            logicalSourceName,
-            physicalSourceName,
-            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                auto inputValue = (InputValue*) buffer.getBuffer();
-                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-                    inputValue[i].value = 1;
-                    inputValue[i].id = 1;
-                    inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
-                }
-                counter++;
-                NES_DEBUG("Counter: {}", counter)
-                buffer.setNumberOfTuples(numberOfTuplesToProduce);
-            },
-            numberOfBuffers,
-            0,
-            GatheringMode::INTERVAL_MODE);
-    }
+public:
+  DataGenerator(std::string logicalSourceName, std::string physicalSourceName,
+                uint64_t numberOfBuffers)
+      : logicalSourceName(std::move(logicalSourceName)),
+        physicalSourceName(std::move(physicalSourceName)),
+        numberOfBuffers(numberOfBuffers){};
+  PhysicalSourceTypePtr getSource() {
+    return LambdaSourceType::create(
+        logicalSourceName, physicalSourceName,
+        [this](Runtime::TupleBuffer &buffer, uint64_t numberOfTuplesToProduce) {
+          auto inputValue = (InputValue *)buffer.getBuffer();
+          for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            inputValue[i].value = 1;
+            inputValue[i].id = 1;
+            inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
+          }
+          counter++;
+          NES_DEBUG("Counter: {}", counter)
+          buffer.setNumberOfTuples(numberOfTuplesToProduce);
+        },
+        numberOfBuffers, 0, GatheringMode::INTERVAL_MODE);
+  }
 
-  private:
-    std::string logicalSourceName;
-    std::string physicalSourceName;
-    uint64_t numberOfBuffers;
-    std::atomic_uint64_t counter = 0;
+private:
+  std::string logicalSourceName;
+  std::string physicalSourceName;
+  uint64_t numberOfBuffers;
+  std::atomic_uint64_t counter = 0;
 };
 
-TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
-    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+TEST_F(NonKeyedSlidingWindowTests,
+       testSingleSlidingWindowSingleBufferSameLength) {
+  auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
-    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
-                     .apply(Sum(Attribute("value")));
+  ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+  auto query = Query::from("window")
+                   .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
+                                             Seconds(1), Seconds(1)))
+                   .apply(Sum(Attribute("value")));
 
-    auto lambdaSource = createSimpleInputStream("window", "window1", 1);
-    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
+  auto lambdaSource = createSimpleInputStream("window", "window1", 1);
+  auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort,
+                                 getTestResourceFolder())
+                         .addLogicalSource("window", testSchema)
+                         .attachWorkerWithLambdaSourceToCoordinator(
+                             lambdaSource, workerConfiguration);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.validate().setupTopology();
+  ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+  testHarness.validate().setupTopology();
 
-    // Expected output
-    auto expectedOutput = "0, 1000, 170\n";
+  // Expected output
+  auto expectedOutput = "0, 1000, 170\n";
 
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+  // Run the query and get the actual dynamic buffers
+  auto actualBuffers =
+      testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+  // Comparing equality
+  const auto outputSchema = testHarness.getOutputSchema();
+  auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(
+      expectedOutput, outputSchema, testHarness.getBufferManager());
+  auto expectedBuffers =
+      TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+  EXPECT_TRUE(
+      TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
-    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+  auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
-    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-                     .apply(Sum(Attribute("value")));
+  ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+  auto query = Query::from("window")
+                   .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
+                                             Seconds(1), Milliseconds(100)))
+                   .apply(Sum(Attribute("value")));
 
-    auto lambdaSource = createSimpleInputStream("window", "window1", 1);
-    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
+  auto lambdaSource = createSimpleInputStream("window", "window1", 1);
+  auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort,
+                                 getTestResourceFolder())
+                         .addLogicalSource("window", testSchema)
+                         .attachWorkerWithLambdaSourceToCoordinator(
+                             lambdaSource, workerConfiguration);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.validate().setupTopology();
+  ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+  testHarness.validate().setupTopology();
 
-    // Expected output
-    auto expectedOutput = "0, 1000, 170\n";
+  // Expected output
+  auto expectedOutput = "0, 1000, 170\n";
 
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+  // Run the query and get the actual dynamic buffers
+  auto actualBuffers =
+      testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+  // Comparing equality
+  const auto outputSchema = testHarness.getOutputSchema();
+  auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(
+      expectedOutput, outputSchema, testHarness.getBufferManager());
+  auto expectedBuffers =
+      TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+  EXPECT_TRUE(
+      TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
-    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+  auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
-    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-                     .apply(Sum(Attribute("value")));
-    auto lambdaSource = createSimpleInputStream("window", "window1", 100);
-    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
+  ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+  auto query = Query::from("window")
+                   .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
+                                             Seconds(1), Milliseconds(100)))
+                   .apply(Sum(Attribute("value")));
+  auto lambdaSource = createSimpleInputStream("window", "window1", 100);
+  auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort,
+                                 getTestResourceFolder())
+                         .addLogicalSource("window", testSchema)
+                         .attachWorkerWithLambdaSourceToCoordinator(
+                             lambdaSource, workerConfiguration);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.validate().setupTopology();
+  ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+  testHarness.validate().setupTopology();
 
-    // Expected output
-    auto expectedOutput = "0, 1000, 17000\n";
+  // Expected output
+  auto expectedOutput = "0, 1000, 17000\n";
 
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+  // Run the query and get the actual dynamic buffers
+  auto actualBuffers =
+      testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+  // Comparing equality
+  const auto outputSchema = testHarness.getOutputSchema();
+  auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(
+      expectedOutput, outputSchema, testHarness.getBufferManager());
+  auto expectedBuffers =
+      TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+  EXPECT_TRUE(
+      TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
-    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+  auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
-    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-                     .apply(Sum(Attribute("value")));
-    auto dg = DataGenerator("window", "window1", 100);
-    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
+  ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+  auto query = Query::from("window")
+                   .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
+                                             Seconds(1), Milliseconds(100)))
+                   .apply(Sum(Attribute("value")));
+  auto dg = DataGenerator("window", "window1", 100);
+  auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort,
+                                 getTestResourceFolder())
+                         .addLogicalSource("window", testSchema)
+                         .attachWorkerWithLambdaSourceToCoordinator(
+                             dg.getSource(), workerConfiguration);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.validate().setupTopology();
+  ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+  testHarness.validate().setupTopology();
 
-    // Expected output
-    std::stringstream expectedOutput;
-    for (uint64_t windowStart = 0; windowStart <= 16000; windowStart = windowStart + 100) {
-        expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1000\n";
-    }
-    expectedOutput << "16100, 17100, 900\n"
-                   << "16200, 17200, 800\n"
-                   << "16300, 17300, 700\n"
-                   << "16400, 17400, 600\n"
-                   << "16500, 17500, 500\n"
-                   << "16600, 17600, 400\n"
-                   << "16700, 17700, 300\n"
-                   << "16800, 17800, 200\n"
-                   << "16900, 17900, 100\n";
+  // Expected output
+  std::stringstream expectedOutput;
+  for (uint64_t windowStart = 0; windowStart <= 16000;
+       windowStart = windowStart + 100) {
+    expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1000\n";
+  }
+  expectedOutput << "16100, 17100, 900\n"
+                 << "16200, 17200, 800\n"
+                 << "16300, 17300, 700\n"
+                 << "16400, 17400, 600\n"
+                 << "16500, 17500, 500\n"
+                 << "16600, 17600, 400\n"
+                 << "16700, 17700, 300\n"
+                 << "16800, 17800, 200\n"
+                 << "16900, 17900, 100\n";
 
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+  // Run the query and get the actual dynamic buffers
+  auto actualBuffers =
+      testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+  // Comparing equality
+  const auto outputSchema = testHarness.getOutputSchema();
+  auto tmpBuffers = TestUtils::createExpectedBufferFromStream(
+      expectedOutput, outputSchema, testHarness.getBufferManager());
+  auto expectedBuffers =
+      TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+  EXPECT_TRUE(
+      TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
-    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+  auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
-    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    auto query = Query::from("window")
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(300)))
-                     .apply(Sum(Attribute("value")));
-    auto dg = DataGenerator("window", "window1", 100);
-    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+  ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+  auto query = Query::from("window")
+                   .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
+                                             Seconds(1), Milliseconds(300)))
+                   .apply(Sum(Attribute("value")));
+  auto dg = DataGenerator("window", "window1", 100);
+  auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort,
+                                 getTestResourceFolder())
 
-                           .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
+                         .addLogicalSource("window", testSchema)
+                         .attachWorkerWithLambdaSourceToCoordinator(
+                             dg.getSource(), workerConfiguration);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.validate().setupTopology();
+  ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+  testHarness.validate().setupTopology();
 
-    // Expected output
-    std::stringstream expectedOutput;
-    expectedOutput << "0, 1000, 1000\n";
-    for (uint64_t windowStart = 300; windowStart <= 16000; windowStart = windowStart + 300) {
-        expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1000\n";
-    }
-    expectedOutput << "16200, 17200, 800\n"
-                   << "16500, 17500, 500\n"
-                   << "16800, 17800, 200\n";
+  // Expected output
+  std::stringstream expectedOutput;
+  expectedOutput << "0, 1000, 1000\n";
+  for (uint64_t windowStart = 300; windowStart <= 16000;
+       windowStart = windowStart + 300) {
+    expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1000\n";
+  }
+  expectedOutput << "16200, 17200, 800\n"
+                 << "16500, 17500, 500\n"
+                 << "16800, 17800, 200\n";
 
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+  // Run the query and get the actual dynamic buffers
+  auto actualBuffers =
+      testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+  // Comparing equality
+  const auto outputSchema = testHarness.getOutputSchema();
+  auto tmpBuffers = TestUtils::createExpectedBufferFromStream(
+      expectedOutput, outputSchema, testHarness.getBufferManager());
+  auto expectedBuffers =
+      TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+  EXPECT_TRUE(
+      TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testWindowExecutionWithDifferentTimeUnits) {
-    struct Tuple {
-        uint64_t timestamp;
-        uint64_t value;
-    };
+  struct Tuple {
+    uint64_t timestamp;
+    uint64_t value;
+  };
 
-    auto schema = Schema::create()
-                      ->addField("timestamp", DataTypeFactory::createUInt64())
-                      ->addField("key", DataTypeFactory::createUInt64());
+  auto schema = Schema::create()
+                    ->addField("timestamp", DataTypeFactory::createUInt64())
+                    ->addField("key", DataTypeFactory::createUInt64());
 
-    auto queryWithWindowOperator =
-        Query::from("tuples")
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Milliseconds(2), Milliseconds(1)))
-            .apply(Count());
+  auto queryWithWindowOperator =
+      Query::from("tuples")
+          .window(
+              SlidingWindow::of(EventTime(Attribute("timestamp"), Seconds()),
+                                Milliseconds(2), Milliseconds(1)))
+          .apply(Count());
 
-    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .addLogicalSource("tuples", schema)
-                           .attachWorkerWithMemorySourceToCoordinator("tuples");
+  auto testHarness = TestHarness(queryWithWindowOperator, *restPort,
+                                 *rpcCoordinatorPort, getTestResourceFolder())
+                         .addLogicalSource("tuples", schema)
+                         .attachWorkerWithMemorySourceToCoordinator("tuples");
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Tuple>({10, 1}, WorkerId(2));
-    testHarness.pushElement<Tuple>({20, 1}, WorkerId(2));
-    testHarness.pushElement<Tuple>({30, 1}, WorkerId(2));
-    testHarness.validate().setupTopology();
+  ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+  testHarness.pushElement<Tuple>({10, 1}, WorkerId(2));
+  testHarness.pushElement<Tuple>({20, 1}, WorkerId(2));
+  testHarness.pushElement<Tuple>({30, 1}, WorkerId(2));
+  testHarness.validate().setupTopology();
 
-    // Expected output
-    auto expectedOutput = "10000,10002,1\n"
-                          "20000,20002,1\n"
-                          "30000,30002,1\n";
+  // Expected output
+  auto expectedOutput = "10000,10002,1\n"
+                        "20000,20002,1\n"
+                        "30000,30002,1\n";
 
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+  // Run the query and get the actual dynamic buffers
+  auto actualBuffers =
+      testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers, true));
+  // Comparing equality
+  const auto outputSchema = testHarness.getOutputSchema();
+  auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(
+      expectedOutput, outputSchema, testHarness.getBufferManager());
+  auto expectedBuffers =
+      TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+  EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers,
+                                                  actualBuffers, true));
 }
 
-}// namespace NES
+} // namespace NES

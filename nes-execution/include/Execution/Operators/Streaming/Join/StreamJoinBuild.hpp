@@ -30,46 +30,47 @@ class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
- * @brief This class is the first phase of the stream join. The actual implementation (e.g., storing tuples, building hash tables, ...)
- * is not part of this class. This class takes care of the close() and terminate() functionality as these are universal
+ * @brief This class is the first phase of the stream join. The actual
+ * implementation (e.g., storing tuples, building hash tables, ...) is not part
+ * of this class. This class takes care of the close() and terminate()
+ * functionality as these are universal
  */
 class StreamJoinBuild : public StreamJoinOperator, public ExecutableOperator {
-  public:
-    /**
-     * @brief Constructor for a StreamJoinBuild
-     * @param operatorHandlerIndex
-     * @param schema
-     * @param joinFieldName
-     * @param joinBuildSide
-     * @param entrySize
-     * @param timeFunction
-     * @param joinStrategy
-     * @param windowingStrategy
-     */
-    StreamJoinBuild(const uint64_t operatorHandlerIndex,
-                    const SchemaPtr& schema,
-                    const std::string& joinFieldName,
-                    const QueryCompilation::JoinBuildSideType joinBuildSide,
-                    const uint64_t entrySize,
-                    TimeFunctionPtr timeFunction,
-                    QueryCompilation::StreamJoinStrategy joinStrategy,
-                    QueryCompilation::WindowingStrategy windowingStrategy);
+public:
+  /**
+   * @brief Constructor for a StreamJoinBuild
+   * @param operatorHandlerIndex
+   * @param schema
+   * @param joinFieldName
+   * @param joinBuildSide
+   * @param entrySize
+   * @param timeFunction
+   * @param joinStrategy
+   * @param windowingStrategy
+   */
+  StreamJoinBuild(const uint64_t operatorHandlerIndex, const SchemaPtr &schema,
+                  const std::string &joinFieldName,
+                  const QueryCompilation::JoinBuildSideType joinBuildSide,
+                  const uint64_t entrySize, TimeFunctionPtr timeFunction,
+                  QueryCompilation::StreamJoinStrategy joinStrategy,
+                  QueryCompilation::WindowingStrategy windowingStrategy);
 
-    /**
-     * @brief Updates the watermark and if needed, pass some slices to the second join phase (NLJProbe) for further processing
-     * @param ctx: The RuntimeExecutionContext
-     * @param recordBuffer: RecordBuffer
-     */
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+  /**
+   * @brief Updates the watermark and if needed, pass some slices to the second
+   * join phase (NLJProbe) for further processing
+   * @param ctx: The RuntimeExecutionContext
+   * @param recordBuffer: RecordBuffer
+   */
+  void close(ExecutionContext &ctx, RecordBuffer &recordBuffer) const override;
 
-  protected:
-    const uint64_t operatorHandlerIndex;
-    const SchemaPtr schema;
-    const std::string joinFieldName;
-    const QueryCompilation::JoinBuildSideType joinBuildSide;
-    const uint64_t entrySize;
-    const TimeFunctionPtr timeFunction;
+protected:
+  const uint64_t operatorHandlerIndex;
+  const SchemaPtr schema;
+  const std::string joinFieldName;
+  const QueryCompilation::JoinBuildSideType joinBuildSide;
+  const uint64_t entrySize;
+  const TimeFunctionPtr timeFunction;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILD_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILD_HPP_

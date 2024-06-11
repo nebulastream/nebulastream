@@ -32,7 +32,8 @@ namespace NES::Runtime {
 /**
  * @brief This is an abstract test class for pipeline execution tests.
  */
-class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::string> {};
-}// namespace NES::Runtime
+class AbstractPipelineExecutionTest
+    : public ::testing::WithParamInterface<std::string> {};
+} // namespace NES::Runtime
 
-#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_

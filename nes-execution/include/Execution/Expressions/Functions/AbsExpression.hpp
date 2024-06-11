@@ -20,17 +20,17 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-  * @brief This expression computes the absolut value of the subExpression.
-  */
+ * @brief This expression computes the absolut value of the subExpression.
+ */
 class AbsExpression : public Expression {
-  public:
-    explicit AbsExpression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+public:
+  explicit AbsExpression(const ExpressionPtr &subExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr subExpression;
+private:
+  const ExpressionPtr subExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_

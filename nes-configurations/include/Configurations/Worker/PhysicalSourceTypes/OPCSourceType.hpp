@@ -32,97 +32,114 @@ using OPCSourceTypePtr = std::shared_ptr<OPCSourceType>;
  */
 class OPCSourceType : public PhysicalSourceType {
 
-  public:
-    /**
-     * @brief create a OPCSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
-     * @return OPCSourceConfigPtr
-     */
-    static OPCSourceTypePtr create(const std::string& logicalSourceName,
-                                   const std::string& physicalSourceName,
-                                   std::map<std::string, std::string> sourceConfigMap);
+public:
+  /**
+   * @brief create a OPCSourceConfigPtr object
+   * @param sourceConfigMap inputted config options
+   * @return OPCSourceConfigPtr
+   */
+  static OPCSourceTypePtr
+  create(const std::string &logicalSourceName,
+         const std::string &physicalSourceName,
+         std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief create a OPCSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
-     * @return OPCSourceConfigPtr
-     */
-    static OPCSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig);
+  /**
+   * @brief create a OPCSourceConfigPtr object
+   * @param sourceConfigMap inputted config options
+   * @return OPCSourceConfigPtr
+   */
+  static OPCSourceTypePtr create(const std::string &logicalSourceName,
+                                 const std::string &physicalSourceName,
+                                 const Yaml::Node &yamlConfig);
 
-    /**
-     * @brief create a OPCSourceConfigPtr object
-     * @return OPCSourceConfigPtr
-     */
-    static OPCSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+  /**
+   * @brief create a OPCSourceConfigPtr object
+   * @return OPCSourceConfigPtr
+   */
+  static OPCSourceTypePtr create(const std::string &logicalSourceName,
+                                 const std::string &physicalSourceName);
 
-    ~OPCSourceType() = default;
+  ~OPCSourceType() = default;
 
-    std::string toString() override;
+  std::string toString() override;
 
-    bool equal(const PhysicalSourceTypePtr& other) override;
+  bool equal(const PhysicalSourceTypePtr &other) override;
 
-    void reset() override;
+  void reset() override;
 
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::uint32_t>> getNamespaceIndex() const;
+  [[nodiscard]] std::shared_ptr<
+      Configurations::ConfigurationOption<std::uint32_t>>
+  getNamespaceIndex() const;
 
-    /**
-     * @brief Set namespaceIndex for node
-     */
-    void setNamespaceIndex(uint32_t namespaceIndex);
+  /**
+   * @brief Set namespaceIndex for node
+   */
+  void setNamespaceIndex(uint32_t namespaceIndex);
 
-    /**
-     * @brief Get node identifier
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getNodeIdentifier() const;
+  /**
+   * @brief Get node identifier
+   */
+  [[nodiscard]] std::shared_ptr<
+      Configurations::ConfigurationOption<std::string>>
+  getNodeIdentifier() const;
 
-    /**
-     * @brief Set node identifier
-     */
-    void setNodeIdentifier(const std::string& nodeIdentifier);
+  /**
+   * @brief Set node identifier
+   */
+  void setNodeIdentifier(const std::string &nodeIdentifier);
 
-    /**
-     * @brief Get userName
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getUserName() const;
+  /**
+   * @brief Get userName
+   */
+  [[nodiscard]] std::shared_ptr<
+      Configurations::ConfigurationOption<std::string>>
+  getUserName() const;
 
-    /**
-     * @brief Set userName
-     */
-    void setUserName(const std::string& userName);
+  /**
+   * @brief Set userName
+   */
+  void setUserName(const std::string &userName);
 
-    /**
-     * @brief Get password
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getPassword() const;
+  /**
+   * @brief Get password
+   */
+  [[nodiscard]] std::shared_ptr<
+      Configurations::ConfigurationOption<std::string>>
+  getPassword() const;
 
-    /**
-     * @brief Set password
-     */
-    void setPassword(const std::string& password);
+  /**
+   * @brief Set password
+   */
+  void setPassword(const std::string &password);
 
-  private:
-    /**
-     * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
-     */
-    explicit OPCSourceType(const std::string& logicalSourceName,
-                           const std::string& physicalSourceName,
-                           std::map<std::string, std::string> sourceConfigMap);
+private:
+  /**
+   * @brief constructor to create a new OPC source config object initialized
+   * with values form sourceConfigMap
+   */
+  explicit OPCSourceType(const std::string &logicalSourceName,
+                         const std::string &physicalSourceName,
+                         std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
-     */
-    explicit OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+  /**
+   * @brief constructor to create a new OPC source config object initialized
+   * with values form sourceConfigMap
+   */
+  explicit OPCSourceType(const std::string &logicalSourceName,
+                         const std::string &physicalSourceName,
+                         Yaml::Node yamlConfig);
 
-    /**
-     * @brief constructor to create a new OPC source config object initialized with default values
-     */
-    OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+  /**
+   * @brief constructor to create a new OPC source config object initialized
+   * with default values
+   */
+  OPCSourceType(const std::string &logicalSourceName,
+                const std::string &physicalSourceName);
 
-    Configurations::IntConfigOption namespaceIndex;
-    Configurations::StringConfigOption nodeIdentifier;
-    Configurations::StringConfigOption userName;
-    Configurations::StringConfigOption password;
+  Configurations::IntConfigOption namespaceIndex;
+  Configurations::StringConfigOption nodeIdentifier;
+  Configurations::StringConfigOption userName;
+  Configurations::StringConfigOption password;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_

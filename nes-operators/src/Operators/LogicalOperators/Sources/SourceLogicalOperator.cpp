@@ -19,74 +19,90 @@
 
 namespace NES {
 
-SourceLogicalOperator::SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(sourceDescriptor) {}
+SourceLogicalOperator::SourceLogicalOperator(
+    SourceDescriptorPtr const &sourceDescriptor, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id),
+      sourceDescriptor(sourceDescriptor) {}
 
-SourceLogicalOperator::SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(sourceDescriptor) {}
+SourceLogicalOperator::SourceLogicalOperator(
+    SourceDescriptorPtr const &sourceDescriptor, OperatorId id,
+    OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id),
+      OriginIdAssignmentOperator(id, originId),
+      sourceDescriptor(sourceDescriptor) {}
 
-bool SourceLogicalOperator::isIdentical(NodePtr const& rhs) const {
-    return equal(rhs) && rhs->as<SourceLogicalOperator>()->getId() == id;
+bool SourceLogicalOperator::isIdentical(NodePtr const &rhs) const {
+  return equal(rhs) && rhs->as<SourceLogicalOperator>()->getId() == id;
 }
 
-bool SourceLogicalOperator::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<SourceLogicalOperator>()) {
-        auto sourceOperator = rhs->as<SourceLogicalOperator>();
-        return sourceOperator->getSourceDescriptor()->equal(sourceDescriptor);
-    }
-    return false;
+bool SourceLogicalOperator::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<SourceLogicalOperator>()) {
+    auto sourceOperator = rhs->as<SourceLogicalOperator>();
+    return sourceOperator->getSourceDescriptor()->equal(sourceDescriptor);
+  }
+  return false;
 }
 
 std::string SourceLogicalOperator::toString() const {
-    std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ", statisticId: " << statisticId << ", originid: " << originId << ", "
-       << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString() << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "SOURCE(opId: " << id << ", statisticId: " << statisticId
+     << ", originid: " << originId << ", "
+     << sourceDescriptor->getLogicalSourceName() << ","
+     << sourceDescriptor->toString() << ")";
+  return ss.str();
 }
 
-SourceDescriptorPtr SourceLogicalOperator::getSourceDescriptor() const { return sourceDescriptor; }
+SourceDescriptorPtr SourceLogicalOperator::getSourceDescriptor() const {
+  return sourceDescriptor;
+}
 
 bool SourceLogicalOperator::inferSchema() {
-    inputSchema = sourceDescriptor->getSchema();
-    outputSchema = sourceDescriptor->getSchema();
-    return true;
+  inputSchema = sourceDescriptor->getSchema();
+  outputSchema = sourceDescriptor->getSchema();
+  return true;
 }
 
-void SourceLogicalOperator::setSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
-    this->sourceDescriptor = std::move(sourceDescriptor);
+void SourceLogicalOperator::setSourceDescriptor(
+    SourceDescriptorPtr sourceDescriptor) {
+  this->sourceDescriptor = std::move(sourceDescriptor);
 }
 
-void SourceLogicalOperator::setProjectSchema(SchemaPtr schema) { projectSchema = std::move(schema); }
+void SourceLogicalOperator::setProjectSchema(SchemaPtr schema) {
+  projectSchema = std::move(schema);
+}
 
 OperatorPtr SourceLogicalOperator::copy() {
-    auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id, originId);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
-    copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
-    if (copy->instanceOf<SourceLogicalOperator>()) {
-        copy->as<SourceLogicalOperator>()->setProjectSchema(projectSchema);
-    }
-    for (const auto& pair : properties) {
-        copy->addProperty(pair.first, pair.second);
-    }
-    return copy;
+  auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id,
+                                                           originId);
+  copy->setInputSchema(inputSchema);
+  copy->setOutputSchema(outputSchema);
+  copy->setHashBasedSignature(hashBasedSignature);
+  copy->setZ3Signature(z3Signature);
+  copy->setOperatorState(operatorState);
+  copy->setStatisticId(statisticId);
+  if (copy->instanceOf<SourceLogicalOperator>()) {
+    copy->as<SourceLogicalOperator>()->setProjectSchema(projectSchema);
+  }
+  for (const auto &pair : properties) {
+    copy->addProperty(pair.first, pair.second);
+  }
+  return copy;
 }
 
 void SourceLogicalOperator::inferStringSignature() {
-    //Update the signature
-    auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")");
-    hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
+  // Update the signature
+  auto hashCode =
+      hashGenerator("SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")");
+  hashBasedSignature[hashCode] = {
+      "SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
 }
 
 void SourceLogicalOperator::inferInputOrigins() {
-    // Data sources have no input origins.
+  // Data sources have no input origins.
 }
 
 std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const {
-    return OriginIdAssignmentOperator::getOutputOriginIds();
+  return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
-}// namespace NES
+} // namespace NES

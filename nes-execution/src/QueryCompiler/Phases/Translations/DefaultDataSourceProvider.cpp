@@ -20,40 +20,33 @@
 
 namespace NES::QueryCompilation {
 
-DefaultDataSourceProvider::DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions)
+DefaultDataSourceProvider::DefaultDataSourceProvider(
+    QueryCompilerOptionsPtr compilerOptions)
     : compilerOptions(std::move(compilerOptions)) {}
 
-DataSourceProviderPtr QueryCompilation::DefaultDataSourceProvider::create(const QueryCompilerOptionsPtr& compilerOptions) {
-    return std::make_shared<DefaultDataSourceProvider>(compilerOptions);
+DataSourceProviderPtr QueryCompilation::DefaultDataSourceProvider::create(
+    const QueryCompilerOptionsPtr &compilerOptions) {
+  return std::make_shared<DefaultDataSourceProvider>(compilerOptions);
 }
 
-DataSourcePtr DefaultDataSourceProvider::lower(OperatorId operatorId,
-                                               OriginId originId,
-                                               StatisticId statisticId,
-                                               SourceDescriptorPtr sourceDescriptor,
-                                               Runtime::NodeEnginePtr nodeEngine,
-                                               std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
+DataSourcePtr DefaultDataSourceProvider::lower(
+    OperatorId operatorId, OriginId originId, StatisticId statisticId,
+    SourceDescriptorPtr sourceDescriptor, Runtime::NodeEnginePtr nodeEngine,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
 
-    for (const auto& plugin : SourcePluginRegistry::getPlugins()) {
-        auto dataSource = plugin->createDataSource(operatorId,
-                                                   originId,
-                                                   statisticId,
-                                                   sourceDescriptor,
-                                                   nodeEngine,
-                                                   compilerOptions->getNumSourceLocalBuffers(),
-                                                   successors);
-        if (dataSource.has_value()) {
-            return dataSource.value();
-        }
+  for (const auto &plugin : SourcePluginRegistry::getPlugins()) {
+    auto dataSource = plugin->createDataSource(
+        operatorId, originId, statisticId, sourceDescriptor, nodeEngine,
+        compilerOptions->getNumSourceLocalBuffers(), successors);
+    if (dataSource.has_value()) {
+      return dataSource.value();
     }
+  }
 
-    return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
-                                                            originId,
-                                                            statisticId,
-                                                            std::move(sourceDescriptor),
-                                                            std::move(nodeEngine),
-                                                            compilerOptions->getNumSourceLocalBuffers(),
-                                                            std::move(successors));
+  return ConvertLogicalToPhysicalSource::createDataSource(
+      operatorId, originId, statisticId, std::move(sourceDescriptor),
+      std::move(nodeEngine), compilerOptions->getNumSourceLocalBuffers(),
+      std::move(successors));
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

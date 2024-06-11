@@ -18,19 +18,19 @@
 
 namespace NES::Optimizer {
 enum class QueryMergerRule : uint8_t {
-    SyntaxBasedCompleteQueryMergerRule,
-    SyntaxBasedPartialQueryMergerRule,
-    Z3SignatureBasedCompleteQueryMergerRule,
-    Z3SignatureBasedPartialQueryMergerRule,
-    Z3SignatureBasedPartialQueryMergerBottomUpRule,
-    HashSignatureBasedCompleteQueryMergerRule,
-    ImprovedHashSignatureBasedCompleteQueryMergerRule,
-    ImprovedHashSignatureBasedPartialQueryMergerRule,
-    HashSignatureBasedPartialQueryMergerRule,
-    DefaultQueryMergerRule,
-    HybridCompleteQueryMergerRule,
-    Z3SignatureBasedBottomUpQueryContainmentRule,
-    Z3SignatureBasedTopDownQueryContainmentMergerRule
+  SyntaxBasedCompleteQueryMergerRule,
+  SyntaxBasedPartialQueryMergerRule,
+  Z3SignatureBasedCompleteQueryMergerRule,
+  Z3SignatureBasedPartialQueryMergerRule,
+  Z3SignatureBasedPartialQueryMergerBottomUpRule,
+  HashSignatureBasedCompleteQueryMergerRule,
+  ImprovedHashSignatureBasedCompleteQueryMergerRule,
+  ImprovedHashSignatureBasedPartialQueryMergerRule,
+  HashSignatureBasedPartialQueryMergerRule,
+  DefaultQueryMergerRule,
+  HybridCompleteQueryMergerRule,
+  Z3SignatureBasedBottomUpQueryContainmentRule,
+  Z3SignatureBasedTopDownQueryContainmentMergerRule
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_

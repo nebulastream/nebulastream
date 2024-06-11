@@ -22,25 +22,25 @@ namespace NES::Nautilus {
 class FieldAccess;
 
 class BlockDim : public BuiltInVariable {
-  public:
-    static const inline auto type = TypeIdentifier::create<BlockDim>();
+public:
+  static const inline auto type = TypeIdentifier::create<BlockDim>();
 
-    BlockDim();
+  BlockDim();
 
-    const std::string getIdentifier() const override;
+  const std::string getIdentifier() const override;
 
-    IR::Types::StampPtr getType() const override;
+  IR::Types::StampPtr getType() const override;
 
-    std::shared_ptr<Any> copy() override;
+  std::shared_ptr<Any> copy() override;
 
-    const Value<> getAsValue() const override;
+  const Value<> getAsValue() const override;
 
-    /**
-     * @return A std::shared_ptr<FieldAccess> for retrieving the field x.
-     */
-    std::shared_ptr<FieldAccess> x();
+  /**
+   * @return A std::shared_ptr<FieldAccess> for retrieving the field x.
+   */
+  std::shared_ptr<FieldAccess> x();
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKDIM_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKDIM_HPP_

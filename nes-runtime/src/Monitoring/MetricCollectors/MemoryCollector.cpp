@@ -24,31 +24,35 @@
 
 namespace NES::Monitoring {
 MemoryCollector::MemoryCollector()
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+    : MetricCollector(),
+      resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(MemoryMetrics::getSchema("")) {
-    NES_INFO("MemoryCollector: Init MemoryCollector with schema {}", schema->toString());
+  NES_INFO("MemoryCollector: Init MemoryCollector with schema {}",
+           schema->toString());
 }
 
-MetricCollectorType MemoryCollector::getType() { return MetricCollectorType::MEMORY_COLLECTOR; }
+MetricCollectorType MemoryCollector::getType() {
+  return MetricCollectorType::MEMORY_COLLECTOR;
+}
 
-bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
-    try {
-        MemoryMetrics measuredVal = resourceReader->readMemoryStats();
-        measuredVal.nodeId = getWorkerId();
-        writeToBuffer(measuredVal, tupleBuffer, 0);
-    } catch (const std::exception& ex) {
-        NES_ERROR("MemoryCollector: Error while collecting metrics {}", ex.what());
-        return false;
-    }
-    return true;
+bool MemoryCollector::fillBuffer(Runtime::TupleBuffer &tupleBuffer) {
+  try {
+    MemoryMetrics measuredVal = resourceReader->readMemoryStats();
+    measuredVal.nodeId = getWorkerId();
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+  } catch (const std::exception &ex) {
+    NES_ERROR("MemoryCollector: Error while collecting metrics {}", ex.what());
+    return false;
+  }
+  return true;
 }
 
 SchemaPtr MemoryCollector::getSchema() { return schema; }
 
 const MetricPtr MemoryCollector::readMetric() const {
-    MemoryMetrics metrics = resourceReader->readMemoryStats();
-    metrics.nodeId = getWorkerId();
-    return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
+  MemoryMetrics metrics = resourceReader->readMemoryStats();
+  metrics.nodeId = getWorkerId();
+  return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
 }
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

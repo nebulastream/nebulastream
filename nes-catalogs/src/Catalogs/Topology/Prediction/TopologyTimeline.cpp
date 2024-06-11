@@ -21,53 +21,58 @@
 #include <utility>
 
 namespace NES::Experimental::TopologyPrediction {
-TopologyTimeline::TopologyTimeline(TopologyPtr originalTopology) : originalTopology(std::move(originalTopology)) {}
+TopologyTimeline::TopologyTimeline(TopologyPtr originalTopology)
+    : originalTopology(std::move(originalTopology)) {}
 
 TopologyTimelinePtr TopologyTimeline::create(TopologyPtr originalTopology) {
-    return std::make_shared<TopologyTimeline>(originalTopology);
+  return std::make_shared<TopologyTimeline>(originalTopology);
 }
 
 TopologyPtr TopologyTimeline::getTopologyVersion(Timestamp time) {
-    //to get the node changes with timestamp equal or less than time
-    auto nodeChanges = createAggregatedChangeLog(time);
-    return createTopologyVersion(nodeChanges);
+  // to get the node changes with timestamp equal or less than time
+  auto nodeChanges = createAggregatedChangeLog(time);
+  return createTopologyVersion(nodeChanges);
 }
 
-void TopologyTimeline::removeTopologyChangeLogAt(Timestamp time) { changeMap.erase(time); }
-
-void TopologyTimeline::addTopologyDelta(Timestamp predictedTime, const TopologyDelta& delta) {
-    auto& change = changeMap[predictedTime];
-    change.update(delta);
+void TopologyTimeline::removeTopologyChangeLogAt(Timestamp time) {
+  changeMap.erase(time);
 }
 
-bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const TopologyDelta& delta) {
-    if (!changeMap.contains(predictedTime)) {
-        return false;
-    }
-    auto& changeLog = changeMap[predictedTime];
-    changeLog.erase(delta);
-    if (changeLog.empty()) {
-        removeTopologyChangeLogAt(predictedTime);
-    }
-    return true;
+void TopologyTimeline::addTopologyDelta(Timestamp predictedTime,
+                                        const TopologyDelta &delta) {
+  auto &change = changeMap[predictedTime];
+  change.update(delta);
 }
 
-TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
-    /*auto copiedTopology = Topology::create();
-    copiedTopology->addAsRootWorkerId(originalTopology->getRoot()->copy());
+bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime,
+                                           const TopologyDelta &delta) {
+  if (!changeMap.contains(predictedTime)) {
+    return false;
+  }
+  auto &changeLog = changeMap[predictedTime];
+  changeLog.erase(delta);
+  if (changeLog.empty()) {
+    removeTopologyChangeLogAt(predictedTime);
+  }
+  return true;
+}
 
-    //bfs starting at root node
-    std::queue<TopologyNodePtr> queue;
-    queue.push(copiedTopology->getRoot());
+TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog &) {
+  /*auto copiedTopology = Topology::create();
+  copiedTopology->addAsRootWorkerId(originalTopology->getRoot()->copy());
 
-    while (!queue.empty()) {
-        auto copiedNode = queue.front();
-        queue.pop();
-        auto nodeId = copiedNode->getId();
+  //bfs starting at root node
+  std::queue<TopologyNodePtr> queue;
+  queue.push(copiedTopology->getRoot());
 
-        auto originalNode = originalTopology->findWorkerWithId(nodeId);
-        if (originalNode) {
-            *//*if the node exists in the original topology, add iterate over its children and add them to the copy if they are not
+  while (!queue.empty()) {
+      auto copiedNode = queue.front();
+      queue.pop();
+      auto nodeId = copiedNode->getId();
+
+      auto originalNode = originalTopology->findWorkerWithId(nodeId);
+      if (originalNode) {
+          *//*if the node exists in the original topology, add iterate over its children and add them to the copy if they are not
             listed as removed by in the changelog*//*
             auto removedChildren = changeLog.getRemovedChildren(nodeId);
             for (auto& originalChild : originalNode->getChildren()) {
@@ -118,16 +123,17 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
         }
     }
     return copiedTopology;*/
-    return nullptr;
+  return nullptr;
 }
 
 TopologyChangeLog TopologyTimeline::createAggregatedChangeLog(Timestamp time) {
-    TopologyChangeLog aggregatedTopologyChangeLog;
-    //todo #3937: garbage collect
-    //todo: create issue for caching
-    for (auto changeLog = changeMap.begin(); changeLog != changeMap.end() && changeLog->first <= time; ++changeLog) {
-        aggregatedTopologyChangeLog.add(changeLog->second);
-    }
-    return aggregatedTopologyChangeLog;
+  TopologyChangeLog aggregatedTopologyChangeLog;
+  // todo #3937: garbage collect
+  // todo: create issue for caching
+  for (auto changeLog = changeMap.begin();
+       changeLog != changeMap.end() && changeLog->first <= time; ++changeLog) {
+    aggregatedTopologyChangeLog.add(changeLog->second);
+  }
+  return aggregatedTopologyChangeLog;
 }
-}// namespace NES::Experimental::TopologyPrediction
+} // namespace NES::Experimental::TopologyPrediction

@@ -21,23 +21,28 @@ namespace NES::Runtime::Execution {
 class ExecutablePipelineStage;
 
 /**
- * @brief The executable pipeline provider creates an executable pipeline stage out of a pipeline of physical operators.
- * We differentiate between different implementations that can use different execution strategies, e.g. compilation or interpretation.
+ * @brief The executable pipeline provider creates an executable pipeline stage
+ * out of a pipeline of physical operators. We differentiate between different
+ * implementations that can use different execution strategies, e.g. compilation
+ * or interpretation.
  */
 class ExecutablePipelineProvider {
-  public:
-    /**
-     * @brief Creates a executable pipeline for the pipeline of physical operators.
-     * @param physicalOperatorPipeline std::shared_ptr<PhysicalOperatorPipeline>
-     * @return std::unique_ptr<ExecutablePipelineStage>
-     */
-    virtual std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                            const Nautilus::CompilationOptions&) = 0;
-    virtual ~ExecutablePipelineProvider() = default;
+public:
+  /**
+   * @brief Creates a executable pipeline for the pipeline of physical
+   * operators.
+   * @param physicalOperatorPipeline std::shared_ptr<PhysicalOperatorPipeline>
+   * @return std::unique_ptr<ExecutablePipelineStage>
+   */
+  virtual std::unique_ptr<ExecutablePipelineStage>
+  create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
+         const Nautilus::CompilationOptions &) = 0;
+  virtual ~ExecutablePipelineProvider() = default;
 };
 
-using ExecutablePipelineProviderRegistry = NES::Util::NamedPluginRegistry<ExecutablePipelineProvider>;
+using ExecutablePipelineProviderRegistry =
+    NES::Util::NamedPluginRegistry<ExecutablePipelineProvider>;
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_

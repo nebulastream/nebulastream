@@ -19,12 +19,14 @@ namespace NES::Nautilus::Backends::Flounder {
 /**
  * @brief Compilation Backend, which uses flounder.
  */
-class FlounderCompilationBackend : public Nautilus::Backends::CompilationBackend {
-  public:
-    std::unique_ptr<Executable>
-    compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
+class FlounderCompilationBackend
+    : public Nautilus::Backends::CompilationBackend {
+public:
+  std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph> ir,
+                                      const CompilationOptions &options,
+                                      const DumpHelper &dumpHelper) override;
 };
 
-}// namespace NES::Nautilus::Backends::Flounder
+} // namespace NES::Nautilus::Backends::Flounder
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERCOMPILATIONBACKEND_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERCOMPILATIONBACKEND_HPP_

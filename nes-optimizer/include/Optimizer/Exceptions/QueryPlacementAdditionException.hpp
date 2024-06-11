@@ -25,12 +25,14 @@ namespace NES::Exceptions {
 /**
  * @brief Exception indicating problem during operator placement addition phase
  */
-class QueryPlacementAdditionException : public Exceptions::RequestExecutionException {
+class QueryPlacementAdditionException
+    : public Exceptions::RequestExecutionException {
 
-  public:
-    explicit QueryPlacementAdditionException(SharedQueryId sharedQueryId, const std::string& message);
+public:
+  explicit QueryPlacementAdditionException(SharedQueryId sharedQueryId,
+                                           const std::string &message);
 
-    const char* what() const noexcept override;
+  const char *what() const noexcept override;
 };
-}// namespace NES::Exceptions
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTADDITIONEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTADDITIONEXCEPTION_HPP_

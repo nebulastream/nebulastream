@@ -21,23 +21,24 @@
 namespace NES::Nautilus {
 
 /**
-* @brief Base class for any class that represents a symbolic compiler built-in variable for computations in operator code.
-*/
+ * @brief Base class for any class that represents a symbolic compiler built-in
+ * variable for computations in operator code.
+ */
 class BuiltInVariable : public Any {
-  public:
-    BuiltInVariable(const TypeIdentifier* identifier);
+public:
+  BuiltInVariable(const TypeIdentifier *identifier);
 
-    /**
-     * @return The unique compiler built-in variable identifier.
-     */
-    virtual const std::string getIdentifier() const = 0;
+  /**
+   * @return The unique compiler built-in variable identifier.
+   */
+  virtual const std::string getIdentifier() const = 0;
 
-    /**
-     * @return A constant Value for allowing symbolic computation.
-     */
-    virtual const Value<> getAsValue() const = 0;
+  /**
+   * @return A constant Value for allowing symbolic computation.
+   */
+  virtual const Value<> getAsValue() const = 0;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_BUILTINVARIABLE_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_BUILTINVARIABLE_HPP_

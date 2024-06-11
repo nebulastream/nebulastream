@@ -22,21 +22,27 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t windowSize,
-                                                                 uint64_t windowSlide,
-                                                                 const std::vector<OriginId>& origins)
-    : AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore>(windowSize, windowSlide, origins) {}
+KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(
+    uint64_t windowSize, uint64_t windowSlide,
+    const std::vector<OriginId> &origins)
+    : AbstractSlicePreAggregationHandler<KeyedSlice,
+                                         KeyedThreadLocalSliceStore>(
+          windowSize, windowSlide, origins) {}
 
-void KeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
-                                            uint64_t keySize,
-                                            uint64_t valueSize) {
-    NES_ASSERT(threadLocalSliceStores.empty(), "The thread local slice store must be empty");
-    for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto threadLocal = std::make_unique<KeyedThreadLocalSliceStore>(keySize, valueSize, windowSize, windowSlide);
-        threadLocalSliceStores.emplace_back(std::move(threadLocal));
-    }
+void KeyedSlicePreAggregationHandler::setup(
+    Runtime::Execution::PipelineExecutionContext &ctx, uint64_t keySize,
+    uint64_t valueSize) {
+  NES_ASSERT(threadLocalSliceStores.empty(),
+             "The thread local slice store must be empty");
+  for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
+    auto threadLocal = std::make_unique<KeyedThreadLocalSliceStore>(
+        keySize, valueSize, windowSize, windowSlide);
+    threadLocalSliceStores.emplace_back(std::move(threadLocal));
+  }
 }
 
-KeyedSlicePreAggregationHandler::~KeyedSlicePreAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
+KeyedSlicePreAggregationHandler::~KeyedSlicePreAggregationHandler() {
+  NES_DEBUG("~GlobalSlicePreAggregationHandler");
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

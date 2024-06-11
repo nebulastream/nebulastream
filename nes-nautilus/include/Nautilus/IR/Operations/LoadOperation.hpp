@@ -19,14 +19,15 @@
 
 namespace NES::Nautilus::IR::Operations {
 class LoadOperation : public Operation {
-  public:
-    explicit LoadOperation(OperationIdentifier identifier, OperationPtr address, Types::StampPtr stamp);
-    ~LoadOperation() override = default;
-    OperationPtr getAddress();
-    std::string toString() override;
+public:
+  explicit LoadOperation(OperationIdentifier identifier, OperationPtr address,
+                         Types::StampPtr stamp);
+  ~LoadOperation() override = default;
+  OperationPtr getAddress();
+  std::string toString() override;
 
-  private:
-    OperationWPtr address;
+private:
+  OperationWPtr address;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_

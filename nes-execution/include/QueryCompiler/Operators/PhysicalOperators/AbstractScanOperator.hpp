@@ -20,6 +20,6 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Abstract Scan operator.
  */
 class AbstractScanOperator {};
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTSCANOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTSCANOPERATOR_HPP_

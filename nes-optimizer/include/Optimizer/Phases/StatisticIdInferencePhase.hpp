@@ -34,46 +34,50 @@ class StatisticIdInferencePhase;
 using StatisticIdInferencePhasePtr = std::shared_ptr<StatisticIdInferencePhase>;
 
 /**
- * @brief This phase iterates over all operators, except sources, and sets a unique statistic id for each logical operator
+ * @brief This phase iterates over all operators, except sources, and sets a
+ * unique statistic id for each logical operator
  */
 class StatisticIdInferencePhase {
-  public:
-    /**
-     * @brief Factory method to create a StatisticIdInferencePhase
-     * @return StatisticIdInferencePhasePtr
-     */
-    static StatisticIdInferencePhasePtr create();
+public:
+  /**
+   * @brief Factory method to create a StatisticIdInferencePhase
+   * @return StatisticIdInferencePhasePtr
+   */
+  static StatisticIdInferencePhasePtr create();
 
-    /**
-     * @brief Apply the rule to the Query plan. After this step, all operators will have a unique statisticId
-     * @param queryPlanPtr : The original query plan
-     * @return The updated query plan
-     */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+  /**
+   * @brief Apply the rule to the Query plan. After this step, all operators
+   * will have a unique statisticId
+   * @param queryPlanPtr : The original query plan
+   * @return The updated query plan
+   */
+  QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-    /**
-     * @brief Apply the rule to the Query plan. After this step, all operators will have a unique statisticId
-     * @param decomposedQueryPlan: The original query plan
-     * @return The updated query plan
-     */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
+  /**
+   * @brief Apply the rule to the Query plan. After this step, all operators
+   * will have a unique statisticId
+   * @param decomposedQueryPlan: The original query plan
+   * @return The updated query plan
+   */
+  DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-  private:
-    /**
-     * @brief Private constructor for creating a StatisticIdInferencePhase
-     */
-    explicit StatisticIdInferencePhase();
+private:
+  /**
+   * @brief Private constructor for creating a StatisticIdInferencePhase
+   */
+  explicit StatisticIdInferencePhase();
 
-    /**
-     * @brief Performs inference by iterating over all operators and setting a new statistic id for each operator.
-     * We do not set a statistic Id for the sources, as they still have to be expanded into multiple physical ones.
-     * We do this in LogicalSourceExpansionRule
-     * @param allOperators
-     */
-    void performInference(std::unordered_set<OperatorPtr> allOperators);
+  /**
+   * @brief Performs inference by iterating over all operators and setting a new
+   * statistic id for each operator. We do not set a statistic Id for the
+   * sources, as they still have to be expanded into multiple physical ones. We
+   * do this in LogicalSourceExpansionRule
+   * @param allOperators
+   */
+  void performInference(std::unordered_set<OperatorPtr> allOperators);
 };
 
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_STATISTICIDINFERENCEPHASE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_STATISTICIDINFERENCEPHASE_HPP_

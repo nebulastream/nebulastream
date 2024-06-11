@@ -24,23 +24,24 @@ class PortDispatcher;
  * It manages garbage collection internally when dtor is called.
  */
 class BorrowedPort {
-  private:
-    uint16_t port;
-    uint32_t portIndex;
-    detail::PortDispatcher* parent;
+private:
+  uint16_t port;
+  uint32_t portIndex;
+  detail::PortDispatcher *parent;
 
-  public:
-    /**
-     * @brief Creates a new port wrapper object
-     * @param port the port value
-     * @param portIndex the index of the port in the pool
-     * @param parent the pool object
-     */
-    explicit BorrowedPort(uint16_t port, uint32_t portIndex, detail::PortDispatcher* parent);
+public:
+  /**
+   * @brief Creates a new port wrapper object
+   * @param port the port value
+   * @param portIndex the index of the port in the pool
+   * @param parent the pool object
+   */
+  explicit BorrowedPort(uint16_t port, uint32_t portIndex,
+                        detail::PortDispatcher *parent);
 
-    ~BorrowedPort() noexcept;
+  ~BorrowedPort() noexcept;
 
-    [[nodiscard]] operator uint16_t() const;
+  [[nodiscard]] operator uint16_t() const;
 };
-}// namespace NES::Testing
-#endif// NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_
+} // namespace NES::Testing
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_

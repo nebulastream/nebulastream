@@ -33,89 +33,99 @@ using DefaultSourceTypePtr = std::shared_ptr<DefaultSourceType>;
  */
 class DefaultSourceType : public PhysicalSourceType {
 
-  public:
-    /**
-     * @brief create a DefaultSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
-     * @return DefaultSourceConfigPtr
-     */
-    static DefaultSourceTypePtr create(const std::string& logicalSourceName,
-                                       const std::string& physicalSourceName,
-                                       std::map<std::string, std::string> sourceConfigMap);
+public:
+  /**
+   * @brief create a DefaultSourceConfigPtr object
+   * @param sourceConfigMap inputted config options
+   * @return DefaultSourceConfigPtr
+   */
+  static DefaultSourceTypePtr
+  create(const std::string &logicalSourceName,
+         const std::string &physicalSourceName,
+         std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief create a DefaultSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
-     * @return DefaultSourceConfigPtr
-     */
-    static DefaultSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+  /**
+   * @brief create a DefaultSourceConfigPtr object
+   * @param sourceConfigMap inputted config options
+   * @return DefaultSourceConfigPtr
+   */
+  static DefaultSourceTypePtr create(const std::string &logicalSourceName,
+                                     const std::string &physicalSourceName,
+                                     Yaml::Node yamlConfig);
 
-    /**
-     * @brief create defaultSourceConfig with default values
-     * @return defaultSourceConfig with default values
-     */
-    static DefaultSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+  /**
+   * @brief create defaultSourceConfig with default values
+   * @return defaultSourceConfig with default values
+   */
+  static DefaultSourceTypePtr create(const std::string &logicalSourceName,
+                                     const std::string &physicalSourceName);
 
-    const Configurations::IntConfigOption& getNumberOfBuffersToProduce() const;
+  const Configurations::IntConfigOption &getNumberOfBuffersToProduce() const;
 
-    const Configurations::IntConfigOption& getSourceGatheringInterval() const;
+  const Configurations::IntConfigOption &getSourceGatheringInterval() const;
 
-    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+  void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
-    void setSourceGatheringInterval(uint32_t sourceGatheringInterval);
+  void setSourceGatheringInterval(uint32_t sourceGatheringInterval);
 
-    /**
-     * @brief Get gathering mode
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode>> getGatheringMode() const;
+  /**
+   * @brief Get gathering mode
+   */
+  [[nodiscard]] std::shared_ptr<
+      Configurations::ConfigurationOption<GatheringMode>>
+  getGatheringMode() const;
 
-    /**
-     * @brief Set gathering mode
-     */
-    void setGatheringMode(std::string inputGatheringMode);
+  /**
+   * @brief Set gathering mode
+   */
+  void setGatheringMode(std::string inputGatheringMode);
 
-    /**
-     * @brief Sets the gathering mode given as GatheringMode
-     * @param inputGatheringMode
-     */
-    void setGatheringMode(GatheringMode inputGatheringMode);
+  /**
+   * @brief Sets the gathering mode given as GatheringMode
+   * @param inputGatheringMode
+   */
+  void setGatheringMode(GatheringMode inputGatheringMode);
 
-    std::string toString() override;
+  std::string toString() override;
 
-    bool equal(const PhysicalSourceTypePtr& other) override;
+  bool equal(const PhysicalSourceTypePtr &other) override;
 
-    void reset() override;
+  void reset() override;
 
-  private:
-    /**
-     * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
-     * @param sourceConfigMap: the source configuration map
-     */
-    explicit DefaultSourceType(const std::string& logicalSourceName,
-                               const std::string& physicalSourceName,
-                               std::map<std::string, std::string> sourceConfigMap);
+private:
+  /**
+   * @brief constructor to create a new Default source config object using the
+   * sourceConfigMap for physicalSources
+   * @param sourceConfigMap: the source configuration map
+   */
+  explicit DefaultSourceType(
+      const std::string &logicalSourceName,
+      const std::string &physicalSourceName,
+      std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
-     * @param sourceTypeConfig: the configuration for yaml
-     */
-    explicit DefaultSourceType(const std::string& logicalSourceName,
-                               const std::string& physicalSourceName,
-                               Yaml::Node sourceTypeConfig);
+  /**
+   * @brief constructor to create a new Default source config object using the
+   * sourceConfigMap for physicalSources
+   * @param sourceTypeConfig: the configuration for yaml
+   */
+  explicit DefaultSourceType(const std::string &logicalSourceName,
+                             const std::string &physicalSourceName,
+                             Yaml::Node sourceTypeConfig);
 
-    /**
-     * @brief constructor to create a new Default source config object initialized with default values
-     */
-    DefaultSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+  /**
+   * @brief constructor to create a new Default source config object initialized
+   * with default values
+   */
+  DefaultSourceType(const std::string &logicalSourceName,
+                    const std::string &physicalSourceName);
 
-    Configurations::IntConfigOption numberOfBuffersToProduce;
-    Configurations::IntConfigOption sourceGatheringInterval;
+  Configurations::IntConfigOption numberOfBuffersToProduce;
+  Configurations::IntConfigOption sourceGatheringInterval;
 
-    /**
-     * @brief the gathering mode of the sampling function.
-     */
-    Configurations::GatheringModeConfigOption gatheringMode;
+  /**
+   * @brief the gathering mode of the sampling function.
+   */
+  Configurations::GatheringModeConfigOption gatheringMode;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_

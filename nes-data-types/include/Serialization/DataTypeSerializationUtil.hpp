@@ -31,44 +31,58 @@ class SerializableDataType;
 class SerializableDataValue;
 
 /**
- * @brief The DataTypeSerializationUtil offers functionality to serialize and de-serialize data types and value types to a
- * corresponding protobuffer object.
+ * @brief The DataTypeSerializationUtil offers functionality to serialize and
+ * de-serialize data types and value types to a corresponding protobuffer
+ * object.
  */
 class DataTypeSerializationUtil {
-  public:
-    /**
-     * @brief Serializes a data type and all its children to a SerializableDataType object.
-     * @param dataType The data type.
-     * @param serializedDataType The corresponding protobuff object, which is used to capture the state of the object.
-     * @return the modified serializedDataType
-     */
-    static SerializableDataType* serializeDataType(const DataTypePtr& dataType, SerializableDataType* serializedDataType);
+public:
+  /**
+   * @brief Serializes a data type and all its children to a
+   * SerializableDataType object.
+   * @param dataType The data type.
+   * @param serializedDataType The corresponding protobuff object, which is used
+   * to capture the state of the object.
+   * @return the modified serializedDataType
+   */
+  static SerializableDataType *
+  serializeDataType(const DataTypePtr &dataType,
+                    SerializableDataType *serializedDataType);
 
-    /**
-    * @brief De-serializes the SerializableDataType and all its children to a DataTypePtr
-    * @param serializedDataType the serialized data type.
-    * @return DataTypePtr
-    */
-    static DataTypePtr deserializeDataType(const SerializableDataType& serializedDataType);
+  /**
+   * @brief De-serializes the SerializableDataType and all its children to a
+   * DataTypePtr
+   * @param serializedDataType the serialized data type.
+   * @return DataTypePtr
+   */
+  static DataTypePtr
+  deserializeDataType(const SerializableDataType &serializedDataType);
 
-    /// @brief: Typed deserialization of what is known to be an array.
-    static std::shared_ptr<ArrayType> deserializeArrayType(const SerializableDataType& serializedDataType);
+  /// @brief: Typed deserialization of what is known to be an array.
+  static std::shared_ptr<ArrayType>
+  deserializeArrayType(const SerializableDataType &serializedDataType);
 
-    /**
-     * @brief Serializes a value type and all its children to a SerializableDataValue object.
-     * @param valueType The data value type.
-     * @param serializedDataValue The corresponding protobuff object, which is used to capture the state of the object.
-     * @return the modified serializedDataValue
-     */
-    static SerializableDataValue* serializeDataValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue);
+  /**
+   * @brief Serializes a value type and all its children to a
+   * SerializableDataValue object.
+   * @param valueType The data value type.
+   * @param serializedDataValue The corresponding protobuff object, which is
+   * used to capture the state of the object.
+   * @return the modified serializedDataValue
+   */
+  static SerializableDataValue *
+  serializeDataValue(const ValueTypePtr &valueType,
+                     SerializableDataValue *serializedDataValue);
 
-    /**
-    * @brief De-serializes the SerializableDataValue and all its children to a ValueTypePtr
-    * @param serializedDataValue the serialized data value type.
-    * @return ValueTypePtr
-    */
-    static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
+  /**
+   * @brief De-serializes the SerializableDataValue and all its children to a
+   * ValueTypePtr
+   * @param serializedDataValue the serialized data value type.
+   * @return ValueTypePtr
+   */
+  static ValueTypePtr
+  deserializeDataValue(const SerializableDataValue &serializedDataValue);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_

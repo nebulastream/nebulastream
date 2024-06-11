@@ -28,60 +28,71 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 namespace QueryCompilation {
 
 class LowerToExecutableQueryPlanPhase {
-  public:
-    LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
-    static LowerToExecutableQueryPlanPhasePtr create(const DataSinkProviderPtr& sinkProvider,
-                                                     const DataSourceProviderPtr& sourceProvider);
+public:
+  LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
+                                  DataSourceProviderPtr sourceProvider);
+  static LowerToExecutableQueryPlanPhasePtr
+  create(const DataSinkProviderPtr &sinkProvider,
+         const DataSourceProviderPtr &sourceProvider);
 
-    Runtime::Execution::ExecutableQueryPlanPtr apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
-                                                     const Runtime::NodeEnginePtr& nodeEngine);
+  Runtime::Execution::ExecutableQueryPlanPtr
+  apply(const PipelineQueryPlanPtr &pipelineQueryPlan,
+        const Runtime::NodeEnginePtr &nodeEngine);
 
-  private:
-    DataSinkProviderPtr sinkProvider;
-    DataSourceProviderPtr sourceProvider;
-    void processSource(const OperatorPipelinePtr& pipeline,
-                       std::vector<DataSourcePtr>& sources,
-                       std::vector<DataSinkPtr>& sinks,
-                       std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-                       const Runtime::NodeEnginePtr& nodeEngine,
-                       const PipelineQueryPlanPtr& pipelineQueryPlan,
-                       std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+private:
+  DataSinkProviderPtr sinkProvider;
+  DataSourceProviderPtr sourceProvider;
+  void processSource(
+      const OperatorPipelinePtr &pipeline, std::vector<DataSourcePtr> &sources,
+      std::vector<DataSinkPtr> &sinks,
+      std::vector<Runtime::Execution::ExecutablePipelinePtr>
+          &executablePipelines,
+      const Runtime::NodeEnginePtr &nodeEngine,
+      const PipelineQueryPlanPtr &pipelineQueryPlan,
+      std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>
+          &pipelineToExecutableMap);
 
-    Runtime::Execution::SuccessorExecutablePipeline
-    processSuccessor(const OperatorPipelinePtr& pipeline,
-                     std::vector<DataSourcePtr>& sources,
-                     std::vector<DataSinkPtr>& sinks,
-                     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-                     const Runtime::NodeEnginePtr& nodeEngine,
-                     const PipelineQueryPlanPtr& pipelineQueryPlan,
-                     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+  Runtime::Execution::SuccessorExecutablePipeline processSuccessor(
+      const OperatorPipelinePtr &pipeline, std::vector<DataSourcePtr> &sources,
+      std::vector<DataSinkPtr> &sinks,
+      std::vector<Runtime::Execution::ExecutablePipelinePtr>
+          &executablePipelines,
+      const Runtime::NodeEnginePtr &nodeEngine,
+      const PipelineQueryPlanPtr &pipelineQueryPlan,
+      std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>
+          &pipelineToExecutableMap);
 
-    Runtime::Execution::SuccessorExecutablePipeline
-    processSink(const OperatorPipelinePtr& pipeline,
-                std::vector<DataSourcePtr>& sources,
-                std::vector<DataSinkPtr>& sinks,
-                std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-                Runtime::NodeEnginePtr nodeEngine,
-                const PipelineQueryPlanPtr& pipelineQueryPlan);
+  Runtime::Execution::SuccessorExecutablePipeline
+  processSink(const OperatorPipelinePtr &pipeline,
+              std::vector<DataSourcePtr> &sources,
+              std::vector<DataSinkPtr> &sinks,
+              std::vector<Runtime::Execution::ExecutablePipelinePtr>
+                  &executablePipelines,
+              Runtime::NodeEnginePtr nodeEngine,
+              const PipelineQueryPlanPtr &pipelineQueryPlan);
 
-    Runtime::Execution::SuccessorExecutablePipeline
-    processOperatorPipeline(const OperatorPipelinePtr& pipeline,
-                            std::vector<DataSourcePtr>& sources,
-                            std::vector<DataSinkPtr>& sinks,
-                            std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-                            const Runtime::NodeEnginePtr& nodeEngine,
-                            const PipelineQueryPlanPtr& pipelineQueryPlan,
-                            std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+  Runtime::Execution::SuccessorExecutablePipeline processOperatorPipeline(
+      const OperatorPipelinePtr &pipeline, std::vector<DataSourcePtr> &sources,
+      std::vector<DataSinkPtr> &sinks,
+      std::vector<Runtime::Execution::ExecutablePipelinePtr>
+          &executablePipelines,
+      const Runtime::NodeEnginePtr &nodeEngine,
+      const PipelineQueryPlanPtr &pipelineQueryPlan,
+      std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>
+          &pipelineToExecutableMap);
 
-    /**
-     * @brief Create Actual Source descriptor from default source descriptor and Physical source properties
-     * @param defaultSourceDescriptor: the default source descriptor
-     * @param physicalSourceType : the physical source
-     * @return Shared pointer for actual source descriptor
-     */
-    SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
+  /**
+   * @brief Create Actual Source descriptor from default source descriptor and
+   * Physical source properties
+   * @param defaultSourceDescriptor: the default source descriptor
+   * @param physicalSourceType : the physical source
+   * @return Shared pointer for actual source descriptor
+   */
+  SourceDescriptorPtr
+  createSourceDescriptor(SchemaPtr schema,
+                         PhysicalSourceTypePtr physicalSourceType);
 };
-}// namespace QueryCompilation
-}// namespace NES
+} // namespace QueryCompilation
+} // namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_

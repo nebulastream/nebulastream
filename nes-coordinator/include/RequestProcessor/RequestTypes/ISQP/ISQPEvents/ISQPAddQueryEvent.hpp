@@ -27,11 +27,12 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 namespace RequestProcessor {
 
 /**
- * @brief the response indicating the id if the query after successful registration of the add query event
+ * @brief the response indicating the id if the query after successful
+ * registration of the add query event
  */
 struct ISQPAddQueryResponse : public ISQPResponse {
-    explicit ISQPAddQueryResponse(QueryId queryId) : queryId(queryId){};
-    QueryId queryId;
+  explicit ISQPAddQueryResponse(QueryId queryId) : queryId(queryId){};
+  QueryId queryId;
 };
 using ISQPAddQueryResponsePtr = std::shared_ptr<ISQPAddQueryResponse>;
 
@@ -43,19 +44,21 @@ using ISQPAddQueryEventPtr = std::shared_ptr<ISQPAddQueryEvent>;
  */
 class ISQPAddQueryEvent : public ISQPEvent {
 
-  public:
-    static ISQPEventPtr create(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy);
+public:
+  static ISQPEventPtr create(const QueryPlanPtr &queryPlan,
+                             Optimizer::PlacementStrategy placementStrategy);
 
-    ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy);
+  ISQPAddQueryEvent(const QueryPlanPtr &queryPlan,
+                    Optimizer::PlacementStrategy placementStrategy);
 
-    const QueryPlanPtr& getQueryPlan() const;
+  const QueryPlanPtr &getQueryPlan() const;
 
-    Optimizer::PlacementStrategy getPlacementStrategy() const;
+  Optimizer::PlacementStrategy getPlacementStrategy() const;
 
-  private:
-    QueryPlanPtr queryPlan;
-    Optimizer::PlacementStrategy placementStrategy;
+private:
+  QueryPlanPtr queryPlan;
+  Optimizer::PlacementStrategy placementStrategy;
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDQUERYEVENT_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDQUERYEVENT_HPP_

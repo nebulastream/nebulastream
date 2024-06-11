@@ -32,65 +32,80 @@
 
 namespace NES::QueryCompilation {
 
-NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompilerOptionsPtr& options,
-                                             const Phases::PhaseFactoryPtr& phaseFactory,
-                                             bool sourceSharing)
-    : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
-      lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options)),
-      compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options)),
-      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
+NautilusQueryCompiler::NautilusQueryCompiler(
+    const QueryCompilation::QueryCompilerOptionsPtr &options,
+    const Phases::PhaseFactoryPtr &phaseFactory, bool sourceSharing)
+    : QueryCompiler(options),
+      lowerLogicalToPhysicalOperatorsPhase(
+          phaseFactory->createLowerLogicalQueryPlanPhase(options)),
+      lowerPhysicalToNautilusOperatorsPhase(
+          std::make_shared<LowerPhysicalToNautilusOperators>(options)),
+      compileNautilusPlanPhase(
+          std::make_shared<NautilusCompilationPhase>(options)),
+      lowerToExecutableQueryPlanPhase(
+          phaseFactory->createLowerToExecutableQueryPlanPhase(options,
+                                                              sourceSharing)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
-      addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)), sourceSharing(sourceSharing) {}
+      addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
+      sourceSharing(sourceSharing) {}
 
-QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options,
-                                               Phases::PhaseFactoryPtr const& phaseFactory,
-                                               bool sourceSharing) {
-    return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory, sourceSharing));
+QueryCompilerPtr
+NautilusQueryCompiler::create(QueryCompilerOptionsPtr const &options,
+                              Phases::PhaseFactoryPtr const &phaseFactory,
+                              bool sourceSharing) {
+  return std::make_shared<NautilusQueryCompiler>(
+      NautilusQueryCompiler(options, phaseFactory, sourceSharing));
 }
 
-QueryCompilation::QueryCompilationResultPtr
-NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request) {
-    NES_INFO("Compile Query with Nautilus");
-    try {
-        Timer timer("NautilusQueryCompiler");
-        auto queryId = request->getDecomposedQueryPlan()->getSharedQueryId();
-        auto subPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
-        auto query = fmt::format("{}-{}", queryId, subPlanId);
-        // create new context for handling debug output
-        auto dumpContext = DumpContext::create("QueryCompilation-" + query);
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
+QueryCompilation::QueryCompilationResultPtr NautilusQueryCompiler::compileQuery(
+    QueryCompilation::QueryCompilationRequestPtr request) {
+  NES_INFO("Compile Query with Nautilus");
+  try {
+    Timer timer("NautilusQueryCompiler");
+    auto queryId = request->getDecomposedQueryPlan()->getSharedQueryId();
+    auto subPlanId =
+        request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
+    auto query = fmt::format("{}-{}", queryId, subPlanId);
+    // create new context for handling debug output
+    auto dumpContext = DumpContext::create("QueryCompilation-" + query);
+    dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
-        timer.start();
-        NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
-        auto logicalQueryPlan = request->getDecomposedQueryPlan();
-        dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
-        timer.snapshot("LogicalQueryPlan");
+    timer.start();
+    NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
+    auto logicalQueryPlan = request->getDecomposedQueryPlan();
+    dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
+    timer.snapshot("LogicalQueryPlan");
 
-        auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
-        dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
-        timer.snapshot("PhysicalQueryPlan");
+    auto physicalQueryPlan =
+        lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
+    dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
+    timer.snapshot("PhysicalQueryPlan");
 
-        auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
-        dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
-        timer.snapshot("AfterPipelinedQueryPlan");
+    auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
+    dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
+    timer.snapshot("AfterPipelinedQueryPlan");
 
-        addScanAndEmitPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
-        timer.snapshot("AfterAddScanAndEmitPhase");
-        auto nodeEngine = request->getNodeEngine();
-        auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
-        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
-        timer.snapshot("AfterToNautilusPlanPhase");
+    addScanAndEmitPhase->apply(pipelinedQueryPlan);
+    dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
+    timer.snapshot("AfterAddScanAndEmitPhase");
+    auto nodeEngine = request->getNodeEngine();
+    auto bufferSize =
+        nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
+    pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(
+        pipelinedQueryPlan, bufferSize);
+    timer.snapshot("AfterToNautilusPlanPhase");
 
-        pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
-        timer.snapshot("AfterNautilusCompilationPhase");
+    pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
+    timer.snapshot("AfterNautilusCompilationPhase");
 
-        auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
-        return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
-    } catch (const QueryCompilationException& exception) {
-        auto currentException = std::current_exception();
-        return QueryCompilationResult::create(currentException);
-    }
+    auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(
+        pipelinedQueryPlan, request->getNodeEngine());
+    return QueryCompilationResult::create(executableQueryPlan,
+                                          std::move(timer));
+  } catch (const QueryCompilationException &exception) {
+    auto currentException = std::current_exception();
+    return QueryCompilationResult::create(currentException);
+  }
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

@@ -18,15 +18,16 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 /**
- * @brief This expression creates a random Number between 0 and 1 with a given seed.
+ * @brief This expression creates a random Number between 0 and 1 with a given
+ * seed.
  */
 class RandomExpression : public Expression {
-  public:
-    RandomExpression(ExpressionPtr subExpression);
-    Value<> execute(NES::Nautilus::Record& record) const override;
+public:
+  RandomExpression(ExpressionPtr subExpression);
+  Value<> execute(NES::Nautilus::Record &record) const override;
 
-  private:
-    const ExpressionPtr subExpression;
+private:
+  const ExpressionPtr subExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RANDOMEXPRESSION_HPP_
+} // namespace NES::Runtime::Execution::Expressions
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RANDOMEXPRESSION_HPP_

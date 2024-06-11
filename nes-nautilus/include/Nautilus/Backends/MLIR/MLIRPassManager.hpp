@@ -24,16 +24,17 @@ namespace NES::Nautilus::Backends::MLIR {
 // The MLIRPassManager takes a generated MLIR module,
 // and applies configured lowering & optimization passes to it.
 class MLIRPassManager {
-  public:
-    enum class LoweringPass : uint8_t { SCF, LLVM };
-    enum class OptimizationPass : uint8_t { Inline };
+public:
+  enum class LoweringPass : uint8_t { SCF, LLVM };
+  enum class OptimizationPass : uint8_t { Inline };
 
-    MLIRPassManager(); // Disable default constructor
-    ~MLIRPassManager();// Disable default destructor
+  MLIRPassManager();  // Disable default constructor
+  ~MLIRPassManager(); // Disable default destructor
 
-    static int lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& module,
-                                          std::vector<LoweringPass> loweringPasses,
-                                          std::vector<OptimizationPass> optimizationPasses);
+  static int
+  lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &module,
+                             std::vector<LoweringPass> loweringPasses,
+                             std::vector<OptimizationPass> optimizationPasses);
 };
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRPASSMANAGER_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRPASSMANAGER_HPP_

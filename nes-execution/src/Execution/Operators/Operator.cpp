@@ -18,47 +18,51 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-void Operator::setup(ExecutionContext& executionCtx) const {
-    if (hasChild()) {
-        child->setup(executionCtx);
-    }
+void Operator::setup(ExecutionContext &executionCtx) const {
+  if (hasChild()) {
+    child->setup(executionCtx);
+  }
 }
 
-void Operator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const {
-    /** We need to set the statisticId in the emitted tuplebuffer. With our current query compiler interface, we
-     * can not access the input tuple buffer in the emit operator. Therefore, we use the ExecutionContext as a bridge
-     * between Scan (access to the input buffer) and Emit (access to the output buffer).
-     * As the statistic id is tied to a tuple buffer, we have to set it again for each tuple buffer.
-     */
-    executionCtx.setCurrentStatisticId(statisticId);
-    if (hasChild()) {
-        child->open(executionCtx, rb);
-    }
+void Operator::open(ExecutionContext &executionCtx, RecordBuffer &rb) const {
+  /** We need to set the statisticId in the emitted tuplebuffer. With our
+   * current query compiler interface, we can not access the input tuple buffer
+   * in the emit operator. Therefore, we use the ExecutionContext as a bridge
+   * between Scan (access to the input buffer) and Emit (access to the output
+   * buffer). As the statistic id is tied to a tuple buffer, we have to set it
+   * again for each tuple buffer.
+   */
+  executionCtx.setCurrentStatisticId(statisticId);
+  if (hasChild()) {
+    child->open(executionCtx, rb);
+  }
 }
 
-void Operator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const {
-    if (hasChild()) {
-        child->close(executionCtx, rb);
-    }
+void Operator::close(ExecutionContext &executionCtx, RecordBuffer &rb) const {
+  if (hasChild()) {
+    child->close(executionCtx, rb);
+  }
 }
 
 bool Operator::hasChild() const { return child != nullptr; }
 
 void Operator::setChild(Operators::ExecuteOperatorPtr child) {
-    if (hasChild()) {
-        NES_THROW_RUNTIME_ERROR("This operator already has a child operator");
-    }
-    this->child = std::move(child);
+  if (hasChild()) {
+    NES_THROW_RUNTIME_ERROR("This operator already has a child operator");
+  }
+  this->child = std::move(child);
 }
 
-void Operator::setStatisticId(StatisticId statisticId) { this->statisticId = statisticId; }
+void Operator::setStatisticId(StatisticId statisticId) {
+  this->statisticId = statisticId;
+}
 
-void Operator::terminate(ExecutionContext& executionCtx) const {
-    if (hasChild()) {
-        child->terminate(executionCtx);
-    }
+void Operator::terminate(ExecutionContext &executionCtx) const {
+  if (hasChild()) {
+    child->terminate(executionCtx);
+  }
 }
 
 Operator::~Operator() {}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

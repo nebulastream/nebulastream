@@ -15,8 +15,10 @@
 #include <Util/BufferSequenceNumber.hpp>
 
 namespace NES {
-uint64_t BufferSequenceNumber::getSequenceNumber() const { return sequenceNumber; }
+uint64_t BufferSequenceNumber::getSequenceNumber() const {
+  return sequenceNumber;
+}
 
 uint64_t BufferSequenceNumber::getOriginId() const { return originId; }
 
-}// namespace NES
+} // namespace NES

@@ -26,30 +26,39 @@ using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 namespace Optimizer {
 
 class ContainmentRelationshipAndOperatorChain;
-using ContainmentRelationshipAndOperatorChainPtr = std::unique_ptr<ContainmentRelationshipAndOperatorChain>;
+using ContainmentRelationshipAndOperatorChainPtr =
+    std::unique_ptr<ContainmentRelationshipAndOperatorChain>;
 
 /**
  * @brief enum describing the given containment relationship
  */
-enum class ContainmentRelationship : uint8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
+enum class ContainmentRelationship : uint8_t {
+  NO_CONTAINMENT,
+  LEFT_SIG_CONTAINED,
+  RIGHT_SIG_CONTAINED,
+  EQUALITY
+};
 
 /**
-* @brief this class stores the containment relationship and any extracted operator chains for TD-CQM and BU-CQM
-*/
+ * @brief this class stores the containment relationship and any extracted
+ * operator chains for TD-CQM and BU-CQM
+ */
 class ContainmentRelationshipAndOperatorChain {
 
-  public:
-    static ContainmentRelationshipAndOperatorChainPtr create(ContainmentRelationship containmentRelationship,
-                                                             std::vector<LogicalOperatorPtr> containedOperatorChain);
+public:
+  static ContainmentRelationshipAndOperatorChainPtr
+  create(ContainmentRelationship containmentRelationship,
+         std::vector<LogicalOperatorPtr> containedOperatorChain);
 
-    ContainmentRelationship containmentRelationship;
-    std::vector<LogicalOperatorPtr> containedOperatorChain;
+  ContainmentRelationship containmentRelationship;
+  std::vector<LogicalOperatorPtr> containedOperatorChain;
 
-  private:
-    explicit ContainmentRelationshipAndOperatorChain(ContainmentRelationship containmentRelationship,
-                                                     std::vector<LogicalOperatorPtr> containedOperatorChain);
+private:
+  explicit ContainmentRelationshipAndOperatorChain(
+      ContainmentRelationship containmentRelationship,
+      std::vector<LogicalOperatorPtr> containedOperatorChain);
 };
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_CONTAINMENTRELATIONSHIPANDOPERATORCHAIN_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_CONTAINMENTRELATIONSHIPANDOPERATORCHAIN_HPP_

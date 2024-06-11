@@ -21,15 +21,20 @@
 namespace NES {
 
 class SchemaSourceDescriptor : public SourceDescriptor {
-  public:
-    static SourceDescriptorPtr create(const SchemaPtr&& schema) { return std::make_shared<SchemaSourceDescriptor>(schema); }
-    explicit SchemaSourceDescriptor(SchemaPtr schema) : SourceDescriptor(std::move(schema)) {}
-    std::string toString() const override { return "Schema Source Descriptor"; }
-    bool equal(SourceDescriptorPtr const& other) const override { return other->getSchema()->equals(this->getSchema()); }
-    ~SchemaSourceDescriptor() override = default;
-    SourceDescriptorPtr copy() override { return create(schema->copy()); };
+public:
+  static SourceDescriptorPtr create(const SchemaPtr &&schema) {
+    return std::make_shared<SchemaSourceDescriptor>(schema);
+  }
+  explicit SchemaSourceDescriptor(SchemaPtr schema)
+      : SourceDescriptor(std::move(schema)) {}
+  std::string toString() const override { return "Schema Source Descriptor"; }
+  bool equal(SourceDescriptorPtr const &other) const override {
+    return other->getSchema()->equals(this->getSchema());
+  }
+  ~SchemaSourceDescriptor() override = default;
+  SourceDescriptorPtr copy() override { return create(schema->copy()); };
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_

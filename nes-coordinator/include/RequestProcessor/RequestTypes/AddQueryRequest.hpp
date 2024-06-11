@@ -21,7 +21,7 @@
 namespace z3 {
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
 namespace NES {
 
@@ -31,7 +31,7 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -45,20 +45,20 @@ using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
 namespace Catalogs {
 namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
 namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
-}// namespace Catalogs
+} // namespace Catalogs
 
 namespace Optimizer {
 
@@ -75,7 +75,8 @@ class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
 
 class TopologySpecificQueryRewritePhase;
-using TopologySpecificQueryRewritePhasePtr = std::shared_ptr<TopologySpecificQueryRewritePhase>;
+using TopologySpecificQueryRewritePhasePtr =
+    std::shared_ptr<TopologySpecificQueryRewritePhase>;
 
 class SignatureInferencePhase;
 using SignatureInferencePhasePtr = std::shared_ptr<SignatureInferencePhase>;
@@ -84,7 +85,8 @@ class QueryMergerPhase;
 using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
 class MemoryLayoutSelectionPhase;
-using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
+using MemoryLayoutSelectionPhasePtr =
+    std::shared_ptr<MemoryLayoutSelectionPhase>;
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
@@ -93,124 +95,141 @@ class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
 class QueryPlacementAmendmentPhase;
-using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentPhase>;
+using QueryPlacementAmendmentPhasePtr =
+    std::shared_ptr<QueryPlacementAmendmentPhase>;
 
 class GlobalQueryPlanUpdatePhase;
-using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
-}// namespace Optimizer
+using GlobalQueryPlanUpdatePhasePtr =
+    std::shared_ptr<GlobalQueryPlanUpdatePhase>;
+} // namespace Optimizer
 
 namespace RequestProcessor {
 
-//a response to the creator of the request
+// a response to the creator of the request
 struct AddQueryResponse : public AbstractRequestResponse {
-    explicit AddQueryResponse(QueryId queryId) : queryId(queryId){};
-    QueryId queryId;
+  explicit AddQueryResponse(QueryId queryId) : queryId(queryId){};
+  QueryId queryId;
 };
 
 class AddQueryRequest;
 using AddQueryRequestPtr = std::shared_ptr<AddQueryRequest>;
 
 class AddQueryRequest : public AbstractUniRequest {
-  public:
-    /**
-     * @brief Constructor
-     * @param queryString: the query string
-     * @param queryPlacementStrategy: the placement strategy
-     * @param maxRetries: Maximum number of retry attempts for the request
-     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     * @param queryParsingService: parsing string queries
-     */
-    AddQueryRequest(const std::string& queryString,
-                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const uint8_t maxRetries,
-                    const z3::ContextPtr& z3Context,
-                    const QueryParsingServicePtr& queryParsingService);
+public:
+  /**
+   * @brief Constructor
+   * @param queryString: the query string
+   * @param queryPlacementStrategy: the placement strategy
+   * @param maxRetries: Maximum number of retry attempts for the request
+   * @param z3Context: The z3 context to be used for the request, needed for
+   * query merging phase
+   * @param queryParsingService: parsing string queries
+   */
+  AddQueryRequest(const std::string &queryString,
+                  const Optimizer::PlacementStrategy queryPlacementStrategy,
+                  const uint8_t maxRetries, const z3::ContextPtr &z3Context,
+                  const QueryParsingServicePtr &queryParsingService);
 
-    /**
-     * @brief Constructor
-     * @param queryPlan: the query plan
-     * @param queryPlacementStrategy: the placement strategy
-     * @param maxRetries: Maximum number of retry attempts for the request
-     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     */
-    AddQueryRequest(const QueryPlanPtr& queryPlan,
-                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const uint8_t maxRetries,
-                    const z3::ContextPtr& z3Context);
+  /**
+   * @brief Constructor
+   * @param queryPlan: the query plan
+   * @param queryPlacementStrategy: the placement strategy
+   * @param maxRetries: Maximum number of retry attempts for the request
+   * @param z3Context: The z3 context to be used for the request, needed for
+   * query merging phase
+   */
+  AddQueryRequest(const QueryPlanPtr &queryPlan,
+                  const Optimizer::PlacementStrategy queryPlacementStrategy,
+                  const uint8_t maxRetries, const z3::ContextPtr &z3Context);
 
-    /**
-     * @brief creates a new AddQueryRequest object
-     * @param queryPlan: the query plan
-     * @param queryPlacementStrategy: the placement strategy
-     * @param maxRetries: Maximum number of retry attempts for the request
-     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     */
-    static AddQueryRequestPtr create(const QueryPlanPtr& queryPlan,
-                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     const uint8_t maxRetries,
-                                     const z3::ContextPtr& z3Context);
+  /**
+   * @brief creates a new AddQueryRequest object
+   * @param queryPlan: the query plan
+   * @param queryPlacementStrategy: the placement strategy
+   * @param maxRetries: Maximum number of retry attempts for the request
+   * @param z3Context: The z3 context to be used for the request, needed for
+   * query merging phase
+   */
+  static AddQueryRequestPtr
+  create(const QueryPlanPtr &queryPlan,
+         const Optimizer::PlacementStrategy queryPlacementStrategy,
+         const uint8_t maxRetries, const z3::ContextPtr &z3Context);
 
-    /**
-     * @brief creates a new AddQueryRequest object
-     * @param queryPlan: the query plan
-     * @param queryPlacementStrategy: the placement strategy
-     * @param maxRetries: Maximum number of retry attempts for the request
-     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     * @param queryParsingService: parsing string query
-     */
-    static AddQueryRequestPtr create(const std::string& queryPlan,
-                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     const uint8_t maxRetries,
-                                     const z3::ContextPtr& z3Context,
-                                     const QueryParsingServicePtr& queryParsingService);
+  /**
+   * @brief creates a new AddQueryRequest object
+   * @param queryPlan: the query plan
+   * @param queryPlacementStrategy: the placement strategy
+   * @param maxRetries: Maximum number of retry attempts for the request
+   * @param z3Context: The z3 context to be used for the request, needed for
+   * query merging phase
+   * @param queryParsingService: parsing string query
+   */
+  static AddQueryRequestPtr
+  create(const std::string &queryPlan,
+         const Optimizer::PlacementStrategy queryPlacementStrategy,
+         const uint8_t maxRetries, const z3::ContextPtr &z3Context,
+         const QueryParsingServicePtr &queryParsingService);
 
-  protected:
-    /**
-     * @brief Performs request specific error handling to be done before changes to the storage are rolled back
-     * @param ex: The exception encountered
-     * @param storageHandle: The storage access handle used by the request
-     */
-    void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
+protected:
+  /**
+   * @brief Performs request specific error handling to be done before changes
+   * to the storage are rolled back
+   * @param ex: The exception encountered
+   * @param storageHandle: The storage access handle used by the request
+   */
+  void preRollbackHandle(std::exception_ptr ex,
+                         const StorageHandlerPtr &storageHandler) override;
 
-    /**
-     * @brief Roll back any changes made by a request that did not complete due to errors.
-     * @param ex: The exception thrown during request execution.
-     * @param storageHandle: The storage access handle that was used by the request to modify the system state.
-     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
-     */
-    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
+  /**
+   * @brief Roll back any changes made by a request that did not complete due to
+   * errors.
+   * @param ex: The exception thrown during request execution.
+   * @param storageHandle: The storage access handle that was used by the
+   * request to modify the system state.
+   * @return a list of follow up requests to be executed (can be empty if no
+   * further actions are required)
+   */
+  std::vector<AbstractRequestPtr>
+  rollBack(std::exception_ptr ex,
+           const StorageHandlerPtr &storageHandle) override;
 
-    /**
-     * @brief Performs request specific error handling to be done after changes to the storage are rolled back
-     * @param ex: The exception encountered
-     * @param storageHandle: The storage access handle used by the request
-     */
-    void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
+  /**
+   * @brief Performs request specific error handling to be done after changes to
+   * the storage are rolled back
+   * @param ex: The exception encountered
+   * @param storageHandle: The storage access handle used by the request
+   */
+  void postRollbackHandle(std::exception_ptr ex,
+                          const StorageHandlerPtr &storageHandler) override;
 
-    /**
-     * @brief Executes the request logic.
-     * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
-     * request
-     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
-     */
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override;
+  /**
+   * @brief Executes the request logic.
+   * @param storageHandle: a handle to access the coordinators data structures
+   * which might be needed for executing the request
+   * @return a list of follow up requests to be executed (can be empty if no
+   * further actions are required)
+   */
+  std::vector<AbstractRequestPtr>
+  executeRequestLogic(const StorageHandlerPtr &storageHandler) override;
 
-    /**
-     * @brief Assign new operator ids to the input query plan
-     * @param queryPlan : the input query plan
-     */
-    void assignOperatorIds(const QueryPlanPtr& queryPlan);
+  /**
+   * @brief Assign new operator ids to the input query plan
+   * @param queryPlan : the input query plan
+   */
+  void assignOperatorIds(const QueryPlanPtr &queryPlan);
 
-  private:
-    QueryId queryId;
-    std::string queryString;
-    QueryPlanPtr queryPlan;
-    Optimizer::PlacementStrategy queryPlacementStrategy;
-    z3::ContextPtr z3Context;
-    QueryParsingServicePtr queryParsingService;
-    void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
-    void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);
+private:
+  QueryId queryId;
+  std::string queryString;
+  QueryPlanPtr queryPlan;
+  Optimizer::PlacementStrategy queryPlacementStrategy;
+  z3::ContextPtr z3Context;
+  QueryParsingServicePtr queryParsingService;
+  void markAsFailedInQueryCatalog(std::exception &e,
+                                  const StorageHandlerPtr &storageHandler);
+  void removeFromGlobalQueryPlanAndMarkAsFailed(
+      std::exception &e, const StorageHandlerPtr &storageHandler);
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_

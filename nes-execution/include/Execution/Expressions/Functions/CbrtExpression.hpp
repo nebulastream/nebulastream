@@ -24,14 +24,14 @@ namespace NES::Runtime::Execution::Expressions {
  * @brief This expression returns the cubic root of the subExpression.
  */
 class CbrtExpression : public Expression {
-  public:
-    CbrtExpression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+public:
+  CbrtExpression(const ExpressionPtr &subExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr subExpression;
+private:
+  const ExpressionPtr subExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_CBRTEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_CBRTEXPRESSION_HPP_

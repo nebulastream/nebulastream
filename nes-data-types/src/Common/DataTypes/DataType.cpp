@@ -34,4 +34,4 @@ bool DataType::isChar() const { return false; }
 
 bool DataType::isText() const { return false; }
 
-}// namespace NES
+} // namespace NES

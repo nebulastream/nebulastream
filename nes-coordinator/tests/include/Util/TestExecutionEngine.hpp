@@ -61,7 +61,8 @@ class NonRunnableDataSource;
 class TestSourceDescriptor;
 
 /**
- * @brief Default values for the test execution engine, otherwise tests will not terminate, as not enough buffers are available
+ * @brief Default values for the test execution engine, otherwise tests will not
+ * terminate, as not enough buffers are available
  */
 constexpr auto DEFAULT_BUFFERSIZE = 8196;
 constexpr auto DEFAULT_NO_BUFFERS_IN_GLOBAL_BM_PER_THREAD = 10240;
@@ -71,47 +72,54 @@ constexpr auto DEFAULT_NO_BUFFERS_IN_SOURCE_BM_PER_THREAD = 512;
  * @brief A simple stand alone query execution engine for testing.
  */
 class TestExecutionEngine {
-  public:
-    explicit TestExecutionEngine(
-        const QueryCompilation::DumpMode& dumpMode = QueryCompilation::DumpMode::NONE,
-        const uint64_t numWorkerThreads = 1,
-        const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-        const QueryCompilation::WindowingStrategy& windowingStrategy = QueryCompilation::WindowingStrategy::SLICING);
+public:
+  explicit TestExecutionEngine(
+      const QueryCompilation::DumpMode &dumpMode =
+          QueryCompilation::DumpMode::NONE,
+      const uint64_t numWorkerThreads = 1,
+      const QueryCompilation::StreamJoinStrategy &joinStrategy =
+          QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+      const QueryCompilation::WindowingStrategy &windowingStrategy =
+          QueryCompilation::WindowingStrategy::SLICING);
 
-    std::shared_ptr<TestSink> createDataSink(const SchemaPtr& outputSchema, uint32_t expectedTuples = 1);
+  std::shared_ptr<TestSink> createDataSink(const SchemaPtr &outputSchema,
+                                           uint32_t expectedTuples = 1);
 
-    template<class Type>
-    auto createCollectSink(SchemaPtr outputSchema) {
-        return CollectTestSink<Type>::create(outputSchema, nodeEngine);
-    }
+  template <class Type> auto createCollectSink(SchemaPtr outputSchema) {
+    return CollectTestSink<Type>::create(outputSchema, nodeEngine);
+  }
 
-    std::shared_ptr<SourceDescriptor> createDataSource(SchemaPtr inputSchema);
+  std::shared_ptr<SourceDescriptor> createDataSource(SchemaPtr inputSchema);
 
-    std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan);
+  std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>
+  submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-    std::shared_ptr<NonRunnableDataSource> getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
-                                                         uint32_t source);
+  std::shared_ptr<NonRunnableDataSource>
+  getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
+                uint32_t source);
 
-    void emitBuffer(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, Runtime::TupleBuffer buffer);
+  void emitBuffer(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
+                  Runtime::TupleBuffer buffer);
 
-    bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
-                   Runtime::QueryTerminationType type = Runtime::QueryTerminationType::HardStop);
+  bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
+                 Runtime::QueryTerminationType type =
+                     Runtime::QueryTerminationType::HardStop);
 
-    Runtime::MemoryLayouts::TestTupleBuffer getBuffer(const SchemaPtr& schema);
+  Runtime::MemoryLayouts::TestTupleBuffer getBuffer(const SchemaPtr &schema);
 
-    bool stop();
+  bool stop();
 
-    Runtime::BufferManagerPtr getBufferManager() const;
+  Runtime::BufferManagerPtr getBufferManager() const;
 
-    Runtime::NodeEnginePtr getNodeEngine() const;
+  Runtime::NodeEnginePtr getNodeEngine() const;
 
-  private:
-    Runtime::NodeEnginePtr nodeEngine;
-    Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
-    Optimizer::StatisticIdInferencePhasePtr statisticIdInferencePhase;
+private:
+  Runtime::NodeEnginePtr nodeEngine;
+  Optimizer::TypeInferencePhasePtr typeInferencePhase;
+  Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
+  Optimizer::StatisticIdInferencePhasePtr statisticIdInferencePhase;
 };
 
-}// namespace NES::Testing
+} // namespace NES::Testing
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_

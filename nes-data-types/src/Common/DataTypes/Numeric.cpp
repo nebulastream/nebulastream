@@ -20,4 +20,4 @@ Numeric::Numeric(int8_t bits) : bits(bits) {}
 
 int8_t Numeric::getBits() const { return bits; }
 
-}// namespace NES
+} // namespace NES

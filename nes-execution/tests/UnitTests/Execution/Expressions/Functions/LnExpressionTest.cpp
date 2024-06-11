@@ -23,67 +23,70 @@ namespace NES::Runtime::Execution::Expressions {
 
 class LnExpressionTest : public Testing::BaseUnitTest {
 
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("LnExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LnExpressionTest test class.");
-    }
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("LnExpressionTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup LnExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down LnExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down LnExpressionTest test class.");
+  }
 };
 
 TEST_F(LnExpressionTest, evaluateLnExpressionInteger) {
-    auto expression = UnaryExpressionWrapper<LnExpression>();
-    // Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>(2_s8));
-        ASSERT_EQ(resultValue, (double) 0.6931471805599453);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>(2_s16));
-        ASSERT_EQ(resultValue, (double) 0.6931471805599453);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(2_s32));
-        ASSERT_EQ(resultValue, (double) 0.6931471805599453);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>(2_s64));
-        ASSERT_EQ(resultValue, (double) 0.6931471805599453);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<LnExpression>();
+  // Int8
+  {
+    auto resultValue = expression.eval(Value<Int8>(2_s8));
+    ASSERT_EQ(resultValue, (double)0.6931471805599453);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int16
+  {
+    auto resultValue = expression.eval(Value<Int16>(2_s16));
+    ASSERT_EQ(resultValue, (double)0.6931471805599453);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int32
+  {
+    auto resultValue = expression.eval(Value<Int32>(2_s32));
+    ASSERT_EQ(resultValue, (double)0.6931471805599453);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int64
+  {
+    auto resultValue = expression.eval(Value<Int64>(2_s64));
+    ASSERT_EQ(resultValue, (double)0.6931471805599453);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 TEST_F(LnExpressionTest, evaluateLnExpressionFloat) {
-    auto expression = UnaryExpressionWrapper<LnExpression>();
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 2));
-        ASSERT_EQ(resultValue, (double) 0.6931471805599453);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 2));
-        ASSERT_EQ(resultValue, (double) 0.6931471805599453);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<LnExpression>();
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)2));
+    ASSERT_EQ(resultValue, (double)0.6931471805599453);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>((double)2));
+    ASSERT_EQ(resultValue, (double)0.6931471805599453);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 /**
-    * @brief If we execute the expression on a boolean it should throw an exception.
-    */
+ * @brief If we execute the expression on a boolean it should throw an
+ * exception.
+ */
 TEST_F(LnExpressionTest, evaluateCotExpressionOnWrongType) {
-    auto expression = UnaryExpressionWrapper<LnExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+  auto expression = UnaryExpressionWrapper<LnExpression>();
+  ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

@@ -27,6 +27,6 @@ using OriginId = uint64_t;
  * @brief The invalid origin id is always zero.
  */
 static constexpr OriginId INVALID_ORIGIN_ID = 0;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_ORIGINID_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_ORIGINID_HPP_

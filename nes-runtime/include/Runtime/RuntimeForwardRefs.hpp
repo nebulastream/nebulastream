@@ -21,14 +21,15 @@
 
 namespace NES {
 class AbstractQueryStatusListener;
-using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
+using AbstractQueryStatusListenerPtr =
+    std::shared_ptr<AbstractQueryStatusListener>;
 
 namespace Configurations {
 
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 
-}// namespace Configurations
+} // namespace Configurations
 
 enum class PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
@@ -59,8 +60,7 @@ using BufferStoragePtr = std::shared_ptr<BufferStorage>;
 
 class PhysicalField;
 using PhysicalFieldPtr = std::shared_ptr<PhysicalField>;
-template<class ValueType>
-class BasicPhysicalField;
+template <class ValueType> class BasicPhysicalField;
 class ArrayPhysicalField;
 
 class PhysicalSchema;
@@ -84,7 +84,7 @@ class FixedSizeBufferPool;
 using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
 
 class WorkerContext;
-using WorkerContextRef = WorkerContext&;
+using WorkerContextRef = WorkerContext &;
 
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
@@ -102,7 +102,13 @@ namespace Execution {
 class OperatorHandler;
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 
-enum class OperatorHandlerType : uint8_t { WINDOW, CEP, JOIN, BATCH_JOIN, KEY_EVENT_TIME_WINDOW };
+enum class OperatorHandlerType : uint8_t {
+  WINDOW,
+  CEP,
+  JOIN,
+  BATCH_JOIN,
+  KEY_EVENT_TIME_WINDOW
+};
 
 class ExecutablePipeline;
 using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
@@ -110,8 +116,10 @@ using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
-using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
-using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
+using SuccessorExecutablePipeline =
+    std::variant<DataSinkPtr, ExecutablePipelinePtr>;
+using PredecessorExecutablePipeline =
+    std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
 
 class ExecutablePipelineStage;
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
@@ -119,7 +127,7 @@ using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 
-}// namespace Execution
+} // namespace Execution
 
 namespace MemoryLayouts {
 
@@ -132,9 +140,9 @@ using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 class RowLayout;
 using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
-}// namespace MemoryLayouts
+} // namespace MemoryLayouts
 
-}// namespace Runtime
+} // namespace Runtime
 
 namespace Network {
 class NesPartition;
@@ -145,8 +153,8 @@ class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 class QueryCompilerOptions;
 using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
-}// namespace QueryCompilation
+} // namespace QueryCompilation
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_

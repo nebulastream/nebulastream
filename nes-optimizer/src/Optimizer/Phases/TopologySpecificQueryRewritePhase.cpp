@@ -23,40 +23,48 @@
 
 namespace NES::Optimizer {
 
-TopologySpecificQueryRewritePhasePtr
-TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
-                                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                          Configurations::OptimizerConfiguration optimizerConfiguration,
-                                          Statistic::StatisticProbeHandlerPtr statisticProbeHandler) {
-    return std::make_shared<TopologySpecificQueryRewritePhase>(
-        TopologySpecificQueryRewritePhase(topology, sourceCatalog, optimizerConfiguration, statisticProbeHandler));
+TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(
+    NES::TopologyPtr topology, Catalogs::Source::SourceCatalogPtr sourceCatalog,
+    Configurations::OptimizerConfiguration optimizerConfiguration,
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler) {
+  return std::make_shared<TopologySpecificQueryRewritePhase>(
+      TopologySpecificQueryRewritePhase(topology, sourceCatalog,
+                                        optimizerConfiguration,
+                                        statisticProbeHandler));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
     TopologyPtr topology,
-    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    const Catalogs::Source::SourceCatalogPtr &sourceCatalog,
     Configurations::OptimizerConfiguration optimizerConfiguration,
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler)
-    : topology(topology), optimizerConfiguration(optimizerConfiguration), statisticProbeHandler(statisticProbeHandler),
+    : topology(topology), optimizerConfiguration(optimizerConfiguration),
+      statisticProbeHandler(statisticProbeHandler),
       sourceCatalog(sourceCatalog) {
-    logicalSourceExpansionRule =
-        LogicalSourceExpansionRule::create(sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion);
+  logicalSourceExpansionRule = LogicalSourceExpansionRule::create(
+      sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion);
 }
 
-QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
-    // We simply write this line here to make sure that the statisticProbeHandler can be used in the optimizer.
-    ((void) statisticProbeHandler);
+QueryPlanPtr
+TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
+  // We simply write this line here to make sure that the statisticProbeHandler
+  // can be used in the optimizer.
+  ((void)statisticProbeHandler);
 
-    queryPlan = logicalSourceExpansionRule->apply(queryPlan);
-    if (optimizerConfiguration.joinOptimizationMode == DistributedJoinOptimizationMode::MATRIX) {
-        auto matrixJoinRule = DistributedMatrixJoinRule::create(optimizerConfiguration, topology);
-        queryPlan = matrixJoinRule->apply(queryPlan);
-    } else if (optimizerConfiguration.joinOptimizationMode == DistributedJoinOptimizationMode::NEMO) {
-        auto nemoJoinRule =
-            DistributedNemoJoinRule::create(optimizerConfiguration, topology, sourceCatalog->getKeyDistributionMap());
-        queryPlan = nemoJoinRule->apply(queryPlan);
-    }
-    return queryPlan;
+  queryPlan = logicalSourceExpansionRule->apply(queryPlan);
+  if (optimizerConfiguration.joinOptimizationMode ==
+      DistributedJoinOptimizationMode::MATRIX) {
+    auto matrixJoinRule =
+        DistributedMatrixJoinRule::create(optimizerConfiguration, topology);
+    queryPlan = matrixJoinRule->apply(queryPlan);
+  } else if (optimizerConfiguration.joinOptimizationMode ==
+             DistributedJoinOptimizationMode::NEMO) {
+    auto nemoJoinRule =
+        DistributedNemoJoinRule::create(optimizerConfiguration, topology,
+                                        sourceCatalog->getKeyDistributionMap());
+    queryPlan = nemoJoinRule->apply(queryPlan);
+  }
+  return queryPlan;
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

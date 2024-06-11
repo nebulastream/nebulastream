@@ -34,7 +34,7 @@ namespace NES {
 namespace Statistic {
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-}// namespace Statistic
+} // namespace Statistic
 
 namespace Runtime {
 
@@ -44,7 +44,7 @@ using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-}// namespace Runtime
+} // namespace Runtime
 using namespace Configurations;
 
 class RequestQueue;
@@ -78,7 +78,8 @@ class SourceCatalogService;
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 
 class CoordinatorHealthCheckService;
-using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
+using CoordinatorHealthCheckServicePtr =
+    std::shared_ptr<CoordinatorHealthCheckService>;
 
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
@@ -88,187 +89,196 @@ namespace Catalogs {
 namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
 namespace Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
+} // namespace Query
 
 namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
-}// namespace Catalogs
+} // namespace UDF
+} // namespace Catalogs
 
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class PlacementAmendmentInstance;
-using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
+using PlacementAmendmentInstancePtr =
+    std::shared_ptr<PlacementAmendmentInstance>;
 
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
+using UMPMCAmendmentQueuePtr = std::shared_ptr<
+    folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
 
 class PlacementAmendmentHandler;
 using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
-}// namespace Optimizer
+} // namespace Optimizer
 
-class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
-    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-    using inherited0 = detail::virtual_enable_shared_from_this<NesCoordinator>;
-    using inherited1 = ErrorListener;
+class NesCoordinator
+    : public detail::virtual_enable_shared_from_this<NesCoordinator>,
+      public Exceptions::ErrorListener {
+  // virtual_enable_shared_from_this necessary for double inheritance of
+  // enable_shared_from_this
+  using inherited0 = detail::virtual_enable_shared_from_this<NesCoordinator>;
+  using inherited1 = ErrorListener;
 
-  public:
-    explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig);
+public:
+  explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig);
 
-    /**
-     * @brief dtor
-     * @return
-     */
-    ~NesCoordinator() override;
+  /**
+   * @brief dtor
+   * @return
+   */
+  ~NesCoordinator() override;
 
-    /**
-     * @brief start rpc server: rest server, and one worker <
-     * @param bool if the method should block
-     */
-    uint64_t startCoordinator(bool blocking);
+  /**
+   * @brief start rpc server: rest server, and one worker <
+   * @param bool if the method should block
+   */
+  uint64_t startCoordinator(bool blocking);
 
-    /**
-     * @brief method to stop coordinator
-     * @param force the shutdown even when queryIdAndCatalogEntryMapping are running
-     * @return bool indicating success
-     */
-    bool stopCoordinator(bool force);
+  /**
+   * @brief method to stop coordinator
+   * @param force the shutdown even when queryIdAndCatalogEntryMapping are
+   * running
+   * @return bool indicating success
+   */
+  bool stopCoordinator(bool force);
 
-    /**
-    * @brief method to return the query statistics
-    * @param id of the query
-    * @return vector of queryStatistics
-    */
-    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+  /**
+   * @brief method to return the query statistics
+   * @param id of the query
+   * @return vector of queryStatistics
+   */
+  std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
-    /**
-     * @brief catalog method for debug use only
-     * @return sourceCatalog
-     */
-    Catalogs::Source::SourceCatalogPtr getSourceCatalog() const;
+  /**
+   * @brief catalog method for debug use only
+   * @return sourceCatalog
+   */
+  Catalogs::Source::SourceCatalogPtr getSourceCatalog() const;
 
-    /**
-     * @brief get topology of coordinator
-     * @return topology
-     */
-    TopologyPtr getTopology() const;
+  /**
+   * @brief get topology of coordinator
+   * @return topology
+   */
+  TopologyPtr getTopology() const;
 
-    /**
-     * @brief Get the instance of query service
-     * @return Query service pointer
-     */
-    RequestHandlerServicePtr getRequestHandlerService();
+  /**
+   * @brief Get the instance of query service
+   * @return Query service pointer
+   */
+  RequestHandlerServicePtr getRequestHandlerService();
 
-    /**
-     * @brief Get instance of query catalog
-     * @return query catalog pointer
-     */
-    Catalogs::Query::QueryCatalogPtr getQueryCatalog();
+  /**
+   * @brief Get instance of query catalog
+   * @return query catalog pointer
+   */
+  Catalogs::Query::QueryCatalogPtr getQueryCatalog();
 
-    /**
-     * @brief Return the UDF catalog.
-     * @return Pointer to the UDF catalog.
-     */
-    Catalogs::UDF::UDFCatalogPtr getUDFCatalog();
+  /**
+   * @brief Return the UDF catalog.
+   * @return Pointer to the UDF catalog.
+   */
+  Catalogs::UDF::UDFCatalogPtr getUDFCatalog();
 
-    /**
-     * @brief Get placement amendment queue
-     * @return pointer to the placement amendment queue
-     */
-    Optimizer::UMPMCAmendmentQueuePtr getPlacementAmendmentQueue();
+  /**
+   * @brief Get placement amendment queue
+   * @return pointer to the placement amendment queue
+   */
+  Optimizer::UMPMCAmendmentQueuePtr getPlacementAmendmentQueue();
 
-    /**
-     * @brief Get instance of monitoring service
-     * @return monitoring service pointer
-     */
-    MonitoringServicePtr getMonitoringService();
+  /**
+   * @brief Get instance of monitoring service
+   * @return monitoring service pointer
+   */
+  MonitoringServicePtr getMonitoringService();
 
-    /**
-     * @brief Get the instance of Global Query Plan
-     * @return Global query plan
-     */
-    GlobalQueryPlanPtr getGlobalQueryPlan();
+  /**
+   * @brief Get the instance of Global Query Plan
+   * @return Global query plan
+   */
+  GlobalQueryPlanPtr getGlobalQueryPlan();
 
-    Runtime::NodeEnginePtr getNodeEngine();
+  Runtime::NodeEnginePtr getNodeEngine();
 
-    void onFatalError(int signalNumber, std::string string) override;
-    void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
+  void onFatalError(int signalNumber, std::string string) override;
+  void onFatalException(std::shared_ptr<std::exception> ptr,
+                        std::string string) override;
 
-    /**
-     * @brief Method to check if a coordinator is still running
-     * @return running status of the coordinator
-     */
-    bool isCoordinatorRunning();
+  /**
+   * @brief Method to check if a coordinator is still running
+   * @return running status of the coordinator
+   */
+  bool isCoordinatorRunning();
 
-    /**
-     * getter for the sourceCatalogService
-     * @return
-     */
-    SourceCatalogServicePtr getSourceCatalogService() const;
+  /**
+   * getter for the sourceCatalogService
+   * @return
+   */
+  SourceCatalogServicePtr getSourceCatalogService() const;
 
-    /**
-     * getter for the locationService
-     * @return
-     */
-    LocationServicePtr getLocationService() const;
+  /**
+   * getter for the locationService
+   * @return
+   */
+  LocationServicePtr getLocationService() const;
 
-    //Todo #3740: this function is added for testing the fail query request. can be removed once the new request executor is implemented
-    /**
-     * getter for the global execution plan
-     * @return
-     */
-    Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlan() const;
+  // Todo #3740: this function is added for testing the fail query request. can
+  // be removed once the new request executor is implemented
+  /**
+   * getter for the global execution plan
+   * @return
+   */
+  Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlan() const;
 
-    NesWorkerPtr getNesWorker();
+  NesWorkerPtr getNesWorker();
 
-    Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler() const;
+  Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler() const;
 
-  private:
-    /**
-     * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
-     */
-    void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom);
+private:
+  /**
+   * @brief this method will start the GRPC Coordinator server which is
+   * responsible for reacting to calls from the CoordinatorRPCClient
+   */
+  void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>> &prom);
 
-    CoordinatorConfigurationPtr coordinatorConfiguration;
-    std::string restIp;
-    uint16_t restPort;
-    std::string rpcIp;
-    uint16_t rpcPort;
-    std::unique_ptr<grpc::Server> rpcServer;
-    std::shared_ptr<std::thread> rpcThread;
-    NesWorkerPtr worker;
-    SourceCatalogServicePtr sourceCatalogService;
-    CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
-    TopologyPtr topology;
-    RestServerPtr restServer;
-    std::shared_ptr<std::thread> restThread;
-    std::atomic<bool> isRunning{false};
-    RequestHandlerServicePtr requestHandlerService;
-    MonitoringServicePtr monitoringService;
-    QueryParsingServicePtr queryParsingService;
-    RequestQueuePtr queryRequestQueue;
-    GlobalQueryPlanPtr globalQueryPlan;
-    Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    bool enableMonitoring;
-    LocationServicePtr locationService;
-    Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
-    Optimizer::UMPMCAmendmentQueuePtr placementAmendmentQueue;
-    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
+  CoordinatorConfigurationPtr coordinatorConfiguration;
+  std::string restIp;
+  uint16_t restPort;
+  std::string rpcIp;
+  uint16_t rpcPort;
+  std::unique_ptr<grpc::Server> rpcServer;
+  std::shared_ptr<std::thread> rpcThread;
+  NesWorkerPtr worker;
+  SourceCatalogServicePtr sourceCatalogService;
+  CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
+  Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
+  Catalogs::Query::QueryCatalogPtr queryCatalog;
+  TopologyPtr topology;
+  RestServerPtr restServer;
+  std::shared_ptr<std::thread> restThread;
+  std::atomic<bool> isRunning{false};
+  RequestHandlerServicePtr requestHandlerService;
+  MonitoringServicePtr monitoringService;
+  QueryParsingServicePtr queryParsingService;
+  RequestQueuePtr queryRequestQueue;
+  GlobalQueryPlanPtr globalQueryPlan;
+  Catalogs::UDF::UDFCatalogPtr udfCatalog;
+  bool enableMonitoring;
+  LocationServicePtr locationService;
+  Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
+  Optimizer::UMPMCAmendmentQueuePtr placementAmendmentQueue;
+  Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
-  public:
-    constexpr static uint64_t NES_COORDINATOR_ID = 1;
+public:
+  constexpr static uint64_t NES_COORDINATOR_ID = 1;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_

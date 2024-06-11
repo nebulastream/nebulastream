@@ -19,70 +19,99 @@
 namespace NES::RequestProcessor {
 
 class DummyResponse : public AbstractRequestResponse {
-  public:
-    explicit DummyResponse(uint32_t number) : number(number){};
-    uint32_t number;
+public:
+  explicit DummyResponse(uint32_t number) : number(number){};
+  uint32_t number;
 };
 
 class DummyRequest : public AbstractUniRequest {
-  public:
-    DummyRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, uint32_t responseValue)
-        : AbstractUniRequest(requiredResources, maxRetries), responseValue(responseValue){};
+public:
+  DummyRequest(const std::vector<ResourceType> &requiredResources,
+               uint8_t maxRetries, uint32_t responseValue)
+      : AbstractUniRequest(requiredResources, maxRetries),
+        responseValue(responseValue){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
-        responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
-        return {};
-    }
+  std::vector<AbstractRequestPtr>
+  executeRequestLogic(const StorageHandlerPtr &) override {
+    responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
+    return {};
+  }
 
-    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
+  std::vector<AbstractRequestPtr> rollBack(std::exception_ptr,
+                                           const StorageHandlerPtr &) override {
+    return {};
+  }
 
-  protected:
-    void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-    void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-    void postExecution(const StorageHandlerPtr&) override {}
+protected:
+  void preRollbackHandle(std::exception_ptr,
+                         const StorageHandlerPtr &) override {}
+  void postRollbackHandle(std::exception_ptr,
+                          const StorageHandlerPtr &) override {}
+  void postExecution(const StorageHandlerPtr &) override {}
 
-  private:
-    uint32_t responseValue;
+private:
+  uint32_t responseValue;
 };
 
 class DummyStorageHandler : public StorageHandler {
-  public:
-    explicit DummyStorageHandler() = default;
-    Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlanHandle(RequestId) override { return nullptr; };
+public:
+  explicit DummyStorageHandler() = default;
+  Optimizer::GlobalExecutionPlanPtr
+  getGlobalExecutionPlanHandle(RequestId) override {
+    return nullptr;
+  };
 
-    TopologyHandle getTopologyHandle(RequestId) override { return nullptr; };
+  TopologyHandle getTopologyHandle(RequestId) override { return nullptr; };
 
-    QueryCatalogHandle getQueryCatalogHandle(RequestId) override { return nullptr; };
+  QueryCatalogHandle getQueryCatalogHandle(RequestId) override {
+    return nullptr;
+  };
 
-    GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId) override { return nullptr; };
+  GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId) override {
+    return nullptr;
+  };
 
-    Catalogs::Source::SourceCatalogPtr getSourceCatalogHandle(RequestId) override { return nullptr; };
+  Catalogs::Source::SourceCatalogPtr
+  getSourceCatalogHandle(RequestId) override {
+    return nullptr;
+  };
 
-    Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId) override { return nullptr; };
+  Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId) override {
+    return nullptr;
+  };
 
-    Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId) override { return nullptr; }
+  Configurations::CoordinatorConfigurationPtr
+  getCoordinatorConfiguration(RequestId) override {
+    return nullptr;
+  }
 
-    Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override { return nullptr; }
+  Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override {
+    return nullptr;
+  }
 };
 
 class AbstractRequestTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() { NES::Logger::setupLogging("AbstractRequestTest.log", NES::LogLevel::LOG_DEBUG); }
+public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("AbstractRequestTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+  }
 };
 
 TEST_F(AbstractRequestTest, testPromise) {
-    constexpr uint32_t responseValue = 20;
-    auto requestId = RequestId(1);
-    std::vector<ResourceType> requiredResources;
-    uint8_t maxRetries = 1;
-    DummyRequest request(requiredResources, maxRetries, responseValue);
-    request.setId(requestId);
-    auto future = request.getFuture();
-    auto thread = std::make_shared<std::thread>([&request]() {
-        std::shared_ptr<DummyStorageHandler> storageHandler;
-        request.executeRequestLogic(storageHandler);
-    });
-    thread->join();
-    EXPECT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
+  constexpr uint32_t responseValue = 20;
+  auto requestId = RequestId(1);
+  std::vector<ResourceType> requiredResources;
+  uint8_t maxRetries = 1;
+  DummyRequest request(requiredResources, maxRetries, responseValue);
+  request.setId(requestId);
+  auto future = request.getFuture();
+  auto thread = std::make_shared<std::thread>([&request]() {
+    std::shared_ptr<DummyStorageHandler> storageHandler;
+    request.executeRequestLogic(storageHandler);
+  });
+  thread->join();
+  EXPECT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number,
+            responseValue);
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

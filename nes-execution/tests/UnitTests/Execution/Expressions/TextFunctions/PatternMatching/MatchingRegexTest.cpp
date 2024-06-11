@@ -26,112 +26,116 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class MatchingRegexTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("MatchingRegexTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MatchingRegexTest test class.");
-    }
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
-        NES_DEBUG("Setup MatchingRegexTest test case.")
-    }
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down MatchingRegexTest test class."); }
-    std::shared_ptr<Runtime::BufferManager> bm;
-    std::shared_ptr<Runtime::WorkerContext> wc;
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("MatchingRegexTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup MatchingRegexTest test class.");
+  }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    bm = std::make_shared<Runtime::BufferManager>();
+    wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm,
+                                                  1024);
+    NES_DEBUG("Setup MatchingRegexTest test case.")
+  }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down MatchingRegexTest test class.");
+  }
+  std::shared_ptr<Runtime::BufferManager> bm;
+  std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
 TEST_F(MatchingRegexTest, evaluateRegexMatch1) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("test");
-        auto r = Value<Text>("test");
-        auto resultValue = expression.eval(l, r, (Boolean) false);
-        EXPECT_EQ(resultValue, (Boolean) true);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("test");
+    auto r = Value<Text>("test");
+    auto resultValue = expression.eval(l, r, (Boolean) false);
+    EXPECT_EQ(resultValue, (Boolean) true);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch2) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("test");
-        auto r = Value<Text>("t");
-        auto resultValue = expression.eval(l, r, (Boolean) false);
-        EXPECT_EQ(resultValue, (Boolean) false);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("test");
+    auto r = Value<Text>("t");
+    auto resultValue = expression.eval(l, r, (Boolean) false);
+    EXPECT_EQ(resultValue, (Boolean) false);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch3) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("test");
-        auto r = Value<Text>("^t$");
-        auto resultValue = expression.eval(l, r, (Boolean) false);
-        EXPECT_EQ(resultValue, (Boolean) false);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("test");
+    auto r = Value<Text>("^t$");
+    auto resultValue = expression.eval(l, r, (Boolean) false);
+    EXPECT_EQ(resultValue, (Boolean) false);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch4) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("test");
-        auto r = Value<Text>(".*(e|s).*");
-        auto resultValue = expression.eval(l, r, (Boolean) false);
-        EXPECT_EQ(resultValue, (Boolean) true);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("test");
+    auto r = Value<Text>(".*(e|s).*");
+    auto resultValue = expression.eval(l, r, (Boolean) false);
+    EXPECT_EQ(resultValue, (Boolean) true);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch5) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("test");
-        auto r = Value<Text>("(e|s).*");
-        auto resultValue = expression.eval(l, r, (Boolean) false);
-        EXPECT_EQ(resultValue, (Boolean) false);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("test");
+    auto r = Value<Text>("(e|s).*");
+    auto resultValue = expression.eval(l, r, (Boolean) false);
+    EXPECT_EQ(resultValue, (Boolean) false);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch6) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("test");
-        auto r = Value<Text>("^(e|s).*");
-        auto resultValue = expression.eval(l, r, (Boolean) false);
-        EXPECT_EQ(resultValue, (Boolean) false);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("test");
+    auto r = Value<Text>("^(e|s).*");
+    auto resultValue = expression.eval(l, r, (Boolean) false);
+    EXPECT_EQ(resultValue, (Boolean) false);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch7) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("tESt");
-        auto r = Value<Text>(".*(e|s).*");
-        auto resultValue = expression.eval(l, r, (Boolean) false);
-        EXPECT_EQ(resultValue, (Boolean) false);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("tESt");
+    auto r = Value<Text>(".*(e|s).*");
+    auto resultValue = expression.eval(l, r, (Boolean) false);
+    EXPECT_EQ(resultValue, (Boolean) false);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch8) {
-    auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
-    {
-        auto l = Value<Text>("tESt");
-        auto r = Value<Text>(".*(e|s).*");
-        auto resultValue = expression.eval(l, r, (Boolean) true);
-        EXPECT_EQ(resultValue, (Boolean) true);
-        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+  auto expression = TernaryExpressionWrapper<MatchingRegex>();
+  // TextValue
+  {
+    auto l = Value<Text>("tESt");
+    auto r = Value<Text>(".*(e|s).*");
+    auto resultValue = expression.eval(l, r, (Boolean) true);
+    EXPECT_EQ(resultValue, (Boolean) true);
+    EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+  }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

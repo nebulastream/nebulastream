@@ -21,25 +21,28 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
- * Furthermore, it supports projection pushdown to eliminate unneeded reads.
+ * @brief This basic scan operator extracts records from a base tuple buffer
+ * according to a memory layout. Furthermore, it supports projection pushdown to
+ * eliminate unneeded reads.
  */
 class Scan : public Operator {
-  public:
-    /**
-     * @brief Constructor for the scan operator that receives a memory layout and a projection vector.
-     * @param memoryLayout memory layout that describes the tuple buffer.
-     * @param projections projection vector
-     */
-    Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-         std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
+public:
+  /**
+   * @brief Constructor for the scan operator that receives a memory layout and
+   * a projection vector.
+   * @param memoryLayout memory layout that describes the tuple buffer.
+   * @param projections projection vector
+   */
+  Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+       std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+  void open(ExecutionContext &executionCtx,
+            RecordBuffer &recordBuffer) const override;
 
-  private:
-    const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-    const std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
+private:
+  const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+  const std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_

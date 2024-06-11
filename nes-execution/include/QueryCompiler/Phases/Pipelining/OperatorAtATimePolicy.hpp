@@ -21,11 +21,12 @@ namespace NES::QueryCompilation {
  * @brief This policy permits operator fusion for all operators.
  */
 class OperatorAtATimePolicy : public OperatorFusionPolicy {
-  public:
-    ~OperatorAtATimePolicy() override = default;
-    static OperatorFusionPolicyPtr create();
-    bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
+public:
+  ~OperatorAtATimePolicy() override = default;
+  static OperatorFusionPolicyPtr create();
+  bool
+  isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_

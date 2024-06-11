@@ -20,21 +20,22 @@ namespace NES {
 /**
  * @brief This node represents a logical binary expression.
  */
-class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode {
-  public:
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override = 0;
+class LogicalBinaryExpressionNode : public BinaryExpressionNode,
+                                    public LogicalExpressionNode {
+public:
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override = 0;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
 
-  protected:
-    LogicalBinaryExpressionNode();
-    ~LogicalBinaryExpressionNode() override = default;
-    explicit LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other);
+protected:
+  LogicalBinaryExpressionNode();
+  ~LogicalBinaryExpressionNode() override = default;
+  explicit LogicalBinaryExpressionNode(LogicalBinaryExpressionNode *other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_

@@ -19,20 +19,27 @@
 
 namespace NES::Nautilus {
 
-FieldAccess::FieldAccess(std::shared_ptr<BuiltInVariable> builtInVariable, std::string fieldName)
-    : BuiltInVariable(&type), builtInVariable(std::move(builtInVariable)), fieldName(std::move(fieldName)){
+FieldAccess::FieldAccess(std::shared_ptr<BuiltInVariable> builtInVariable,
+                         std::string fieldName)
+    : BuiltInVariable(&type), builtInVariable(std::move(builtInVariable)),
+      fieldName(std::move(fieldName)){
 
-                                                                           };
+      };
 
-const std::string FieldAccess::getIdentifier() const { return builtInVariable->getIdentifier() + "." + fieldName; }
-
-IR::Types::StampPtr FieldAccess::getType() const {
-    // TODO #4832: Not always correct, as there are also vector types for float, double, signed ints
-    return IR::Types::StampFactory::createUInt64Stamp();
+const std::string FieldAccess::getIdentifier() const {
+  return builtInVariable->getIdentifier() + "." + fieldName;
 }
 
-std::shared_ptr<Any> FieldAccess::copy() { return create<FieldAccess>(builtInVariable, fieldName); }
+IR::Types::StampPtr FieldAccess::getType() const {
+  // TODO #4832: Not always correct, as there are also vector types for float,
+  // double, signed ints
+  return IR::Types::StampFactory::createUInt64Stamp();
+}
 
-const Value<> FieldAccess::getAsValue() const { return Value<>((uint64_t) 0); }
+std::shared_ptr<Any> FieldAccess::copy() {
+  return create<FieldAccess>(builtInVariable, fieldName);
+}
 
-}// namespace NES::Nautilus
+const Value<> FieldAccess::getAsValue() const { return Value<>((uint64_t)0); }
+
+} // namespace NES::Nautilus

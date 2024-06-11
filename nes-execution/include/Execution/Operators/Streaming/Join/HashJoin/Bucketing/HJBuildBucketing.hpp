@@ -20,41 +20,41 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class implements how the hash join inserts records into the multiple buckets by implementing insertRecordForWindow.
- * It iterates over all windows, it has to fill and then inserts the record into each hash table of each window.
- * The insertion is done via a Nautilus::FunctionCall that proxies to the hashTable->insert() and returns a pointer to allocated space for the tuple.
+ * @brief This class implements how the hash join inserts records into the
+ * multiple buckets by implementing insertRecordForWindow. It iterates over all
+ * windows, it has to fill and then inserts the record into each hash table of
+ * each window. The insertion is done via a Nautilus::FunctionCall that proxies
+ * to the hashTable->insert() and returns a pointer to allocated space for the
+ * tuple.
  */
 class HJBuildBucketing : public StreamJoinBuildBucketing {
-  public:
-    /**
-     * @brief Constructor for a HJBuildBucketing join phase
-     * @param operatorHandlerIndex
-     * @param schema
-     * @param joinFieldName
-     * @param joinBuildSide
-     * @param entrySize
-     * @param timeFunction
-     * @param joinStrategy
-     * @param windowingStrategy
-     * @param windowSize
-     * @param windowSlide
-     */
-    HJBuildBucketing(const uint64_t operatorHandlerIndex,
-                     const SchemaPtr& schema,
-                     const std::string& joinFieldName,
-                     const QueryCompilation::JoinBuildSideType joinBuildSide,
-                     const uint64_t entrySize,
-                     TimeFunctionPtr timeFunction,
-                     QueryCompilation::StreamJoinStrategy joinStrategy,
-                     QueryCompilation::WindowingStrategy windowingStrategy,
-                     const uint64_t windowSize,
-                     const uint64_t windowSlide);
+public:
+  /**
+   * @brief Constructor for a HJBuildBucketing join phase
+   * @param operatorHandlerIndex
+   * @param schema
+   * @param joinFieldName
+   * @param joinBuildSide
+   * @param entrySize
+   * @param timeFunction
+   * @param joinStrategy
+   * @param windowingStrategy
+   * @param windowSize
+   * @param windowSlide
+   */
+  HJBuildBucketing(const uint64_t operatorHandlerIndex, const SchemaPtr &schema,
+                   const std::string &joinFieldName,
+                   const QueryCompilation::JoinBuildSideType joinBuildSide,
+                   const uint64_t entrySize, TimeFunctionPtr timeFunction,
+                   QueryCompilation::StreamJoinStrategy joinStrategy,
+                   QueryCompilation::WindowingStrategy windowingStrategy,
+                   const uint64_t windowSize, const uint64_t windowSlide);
 
-    void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
-                               Value<UInt64>& curIndex,
-                               ValueId<WorkerThreadId>& workerThreadId,
-                               Record& record) const override;
+  void insertRecordForWindow(Value<MemRef> &allWindowsToFill,
+                             Value<UInt64> &curIndex,
+                             ValueId<WorkerThreadId> &workerThreadId,
+                             Record &record) const override;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_BUCKETING_HJBUILDBUCKETING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_BUCKETING_HJBUILDBUCKETING_HPP_

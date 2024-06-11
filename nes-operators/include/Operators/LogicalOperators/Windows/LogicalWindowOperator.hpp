@@ -21,21 +21,23 @@
 namespace NES {
 
 class LogicalWindowOperator : public WindowOperator {
-  public:
-    LogicalWindowOperator(Windowing::LogicalWindowDescriptorPtr const& windowDefinition, OperatorId id);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
-    OperatorPtr copy() override;
-    bool inferSchema() override;
-    void inferStringSignature() override;
+public:
+  LogicalWindowOperator(
+      Windowing::LogicalWindowDescriptorPtr const &windowDefinition,
+      OperatorId id);
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+  std::string toString() const override;
+  OperatorPtr copy() override;
+  bool inferSchema() override;
+  void inferStringSignature() override;
 
-    /**
-     * @brief returns the names of every key used in the aggregation
-     * @return a vector containing the key names used in the aggregation
-     */
-    std::vector<std::string> getGroupByKeyNames() const;
+  /**
+   * @brief returns the names of every key used in the aggregation
+   * @return a vector containing the key names used in the aggregation
+   */
+  std::vector<std::string> getGroupByKeyNames() const;
 };
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_

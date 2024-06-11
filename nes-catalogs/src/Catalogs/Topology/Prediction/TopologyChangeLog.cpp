@@ -18,99 +18,121 @@
 
 namespace NES::Experimental::TopologyPrediction {
 
-void TopologyChangeLog::updateChangelog(const std::unordered_map<WorkerId, std::vector<WorkerId>>& newMap,
-                                        std::unordered_map<WorkerId, std::vector<WorkerId>>& additionTarget,
-                                        std::unordered_map<WorkerId, std::vector<WorkerId>>& toSubtract) {
-    //iterate over the parent ids and corresponding lists of children
-    for (const auto& [parentToAdd, childrenToAdd] : newMap) {
-        //get the list of children to which new children will be added
-        auto& additionTargetChildren = additionTarget[parentToAdd];
-        //get the children which are not to be added even if they appead in the list of children to add
-        auto& childrenToSubtract = toSubtract[parentToAdd];
-        for (const auto childToAdd : childrenToAdd) {
-            auto childToSubtract = std::find(childrenToSubtract.begin(), childrenToSubtract.end(), childToAdd);
-            if (childToSubtract != childrenToSubtract.end()) {
-                //if the child that is to be added, is also subtracted, remove it from the subtraction list and do not add it to the addition target
-                childrenToSubtract.erase(childToSubtract);
-                continue;
-            }
+void TopologyChangeLog::updateChangelog(
+    const std::unordered_map<WorkerId, std::vector<WorkerId>> &newMap,
+    std::unordered_map<WorkerId, std::vector<WorkerId>> &additionTarget,
+    std::unordered_map<WorkerId, std::vector<WorkerId>> &toSubtract) {
+  // iterate over the parent ids and corresponding lists of children
+  for (const auto &[parentToAdd, childrenToAdd] : newMap) {
+    // get the list of children to which new children will be added
+    auto &additionTargetChildren = additionTarget[parentToAdd];
+    // get the children which are not to be added even if they appead in the
+    // list of children to add
+    auto &childrenToSubtract = toSubtract[parentToAdd];
+    for (const auto childToAdd : childrenToAdd) {
+      auto childToSubtract = std::find(childrenToSubtract.begin(),
+                                       childrenToSubtract.end(), childToAdd);
+      if (childToSubtract != childrenToSubtract.end()) {
+        // if the child that is to be added, is also subtracted, remove it from
+        // the subtraction list and do not add it to the addition target
+        childrenToSubtract.erase(childToSubtract);
+        continue;
+      }
 
-            //if compiled with debug configuration, check for duplicates
+      // if compiled with debug configuration, check for duplicates
 #ifndef NDEBUG
-            //if the link to be added is also added as part of another changelog, this means our data is corrupted
-            if (std::find(additionTargetChildren.begin(), additionTargetChildren.end(), childToAdd)
-                != additionTargetChildren.end()) {
-                NES_ERROR("Duplicate link {}->{} found in topology changelog", childToAdd, parentToAdd);
-            }
+      // if the link to be added is also added as part of another changelog,
+      // this means our data is corrupted
+      if (std::find(additionTargetChildren.begin(),
+                    additionTargetChildren.end(),
+                    childToAdd) != additionTargetChildren.end()) {
+        NES_ERROR("Duplicate link {}->{} found in topology changelog",
+                  childToAdd, parentToAdd);
+      }
 #endif
-            additionTargetChildren.push_back(childToAdd);
-        }
-        //remove empty vectors in target
-        if (additionTargetChildren.empty()) {
-            additionTarget.erase(parentToAdd);
-        }
-        if (childrenToSubtract.empty()) {
-            toSubtract.erase(parentToAdd);
-        }
+      additionTargetChildren.push_back(childToAdd);
     }
-}
-
-void TopologyChangeLog::add(const TopologyChangeLog& newChangeLog) {
-    /* add added linkss from the addedChangelog to the list of added linkss at this object unless they already exist in the list of
-     * removed links at this object. In case the added link exists in the list of removed links at this object, remove it from the list.
-     */
-    updateChangelog(newChangeLog.addedLinks, this->addedLinks, this->removedLinks);
-    /* add removed links from the addedChangelog to the list of removed links at this object unless they already exist in the list of
-     * added links at this object. In case the removed link exists in the list of added links at this object, remove it from the list.
-     */
-    updateChangelog(newChangeLog.removedLinks, this->removedLinks, this->addedLinks);
-}
-
-std::vector<WorkerId> TopologyChangeLog::getAddedChildren(WorkerId nodeId) const {
-    auto it = addedLinks.find(nodeId);
-    if (it != addedLinks.end()) {
-        return it->second;
+    // remove empty vectors in target
+    if (additionTargetChildren.empty()) {
+      additionTarget.erase(parentToAdd);
     }
-    return {};
-}
-
-std::vector<WorkerId> TopologyChangeLog::getRemovedChildren(WorkerId nodeId) const {
-    auto it = removedLinks.find(nodeId);
-    if (it != removedLinks.end()) {
-        return it->second;
+    if (childrenToSubtract.empty()) {
+      toSubtract.erase(parentToAdd);
     }
-    return {};
+  }
 }
 
-void TopologyChangeLog::update(const TopologyDelta& newDelta) {
-    for (auto addedEdge : newDelta.getAdded()) {
-        addedLinks[addedEdge.downstreamTopologyNode].push_back(addedEdge.upstreamTopologyNode);
+void TopologyChangeLog::add(const TopologyChangeLog &newChangeLog) {
+  /* add added linkss from the addedChangelog to the list of added linkss at
+   * this object unless they already exist in the list of removed links at this
+   * object. In case the added link exists in the list of removed links at this
+   * object, remove it from the list.
+   */
+  updateChangelog(newChangeLog.addedLinks, this->addedLinks,
+                  this->removedLinks);
+  /* add removed links from the addedChangelog to the list of removed links at
+   * this object unless they already exist in the list of added links at this
+   * object. In case the removed link exists in the list of added links at this
+   * object, remove it from the list.
+   */
+  updateChangelog(newChangeLog.removedLinks, this->removedLinks,
+                  this->addedLinks);
+}
+
+std::vector<WorkerId>
+TopologyChangeLog::getAddedChildren(WorkerId nodeId) const {
+  auto it = addedLinks.find(nodeId);
+  if (it != addedLinks.end()) {
+    return it->second;
+  }
+  return {};
+}
+
+std::vector<WorkerId>
+TopologyChangeLog::getRemovedChildren(WorkerId nodeId) const {
+  auto it = removedLinks.find(nodeId);
+  if (it != removedLinks.end()) {
+    return it->second;
+  }
+  return {};
+}
+
+void TopologyChangeLog::update(const TopologyDelta &newDelta) {
+  for (auto addedEdge : newDelta.getAdded()) {
+    addedLinks[addedEdge.downstreamTopologyNode].push_back(
+        addedEdge.upstreamTopologyNode);
+  }
+  for (auto removedEdge : newDelta.getRemoved()) {
+    removedLinks[removedEdge.downstreamTopologyNode].push_back(
+        removedEdge.upstreamTopologyNode);
+  }
+}
+
+void TopologyChangeLog::erase(const TopologyDelta &delta) {
+  removeLinksFromMap(addedLinks, delta.getAdded());
+  removeLinksFromMap(removedLinks, delta.getRemoved());
+}
+
+void TopologyChangeLog::removeLinksFromMap(
+    std::unordered_map<WorkerId, std::vector<WorkerId>> &map,
+    const std::vector<TopologyLinkInformation> &linksToRemove) {
+  for (auto link : linksToRemove) {
+    auto &children = map[link.downstreamTopologyNode];
+    auto iterator =
+        std::find(children.begin(), children.end(), link.upstreamTopologyNode);
+    if (iterator != children.end()) {
+      children.erase(iterator);
+    } else if (!children.empty()) {
+      NES_THROW_RUNTIME_ERROR("Trying to remove link " + link.toString() +
+                              " which does not exist in the changelog");
     }
-    for (auto removedEdge : newDelta.getRemoved()) {
-        removedLinks[removedEdge.downstreamTopologyNode].push_back(removedEdge.upstreamTopologyNode);
+    if (children.empty()) {
+      map.erase(link.downstreamTopologyNode);
     }
+  }
 }
 
-void TopologyChangeLog::erase(const TopologyDelta& delta) {
-    removeLinksFromMap(addedLinks, delta.getAdded());
-    removeLinksFromMap(removedLinks, delta.getRemoved());
+bool TopologyChangeLog::empty() {
+  return addedLinks.empty() && removedLinks.empty();
 }
-
-void TopologyChangeLog::removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
-                                           const std::vector<TopologyLinkInformation>& linksToRemove) {
-    for (auto link : linksToRemove) {
-        auto& children = map[link.downstreamTopologyNode];
-        auto iterator = std::find(children.begin(), children.end(), link.upstreamTopologyNode);
-        if (iterator != children.end()) {
-            children.erase(iterator);
-        } else if (!children.empty()) {
-            NES_THROW_RUNTIME_ERROR("Trying to remove link " + link.toString() + " which does not exist in the changelog");
-        }
-        if (children.empty()) {
-            map.erase(link.downstreamTopologyNode);
-        }
-    }
-}
-
-bool TopologyChangeLog::empty() { return addedLinks.empty() && removedLinks.empty(); }
-}// namespace NES::Experimental::TopologyPrediction
+} // namespace NES::Experimental::TopologyPrediction

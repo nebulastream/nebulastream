@@ -19,41 +19,42 @@
 namespace NES {
 
 class JsonFormat : public SinkFormat {
-  public:
-    JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+public:
+  JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
 
-    /**
-     * @brief Returns the schema of formatted according to the specific SinkFormat represented as string.
-     * @return The formatted schema as string
-     */
-    std::string getFormattedSchema() override;
+  /**
+   * @brief Returns the schema of formatted according to the specific SinkFormat
+   * represented as string.
+   * @return The formatted schema as string
+   */
+  std::string getFormattedSchema() override;
 
-    /**
-    * @brief method to write a TupleBuffer
-    * @param a tuple buffers pointer
-    * @return vector of Tuple buffer containing the content of the tuplebuffer
-     */
-    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
+  /**
+   * @brief method to write a TupleBuffer
+   * @param a tuple buffers pointer
+   * @return vector of Tuple buffer containing the content of the tuplebuffer
+   */
+  std::string getFormattedBuffer(Runtime::TupleBuffer &inputBuffer) override;
 
-    //TODO implement this function with an SinkFormatIterator
-    /**
-    * @brief method to write a TupleBuffer
-    * @param a tuple buffers pointer
-    * @return vector of Tuple buffer containing the content of the tuplebuffer
-     */
-    FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
+  // TODO implement this function with an SinkFormatIterator
+  /**
+   * @brief method to write a TupleBuffer
+   * @param a tuple buffers pointer
+   * @return vector of Tuple buffer containing the content of the tuplebuffer
+   */
+  FormatIterator getTupleIterator(Runtime::TupleBuffer &inputBuffer) override;
 
-    /**
-     * @brief method to return the format as a string
-     * @return format as string
-     */
-    std::string toString() override;
+  /**
+   * @brief method to return the format as a string
+   * @return format as string
+   */
+  std::string toString() override;
 
-    /**
-     * @brief return sink format
-     * @return sink format
-     */
-    FormatTypes getSinkFormat() override;
+  /**
+   * @brief return sink format
+   * @return sink format
+   */
+  FormatTypes getSinkFormat() override;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

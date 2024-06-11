@@ -20,12 +20,12 @@ namespace NES::Runtime::Execution::Expressions {
  * @brief This expression converts the radians to degrees
  */
 class DegreesExpression : public Expression {
-  public:
-    DegreesExpression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+public:
+  DegreesExpression(const ExpressionPtr &subExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr SubExpression;
+private:
+  const ExpressionPtr SubExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_
+} // namespace NES::Runtime::Execution::Expressions
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_

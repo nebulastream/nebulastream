@@ -18,40 +18,43 @@
 using namespace NES;
 using namespace NES::Compiler;
 class SharedLibraryTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before a test is executed. */
-    static void SetUpTestCase() { NES::Logger::setupLogging("SharedLibraryTest.log", NES::LogLevel::LOG_DEBUG); }
+public:
+  /* Will be called before a test is executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("SharedLibraryTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+  }
 };
 
 TEST_F(SharedLibraryTest, loadSharedLib) {
 #ifdef __linux__
-    auto sharedLib = SharedLibrary::load("libnes-compiler.so");
+  auto sharedLib = SharedLibrary::load("libnes-compiler.so");
 #elif defined(__APPLE__)
-    auto sharedLib = SharedLibrary::load("libnes-compiler.dylib");
+  auto sharedLib = SharedLibrary::load("libnes-compiler.dylib");
 #else
 #error "Unknown error"
 #endif
-    sharedLib.reset();
+  sharedLib.reset();
 }
 
 TEST_F(SharedLibraryTest, loadSharedLibWithError) {
 #ifdef __linux__
-    EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.so"));
+  EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.so"));
 #elif defined(__APPLE__)
-    EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.dylib"));
+  EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.dylib"));
 #else
 #error "Unknown error"
 #endif
 }
 
 TEST_F(SharedLibraryTest, loadSymbleERROR) {
-    using FunctionType = uint64_t (*)();
+  using FunctionType = uint64_t (*)();
 #ifdef __linux__
-    auto sharedLib = SharedLibrary::load("libnes-compiler.so");
+  auto sharedLib = SharedLibrary::load("libnes-compiler.so");
 #elif defined(__APPLE__)
-    auto sharedLib = SharedLibrary::load("libnes-compiler.dylib");
+  auto sharedLib = SharedLibrary::load("libnes-compiler.dylib");
 #else
 #error "Unknown error"
 #endif
-    EXPECT_ANY_THROW(sharedLib->getInvocableMember<FunctionType>("NotExisting"));
+  EXPECT_ANY_THROW(sharedLib->getInvocableMember<FunctionType>("NotExisting"));
 }

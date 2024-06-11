@@ -34,7 +34,7 @@ using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-}// namespace NES
+} // namespace NES
 
 namespace NES::Windowing {
 
@@ -47,41 +47,50 @@ using WindowActionDescriptorPtr = std::shared_ptr<BaseWindowActionDescriptor>;
 class AbstractWindowHandler;
 using AbstractWindowHandlerPtr = std::shared_ptr<AbstractWindowHandler>;
 
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+template <class KeyType, class InputType, class PartialAggregateType,
+          class FinalAggregateType>
 class BaseExecutableWindowAction;
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+template <class KeyType, class InputType, class PartialAggregateType,
+          class FinalAggregateType>
 using BaseExecutableWindowActionPtr =
-    std::shared_ptr<BaseExecutableWindowAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+    std::shared_ptr<BaseExecutableWindowAction<
+        KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+template <class KeyType, class InputType, class PartialAggregateType,
+          class FinalAggregateType>
 class ExecutableCompleteAggregationTriggerAction;
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+template <class KeyType, class InputType, class PartialAggregateType,
+          class FinalAggregateType>
 using ExecutableCompleteAggregationTriggerActionPtr =
-    std::shared_ptr<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+    std::shared_ptr<ExecutableCompleteAggregationTriggerAction<
+        KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+template <class KeyType, class InputType, class PartialAggregateType,
+          class FinalAggregateType>
 class ExecutableSliceAggregationTriggerAction;
-template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+template <class KeyType, class InputType, class PartialAggregateType,
+          class FinalAggregateType>
 using ExecutableSliceAggregationTriggerActionPtr =
-    std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+    std::shared_ptr<ExecutableSliceAggregationTriggerAction<
+        KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 class LogicalWindowDescriptor;
 using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 
 class WindowAggregationDescriptor;
-using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
+using WindowAggregationDescriptorPtr =
+    std::shared_ptr<WindowAggregationDescriptor>;
 
-template<typename InputType, typename PartialAggregateType, typename FinalAggregateName>
+template <typename InputType, typename PartialAggregateType,
+          typename FinalAggregateName>
 class ExecutableWindowAggregation;
 
 class WindowManager;
 using WindowManagerPtr = std::shared_ptr<WindowManager>;
 
-template<class PartialAggregateType>
-class WindowSliceStore;
+template <class PartialAggregateType> class WindowSliceStore;
 
-template<class ValueType>
-class WindowedJoinSliceListStore;
+template <class ValueType> class WindowedJoinSliceListStore;
 
 class SliceMetaData;
 
@@ -114,11 +123,13 @@ class WatermarkStrategy;
 using WatermarkStrategyPtr = std::shared_ptr<WatermarkStrategy>;
 
 class EventTimeWatermarkStrategy;
-using EventTimeWatermarkStrategyPtr = std::shared_ptr<EventTimeWatermarkStrategy>;
+using EventTimeWatermarkStrategyPtr =
+    std::shared_ptr<EventTimeWatermarkStrategy>;
 
 class WatermarkStrategyDescriptor;
-using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
+using WatermarkStrategyDescriptorPtr =
+    std::shared_ptr<WatermarkStrategyDescriptor>;
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_

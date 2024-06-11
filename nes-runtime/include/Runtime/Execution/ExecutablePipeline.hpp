@@ -30,171 +30,187 @@ namespace NES::Runtime::Execution {
 
 /**
  * @brief An ExecutablePipeline represents a fragment of an overall query.
- * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
- * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
+ * It can contain multiple operators and the implementation of its computation
+ * is defined in the ExecutablePipelineStage. Furthermore, it holds the
+ * PipelineExecutionContextPtr and a reference to the next pipeline in the query
+ * plan.
  */
-class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventListener {
-    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-    using inherited0 = Reconfigurable;
-    using inherited1 = Runtime::RuntimeEventListener;
+class ExecutablePipeline : public Reconfigurable,
+                           public Runtime::RuntimeEventListener {
+  // virtual_enable_shared_from_this necessary for double inheritance of
+  // enable_shared_from_this
+  using inherited0 = Reconfigurable;
+  using inherited1 = Runtime::RuntimeEventListener;
 
-    friend class QueryManager;
+  friend class QueryManager;
 
-    enum class PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
+  enum class PipelineStatus : uint8_t {
+    PipelineCreated,
+    PipelineRunning,
+    PipelineStopped,
+    PipelineFailed
+  };
 
-  public:
-    /**
-     * @brief Constructor for an executable pipeline.
-     * @param pipelineId The Id of this pipeline
-     * @param querySubPlanId the id of the query sub plan
-     * @param queryManager reference to the queryManager
-     * @param pipelineContext the pipeline context
-     * @param executablePipelineStage the executable pipeline stage
-     * @param numOfProducingPipelines number of producing pipelines
-     * @param successorPipelines a vector of successor pipelines
-     * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
-     * @return ExecutablePipelinePtr
-     */
-    explicit ExecutablePipeline(PipelineId pipelineId,
-                                SharedQueryId sharedQueryId,
-                                DecomposedQueryPlanId decomposedQueryPlanId,
-                                QueryManagerPtr queryManager,
-                                PipelineExecutionContextPtr pipelineExecutionContext,
-                                ExecutablePipelineStagePtr executablePipelineStage,
-                                uint32_t numOfProducingPipelines,
-                                std::vector<SuccessorExecutablePipeline> successorPipelines,
-                                bool reconfiguration);
+public:
+  /**
+   * @brief Constructor for an executable pipeline.
+   * @param pipelineId The Id of this pipeline
+   * @param querySubPlanId the id of the query sub plan
+   * @param queryManager reference to the queryManager
+   * @param pipelineContext the pipeline context
+   * @param executablePipelineStage the executable pipeline stage
+   * @param numOfProducingPipelines number of producing pipelines
+   * @param successorPipelines a vector of successor pipelines
+   * @param reconfiguration indicates if this is a reconfiguration task. Default
+   * = false.
+   * @return ExecutablePipelinePtr
+   */
+  explicit ExecutablePipeline(
+      PipelineId pipelineId, SharedQueryId sharedQueryId,
+      DecomposedQueryPlanId decomposedQueryPlanId, QueryManagerPtr queryManager,
+      PipelineExecutionContextPtr pipelineExecutionContext,
+      ExecutablePipelineStagePtr executablePipelineStage,
+      uint32_t numOfProducingPipelines,
+      std::vector<SuccessorExecutablePipeline> successorPipelines,
+      bool reconfiguration);
 
-    /**
-     * @brief Factory method to create a new executable pipeline.
-     * @param pipelineId The Id of this pipeline
-     * @param decomposedQueryPlanId the id of the query sub plan
-     * @param pipelineContext the pipeline context
-     * @param executablePipelineStage the executable pipeline stage
-     * @param numOfProducingPipelines number of producing pipelines
-     * @param successorPipelines a vector of successor pipelines
-     * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
-     * @return ExecutablePipelinePtr
-     */
-    static ExecutablePipelinePtr create(PipelineId pipelineId,
-                                        SharedQueryId sharedQueryId,
-                                        DecomposedQueryPlanId decomposedQueryPlanId,
-                                        const QueryManagerPtr& queryManager,
-                                        const PipelineExecutionContextPtr& pipelineExecutionContext,
-                                        const ExecutablePipelineStagePtr& executablePipelineStage,
-                                        uint32_t numOfProducingPipelines,
-                                        const std::vector<SuccessorExecutablePipeline>& successorPipelines,
-                                        bool reconfiguration = false);
+  /**
+   * @brief Factory method to create a new executable pipeline.
+   * @param pipelineId The Id of this pipeline
+   * @param decomposedQueryPlanId the id of the query sub plan
+   * @param pipelineContext the pipeline context
+   * @param executablePipelineStage the executable pipeline stage
+   * @param numOfProducingPipelines number of producing pipelines
+   * @param successorPipelines a vector of successor pipelines
+   * @param reconfiguration indicates if this is a reconfiguration task. Default
+   * = false.
+   * @return ExecutablePipelinePtr
+   */
+  static ExecutablePipelinePtr
+  create(PipelineId pipelineId, SharedQueryId sharedQueryId,
+         DecomposedQueryPlanId decomposedQueryPlanId,
+         const QueryManagerPtr &queryManager,
+         const PipelineExecutionContextPtr &pipelineExecutionContext,
+         const ExecutablePipelineStagePtr &executablePipelineStage,
+         uint32_t numOfProducingPipelines,
+         const std::vector<SuccessorExecutablePipeline> &successorPipelines,
+         bool reconfiguration = false);
 
-    /**
-     * @brief Execute a pipeline stage
-     * @param inputBuffer: the input buffer on which to execute the pipeline stage
-     * @param workerContext: the worker context
-     * @return true if no error occurred
-     */
-    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+  /**
+   * @brief Execute a pipeline stage
+   * @param inputBuffer: the input buffer on which to execute the pipeline stage
+   * @param workerContext: the worker context
+   * @return true if no error occurred
+   */
+  ExecutionResult execute(TupleBuffer &inputBuffer,
+                          WorkerContextRef workerContext);
 
-    /**
+  /**
    * @brief Initialises a pipeline stage
    * @return boolean if successful
    */
-    bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
+  bool setup(const QueryManagerPtr &queryManager,
+             const BufferManagerPtr &bufferManager);
 
-    /**
-     * @brief Starts a pipeline stage and passes statemanager and local state counter further to the operator handler
-     * @param stateManager pointer to the current state manager
-     * @return Success if pipeline stage started 
-     */
-    bool start();
+  /**
+   * @brief Starts a pipeline stage and passes statemanager and local state
+   * counter further to the operator handler
+   * @param stateManager pointer to the current state manager
+   * @return Success if pipeline stage started
+   */
+  bool start();
 
-    /**
-     * @brief Stops pipeline stage
-     * @param terminationType indicates the termination type see @QueryTerminationType
-     * @return  Success if pipeline stage stopped
-     */
-    bool stop(QueryTerminationType terminationType);
+  /**
+   * @brief Stops pipeline stage
+   * @param terminationType indicates the termination type see
+   * @QueryTerminationType
+   * @return  Success if pipeline stage stopped
+   */
+  bool stop(QueryTerminationType terminationType);
 
-    /**
-     * @brief Fails pipeline stage
-     * @return true if successful
-     */
-    bool fail();
+  /**
+   * @brief Fails pipeline stage
+   * @return true if successful
+   */
+  bool fail();
 
-    /**
-    * @brief Get id of pipeline stage
-    * @return pipeline id
-    */
-    PipelineId getPipelineId() const;
+  /**
+   * @brief Get id of pipeline stage
+   * @return pipeline id
+   */
+  PipelineId getPipelineId() const;
 
-    /**
-     * @brief Get query sub plan id.
-     * @return QuerySubPlanId.
-     */
-    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
+  /**
+   * @brief Get query sub plan id.
+   * @return QuerySubPlanId.
+   */
+  DecomposedQueryPlanId getDecomposedQueryPlanId() const;
 
-    /**
-     * @brief Checks if this pipeline is running
-     * @return true if pipeline is running.
-     */
-    bool isRunning() const;
+  /**
+   * @brief Checks if this pipeline is running
+   * @return true if pipeline is running.
+   */
+  bool isRunning() const;
 
-    /**
-    * @return returns true if the pipeline contains a function pointer for a reconfiguration task
-    */
-    bool isReconfiguration() const;
+  /**
+   * @return returns true if the pipeline contains a function pointer for a
+   * reconfiguration task
+   */
+  bool isReconfiguration() const;
 
-    /**
-     * @brief reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     * @param context the worker context
-     */
-    void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
+  /**
+   * @brief reconfigure callback called upon a reconfiguration
+   * @param task the reconfig descriptor
+   * @param context the worker context
+   */
+  void reconfigure(ReconfigurationMessage &task,
+                   WorkerContext &context) override;
 
-    /**
-     * @brief final reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     */
-    void postReconfigurationCallback(ReconfigurationMessage& task) override;
+  /**
+   * @brief final reconfigure callback called upon a reconfiguration
+   * @param task the reconfig descriptor
+   */
+  void postReconfigurationCallback(ReconfigurationMessage &task) override;
 
-    /**
-     * @brief Get query plan id.
-     * @return QueryId.
-     */
-    SharedQueryId getSharedQueryId() const;
+  /**
+   * @brief Get query plan id.
+   * @return QueryId.
+   */
+  SharedQueryId getSharedQueryId() const;
 
-    /**
-     * @brief Gets the successor pipelines
-     * @return SuccessorPipelines
-     */
-    const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
+  /**
+   * @brief Gets the successor pipelines
+   * @return SuccessorPipelines
+   */
+  const std::vector<SuccessorExecutablePipeline> &getSuccessors() const;
 
-    /**
-     * @brief API method called upon receiving an event (from downstream)
-     * @param event
-     */
-    void onEvent(Runtime::BaseEvent& event) override;
+  /**
+   * @brief API method called upon receiving an event (from downstream)
+   * @param event
+   */
+  void onEvent(Runtime::BaseEvent &event) override;
 
-    /**
-     * @brief API method called upon receiving an event (from downstream)
-     * @param event
-     */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef);
+  /**
+   * @brief API method called upon receiving an event (from downstream)
+   * @param event
+   */
+  void onEvent(Runtime::BaseEvent &event, Runtime::WorkerContextRef);
 
-    PipelineExecutionContextPtr getContext() { return pipelineContext; };
+  PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
-  private:
-    const PipelineId pipelineId;
-    const SharedQueryId sharedQueryId;
-    const DecomposedQueryPlanId decomposedQueryPlanId;
-    QueryManagerPtr queryManager;
-    ExecutablePipelineStagePtr executablePipelineStage;
-    PipelineExecutionContextPtr pipelineContext;
-    bool reconfiguration;
-    std::atomic<PipelineStatus> pipelineStatus;
-    std::atomic<uint32_t> activeProducers = 0;
-    std::vector<SuccessorExecutablePipeline> successorPipelines;
+private:
+  const PipelineId pipelineId;
+  const SharedQueryId sharedQueryId;
+  const DecomposedQueryPlanId decomposedQueryPlanId;
+  QueryManagerPtr queryManager;
+  ExecutablePipelineStagePtr executablePipelineStage;
+  PipelineExecutionContextPtr pipelineContext;
+  bool reconfiguration;
+  std::atomic<PipelineStatus> pipelineStatus;
+  std::atomic<uint32_t> activeProducers = 0;
+  std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

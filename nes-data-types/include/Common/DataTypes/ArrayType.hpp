@@ -25,51 +25,53 @@ namespace NES {
  */
 class ArrayType : public DataType {
 
-  public:
-    /**
-     * @brief Constructs a new ArrayType.
-     * @param length length of the array
-     * @param component component type
-     */
-    inline ArrayType(uint64_t length, DataTypePtr component) noexcept : length(length), component(std::move(component)) {}
+public:
+  /**
+   * @brief Constructs a new ArrayType.
+   * @param length length of the array
+   * @param component component type
+   */
+  inline ArrayType(uint64_t length, DataTypePtr component) noexcept
+      : length(length), component(std::move(component)) {}
 
-    ~ArrayType() override = default;
+  ~ArrayType() override = default;
 
-    /**
-     * @brief Checks if this data type is an ArrayType.
-     */
-    [[nodiscard]] bool isArray() const final { return true; }
+  /**
+   * @brief Checks if this data type is an ArrayType.
+   */
+  [[nodiscard]] bool isArray() const final { return true; }
 
-    /**
-     * @brief Checks if this data type is an ArrayType.
-     */
-    [[nodiscard]] bool isCharArray() const final { return component->isChar(); }
+  /**
+   * @brief Checks if this data type is an ArrayType.
+   */
+  [[nodiscard]] bool isCharArray() const final { return component->isChar(); }
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return
-     */
-    bool equals(DataTypePtr otherDataType) final;
+  /**
+   * @brief Checks if two data types are equal.
+   * @param otherDataType
+   * @return
+   */
+  bool equals(DataTypePtr otherDataType) final;
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return DataTypePtr joined data type
-     */
-    DataTypePtr join(DataTypePtr otherDataType) final;
+  /**
+   * @brief Calculates the joined data type between this data type and the
+   * other. If they have no possible joined data type, the coined type is
+   * Undefined.
+   * @param other data type
+   * @return DataTypePtr joined data type
+   */
+  DataTypePtr join(DataTypePtr otherDataType) final;
 
-    /**
-    * @brief Returns a string representation of the data type.
-    * @return string
-    */
-    std::string toString() final;
+  /**
+   * @brief Returns a string representation of the data type.
+   * @return string
+   */
+  std::string toString() final;
 
-    uint64_t const length;
-    DataTypePtr const component;
+  uint64_t const length;
+  DataTypePtr const component;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_ARRAYTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_ARRAYTYPE_HPP_

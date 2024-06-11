@@ -20,27 +20,30 @@
 #include <memory>
 namespace NES {
 class AbstractQueryStatusListener {
-  public:
-    virtual ~AbstractQueryStatusListener() noexcept = default;
+public:
+  virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool canTriggerEndOfStream(SharedQueryId sharedQueryId,
-                                       DecomposedQueryPlanId decomposedQueryPlanId,
-                                       OperatorId sourceId,
-                                       Runtime::QueryTerminationType) = 0;
+  virtual bool
+  canTriggerEndOfStream(SharedQueryId sharedQueryId,
+                        DecomposedQueryPlanId decomposedQueryPlanId,
+                        OperatorId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifySourceTermination(SharedQueryId sharedQueryId,
-                                         DecomposedQueryPlanId decomposedQueryPlanId,
-                                         OperatorId sourceId,
-                                         Runtime::QueryTerminationType) = 0;
+  virtual bool notifySourceTermination(
+      SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId,
+      OperatorId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) = 0;
+  virtual bool notifyQueryFailure(SharedQueryId sharedQueryId,
+                                  DecomposedQueryPlanId subQueryId,
+                                  std::string errorMsg) = 0;
 
-    virtual bool notifyQueryStatusChange(SharedQueryId sharedQueryId,
-                                         DecomposedQueryPlanId decomposedQueryPlanId,
-                                         Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
+  virtual bool notifyQueryStatusChange(
+      SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId,
+      Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
 
-    virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) = 0;
+  virtual bool notifyEpochTermination(uint64_t timestamp,
+                                      uint64_t querySubPlanId) = 0;
 };
-using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
+using AbstractQueryStatusListenerPtr =
+    std::shared_ptr<AbstractQueryStatusListener>;
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_

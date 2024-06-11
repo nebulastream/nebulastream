@@ -21,17 +21,18 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This expression computes the rounding down to x.0 of the subExpression.
-*/
+ * @brief This expression computes the rounding down to x.0 of the
+ * subExpression.
+ */
 class TruncExpression : public Expression {
-  public:
-    TruncExpression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+public:
+  TruncExpression(const ExpressionPtr &subExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr subExpression;
+private:
+  const ExpressionPtr subExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_TRUNCEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_TRUNCEXPRESSION_HPP_

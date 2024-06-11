@@ -20,16 +20,16 @@
 namespace NES::Nautilus::IR::Operations {
 
 class ConstBooleanOperation : public Operation {
-  public:
-    explicit ConstBooleanOperation(OperationIdentifier identifier, bool value);
-    ~ConstBooleanOperation() override = default;
-    bool getValue();
-    std::string toString() override;
-    static bool classof(const Operation* Op);
+public:
+  explicit ConstBooleanOperation(OperationIdentifier identifier, bool value);
+  ~ConstBooleanOperation() override = default;
+  bool getValue();
+  std::string toString() override;
+  static bool classof(const Operation *Op);
 
-  private:
-    bool constantValue;// Can also hold uInts
+private:
+  bool constantValue; // Can also hold uInts
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTBOOLEANOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTBOOLEANOPERATION_HPP_

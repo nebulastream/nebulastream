@@ -26,35 +26,36 @@ namespace NES {
  * Filter or Map, dont need to assign new origin ids.
  */
 class OriginIdAssignmentOperator : public virtual Operator {
-  public:
-    /**
-     * @brief Constructor for the origin id operator
-     * @param operatorId OperatorId
-     * @param originId if not set INVALID_ORIGIN_ID is default
-     */
-    OriginIdAssignmentOperator(OperatorId operatorId, OriginId originId = INVALID_ORIGIN_ID);
+public:
+  /**
+   * @brief Constructor for the origin id operator
+   * @param operatorId OperatorId
+   * @param originId if not set INVALID_ORIGIN_ID is default
+   */
+  OriginIdAssignmentOperator(OperatorId operatorId,
+                             OriginId originId = INVALID_ORIGIN_ID);
 
-    /**
-     * @brief Gets the output origin ids from this operator
-     * @return std::vector<OriginId>
-     */
-    std::vector<OriginId> getOutputOriginIds() const override;
+  /**
+   * @brief Gets the output origin ids from this operator
+   * @return std::vector<OriginId>
+   */
+  std::vector<OriginId> getOutputOriginIds() const override;
 
-    /**
-     * @brief Sets the origin id, which is used from this operator as an output
-     * @param originId
-     */
-    virtual void setOriginId(OriginId originId);
+  /**
+   * @brief Sets the origin id, which is used from this operator as an output
+   * @param originId
+   */
+  virtual void setOriginId(OriginId originId);
 
-    /**
-     * @brief Get the origin id
-     * @return OriginId
-     */
-    OriginId getOriginId() const;
+  /**
+   * @brief Get the origin id
+   * @return OriginId
+   */
+  OriginId getOriginId() const;
 
-  protected:
-    OriginId originId;
+protected:
+  OriginId originId;
 };
-}// namespace NES
+} // namespace NES
 // namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_

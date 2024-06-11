@@ -23,41 +23,35 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Physical InferModel operator.
  */
 class PhysicalInferModelOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalInferModelOperator(OperatorId id,
-                               StatisticId statisticId,
-                               SchemaPtr inputSchema,
-                               SchemaPtr outputSchema,
-                               std::string model,
-                               std::vector<ExpressionNodePtr> inputFields,
-                               std::vector<ExpressionNodePtr> outputFields);
+public:
+  PhysicalInferModelOperator(OperatorId id, StatisticId statisticId,
+                             SchemaPtr inputSchema, SchemaPtr outputSchema,
+                             std::string model,
+                             std::vector<ExpressionNodePtr> inputFields,
+                             std::vector<ExpressionNodePtr> outputFields);
 
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema,
-                                      std::string model,
-                                      std::vector<ExpressionNodePtr> inputFields,
-                                      std::vector<ExpressionNodePtr> outputFields);
+  static PhysicalOperatorPtr
+  create(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema,
+         SchemaPtr outputSchema, std::string model,
+         std::vector<ExpressionNodePtr> inputFields,
+         std::vector<ExpressionNodePtr> outputFields);
 
-    static PhysicalOperatorPtr create(StatisticId statisticId,
-                                      SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema,
-                                      std::string model,
-                                      std::vector<ExpressionNodePtr> inputFields,
-                                      std::vector<ExpressionNodePtr> outputFields);
+  static PhysicalOperatorPtr
+  create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema,
+         std::string model, std::vector<ExpressionNodePtr> inputFields,
+         std::vector<ExpressionNodePtr> outputFields);
 
-    std::string toString() const override;
-    OperatorPtr copy() override;
-    const std::string& getModel() const;
-    const std::vector<ExpressionNodePtr>& getInputFields() const;
-    const std::vector<ExpressionNodePtr>& getOutputFields() const;
+  std::string toString() const override;
+  OperatorPtr copy() override;
+  const std::string &getModel() const;
+  const std::vector<ExpressionNodePtr> &getInputFields() const;
+  const std::vector<ExpressionNodePtr> &getOutputFields() const;
 
-  protected:
-    const std::string model;
-    const std::vector<ExpressionNodePtr> inputFields;
-    const std::vector<ExpressionNodePtr> outputFields;
+protected:
+  const std::string model;
+  const std::vector<ExpressionNodePtr> inputFields;
+  const std::vector<ExpressionNodePtr> outputFields;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_

@@ -24,67 +24,68 @@ namespace NES {
  * @brief this class provides a binary file as source
  */
 class BinarySource : public DataSource {
-  public:
-    /**
-     * @brief the constructor for a binary source
-     * @param schema of the data source
-     * @param bufferManager pointer to the buffer manager
-     * @param queryManager pointer to the query manager
-     * @param pathToFile path to the binary file
-     * @param operatorId current operator id
-     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-     * @param statisticId represents the unique identifier of components that we can track statistics for
-     * @param numSourceLocalBuffers the number of buffers allocated to a source
-     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
-     * @param physicalSourceName the name and unique identifier of a physical source
-     * @param successors the subsequent operators in the pipeline to which the data is pushed
-     * @return a DataSourcePtr pointing to the data source
-     */
-    explicit BinarySource(const SchemaPtr& schema,
-                          Runtime::BufferManagerPtr bufferManager,
-                          Runtime::QueryManagerPtr queryManager,
-                          const std::string& pathToFile,
-                          OperatorId operatorId,
-                          OriginId originId,
-                          StatisticId statisticId,
-                          size_t numSourceLocalBuffers,
-                          GatheringMode gatheringMode,
-                          const std::string& physicalSourceName,
-                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+public:
+  /**
+   * @brief the constructor for a binary source
+   * @param schema of the data source
+   * @param bufferManager pointer to the buffer manager
+   * @param queryManager pointer to the query manager
+   * @param pathToFile path to the binary file
+   * @param operatorId current operator id
+   * @param originId represents the identifier of the upstream operator that
+   * represents the origin of the input stream
+   * @param statisticId represents the unique identifier of components that we
+   * can track statistics for
+   * @param numSourceLocalBuffers the number of buffers allocated to a source
+   * @param gatheringMode the gathering mode (INTERVAL_MODE,
+   * INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+   * @param physicalSourceName the name and unique identifier of a physical
+   * source
+   * @param successors the subsequent operators in the pipeline to which the
+   * data is pushed
+   * @return a DataSourcePtr pointing to the data source
+   */
+  explicit BinarySource(
+      const SchemaPtr &schema, Runtime::BufferManagerPtr bufferManager,
+      Runtime::QueryManagerPtr queryManager, const std::string &pathToFile,
+      OperatorId operatorId, OriginId originId, StatisticId statisticId,
+      size_t numSourceLocalBuffers, GatheringMode gatheringMode,
+      const std::string &physicalSourceName,
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
-    /**
-     * @brief override the receiveData method for the binary source
-     * @return returns a buffer if available
-     */
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+  /**
+   * @brief override the receiveData method for the binary source
+   * @return returns a buffer if available
+   */
+  std::optional<Runtime::TupleBuffer> receiveData() override;
 
-    /**
-     * @brief override the toString method for the binary source
-     * @return returns string describing the binary source
-     */
-    std::string toString() const override;
+  /**
+   * @brief override the toString method for the binary source
+   * @return returns string describing the binary source
+   */
+  std::string toString() const override;
 
-    /**
-     *  @brief method to fill the buffer with tuples
-     *  @param buffer to be filled
-     */
-    void fillBuffer(Runtime::TupleBuffer&);
+  /**
+   *  @brief method to fill the buffer with tuples
+   *  @param buffer to be filled
+   */
+  void fillBuffer(Runtime::TupleBuffer &);
 
-    SourceType getType() const override;
+  SourceType getType() const override;
 
-    const std::string& getFilePath() const;
+  const std::string &getFilePath() const;
 
-  protected:
-    std::ifstream input;
+protected:
+  std::ifstream input;
 
-  private:
-    std::string filePath;
+private:
+  std::string filePath;
 
-    size_t fileSize;
-    uint64_t tupleSize;
+  size_t fileSize;
+  uint64_t tupleSize;
 };
 
 using BinarySourcePtr = std::shared_ptr<BinarySource>;
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_

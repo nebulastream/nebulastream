@@ -19,15 +19,16 @@ namespace NES::QueryCompilation {
 
 /**
  * @brief Simple phase to add scan and emit operator to pipelines in necessary.
- * A common case would be that, the pipelining phase placed a filter operator in an own pipeline.
- * In this case, the AddScanAndEmitPhase adds a scan before and end emit operator respectively after the filter operator.
+ * A common case would be that, the pipelining phase placed a filter operator in
+ * an own pipeline. In this case, the AddScanAndEmitPhase adds a scan before and
+ * end emit operator respectively after the filter operator.
  */
 class AddScanAndEmitPhase {
-  public:
-    static AddScanAndEmitPhasePtr create();
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
-    static OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
+public:
+  static AddScanAndEmitPhasePtr create();
+  PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
+  static OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_

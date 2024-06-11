@@ -18,17 +18,18 @@
 namespace NES::Optimizer {
 
 DefaultQueryMergerRulePtr DefaultQueryMergerRule::create() {
-    return std::make_shared<DefaultQueryMergerRule>(DefaultQueryMergerRule());
+  return std::make_shared<DefaultQueryMergerRule>(DefaultQueryMergerRule());
 }
 
 bool DefaultQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    //For each query plan to add we compute a new SharedQueryPlan and add it to the global query plan
-    auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
-    for (auto queryPlan : queryPlansToAdd) {
-        globalQueryPlan->createNewSharedQueryPlan(queryPlan);
-    }
-    return globalQueryPlan->clearQueryPlansToAdd();
+  // For each query plan to add we compute a new SharedQueryPlan and add it to
+  // the global query plan
+  auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
+  for (auto queryPlan : queryPlansToAdd) {
+    globalQueryPlan->createNewSharedQueryPlan(queryPlan);
+  }
+  return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

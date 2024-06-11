@@ -27,6 +27,6 @@ class LanguageCompiler;
 class JITCompiler;
 class ExternalAPI;
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_

@@ -22,18 +22,20 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-  * @brief Compares two text object and returns their LevenshteinDistance Distance as calculated with Wagner-Fischer Algorithm.
-  */
+ * @brief Compares two text object and returns their LevenshteinDistance
+ * Distance as calculated with Wagner-Fischer Algorithm.
+ */
 class LevenshteinDistance : public Expression {
-  public:
-    LevenshteinDistance(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<> execute(Record& record) const override;
+public:
+  LevenshteinDistance(const ExpressionPtr &leftSubExpression,
+                      const ExpressionPtr &rightSubExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_LEVENSHTEINDISTANCE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_LEVENSHTEINDISTANCE_HPP_

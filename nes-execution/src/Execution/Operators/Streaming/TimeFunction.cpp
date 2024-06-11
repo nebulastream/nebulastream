@@ -22,27 +22,35 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuffer&) {
-    // nop
+void EventTimeFunction::open(Execution::ExecutionContext &,
+                             Execution::RecordBuffer &) {
+  // nop
 }
 
-EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
+EventTimeFunction::EventTimeFunction(
+    Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
     : unit(unit), timestampExpression(std::move(timestampExpression)) {}
 
-Nautilus::Value<UInt64> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
-    Value<UInt64> ts = this->timestampExpression->execute(record).as<UInt64>();
-    auto timeMultiplier = Value<UInt64>(unit.getMillisecondsConversionMultiplier());
-    auto tsInMs = (ts * timeMultiplier).as<UInt64>();
-    ctx.setCurrentTs(tsInMs);
-    return tsInMs;
+Nautilus::Value<UInt64>
+EventTimeFunction::getTs(Execution::ExecutionContext &ctx,
+                         Nautilus::Record &record) {
+  Value<UInt64> ts = this->timestampExpression->execute(record).as<UInt64>();
+  auto timeMultiplier =
+      Value<UInt64>(unit.getMillisecondsConversionMultiplier());
+  auto tsInMs = (ts * timeMultiplier).as<UInt64>();
+  ctx.setCurrentTs(tsInMs);
+  return tsInMs;
 }
 
-void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) {
-    ctx.setCurrentTs(buffer.getCreatingTs());
+void IngestionTimeFunction::open(Execution::ExecutionContext &ctx,
+                                 Execution::RecordBuffer &buffer) {
+  ctx.setCurrentTs(buffer.getCreatingTs());
 }
 
-Nautilus::Value<UInt64> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&) {
-    return ctx.getCurrentTs();
+Nautilus::Value<UInt64>
+IngestionTimeFunction::getTs(Execution::ExecutionContext &ctx,
+                             Nautilus::Record &) {
+  return ctx.getCurrentTs();
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

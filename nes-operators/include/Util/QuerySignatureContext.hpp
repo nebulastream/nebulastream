@@ -21,7 +21,7 @@ class expr;
 using ExprPtr = std::shared_ptr<expr>;
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
 namespace NES::Optimizer {
 
@@ -29,10 +29,11 @@ class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
 class QuerySignatureContext {
-  public:
-    virtual QuerySignaturePtr createQuerySignatureForOperator(const OperatorPtr& operatorNode) const = 0;
-    virtual ~QuerySignatureContext() = default;
+public:
+  virtual QuerySignaturePtr
+  createQuerySignatureForOperator(const OperatorPtr &operatorNode) const = 0;
+  virtual ~QuerySignatureContext() = default;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPERATORS_INCLUDE_UTIL_QUERYSIGNATURECONTEXT_HPP_
+#endif // NES_OPERATORS_INCLUDE_UTIL_QUERYSIGNATURECONTEXT_HPP_

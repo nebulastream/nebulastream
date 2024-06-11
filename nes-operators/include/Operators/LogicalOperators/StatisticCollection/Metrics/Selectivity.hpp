@@ -19,40 +19,41 @@
 namespace NES::Statistic {
 
 /**
- * @brief Collects statistics to estimate the selectivity. We define the selectivity as a ratio of how many tuples
- * an operator filters out. For example, a selectivity of 75% would mean that 75% of all tuples are not passed on by the
- * operator.
+ * @brief Collects statistics to estimate the selectivity. We define the
+ * selectivity as a ratio of how many tuples an operator filters out. For
+ * example, a selectivity of 75% would mean that 75% of all tuples are not
+ * passed on by the operator.
  */
 class Selectivity : public StatisticMetric {
-  public:
-    /**
-     * @brief Creates a Selectivity wrapped in a MetricPtr
-     * @param expressionNode
-     * @return MetricPtr
-     */
-    static MetricPtr create(const FieldAccessExpressionNodePtr& field);
+public:
+  /**
+   * @brief Creates a Selectivity wrapped in a MetricPtr
+   * @param expressionNode
+   * @return MetricPtr
+   */
+  static MetricPtr create(const FieldAccessExpressionNodePtr &field);
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if equal otherwise false
-     */
-    bool operator==(const StatisticMetric& rhs) const override;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if equal otherwise false
+   */
+  bool operator==(const StatisticMetric &rhs) const override;
 
-    /**
-     * @brief Creates a string representation
-     * @return String representation
-     */
-    std::string toString() const override;
+  /**
+   * @brief Creates a string representation
+   * @return String representation
+   */
+  std::string toString() const override;
 
-  private:
-    /**
-     * @brief Private constructor for a Selectivity
-     * @param expressionNode
-     */
-    explicit Selectivity(const FieldAccessExpressionNodePtr& field);
+private:
+  /**
+   * @brief Private constructor for a Selectivity
+   * @param expressionNode
+   */
+  explicit Selectivity(const FieldAccessExpressionNodePtr &field);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_SELECTIVITY_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_SELECTIVITY_HPP_

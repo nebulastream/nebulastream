@@ -23,36 +23,42 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical source for monitoring
+ * @brief Descriptor defining properties used for creating physical source for
+ * monitoring
  */
 class MonitoringSourceDescriptor : public SourceDescriptor {
-  public:
-    static SourceDescriptorPtr create(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
+public:
+  static SourceDescriptorPtr
+  create(std::chrono::milliseconds waitTime,
+         Monitoring::MetricCollectorType metricCollectorType);
 
-    /**
-     * @brief Return the wait time between sampling periods.
-     * @return the wait time
-     */
-    std::chrono::milliseconds getWaitTime() const;
+  /**
+   * @brief Return the wait time between sampling periods.
+   * @return the wait time
+   */
+  std::chrono::milliseconds getWaitTime() const;
 
-    /**
-     * @brief Return the type of metric collector used for the monitoring source
-     * @return the metric collector
-     */
-    Monitoring::MetricCollectorType getMetricCollectorType() const;
+  /**
+   * @brief Return the type of metric collector used for the monitoring source
+   * @return the metric collector
+   */
+  Monitoring::MetricCollectorType getMetricCollectorType() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
-    std::string toString() const override;
-    SourceDescriptorPtr copy() override;
+  [[nodiscard]] bool equal(SourceDescriptorPtr const &other) const override;
+  std::string toString() const override;
+  SourceDescriptorPtr copy() override;
 
-  private:
-    explicit MonitoringSourceDescriptor(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
-    std::chrono::milliseconds waitTime;
-    Monitoring::MetricCollectorType metricCollectorType;
+private:
+  explicit MonitoringSourceDescriptor(
+      std::chrono::milliseconds waitTime,
+      Monitoring::MetricCollectorType metricCollectorType);
+  std::chrono::milliseconds waitTime;
+  Monitoring::MetricCollectorType metricCollectorType;
 };
 
-using MonitoringSourceDescriptorPtr = std::shared_ptr<MonitoringSourceDescriptor>;
+using MonitoringSourceDescriptorPtr =
+    std::shared_ptr<MonitoringSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_

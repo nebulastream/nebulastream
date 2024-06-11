@@ -16,15 +16,18 @@
 
 namespace NES::RequestProcessor {
 
-ISQPEventPtr ISQPAddLinkEvent::create(const WorkerId& parentNodeId, const WorkerId& childWorkerId) {
-    return std::make_shared<ISQPAddLinkEvent>(parentNodeId, childWorkerId);
+ISQPEventPtr ISQPAddLinkEvent::create(const WorkerId &parentNodeId,
+                                      const WorkerId &childWorkerId) {
+  return std::make_shared<ISQPAddLinkEvent>(parentNodeId, childWorkerId);
 };
 
-ISQPAddLinkEvent::ISQPAddLinkEvent(const WorkerId& parentNodeId, const WorkerId& childWorkerId)
-    : ISQPEvent(ISQP_ADD_LINK_EVENT_PRIORITY), parentNodeId(parentNodeId), childNodeId(childWorkerId) {}
+ISQPAddLinkEvent::ISQPAddLinkEvent(const WorkerId &parentNodeId,
+                                   const WorkerId &childWorkerId)
+    : ISQPEvent(ISQP_ADD_LINK_EVENT_PRIORITY), parentNodeId(parentNodeId),
+      childNodeId(childWorkerId) {}
 
 WorkerId ISQPAddLinkEvent::getParentNodeId() const { return parentNodeId; }
 
 WorkerId ISQPAddLinkEvent::getChildNodeId() const { return childNodeId; }
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

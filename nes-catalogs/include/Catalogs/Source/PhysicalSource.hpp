@@ -32,59 +32,60 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
  */
 class PhysicalSource {
 
-  public:
-    /**
-     * @brief create method to construct physical Source
-     * @param physicalSourceType : physical source type
-     * @return shared pointer to a physical source
-     */
-    static PhysicalSourcePtr create(PhysicalSourceTypePtr physicalSourceType);
+public:
+  /**
+   * @brief create method to construct physical Source
+   * @param physicalSourceType : physical source type
+   * @return shared pointer to a physical source
+   */
+  static PhysicalSourcePtr create(PhysicalSourceTypePtr physicalSourceType);
 
-    /**
-     * @brief Create physical source without physical source type
-     * @param logicalSourceName : logical source name
-     * @param physicalSourceName : physical source name
-     * @return shared pointer to a physical source
-     */
-    static PhysicalSourcePtr create(std::string logicalSourceName, std::string physicalSourceName);
+  /**
+   * @brief Create physical source without physical source type
+   * @param logicalSourceName : logical source name
+   * @param physicalSourceName : physical source name
+   * @return shared pointer to a physical source
+   */
+  static PhysicalSourcePtr create(std::string logicalSourceName,
+                                  std::string physicalSourceName);
 
-    /**
-     * @brief Get logical source name
-     * @return logical source name
-     */
-    const std::string& getLogicalSourceName() const;
+  /**
+   * @brief Get logical source name
+   * @return logical source name
+   */
+  const std::string &getLogicalSourceName() const;
 
-    /**
-     * @brief Get physical source name
-     * @return physical source name
-     */
-    const std::string& getPhysicalSourceName() const;
+  /**
+   * @brief Get physical source name
+   * @return physical source name
+   */
+  const std::string &getPhysicalSourceName() const;
 
-    /**
-     * @brief Get physical source type
-     * @return physical source type
-     */
-    const PhysicalSourceTypePtr& getPhysicalSourceType() const;
+  /**
+   * @brief Get physical source type
+   * @return physical source type
+   */
+  const PhysicalSourceTypePtr &getPhysicalSourceType() const;
 
-    std::string toString();
+  std::string toString();
 
-    /**
-     * @brief Get the statistic id of this physical source
-     * @return StatisticId
-     */
-    StatisticId getStatisticId() const;
+  /**
+   * @brief Get the statistic id of this physical source
+   * @return StatisticId
+   */
+  StatisticId getStatisticId() const;
 
-  private:
-    explicit PhysicalSource(std::string logicalSourceName,
-                            std::string physicalSourceName,
-                            PhysicalSourceTypePtr physicalSourceType);
+private:
+  explicit PhysicalSource(std::string logicalSourceName,
+                          std::string physicalSourceName,
+                          PhysicalSourceTypePtr physicalSourceType);
 
-    std::string logicalSourceName;
-    std::string physicalSourceName;
-    PhysicalSourceTypePtr physicalSourceType;
-    StatisticId statisticId;
+  std::string logicalSourceName;
+  std::string physicalSourceName;
+  PhysicalSourceTypePtr physicalSourceType;
+  StatisticId statisticId;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_

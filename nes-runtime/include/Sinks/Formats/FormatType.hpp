@@ -19,7 +19,12 @@ namespace NES {
 /**
  * @brief Format types supported by NES
  */
-enum class FormatTypes : uint8_t { ARROW_IPC_FORMAT, CSV_FORMAT, JSON_FORMAT, NES_FORMAT };
-}// namespace NES
+enum class FormatTypes : uint8_t {
+  ARROW_IPC_FORMAT,
+  CSV_FORMAT,
+  JSON_FORMAT,
+  NES_FORMAT
+};
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_

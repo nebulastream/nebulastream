@@ -19,12 +19,13 @@
 
 namespace NES {
 /**
- * @brief This exception is raised when the query you are looking for is not found
+ * @brief This exception is raised when the query you are looking for is not
+ * found
  */
 class MapEntryNotFoundException : public std::runtime_error {
-  public:
-    explicit MapEntryNotFoundException(const std::string& message);
+public:
+  explicit MapEntryNotFoundException(const std::string &message);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_MAPENTRYNOTFOUNDEXCEPTION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_MAPENTRYNOTFOUNDEXCEPTION_HPP_

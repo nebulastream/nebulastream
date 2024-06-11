@@ -19,18 +19,20 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression returns true if leftSubExpression is equal to the (==) rightSubExpression.
+ * @brief This expression returns true if leftSubExpression is equal to the (==)
+ * rightSubExpression.
  */
 class EqualsExpression : public Expression {
-  public:
-    EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+public:
+  EqualsExpression(ExpressionPtr leftSubExpression,
+                   ExpressionPtr rightSubExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSION_HPP_

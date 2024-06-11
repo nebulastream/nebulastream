@@ -20,4 +20,4 @@ namespace NES::Windowing {
 
 WindowType::WindowType() = default;
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing

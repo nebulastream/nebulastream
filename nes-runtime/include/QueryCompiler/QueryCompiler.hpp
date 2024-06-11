@@ -19,24 +19,27 @@ namespace NES::QueryCompilation {
 
 /**
  * @brief General interface for the query compiler interface.
- * Subclasses can provide their own implementation on how to to process a query compilation request.
+ * Subclasses can provide their own implementation on how to to process a query
+ * compilation request.
  */
 class QueryCompiler {
-  public:
-    /**
-     * @brief Submits a new query compilation request for compilation.
-     * @param request The compilation request.
-     * @return QueryCompilationResultPtr result for the query compilation.
-     */
-    virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
-    virtual ~QueryCompiler() = default;
+public:
+  /**
+   * @brief Submits a new query compilation request for compilation.
+   * @param request The compilation request.
+   * @return QueryCompilationResultPtr result for the query compilation.
+   */
+  virtual QueryCompilationResultPtr
+  compileQuery(QueryCompilationRequestPtr request) = 0;
+  virtual ~QueryCompiler() = default;
 
-  protected:
-    explicit QueryCompiler(QueryCompilerOptionsPtr const& options) noexcept : queryCompilerOptions(options) {}
+protected:
+  explicit QueryCompiler(QueryCompilerOptionsPtr const &options) noexcept
+      : queryCompilerOptions(options) {}
 
-    QueryCompilerOptionsPtr const queryCompilerOptions;
+  QueryCompilerOptionsPtr const queryCompilerOptions;
 };
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#endif // NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

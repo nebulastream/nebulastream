@@ -28,36 +28,35 @@ typedef std::shared_ptr<Any> AnyPtr;
  * @brief Any is the base class of all data types in the interpreter framework.
  */
 class Any : public Typed {
-  public:
-    Any(const TypeIdentifier* identifier);
-    template<typename type, typename... Args>
-    static std::shared_ptr<type> create(Args&&... args) {
-        return std::make_shared<type>(std::forward<Args>(args)...);
-    }
+public:
+  Any(const TypeIdentifier *identifier);
+  template <typename type, typename... Args>
+  static std::shared_ptr<type> create(Args &&...args) {
+    return std::make_shared<type>(std::forward<Args>(args)...);
+  }
 
-    virtual std::shared_ptr<Any> copy() = 0;
-    virtual ~Any() = default;
+  virtual std::shared_ptr<Any> copy() = 0;
+  virtual ~Any() = default;
 
-    template<typename Type>
-    const Type& staticCast() const {
-        return static_cast<const Type&>(*this);
-    }
-    virtual std::string toString();
+  template <typename Type> const Type &staticCast() const {
+    return static_cast<const Type &>(*this);
+  }
+  virtual std::string toString();
 
-    virtual Nautilus::IR::Types::StampPtr getType() const;
+  virtual Nautilus::IR::Types::StampPtr getType() const;
 };
 
 class TraceableType : public Any {
-  public:
-    TraceableType(const TypeIdentifier* identifier) : Any(identifier) {}
-    static const TraceableType& asTraceableType(const Any&);
+public:
+  TraceableType(const TypeIdentifier *identifier) : Any(identifier) {}
+  static const TraceableType &asTraceableType(const Any &);
 };
 
-template<class X, class Y>
-    requires(std::is_same<Any, X>::value)
-inline std::shared_ptr<X> cast(const std::shared_ptr<Y>& value) {
-    // copy value value
-    return value;
+template <class X, class Y>
+  requires(std::is_same<Any, X>::value)
+inline std::shared_ptr<X> cast(const std::shared_ptr<Y> &value) {
+  // copy value value
+  return value;
 }
 
 class Int8;
@@ -72,14 +71,12 @@ class Double;
 class Float;
 class Boolean;
 
-template<class T>
-struct RawTypeToNautilusType;
+template <class T> struct RawTypeToNautilusType;
 
-#define SPECIALIZE_RAW_TO_NAUTILUS_TYPE(RawType, NautilusType)                                                                   \
-    template<>                                                                                                                   \
-    struct RawTypeToNautilusType<RawType> {                                                                                      \
-        typedef NautilusType type;                                                                                               \
-    };
+#define SPECIALIZE_RAW_TO_NAUTILUS_TYPE(RawType, NautilusType)                 \
+  template <> struct RawTypeToNautilusType<RawType> {                          \
+    typedef NautilusType type;                                                 \
+  };
 
 SPECIALIZE_RAW_TO_NAUTILUS_TYPE(int8_t, Int8);
 SPECIALIZE_RAW_TO_NAUTILUS_TYPE(int16_t, Int16);
@@ -93,6 +90,6 @@ SPECIALIZE_RAW_TO_NAUTILUS_TYPE(double, Double);
 SPECIALIZE_RAW_TO_NAUTILUS_TYPE(float, Float);
 SPECIALIZE_RAW_TO_NAUTILUS_TYPE(bool, Boolean);
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_

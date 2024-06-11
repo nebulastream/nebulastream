@@ -23,31 +23,32 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 /**
  * @brief DataSink interface to register a new physical data sink plugin.
- * Implementations of this plugin must implement createDataSink that translates a sink descriptor to a DataSinkPtr.
+ * Implementations of this plugin must implement createDataSink that translates
+ * a sink descriptor to a DataSinkPtr.
  */
 class DataSinkPlugin {
-  public:
-    DataSinkPlugin() = default;
-    /**
-     * @brief Translates a sink descriptor to a data sink.
-     * @param sinkId id of the sink
-     * @param sinkDescriptor sink descriptor for which we want to create a physical data sink
-     * @param schema of the result data
-     * @param nodeEngine reference to the node engine
-     * @param querySubPlan reference to the pipelined query plan
-     * @param numOfProducers number of data producers.
-     * @return
-     */
-    virtual std::optional<DataSinkPtr> createDataSink(OperatorId sinkId,
-                                                      SinkDescriptorPtr sinkDescriptor,
-                                                      SchemaPtr schema,
-                                                      Runtime::NodeEnginePtr nodeEngine,
-                                                      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                                      size_t numOfProducers) = 0;
-    virtual ~DataSinkPlugin() = default;
+public:
+  DataSinkPlugin() = default;
+  /**
+   * @brief Translates a sink descriptor to a data sink.
+   * @param sinkId id of the sink
+   * @param sinkDescriptor sink descriptor for which we want to create a
+   * physical data sink
+   * @param schema of the result data
+   * @param nodeEngine reference to the node engine
+   * @param querySubPlan reference to the pipelined query plan
+   * @param numOfProducers number of data producers.
+   * @return
+   */
+  virtual std::optional<DataSinkPtr>
+  createDataSink(OperatorId sinkId, SinkDescriptorPtr sinkDescriptor,
+                 SchemaPtr schema, Runtime::NodeEnginePtr nodeEngine,
+                 const QueryCompilation::PipelineQueryPlanPtr &querySubPlan,
+                 size_t numOfProducers) = 0;
+  virtual ~DataSinkPlugin() = default;
 };
 
 using SinkPluginRegistry = Util::PluginRegistry<DataSinkPlugin>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_DATASINKPLUGIN_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_DATASINKPLUGIN_HPP_

@@ -24,37 +24,39 @@ namespace NES {
  * @brief projection operator, which contains an resets the output schema
  */
 class LogicalProjectionOperator : public LogicalUnaryOperator {
-  public:
-    explicit LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id);
-    ~LogicalProjectionOperator() override = default;
+public:
+  explicit LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions,
+                                     OperatorId id);
+  ~LogicalProjectionOperator() override = default;
 
-    /**
-     * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<ExpressionNodePtr>
-     */
-    std::vector<ExpressionNodePtr> getExpressions() const;
+  /**
+   * @brief returns the list of fields that remain in the output schema.
+   * @return  std::vector<ExpressionNodePtr>
+   */
+  std::vector<ExpressionNodePtr> getExpressions() const;
 
-    /**
-     * @brief check if two operators have the same output schema
-     * @param rhs the operator to compare
-     * @return bool true if they are the same otherwise false
-     */
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
-    void inferStringSignature() override;
+  /**
+   * @brief check if two operators have the same output schema
+   * @param rhs the operator to compare
+   * @return bool true if they are the same otherwise false
+   */
+  [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+  [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+  [[nodiscard]] std::string toString() const override;
+  void inferStringSignature() override;
 
-    /**
-    * @brief infers the input and out schema of this operator depending on its child.
-    * @param typeInferencePhaseContext needed for stamp inferring
-    * @return true if schema was correctly inferred
-    */
-    bool inferSchema() override;
-    OperatorPtr copy() override;
+  /**
+   * @brief infers the input and out schema of this operator depending on its
+   * child.
+   * @param typeInferencePhaseContext needed for stamp inferring
+   * @return true if schema was correctly inferred
+   */
+  bool inferSchema() override;
+  OperatorPtr copy() override;
 
-  private:
-    std::vector<ExpressionNodePtr> expressions;
+private:
+  std::vector<ExpressionNodePtr> expressions;
 };
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALPROJECTIONOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALPROJECTIONOPERATOR_HPP_

@@ -27,25 +27,26 @@ using ThresholdWindowPtr = std::shared_ptr<ThresholdWindow>;
 
 class ContentBasedWindowType : public WindowType {
 
-  public:
-    enum class ContentBasedSubWindowType : uint8_t { THRESHOLDWINDOW };
+public:
+  enum class ContentBasedSubWindowType : uint8_t { THRESHOLDWINDOW };
 
-    explicit ContentBasedWindowType();
+  explicit ContentBasedWindowType();
 
-    ~ContentBasedWindowType() override = default;
+  ~ContentBasedWindowType() override = default;
 
-    /**
-     * @brief getter for the SubWindowType, i.e., Thresholdwindow
-     * @return the SubWindowType
-    */
-    virtual ContentBasedSubWindowType getContentBasedSubWindowType() = 0;
+  /**
+   * @brief getter for the SubWindowType, i.e., Thresholdwindow
+   * @return the SubWindowType
+   */
+  virtual ContentBasedSubWindowType getContentBasedSubWindowType() = 0;
 
-    /**
-       * Cast the current window type as a threshold window type
-       * @return a shared pointer of ThresholdWindow
-       */
-    static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
+  /**
+   * Cast the current window type as a threshold window type
+   * @return a shared pointer of ThresholdWindow
+   */
+  static ThresholdWindowPtr
+  asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_

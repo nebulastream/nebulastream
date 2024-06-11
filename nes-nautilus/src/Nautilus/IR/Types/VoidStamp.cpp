@@ -17,4 +17,4 @@ namespace NES::Nautilus::IR::Types {
 VoidStamp::VoidStamp() : Stamp(&type) {}
 const std::string VoidStamp::toString() const { return "void"; }
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types

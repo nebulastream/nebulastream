@@ -17,28 +17,34 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalScanOperator::PhysicalScanOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, outputSchema, outputSchema) {}
+PhysicalScanOperator::PhysicalScanOperator(OperatorId id,
+                                           StatisticId statisticId,
+                                           const SchemaPtr &outputSchema)
+    : Operator(id, statisticId),
+      PhysicalUnaryOperator(id, statisticId, outputSchema, outputSchema) {}
 
-PhysicalOperatorPtr PhysicalScanOperator::create(StatisticId statisticId, SchemaPtr outputSchema) {
-    return create(getNextOperatorId(), statisticId, std::move(outputSchema));
+PhysicalOperatorPtr PhysicalScanOperator::create(StatisticId statisticId,
+                                                 SchemaPtr outputSchema) {
+  return create(getNextOperatorId(), statisticId, std::move(outputSchema));
 }
-PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema) {
-    return std::make_shared<PhysicalScanOperator>(id, statisticId, outputSchema);
+PhysicalOperatorPtr
+PhysicalScanOperator::create(OperatorId id, StatisticId statisticId,
+                             const SchemaPtr &outputSchema) {
+  return std::make_shared<PhysicalScanOperator>(id, statisticId, outputSchema);
 }
 
 std::string PhysicalScanOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalScanOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalScanOperator:\n";
+  out << PhysicalUnaryOperator::toString();
+  return out.str();
 }
 
 OperatorPtr PhysicalScanOperator::copy() {
-    auto result = create(id, statisticId, outputSchema);
-    result->addAllProperties(properties);
-    return result;
+  auto result = create(id, statisticId, outputSchema);
+  result->addAllProperties(properties);
+  return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

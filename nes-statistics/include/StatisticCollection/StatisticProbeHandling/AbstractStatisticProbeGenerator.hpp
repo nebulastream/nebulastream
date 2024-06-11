@@ -24,28 +24,33 @@
 namespace NES::Statistic {
 
 class AbstractStatisticProbeGenerator;
-using StatisticProbeGeneratorPtr = std::shared_ptr<AbstractStatisticProbeGenerator>;
+using StatisticProbeGeneratorPtr =
+    std::shared_ptr<AbstractStatisticProbeGenerator>;
 
 /**
- * @brief Abstract class that defines an interface of creating StatisticProbeRequestGRPC for a given StatisticProbeRequest.
- * The StatisticProbeRequestGRPC is used to send a probe request to a worker node and then collect the statistics.
+ * @brief Abstract class that defines an interface of creating
+ * StatisticProbeRequestGRPC for a given StatisticProbeRequest. The
+ * StatisticProbeRequestGRPC is used to send a probe request to a worker node
+ * and then collect the statistics.
  */
 class AbstractStatisticProbeGenerator {
-  public:
-    /**
-     * @brief Creates a vector of StatisticProbeRequestGRPC for a given StatisticProbeRequest.
-     * @param registry
-     * @param probeRequest
-     * @param allWorkerIds
-     * @return Vector of StatisticProbeRequestGRPC
-     */
-    virtual std::vector<StatisticProbeRequestGRPC> generateProbeRequests(const StatisticRegistry& registry,
-                                                                         const AbstractStatisticCache& cache,
-                                                                         const StatisticProbeRequest& probeRequest,
-                                                                         const std::vector<WorkerId>& allWorkerIds) = 0;
-    virtual ~AbstractStatisticProbeGenerator();
+public:
+  /**
+   * @brief Creates a vector of StatisticProbeRequestGRPC for a given
+   * StatisticProbeRequest.
+   * @param registry
+   * @param probeRequest
+   * @param allWorkerIds
+   * @return Vector of StatisticProbeRequestGRPC
+   */
+  virtual std::vector<StatisticProbeRequestGRPC>
+  generateProbeRequests(const StatisticRegistry &registry,
+                        const AbstractStatisticCache &cache,
+                        const StatisticProbeRequest &probeRequest,
+                        const std::vector<WorkerId> &allWorkerIds) = 0;
+  virtual ~AbstractStatisticProbeGenerator();
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_ABSTRACTSTATISTICPROBEGENERATOR_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_ABSTRACTSTATISTICPROBEGENERATOR_HPP_

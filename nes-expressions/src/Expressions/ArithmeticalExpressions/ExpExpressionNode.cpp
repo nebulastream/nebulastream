@@ -20,39 +20,46 @@
 
 namespace NES {
 
-ExpExpressionNode::ExpExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+ExpExpressionNode::ExpExpressionNode(DataTypePtr stamp)
+    : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
 
-ExpExpressionNode::ExpExpressionNode(ExpExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
+ExpExpressionNode::ExpExpressionNode(ExpExpressionNode *other)
+    : ArithmeticalUnaryExpressionNode(other) {}
 
-ExpressionNodePtr ExpExpressionNode::create(ExpressionNodePtr const& child) {
-    auto expNode = std::make_shared<ExpExpressionNode>(child->getStamp());
-    expNode->setChild(child);
-    return expNode;
+ExpressionNodePtr ExpExpressionNode::create(ExpressionNodePtr const &child) {
+  auto expNode = std::make_shared<ExpExpressionNode>(child->getStamp());
+  expNode->setChild(child);
+  return expNode;
 }
 
 void ExpExpressionNode::inferStamp(SchemaPtr schema) {
-    // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+  // infer stamp of child, check if its numerical, assume same stamp
+  ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
-    stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
-    NES_TRACE("ExpExpressionNode: change stamp to float with bounds [0, DOUBLE_MAX]: {}", toString());
+  // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are
+  // always positive and become high quickly.
+  stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
+  NES_TRACE("ExpExpressionNode: change stamp to float with bounds [0, "
+            "DOUBLE_MAX]: {}",
+            toString());
 }
 
-bool ExpExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<ExpExpressionNode>()) {
-        auto otherExpNode = rhs->as<ExpExpressionNode>();
-        return child()->equal(otherExpNode->child());
-    }
-    return false;
+bool ExpExpressionNode::equal(NodePtr const &rhs) const {
+  if (rhs->instanceOf<ExpExpressionNode>()) {
+    auto otherExpNode = rhs->as<ExpExpressionNode>();
+    return child()->equal(otherExpNode->child());
+  }
+  return false;
 }
 
 std::string ExpExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << "EXP(" << children[0]->toString() << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "EXP(" << children[0]->toString() << ")";
+  return ss.str();
 }
 
-ExpressionNodePtr ExpExpressionNode::copy() { return ExpExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr ExpExpressionNode::copy() {
+  return ExpExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+} // namespace NES

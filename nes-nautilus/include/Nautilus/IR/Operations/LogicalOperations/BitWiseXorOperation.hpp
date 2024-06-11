@@ -20,48 +20,49 @@
 namespace NES::Nautilus::IR::Operations {
 
 class BitWiseXorOperation : public Operation {
-  public:
-    /**
-     * @brief Constructor for a BitWiseXorOperation
-     * @param identifier
-     * @param leftInput
-     * @param rightInput
-     */
-    BitWiseXorOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
+public:
+  /**
+   * @brief Constructor for a BitWiseXorOperation
+   * @param identifier
+   * @param leftInput
+   * @param rightInput
+   */
+  BitWiseXorOperation(OperationIdentifier identifier, OperationPtr leftInput,
+                      OperationPtr rightInput);
 
-    /**
-     * @brief Default deconstructor
-     */
-    ~BitWiseXorOperation() override = default;
+  /**
+   * @brief Default deconstructor
+   */
+  ~BitWiseXorOperation() override = default;
 
-    /**
-     * @brief Retrieves the left input
-     * @return OperationPtr
-     */
-    OperationPtr getLeftInput();
+  /**
+   * @brief Retrieves the left input
+   * @return OperationPtr
+   */
+  OperationPtr getLeftInput();
 
-    /**
-     * @brief Retrieves the left input
-     * @return OperationPtr
-     */
-    OperationPtr getRightInput();
+  /**
+   * @brief Retrieves the left input
+   * @return OperationPtr
+   */
+  OperationPtr getRightInput();
 
-    /**
-     * @brief Creates a string representation of this operation
-     * @return std::string
-     */
-    std::string toString() override;
+  /**
+   * @brief Creates a string representation of this operation
+   * @return std::string
+   */
+  std::string toString() override;
 
-    /**
-     * @brief Checks if the operation (Op) is of the same class
-     * @param Op
-     * @return boolean
-     */
-    bool classof(const Operation* Op);
+  /**
+   * @brief Checks if the operation (Op) is of the same class
+   * @param Op
+   * @return boolean
+   */
+  bool classof(const Operation *Op);
 
-  private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+private:
+  OperationWPtr leftInput;
+  OperationWPtr rightInput;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEXOROPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEXOROPERATION_HPP_

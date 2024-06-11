@@ -22,43 +22,46 @@ auto constexpr GENERATOR_SEED_ZIPFIAN = 848566;
 
 class ZipfianDataGenerator : public DataGenerator {
 
-  public:
-    explicit ZipfianDataGenerator(double alpha, uint64_t minValue, uint64_t maxValue);
+public:
+  explicit ZipfianDataGenerator(double alpha, uint64_t minValue,
+                                uint64_t maxValue);
 
-    /**
-     * @brief creates Zipfian data with the schema "id, value, payload, timestamp"
-     * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
-     * randomly from a Zipfian distribution in the range [minValue, maxValue]
-     * @param numberOfBuffers
-     * @param bufferSize
-     * @return success
-     */
-    std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
+  /**
+   * @brief creates Zipfian data with the schema "id, value, payload, timestamp"
+   * the id, payload, and timestamp are just counters that increment whereas the
+   * value gets drawn randomly from a Zipfian distribution in the range
+   * [minValue, maxValue]
+   * @param numberOfBuffers
+   * @param bufferSize
+   * @return success
+   */
+  std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers,
+                                               size_t bufferSize) override;
 
-    /**
-     * @brief overrides the schema from the abstract parent class
-     * @return schema from a DefaultDataGenerator
-     */
-    SchemaPtr getSchema() override;
+  /**
+   * @brief overrides the schema from the abstract parent class
+   * @return schema from a DefaultDataGenerator
+   */
+  SchemaPtr getSchema() override;
 
-    Configurations::SchemaTypePtr getSchemaType() override;
+  Configurations::SchemaTypePtr getSchemaType() override;
 
-    /**
-     * @brief overrides the name from the abstract parent class
-     * @return name
-     */
-    std::string getName() override;
+  /**
+   * @brief overrides the name from the abstract parent class
+   * @return name
+   */
+  std::string getName() override;
 
-    /**
-     * @brief overrides the string representation of the parent class
-     * @return string representation
-     */
-    std::string toString() override;
+  /**
+   * @brief overrides the string representation of the parent class
+   * @return string representation
+   */
+  std::string toString() override;
 
-  private:
-    double alpha;
-    uint64_t minValue;
-    uint64_t maxValue;
+private:
+  double alpha;
+  uint64_t minValue;
+  uint64_t maxValue;
 };
-}// namespace NES::Benchmark::DataGeneration
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_
+} // namespace NES::Benchmark::DataGeneration
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_

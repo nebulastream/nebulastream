@@ -16,14 +16,18 @@
 
 namespace NES::Compiler {
 
-std::unordered_set<std::string> CompilerFlags::getFlags() const { return compilerFlags; }
-
-void CompilerFlags::addFlag(const std::string& flag) { compilerFlags.insert(flag); }
-
-void CompilerFlags::mergeFlags(const CompilerFlags& flags) {
-    for (auto flag : flags.getFlags()) {
-        addFlag(flag);
-    }
+std::unordered_set<std::string> CompilerFlags::getFlags() const {
+  return compilerFlags;
 }
 
-}// namespace NES::Compiler
+void CompilerFlags::addFlag(const std::string &flag) {
+  compilerFlags.insert(flag);
+}
+
+void CompilerFlags::mergeFlags(const CompilerFlags &flags) {
+  for (auto flag : flags.getFlags()) {
+    addFlag(flag);
+  }
+}
+
+} // namespace NES::Compiler

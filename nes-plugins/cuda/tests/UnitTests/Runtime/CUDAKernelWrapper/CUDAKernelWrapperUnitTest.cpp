@@ -19,42 +19,50 @@
 
 namespace NES::Runtime::CUDAKernelWrapper {
 class CUDAKernelWrapperUnitTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("CUDAKernelWrapperUnitTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup CUDAKernelWrapperUnitTest test class.");
-    }
+public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("CUDAKernelWrapperUnitTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup CUDAKernelWrapperUnitTest test class.");
+  }
 
-    void SetUp() override { Testing::BaseUnitTest::SetUp(); }
+  void SetUp() override { Testing::BaseUnitTest::SetUp(); }
 };
 
-// Test cuda wrapper in compiling and executing a simple CUDA Kernel processing a single integer field
+// Test cuda wrapper in compiling and executing a simple CUDA Kernel processing
+// a single integer field
 TEST_F(CUDAKernelWrapperUnitTest, CUDAKernelWrapperOnSimpleAddition__GPU) {
-    // Prepare a simple CUDA kernel which adds 42 to the recordValue and then write it to the result
-    const char* const SimpleKernel_cu =
-        "SimpleKernel.cu\n"
-        "__global__ void simpleAdditionKernel(const int* recordValue, const int count, int* result) {\n"
-        "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
-        "\n"
-        "    if (i < count) {\n"
-        "        result[i] = recordValue[i] + 42;\n"
-        "    }\n"
-        "}\n";
+  // Prepare a simple CUDA kernel which adds 42 to the recordValue and then
+  // write it to the result
+  const char *const SimpleKernel_cu =
+      "SimpleKernel.cu\n"
+      "__global__ void simpleAdditionKernel(const int* recordValue, const int "
+      "count, int* result) {\n"
+      "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
+      "\n"
+      "    if (i < count) {\n"
+      "        result[i] = recordValue[i] + 42;\n"
+      "    }\n"
+      "}\n";
 
-    uint32_t numberOfTuples = 10;
+  uint32_t numberOfTuples = 10;
 
-    CUDAKernelWrapper<int, int> cudaKernelWrapper;
-    // set up the kernel program and allocate gpu buffer
-    cudaKernelWrapper.setup(SimpleKernel_cu, numberOfTuples * sizeof(int));
+  CUDAKernelWrapper<int, int> cudaKernelWrapper;
+  // set up the kernel program and allocate gpu buffer
+  cudaKernelWrapper.setup(SimpleKernel_cu, numberOfTuples * sizeof(int));
 
-    int* inputTuples = static_cast<int*>(std::malloc(numberOfTuples * sizeof(int)));
-    int* outputTuples = static_cast<int*>(std::malloc(numberOfTuples * sizeof(int)));
+  int *inputTuples =
+      static_cast<int *>(std::malloc(numberOfTuples * sizeof(int)));
+  int *outputTuples =
+      static_cast<int *>(std::malloc(numberOfTuples * sizeof(int)));
 
-    NES::Runtime::CUDAKernelWrapper::KernelDescriptor kernelDescriptor = {"simpleAdditionKernel", dim3(1), dim3(32)};
-    cudaKernelWrapper.execute(inputTuples, numberOfTuples, outputTuples, numberOfTuples, kernelDescriptor);
+  NES::Runtime::CUDAKernelWrapper::KernelDescriptor kernelDescriptor = {
+      "simpleAdditionKernel", dim3(1), dim3(32)};
+  cudaKernelWrapper.execute(inputTuples, numberOfTuples, outputTuples,
+                            numberOfTuples, kernelDescriptor);
 
-    std::free(inputTuples);
-    std::free(outputTuples);
+  std::free(inputTuples);
+  std::free(outputTuples);
 }
 
-}// namespace NES::Runtime::CUDAKernelWrapper
+} // namespace NES::Runtime::CUDAKernelWrapper

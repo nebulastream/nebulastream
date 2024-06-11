@@ -21,44 +21,47 @@
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
 namespace NES::Monitoring {
-AbstractSystemResourcesReader::AbstractSystemResourcesReader() : readerType(SystemResourcesReaderType::AbstractReader) {}
+AbstractSystemResourcesReader::AbstractSystemResourcesReader()
+    : readerType(SystemResourcesReaderType::AbstractReader) {}
 
 RuntimeMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
-    RuntimeMetrics output{};
-    return output;
+  RuntimeMetrics output{};
+  return output;
 }
 
 RegistrationMetrics AbstractSystemResourcesReader::readRegistrationMetrics() {
-    RegistrationMetrics output;
-    return output;
+  RegistrationMetrics output;
+  return output;
 }
 
 CpuMetricsWrapper AbstractSystemResourcesReader::readCpuStats() {
-    std::vector<CpuMetrics> arr{CpuMetrics()};
-    CpuMetricsWrapper output{std::move(arr)};
-    return output;
+  std::vector<CpuMetrics> arr{CpuMetrics()};
+  CpuMetricsWrapper output{std::move(arr)};
+  return output;
 }
 
 NetworkMetricsWrapper AbstractSystemResourcesReader::readNetworkStats() {
-    std::vector<NetworkMetrics> arr{NetworkMetrics()};
-    NetworkMetricsWrapper output{std::move(arr)};
-    return output;
+  std::vector<NetworkMetrics> arr{NetworkMetrics()};
+  NetworkMetricsWrapper output{std::move(arr)};
+  return output;
 }
 
 MemoryMetrics AbstractSystemResourcesReader::readMemoryStats() {
-    MemoryMetrics output{};
-    return output;
+  MemoryMetrics output{};
+  return output;
 }
 
 DiskMetrics AbstractSystemResourcesReader::readDiskStats() {
-    DiskMetrics output{};
-    return output;
+  DiskMetrics output{};
+  return output;
 }
 
 uint64_t AbstractSystemResourcesReader::getWallTimeInNs() {
-    uint64_t output{};
-    return output;
+  uint64_t output{};
+  return output;
 }
 
-SystemResourcesReaderType AbstractSystemResourcesReader::getReaderType() const { return readerType; }
-}// namespace NES::Monitoring
+SystemResourcesReaderType AbstractSystemResourcesReader::getReaderType() const {
+  return readerType;
+}
+} // namespace NES::Monitoring

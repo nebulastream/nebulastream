@@ -20,32 +20,34 @@
 namespace NES::Runtime {
 
 /**
- * @brief The Abstract Lineage Manager class is used to map of all tuples that got their sequence number changed
- * by stateful operators
+ * @brief The Abstract Lineage Manager class is used to map of all tuples that
+ * got their sequence number changed by stateful operators
  */
 class AbstractLineageManager {
-  public:
-    virtual ~AbstractLineageManager() noexcept = default;
+public:
+  virtual ~AbstractLineageManager() noexcept = default;
 
-    /**
-     * @brief Inserts a pair newId, oldId into bufferAncestorMapping, where newId is a key
-     * @param newId new sequence number that was created by a stateful operator
-     * @param oldId old sequence number that the tuple had
-     */
-    virtual void insert(BufferSequenceNumber newBufferSequenceNumber, BufferSequenceNumber oldBufferSequenceNumber) = 0;
+  /**
+   * @brief Inserts a pair newId, oldId into bufferAncestorMapping, where newId
+   * is a key
+   * @param newId new sequence number that was created by a stateful operator
+   * @param oldId old sequence number that the tuple had
+   */
+  virtual void insert(BufferSequenceNumber newBufferSequenceNumber,
+                      BufferSequenceNumber oldBufferSequenceNumber) = 0;
 
-    /**
-     * @brief Deletes a pair<newId,oldId> from bufferAncestorMapping manager
-     * @param bufferSequenceNumber newId of the tuple
-     * @return true in case of a success trimming
-     */
-    virtual bool trim(BufferSequenceNumber bufferSequenceNumber) = 0;
+  /**
+   * @brief Deletes a pair<newId,oldId> from bufferAncestorMapping manager
+   * @param bufferSequenceNumber newId of the tuple
+   * @return true in case of a success trimming
+   */
+  virtual bool trim(BufferSequenceNumber bufferSequenceNumber) = 0;
 
-    /**
-     * @brief Return current bufferAncestorMapping size
-     * @return Current bufferAncestorMapping size
-     */
-    virtual size_t getLineageSize() const = 0;
+  /**
+   * @brief Return current bufferAncestorMapping size
+   * @return Current bufferAncestorMapping size
+   */
+  virtual size_t getLineageSize() const = 0;
 };
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_

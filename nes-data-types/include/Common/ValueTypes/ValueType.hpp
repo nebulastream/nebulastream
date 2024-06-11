@@ -29,25 +29,26 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /// @brief Representation of a user-defined constant in the NES type system.
 class [[nodiscard]] ValueType {
-  public:
-    [[nodiscard]] inline explicit ValueType(const DataTypePtr& type) : dataType(std::move(type)) {}
+public:
+  [[nodiscard]] inline explicit ValueType(const DataTypePtr &type)
+      : dataType(std::move(type)) {}
 
-    virtual ~ValueType() = default;
+  virtual ~ValueType() = default;
 
-    /// @brief Checks if two values are equal
-    [[nodiscard]] virtual bool isEquals(ValueTypePtr valueType) const noexcept = 0;
+  /// @brief Checks if two values are equal
+  [[nodiscard]] virtual bool
+  isEquals(ValueTypePtr valueType) const noexcept = 0;
 
-    /// @brief Returns a string representation of this value
-    [[nodiscard]] virtual std::string toString() const noexcept = 0;
+  /// @brief Returns a string representation of this value
+  [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
-    template<class CheckedType>
-    auto as() {
-        return dynamic_cast<CheckedType*>(this);
-    }
+  template <class CheckedType> auto as() {
+    return dynamic_cast<CheckedType *>(this);
+  }
 
-    DataTypePtr const dataType;
+  DataTypePtr const dataType;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_

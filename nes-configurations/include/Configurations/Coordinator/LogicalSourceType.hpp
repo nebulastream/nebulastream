@@ -27,24 +27,27 @@ class LogicalSourceType;
 using LogicalSourceTypePtr = std::shared_ptr<LogicalSourceType>;
 
 /**
- * @brief This class is a wrapper for storing the logical source related configurations supplied by user and then later using it to create the actual Logical Source
+ * @brief This class is a wrapper for storing the logical source related
+ * configurations supplied by user and then later using it to create the actual
+ * Logical Source
  */
 class LogicalSourceType {
 
-  public:
-    static LogicalSourceTypePtr create(const std::string& logicalSourceName, const SchemaTypePtr& schemaType);
+public:
+  static LogicalSourceTypePtr create(const std::string &logicalSourceName,
+                                     const SchemaTypePtr &schemaType);
 
-    [[nodiscard]] const std::string& getLogicalSourceName() const;
+  [[nodiscard]] const std::string &getLogicalSourceName() const;
 
-    [[nodiscard]] const SchemaTypePtr& getSchemaType() const;
+  [[nodiscard]] const SchemaTypePtr &getSchemaType() const;
 
-  private:
-    LogicalSourceType(std::string logicalSourceName, SchemaTypePtr schemaType);
+private:
+  LogicalSourceType(std::string logicalSourceName, SchemaTypePtr schemaType);
 
-    std::string logicalSourceName;
-    SchemaTypePtr schemaType;
+  std::string logicalSourceName;
+  SchemaTypePtr schemaType;
 };
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPE_HPP_

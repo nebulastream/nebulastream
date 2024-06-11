@@ -28,7 +28,7 @@ using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 class WindowOperatorHandler;
 using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
 namespace NES::Join {
 class LogicalJoinDescriptor;
@@ -36,12 +36,13 @@ using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
 namespace Experimental {
 class LogicalBatchJoinDescriptor;
-using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
+using LogicalBatchJoinDescriptorPtr =
+    std::shared_ptr<LogicalBatchJoinDescriptor>;
 
 class BatchJoinOperatorHandler;
 using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
-}// namespace Experimental
-}// namespace NES::Join
+} // namespace Experimental
+} // namespace NES::Join
 namespace NES {
 
 class LogicalOperator;
@@ -77,13 +78,15 @@ using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 namespace Experimental {
 class LogicalBatchJoinOperator;
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
-}// namespace Experimental
+} // namespace Experimental
 
 class FieldAssignmentExpressionNode;
-using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+using FieldAssignmentExpressionNodePtr =
+    std::shared_ptr<FieldAssignmentExpressionNode>;
 
 class ConstantValueExpressionNode;
-using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
+using ConstantValueExpressionNodePtr =
+    std::shared_ptr<ConstantValueExpressionNode>;
 
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
@@ -91,13 +94,14 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 namespace Catalogs::UDF {
 class JavaUDFDescriptor;
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
 class BroadcastLogicalOperator;
 using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 
 class WatermarkAssignerLogicalOperator;
-using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
+using WatermarkAssignerLogicalOperatorPtr =
+    std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
 class CentralWindowOperator;
 using CentralWindowOperatorPtr = std::shared_ptr<CentralWindowOperator>;
@@ -116,9 +120,10 @@ using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 
 namespace Statistic {
 class LogicalStatisticWindowOperator;
-using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
-}// namespace Statistic
+using LogicalStatisticWindowOperatorPtr =
+    std::shared_ptr<LogicalStatisticWindowOperator>;
+} // namespace Statistic
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_

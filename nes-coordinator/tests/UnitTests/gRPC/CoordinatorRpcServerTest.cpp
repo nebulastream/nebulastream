@@ -34,130 +34,156 @@ namespace NES {
 using namespace Configurations;
 
 class CoordinatorRPCServerTest : public Testing::BaseUnitTest {
-  public:
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        VALID_LOGICAL_SOURCE_SCHEMA = TestSchemas::getSchemaTemplate("id_val_u64");
-    }
+public:
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    VALID_LOGICAL_SOURCE_SCHEMA = TestSchemas::getSchemaTemplate("id_val_u64");
+  }
 
-    static void SetUpTestCase() { setupLogging(); }
-    constexpr static auto VALID_LOGICAL_SOURCE_NAME = "ValidSource";
-    constexpr static auto INVALID_LOGICAL_SOURCE_NAME = "InvalidSource";
+  static void SetUpTestCase() { setupLogging(); }
+  constexpr static auto VALID_LOGICAL_SOURCE_NAME = "ValidSource";
+  constexpr static auto INVALID_LOGICAL_SOURCE_NAME = "InvalidSource";
 
-  protected:
-    SchemaPtr VALID_LOGICAL_SOURCE_SCHEMA;
-    static void setupLogging() {
-        NES::Logger::setupLogging("ExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ExpressionNodeTest test class.");
-    }
-    static std::tuple<std::unique_ptr<CoordinatorRPCServer>, std::shared_ptr<Catalogs::Source::SourceCatalog>> defaultUUT() {
-        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-        auto catalog = std::make_shared<SourceCatalogService>(sourceCatalog);
+protected:
+  SchemaPtr VALID_LOGICAL_SOURCE_SCHEMA;
+  static void setupLogging() {
+    NES::Logger::setupLogging("ExpressionNodeTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_DEBUG("Setup ExpressionNodeTest test class.");
+  }
+  static std::tuple<std::unique_ptr<CoordinatorRPCServer>,
+                    std::shared_ptr<Catalogs::Source::SourceCatalog>>
+  defaultUUT() {
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    auto catalog = std::make_shared<SourceCatalogService>(sourceCatalog);
 
-        return std::make_tuple(
-            std::make_unique<CoordinatorRPCServer>(nullptr, nullptr, std::move(catalog), nullptr, nullptr, nullptr, nullptr),
-            sourceCatalog);
-    }
+    return std::make_tuple(std::make_unique<CoordinatorRPCServer>(
+                               nullptr, nullptr, std::move(catalog), nullptr,
+                               nullptr, nullptr, nullptr),
+                           sourceCatalog);
+  }
 };
 
 TEST_F(CoordinatorRPCServerTest, testEmptyPhysicalSourceRegistrationRequest) {
-    auto [uut, _] = defaultUUT();
-    ServerContext serverContext;
-    RegisterPhysicalSourcesRequest request;
-    RegisterPhysicalSourcesReply reply;
+  auto [uut, _] = defaultUUT();
+  ServerContext serverContext;
+  RegisterPhysicalSourcesRequest request;
+  RegisterPhysicalSourcesReply reply;
 
-    uut->RegisterPhysicalSource(&serverContext, &request, &reply);
+  uut->RegisterPhysicalSource(&serverContext, &request, &reply);
 
-    EXPECT_THAT(reply.results(), ::testing::IsEmpty());
-    EXPECT_TRUE(reply.success());
+  EXPECT_THAT(reply.results(), ::testing::IsEmpty());
+  EXPECT_TRUE(reply.success());
 }
 
 TEST_F(CoordinatorRPCServerTest, testValidPhysicalSourceRegistrationRequest) {
-    auto [uut, sourceCatalog] = defaultUUT();
+  auto [uut, sourceCatalog] = defaultUUT();
 
-    sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME, VALID_LOGICAL_SOURCE_SCHEMA);
+  sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME,
+                                  VALID_LOGICAL_SOURCE_SCHEMA);
 
-    ServerContext serverContext;
-    RegisterPhysicalSourcesRequest request;
-    RegisterPhysicalSourcesReply reply;
+  ServerContext serverContext;
+  RegisterPhysicalSourcesRequest request;
+  RegisterPhysicalSourcesReply reply;
 
-    request.set_workerid(2);
-    PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsourcetypes();
-    physicalSourceDefinition->set_sourcetype(std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
-    physicalSourceDefinition->set_physicalsourcename(fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
-    physicalSourceDefinition->set_logicalsourcename(VALID_LOGICAL_SOURCE_NAME);
+  request.set_workerid(2);
+  PhysicalSourceDefinition *physicalSourceDefinition =
+      request.add_physicalsourcetypes();
+  physicalSourceDefinition->set_sourcetype(
+      std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
+  physicalSourceDefinition->set_physicalsourcename(
+      fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
+  physicalSourceDefinition->set_logicalsourcename(VALID_LOGICAL_SOURCE_NAME);
 
-    uut->RegisterPhysicalSource(&serverContext, &request, &reply);
+  uut->RegisterPhysicalSource(&serverContext, &request, &reply);
 
-    EXPECT_THAT(reply.results(), ::testing::SizeIs(1));
-    EXPECT_EQ(reply.results(0).physicalsourcename(), fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
-    EXPECT_THAT(reply.results(0).reason(), ::testing::IsEmpty());
-    EXPECT_TRUE(reply.results(0).success());
-    EXPECT_TRUE(reply.success());
+  EXPECT_THAT(reply.results(), ::testing::SizeIs(1));
+  EXPECT_EQ(reply.results(0).physicalsourcename(),
+            fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
+  EXPECT_THAT(reply.results(0).reason(), ::testing::IsEmpty());
+  EXPECT_TRUE(reply.results(0).success());
+  EXPECT_TRUE(reply.success());
 }
 
 TEST_F(CoordinatorRPCServerTest, testInvalidPhysicalSourceRegistrationRequest) {
-    auto [uut, sourceCatalog] = defaultUUT();
+  auto [uut, sourceCatalog] = defaultUUT();
 
-    sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME, VALID_LOGICAL_SOURCE_SCHEMA);
+  sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME,
+                                  VALID_LOGICAL_SOURCE_SCHEMA);
 
-    ServerContext serverContext;
-    RegisterPhysicalSourcesRequest request;
-    RegisterPhysicalSourcesReply reply;
+  ServerContext serverContext;
+  RegisterPhysicalSourcesRequest request;
+  RegisterPhysicalSourcesReply reply;
 
-    request.set_workerid(2);
-    PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsourcetypes();
-    physicalSourceDefinition->set_sourcetype(std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
-    physicalSourceDefinition->set_physicalsourcename(fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
-    physicalSourceDefinition->set_logicalsourcename(INVALID_LOGICAL_SOURCE_NAME);
+  request.set_workerid(2);
+  PhysicalSourceDefinition *physicalSourceDefinition =
+      request.add_physicalsourcetypes();
+  physicalSourceDefinition->set_sourcetype(
+      std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
+  physicalSourceDefinition->set_physicalsourcename(
+      fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
+  physicalSourceDefinition->set_logicalsourcename(INVALID_LOGICAL_SOURCE_NAME);
 
-    uut->RegisterPhysicalSource(&serverContext, &request, &reply);
+  uut->RegisterPhysicalSource(&serverContext, &request, &reply);
 
-    EXPECT_THAT(reply.results(), ::testing::SizeIs(1));
-    EXPECT_EQ(reply.results(0).physicalsourcename(), fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
-    EXPECT_THAT(reply.results(0).reason(), ::testing::Not(::testing::IsEmpty()));
-    EXPECT_FALSE(reply.results(0).success());
-    EXPECT_FALSE(reply.success());
+  EXPECT_THAT(reply.results(), ::testing::SizeIs(1));
+  EXPECT_EQ(reply.results(0).physicalsourcename(),
+            fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
+  EXPECT_THAT(reply.results(0).reason(), ::testing::Not(::testing::IsEmpty()));
+  EXPECT_FALSE(reply.results(0).success());
+  EXPECT_FALSE(reply.success());
 }
 
-TEST_F(CoordinatorRPCServerTest, testValidAndInvalidPhysicalSourceRegistrationRequest) {
-    auto [uut, sourceCatalog] = defaultUUT();
+TEST_F(CoordinatorRPCServerTest,
+       testValidAndInvalidPhysicalSourceRegistrationRequest) {
+  auto [uut, sourceCatalog] = defaultUUT();
 
-    sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME, VALID_LOGICAL_SOURCE_SCHEMA);
+  sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME,
+                                  VALID_LOGICAL_SOURCE_SCHEMA);
 
-    ServerContext serverContext;
-    RegisterPhysicalSourcesRequest request;
-    RegisterPhysicalSourcesReply reply;
+  ServerContext serverContext;
+  RegisterPhysicalSourcesRequest request;
+  RegisterPhysicalSourcesReply reply;
 
-    request.set_workerid(2);
-    {
-        PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsourcetypes();
-        physicalSourceDefinition->set_sourcetype(std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
-        physicalSourceDefinition->set_physicalsourcename(fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
-        physicalSourceDefinition->set_logicalsourcename(INVALID_LOGICAL_SOURCE_NAME);
-    }
-    {
-        PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsourcetypes();
-        physicalSourceDefinition->set_sourcetype(std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
-        physicalSourceDefinition->set_physicalsourcename(fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
-        physicalSourceDefinition->set_logicalsourcename(VALID_LOGICAL_SOURCE_NAME);
-    }
+  request.set_workerid(2);
+  {
+    PhysicalSourceDefinition *physicalSourceDefinition =
+        request.add_physicalsourcetypes();
+    physicalSourceDefinition->set_sourcetype(
+        std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
+    physicalSourceDefinition->set_physicalsourcename(
+        fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
+    physicalSourceDefinition->set_logicalsourcename(
+        INVALID_LOGICAL_SOURCE_NAME);
+  }
+  {
+    PhysicalSourceDefinition *physicalSourceDefinition =
+        request.add_physicalsourcetypes();
+    physicalSourceDefinition->set_sourcetype(
+        std::string(magic_enum::enum_name(SourceType::TCP_SOURCE)));
+    physicalSourceDefinition->set_physicalsourcename(
+        fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
+    physicalSourceDefinition->set_logicalsourcename(VALID_LOGICAL_SOURCE_NAME);
+  }
 
-    uut->RegisterPhysicalSource(&serverContext, &request, &reply);
+  uut->RegisterPhysicalSource(&serverContext, &request, &reply);
 
-    EXPECT_THAT(reply.results(), ::testing::SizeIs(2));
-    EXPECT_EQ(reply.results(0).physicalsourcename(), fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
-    EXPECT_THAT(reply.results(0).reason(), ::testing::Not(::testing::IsEmpty()));
-    EXPECT_FALSE(reply.results(0).success());
+  EXPECT_THAT(reply.results(), ::testing::SizeIs(2));
+  EXPECT_EQ(reply.results(0).physicalsourcename(),
+            fmt::format("{}_{}", INVALID_LOGICAL_SOURCE_NAME, 1));
+  EXPECT_THAT(reply.results(0).reason(), ::testing::Not(::testing::IsEmpty()));
+  EXPECT_FALSE(reply.results(0).success());
 
-    EXPECT_EQ(reply.results(1).physicalsourcename(), fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
-    EXPECT_THAT(reply.results(1).reason(), ::testing::IsEmpty());
-    EXPECT_TRUE(reply.results(1).success());
+  EXPECT_EQ(reply.results(1).physicalsourcename(),
+            fmt::format("{}_{}", VALID_LOGICAL_SOURCE_NAME, 1));
+  EXPECT_THAT(reply.results(1).reason(), ::testing::IsEmpty());
+  EXPECT_TRUE(reply.results(1).success());
 
-    EXPECT_THAT(sourceCatalog->getPhysicalSources(VALID_LOGICAL_SOURCE_NAME), ::testing::IsEmpty())
-        << "Expected physical sources to be unregistered on partial failure";
+  EXPECT_THAT(sourceCatalog->getPhysicalSources(VALID_LOGICAL_SOURCE_NAME),
+              ::testing::IsEmpty())
+      << "Expected physical sources to be unregistered on partial failure";
 
-    EXPECT_FALSE(reply.success());
+  EXPECT_FALSE(reply.success());
 }
 
-}// namespace NES
+} // namespace NES

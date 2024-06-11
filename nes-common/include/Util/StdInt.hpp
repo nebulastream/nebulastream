@@ -19,34 +19,57 @@
 #include <cstdint>
 
 /**
- * @brief Implements unsigned user-defined literals that return the corresponding uintX_t type
+ * @brief Implements unsigned user-defined literals that return the
+ * corresponding uintX_t type
  */
-consteval uint8_t operator""_u8(unsigned long long value) { return static_cast<uint8_t>(value); }
-consteval uint16_t operator""_u16(unsigned long long value) { return static_cast<uint16_t>(value); }
-consteval uint32_t operator""_u32(unsigned long long value) { return static_cast<uint32_t>(value); }
-consteval uint64_t operator""_u64(unsigned long long value) { return static_cast<uint64_t>(value); }
+consteval uint8_t operator""_u8(unsigned long long value) {
+  return static_cast<uint8_t>(value);
+}
+consteval uint16_t operator""_u16(unsigned long long value) {
+  return static_cast<uint16_t>(value);
+}
+consteval uint32_t operator""_u32(unsigned long long value) {
+  return static_cast<uint32_t>(value);
+}
+consteval uint64_t operator""_u64(unsigned long long value) {
+  return static_cast<uint64_t>(value);
+}
 
 /**
- * @brief We require this helper struct, as there is no such thing as a negative integer literal (https://stackoverflow.com/a/23430371)
- * We overload the operator- and the implicit conversion operator to be able to use it seamlessly, e.g. CustomClass(-2_s8), or CustomClass(42_s64)
+ * @brief We require this helper struct, as there is no such thing as a negative
+ * integer literal (https://stackoverflow.com/a/23430371) We overload the
+ * operator- and the implicit conversion operator to be able to use it
+ * seamlessly, e.g. CustomClass(-2_s8), or CustomClass(42_s64)
  */
-template<typename T>
-struct HelperStructLiterals {
-    T val;
-    [[maybe_unused]] constexpr inline explicit HelperStructLiterals(T v) : val(v) {}
+template <typename T> struct HelperStructLiterals {
+  T val;
+  [[maybe_unused]] constexpr inline explicit HelperStructLiterals(T v)
+      : val(v) {}
 
-    constexpr inline T operator-() const { return -val; }
+  constexpr inline T operator-() const { return -val; }
 
-    constexpr inline T operator+() const { return +val; }
+  constexpr inline T operator+() const { return +val; }
 
-    constexpr inline operator T() const { return val; }
+  constexpr inline operator T() const { return val; }
 };
 
 /**
- * @brief We have to return here our own helper struct as otherwise, we can not parse negative constants.
+ * @brief We have to return here our own helper struct as otherwise, we can not
+ * parse negative constants.
  */
-consteval HelperStructLiterals<int8_t> operator""_s8(unsigned long long value) { return HelperStructLiterals<int8_t>(value); }
-consteval HelperStructLiterals<int16_t> operator""_s16(unsigned long long value) { return HelperStructLiterals<int16_t>(value); }
-consteval HelperStructLiterals<int32_t> operator""_s32(unsigned long long value) { return HelperStructLiterals<int32_t>(value); }
-consteval HelperStructLiterals<int64_t> operator""_s64(unsigned long long value) { return HelperStructLiterals<int64_t>(value); }
-#endif// NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
+consteval HelperStructLiterals<int8_t> operator""_s8(unsigned long long value) {
+  return HelperStructLiterals<int8_t>(value);
+}
+consteval HelperStructLiterals<int16_t>
+operator""_s16(unsigned long long value) {
+  return HelperStructLiterals<int16_t>(value);
+}
+consteval HelperStructLiterals<int32_t>
+operator""_s32(unsigned long long value) {
+  return HelperStructLiterals<int32_t>(value);
+}
+consteval HelperStructLiterals<int64_t>
+operator""_s64(unsigned long long value) {
+  return HelperStructLiterals<int64_t>(value);
+}
+#endif // NES_COMMON_INCLUDE_UTIL_STDINT_HPP_

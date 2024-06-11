@@ -24,49 +24,49 @@ namespace NES::Util {
  * It implements the Mutex named requirements
  */
 class FileMutex {
-  public:
-    /**
-     * @brief Creates a FileMutex using a file specified as filePath
-     * @param filePath that path to a file
-     */
-    explicit FileMutex(const std::string filePath);
+public:
+  /**
+   * @brief Creates a FileMutex using a file specified as filePath
+   * @param filePath that path to a file
+   */
+  explicit FileMutex(const std::string filePath);
 
-    /**
-     * @brief closes the internal file but does not release the mutex.
-     * The behavior is undefined if the mutex is owned by any thread or if any thread
-     * terminates while holding any ownership of the mutex.
-     */
-    ~FileMutex();
+  /**
+   * @brief closes the internal file but does not release the mutex.
+   * The behavior is undefined if the mutex is owned by any thread or if any
+   * thread terminates while holding any ownership of the mutex.
+   */
+  ~FileMutex();
 
-    FileMutex(const FileMutex&) = delete;
+  FileMutex(const FileMutex &) = delete;
 
-    FileMutex(FileMutex&&) = delete;
+  FileMutex(FileMutex &&) = delete;
 
-    FileMutex& operator=(const FileMutex&) = delete;
+  FileMutex &operator=(const FileMutex &) = delete;
 
-    FileMutex& operator=(FileMutex&&) = delete;
+  FileMutex &operator=(FileMutex &&) = delete;
 
-    /**
-     * @brief lock the mutex
-     */
-    void lock();
+  /**
+   * @brief lock the mutex
+   */
+  void lock();
 
-    /**
-     * @brief try locking the mutex
-     * @return true if locking is successful
-     */
-    bool try_lock();
+  /**
+   * @brief try locking the mutex
+   * @return true if locking is successful
+   */
+  bool try_lock();
 
-    /**
-     * @brief try unlocking the file
-     */
-    void unlock();
+  /**
+   * @brief try unlocking the file
+   */
+  void unlock();
 
-  private:
-    int fd;
-    std::string fileName;
+private:
+  int fd;
+  std::string fileName;
 };
 
-}// namespace NES::Util
+} // namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_

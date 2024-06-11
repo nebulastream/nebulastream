@@ -19,22 +19,23 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES::Compiler {
 
-bool CompilationCache::contains(const SourceCode& code) {
-    std::lock_guard<std::recursive_mutex> lk(mutex);
-    return compilationReuseMap.contains(code);
+bool CompilationCache::contains(const SourceCode &code) {
+  std::lock_guard<std::recursive_mutex> lk(mutex);
+  return compilationReuseMap.contains(code);
 };
 
-void CompilationCache::insert(const SourceCode& code, CompilationResult& newEntry) {
-    std::lock_guard<std::recursive_mutex> lk(mutex);
-    if (contains(code)) {
-        NES_WARNING("Compilation Cache: inserted item already exists");
-    } else {
-        compilationReuseMap.insert(std::make_pair(code, newEntry));
-    }
+void CompilationCache::insert(const SourceCode &code,
+                              CompilationResult &newEntry) {
+  std::lock_guard<std::recursive_mutex> lk(mutex);
+  if (contains(code)) {
+    NES_WARNING("Compilation Cache: inserted item already exists");
+  } else {
+    compilationReuseMap.insert(std::make_pair(code, newEntry));
+  }
 }
 
-CompilationResult CompilationCache::get(const SourceCode& code) {
-    std::lock_guard<std::recursive_mutex> lk(mutex);
-    return compilationReuseMap.find(code)->second;
+CompilationResult CompilationCache::get(const SourceCode &code) {
+  std::lock_guard<std::recursive_mutex> lk(mutex);
+  return compilationReuseMap.find(code)->second;
 }
-}// namespace NES::Compiler
+} // namespace NES::Compiler

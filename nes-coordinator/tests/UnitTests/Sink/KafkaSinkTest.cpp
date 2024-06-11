@@ -48,98 +48,93 @@ const std::string KAFKA_BROKER = "localhost:9092";
 namespace NES {
 
 /**
-* NOTE: this test requires a running kafka instance
-*/
+ * NOTE: this test requires a running kafka instance
+ */
 class KafkaSinkTest : public Testing::BaseIntegrationTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("KafkaSinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("KafkaSinkTest::SetUpTestCase()");
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("KafkaSinkTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_DEBUG("KafkaSinkTest::SetUpTestCase()");
+  }
+
+  void SetUp() override {
+    Testing::BaseIntegrationTest::SetUp();
+    dataPort = Testing::BaseIntegrationTest::getAvailablePort();
+    NES_DEBUG("Setup KafkaSinkTest test case.");
+    auto sourceType = DefaultSourceType::create("x", "x1");
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(*dataPort);
+    workerConfiguration->physicalSourceTypes.add(sourceType);
+    workerConfiguration->bufferSizeInBytes = 1024;
+    nodeEngine =
+        Runtime::NodeEngineBuilder::create(workerConfiguration)
+            .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+            .build();
+    testSchema = Schema::create()
+                     ->addField("KEY", BasicType::UINT32)
+                     ->addField("VALUE", BasicType::UINT32);
+  }
+
+  /* Will be called after a test is executed. */
+  void TearDown() override {
+    dataPort.reset();
+    ASSERT_TRUE(nodeEngine->stop());
+    NES_DEBUG("KafkaSinkTest::TearDown() Tear down KafkaSinkTest");
+    Testing::BaseIntegrationTest::TearDown();
+  }
+
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_DEBUG("KafkaSinkTest::TearDownTestCases() Tear down KafkaSinkTest test "
+              "class.");
+  }
+
+  static NES::Runtime::TupleBuffer
+  createSimpleBuffer(uint64_t bufferSize,
+                     const std::shared_ptr<Runtime::BufferManager> &buffMgr) {
+    auto buffer = buffMgr->getBufferBlocking();
+    for (uint32_t j = 0; j < bufferSize / sizeof(uint32_t); ++j) {
+      buffer.getBuffer<uint32_t>()[j] = 2;
     }
+    buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
 
-    void SetUp() override {
-        Testing::BaseIntegrationTest::SetUp();
-        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
-        NES_DEBUG("Setup KafkaSinkTest test case.");
-        auto sourceType = DefaultSourceType::create("x", "x1");
-        auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSourceTypes.add(sourceType);
-        workerConfiguration->bufferSizeInBytes = 1024;
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
-                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                         .build();
-        testSchema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
-    }
+    return buffer;
+  }
 
-    /* Will be called after a test is executed. */
-    void TearDown() override {
-        dataPort.reset();
-        ASSERT_TRUE(nodeEngine->stop());
-        NES_DEBUG("KafkaSinkTest::TearDown() Tear down KafkaSinkTest");
-        Testing::BaseIntegrationTest::TearDown();
-    }
+  Runtime::NodeEnginePtr nodeEngine{nullptr};
+  Testing::BorrowedPortPtr dataPort;
+  SchemaPtr testSchema;
+  uint64_t buffer_size{};
+  KafkaSourceTypePtr kafkaSourceType;
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("KafkaSinkTest::TearDownTestCases() Tear down KafkaSinkTest test class."); }
-
-    static NES::Runtime::TupleBuffer createSimpleBuffer(uint64_t bufferSize,
-                                                        const std::shared_ptr<Runtime::BufferManager>& buffMgr) {
-        auto buffer = buffMgr->getBufferBlocking();
-        for (uint32_t j = 0; j < bufferSize / sizeof(uint32_t); ++j) {
-            buffer.getBuffer<uint32_t>()[j] = 2;
-        }
-        buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-
-        return buffer;
-    }
-
-    Runtime::NodeEnginePtr nodeEngine{nullptr};
-    Testing::BorrowedPortPtr dataPort;
-    SchemaPtr testSchema;
-    uint64_t buffer_size{};
-    KafkaSourceTypePtr kafkaSourceType;
-
-    const std::string brokers = std::string(KAFKA_BROKER);
-    const std::string topic = std::string("sinkTest");
-    const std::string groupId = std::string("0");
+  const std::string brokers = std::string(KAFKA_BROKER);
+  const std::string topic = std::string("sinkTest");
+  const std::string groupId = std::string("0");
 };
 
 /**
-* Tests basic set up of Kafka sink
-*/
+ * Tests basic set up of Kafka sink
+ */
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
-    auto kafkaSink = createCsvKafkaSink(testSchema,
-                                        SharedQueryId(QUERYID),
-                                        DecomposedQueryPlanId(QUERYID),
-                                        nodeEngine,
-                                        1,
-                                        brokers,
-                                        topic,
-                                        1,
-                                        1);
+  auto kafkaSink = createCsvKafkaSink(testSchema, SharedQueryId(QUERYID),
+                                      DecomposedQueryPlanId(QUERYID),
+                                      nodeEngine, 1, brokers, topic, 1, 1);
 }
 
 /**
-* Test if schema, Kafka server address, clientId, user, and topic are the same
-*/
+ * Test if schema, Kafka server address, clientId, user, and topic are the same
+ */
 TEST_F(KafkaSinkTest, KafkaSourcePrint) {
-    auto kafkaSink = createCsvKafkaSink(testSchema,
-                                        SharedQueryId(QUERYID),
-                                        DecomposedQueryPlanId(QUERYID),
-                                        nodeEngine,
-                                        1,
-                                        brokers,
-                                        topic,
-                                        1,
-                                        1);
+  auto kafkaSink = createCsvKafkaSink(testSchema, SharedQueryId(QUERYID),
+                                      DecomposedQueryPlanId(QUERYID),
+                                      nodeEngine, 1, brokers, topic, 1, 1);
 
-    std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
+  std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 
-    EXPECT_EQ(kafkaSink->toString(), expected);
+  EXPECT_EQ(kafkaSink->toString(), expected);
 
-    NES_DEBUG("kafka string={}", kafkaSink->toString());
+  NES_DEBUG("kafka string={}", kafkaSink->toString());
 }
 
 #ifdef RUNNING_KAFKA_INSTANCE
@@ -147,89 +142,109 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
  * Tests if obtained value is valid.
  */
 TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
-    auto kafkaSink = createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, 1);
+  auto kafkaSink = createTextKafkaSink(testSchema, OPERATORID, OPERATORID,
+                                       nodeEngine, 1, brokers, topic, 1, 1);
 
-    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
-    auto inputBuffer = createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(), nodeEngine->getBufferManager());
-    auto testBuffer = createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(), nodeEngine->getBufferManager());
-    Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
+  auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
+  auto inputBuffer =
+      createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(),
+                         nodeEngine->getBufferManager());
+  auto testBuffer =
+      createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(),
+                         nodeEngine->getBufferManager());
+  Runtime::WorkerContext workerContext(Runtime::NesThread::getId(),
+                                       nodeEngine->getBufferManager(), 64);
 
-    int partition_value = -1;
+  int partition_value = -1;
 
-    //    #####################
-    // Construct the configuration
-    cppkafka::Configuration config = {{"metadata.broker.list", brokers},
-                                      {"group.id", groupId},
-                                      {"auto.offset.reset", "earliest"},
-                                      // Disable auto commit
-                                      {"enable.auto.commit", false}};
+  //    #####################
+  // Construct the configuration
+  cppkafka::Configuration config = {{"metadata.broker.list", brokers},
+                                    {"group.id", groupId},
+                                    {"auto.offset.reset", "earliest"},
+                                    // Disable auto commit
+                                    {"enable.auto.commit", false}};
 
-    // Create the consumer
-    cppkafka::Consumer consumer(config);
+  // Create the consumer
+  cppkafka::Consumer consumer(config);
 
-    // Print the assigned partitions on assignment
-    consumer.set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
+  // Print the assigned partitions on assignment
+  consumer.set_assignment_callback(
+      [](const cppkafka::TopicPartitionList &partitions) {
         NES_DEBUG("Got assigned: {}", partitions);
-    });
+      });
 
-    // Print the revoked partitions on revocation
-    consumer.set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
+  // Print the revoked partitions on revocation
+  consumer.set_revocation_callback(
+      [](const cppkafka::TopicPartitionList &partitions) {
         NES_DEBUG("Got revoked: {}", partitions);
-    });
+      });
 
-    // Subscribe to the topic
-    consumer.subscribe({topic});
+  // Subscribe to the topic
+  consumer.subscribe({topic});
 
-    NES_DEBUG("Consuming messages from topic {}", topic);
+  NES_DEBUG("Consuming messages from topic {}", topic);
 
-    //write buffer
-    auto tuple_bufferJ = kafkaSink->writeData(inputBuffer, workerContext);
+  // write buffer
+  auto tuple_bufferJ = kafkaSink->writeData(inputBuffer, workerContext);
 
-    //################################
-    bool pollSuccessFull = false;
-    size_t cnt = 0;
-    while (!pollSuccessFull) {
-        NES_DEBUG("run ={}", cnt++);
-        if (cnt > 10) {
-            break;
-        }
-        cppkafka::Message msg = consumer.poll();
-        if (msg) {
-            // If we managed to get a message
-            if (msg.get_error()) {
-                // Ignore EOF notifications from rdkafka
-                if (!msg.is_eof()) {
-                    NES_DEBUG("[+] Received error notification: {}", msg.get_error());
-                }
-            } else {
-                // Print the key (if any)
-                if (msg.get_key()) {
-                    NES_DEBUG("{} -> ", msg.get_key());
-                }
-                // Print the payload
-                NES_DEBUG("{}", msg.get_payload());
-
-                // Now commit the message
-                consumer.commit(msg);
-                pollSuccessFull = true;
-                std::string expected =
-                    "+----------------------------------------------------+\n|KEY:UINT32|VALUE:UINT32|\n+------------------------"
-                    "----------------------------+\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
-                    "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
-                    "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|"
-                    "2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
-                    "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
-                    "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|"
-                    "2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
-                    "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
-                    "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n+--------------------------------------"
-                    "--------------+";
-                std::string_view payload_view(reinterpret_cast<const char*>(msg.get_payload().get_data()), expected.size());
-                EXPECT_EQ(expected, payload_view);
-            }
-        }
+  // ################################
+  bool pollSuccessFull = false;
+  size_t cnt = 0;
+  while (!pollSuccessFull) {
+    NES_DEBUG("run ={}", cnt++);
+    if (cnt > 10) {
+      break;
     }
+    cppkafka::Message msg = consumer.poll();
+    if (msg) {
+      // If we managed to get a message
+      if (msg.get_error()) {
+        // Ignore EOF notifications from rdkafka
+        if (!msg.is_eof()) {
+          NES_DEBUG("[+] Received error notification: {}", msg.get_error());
+        }
+      } else {
+        // Print the key (if any)
+        if (msg.get_key()) {
+          NES_DEBUG("{} -> ", msg.get_key());
+        }
+        // Print the payload
+        NES_DEBUG("{}", msg.get_payload());
+
+        // Now commit the message
+        consumer.commit(msg);
+        pollSuccessFull = true;
+        std::string expected =
+            "+----------------------------------------------------+\n|KEY:"
+            "UINT32|VALUE:UINT32|\n+------------------------"
+            "----------------------------+\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
+            "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
+            "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
+            "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
+            "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|"
+            "2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|"
+            "2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
+            "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
+            "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
+            "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
+            "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|"
+            "2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|"
+            "2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
+            "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|"
+            "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
+            "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
+            "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|"
+            "2|\n+--------------------------------------"
+            "--------------+";
+        std::string_view payload_view(
+            reinterpret_cast<const char *>(msg.get_payload().get_data()),
+            expected.size());
+        EXPECT_EQ(expected, payload_view);
+      }
+    }
+  }
 }
 #endif
-}// namespace NES
+} // namespace NES
 #endif

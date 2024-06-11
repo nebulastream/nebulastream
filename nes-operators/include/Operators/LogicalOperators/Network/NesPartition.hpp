@@ -27,69 +27,69 @@ static constexpr PartitionId DEFAULT_PARTITION_ID = PartitionId(0);
 static constexpr SubpartitionId DEFAULT_SUBPARTITION_ID = SubpartitionId(0);
 
 class NesPartition {
-  public:
-    explicit NesPartition(SharedQueryId sharedQueryId,
-                          OperatorId operatorId,
-                          PartitionId partitionId,
-                          SubpartitionId subpartitionId);
+public:
+  explicit NesPartition(SharedQueryId sharedQueryId, OperatorId operatorId,
+                        PartitionId partitionId, SubpartitionId subpartitionId);
 
-    /**
-     * @brief getter for the queryId
-     * @return the queryId
-     */
-    [[nodiscard]] SharedQueryId getQueryId() const;
+  /**
+   * @brief getter for the queryId
+   * @return the queryId
+   */
+  [[nodiscard]] SharedQueryId getQueryId() const;
 
-    /**
-     * @brief getter for the operatorId
-     * @return the operatorId
-     */
-    [[nodiscard]] OperatorId getOperatorId() const;
+  /**
+   * @brief getter for the operatorId
+   * @return the operatorId
+   */
+  [[nodiscard]] OperatorId getOperatorId() const;
 
-    /**
-     * @brief getter for the partitionId
-     * @return the partitionId
-     */
-    [[nodiscard]] PartitionId getPartitionId() const;
+  /**
+   * @brief getter for the partitionId
+   * @return the partitionId
+   */
+  [[nodiscard]] PartitionId getPartitionId() const;
 
-    /**
-     * @brief getter for the getSubpartitionId
-     * @return the subpartitionId
-     */
-    [[nodiscard]] SubpartitionId getSubpartitionId() const;
+  /**
+   * @brief getter for the getSubpartitionId
+   * @return the subpartitionId
+   */
+  [[nodiscard]] SubpartitionId getSubpartitionId() const;
 
-    [[nodiscard]] std::string toString() const;
+  [[nodiscard]] std::string toString() const;
 
-    friend std::ostream& operator<<(std::ostream& os, const NesPartition& partition);
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const NesPartition &partition);
 
-    /**
-     * @brief The equals operator for the NesPartition. It is not comparing threadIds
-     * @param lhs
-     * @param rhs
-     * @return
-     */
-    friend bool operator==(const NesPartition& lhs, const NesPartition& rhs);
+  /**
+   * @brief The equals operator for the NesPartition. It is not comparing
+   * threadIds
+   * @param lhs
+   * @param rhs
+   * @return
+   */
+  friend bool operator==(const NesPartition &lhs, const NesPartition &rhs);
 
-    friend bool operator<(const NesPartition& lhs, const NesPartition& rhs);
+  friend bool operator<(const NesPartition &lhs, const NesPartition &rhs);
 
-  private:
-    SharedQueryId sharedQueryId;
-    OperatorId operatorId;
-    PartitionId partitionId;
-    SubpartitionId subpartitionId;
+private:
+  SharedQueryId sharedQueryId;
+  OperatorId operatorId;
+  PartitionId partitionId;
+  SubpartitionId subpartitionId;
 };
-}// namespace NES::Network
+} // namespace NES::Network
 namespace std {
-template<>
-struct hash<NES::Network::NesPartition> {
-    std::uint64_t operator()(const NES::Network::NesPartition& k) const;
+template <> struct hash<NES::Network::NesPartition> {
+  std::uint64_t operator()(const NES::Network::NesPartition &k) const;
 };
 
-}// namespace std
+} // namespace std
 
 namespace fmt {
-template<>
+template <>
 struct formatter<NES::Network::NesPartition> : formatter<std::string> {
-    auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
+  auto format(const NES::Network::NesPartition &partition, format_context &ctx)
+      -> decltype(ctx.out());
 };
-}//namespace fmt
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
+} // namespace fmt
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_

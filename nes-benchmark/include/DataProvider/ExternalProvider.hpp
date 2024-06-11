@@ -20,7 +20,8 @@
 
 namespace NES::Benchmark::DataProvision {
 /**
- * @brief sets the time period in milliseconds in which the predefined amount of buffers is ingested
+ * @brief sets the time period in milliseconds in which the predefined amount of
+ * buffers is ingested
  */
 auto constexpr workingTimeDeltaInMillSeconds = 10;
 
@@ -28,110 +29,117 @@ class ExternalProvider;
 using ExternalProviderPtr = std::shared_ptr<ExternalProvider>;
 
 /**
- * @brief This class inherits from DataProvider. It enables the use of dynamic ingestion rates.
+ * @brief This class inherits from DataProvider. It enables the use of dynamic
+ * ingestion rates.
  */
 class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
-  public:
-    /**
-      * @brief creates an ExternalProvider
-      * @param id
-      * @param providerMode
-      * @param preAllocatedBuffers
-      * @param ingestionRateGenerator
-      * @param throwException: If this is set to true, then exceptions are thrown instead of warnings. There is one exception thrown
-      * if the buffer can not be written to the queue. Another one is thrown, if the data could not been generated fast enough
-      */
-    ExternalProvider(uint64_t id,
-                     const DataProviderMode providerMode,
-                     const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
-                     bool throwException = true);
+public:
+  /**
+   * @brief creates an ExternalProvider
+   * @param id
+   * @param providerMode
+   * @param preAllocatedBuffers
+   * @param ingestionRateGenerator
+   * @param throwException: If this is set to true, then exceptions are thrown
+   * instead of warnings. There is one exception thrown if the buffer can not be
+   * written to the queue. Another one is thrown, if the data could not been
+   * generated fast enough
+   */
+  ExternalProvider(
+      uint64_t id, const DataProviderMode providerMode,
+      const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+      IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
+      bool throwException = true);
 
-    /**
-     * @brief destructor
-     */
-    ~ExternalProvider() override;
+  /**
+   * @brief destructor
+   */
+  ~ExternalProvider() override;
 
-    /**
-     * @brief returns a reference to preAllocatedBuffers
-     * @return preAllocatedBuffers
-     */
-    std::vector<Runtime::TupleBuffer>& getPreAllocatedBuffers();
+  /**
+   * @brief returns a reference to preAllocatedBuffers
+   * @return preAllocatedBuffers
+   */
+  std::vector<Runtime::TupleBuffer> &getPreAllocatedBuffers();
 
-    /**
-     * @brief returns a reference to bufferQueue
-     * @return bufferQueue
-     */
-    folly::MPMCQueue<TupleBufferHolder>& getBufferQueue();
+  /**
+   * @brief returns a reference to bufferQueue
+   * @return bufferQueue
+   */
+  folly::MPMCQueue<TupleBufferHolder> &getBufferQueue();
 
-    /**
-     * @brief returns a reference to generatorThread
-     * @return generatorThread
-     */
-    std::thread& getGeneratorThread();
+  /**
+   * @brief returns a reference to generatorThread
+   * @return generatorThread
+   */
+  std::thread &getGeneratorThread();
 
-    /**
-     * @brief overrides the start function and generates the data
-     */
-    void start() override;
+  /**
+   * @brief overrides the start function and generates the data
+   */
+  void start() override;
 
-    /**
-     * @brief overrides the stop function and clears the preAllocatedBuffers
-     */
-    void stop() override;
+  /**
+   * @brief overrides the stop function and clears the preAllocatedBuffers
+   */
+  void stop() override;
 
-    /**
-     * @brief getter for checking if the external provider has started
-     * @return true, if the external provider is up and running
-     */
-    bool isStarted() const;
+  /**
+   * @brief getter for checking if the external provider has started
+   * @return true, if the external provider is up and running
+   */
+  bool isStarted() const;
 
-    /**
-     * @brief overrides readNextBuffer by providing the next buffer to be added to the caller
-     * @param sourceId
-     * @return either the next buffer in the queue or std::nullopt
-     */
-    std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
+  /**
+   * @brief overrides readNextBuffer by providing the next buffer to be added to
+   * the caller
+   * @param sourceId
+   * @return either the next buffer in the queue or std::nullopt
+   */
+  std::optional<Runtime::TupleBuffer>
+  readNextBuffer(uint64_t sourceId) override;
 
-    /**
-     * @brief overrides the recyclePooledBuffer interface. We have nothing to add in this class
-     * @param buffer
-     */
-    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) override;
+  /**
+   * @brief overrides the recyclePooledBuffer interface. We have nothing to add
+   * in this class
+   * @param buffer
+   */
+  void recyclePooledBuffer(Runtime::detail::MemorySegment *buffer) override;
 
-    /**
-     * @brief overrides the recycleUnpooledBuffer interface. We have nothing to add in this class
-     * @param buffer
-     */
-    void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
+  /**
+   * @brief overrides the recycleUnpooledBuffer interface. We have nothing to
+   * add in this class
+   * @param buffer
+   */
+  void recycleUnpooledBuffer(Runtime::detail::MemorySegment *buffer) override;
 
-    /**
-     * @brief waits until the external provider has started
-     */
-    void waitUntilStarted();
+  /**
+   * @brief waits until the external provider has started
+   */
+  void waitUntilStarted();
 
-    /**
-     * @brief sets new value for throwException
-     * @param throwException
-     */
-    void setThrowException(bool throwException);
+  /**
+   * @brief sets new value for throwException
+   * @param throwException
+   */
+  void setThrowException(bool throwException);
 
-  private:
-    /**
-     * @brief generates data based on predefinedIngestionRates
-     */
-    void generateData();
+private:
+  /**
+   * @brief generates data based on predefinedIngestionRates
+   */
+  void generateData();
 
-    std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
-    IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator;
-    folly::MPMCQueue<TupleBufferHolder> bufferQueue;
-    std::atomic<bool> started = false;
-    std::mutex mutexStartProvider;
-    std::condition_variable cvStartProvider;
-    std::thread generatorThread;
-    std::vector<uint64_t> predefinedIngestionRates;
-    bool throwException;
+  std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
+  IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator;
+  folly::MPMCQueue<TupleBufferHolder> bufferQueue;
+  std::atomic<bool> started = false;
+  std::mutex mutexStartProvider;
+  std::condition_variable cvStartProvider;
+  std::thread generatorThread;
+  std::vector<uint64_t> predefinedIngestionRates;
+  bool throwException;
 };
-}// namespace NES::Benchmark::DataProvision
+} // namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_

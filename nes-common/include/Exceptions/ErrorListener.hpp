@@ -22,23 +22,25 @@ namespace NES::Exceptions {
 /**
  * @brief This is an error interceptor suitable for signals and exceptions
  */
-class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListener> {
-  public:
-    /**
-     * @brief onFatalError shall be called when a signal is caught
-     * @param signalNumber the caught signal
-     * @param stacktrace the stacktrace of the error
-     */
-    virtual void onFatalError(int signalNumber, std::string) = 0;
+class ErrorListener
+    : public detail::virtual_enable_shared_from_this<ErrorListener> {
+public:
+  /**
+   * @brief onFatalError shall be called when a signal is caught
+   * @param signalNumber the caught signal
+   * @param stacktrace the stacktrace of the error
+   */
+  virtual void onFatalError(int signalNumber, std::string) = 0;
 
-    /**
-     * @brief onFatalException shall be called when an exception is caught
-     * @param exception the caught exception
-     * @param stacktrace the stacktrace of the error
-     */
-    virtual void onFatalException(std::shared_ptr<std::exception>, std::string) = 0;
+  /**
+   * @brief onFatalException shall be called when an exception is caught
+   * @param exception the caught exception
+   * @param stacktrace the stacktrace of the error
+   */
+  virtual void onFatalException(std::shared_ptr<std::exception>,
+                                std::string) = 0;
 };
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_

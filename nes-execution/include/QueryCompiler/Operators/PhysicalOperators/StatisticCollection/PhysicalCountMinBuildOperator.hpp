@@ -28,75 +28,68 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalCountMinBuildOperator : public PhysicalSynopsisBuildOperator,
                                       public PhysicalUnaryOperator,
                                       public AbstractEmitOperator {
-  public:
-    /**
-     * @brief Creates a PhysicalCountMinBuildOperator
-     * @param id
-     * @param statisticId
-     * @param inputSchema
-     * @param outputSchema
-     * @param nameOfFieldToTrack
-     * @param width
-     * @param depth
-     * @param metricHash
-     * @param windowType
-     * @param sendingPolicy
-     * @return PhysicalOperatorPtr
-     */
-    static PhysicalOperatorPtr create(const OperatorId id,
-                                      const StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const std::string& nameOfFieldToTrack,
-                                      const uint64_t width,
-                                      const uint64_t depth,
-                                      const Statistic::StatisticMetricHash metricHash,
-                                      const Windowing::WindowTypePtr windowType,
-                                      const Statistic::SendingPolicyPtr sendingPolicy);
+public:
+  /**
+   * @brief Creates a PhysicalCountMinBuildOperator
+   * @param id
+   * @param statisticId
+   * @param inputSchema
+   * @param outputSchema
+   * @param nameOfFieldToTrack
+   * @param width
+   * @param depth
+   * @param metricHash
+   * @param windowType
+   * @param sendingPolicy
+   * @return PhysicalOperatorPtr
+   */
+  static PhysicalOperatorPtr
+  create(const OperatorId id, const StatisticId statisticId,
+         const SchemaPtr &inputSchema, const SchemaPtr &outputSchema,
+         const std::string &nameOfFieldToTrack, const uint64_t width,
+         const uint64_t depth, const Statistic::StatisticMetricHash metricHash,
+         const Windowing::WindowTypePtr windowType,
+         const Statistic::SendingPolicyPtr sendingPolicy);
 
-    /**
-     * @brief Creates a PhysicalCountMinBuildOperator and sets the operatorId to the nextOperatorId
-     * @param statisticId
-     * @param inputSchema
-     * @param outputSchema
-     * @param nameOfFieldToTrack
-     * @param width
-     * @param depth
-     * @param metricHash
-     * @param windowType
-     * @param sendingPolicy
-     * @return PhysicalOperatorPtr
-     */
-    static PhysicalOperatorPtr create(const StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const std::string& nameOfFieldToTrack,
-                                      const uint64_t width,
-                                      const uint64_t depth,
-                                      const Statistic::StatisticMetricHash metricHash,
-                                      const Windowing::WindowTypePtr windowType,
-                                      const Statistic::SendingPolicyPtr sendingPolicy);
+  /**
+   * @brief Creates a PhysicalCountMinBuildOperator and sets the operatorId to
+   * the nextOperatorId
+   * @param statisticId
+   * @param inputSchema
+   * @param outputSchema
+   * @param nameOfFieldToTrack
+   * @param width
+   * @param depth
+   * @param metricHash
+   * @param windowType
+   * @param sendingPolicy
+   * @return PhysicalOperatorPtr
+   */
+  static PhysicalOperatorPtr
+  create(const StatisticId statisticId, const SchemaPtr &inputSchema,
+         const SchemaPtr &outputSchema, const std::string &nameOfFieldToTrack,
+         const uint64_t width, const uint64_t depth,
+         const Statistic::StatisticMetricHash metricHash,
+         const Windowing::WindowTypePtr windowType,
+         const Statistic::SendingPolicyPtr sendingPolicy);
 
-    OperatorPtr copy() override;
-    uint64_t getWidth() const;
-    uint64_t getDepth() const;
+  OperatorPtr copy() override;
+  uint64_t getWidth() const;
+  uint64_t getDepth() const;
 
-  private:
-    PhysicalCountMinBuildOperator(const OperatorId id,
-                                  const StatisticId statisticId,
-                                  const SchemaPtr& inputSchema,
-                                  const SchemaPtr& outputSchema,
-                                  const std::string& nameOfFieldToTrack,
-                                  const uint64_t width,
-                                  const uint64_t depth,
-                                  const Statistic::StatisticMetricHash metricHash,
-                                  const Windowing::WindowTypePtr windowType,
-                                  const Statistic::SendingPolicyPtr sendingPolicy);
+private:
+  PhysicalCountMinBuildOperator(
+      const OperatorId id, const StatisticId statisticId,
+      const SchemaPtr &inputSchema, const SchemaPtr &outputSchema,
+      const std::string &nameOfFieldToTrack, const uint64_t width,
+      const uint64_t depth, const Statistic::StatisticMetricHash metricHash,
+      const Windowing::WindowTypePtr windowType,
+      const Statistic::SendingPolicyPtr sendingPolicy);
 
-    const uint64_t width;
-    const uint64_t depth;
+  const uint64_t width;
+  const uint64_t depth;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALCOUNTMINBUILDOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALCOUNTMINBUILDOPERATOR_HPP_

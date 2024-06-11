@@ -22,12 +22,12 @@
 namespace z3 {
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
 namespace NES::Configurations {
 class OptimizerConfiguration;
 using OptimizerConfigurationPtr = std::shared_ptr<OptimizerConfiguration>;
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
 namespace NES::Optimizer {
 
@@ -36,20 +36,24 @@ using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
 class QueryMergerPhase {
 
-  public:
-    static QueryMergerPhasePtr create(z3::ContextPtr context,
-                                      const Configurations::OptimizerConfiguration optimizerConfiguration);
+public:
+  static QueryMergerPhasePtr
+  create(z3::ContextPtr context,
+         const Configurations::OptimizerConfiguration optimizerConfiguration);
 
-    /**
-     * @brief execute method to apply different query merger rules on the global query plan.
-     * @param globalQueryPlan: the global query plan
-     * @return true if successful
-     */
-    bool execute(GlobalQueryPlanPtr globalQueryPlan);
+  /**
+   * @brief execute method to apply different query merger rules on the global
+   * query plan.
+   * @param globalQueryPlan: the global query plan
+   * @return true if successful
+   */
+  bool execute(GlobalQueryPlanPtr globalQueryPlan);
 
-  private:
-    explicit QueryMergerPhase(z3::ContextPtr context, const Configurations::OptimizerConfiguration optimizerConfiguration);
-    BaseQueryMergerRulePtr queryMergerRule;
+private:
+  explicit QueryMergerPhase(
+      z3::ContextPtr context,
+      const Configurations::OptimizerConfiguration optimizerConfiguration);
+  BaseQueryMergerRulePtr queryMergerRule;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYMERGERPHASE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYMERGERPHASE_HPP_

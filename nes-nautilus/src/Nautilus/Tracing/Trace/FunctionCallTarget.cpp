@@ -17,10 +17,11 @@
 
 namespace NES::Nautilus::Tracing {
 
-FunctionCallTarget::FunctionCallTarget(const std::basic_string<char>& mangledFunctionName, void* functionPtr)
+FunctionCallTarget::FunctionCallTarget(
+    const std::basic_string<char> &mangledFunctionName, void *functionPtr)
     : mangledName(mangledFunctionName), functionPtr(functionPtr) {}
-std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target) {
-    os << target.mangledName;
-    return os;
+std::ostream &operator<<(std::ostream &os, const FunctionCallTarget &target) {
+  os << target.mangledName;
+  return os;
 }
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

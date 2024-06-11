@@ -15,20 +15,21 @@
 
 namespace NES::Nautilus::Interface {
 HashFunction::HashValue HashFunction::calculate(Value<> value) {
-    auto hash = init();
-    return calculate(hash, value);
+  auto hash = init();
+  return calculate(hash, value);
 };
 
-HashFunction::HashValue HashFunction::calculate(std::vector<Value<>>& values) {
-    auto hash = init();
-    for (auto& value : values) {
-        hash = calculate(hash, value);
-    }
-    return hash;
+HashFunction::HashValue HashFunction::calculate(std::vector<Value<>> &values) {
+  auto hash = init();
+  for (auto &value : values) {
+    hash = calculate(hash, value);
+  }
+  return hash;
 }
 
-HashFunction::HashValue HashFunction::calculateWithState(Value<> value, Value<MemRef> state) {
-    auto hash = init();
-    return calculateWithState(hash, value, state);
+HashFunction::HashValue HashFunction::calculateWithState(Value<> value,
+                                                         Value<MemRef> state) {
+  auto hash = init();
+  return calculateWithState(hash, value, state);
 }
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface

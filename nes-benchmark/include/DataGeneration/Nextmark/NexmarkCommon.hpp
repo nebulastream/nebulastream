@@ -16,25 +16,26 @@
 namespace NES::Benchmark::DataGeneration {
 
 class NexmarkCommon {
-  public:
-    static constexpr long PERSON_EVENT_RATIO = 1;
-    static constexpr long AUCTION_EVENT_RATIO = 4;
-    static constexpr long BID_EVENT_RATIO = 4;
-    static constexpr long TOTAL_EVENT_RATIO = PERSON_EVENT_RATIO + AUCTION_EVENT_RATIO + BID_EVENT_RATIO;
+public:
+  static constexpr long PERSON_EVENT_RATIO = 1;
+  static constexpr long AUCTION_EVENT_RATIO = 4;
+  static constexpr long BID_EVENT_RATIO = 4;
+  static constexpr long TOTAL_EVENT_RATIO =
+      PERSON_EVENT_RATIO + AUCTION_EVENT_RATIO + BID_EVENT_RATIO;
 
-    static constexpr int MAX_PARALLELISM = 50;
+  static constexpr int MAX_PARALLELISM = 50;
 
-    static const long START_ID_AUCTION[MAX_PARALLELISM];
-    static const long START_ID_PERSON[MAX_PARALLELISM];
+  static const long START_ID_AUCTION[MAX_PARALLELISM];
+  static const long START_ID_PERSON[MAX_PARALLELISM];
 
-    static constexpr long MAX_PERSON_ID = 540000000L;
-    static constexpr long MAX_AUCTION_ID = 540000000000L;
-    static constexpr long MAX_BID_ID = 540000000000L;
+  static constexpr long MAX_PERSON_ID = 540000000L;
+  static constexpr long MAX_AUCTION_ID = 540000000000L;
+  static constexpr long MAX_BID_ID = 540000000000L;
 
-    static constexpr int HOT_SELLER_RATIO = 100;
-    static constexpr int HOT_AUCTIONS_PROB = 85;
-    static constexpr int HOT_AUCTION_RATIO = 100;
+  static constexpr int HOT_SELLER_RATIO = 100;
+  static constexpr int HOT_AUCTIONS_PROB = 85;
+  static constexpr int HOT_AUCTION_RATIO = 100;
 };
 
-}// namespace NES::Benchmark::DataGeneration
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEXMARKCOMMON_HPP_
+} // namespace NES::Benchmark::DataGeneration
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEXMARKCOMMON_HPP_

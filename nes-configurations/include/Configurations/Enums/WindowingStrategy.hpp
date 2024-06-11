@@ -18,12 +18,12 @@
 
 namespace NES::QueryCompilation {
 enum class WindowingStrategy : uint8_t {
-    // This is the legacy window strategy from the old query compiler
-    LEGACY,
-    // Applies slicing window computations. This is the default on nautilus.
-    SLICING,
-    // Applies bucketing as an alternative to slicing.
-    BUCKETING
+  // This is the legacy window strategy from the old query compiler
+  LEGACY,
+  // Applies slicing window computations. This is the default on nautilus.
+  SLICING,
+  // Applies bucketing as an alternative to slicing.
+  BUCKETING
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_

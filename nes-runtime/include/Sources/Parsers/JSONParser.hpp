@@ -21,35 +21,39 @@
 namespace NES {
 class JSONParser : public Parser {
 
-  public:
-    /**
+public:
+  /**
    * @brief public constructor for JSON input data parser
    * @param numberOfSchemaFields number of schema fields
-   * @param schemaKeys vector with schema keys to identify the keys in the json object
+   * @param schemaKeys vector with schema keys to identify the keys in the json
+   * object
    * @param physicalTypes vector with physical data types
    */
-    JSONParser(uint64_t numberOfSchemaFields,
-               std::vector<std::string> schemaKeys,
-               std::vector<NES::PhysicalTypePtr> physicalTypes);
+  JSONParser(uint64_t numberOfSchemaFields, std::vector<std::string> schemaKeys,
+             std::vector<NES::PhysicalTypePtr> physicalTypes);
 
-    /**
-   * @brief takes a json tuple as string, parses it using cpprest and calls Parser::writeFieldValueToTupleBuffer() for every value in the tuple
-   * @param jsonTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
-   * @param tupleCount: the number of tuples already written to the current TupleBuffer
-   * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
+  /**
+   * @brief takes a json tuple as string, parses it using cpprest and calls
+   * Parser::writeFieldValueToTupleBuffer() for every value in the tuple
+   * @param jsonTuple: string value that is cast to the PhysicalType and written
+   * to the TupleBuffer
+   * @param tupleCount: the number of tuples already written to the current
+   * TupleBuffer
+   * @param tupleBuffer: the TupleBuffer to which the value is written
+   * containing the currently chosen memory layout
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    bool writeInputTupleToTupleBuffer(std::string_view jsonTuple,
-                                      uint64_t tupleCount,
-                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                      const SchemaPtr& schema,
-                                      const Runtime::BufferManagerPtr& bufferManager) override;
+  bool writeInputTupleToTupleBuffer(
+      std::string_view jsonTuple, uint64_t tupleCount,
+      Runtime::MemoryLayouts::TestTupleBuffer &tupleBuffer,
+      const SchemaPtr &schema,
+      const Runtime::BufferManagerPtr &bufferManager) override;
 
-  private:
-    uint64_t numberOfSchemaFields;
-    std::vector<std::string> schemaKeys;
-    std::vector<NES::PhysicalTypePtr> physicalTypes;
+private:
+  uint64_t numberOfSchemaFields;
+  std::vector<std::string> schemaKeys;
+  std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

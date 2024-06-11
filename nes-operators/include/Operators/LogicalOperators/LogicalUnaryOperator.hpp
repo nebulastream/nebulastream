@@ -24,22 +24,24 @@ namespace NES {
  */
 class LogicalUnaryOperator : public LogicalOperator, public UnaryOperator {
 
-  public:
-    explicit LogicalUnaryOperator(OperatorId id);
+public:
+  explicit LogicalUnaryOperator(OperatorId id);
 
-    /**
-    * @brief infers the input and out schema of this operator depending on its child.
-    * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
-    * @param typeInferencePhaseContext needed for stamp inferring
-    * @return true if schema was correctly inferred
-    */
-    bool inferSchema() override;
+  /**
+   * @brief infers the input and out schema of this operator depending on its
+   * child.
+   * @throws Exception if the schema could not be infers correctly or if the
+   * inferred types are not valid.
+   * @param typeInferencePhaseContext needed for stamp inferring
+   * @return true if schema was correctly inferred
+   */
+  bool inferSchema() override;
 
-    /**
-     * @brief infers the origin id from the child operator.
-     */
-    void inferInputOrigins() override;
+  /**
+   * @brief infers the origin id from the child operator.
+   */
+  void inferInputOrigins() override;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_

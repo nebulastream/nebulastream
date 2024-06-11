@@ -23,13 +23,13 @@ namespace NES::Runtime::Execution::Expressions {
  * @brief This expression cos the Expression
  */
 class CosExpression : public Expression {
-  public:
-    explicit CosExpression(const ExpressionPtr& leftSubExpression);
-    Value<> execute(Record& record) const override;
+public:
+  explicit CosExpression(const ExpressionPtr &leftSubExpression);
+  Value<> execute(Record &record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
+private:
+  const ExpressionPtr leftSubExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COSEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_COSEXPRESSION_HPP_

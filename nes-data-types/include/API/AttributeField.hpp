@@ -32,38 +32,39 @@ using AttributeFieldPtr = std::shared_ptr<AttributeField>;
  * @brief Represents a typed field in a schema.
  */
 class AttributeField {
-  public:
-    AttributeField() = default;
-    AttributeField(std::string name, DataTypePtr dataType);
+public:
+  AttributeField() = default;
+  AttributeField(std::string name, DataTypePtr dataType);
 
-    /**
-     * @brief Factory method to create a new field
-     * @param name name of the field
-     * @param dataType data type
-     * @return AttributeFieldPtr
-     */
-    static AttributeFieldPtr create(const std::string& name, const DataTypePtr& dataType);
+  /**
+   * @brief Factory method to create a new field
+   * @param name name of the field
+   * @param dataType data type
+   * @return AttributeFieldPtr
+   */
+  static AttributeFieldPtr create(const std::string &name,
+                                  const DataTypePtr &dataType);
 
-    [[nodiscard]] DataTypePtr getDataType() const;
+  [[nodiscard]] DataTypePtr getDataType() const;
 
-    [[nodiscard]] const std::string& getName() const;
+  [[nodiscard]] const std::string &getName() const;
 
-    void setName(std::string newName);
+  void setName(std::string newName);
 
-    [[nodiscard]] std::string toString() const;
-    bool isEqual(const AttributeFieldPtr& attr) const;
+  [[nodiscard]] std::string toString() const;
+  bool isEqual(const AttributeFieldPtr &attr) const;
 
-    uint64_t hash() const;
-    /**
-     * @brief Make copy of this attribute
-     * @return shared pointer
-     */
-    AttributeFieldPtr copy() const;
+  uint64_t hash() const;
+  /**
+   * @brief Make copy of this attribute
+   * @return shared pointer
+   */
+  AttributeFieldPtr copy() const;
 
-  private:
-    std::string name;
-    DataTypePtr dataType;
+private:
+  std::string name;
+  DataTypePtr dataType;
 };
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_

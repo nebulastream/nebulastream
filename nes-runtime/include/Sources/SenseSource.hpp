@@ -24,64 +24,63 @@ namespace NES {
  * @brief this class implement the CSV as an input source
  */
 class SenseSource : public DataSource {
-  public:
-    /**
-     * @brief constructor of sense source
-     * @param schema the schema of the source
-     * @param bufferManager pointer to the buffer manager
-     * @param queryManager pointer to the query manager
-     * @param udfs to apply
-     * @param operatorId current operator id
-     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-     * @param statisticId represents the unique identifier of components that we can track statistics for
-     * @param numSourceLocalBuffers the number of buffers allocated to a source
-     * @param physicalSourceName
-     * @param successors the subsequent operators in the pipeline to which the data is pushed
-     */
-    explicit SenseSource(SchemaPtr schema,
-                         Runtime::BufferManagerPtr bufferManager,
-                         Runtime::QueryManagerPtr queryManager,
-                         std::string udfs,
-                         OperatorId operatorId,
-                         OriginId originId,
-                         StatisticId statisticId,
-                         size_t numSourceLocalBuffers,
-                         const std::string& physicalSourceName,
-                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+public:
+  /**
+   * @brief constructor of sense source
+   * @param schema the schema of the source
+   * @param bufferManager pointer to the buffer manager
+   * @param queryManager pointer to the query manager
+   * @param udfs to apply
+   * @param operatorId current operator id
+   * @param originId represents the identifier of the upstream operator that
+   * represents the origin of the input stream
+   * @param statisticId represents the unique identifier of components that we
+   * can track statistics for
+   * @param numSourceLocalBuffers the number of buffers allocated to a source
+   * @param physicalSourceName
+   * @param successors the subsequent operators in the pipeline to which the
+   * data is pushed
+   */
+  explicit SenseSource(
+      SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
+      Runtime::QueryManagerPtr queryManager, std::string udfs,
+      OperatorId operatorId, OriginId originId, StatisticId statisticId,
+      size_t numSourceLocalBuffers, const std::string &physicalSourceName,
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
-    /**
+  /**
    * @brief override the receiveData method for the source
    * @return returns a buffer if available
    */
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+  std::optional<Runtime::TupleBuffer> receiveData() override;
 
-    /**
+  /**
    *  @brief method to fill the buffer with tuples
    *  @param buffer to be filled
    */
-    void fillBuffer(Runtime::TupleBuffer&);
+  void fillBuffer(Runtime::TupleBuffer &);
 
-    /**
-     * @brief override the toString method for the csv source
-     * @return returns string describing the binary source
-     */
-    std::string toString() const override;
+  /**
+   * @brief override the toString method for the csv source
+   * @return returns string describing the binary source
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief Get source type
-     */
-    SourceType getType() const override;
+  /**
+   * @brief Get source type
+   */
+  SourceType getType() const override;
 
-    /**
-     * @brief Get UDFs for sense
-     */
-    const std::string& getUdfs() const;
+  /**
+   * @brief Get UDFs for sense
+   */
+  const std::string &getUdfs() const;
 
-  private:
-    std::string udfs;
+private:
+  std::string udfs;
 };
 
 using SenseSourcePtr = std::shared_ptr<SenseSource>;
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_SENSESOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_SENSESOURCE_HPP_

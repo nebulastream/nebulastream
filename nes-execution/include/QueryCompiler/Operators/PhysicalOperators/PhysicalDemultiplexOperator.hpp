@@ -19,9 +19,9 @@ namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief The physical demultiplex operator
- * This operator receives one data source form its upstream operator and forwards it to multiple down-stream operators.
- * Thus it has one child node and multiple parent nodes.
- * Example query plan:
+ * This operator receives one data source form its upstream operator and
+ * forwards it to multiple down-stream operators. Thus it has one child node and
+ * multiple parent nodes. Example query plan:
  *                                             --- OperatorY --- Sink
  *                                           /
  * --- Data --- OperatorX --- Demultiplex ---
@@ -29,13 +29,16 @@ namespace NES::QueryCompilation::PhysicalOperators {
  *                                            --- Sink
  */
 class PhysicalDemultiplexOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, SchemaPtr const& inputSchema);
-    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, SchemaPtr const& inputSchema);
-    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema);
-    [[nodiscard]] std::string toString() const override;
-    OperatorPtr copy() override;
+public:
+  PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId,
+                              SchemaPtr const &inputSchema);
+  static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId,
+                                    SchemaPtr const &inputSchema);
+  static PhysicalOperatorPtr create(StatisticId statisticId,
+                                    SchemaPtr inputSchema);
+  [[nodiscard]] std::string toString() const override;
+  OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_

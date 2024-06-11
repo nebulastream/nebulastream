@@ -20,125 +20,130 @@
 
 namespace NES::Nautilus {
 /**
-* @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
-*/
+ * @brief TimeStamp data type. Customized data type, currently simply holds the
+ * timestamp as milliseconds.
+ */
 class TimeStamp : public Any {
-  public:
-    static const inline auto type = TypeIdentifier::create<TimeStamp>();
+public:
+  static const inline auto type = TypeIdentifier::create<TimeStamp>();
 
-    TimeStamp(Value<> milliseconds);
-    Nautilus::IR::Types::StampPtr getType() const override;
-    AnyPtr copy() override;
-    std::string toString() override;
+  TimeStamp(Value<> milliseconds);
+  Nautilus::IR::Types::StampPtr getType() const override;
+  AnyPtr copy() override;
+  std::string toString() override;
 
-    /**
-    * @brief Addition of two TimeStamps, i.e., their milliseconds
-    * @param other the TimeStamp to add to this TimeStamp instance
-    */
-    AnyPtr add(const TimeStamp& other) const;
-    /**
-    * @brief Substraction of two TimeStamps, i.e., their milliseconds
-    * @param other the TimeStamp to substract to this TimeStamp instance
-    */
-    AnyPtr substract(const TimeStamp& other) const;
+  /**
+   * @brief Addition of two TimeStamps, i.e., their milliseconds
+   * @param other the TimeStamp to add to this TimeStamp instance
+   */
+  AnyPtr add(const TimeStamp &other) const;
+  /**
+   * @brief Substraction of two TimeStamps, i.e., their milliseconds
+   * @param other the TimeStamp to substract to this TimeStamp instance
+   */
+  AnyPtr substract(const TimeStamp &other) const;
 
-    /**
-    * @brief Tests if this TimeStamp Value is equal to the other TimeSTamp Value
-    * @param other the other TimeStamp
-    */
-    std::shared_ptr<Boolean> equals(const TimeStamp& other) const;
+  /**
+   * @brief Tests if this TimeStamp Value is equal to the other TimeSTamp Value
+   * @param other the other TimeStamp
+   */
+  std::shared_ptr<Boolean> equals(const TimeStamp &other) const;
 
-    /**
-    * @brief Tests if this TimeStamp Value is less than the other TimeSTamp Value
-    * @param other the other TimeStamp
-    */
-    std::shared_ptr<Boolean> lessThan(const TimeStamp& other) const;
+  /**
+   * @brief Tests if this TimeStamp Value is less than the other TimeSTamp Value
+   * @param other the other TimeStamp
+   */
+  std::shared_ptr<Boolean> lessThan(const TimeStamp &other) const;
 
-    /**
-    * @brief Tests if this TimeStamp Value is greater than the other TimeSTamp Value
-    * @param other the other TimeStamp
-    */
-    std::shared_ptr<Boolean> greaterThan(const TimeStamp& other) const;
+  /**
+   * @brief Tests if this TimeStamp Value is greater than the other TimeSTamp
+   * Value
+   * @param other the other TimeStamp
+   */
+  std::shared_ptr<Boolean> greaterThan(const TimeStamp &other) const;
 
-    /**
-    * @brief Returns the Milliseconds of the TimeStamp
-    */
-    Value<> getMilliSeconds();
+  /**
+   * @brief Returns the Milliseconds of the TimeStamp
+   */
+  Value<> getMilliSeconds();
 
-    /**
-    * @brief Returns the Seconds of the TimeStamp
-    */
-    Value<> getSeconds();
+  /**
+   * @brief Returns the Seconds of the TimeStamp
+   */
+  Value<> getSeconds();
 
-    /**
-    * @brief Returns the Minutes of the TimeStamp
-    */
-    Value<> getMinutes();
+  /**
+   * @brief Returns the Minutes of the TimeStamp
+   */
+  Value<> getMinutes();
 
-    /**
-    * @brief Returns the Hours of the TimeStamp
-    */
-    Value<> getHours();
+  /**
+   * @brief Returns the Hours of the TimeStamp
+   */
+  Value<> getHours();
 
-    /**
-    * @brief Returns the Day of the TimeStamp
-    */
-    Value<> getDays();
+  /**
+   * @brief Returns the Day of the TimeStamp
+   */
+  Value<> getDays();
 
-    /**
-    * @brief Returns the Month of the TimeStamp
-    */
-    Value<> getMonths();
+  /**
+   * @brief Returns the Month of the TimeStamp
+   */
+  Value<> getMonths();
 
-    /**
-    * @brief Returns the Year of the TimeStamp
-    */
-    Value<> getYears();
+  /**
+   * @brief Returns the Year of the TimeStamp
+   */
+  Value<> getYears();
 
-    /**
-    * @brief Returns the TimeStamp value, i.e., the milliseconds
-    */
-    Value<> getValue();
+  /**
+   * @brief Returns the TimeStamp value, i.e., the milliseconds
+   */
+  Value<> getValue();
 
-    /**
-    * @brief Returns the century of the TimeStamp
-    */
-    Value<> century();
-    /**
-    * @brief Returns The (English) name of the weekday
-    */
+  /**
+   * @brief Returns the century of the TimeStamp
+   */
+  Value<> century();
+  /**
+   * @brief Returns The (English) name of the weekday
+   */
 
-    Value<Text> getWeekdayName();
-    /**
-    * @brief Returns The (English) name of the month
-    */
+  Value<Text> getWeekdayName();
+  /**
+   * @brief Returns The (English) name of the month
+   */
 
-    Value<Text> getMonthName();
-    /**
-    * @brief Returns the time difference between now and this timestamp (Subtract arguments: now - this timestamp)
-    */
-    Value<> age();
+  Value<Text> getMonthName();
+  /**
+   * @brief Returns the time difference between now and this timestamp (Subtract
+   * arguments: now - this timestamp)
+   */
+  Value<> age();
 
-    /**
-    * @brief Returns the time difference between the two timestamps (Subtract arguments: other date - this timestamp)
-    * @param other the other TimeStamp to substract from
-    */
-    Value<> difference(Value<TimeStamp>& other);
+  /**
+   * @brief Returns the time difference between the two timestamps (Subtract
+   * arguments: other date - this timestamp)
+   * @param other the other TimeStamp to substract from
+   */
+  Value<> difference(Value<TimeStamp> &other);
 
-    /**
-    * @brief Transforms a string in the format "YYYY-MM-DDTHH:MM:SS" to milliseconds
-    * @param textValue the TimeStamp String in the format "YYYY-MM-DDTHH:MM:SS"
-    */
-    Value<UInt64> stringtomilliseconds(Value<Text> textValue);
-    /**
-    * @brief Changes a milliseconds into intervall
-    */
-    Value<Text> interval();
+  /**
+   * @brief Transforms a string in the format "YYYY-MM-DDTHH:MM:SS" to
+   * milliseconds
+   * @param textValue the TimeStamp String in the format "YYYY-MM-DDTHH:MM:SS"
+   */
+  Value<UInt64> stringtomilliseconds(Value<Text> textValue);
+  /**
+   * @brief Changes a milliseconds into intervall
+   */
+  Value<Text> interval();
 
-  private:
-    Value<> milliseconds;
+private:
+  Value<> milliseconds;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_

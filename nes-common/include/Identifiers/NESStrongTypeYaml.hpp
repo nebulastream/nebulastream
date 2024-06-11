@@ -19,33 +19,33 @@
 
 /**
  * Adds NESStrongType overloads for the yaml library.
- * This allows assignements of Yaml values with identifiers. This also directly enables Identifiers to be used within the
- * Configuration classes, e.g. `ScalarOption<WorkerId>`
+ * This allows assignements of Yaml values with identifiers. This also directly
+ * enables Identifiers to be used within the Configuration classes, e.g.
+ * `ScalarOption<WorkerId>`
  */
 namespace Yaml {
 namespace impl {
-template<NES::NESIdentifier T>
-struct StringConverter<T> {
-    static T Get(const std::string& data) {
-        typename T::Underlying type;
-        std::stringstream ss(data);
-        ss >> type;
-        return T(type);
+template <NES::NESIdentifier T> struct StringConverter<T> {
+  static T Get(const std::string &data) {
+    typename T::Underlying type;
+    std::stringstream ss(data);
+    ss >> type;
+    return T(type);
+  }
+
+  static T Get(const std::string &data, const T &defaultValue) {
+    typename T::Underlying type;
+    std::stringstream ss(data);
+    ss >> type;
+
+    if (ss.fail()) {
+      return defaultValue;
     }
 
-    static T Get(const std::string& data, const T& defaultValue) {
-        typename T::Underlying type;
-        std::stringstream ss(data);
-        ss >> type;
-
-        if (ss.fail()) {
-            return defaultValue;
-        }
-
-        return T(type);
-    }
+    return T(type);
+  }
 };
-}// namespace impl
-}// namespace Yaml
+} // namespace impl
+} // namespace Yaml
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEYAML_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEYAML_HPP_

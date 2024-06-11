@@ -20,47 +20,45 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief Physical Source operator.
  */
-class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
-  public:
-    PhysicalSourceOperator(OperatorId id,
-                           StatisticId statisticId,
-                           OriginId originId,
-                           SchemaPtr inputSchema,
-                           SchemaPtr outputSchema,
-                           SourceDescriptorPtr sourceDescriptor);
-    static std::shared_ptr<PhysicalSourceOperator> create(OperatorId id,
-                                                          StatisticId statisticId,
-                                                          OriginId originId,
-                                                          const SchemaPtr& inputSchema,
-                                                          const SchemaPtr& outputSchema,
-                                                          const SourceDescriptorPtr& sourceDescriptor);
-    static std::shared_ptr<PhysicalSourceOperator>
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+class PhysicalSourceOperator : public PhysicalUnaryOperator,
+                               public AbstractScanOperator {
+public:
+  PhysicalSourceOperator(OperatorId id, StatisticId statisticId,
+                         OriginId originId, SchemaPtr inputSchema,
+                         SchemaPtr outputSchema,
+                         SourceDescriptorPtr sourceDescriptor);
+  static std::shared_ptr<PhysicalSourceOperator>
+  create(OperatorId id, StatisticId statisticId, OriginId originId,
+         const SchemaPtr &inputSchema, const SchemaPtr &outputSchema,
+         const SourceDescriptorPtr &sourceDescriptor);
+  static std::shared_ptr<PhysicalSourceOperator>
+  create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema,
+         SourceDescriptorPtr sourceDescriptor);
 
-    /**
-     * @brief Gets the source descriptor for this source operator
-     * @return SourceDescriptorPtr
-     */
-    SourceDescriptorPtr getSourceDescriptor();
+  /**
+   * @brief Gets the source descriptor for this source operator
+   * @return SourceDescriptorPtr
+   */
+  SourceDescriptorPtr getSourceDescriptor();
 
-    /**
-     * @brief Sets the origin id for this source operator
-     * @param originId
-     */
-    void setOriginId(OriginId originId);
+  /**
+   * @brief Sets the origin id for this source operator
+   * @param originId
+   */
+  void setOriginId(OriginId originId);
 
-    /**
-     * @brief Gets the origin id
-     * @return OriginId
-     */
-    OriginId getOriginId();
-    std::string toString() const override;
-    OperatorPtr copy() override;
+  /**
+   * @brief Gets the origin id
+   * @return OriginId
+   */
+  OriginId getOriginId();
+  std::string toString() const override;
+  OperatorPtr copy() override;
 
-  private:
-    SourceDescriptorPtr sourceDescriptor;
-    OriginId originId;
+private:
+  SourceDescriptorPtr sourceDescriptor;
+  OriginId originId;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSOURCEOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSOURCEOPERATOR_HPP_

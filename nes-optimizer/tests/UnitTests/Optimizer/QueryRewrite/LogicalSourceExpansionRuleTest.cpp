@@ -46,227 +46,282 @@ using namespace Configurations;
 
 class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest {
 
-  public:
-    SchemaPtr schema;
+public:
+  SchemaPtr schema;
 
-    /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
-    }
+  /* Will be called before all tests in this class are started. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("LogicalSourceExpansionRuleTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    schema = Schema::create()
+                 ->addField("id", BasicType::UINT32)
+                 ->addField("value", BasicType::UINT64);
+  }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
-        std::map<std::string, std::any> properties;
-        properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+  void setupSensorNodeAndSourceCatalog(
+      const Catalogs::Source::SourceCatalogPtr &sourceCatalog) {
+    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
+        NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr physicalNode1 = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
-        TopologyNodePtr physicalNode2 = TopologyNode::create(WorkerId(2), "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode1 = TopologyNode::create(
+        WorkerId(1), "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode2 = TopologyNode::create(
+        WorkerId(2), "localhost", 4000, 4002, 4, properties);
 
-        auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
-        PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-        LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-        auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode1->getId());
-        auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode2->getId());
-        sourceCatalog->addPhysicalSource("default_logical", sce1);
-        sourceCatalog->addPhysicalSource("default_logical", sce2);
-    }
+    auto csvSourceType =
+        CSVSourceType::create("default_logical", "test_stream");
+    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
+    LogicalSourcePtr logicalSource =
+        LogicalSource::create("default_logical", Schema::create());
+    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(
+        physicalSource, logicalSource, physicalNode1->getId());
+    auto sce2 = Catalogs::Source::SourceCatalogEntry::create(
+        physicalSource, logicalSource, physicalNode2->getId());
+    sourceCatalog->addPhysicalSource("default_logical", sce1);
+    sourceCatalog->addPhysicalSource("default_logical", sce2);
+  }
 };
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+TEST_F(LogicalSourceExpansionRuleTest,
+       testLogicalSourceExpansionRuleForQueryWithJustSource) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    const std::string logicalSourceName = "default_logical";
-    Query query = Query::from(logicalSourceName).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan = query.getQueryPlan();
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  const std::string logicalSourceName = "default_logical";
+  Query query = Query::from(logicalSourceName).sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
-    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+  // Execute
+  auto logicalSourceExpansionRule =
+      Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+  const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
-    // Validate
-    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
-    EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 1u);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2u);
+  // Validate
+  std::vector<WorkerId> sourceTopologyNodes =
+      sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+  EXPECT_EQ(updatedPlan->getSourceOperators().size(),
+            sourceTopologyNodes.size());
+  std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
+  EXPECT_EQ(rootOperators.size(), 1u);
+  EXPECT_EQ(rootOperators[0]->getChildren().size(), 2u);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
-    const std::string logicalSourceName = "default_logical";
+TEST_F(LogicalSourceExpansionRuleTest,
+       testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
+  const std::string logicalSourceName = "default_logical";
 
-    // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(logicalSourceName));
+  // Prepare
+  auto sourceOperator = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create(logicalSourceName));
 
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto sinkOperator1 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    auto sinkOperator2 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  auto sinkOperator2 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    sinkOperator1->addChild(sourceOperator);
-    sinkOperator2->addChild(sourceOperator);
+  sinkOperator1->addChild(sourceOperator);
+  sinkOperator2->addChild(sourceOperator);
 
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    queryPlan->addRootOperator(sinkOperator1);
-    queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
+  QueryPlanPtr queryPlan = QueryPlan::create();
+  queryPlan->addRootOperator(sinkOperator1);
+  queryPlan->addRootOperator(sinkOperator2);
+  QueryId queryId = PlanIdGenerator::getNextQueryId();
+  queryPlan->setQueryId(queryId);
 
-    // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
-    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+  // Execute
+  auto logicalSourceExpansionRule =
+      Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+  const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
-    // Validate
-    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
-    EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 2U);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
+  // Validate
+  std::vector<WorkerId> sourceTopologyNodes =
+      sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+  EXPECT_EQ(updatedPlan->getSourceOperators().size(),
+            sourceTopologyNodes.size());
+  std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
+  EXPECT_EQ(rootOperators.size(), 2U);
+  EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
-    const std::string logicalSourceName = "default_logical";
+TEST_F(LogicalSourceExpansionRuleTest,
+       testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
+  const std::string logicalSourceName = "default_logical";
 
-    // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(logicalSourceName));
+  // Prepare
+  auto sourceOperator = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create(logicalSourceName));
 
-    auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
-    filterOperator->addChild(sourceOperator);
+  auto filterOperator =
+      LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
+  filterOperator->addChild(sourceOperator);
 
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto sinkOperator1 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    auto sinkOperator2 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  auto sinkOperator2 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    sinkOperator1->addChild(filterOperator);
-    sinkOperator2->addChild(filterOperator);
+  sinkOperator1->addChild(filterOperator);
+  sinkOperator2->addChild(filterOperator);
 
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    queryPlan->addRootOperator(sinkOperator1);
-    queryPlan->addRootOperator(sinkOperator2);
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
+  QueryPlanPtr queryPlan = QueryPlan::create();
+  queryPlan->addRootOperator(sinkOperator1);
+  queryPlan->addRootOperator(sinkOperator2);
+  QueryId queryId = PlanIdGenerator::getNextQueryId();
+  queryPlan->setQueryId(queryId);
 
-    // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
-    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+  // Execute
+  auto logicalSourceExpansionRule =
+      Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+  const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
-    // Validate
-    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
-    EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 2U);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
+  // Validate
+  std::vector<WorkerId> sourceTopologyNodes =
+      sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+  EXPECT_EQ(updatedPlan->getSourceOperators().size(),
+            sourceTopologyNodes.size());
+  std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
+  EXPECT_EQ(rootOperators.size(), 2U);
+  EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFilterAndMap) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+TEST_F(LogicalSourceExpansionRuleTest,
+       testLogicalSourceExpansionRuleForQueryWithFilterAndMap) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    const std::string logicalSourceName = "default_logical";
-    Query query =
-        Query::from(logicalSourceName).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan = query.getQueryPlan();
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  const std::string logicalSourceName = "default_logical";
+  Query query = Query::from(logicalSourceName)
+                    .map(Attribute("value") = 40)
+                    .filter(Attribute("id") < 45)
+                    .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
-    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+  // Execute
+  auto logicalSourceExpansionRule =
+      Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+  const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
-    // Validate
-    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
-    EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 1U);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
+  // Validate
+  std::vector<WorkerId> sourceTopologyNodes =
+      sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+  EXPECT_EQ(updatedPlan->getSourceOperators().size(),
+            sourceTopologyNodes.size());
+  std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
+  EXPECT_EQ(rootOperators.size(), 1U);
+  EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithUnionOperator) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+TEST_F(LogicalSourceExpansionRuleTest,
+       testLogicalSourceExpansionRuleForQueryWithUnionOperator) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    const std::string logicalSourceName = "default_logical";
-    Query subQuery = Query::from(logicalSourceName).map(Attribute("value") = 50);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  const std::string logicalSourceName = "default_logical";
+  Query subQuery = Query::from(logicalSourceName).map(Attribute("value") = 50);
 
-    Query query = Query::from(logicalSourceName)
-                      .map(Attribute("value") = 40)
-                      .unionWith(subQuery)
-                      .filter(Attribute("id") < 45)
-                      .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan = query.getQueryPlan();
+  Query query = Query::from(logicalSourceName)
+                    .map(Attribute("value") = 40)
+                    .unionWith(subQuery)
+                    .filter(Attribute("id") < 45)
+                    .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
-    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+  // Execute
+  auto logicalSourceExpansionRule =
+      Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+  const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
-    // Validate
-    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
-    EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size() * 2);
-    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 1U);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
-    auto mergeOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(mergeOperators.size(), 1U);
-    EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4U);
+  // Validate
+  std::vector<WorkerId> sourceTopologyNodes =
+      sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+  EXPECT_EQ(updatedPlan->getSourceOperators().size(),
+            sourceTopologyNodes.size() * 2);
+  std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
+  EXPECT_EQ(rootOperators.size(), 1U);
+  EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
+  auto mergeOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(mergeOperators.size(), 1U);
+  EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFlatMapOperator) {
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+TEST_F(LogicalSourceExpansionRuleTest,
+       testLogicalSourceExpansionRuleForQueryWithFlatMapOperator) {
+  auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    // Prepare
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
-    const std::string logicalSourceName = "default_logical";
-    auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
-    auto javaUDFDescriptor =
-        Catalogs::UDF::JavaUDFDescriptorBuilder{}
-            .setClassName("stream.nebula.IntegerFlatMapFunction")
-            .setMethodName("flatMap")
-            .setInstance({})
-            .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.IntegerFlatMapFunction", {}}})
-            .setInputSchema(udfSchema)
-            .setOutputSchema(udfSchema)
-            .setInputClassName("java.lang.Integer")
-            .setOutputClassName("java.util.Collection")
-            .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-            .build();
+  // Prepare
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
+  const std::string logicalSourceName = "default_logical";
+  auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
+  auto javaUDFDescriptor =
+      Catalogs::UDF::JavaUDFDescriptorBuilder{}
+          .setClassName("stream.nebula.IntegerFlatMapFunction")
+          .setMethodName("flatMap")
+          .setInstance({})
+          .setByteCodeList({{"stream.nebula.FlatMapFunction", {}},
+                            {"stream.nebula.IntegerFlatMapFunction", {}}})
+          .setInputSchema(udfSchema)
+          .setOutputSchema(udfSchema)
+          .setInputClassName("java.lang.Integer")
+          .setOutputClassName("java.util.Collection")
+          .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+          .build();
 
-    auto query = Query::from(logicalSourceName).mapUDF(javaUDFDescriptor).flatMapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
-    auto queryPlan = query.getQueryPlan();
+  auto query = Query::from(logicalSourceName)
+                   .mapUDF(javaUDFDescriptor)
+                   .flatMapUDF(javaUDFDescriptor)
+                   .sink(printSinkDescriptor);
+  auto queryPlan = query.getQueryPlan();
 
-    // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
-    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+  // Execute
+  auto logicalSourceExpansionRule =
+      Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+  const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
-    // Validate
-    auto sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
-    EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    auto rootOperators = updatedPlan->getRootOperators();
-    EXPECT_EQ(rootOperators.size(), 1U);
-    EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
-    auto flatMapOperators = queryPlan->getOperatorByType<FlatMapUDFLogicalOperator>();
-    EXPECT_EQ(flatMapOperators.size(), 1U);
-    EXPECT_EQ(flatMapOperators[0]->getChildren().size(), 2U);
+  // Validate
+  auto sourceTopologyNodes =
+      sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+  EXPECT_EQ(updatedPlan->getSourceOperators().size(),
+            sourceTopologyNodes.size());
+  auto rootOperators = updatedPlan->getRootOperators();
+  EXPECT_EQ(rootOperators.size(), 1U);
+  EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
+  auto flatMapOperators =
+      queryPlan->getOperatorByType<FlatMapUDFLogicalOperator>();
+  EXPECT_EQ(flatMapOperators.size(), 1U);
+  EXPECT_EQ(flatMapOperators[0]->getChildren().size(), 2U);
 
-    //Validate that FlatMap is connected to two map logical operators
-    for (const auto& childOperator : flatMapOperators[0]->getChildren()) {
-        EXPECT_TRUE(childOperator->as_if<LogicalOperator>()->instanceOf<MapUDFLogicalOperator>());
-    }
+  // Validate that FlatMap is connected to two map logical operators
+  for (const auto &childOperator : flatMapOperators[0]->getChildren()) {
+    EXPECT_TRUE(childOperator->as_if<LogicalOperator>()
+                    ->instanceOf<MapUDFLogicalOperator>());
+  }
 }

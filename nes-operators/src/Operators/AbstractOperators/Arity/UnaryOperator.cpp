@@ -23,34 +23,40 @@ namespace NES {
 UnaryOperator::UnaryOperator(OperatorId id) : Operator(id) {}
 
 void UnaryOperator::setInputSchema(SchemaPtr inputSchema) {
-    if (inputSchema) {
-        this->inputSchema = std::move(inputSchema);
-    }
+  if (inputSchema) {
+    this->inputSchema = std::move(inputSchema);
+  }
 }
 
 void UnaryOperator::setOutputSchema(SchemaPtr outputSchema) {
-    if (outputSchema) {
-        this->outputSchema = std::move(outputSchema);
-    }
+  if (outputSchema) {
+    this->outputSchema = std::move(outputSchema);
+  }
 }
 
 SchemaPtr UnaryOperator::getInputSchema() const { return inputSchema; }
 
 SchemaPtr UnaryOperator::getOutputSchema() const { return outputSchema; }
 
-void UnaryOperator::setInputOriginIds(const std::vector<OriginId>& originIds) { this->inputOriginIds = originIds; }
-
-std::vector<OriginId> UnaryOperator::getInputOriginIds() const { return inputOriginIds; }
-
-std::vector<OriginId> UnaryOperator::getOutputOriginIds() const { return inputOriginIds; }
-
-std::string UnaryOperator::toString() const {
-    return fmt::format("inputSchema: {}\n"
-                       "outputSchema: {}\n"
-                       "inputOriginIds: {}",
-                       inputSchema->toString(),
-                       outputSchema->toString(),
-                       fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+void UnaryOperator::setInputOriginIds(const std::vector<OriginId> &originIds) {
+  this->inputOriginIds = originIds;
 }
 
-}// namespace NES
+std::vector<OriginId> UnaryOperator::getInputOriginIds() const {
+  return inputOriginIds;
+}
+
+std::vector<OriginId> UnaryOperator::getOutputOriginIds() const {
+  return inputOriginIds;
+}
+
+std::string UnaryOperator::toString() const {
+  return fmt::format(
+      "inputSchema: {}\n"
+      "outputSchema: {}\n"
+      "inputOriginIds: {}",
+      inputSchema->toString(), outputSchema->toString(),
+      fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+}
+
+} // namespace NES

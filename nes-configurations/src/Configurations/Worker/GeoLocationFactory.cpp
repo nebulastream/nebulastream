@@ -20,25 +20,30 @@
 namespace NES::Configurations::Spatial::Index::Experimental {
 
 NES::Spatial::DataTypes::Experimental::GeoLocation
-GeoLocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
-    std::string coordStr;
-    for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
-        if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
-            coordStr = it->second;
-        }
+GeoLocationFactory::createFromString(
+    std::string, std::map<std::string, std::string> &commandLineParams) {
+  std::string coordStr;
+  for (auto it = commandLineParams.begin(); it != commandLineParams.end();
+       ++it) {
+    if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
+      coordStr = it->second;
     }
-    //if the input string is empty, construct an invalid location
-    if (coordStr.empty()) {
-        return {200, 200};
-    }
-    return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(std::move(coordStr));
+  }
+  // if the input string is empty, construct an invalid location
+  if (coordStr.empty()) {
+    return {200, 200};
+  }
+  return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(
+      std::move(coordStr));
 }
 
-NES::Spatial::DataTypes::Experimental::GeoLocation GeoLocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
-    auto configString = yamlConfig.As<std::string>();
-    if (!configString.empty() && configString != "\n") {
-        return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(configString);
-    }
-    return {};
+NES::Spatial::DataTypes::Experimental::GeoLocation
+GeoLocationFactory::createFromYaml(Yaml::Node &yamlConfig) {
+  auto configString = yamlConfig.As<std::string>();
+  if (!configString.empty() && configString != "\n") {
+    return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(
+        configString);
+  }
+  return {};
 }
-}//namespace NES::Configurations::Spatial::Index::Experimental
+} // namespace NES::Configurations::Spatial::Index::Experimental

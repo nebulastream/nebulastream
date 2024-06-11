@@ -26,22 +26,24 @@ using TopologyPtr = std::shared_ptr<Topology>;
 namespace Catalogs::Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
+} // namespace Catalogs::Source
 
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class PlacementAmendmentInstance;
-using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
+using PlacementAmendmentInstancePtr =
+    std::shared_ptr<PlacementAmendmentInstance>;
 
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
-}// namespace Optimizer
+using UMPMCAmendmentQueuePtr = std::shared_ptr<
+    folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
+} // namespace Optimizer
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -49,43 +51,45 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 namespace Catalogs::UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
 namespace Statistic {
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-}// namespace Statistic
+} // namespace Statistic
 
 namespace RequestProcessor {
 /**
- * @brief This struct contains smart pointers to the data structures which coordinator requests operate on.
+ * @brief This struct contains smart pointers to the data structures which
+ * coordinator requests operate on.
  */
 struct StorageDataStructures {
-    StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                          TopologyPtr topology,
-                          Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                          GlobalQueryPlanPtr globalQueryPlan,
-                          Catalogs::Query::QueryCatalogPtr queryCatalog,
-                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                          Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                          Optimizer::UMPMCAmendmentQueuePtr amendmentQueue,
-                          Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
+  StorageDataStructures(
+      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+      TopologyPtr topology,
+      Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+      GlobalQueryPlanPtr globalQueryPlan,
+      Catalogs::Query::QueryCatalogPtr queryCatalog,
+      Catalogs::Source::SourceCatalogPtr sourceCatalog,
+      Catalogs::UDF::UDFCatalogPtr udfCatalog,
+      Optimizer::UMPMCAmendmentQueuePtr amendmentQueue,
+      Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
 
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    TopologyPtr topology;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    GlobalQueryPlanPtr globalQueryPlan;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
-    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
+  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+  TopologyPtr topology;
+  Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+  GlobalQueryPlanPtr globalQueryPlan;
+  Catalogs::Query::QueryCatalogPtr queryCatalog;
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
+  Catalogs::UDF::UDFCatalogPtr udfCatalog;
+  Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
+  Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_

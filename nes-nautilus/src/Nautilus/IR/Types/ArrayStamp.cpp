@@ -18,9 +18,11 @@ namespace NES::Nautilus::IR::Types {
 ArrayStamp::ArrayStamp(const uint64_t size, StampPtr componentStamp)
     : Stamp(&type), size(size), componentStamp(std::move(componentStamp)) {}
 
-const StampPtr& ArrayStamp::getComponentStamp() const { return componentStamp; }
+const StampPtr &ArrayStamp::getComponentStamp() const { return componentStamp; }
 
 uint64_t ArrayStamp::getSize() const { return size; }
-const std::string ArrayStamp::toString() const { return componentStamp->toString() + "[" + std::to_string(size) + "]"; }
+const std::string ArrayStamp::toString() const {
+  return componentStamp->toString() + "[" + std::to_string(size) + "]";
+}
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types

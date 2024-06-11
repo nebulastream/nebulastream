@@ -18,15 +18,15 @@ namespace NES::Nautilus::Tracing {
 
 BlockRef::BlockRef(uint32_t block) : block(block) {}
 
-std::ostream& operator<<(std::ostream& os, const BlockRef& block) {
-    os << "Block" << block.block << "(";
-    for (auto argument : block.arguments) {
-        os << argument << ",";
-    }
+std::ostream &operator<<(std::ostream &os, const BlockRef &block) {
+  os << "Block" << block.block << "(";
+  for (auto argument : block.arguments) {
+    os << argument << ",";
+  }
 
-    os << ")";
+  os << ")";
 
-    return os;
+  return os;
 }
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

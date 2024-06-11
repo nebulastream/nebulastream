@@ -26,109 +26,113 @@ class TupleBuffer;
 }
 
 /**
- * @brief Descriptor defining properties used for creating physical memory source
+ * @brief Descriptor defining properties used for creating physical memory
+ * source
  */
 class LambdaSourceDescriptor : public SourceDescriptor {
-  public:
-    /**
-     * @brief Constructor for a LambdaSourceDescriptor
-     * @param schema the schema of the source
-     * @param lambda function
-     * @param numBuffersToProduce number of buffers to produce
-     * @param gatheringValue gathering value
-     * @param gatheringMode gathering mode
-     * @param sourceAffinity sourceAffinity
-     * @param taskQueueId taskQueueId
-     */
-    explicit LambdaSourceDescriptor(
-        SchemaPtr schema,
-        std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-        uint64_t numBuffersToProduce,
-        uint64_t gatheringValue,
-        GatheringMode gatheringMode,
-        uint64_t sourceAffinity,
-        uint64_t taskQueueId,
-        const std::string& logicalSourceName,
-        const std::string& physicalSourceName);
+public:
+  /**
+   * @brief Constructor for a LambdaSourceDescriptor
+   * @param schema the schema of the source
+   * @param lambda function
+   * @param numBuffersToProduce number of buffers to produce
+   * @param gatheringValue gathering value
+   * @param gatheringMode gathering mode
+   * @param sourceAffinity sourceAffinity
+   * @param taskQueueId taskQueueId
+   */
+  explicit LambdaSourceDescriptor(
+      SchemaPtr schema,
+      std::function<void(NES::Runtime::TupleBuffer &buffer,
+                         uint64_t numberOfTuplesToProduce)>
+          &&generationFunction,
+      uint64_t numBuffersToProduce, uint64_t gatheringValue,
+      GatheringMode gatheringMode, uint64_t sourceAffinity,
+      uint64_t taskQueueId, const std::string &logicalSourceName,
+      const std::string &physicalSourceName);
 
-    /**
-     * @brief Factory method to create a LambdaSourceDescriptor object
-     * @param schema the schema of the source
-     * @param lambda function
-     * @param numBuffersToProcess
-     * @param frequency
-     * @return a correctly initialized shared ptr to LambdaSourceDescriptor
-     */
-    static std::shared_ptr<LambdaSourceDescriptor>
-    create(const SchemaPtr& schema,
-           std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-           uint64_t numBuffersToProcess,
-           uint64_t gatheringValue,
-           GatheringMode gatheringMode,
-           uint64_t sourceAffinity = 0,
-           uint64_t taskQueueId = 0,
-           const std::string& logicalSourceName = "",
-           const std::string& physicalSourceName = "");
+  /**
+   * @brief Factory method to create a LambdaSourceDescriptor object
+   * @param schema the schema of the source
+   * @param lambda function
+   * @param numBuffersToProcess
+   * @param frequency
+   * @return a correctly initialized shared ptr to LambdaSourceDescriptor
+   */
+  static std::shared_ptr<LambdaSourceDescriptor>
+  create(const SchemaPtr &schema,
+         std::function<void(NES::Runtime::TupleBuffer &buffer,
+                            uint64_t numberOfTuplesToProduce)>
+             &&generationFunction,
+         uint64_t numBuffersToProcess, uint64_t gatheringValue,
+         GatheringMode gatheringMode, uint64_t sourceAffinity = 0,
+         uint64_t taskQueueId = 0, const std::string &logicalSourceName = "",
+         const std::string &physicalSourceName = "");
 
-    /**
-     * @brief Provides the string representation of the memory source
-     * @return the string representation of the memory source
-     */
-    std::string toString() const override;
+  /**
+   * @brief Provides the string representation of the memory source
+   * @return the string representation of the memory source
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief Equality method to compare two source descriptors stored as shared_ptr
-     * @param other the source descriptor to compare against
-     * @return true if type, schema, and memory area are equal
-     */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+  /**
+   * @brief Equality method to compare two source descriptors stored as
+   * shared_ptr
+   * @param other the source descriptor to compare against
+   * @return true if type, schema, and memory area are equal
+   */
+  [[nodiscard]] bool equal(SourceDescriptorPtr const &other) const override;
 
-    /**
-     * @brief returns the the generator function
-     * @return generator function
-     */
-    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& getGeneratorFunction();
+  /**
+   * @brief returns the the generator function
+   * @return generator function
+   */
+  std::function<void(NES::Runtime::TupleBuffer &buffer,
+                     uint64_t numberOfTuplesToProduce)> &&
+  getGeneratorFunction();
 
-    /**
-     * @brief returns number of buffer to process
-     * @return
-     */
-    uint64_t getNumBuffersToProcess() const;
+  /**
+   * @brief returns number of buffer to process
+   * @return
+   */
+  uint64_t getNumBuffersToProcess() const;
 
-    /**
-     * @brief return the gathering mode
-     * @return
-     */
-    GatheringMode getGatheringMode() const;
+  /**
+   * @brief return the gathering mode
+   * @return
+   */
+  GatheringMode getGatheringMode() const;
 
-    /**
-     * @brief return the gathering value
-     * @return
-     */
-    uint64_t getGatheringValue() const;
+  /**
+   * @brief return the gathering value
+   * @return
+   */
+  uint64_t getGatheringValue() const;
 
-    /**
-    * @brief return the source affinity thus on which core this source is mapped
-    * @return
-    */
-    uint64_t getSourceAffinity() const;
+  /**
+   * @brief return the source affinity thus on which core this source is mapped
+   * @return
+   */
+  uint64_t getSourceAffinity() const;
 
-    SourceDescriptorPtr copy() override;
+  SourceDescriptorPtr copy() override;
 
-    /**
-    * @brief return the task queue id thus on which core this source is mapped
-    * @return
-    */
-    uint64_t getTaskQueueId() const;
+  /**
+   * @brief return the task queue id thus on which core this source is mapped
+   * @return
+   */
+  uint64_t getTaskQueueId() const;
 
-  private:
-    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
-    uint64_t numBuffersToProcess;
-    uint64_t gatheringValue;
-    GatheringMode gatheringMode;
-    uint64_t sourceAffinity;
-    uint64_t taskQueueId;
+private:
+  std::function<void(NES::Runtime::TupleBuffer &buffer,
+                     uint64_t numberOfTuplesToProduce)>
+      generationFunction;
+  uint64_t numBuffersToProcess;
+  uint64_t gatheringValue;
+  GatheringMode gatheringMode;
+  uint64_t sourceAffinity;
+  uint64_t taskQueueId;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_

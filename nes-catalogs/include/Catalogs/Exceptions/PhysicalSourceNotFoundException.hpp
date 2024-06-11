@@ -22,12 +22,12 @@ namespace NES::Exceptions {
  * @brief This exception indicates, that a physical source was not found
  */
 class PhysicalSourceNotFoundException : public RequestExecutionException {
-  public:
-    /**
-     * @brief construct an exception containing a human readable message
-     * @param message: A string to indicate to the user what caused the exception
-     */
-    explicit PhysicalSourceNotFoundException(const std::string& message);
+public:
+  /**
+   * @brief construct an exception containing a human readable message
+   * @param message: A string to indicate to the user what caused the exception
+   */
+  explicit PhysicalSourceNotFoundException(const std::string &message);
 };
-}// namespace NES::Exceptions
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_

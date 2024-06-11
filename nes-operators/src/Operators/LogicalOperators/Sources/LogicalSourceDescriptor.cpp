@@ -21,27 +21,30 @@ namespace NES {
 LogicalSourceDescriptor::LogicalSourceDescriptor(std::string logicalSourceName)
     : SourceDescriptor(Schema::create(), std::move(logicalSourceName)) {}
 
-SourceDescriptorPtr LogicalSourceDescriptor::create(std::string logicalSourceName) {
-    return std::make_shared<LogicalSourceDescriptor>(LogicalSourceDescriptor(std::move(logicalSourceName)));
+SourceDescriptorPtr
+LogicalSourceDescriptor::create(std::string logicalSourceName) {
+  return std::make_shared<LogicalSourceDescriptor>(
+      LogicalSourceDescriptor(std::move(logicalSourceName)));
 }
 
-bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-    if (!other->instanceOf<LogicalSourceDescriptor>()) {
-        return false;
-    }
-    auto otherLogicalSource = other->as<LogicalSourceDescriptor>();
-    return getLogicalSourceName() == otherLogicalSource->getLogicalSourceName();
+bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const &other) const {
+  if (!other->instanceOf<LogicalSourceDescriptor>()) {
+    return false;
+  }
+  auto otherLogicalSource = other->as<LogicalSourceDescriptor>();
+  return getLogicalSourceName() == otherLogicalSource->getLogicalSourceName();
 }
 
 std::string LogicalSourceDescriptor::toString() const {
-    return "LogicalSourceDescriptor(" + logicalSourceName + ", " + physicalSourceName + ")";
+  return "LogicalSourceDescriptor(" + logicalSourceName + ", " +
+         physicalSourceName + ")";
 }
 
 SourceDescriptorPtr LogicalSourceDescriptor::copy() {
-    auto copy = LogicalSourceDescriptor::create(logicalSourceName);
-    copy->setPhysicalSourceName(physicalSourceName);
-    copy->setSchema(schema->copy());
-    return copy;
+  auto copy = LogicalSourceDescriptor::create(logicalSourceName);
+  copy->setPhysicalSourceName(physicalSourceName);
+  copy->setSchema(schema->copy());
+  return copy;
 }
 
-}// namespace NES
+} // namespace NES

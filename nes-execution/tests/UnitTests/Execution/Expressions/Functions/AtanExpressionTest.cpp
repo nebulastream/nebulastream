@@ -21,44 +21,48 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class AtanExpressionTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("AtanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AtanExpressionTest test class.");
-    }
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("AtanExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup AtanExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down AtanExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down AtanExpressionTest test class.");
+  }
 };
 
 TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
-    auto expression = UnaryExpressionWrapper<AtanExpression>();
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>(0.5));
-        ASSERT_EQ(resultValue, std::atan(0.5));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<AtanExpression>();
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>(0.5));
+    ASSERT_EQ(resultValue, std::atan(0.5));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat) {
-    auto expression = UnaryExpressionWrapper<AtanExpression>();
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue, std::atan((float) 0.5));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<AtanExpression>();
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)0.5));
+    ASSERT_EQ(resultValue, std::atan((float)0.5));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 /**
-* @brief If we execute the expression on a boolean it should throw an exception.
-*/
+ * @brief If we execute the expression on a boolean it should throw an
+ * exception.
+ */
 TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType) {
-    auto expression = UnaryExpressionWrapper<AtanExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
-    ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8) 1)););
+  auto expression = UnaryExpressionWrapper<AtanExpression>();
+  ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+  ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8)1)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

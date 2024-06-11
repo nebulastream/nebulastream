@@ -28,30 +28,39 @@ class MultiOriginWatermarkProcessor;
 class KeyedThreadLocalSliceStore;
 class State;
 /**
- * @brief The KeyedSlicePreAggregationHandler provides an operator handler to perform slice-based pre-aggregation of keyed tumbling windows.
+ * @brief The KeyedSlicePreAggregationHandler provides an operator handler to
+ * perform slice-based pre-aggregation of keyed tumbling windows.
  * @note sliding windows will be added later.
- * This operator handler, maintains a slice store for each worker thread and provides them for the aggregation.
- * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
- * This is decided by the current watermark timestamp.
+ * This operator handler, maintains a slice store for each worker thread and
+ * provides them for the aggregation. For each processed tuple buffer
+ * triggerThreadLocalState is called, which checks if the thread-local slice
+ * store should be triggered. This is decided by the current watermark
+ * timestamp.
  */
-class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore> {
-  public:
-    /**
-     * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
-     * @param windowDefinition logical window definition
-     * @param origins the set of origins, which can produce data for the window operator
-     * @param weakSliceStagingPtr access to the slice staging.
-     */
-    KeyedSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
+class KeyedSlicePreAggregationHandler
+    : public AbstractSlicePreAggregationHandler<KeyedSlice,
+                                                KeyedThreadLocalSliceStore> {
+public:
+  /**
+   * @brief Creates the operator handler with a specific window definition, a
+   * set of origins, and access to the slice staging object.
+   * @param windowDefinition logical window definition
+   * @param origins the set of origins, which can produce data for the window
+   * operator
+   * @param weakSliceStagingPtr access to the slice staging.
+   */
+  KeyedSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide,
+                                  const std::vector<OriginId> &origins);
 
-    /**
-     * @brief Initializes the thread local state for the window operator
-     * @param ctx PipelineExecutionContext
-     * @param entrySize Size of the aggregated values in memory
-     */
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
+  /**
+   * @brief Initializes the thread local state for the window operator
+   * @param ctx PipelineExecutionContext
+   * @param entrySize Size of the aggregated values in memory
+   */
+  void setup(Runtime::Execution::PipelineExecutionContext &ctx,
+             uint64_t keySize, uint64_t valueSize);
 
-    ~KeyedSlicePreAggregationHandler() override;
+  ~KeyedSlicePreAggregationHandler() override;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_

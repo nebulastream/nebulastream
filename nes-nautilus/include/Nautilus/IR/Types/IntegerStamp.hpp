@@ -23,59 +23,62 @@ namespace NES::Nautilus::IR::Types {
  * It is defined by of a bit width and a signedness.
  */
 class IntegerStamp : public Stamp {
-  public:
-    // Bit width for the integer
-    enum class BitWidth : uint8_t { I8, I16, I32, I64 };
+public:
+  // Bit width for the integer
+  enum class BitWidth : uint8_t { I8, I16, I32, I64 };
 
-    // Signedness semantics.
-    enum class SignednessSemantics : uint8_t {
-        Signed,  /// Signed integer
-        Unsigned,/// Unsigned integer
-    };
+  // Signedness semantics.
+  enum class SignednessSemantics : uint8_t {
+    Signed,   /// Signed integer
+    Unsigned, /// Unsigned integer
+  };
 
-    static const inline auto type = TypeIdentifier::create<IntegerStamp>();
+  static const inline auto type = TypeIdentifier::create<IntegerStamp>();
 
-    /**
-     * @brief Constructor to create a integer stamp.
-     * @param bitWidth defines the width of the integer, can be 8, 16, 32, and 64bit.
-     * @param signedness defines the signedness of the integer, can be signed and unsigned.
-     */
-    IntegerStamp(BitWidth bitWidth, SignednessSemantics signedness);
+  /**
+   * @brief Constructor to create a integer stamp.
+   * @param bitWidth defines the width of the integer, can be 8, 16, 32, and
+   * 64bit.
+   * @param signedness defines the signedness of the integer, can be signed and
+   * unsigned.
+   */
+  IntegerStamp(BitWidth bitWidth, SignednessSemantics signedness);
 
-    /**
-     * @brief Returns the bit width of the integer.
-     * @return BitWidth
-     */
-    BitWidth getBitWidth() const;
+  /**
+   * @brief Returns the bit width of the integer.
+   * @return BitWidth
+   */
+  BitWidth getBitWidth() const;
 
-    /**
-     * @brief Returns the number of bit as a uint32_t a value of this stamp will occupy.
-     * @return uint32_t
-     */
-    uint32_t getNumberOfBits() const;
+  /**
+   * @brief Returns the number of bit as a uint32_t a value of this stamp will
+   * occupy.
+   * @return uint32_t
+   */
+  uint32_t getNumberOfBits() const;
 
-    /**
-     * @brief Returns the signedness of this integer stamp.
-     * @return SignednessSemantics
-     */
-    SignednessSemantics getSignedness() const;
+  /**
+   * @brief Returns the signedness of this integer stamp.
+   * @return SignednessSemantics
+   */
+  SignednessSemantics getSignedness() const;
 
-    /**
-     * @return true if integer is signed.
-     */
-    bool isSigned() const;
+  /**
+   * @return true if integer is signed.
+   */
+  bool isSigned() const;
 
-    /**
-     * @return true if integer is unsigned.
-     */
-    bool isUnsigned() const;
-    const std::string toString() const override;
+  /**
+   * @return true if integer is unsigned.
+   */
+  bool isUnsigned() const;
+  const std::string toString() const override;
 
-  private:
-    const BitWidth bitWidth;
-    const SignednessSemantics signedness;
+private:
+  const BitWidth bitWidth;
+  const SignednessSemantics signedness;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_
