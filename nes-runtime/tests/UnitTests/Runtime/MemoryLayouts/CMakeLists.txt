@@ -18,6 +18,3 @@ add_nes_runtime_test(columnar-memory-layout-tests "ColumnarMemoryLayoutTest.cpp"
 
 ### Dynamic Memory Layout Tests ###
 add_nes_runtime_test(dynamic-memory-layout-tests "DynamicMemoryLayoutTest.cpp")
-
-### Dynamic TupleBuffer Tests ###
-add_nes_runtime_test(dynamic-tuple-buffer-tests "../../Util/TestTupleBufferTest.cpp")

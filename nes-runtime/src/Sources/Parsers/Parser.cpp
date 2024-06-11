@@ -136,6 +136,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
         } else {// char array(string) case
+            // TODO Replace code to handle CHAR array with TEXT field; this code contains a buffer overflow bug: https://github.com/nebulastream/nebulastream/issues/4941
             // obtain pointer from buffer to fill with content via strcpy
             char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
             // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
