@@ -15,8 +15,11 @@
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 
 namespace NES::Exceptions {
-SharedQueryPlanNotFoundException::SharedQueryPlanNotFoundException(const std::string& message, NES::SharedQueryId id)
+SharedQueryPlanNotFoundException::SharedQueryPlanNotFoundException(
+    const std::string& message, NES::SharedQueryId id)
     : RequestExecutionException(message), id(id) {}
 
-SharedQueryId SharedQueryPlanNotFoundException::getSharedQueryId() const { return id; }
-}// namespace NES::Exceptions
+SharedQueryId SharedQueryPlanNotFoundException::getSharedQueryId() const {
+  return id;
+}
+}  // namespace NES::Exceptions

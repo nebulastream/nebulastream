@@ -20,33 +20,31 @@
 
 namespace NES::Runtime::Execution::Operators {
 class NLJProbe : public StreamJoinProbe {
-  public:
-    /**
-     * @brief Constructor for a NLJProbe join phase
-     * @param operatorHandlerIndex
-     * @param joinSchema
-     * @param windowMetaData
-     * @param leftEntrySize
-     * @param rightEntrySize
-     * @param joinStrategy
-     * @param windowingStrategy
-     * @param withDeletion
-     */
-    NLJProbe(const uint64_t operatorHandlerIndex,
-             const JoinSchema& joinSchema,
-             Expressions::ExpressionPtr joinExpression,
-             const WindowMetaData& windowMetaData,
-             const SchemaPtr& leftSchema,
-             const SchemaPtr& rightSchema,
-             QueryCompilation::StreamJoinStrategy joinStrategy,
-             QueryCompilation::WindowingStrategy windowingStrategy,
-             bool withDeletion = true);
+ public:
+  /**
+   * @brief Constructor for a NLJProbe join phase
+   * @param operatorHandlerIndex
+   * @param joinSchema
+   * @param windowMetaData
+   * @param leftEntrySize
+   * @param rightEntrySize
+   * @param joinStrategy
+   * @param windowingStrategy
+   * @param withDeletion
+   */
+  NLJProbe(const uint64_t operatorHandlerIndex, const JoinSchema& joinSchema,
+           Expressions::ExpressionPtr joinExpression,
+           const WindowMetaData& windowMetaData, const SchemaPtr& leftSchema,
+           const SchemaPtr& rightSchema,
+           QueryCompilation::StreamJoinStrategy joinStrategy,
+           QueryCompilation::WindowingStrategy windowingStrategy,
+           bool withDeletion = true);
 
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+  void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-  protected:
-    const SchemaPtr leftSchema;
-    const SchemaPtr rightSchema;
+ protected:
+  const SchemaPtr leftSchema;
+  const SchemaPtr rightSchema;
 };
-};    // namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_
+};      // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_

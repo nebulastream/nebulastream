@@ -20,30 +20,37 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* getStates(void* op, WorkerThreadId workerThreadId) {
-    auto handler = static_cast<BatchAggregationHandler*>(op);
-    return handler->getThreadLocalState(workerThreadId);
+  auto handler = static_cast<BatchAggregationHandler*>(op);
+  return handler->getThreadLocalState(workerThreadId);
 }
 
 BatchAggregationScan::BatchAggregationScan(
     uint64_t operatorHandlerIndex,
-    const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
+    const std::vector<
+        std::shared_ptr<Execution::Aggregation::AggregationFunction>>&
+        aggregationFunctions)
+    : operatorHandlerIndex(operatorHandlerIndex),
+      aggregationFunctions(aggregationFunctions) {}
 
 void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
-    Operators::Operator::open(ctx, rb);
-    // 1. get the operator handler
-    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local state.
+  Operators::Operator::open(ctx, rb);
+  // 1. get the operator handler
+  auto globalOperatorHandler =
+      ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+  // 2. load the thread local state.
 
-    // TODO merge all thread local states to support concurrent aggregations with multiple thread local states.
-    auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerThreadId());
+  // TODO merge all thread local states to support concurrent aggregations with
+  // multiple thread local states.
+  auto state =
+      Nautilus::FunctionCall("getThreadLocalState", getStates,
+                             globalOperatorHandler, ctx.getWorkerThreadId());
 
-    // 3. perform final aggregation.
-    Record result;
-    for (const auto& aggregationFunction : aggregationFunctions) {
-        aggregationFunction->lower(state, result);
-    }
-    child->execute(ctx, result);
+  // 3. perform final aggregation.
+  Record result;
+  for (const auto& aggregationFunction : aggregationFunctions) {
+    aggregationFunction->lower(state, result);
+  }
+  child->execute(ctx, result);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

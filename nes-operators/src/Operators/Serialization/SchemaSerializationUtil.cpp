@@ -11,66 +11,78 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <SerializableOperator.pb.h>
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <SerializableOperator.pb.h>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
-SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& schema, SerializableSchema* serializedSchema) {
-    NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema->toString());
-    // serialize all field in schema
-    for (const auto& field : schema->fields) {
-        auto* serializedField = serializedSchema->add_fields();
-        serializedField->set_name(field->getName());
-        // serialize data type
-        DataTypeSerializationUtil::serializeDataType(field->getDataType(), serializedField->mutable_type());
-    }
+SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(
+    const SchemaPtr& schema, SerializableSchema* serializedSchema) {
+  NES_DEBUG("SchemaSerializationUtil:: serialize schema {}",
+            schema->toString());
+  // serialize all field in schema
+  for (const auto& field : schema->fields) {
+    auto* serializedField = serializedSchema->add_fields();
+    serializedField->set_name(field->getName());
+    // serialize data type
+    DataTypeSerializationUtil::serializeDataType(
+        field->getDataType(), serializedField->mutable_type());
+  }
 
-    // Serialize layoutType
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
-        serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_ROW_LAYOUT);
-        NES_DEBUG("SchemaSerializationUtil:: serialize schema Row Layout");
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-        serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_COL_LAYOUT);
-        NES_DEBUG("SchemaSerializationUtil:: serialize schema Column Layout");
-    }
+  // Serialize layoutType
+  if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+    serializedSchema->set_layouttype(
+        SerializableSchema_MemoryLayoutType_ROW_LAYOUT);
+    NES_DEBUG("SchemaSerializationUtil:: serialize schema Row Layout");
+  } else if (schema->getLayoutType() ==
+             Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    serializedSchema->set_layouttype(
+        SerializableSchema_MemoryLayoutType_COL_LAYOUT);
+    NES_DEBUG("SchemaSerializationUtil:: serialize schema Column Layout");
+  }
 
-    return std::make_shared<SerializableSchema>(*serializedSchema);
+  return std::make_shared<SerializableSchema>(*serializedSchema);
 }
 
-SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema) {
-    // de-serialize field from serialized schema to the schema object.
-    NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
-    auto deserializedSchema = Schema::create();
-    for (const auto& serializedField : serializedSchema.fields()) {
-        const auto& fieldName = serializedField.name();
-        // de-serialize data type
-        auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
-        deserializedSchema->addField(fieldName, type);
-    }
+SchemaPtr SchemaSerializationUtil::deserializeSchema(
+    const SerializableSchema& serializedSchema) {
+  // de-serialize field from serialized schema to the schema object.
+  NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
+  auto deserializedSchema = Schema::create();
+  for (const auto& serializedField : serializedSchema.fields()) {
+    const auto& fieldName = serializedField.name();
+    // de-serialize data type
+    auto type =
+        DataTypeSerializationUtil::deserializeDataType(serializedField.type());
+    deserializedSchema->addField(fieldName, type);
+  }
 
-    // Deserialize layoutType
-    switch (serializedSchema.layouttype()) {
-        case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
-            deserializedSchema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
-            NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");
-            break;
-        }
-        case SerializableSchema_MemoryLayoutType_COL_LAYOUT: {
-            deserializedSchema->setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            NES_DEBUG("SchemaSerializationUtil:: deserialized columnar Layout");
-            break;
-        }
-        default: {
-            NES_ERROR("SchemaSerializationUtil:: Wrong memory layout in serialization format");
-        }
+  // Deserialize layoutType
+  switch (serializedSchema.layouttype()) {
+    case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
+      deserializedSchema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
+      NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");
+      break;
     }
-    return deserializedSchema;
+    case SerializableSchema_MemoryLayoutType_COL_LAYOUT: {
+      deserializedSchema->setLayoutType(
+          Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+      NES_DEBUG("SchemaSerializationUtil:: deserialized columnar Layout");
+      break;
+    }
+    default: {
+      NES_ERROR(
+          "SchemaSerializationUtil:: Wrong memory layout in serialization "
+          "format");
+    }
+  }
+  return deserializedSchema;
 }
-}// namespace NES
+}  // namespace NES

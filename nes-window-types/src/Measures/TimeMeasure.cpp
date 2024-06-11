@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <Measures/TimeMeasure.hpp>
 #include <fmt/format.h>
+
+#include <Measures/TimeMeasure.hpp>
 #include <string>
 
 namespace NES::Windowing {
@@ -22,14 +23,24 @@ TimeMeasure::TimeMeasure(uint64_t milliseconds) : milliSeconds(milliseconds) {}
 
 uint64_t TimeMeasure::getTime() const { return milliSeconds; }
 
-std::string TimeMeasure::toString() const { return fmt::format("TimeMeasure: {}ms", std::to_string(milliSeconds)); }
+std::string TimeMeasure::toString() const {
+  return fmt::format("TimeMeasure: {}ms", std::to_string(milliSeconds));
+}
 
-bool TimeMeasure::operator<(const TimeMeasure& other) const { return milliSeconds < other.milliSeconds; }
+bool TimeMeasure::operator<(const TimeMeasure& other) const {
+  return milliSeconds < other.milliSeconds;
+}
 
-bool TimeMeasure::operator<=(const TimeMeasure& other) const { return milliSeconds <= other.milliSeconds; }
+bool TimeMeasure::operator<=(const TimeMeasure& other) const {
+  return milliSeconds <= other.milliSeconds;
+}
 
-bool TimeMeasure::operator==(const TimeMeasure& other) const { return milliSeconds == other.milliSeconds; }
+bool TimeMeasure::operator==(const TimeMeasure& other) const {
+  return milliSeconds == other.milliSeconds;
+}
 
-bool TimeMeasure::equals(const TimeMeasure& other) const { return this->milliSeconds == other.milliSeconds; }
+bool TimeMeasure::equals(const TimeMeasure& other) const {
+  return this->milliSeconds == other.milliSeconds;
+}
 
-}// namespace NES::Windowing
+}  // namespace NES::Windowing

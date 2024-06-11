@@ -22,33 +22,38 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief BatchSortScan operator that sorts a batch of records stored in the BatchSortOperatorHandler state.
+ * @brief BatchSortScan operator that sorts a batch of records stored in the
+ * BatchSortOperatorHandler state.
  */
 class BatchSortScan : public Operator {
-  public:
-    /**
-     * @brief Construct a new BatchSortScan operator
-     * @param operatorHandlerIndex operator handler index
-     * @param fieldIdentifiers field identifiers of the records
-     * @param dataTypes data types of the records
-     * @param sortIndices field indices of the records to sort
-     */
-    BatchSortScan(const uint64_t operatorHandlerIndex,
-                  const std::vector<PhysicalTypePtr>& dataTypes,
-                  const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
-                  const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers)
-        : operatorHandlerIndex(operatorHandlerIndex), dataTypes(dataTypes), fieldIdentifiers(fieldIdentifiers),
-          sortFieldIdentifiers(sortFieldIdentifiers) {}
+ public:
+  /**
+   * @brief Construct a new BatchSortScan operator
+   * @param operatorHandlerIndex operator handler index
+   * @param fieldIdentifiers field identifiers of the records
+   * @param dataTypes data types of the records
+   * @param sortIndices field indices of the records to sort
+   */
+  BatchSortScan(
+      const uint64_t operatorHandlerIndex,
+      const std::vector<PhysicalTypePtr>& dataTypes,
+      const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+      const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers)
+      : operatorHandlerIndex(operatorHandlerIndex),
+        dataTypes(dataTypes),
+        fieldIdentifiers(fieldIdentifiers),
+        sortFieldIdentifiers(sortFieldIdentifiers) {}
 
-    void setup(ExecutionContext& executionCtx) const override;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+  void setup(ExecutionContext& executionCtx) const override;
+  void open(ExecutionContext& executionCtx,
+            RecordBuffer& recordBuffer) const override;
 
-  private:
-    const uint64_t operatorHandlerIndex;
-    const std::vector<PhysicalTypePtr> dataTypes;
-    const std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
-    const std::vector<Record::RecordFieldIdentifier> sortFieldIdentifiers;
+ private:
+  const uint64_t operatorHandlerIndex;
+  const std::vector<PhysicalTypePtr> dataTypes;
+  const std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
+  const std::vector<Record::RecordFieldIdentifier> sortFieldIdentifiers;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTSCAN_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTSCAN_HPP_

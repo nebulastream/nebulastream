@@ -16,7 +16,8 @@
 #include <Exceptions/RequestExecutionException.hpp>
 
 /**
- * @brief This exception is raised, when a request was not able to lock a resource
+ * @brief This exception is raised, when a request was not able to lock a
+ * resource
  */
 namespace NES {
 namespace RequestProcessor::Experimental {
@@ -25,18 +26,21 @@ enum class ResourceType : uint8_t;
 namespace Exceptions {
 
 class ResourceLockingException : public RequestExecutionException {
-  public:
-    ResourceLockingException(const std::string& message, RequestProcessor::Experimental::ResourceType resourceType);
+ public:
+  ResourceLockingException(
+      const std::string& message,
+      RequestProcessor::Experimental::ResourceType resourceType);
 
-    /**
-     * @brief Access the type of the resource which could not be accessed
-     * @return the resource type
-     */
-    [[nodiscard]] RequestProcessor::Experimental::ResourceType getResourceType() const;
+  /**
+   * @brief Access the type of the resource which could not be accessed
+   * @return the resource type
+   */
+  [[nodiscard]] RequestProcessor::Experimental::ResourceType getResourceType()
+      const;
 
-  private:
-    RequestProcessor::Experimental::ResourceType resourceType;
+ private:
+  RequestProcessor::Experimental::ResourceType resourceType;
 };
-}// namespace Exceptions
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
+}  // namespace Exceptions
+}  // namespace NES
+#endif  // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_

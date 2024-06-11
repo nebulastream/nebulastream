@@ -14,9 +14,10 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
+#include <folly/Synchronized.h>
+
 #include <Network/NetworkMessage.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
-#include <folly/Synchronized.h>
 #include <map>
 #include <variant>
 
@@ -27,78 +28,83 @@ namespace NES::Network {
 class PartitionManager;
 class ExchangeProtocolListener;
 /**
- * @brief This class is used by the ZmqServer and defines the reaction for events onDataBuffer,
- * clientAnnouncement, endOfStream and exceptionHandling between all nodes of NES.
+ * @brief This class is used by the ZmqServer and defines the reaction for
+ * events onDataBuffer, clientAnnouncement, endOfStream and exceptionHandling
+ * between all nodes of NES.
  */
 class ExchangeProtocol {
-  public:
-    /**
-     * @brief Create an exchange protocol object with a partition manager and a listener
-     * @param partitionManager
-     * @param listener
-     */
-    explicit ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
-                              std::shared_ptr<ExchangeProtocolListener> listener);
+ public:
+  /**
+   * @brief Create an exchange protocol object with a partition manager and a
+   * listener
+   * @param partitionManager
+   * @param listener
+   */
+  explicit ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
+                            std::shared_ptr<ExchangeProtocolListener> listener);
 
-    /**
-     * @brief Copy-Constructor for ExchangeProtocol
-     * @param other
-     */
-    ExchangeProtocol(const ExchangeProtocol& other);
+  /**
+   * @brief Copy-Constructor for ExchangeProtocol
+   * @param other
+   */
+  ExchangeProtocol(const ExchangeProtocol& other);
 
-    /**
-     * @brief Reaction of the zmqServer after a ClientAnnounceMessage is received.
-     * @param clientAnnounceMessage
-     * @return if successful, return ServerReadyMessage
-     */
-    std::variant<Messages::ServerReadyMessage, Messages::ErrorMessage> onClientAnnouncement(Messages::ClientAnnounceMessage msg);
+  /**
+   * @brief Reaction of the zmqServer after a ClientAnnounceMessage is received.
+   * @param clientAnnounceMessage
+   * @return if successful, return ServerReadyMessage
+   */
+  std::variant<Messages::ServerReadyMessage, Messages::ErrorMessage>
+  onClientAnnouncement(Messages::ClientAnnounceMessage msg);
 
-    /**
-     * @brief Reaction of the zmqServer after a buffer is received.
-     * @param id of the buffer
-     * @param buffer content
-     * @param messageSequenceData
-     */
-    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, SequenceData messageSequenceData);
+  /**
+   * @brief Reaction of the zmqServer after a buffer is received.
+   * @param id of the buffer
+   * @param buffer content
+   * @param messageSequenceData
+   */
+  void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer,
+                SequenceData messageSequenceData);
 
-    /**
-     * @brief Reaction of the zmqServer after an error occurs.
-     * @param the error message
-     */
-    void onServerError(Messages::ErrorMessage error);
+  /**
+   * @brief Reaction of the zmqServer after an error occurs.
+   * @param the error message
+   */
+  void onServerError(Messages::ErrorMessage error);
 
-    /**
-     * @brief Reaction of the zmqServer after an error occurs.
-     * @param the error message
-     */
-    void onChannelError(Messages::ErrorMessage error);
+  /**
+   * @brief Reaction of the zmqServer after an error occurs.
+   * @param the error message
+   */
+  void onChannelError(Messages::ErrorMessage error);
 
-    /**
-     * @brief Reaction of the zmqServer after an EndOfStream message is received.
-     * @param the endOfStreamMessage
-     */
-    void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage);
+  /**
+   * @brief Reaction of the zmqServer after an EndOfStream message is received.
+   * @param the endOfStreamMessage
+   */
+  void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage);
 
-    /**
-     * @brief This method is called when the server receives an event message.
-     * @param nesPartition
-     * @param event
-     */
-    void onEvent(NesPartition nesPartition, Runtime::BaseEvent& event);
+  /**
+   * @brief This method is called when the server receives an event message.
+   * @param nesPartition
+   * @param event
+   */
+  void onEvent(NesPartition nesPartition, Runtime::BaseEvent& event);
 
-    /**
-     * @brief getter for the PartitionManager
-     * @return the PartitionManager
-     */
-    [[nodiscard]] std::shared_ptr<PartitionManager> getPartitionManager() const;
+  /**
+   * @brief getter for the PartitionManager
+   * @return the PartitionManager
+   */
+  [[nodiscard]] std::shared_ptr<PartitionManager> getPartitionManager() const;
 
-  private:
-    std::shared_ptr<PartitionManager> partitionManager{nullptr};
-    std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
-    folly::Synchronized<std::unordered_map<NesPartition, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>
-        maxSeqNumberPerNesPartition;
+ private:
+  std::shared_ptr<PartitionManager> partitionManager{nullptr};
+  std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
+  folly::Synchronized<std::unordered_map<
+      NesPartition, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>
+      maxSeqNumberPerNesPartition;
 };
 
-}// namespace NES::Network
+}  // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_

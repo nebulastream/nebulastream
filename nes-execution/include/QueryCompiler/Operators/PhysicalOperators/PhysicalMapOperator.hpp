@@ -22,33 +22,29 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Physical Map operator.
  */
 class PhysicalMapOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalMapOperator(OperatorId id,
-                        StatisticId statisticId,
-                        SchemaPtr inputSchema,
-                        SchemaPtr outputSchema,
-                        FieldAssignmentExpressionNodePtr mapExpression);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const FieldAssignmentExpressionNodePtr& mapExpression);
-    static PhysicalOperatorPtr create(StatisticId statisticId,
-                                      SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema,
-                                      FieldAssignmentExpressionNodePtr mapExpression);
-    std::string toString() const override;
-    OperatorPtr copy() override;
+ public:
+  PhysicalMapOperator(OperatorId id, StatisticId statisticId,
+                      SchemaPtr inputSchema, SchemaPtr outputSchema,
+                      FieldAssignmentExpressionNodePtr mapExpression);
+  static PhysicalOperatorPtr create(
+      OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema,
+      const SchemaPtr& outputSchema,
+      const FieldAssignmentExpressionNodePtr& mapExpression);
+  static PhysicalOperatorPtr create(
+      StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema,
+      FieldAssignmentExpressionNodePtr mapExpression);
+  std::string toString() const override;
+  OperatorPtr copy() override;
 
-    /**
-     * @brief Returns the expression of this map operator
-     * @return FieldAssignmentExpressionNodePtr
-     */
-    FieldAssignmentExpressionNodePtr getMapExpression();
+  /**
+   * @brief Returns the expression of this map operator
+   * @return FieldAssignmentExpressionNodePtr
+   */
+  FieldAssignmentExpressionNodePtr getMapExpression();
 
-  protected:
-    const FieldAssignmentExpressionNodePtr mapExpression;
+ protected:
+  const FieldAssignmentExpressionNodePtr mapExpression;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPOPERATOR_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPOPERATOR_HPP_

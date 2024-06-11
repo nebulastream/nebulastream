@@ -33,22 +33,30 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class GlobalQueryNode;
 using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
-}// namespace NES
+}  // namespace NES
 
 namespace NES::Optimizer {
 
 class SyntaxBasedCompleteQueryMergerRule;
-using SyntaxBasedCompleteQueryMergerRulePtr = std::shared_ptr<SyntaxBasedCompleteQueryMergerRule>;
+using SyntaxBasedCompleteQueryMergerRulePtr =
+    std::shared_ptr<SyntaxBasedCompleteQueryMergerRule>;
 
 /**
- * @brief SyntaxBasedCompleteQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
- * all equivalent operator chains should be merged together and only a single representative operator chain should exists in the Global Query Plan for all of them.
- * Effectively this will prune the global query plan size.
+ * @brief SyntaxBasedCompleteQueryMergerRule is responsible for merging together
+ * all the equivalent chains of Global Query Nodes within the Global Query Plan
+ * such that, after running this rule all equivalent operator chains should be
+ * merged together and only a single representative operator chain should exists
+ * in the Global Query Plan for all of them. Effectively this will prune the
+ * global query plan size.
  *
- * Following are the conditions for the two global query node chains to be equivalent:
- *  - For each global query node in the first chain, there should exists an equal global query node in the other chain (except for the node with the sink operator).
- *      - For two global query nodes to be equal, we check that for each logical operator in one global query node their is an equivalent logical operator in the other
- *      global query node.
+ * Following are the conditions for the two global query node chains to be
+ * equivalent:
+ *  - For each global query node in the first chain, there should exists an
+ * equal global query node in the other chain (except for the node with the sink
+ * operator).
+ *      - For two global query nodes to be equal, we check that for each logical
+ * operator in one global query node their is an equivalent logical operator in
+ * the other global query node.
  *  - The order of global query nodes in both the chains should be same.
  *
  * Following is the example:
@@ -57,24 +65,24 @@ using SyntaxBasedCompleteQueryMergerRulePtr = std::shared_ptr<SyntaxBasedComplet
  *                                                         /     \
  *                                                       /        \
  *                                                     /           \
- *                                         GQN1({Sink1},{Q1})  GQN5({Sink2},{Q2})
+ *                                         GQN1({Sink1},{Q1}) GQN5({Sink2},{Q2})
  *                                                |                 |
  *                                        GQN2({Map1},{Q1})    GQN6({Map1},{Q2})
  *                                                |                 |
- *                                     GQN3({Filter1},{Q1})    GQN7({Filter1},{Q2})
+ *                                     GQN3({Filter1},{Q1}) GQN7({Filter1},{Q2})
  *                                                |                 |
- *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
+ *                                  GQN4({Source(Car)},{Q1})
+ * GQN8({Source(Car)},{Q2})
  *
  *
- * After running the SyntaxBasedCompleteQueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the SyntaxBasedCompleteQueryMergerRule, the resulting Global
+ * Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \
  *                                                        /       \
- *                                           GQN1({Sink1},{Q1}) GQN5({Sink2},{Q2})
- *                                                        \      /
- *                                                         \   /
- *                                                   GQN2({Map1},{Q1,Q2})
+ *                                           GQN1({Sink1},{Q1})
+ * GQN5({Sink2},{Q2}) \      / \   / GQN2({Map1},{Q1,Q2})
  *                                                           |
  *                                                  GQN3({Filter1},{Q1,Q2})
  *                                                           |
@@ -82,27 +90,27 @@ using SyntaxBasedCompleteQueryMergerRulePtr = std::shared_ptr<SyntaxBasedComplet
  *
  */
 class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
+ public:
+  static SyntaxBasedCompleteQueryMergerRulePtr create();
+  ~SyntaxBasedCompleteQueryMergerRule() override = default;
 
-  public:
-    static SyntaxBasedCompleteQueryMergerRulePtr create();
-    ~SyntaxBasedCompleteQueryMergerRule() override = default;
+  bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-    bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
+  /**
+   * @brief identify if the query plans are equal or not
+   * @param targetQueryPlan : target query plan
+   * @param hostQueryPlan : address query plan
+   * @param targetHostOperatorMap: map passed as reference to record the
+   * matching pair of target and address operators
+   * @return true if the query plans are equal
+   */
+  bool areQueryPlansEqual(
+      const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan,
+      std::map<OperatorId, OperatorId>& targetHostOperatorMap);
 
-    /**
-     * @brief identify if the query plans are equal or not
-     * @param targetQueryPlan : target query plan
-     * @param hostQueryPlan : address query plan
-     * @param targetHostOperatorMap: map passed as reference to record the matching pair of target and address operators
-     * @return true if the query plans are equal
-     */
-    bool areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                            const QueryPlanPtr& hostQueryPlan,
-                            std::map<OperatorId, OperatorId>& targetHostOperatorMap);
-
-    bool areOperatorEqual(const OperatorPtr& targetOperator,
-                          const OperatorPtr& hostOperator,
-                          std::map<OperatorId, OperatorId>& targetHostOperatorMap);
+  bool areOperatorEqual(
+      const OperatorPtr& targetOperator, const OperatorPtr& hostOperator,
+      std::map<OperatorId, OperatorId>& targetHostOperatorMap);
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP_
+}  // namespace NES::Optimizer
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP_

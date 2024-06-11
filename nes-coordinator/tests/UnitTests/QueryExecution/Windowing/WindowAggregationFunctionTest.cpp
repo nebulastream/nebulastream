@@ -35,223 +35,254 @@ const static uint64_t recordsPerBuffer = 100;
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
-                                      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("WindowAggregationFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("WindowAggregationFunctionTest: Setup WindowAggregationFunctionTest test class.");
-    }
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
-        sourceSchema = Schema::create()->addField("test$ts", BasicType::UINT64)->addField("test$value", BasicType::INT64);
-    }
+                                      public ::testing::WithParamInterface<
+                                          QueryCompilation::QueryCompilerType> {
+ public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("WindowAggregationFunctionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_DEBUG(
+        "WindowAggregationFunctionTest: Setup WindowAggregationFunctionTest "
+        "test class.");
+  }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
+    sourceSchema = Schema::create()
+                       ->addField("test$ts", BasicType::UINT64)
+                       ->addField("test$value", BasicType::INT64);
+  }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override {
-        NES_DEBUG("WindowAggregationFunctionTest: Tear down WindowAggregationFunctionTest test case.");
-        ASSERT_TRUE(executionEngine->stop());
-        Testing::BaseUnitTest::TearDown();
-    }
+  /* Will be called before a test is executed. */
+  void TearDown() override {
+    NES_DEBUG(
+        "WindowAggregationFunctionTest: Tear down "
+        "WindowAggregationFunctionTest test case.");
+    ASSERT_TRUE(executionEngine->stop());
+    Testing::BaseUnitTest::TearDown();
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_DEBUG("WindowAggregationFunctionTest: Tear down WindowAggregationFunctionTest test class.");
-    }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_DEBUG(
+        "WindowAggregationFunctionTest: Tear down "
+        "WindowAggregationFunctionTest test class.");
+  }
 
-    SchemaPtr sourceSchema;
-    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
-    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
+  SchemaPtr sourceSchema;
+  std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+  static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId =
+      INVALID_DECOMPOSED_QUERY_PLAN_ID;
+  static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 
-    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf, uint64_t ts) {
-        for (int64_t recordIndex = 0; recordIndex < (int64_t) recordsPerBuffer; recordIndex++) {
-            buf[recordIndex][0].write<uint64_t>(ts);
-            buf[recordIndex][1].write<int64_t>(recordIndex);
-        }
-        buf.setNumberOfTuples(recordsPerBuffer);
-        buf.getBuffer().setSequenceData({1, 1, true});
+  void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf, uint64_t ts) {
+    for (int64_t recordIndex = 0; recordIndex < (int64_t)recordsPerBuffer;
+         recordIndex++) {
+      buf[recordIndex][0].write<uint64_t>(ts);
+      buf[recordIndex][1].write<int64_t>(recordIndex);
     }
+    buf.setNumberOfTuples(recordsPerBuffer);
+    buf.getBuffer().setSequenceData({1, 1, true});
+  }
 
-    Runtime::Execution::ExecutableQueryPlanPtr executeQuery(Query query) {
-        auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                               defaultSharedQueryId,
-                                                               INVALID_WORKER_NODE_ID,
-                                                               query.getQueryPlan()->getRootOperators());
-        auto plan = executionEngine->submitQuery(decomposedQueryPlan);
-        auto source = executionEngine->getDataSource(plan, 0);
-        // create data for five windows
-        for (uint64_t ts = 1; ts < 30; ts = ts + windowSize) {
-            auto inputBuffer = executionEngine->getBuffer(sourceSchema);
-            fillBuffer(inputBuffer, ts);
-            source->emitBuffer(inputBuffer);
-        }
-        return plan;
+  Runtime::Execution::ExecutableQueryPlanPtr executeQuery(Query query) {
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId,
+        INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
+    auto source = executionEngine->getDataSource(plan, 0);
+    // create data for five windows
+    for (uint64_t ts = 1; ts < 30; ts = ts + windowSize) {
+      auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+      fillBuffer(inputBuffer, ts);
+      source->emitBuffer(inputBuffer);
     }
+    return plan;
+  }
 };
 
 TEST_F(WindowAggregationFunctionTest, testSumAggregation) {
-    struct ResultRecord {
-        uint64_t start_ts;
-        uint64_t end_ts;
-        uint64_t value;
-    };
-    auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
-    auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
-    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(collector);
+  struct ResultRecord {
+    uint64_t start_ts;
+    uint64_t end_ts;
+    uint64_t value;
+  };
+  auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
+  auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
+  auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+  auto testSinkDescriptor =
+      std::make_shared<TestUtils::TestSinkDescriptor>(collector);
 
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("value")))
-                     .project(Attribute("start"), Attribute("end"), Attribute("value"))
-                     .sink(testSinkDescriptor);
+  auto query =
+      TestQuery::from(testSourceDescriptor)
+          .window(TumblingWindow::of(EventTime(Attribute("ts")),
+                                     Milliseconds(windowSize)))
+          .apply(
+              Sum(Attribute("value", BasicType::INT64))->as(Attribute("value")))
+          .project(Attribute("start"), Attribute("end"), Attribute("value"))
+          .sink(testSinkDescriptor);
 
-    auto plan = executeQuery(query);
+  auto plan = executeQuery(query);
 
-    collector->waitTillCompleted(/*wait for two records*/ 2);
-    auto& results = collector->getResult();
-    EXPECT_EQ(results.size(), 2u);
-    EXPECT_EQ(results[0].start_ts, 0UL);
-    EXPECT_EQ(results[0].end_ts, 10UL);
-    EXPECT_EQ(results[0].value, 4950UL);
+  collector->waitTillCompleted(/*wait for two records*/ 2);
+  auto& results = collector->getResult();
+  EXPECT_EQ(results.size(), 2u);
+  EXPECT_EQ(results[0].start_ts, 0UL);
+  EXPECT_EQ(results[0].end_ts, 10UL);
+  EXPECT_EQ(results[0].value, 4950UL);
 
-    EXPECT_EQ(results[1].start_ts, 10UL);
-    EXPECT_EQ(results[1].end_ts, 20UL);
-    EXPECT_EQ(results[1].value, 4950UL);
+  EXPECT_EQ(results[1].start_ts, 10UL);
+  EXPECT_EQ(results[1].end_ts, 20UL);
+  EXPECT_EQ(results[1].value, 4950UL);
 }
 
 TEST_F(WindowAggregationFunctionTest, testAvgAggregation) {
-    struct ResultRecord {
-        uint64_t start_ts;
-        uint64_t end_ts;
-        uint64_t value;
-    };
-    auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
-    auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
-    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(collector);
+  struct ResultRecord {
+    uint64_t start_ts;
+    uint64_t end_ts;
+    uint64_t value;
+  };
+  auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
+  auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
+  auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+  auto testSinkDescriptor =
+      std::make_shared<TestUtils::TestSinkDescriptor>(collector);
 
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Avg(Attribute("value", BasicType::INT64))->as(Attribute("value")))
-                     .project(Attribute("start"), Attribute("end"), Attribute("value"))
-                     .sink(testSinkDescriptor);
+  auto query =
+      TestQuery::from(testSourceDescriptor)
+          .window(TumblingWindow::of(EventTime(Attribute("ts")),
+                                     Milliseconds(windowSize)))
+          .apply(
+              Avg(Attribute("value", BasicType::INT64))->as(Attribute("value")))
+          .project(Attribute("start"), Attribute("end"), Attribute("value"))
+          .sink(testSinkDescriptor);
 
-    auto plan = executeQuery(query);
+  auto plan = executeQuery(query);
 
-    collector->waitTillCompleted(/*wait for two records*/ 2);
-    auto& results = collector->getResult();
-    EXPECT_EQ(results.size(), 2u);
-    EXPECT_EQ(results[0].start_ts, 0UL);
-    EXPECT_EQ(results[0].end_ts, 10UL);
-    EXPECT_EQ(results[0].value, 49UL);
+  collector->waitTillCompleted(/*wait for two records*/ 2);
+  auto& results = collector->getResult();
+  EXPECT_EQ(results.size(), 2u);
+  EXPECT_EQ(results[0].start_ts, 0UL);
+  EXPECT_EQ(results[0].end_ts, 10UL);
+  EXPECT_EQ(results[0].value, 49UL);
 
-    EXPECT_EQ(results[1].start_ts, 10UL);
-    EXPECT_EQ(results[1].end_ts, 20UL);
-    EXPECT_EQ(results[1].value, 49UL);
+  EXPECT_EQ(results[1].start_ts, 10UL);
+  EXPECT_EQ(results[1].end_ts, 20UL);
+  EXPECT_EQ(results[1].value, 49UL);
 }
 
 TEST_F(WindowAggregationFunctionTest, testMinAggregation) {
-    struct ResultRecord {
-        uint64_t start_ts;
-        uint64_t end_ts;
-        uint64_t value;
-    };
-    auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
-    auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
-    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(collector);
+  struct ResultRecord {
+    uint64_t start_ts;
+    uint64_t end_ts;
+    uint64_t value;
+  };
+  auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
+  auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
+  auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+  auto testSinkDescriptor =
+      std::make_shared<TestUtils::TestSinkDescriptor>(collector);
 
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Min(Attribute("value", BasicType::INT64))->as(Attribute("value")))
-                     .project(Attribute("start"), Attribute("end"), Attribute("value"))
-                     .sink(testSinkDescriptor);
+  auto query =
+      TestQuery::from(testSourceDescriptor)
+          .window(TumblingWindow::of(EventTime(Attribute("ts")),
+                                     Milliseconds(windowSize)))
+          .apply(
+              Min(Attribute("value", BasicType::INT64))->as(Attribute("value")))
+          .project(Attribute("start"), Attribute("end"), Attribute("value"))
+          .sink(testSinkDescriptor);
 
-    auto plan = executeQuery(query);
+  auto plan = executeQuery(query);
 
-    collector->waitTillCompleted(/*wait for two records*/ 2);
-    auto& results = collector->getResult();
-    EXPECT_EQ(results.size(), 2u);
-    EXPECT_EQ(results[0].start_ts, 0UL);
-    EXPECT_EQ(results[0].end_ts, 10UL);
-    EXPECT_EQ(results[0].value, 0UL);
+  collector->waitTillCompleted(/*wait for two records*/ 2);
+  auto& results = collector->getResult();
+  EXPECT_EQ(results.size(), 2u);
+  EXPECT_EQ(results[0].start_ts, 0UL);
+  EXPECT_EQ(results[0].end_ts, 10UL);
+  EXPECT_EQ(results[0].value, 0UL);
 
-    EXPECT_EQ(results[1].start_ts, 10UL);
-    EXPECT_EQ(results[1].end_ts, 20UL);
-    EXPECT_EQ(results[1].value, 0UL);
+  EXPECT_EQ(results[1].start_ts, 10UL);
+  EXPECT_EQ(results[1].end_ts, 20UL);
+  EXPECT_EQ(results[1].value, 0UL);
 }
 
 TEST_F(WindowAggregationFunctionTest, testMaxAggregation) {
-    struct ResultRecord {
-        uint64_t start_ts;
-        uint64_t end_ts;
-        uint64_t value;
-    };
-    auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
-    auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
-    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(collector);
+  struct ResultRecord {
+    uint64_t start_ts;
+    uint64_t end_ts;
+    uint64_t value;
+  };
+  auto sinkSchema = Schema::create()->addField("value", BasicType::INT64);
+  auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
+  auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+  auto testSinkDescriptor =
+      std::make_shared<TestUtils::TestSinkDescriptor>(collector);
 
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Max(Attribute("value", BasicType::INT64))->as(Attribute("value")))
-                     .project(Attribute("start"), Attribute("end"), Attribute("value"))
-                     .sink(testSinkDescriptor);
+  auto query =
+      TestQuery::from(testSourceDescriptor)
+          .window(TumblingWindow::of(EventTime(Attribute("ts")),
+                                     Milliseconds(windowSize)))
+          .apply(
+              Max(Attribute("value", BasicType::INT64))->as(Attribute("value")))
+          .project(Attribute("start"), Attribute("end"), Attribute("value"))
+          .sink(testSinkDescriptor);
 
-    auto plan = executeQuery(query);
+  auto plan = executeQuery(query);
 
-    collector->waitTillCompleted(/*wait for two records*/ 2);
-    auto& results = collector->getResult();
-    EXPECT_EQ(results.size(), 2u);
-    EXPECT_EQ(results[0].start_ts, 0UL);
-    EXPECT_EQ(results[0].end_ts, 10UL);
-    EXPECT_EQ(results[0].value, 99UL);
+  collector->waitTillCompleted(/*wait for two records*/ 2);
+  auto& results = collector->getResult();
+  EXPECT_EQ(results.size(), 2u);
+  EXPECT_EQ(results[0].start_ts, 0UL);
+  EXPECT_EQ(results[0].end_ts, 10UL);
+  EXPECT_EQ(results[0].value, 99UL);
 
-    EXPECT_EQ(results[1].start_ts, 10UL);
-    EXPECT_EQ(results[1].end_ts, 20UL);
-    EXPECT_EQ(results[1].value, 99UL);
+  EXPECT_EQ(results[1].start_ts, 10UL);
+  EXPECT_EQ(results[1].end_ts, 20UL);
+  EXPECT_EQ(results[1].value, 99UL);
 }
 
 TEST_F(WindowAggregationFunctionTest, testMultiAggregationFunctions) {
-    struct ResultRecord {
-        uint64_t start_ts;
-        uint64_t end_ts;
-        uint64_t sum;
-        uint64_t min;
-        uint64_t max;
-        uint64_t avg;
-    };
-    auto sinkSchema = Schema::create()
-                          ->addField("start", BasicType::INT64)
-                          ->addField("end", BasicType::INT64)
-                          ->addField("sum", BasicType::INT64)
-                          ->addField("test$count", BasicType::UINT64);
-    auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
-    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(collector);
+  struct ResultRecord {
+    uint64_t start_ts;
+    uint64_t end_ts;
+    uint64_t sum;
+    uint64_t min;
+    uint64_t max;
+    uint64_t avg;
+  };
+  auto sinkSchema = Schema::create()
+                        ->addField("start", BasicType::INT64)
+                        ->addField("end", BasicType::INT64)
+                        ->addField("sum", BasicType::INT64)
+                        ->addField("test$count", BasicType::UINT64);
+  auto collector = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
+  auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+  auto testSinkDescriptor =
+      std::make_shared<TestUtils::TestSinkDescriptor>(collector);
 
-    auto query =
-        TestQuery::from(testSourceDescriptor)
-            .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-            .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("sum")),
-                   Min(Attribute("value", BasicType::INT64))->as(Attribute("min")),
-                   Max(Attribute("value", BasicType::INT64))->as(Attribute("max")),
-                   Avg(Attribute("value", BasicType::INT64))->as(Attribute("avg")))
-            .project(Attribute("start"), Attribute("end"), Attribute("sum"), Attribute("min"), Attribute("max"), Attribute("avg"))
-            .sink(testSinkDescriptor);
+  auto query =
+      TestQuery::from(testSourceDescriptor)
+          .window(TumblingWindow::of(EventTime(Attribute("ts")),
+                                     Milliseconds(windowSize)))
+          .apply(
+              Sum(Attribute("value", BasicType::INT64))->as(Attribute("sum")),
+              Min(Attribute("value", BasicType::INT64))->as(Attribute("min")),
+              Max(Attribute("value", BasicType::INT64))->as(Attribute("max")),
+              Avg(Attribute("value", BasicType::INT64))->as(Attribute("avg")))
+          .project(Attribute("start"), Attribute("end"), Attribute("sum"),
+                   Attribute("min"), Attribute("max"), Attribute("avg"))
+          .sink(testSinkDescriptor);
 
-    auto plan = executeQuery(query);
+  auto plan = executeQuery(query);
 
-    collector->waitTillCompleted(/*wait for two records*/ 2);
-    auto& results = collector->getResult();
-    EXPECT_EQ(results.size(), 2u);
-    EXPECT_EQ(results[0].start_ts, 0UL);
-    EXPECT_EQ(results[0].end_ts, 10UL);
-    EXPECT_EQ(results[0].sum, 4950UL);
-    EXPECT_EQ(results[0].min, 0UL);
-    EXPECT_EQ(results[0].max, 99UL);
-    EXPECT_EQ(results[0].avg, 49UL);
+  collector->waitTillCompleted(/*wait for two records*/ 2);
+  auto& results = collector->getResult();
+  EXPECT_EQ(results.size(), 2u);
+  EXPECT_EQ(results[0].start_ts, 0UL);
+  EXPECT_EQ(results[0].end_ts, 10UL);
+  EXPECT_EQ(results[0].sum, 4950UL);
+  EXPECT_EQ(results[0].min, 0UL);
+  EXPECT_EQ(results[0].max, 99UL);
+  EXPECT_EQ(results[0].avg, 49UL);
 }

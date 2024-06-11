@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <z3++.h>
+
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
@@ -35,1739 +37,1950 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
-#include <z3++.h>
 
 using namespace NES;
 
-class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest {
+class HashSignatureBasedPartialQueryMergerRuleTest
+    : public Testing::BaseUnitTest {
+ public:
+  SchemaPtr schema;
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
+  std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
-  public:
-    SchemaPtr schema;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+  /* Will be called before all tests in this class are started. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging(
+        "HashSignatureBasedPartialQueryMergerRuleTest.log",
+        NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup HashSignatureBasedPartialQueryMergerRuleTest test case.");
+  }
 
-    /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("HashSignatureBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup HashSignatureBasedPartialQueryMergerRuleTest test case.");
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    schema = Schema::create()
+                 ->addField("ts", BasicType::UINT32)
+                 ->addField("type", BasicType::UINT32)
+                 ->addField("id", BasicType::UINT32)
+                 ->addField("value", BasicType::UINT64)
+                 ->addField("id1", BasicType::UINT32)
+                 ->addField("value1", BasicType::UINT64);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    sourceCatalog->addLogicalSource("car", schema);
+    sourceCatalog->addLogicalSource("bike", schema);
+    sourceCatalog->addLogicalSource("truck", schema);
+    udfCatalog = Catalogs::UDF::UDFCatalog::create();
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        schema = Schema::create()
-                     ->addField("ts", BasicType::UINT32)
-                     ->addField("type", BasicType::UINT32)
-                     ->addField("id", BasicType::UINT32)
-                     ->addField("value", BasicType::UINT64)
-                     ->addField("id1", BasicType::UINT32)
-                     ->addField("value1", BasicType::UINT64);
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-        sourceCatalog->addLogicalSource("car", schema);
-        sourceCatalog->addLogicalSource("bike", schema);
-        sourceCatalog->addLogicalSource("truck", schema);
-        udfCatalog = Catalogs::UDF::UDFCatalog::create();
-    }
+  /* Will be called before a test is executed. */
+  void TearDown() override {
+    NES_INFO("Setup HashSignatureBasedCompleteQueryMergerRuleTest test case.");
+  }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup HashSignatureBasedCompleteQueryMergerRuleTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down HashSignatureBasedCompleteQueryMergerRuleTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO(
+        "Tear down HashSignatureBasedCompleteQueryMergerRuleTest test class.");
+  }
 };
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with same queryIdAndCatalogEntryMapping
  */
 TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto stringSignatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1Children, sink2Children);
-        }
+  for (const auto& sink1Children : updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink2Children : updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1Children, sink2Children);
     }
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with multiple same source
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with same queryIdAndCatalogEntryMapping with multiple same source
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingEqualQueriesWithMultipleSameSources) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sinkOperator11 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  auto sinkOperator11 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    sinkOperator11->addChild(sourceOperator11);
-    sinkOperator11->addChild(sourceOperator21);
+  sinkOperator11->addChild(sourceOperator11);
+  sinkOperator11->addChild(sourceOperator21);
 
-    QueryPlanPtr queryPlan1 = QueryPlan::create();
-    queryPlan1->addRootOperator(sinkOperator11);
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  QueryPlanPtr queryPlan1 = QueryPlan::create();
+  queryPlan1->addRootOperator(sinkOperator11);
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
+  auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(
+      LogicalSourceDescriptor::create("car"));
 
-    auto sinkOperator12 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
+  auto sinkOperator12 =
+      LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
-    sinkOperator12->addChild(sourceOperator12);
-    sinkOperator12->addChild(sourceOperator22);
+  sinkOperator12->addChild(sourceOperator12);
+  sinkOperator12->addChild(sourceOperator22);
 
-    QueryPlanPtr queryPlan2 = QueryPlan::create();
-    queryPlan2->addRootOperator(sinkOperator12);
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  QueryPlanPtr queryPlan2 = QueryPlan::create();
+  queryPlan2->addRootOperator(sinkOperator12);
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto stringSignatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto stringSignatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  stringSignatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
-                found = true;
-            }
-        }
-        EXPECT_TRUE(found);
+  for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    bool found = false;
+    for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+      if (sink1GQNChild->equal(sink2GQNChild)) {
+        found = true;
+      }
     }
+    EXPECT_TRUE(found);
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different source
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentSources) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("truck").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("truck")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 2);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 2);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQueryPlans[1]->getQueryPlan();
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  auto updatedSharedQueryPlan2 = updatedSharedQueryPlans[1]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 1);
+  auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
-    //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
+  // assert
+  for (const auto& sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink2ChildOperator :
+         updatedRootOperators2[0]->getChildren()) {
+      EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
     }
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedPartialQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
+ * @brief Test applying SignatureBasedPartialQueryMergerRule on Global query
+ * plan with same queryIdAndCatalogEntryMapping with unionWith operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithUnionOperators) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("truck");
+  Query query1 = Query::from("car")
+                     .unionWith(subQuery1)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .unionWith(subQuery2)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
-        }
+  for (const auto& sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink2ChildOperator :
+         updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
     }
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with queryIdAndCatalogEntryMapping with different order of unionWith operator
+ * children
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("car");
-    Query query1 = Query::from("truck")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithUnionOperatorChildrenOrder) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("car");
+  Query query1 = Query::from("truck")
+                     .unionWith(subQuery1)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .unionWith(subQuery2)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 2u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 2u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with queryIdAndCatalogEntryMapping with unionWith operators but different
+ * children
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("bike");
-    Query query1 = Query::from("truck")
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("bike");
+  Query query1 = Query::from("truck")
+                     .unionWith(subQuery1)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .unionWith(subQuery2)
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 2);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 2);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    auto updatedSharedQueryPlan2 = updatedSharedQueryPlans[1]->getQueryPlan();
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  auto updatedSharedQueryPlan2 = updatedSharedQueryPlans[1]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 1);
-    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 1);
+  auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
-    //assert
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
-        }
+  // assert
+  for (const auto& sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink2ChildOperator :
+         updatedRootOperators2[0]->getChildren()) {
+      EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
     }
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentFilters) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 45)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different filters
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentFiltersField) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id1") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id1") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentMapAttribute) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value1") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car").map(Attribute("value1") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different map
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentMapValue) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 50)
+                     .filter(Attribute("id") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car").map(Attribute("value") = 50).filter(Attribute("id") < 40).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different window operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentWindowTypes) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")),
+                                       Milliseconds(4), Milliseconds(2));
+  auto aggregation1 = Sum(Attribute("value"));
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
-    auto aggregation1 = Sum(Attribute("value"));
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .window(windowType1)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .window(windowType1)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  auto windowType2 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation2 = Sum(Attribute("value"));
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .window(windowType2)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation2)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .window(windowType2)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation2)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different window operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentWindowAggregations) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation1 = Sum(Attribute("value"));
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .window(windowType1)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .window(windowType1)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  auto windowType2 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation2 = Min(Attribute("value"));
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .window(windowType2)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation2)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Min(Attribute("value"));
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .window(windowType2)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation2)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same window operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithSameWindows) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation1 = Sum(Attribute("value"));
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .window(windowType1)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .window(windowType1)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  auto windowType2 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation2 = Sum(Attribute("value"));
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("id") < 40)
+                     .window(windowType2)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation2)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .window(windowType2)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation2)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
-
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
-                found = true;
-            }
-        }
-        EXPECT_TRUE(found);
+  for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    bool found = false;
+    for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+      if (sink1GQNChild->equal(sink2GQNChild)) {
+        found = true;
+      }
     }
+    EXPECT_TRUE(found);
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same window operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation1 = Sum(Attribute("value"));
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("type") < 40)
+                     .window(windowType1)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .window(windowType1)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  auto windowType2 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation2 = Sum(Attribute("value"));
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .window(windowType2)
+                     .byKey(Attribute("type"))
+                     .apply(aggregation2)
+                     .filter(Attribute("type") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .window(windowType2)
-                       .byKey(Attribute("type"))
-                       .apply(aggregation2)
-                       .filter(Attribute("type") < 40)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same project operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithSameProjectOperator) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("type") < 40)
+                     .project(Attribute("type"), Attribute("value"))
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("type"), Attribute("value"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("type") < 40)
+                     .project(Attribute("value"), Attribute("type"))
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
-
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
-                found = true;
-            }
-        }
-        EXPECT_TRUE(found);
+  for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    bool found = false;
+    for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+      if (sink1GQNChild->equal(sink2GQNChild)) {
+        found = true;
+      }
     }
+    EXPECT_TRUE(found);
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operator but in different order
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same project operator but in
+ * different order
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("type") < 40)
+                     .project(Attribute("type"), Attribute("value"))
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("type"), Attribute("value"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .project(Attribute("value"), Attribute("type"))
+                     .filter(Attribute("type") < 40)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .project(Attribute("value"), Attribute("type"))
-                       .filter(Attribute("type") < 40)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different project operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different project operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentProjectOperatorOrder) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("type") < 40)
+                     .project(Attribute("type"), Attribute("value"))
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("type"), Attribute("value"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 = Query::from("car")
+                     .map(Attribute("value") = 40)
+                     .filter(Attribute("type") < 40)
+                     .project(Attribute("value"))
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("value"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same watermark operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same watermark operators
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithSameWatermarkOperator) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .map(Attribute("value") = 40)
+          .filter(Attribute("type") < 40)
+          .project(Attribute("type"), Attribute("value"))
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("type"), Attribute("value"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .map(Attribute("value") = 40)
+          .filter(Attribute("type") < 40)
+          .project(Attribute("value"), Attribute("type"))
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
-
-    for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        bool found = false;
-        for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            if (sink1GQNChild->equal(sink2GQNChild)) {
-                found = true;
-            }
-        }
-        EXPECT_TRUE(found);
+  for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+    bool found = false;
+    for (const auto& sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+      if (sink1GQNChild->equal(sink2GQNChild)) {
+        found = true;
+      }
     }
+    EXPECT_TRUE(found);
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different watermark operators.
- * One query with IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with different watermark operators.
+ * One query with IngestionTimeWatermarkStrategy and other with
+ * EventTimeWatermarkStrategy.
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithDifferentWatermarkOperator) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query1 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .map(Attribute("value") = 40)
+          .filter(Attribute("type") < 40)
+          .project(Attribute("type"), Attribute("value"))
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query query1 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("type"), Attribute("value"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  Query query2 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                  Attribute("ts"), NES::API::Milliseconds(10),
+                  NES::API::Milliseconds()))
+          .map(Attribute("value") = 40)
+          .filter(Attribute("type") < 40)
+          .project(Attribute("value"), Attribute("type"))
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
-                                                                                                NES::API::Milliseconds(10),
-                                                                                                NES::API::Milliseconds()))
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("type") < 40)
-                       .project(Attribute("value"), Attribute("type"))
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 1u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 1u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queryIdAndCatalogEntryMapping with unionWith operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two identical queryIdAndCatalogEntryMapping with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query1 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("truck").assignWatermark(
+      Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+  Query query1 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .unionWith(subQuery1)
+          .map(Attribute("value") = 40)
+          .filter(Attribute("id") < 45)
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery2 = Query::from("truck").assignWatermark(
+      Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+  Query query2 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .unionWith(subQuery2)
+          .map(Attribute("value") = 40)
+          .filter(Attribute("id") < 45)
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
-        }
+  for (const auto& sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink2ChildOperator :
+         updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
     }
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queryIdAndCatalogEntryMapping with unionWith operator.
- * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
- * with EventTimeWatermarkStrategy.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with Same queryIdAndCatalogEntryMapping with unionWith operator. Each query
+ * has two sources with different watermark strategy. One source with
+ * IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
+ */
+TEST_F(
+    HashSignatureBasedPartialQueryMergerRuleTest,
+    testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("truck").assignWatermark(
+      Windowing::EventTimeWatermarkStrategyDescriptor::create(
+          Attribute("ts"), NES::API::Milliseconds(10),
+          NES::API::Milliseconds()));
+  Query query1 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .unionWith(subQuery1)
+          .map(Attribute("value") = 40)
+          .filter(Attribute("id") < 45)
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
+
+  Query subQuery2 = Query::from("truck").assignWatermark(
+      Windowing::EventTimeWatermarkStrategyDescriptor::create(
+          Attribute("ts"), NES::API::Milliseconds(10),
+          NES::API::Milliseconds()));
+  Query query2 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .unionWith(subQuery2)
+          .map(Attribute("value") = 40)
+          .filter(Attribute("id") < 45)
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
+
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
+
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
+
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
+
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
+
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+  for (const auto& sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink2ChildOperator :
+         updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
+    }
+  }
+}
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with distinct queryIdAndCatalogEntryMapping with unionWith operator. Each
+ * query has two sources with different watermark strategies. One source with
+ * IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy and
+ * in the second query the strategies are inverted.
+ */
+TEST_F(
+    HashSignatureBasedPartialQueryMergerRuleTest,
+    testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("truck").assignWatermark(
+      Windowing::EventTimeWatermarkStrategyDescriptor::create(
+          Attribute("ts"), NES::API::Milliseconds(10),
+          NES::API::Milliseconds()));
+  Query query1 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
+          .unionWith(subQuery1)
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
+
+  Query subQuery2 = Query::from("truck").assignWatermark(
+      Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+  Query query2 =
+      Query::from("car")
+          .assignWatermark(
+              Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                  Attribute("ts"), NES::API::Milliseconds(10),
+                  NES::API::Milliseconds()))
+          .unionWith(subQuery2)
+          .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
+
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
+
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
+
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
+
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
+
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 2u);
+}
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
-       testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 =
-        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
-                                                                                                     NES::API::Milliseconds(10),
-                                                                                                     NES::API::Milliseconds()));
-    Query query1 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+       testMergingQueriesWithJoinOperator) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
-    Query subQuery2 =
-        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
-                                                                                                     NES::API::Milliseconds(10),
-                                                                                                     NES::API::Milliseconds()));
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery1 = Query::from("truck");
+  Query query1 = Query::from("car")
+                     .joinWith(subQuery1)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto windowType2 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation2 = Sum(Attribute("value"));
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .joinWith(subQuery2)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType2)
+                     .sink(printSinkDescriptor);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
-        }
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+
+  auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
+  EXPECT_TRUE(updatedSharedQueryPlan1);
+
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+  EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+  for (const auto& sink1ChildOperator :
+       updatedRootOperators1[0]->getChildren()) {
+    for (const auto& sink2ChildOperator :
+         updatedRootOperators1[1]->getChildren()) {
+      EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
     }
+  }
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queryIdAndCatalogEntryMapping with unionWith operator.
- * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
- * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
-       testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 =
-        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
-                                                                                                     NES::API::Milliseconds(10),
-                                                                                                     NES::API::Milliseconds()));
-    Query query1 = Query::from("car")
-                       .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .unionWith(subQuery1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+       testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
-    Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
-                                                                                                NES::API::Milliseconds(10),
-                                                                                                NES::API::Milliseconds()))
-                       .unionWith(subQuery2)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  Query subQuery1 = Query::from("truck");
+  Query query1 = Query::from("car")
+                     .joinWith(subQuery1)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto windowType2 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  auto aggregation2 = Sum(Attribute("value"));
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  Query subQuery2 = Query::from("car");
+  Query query2 = Query::from("truck")
+                     .joinWith(subQuery2)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType2)
+                     .sink(printSinkDescriptor);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 2u);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
+
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 2u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  Query subQuery1 = Query::from("truck");
+  Query query1 = Query::from("car")
+                     .joinWith(subQuery1)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  auto windowType2 = SlidingWindow::of(EventTime(Attribute("ts")),
+                                       Milliseconds(4), Milliseconds(4));
+  auto aggregation2 = Sum(Attribute("value"));
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .joinWith(subQuery2)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType2)
+                     .sink(printSinkDescriptor);
 
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType2)
-                       .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(updatedSharedQueryPlans.size() == 1);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    auto updatedSharedQueryPlan1 = updatedSharedQueryPlans[0]->getQueryPlan();
-    EXPECT_TRUE(updatedSharedQueryPlan1);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
-
-    for (const auto& sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
-        for (const auto& sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
-            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
-        }
-    }
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 2u);
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan
+ * with two queryIdAndCatalogEntryMapping with same join operators.
  */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
+TEST_F(HashSignatureBasedPartialQueryMergerRuleTest,
+       testMergingQueriesWithJoinOperatorWithDifferentWindows) {
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  auto windowType1 =
+      TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+  Query subQuery1 = Query::from("truck");
+  Query query1 = Query::from("car")
+                     .joinWith(subQuery1)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType1)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+  QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+  queryPlan1->setQueryId(queryId1);
 
-    Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
+  auto windowType2 = SlidingWindow::of(EventTime(Attribute("ts")),
+                                       Milliseconds(4), Milliseconds(2));
+  auto aggregation2 = Sum(Attribute("value"));
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
+  Query subQuery2 = Query::from("truck");
+  Query query2 = Query::from("car")
+                     .joinWith(subQuery2)
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
+                     .window(windowType2)
+                     .sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+  QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+  queryPlan2->setQueryId(queryId2);
 
-    Query subQuery2 = Query::from("car");
-    Query query2 = Query::from("truck")
-                       .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType2)
-                       .sink(printSinkDescriptor);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan1);
+  typeInferencePhase->execute(queryPlan2);
 
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
+  z3::ContextPtr context = std::make_shared<z3::context>();
+  auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(
+      context,
+      Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+  signatureInferencePhase->execute(queryPlan1);
+  signatureInferencePhase->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
+  auto globalQueryPlan = GlobalQueryPlan::create();
+  globalQueryPlan->addQueryPlan(queryPlan1);
+  globalQueryPlan->addQueryPlan(queryPlan2);
 
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
+  // execute
+  auto signatureBasedEqualQueryMergerRule =
+      Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
+  signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
+  // assert
+  auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+  EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
 
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+  auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
 
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
+  // assert that the sink operators have same up-stream operator
+  auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
+  EXPECT_EQ(updatedRootOperators1.size(), 2u);
 
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
-
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 2u);
-}
-
-/**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
- */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
-
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-
-    Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
-
-    auto windowType2 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
-
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType2)
-                       .sink(printSinkDescriptor);
-
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
-
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
-
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
-
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
-
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
-
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 2u);
-}
-
-/**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
- */
-TEST_F(HashSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
-
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-
-    Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .joinWith(subQuery1)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType1)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    queryPlan1->setQueryId(queryId1);
-
-    auto windowType2 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
-    auto aggregation2 = Sum(Attribute("value"));
-
-    Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .joinWith(subQuery2)
-                       .where(Attribute("value"))
-                       .equalsTo(Attribute("value"))
-                       .window(windowType2)
-                       .sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    queryPlan2->setQueryId(queryId2);
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan1);
-    signatureInferencePhase->execute(queryPlan2);
-
-    auto globalQueryPlan = GlobalQueryPlan::create();
-    globalQueryPlan->addQueryPlan(queryPlan1);
-    globalQueryPlan->addQueryPlan(queryPlan2);
-
-    //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::HashSignatureBasedPartialQueryMergerRule::create();
-    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
-
-    //assert
-    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_EQ(updatedSharedQueryPlans.size(), 1u);
-
-    auto updatedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
-
-    //assert that the sink operators have same up-stream operator
-    auto updatedRootOperators1 = updatedQueryPlan->getRootOperators();
-    EXPECT_EQ(updatedRootOperators1.size(), 2u);
-
-    //assert
-    auto sourceOperators = updatedQueryPlan->getLeafOperators();
-    EXPECT_EQ(sourceOperators.size(), 2u);
+  // assert
+  auto sourceOperators = updatedQueryPlan->getLeafOperators();
+  EXPECT_EQ(sourceOperators.size(), 2u);
 }

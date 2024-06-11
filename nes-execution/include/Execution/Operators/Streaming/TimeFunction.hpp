@@ -26,12 +26,12 @@ namespace NES::Runtime::Execution {
 class RecordBuffer;
 class ExecutionContext;
 
-}// namespace NES::Runtime::Execution
+}  // namespace NES::Runtime::Execution
 
 namespace NES::Runtime::Execution::Expressions {
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
 namespace NES::Runtime::Execution::Operators {
 using namespace Nautilus;
@@ -44,34 +44,41 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
  * For event time, this is infered by a field in the record.
  */
 class TimeFunction {
-  public:
-    virtual void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) = 0;
-    virtual Value<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
-    virtual ~TimeFunction() = default;
+ public:
+  virtual void open(Execution::ExecutionContext& ctx,
+                    Execution::RecordBuffer& buffer) = 0;
+  virtual Value<UInt64> getTs(Execution::ExecutionContext& ctx,
+                              Record& record) = 0;
+  virtual ~TimeFunction() = default;
 };
 
 /**
  * @brief Time function for event time windows
  */
 class EventTimeFunction final : public TimeFunction {
-  public:
-    explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit);
-    void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
-    Value<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) override;
+ public:
+  explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression,
+                             Windowing::TimeUnit unit);
+  void open(Execution::ExecutionContext& ctx,
+            Execution::RecordBuffer& buffer) override;
+  Value<UInt64> getTs(Execution::ExecutionContext& ctx,
+                      Record& record) override;
 
-  private:
-    Windowing::TimeUnit unit;
-    Expressions::ExpressionPtr timestampExpression;
+ private:
+  Windowing::TimeUnit unit;
+  Expressions::ExpressionPtr timestampExpression;
 };
 
 /**
  * @brief Time function for ingestion time windows
  */
 class IngestionTimeFunction final : public TimeFunction {
-  public:
-    void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
-    Nautilus::Value<UInt64> getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
+ public:
+  void open(Execution::ExecutionContext& ctx,
+            Execution::RecordBuffer& buffer) override;
+  Nautilus::Value<UInt64> getTs(Execution::ExecutionContext& ctx,
+                                Nautilus::Record& record) override;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_

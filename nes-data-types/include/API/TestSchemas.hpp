@@ -21,12 +21,12 @@
 
 namespace NES {
 class TestSchemas {
-  public:
-    static SchemaPtr getSchemaTemplate(const std::string& name);
+ public:
+  static SchemaPtr getSchemaTemplate(const std::string& name);
 
-  private:
-    static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
+ private:
+  static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
+#endif  // NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_

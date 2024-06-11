@@ -15,7 +15,8 @@
 
 namespace NES::Exceptions {
 
-PhysicalSourceNotFoundException::PhysicalSourceNotFoundException(const std::string& message)
+PhysicalSourceNotFoundException::PhysicalSourceNotFoundException(
+    const std::string& message)
     : RequestExecutionException(message) {}
 
-}// namespace NES::Exceptions
+}  // namespace NES::Exceptions

@@ -25,55 +25,56 @@ using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
  * It can be created typed or untyped.
  */
 class FieldAccessExpressionNode : public ExpressionNode {
-  public:
-    /**
-    * @brief Create typed field read.
-    */
-    static ExpressionNodePtr create(DataTypePtr stamp, std::string fieldName);
+ public:
+  /**
+   * @brief Create typed field read.
+   */
+  static ExpressionNodePtr create(DataTypePtr stamp, std::string fieldName);
 
-    /**
-     * @brief Create untyped field read.
-     */
-    static ExpressionNodePtr create(std::string fieldName);
+  /**
+   * @brief Create untyped field read.
+   */
+  static ExpressionNodePtr create(std::string fieldName);
 
-    std::string toString() const override;
-    bool equal(NodePtr const& rhs) const override;
+  std::string toString() const override;
+  bool equal(NodePtr const& rhs) const override;
 
-    /**
-     * @brief Get field name
-     * @return field name
-     */
-    std::string getFieldName() const;
+  /**
+   * @brief Get field name
+   * @return field name
+   */
+  std::string getFieldName() const;
 
-    /**
-     * @brief Updated field name
-     * @param fieldName : the new name of the field
-     */
-    void updateFieldName(std::string fieldName);
+  /**
+   * @brief Updated field name
+   * @param fieldName : the new name of the field
+   */
+  void updateFieldName(std::string fieldName);
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  protected:
-    explicit FieldAccessExpressionNode(FieldAccessExpressionNode* other);
+ protected:
+  explicit FieldAccessExpressionNode(FieldAccessExpressionNode* other);
 
-    FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);
-    /**
-     * @brief Name of the field want to access.
-     */
-    std::string fieldName;
+  FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);
+  /**
+   * @brief Name of the field want to access.
+   */
+  std::string fieldName;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_

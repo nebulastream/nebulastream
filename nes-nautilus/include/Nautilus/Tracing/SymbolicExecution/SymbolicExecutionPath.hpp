@@ -21,23 +21,25 @@
 namespace NES::Nautilus::Tracing {
 
 /**
- * @brief The SymbolicExecutionPath represents all tags in one specific execution.
+ * @brief The SymbolicExecutionPath represents all tags in one specific
+ * execution.
  */
 class SymbolicExecutionPath {
-  public:
-    void append(bool outcome);
-    std::tuple<bool> operator[](uint64_t size);
-    uint64_t getSize();
-    friend std::ostream& operator<<(std::ostream& os, const SymbolicExecutionPath& path);
-    [[maybe_unused]] std::vector<bool>& getPath();
-    [[nodiscard]] const Tag* getFinalTag() const;
-    void setFinalTag(const Tag* finalTag);
+ public:
+  void append(bool outcome);
+  std::tuple<bool> operator[](uint64_t size);
+  uint64_t getSize();
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const SymbolicExecutionPath& path);
+  [[maybe_unused]] std::vector<bool>& getPath();
+  [[nodiscard]] const Tag* getFinalTag() const;
+  void setFinalTag(const Tag* finalTag);
 
-  private:
-    std::vector<bool> path;
-    const Tag* finalTag;
+ private:
+  std::vector<bool> path;
+  const Tag* finalTag;
 };
 
-}// namespace NES::Nautilus::Tracing
+}  // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_

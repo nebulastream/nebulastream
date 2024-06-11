@@ -42,8 +42,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               DecomposedQueryPlanId decomposedQueryPlanId,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               uint32_t activeProducers,
-                              const std::string& filePath,
-                              bool append,
+                              const std::string& filePath, bool append,
                               bool addTimestamp = false,
                               uint64_t numberOfOrigins = 1);
 
@@ -61,8 +60,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     DecomposedQueryPlanId decomposedQueryPlanId,
                                     const Runtime::NodeEnginePtr& nodeEngine,
                                     uint32_t numOfProducers,
-                                    const std::string& filePath,
-                                    bool append,
+                                    const std::string& filePath, bool append,
                                     uint64_t numberOfOrigins = 1);
 
 /**
@@ -79,8 +77,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t numOfProducers,
-                               const std::string& filePath,
-                               bool append,
+                               const std::string& filePath, bool append,
                                uint64_t numberOfOrigins = 1);
 
 /**
@@ -89,7 +86,8 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
  * @param bufferManager
  * @param hostname as sting
  * @param port at uint16
- * @param internal refers to the usage of this zmq sink as a fwd operator such that we dont have to send the schema, only the data
+ * @param internal refers to the usage of this zmq sink as a fwd operator such
+ * that we dont have to send the schema, only the data
  * @param numberOfOrigins: number of origins of a given query
  * @return a data sink pointer
  */
@@ -97,10 +95,8 @@ DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
                              SharedQueryId sharedQueryId,
                              DecomposedQueryPlanId decomposedQueryPlanId,
                              const Runtime::NodeEnginePtr& nodeEngine,
-                             uint32_t numOfProducers,
-                             const std::string& host,
-                             uint16_t port,
-                             uint64_t numberOfOrigins = 1);
+                             uint32_t numOfProducers, const std::string& host,
+                             uint16_t port, uint64_t numberOfOrigins = 1);
 #ifdef ENABLE_OPC_BUILD
 /**
  * @brief create a OPC test sink with a schema
@@ -113,13 +109,10 @@ DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
  * @param password as string to log in to the OPC server
  * @return a data sink pointer
  */
-DataSinkPtr createOPCSink(SchemaPtr schema,
-                          SharedQueryId queryId,
+DataSinkPtr createOPCSink(SchemaPtr schema, SharedQueryId queryId,
                           QuerySubPlanId querySubPlanId,
-                          Runtime::NodeEnginePtr nodeEngine,
-                          std::string url,
-                          UA_NodeId nodeId,
-                          std::string user,
+                          Runtime::NodeEnginePtr nodeEngine, std::string url,
+                          UA_NodeId nodeId, std::string user,
                           std::string password);
 #endif
 /**
@@ -135,10 +128,8 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              SharedQueryId sharedQueryId,
                              DecomposedQueryPlanId decomposedQueryPlanId,
                              const Runtime::NodeEnginePtr& nodeEngine,
-                             uint32_t numOfProducers,
-                             const std::string& host,
-                             uint16_t port,
-                             uint64_t numberOfOrigins = 1);
+                             uint32_t numOfProducers, const std::string& host,
+                             uint16_t port, uint64_t numberOfOrigins = 1);
 
 /**
  * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
@@ -154,10 +145,8 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 uint32_t activeProducers,
-                                const std::string& host,
-                                uint16_t port,
-                                bool internal,
-                                uint64_t numberOfOrigins = 1);
+                                const std::string& host, uint16_t port,
+                                bool internal, uint64_t numberOfOrigins = 1);
 
 /**
  * @brief create a print test sink with a schema
@@ -171,8 +160,7 @@ DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
                                SharedQueryId sharedQueryId,
                                DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
-                               uint32_t activeProducers,
-                               std::ostream& out,
+                               uint32_t activeProducers, std::ostream& out,
                                uint64_t numberOfOrigins = 1);
 
 /**
@@ -198,8 +186,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                SharedQueryId sharedQueryId,
                                DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
-                               uint32_t activeProducers,
-                               std::ostream& out,
+                               uint32_t activeProducers, std::ostream& out,
                                uint64_t numberOfOrigins = 1);
 
 /**
@@ -213,18 +200,14 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
  * @param version the initial version number of the network sink
  * @return a data sink pointer
  */
-DataSinkPtr createNetworkSink(const SchemaPtr& schema,
-                              OperatorId uniqueNetworkSinkDescriptorId,
-                              SharedQueryId sharedQueryId,
-                              DecomposedQueryPlanId decomposedQueryPlanId,
-                              const Network::NodeLocation& nodeLocation,
-                              Network::NesPartition nesPartition,
-                              const Runtime::NodeEnginePtr& nodeEngine,
-                              size_t numOfProducers,
-                              std::chrono::milliseconds waitTime,
-                              DecomposedQueryPlanVersion version,
-                              uint64_t numberOfOrigins = 1,
-                              uint8_t retryTimes = 5);
+DataSinkPtr createNetworkSink(
+    const SchemaPtr& schema, OperatorId uniqueNetworkSinkDescriptorId,
+    SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId,
+    const Network::NodeLocation& nodeLocation,
+    Network::NesPartition nesPartition,
+    const Runtime::NodeEnginePtr& nodeEngine, size_t numOfProducers,
+    std::chrono::milliseconds waitTime, DecomposedQueryPlanVersion version,
+    uint64_t numberOfOrigins = 1, uint8_t retryTimes = 5);
 
 /**
  * @brief create a monitoring data sink
@@ -273,15 +256,15 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
  * @param sharedQueryId of the query that writes to the sink
  * @param decomposedQueryPlanId of the query that writes to the sink
  * @param nodeEngine
- * @param activeProducers how many different queries write to this sink which is needed for sink shutdown
+ * @param activeProducers how many different queries write to this sink which is
+ * needed for sink shutdown
  * @param brokers: broker list
  * @param topic: kafka topic to write to
  * @param kafkaProducerTimeout: kafka producer timeout
  * @param numberOfOrigins
  * @return a data sink pointer
  */
-DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
-                               SharedQueryId sharedQueryId,
+DataSinkPtr createCsvKafkaSink(SchemaPtr schema, SharedQueryId sharedQueryId,
                                DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
@@ -295,35 +278,34 @@ DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
  * @brief create MQTT sink
  * @param schema: schema of the data
  * @param parentPlan: the Id of the parent plan
- * @param nodeEngine: a node engine pointer, e.g. for access to the buffer manager
+ * @param nodeEngine: a node engine pointer, e.g. for access to the buffer
+ * manager
  * @param address: address of a MQTT broker
- * @param clientId: client ID for MQTT client. If non is given, the operatorID is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
+ * @param clientId: client ID for MQTT client. If non is given, the operatorID
+ * is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
  * @param topic: broker topic/path to which the MQTT messages are published
  * @param user: used to identify client at broker
- * @param maxBufferedMSGs: maximal number for how many messages can be buffered at client
- * @param timeUnit: unit used to interpret the msgDelay value (seconds vs milliseconds vs nanoseconds)
+ * @param maxBufferedMSGs: maximal number for how many messages can be buffered
+ * at client
+ * @param timeUnit: unit used to interpret the msgDelay value (seconds vs
+ * milliseconds vs nanoseconds)
  * @param msgDelay: how long to wait before sending the next message from client
- * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
+ * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0
+ * required for a non-clean (persistent) session.
  * @param asynchronousClient: 1 if client should be asynchronous, else 0
  * @param numberOfOrigins: number of origins of a given query
  * @return a data sink pointer
  */
-DataSinkPtr createMQTTSink(const SchemaPtr& schema,
-                           SharedQueryId sharedQueryId,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
-                           const Runtime::NodeEnginePtr& nodeEngine,
-                           uint32_t numOfProducers,
-                           std::string const& address,
-                           std::string const& clientID,
-                           std::string const& topic,
-                           std::string const& user,
-                           uint64_t maxBufferedMSGs,
-                           MQTTSinkDescriptor::TimeUnits timeUnit,
-                           uint64_t msgDelay,
-                           MQTTSinkDescriptor::ServiceQualities qualityOfService,
-                           bool asynchronousClient,
-                           uint64_t numberOfOrigins = 1);
+DataSinkPtr createMQTTSink(
+    const SchemaPtr& schema, SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    const Runtime::NodeEnginePtr& nodeEngine, uint32_t numOfProducers,
+    std::string const& address, std::string const& clientID,
+    std::string const& topic, std::string const& user, uint64_t maxBufferedMSGs,
+    MQTTSinkDescriptor::TimeUnits timeUnit, uint64_t msgDelay,
+    MQTTSinkDescriptor::ServiceQualities qualityOfService,
+    bool asynchronousClient, uint64_t numberOfOrigins = 1);
 #endif
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
+}  // namespace NES
+#endif  // NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_

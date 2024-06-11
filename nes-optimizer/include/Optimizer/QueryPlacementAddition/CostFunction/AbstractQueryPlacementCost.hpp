@@ -29,22 +29,23 @@ using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
  * whether a particular operator is placed at a specific position
  * (row, column). `true` means an operator is placed at that topology node,
  * while `false` means the operator is not placed in that topology node.
- * The matrix assumes the operator and nodes are sorted using depth-first iterator.
+ * The matrix assumes the operator and nodes are sorted using depth-first
+ * iterator.
  */
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
 namespace Optimizer {
 class AbstractQueryPlacementCost {
-  public:
-    AbstractQueryPlacementCost();
+ public:
+  AbstractQueryPlacementCost();
 
-    /**
-     * @brief compute the estimated cost of applying the given placement candidate
-     * @return cost of the placement candidate
-     */
-    virtual float getCost(PlacementMatrix candidate) = 0;
+  /**
+   * @brief compute the estimated cost of applying the given placement candidate
+   * @return cost of the placement candidate
+   */
+  virtual float getCost(PlacementMatrix candidate) = 0;
 };
-}// namespace Optimizer
-}// namespace NES
+}  // namespace Optimizer
+}  // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_ABSTRACTQUERYPLACEMENTCOST_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_ABSTRACTQUERYPLACEMENTCOST_HPP_

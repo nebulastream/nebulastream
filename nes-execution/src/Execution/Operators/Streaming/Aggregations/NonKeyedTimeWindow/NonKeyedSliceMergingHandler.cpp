@@ -27,25 +27,36 @@ namespace NES::Runtime::Execution::Operators {
 
 NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler() {}
 
-void NonKeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
-    this->entrySize = entrySize;
-    defaultState = std::make_unique<State>(entrySize);
+void NonKeyedSliceMergingHandler::setup(
+    Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
+  this->entrySize = entrySize;
+  defaultState = std::make_unique<State>(entrySize);
 }
 
-void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
-    NES_DEBUG("start NonKeyedSliceMergingHandler");
+void NonKeyedSliceMergingHandler::start(
+    Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
+  NES_DEBUG("start NonKeyedSliceMergingHandler");
 }
 
-GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<NonKeyedSlice>* sliceMergeTask) {
-    return std::make_unique<NonKeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
+GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(
+    SliceMergeTask<NonKeyedSlice>* sliceMergeTask) {
+  return std::make_unique<NonKeyedSlice>(entrySize, sliceMergeTask->startSlice,
+                                         sliceMergeTask->endSlice,
+                                         defaultState);
 }
 
-const State* NonKeyedSliceMergingHandler::getDefaultState() const { return defaultState.get(); }
-
-NonKeyedSliceMergingHandler::~NonKeyedSliceMergingHandler() { NES_DEBUG("Destruct NonKeyedSliceMergingHandler"); }
-
-void NonKeyedSliceMergingHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop NonKeyedSliceMergingHandler");
+const State* NonKeyedSliceMergingHandler::getDefaultState() const {
+  return defaultState.get();
 }
 
-}// namespace NES::Runtime::Execution::Operators
+NonKeyedSliceMergingHandler::~NonKeyedSliceMergingHandler() {
+  NES_DEBUG("Destruct NonKeyedSliceMergingHandler");
+}
+
+void NonKeyedSliceMergingHandler::stop(
+    Runtime::QueryTerminationType,
+    Runtime::Execution::PipelineExecutionContextPtr) {
+  NES_DEBUG("stop NonKeyedSliceMergingHandler");
+}
+
+}  // namespace NES::Runtime::Execution::Operators

@@ -20,10 +20,11 @@
 namespace NES::Monitoring {
 
 /**
-* @brief The metric types of NES represented in the subdirectories of Metrics/..
-*/
+ * @brief The metric types of NES represented in the subdirectories of
+ * Metrics/..
+ */
 enum class MetricStoreType : uint8_t { AllEntries, NewestEntry };
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_METRICSTORETYPE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_STORAGE_METRICSTORETYPE_HPP_

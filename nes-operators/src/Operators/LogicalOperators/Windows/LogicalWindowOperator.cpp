@@ -26,157 +26,180 @@
 #include <sstream>
 namespace NES {
 
-LogicalWindowOperator::LogicalWindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id)
+LogicalWindowOperator::LogicalWindowOperator(
+    const Windowing::LogicalWindowDescriptorPtr& windowDefinition,
+    OperatorId id)
     : Operator(id), WindowOperator(windowDefinition, id) {}
 
 std::string LogicalWindowOperator::toString() const {
-    std::stringstream ss;
-    auto windowType = windowDefinition->getWindowType();
-    auto windowAggregation = windowDefinition->getWindowAggregation();
-    ss << "WINDOW AGGREGATION(OP-" << id << ", ";
-    for (auto agg : windowAggregation) {
-        ss << agg->getTypeAsString() << ";";
-    }
-    ss << ")";
-    return ss.str();
+  std::stringstream ss;
+  auto windowType = windowDefinition->getWindowType();
+  auto windowAggregation = windowDefinition->getWindowAggregation();
+  ss << "WINDOW AGGREGATION(OP-" << id << ", ";
+  for (auto agg : windowAggregation) {
+    ss << agg->getTypeAsString() << ";";
+  }
+  ss << ")";
+  return ss.str();
 }
 
 bool LogicalWindowOperator::isIdentical(NodePtr const& rhs) const {
-    return equal(rhs) && (rhs->as<LogicalWindowOperator>()->getId() == id);
+  return equal(rhs) && (rhs->as<LogicalWindowOperator>()->getId() == id);
 }
 
 bool LogicalWindowOperator::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalWindowOperator>()) {
-        auto rhsWindow = rhs->as<LogicalWindowOperator>();
-        return windowDefinition->equal(rhsWindow->windowDefinition);
-    }
-    return false;
+  if (rhs->instanceOf<LogicalWindowOperator>()) {
+    auto rhsWindow = rhs->as<LogicalWindowOperator>();
+    return windowDefinition->equal(rhsWindow->windowDefinition);
+  }
+  return false;
 }
 
 OperatorPtr LogicalWindowOperator::copy() {
-    auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id)->as<LogicalWindowOperator>();
-    copy->setOriginId(originId);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
-    copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
-        copy->addProperty(key, value);
-    }
-    return copy;
+  auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id)
+                  ->as<LogicalWindowOperator>();
+  copy->setOriginId(originId);
+  copy->setInputOriginIds(inputOriginIds);
+  copy->setInputSchema(inputSchema);
+  copy->setOutputSchema(outputSchema);
+  copy->setHashBasedSignature(hashBasedSignature);
+  copy->setZ3Signature(z3Signature);
+  copy->setStatisticId(statisticId);
+  for (const auto& [key, value] : properties) {
+    copy->addProperty(key, value);
+  }
+  return copy;
 }
 
 bool LogicalWindowOperator::inferSchema() {
-    if (!WindowOperator::inferSchema()) {
+  if (!WindowOperator::inferSchema()) {
+    return false;
+  }
+  // infer the default input and output schema
+  NES_DEBUG(
+      "LogicalWindowOperator: TypeInferencePhase: infer types for window "
+      "operator with input schema {}",
+      inputSchema->toString());
+
+  // infer type of aggregation
+  auto windowAggregation = windowDefinition->getWindowAggregation();
+  for (const auto& agg : windowAggregation) {
+    agg->inferStamp(inputSchema);
+  }
+
+  // Construct output schema
+  // First clear()
+  outputSchema->clear();
+  // Distinguish process between different window types (currently time-based
+  // and content-based)
+  auto windowType = windowDefinition->getWindowType();
+  if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
+    // typeInference
+    if (!windowType->as<Windowing::TimeBasedWindowType>()->inferStamp(
+            inputSchema)) {
+      return false;
+    }
+    outputSchema =
+        outputSchema
+            ->addField(createField(
+                inputSchema
+                        ->getQualifierNameForSystemGeneratedFieldsWithSeparator() +
+                    "start",
+                BasicType::UINT64))
+            ->addField(createField(
+                inputSchema
+                        ->getQualifierNameForSystemGeneratedFieldsWithSeparator() +
+                    "end",
+                BasicType::UINT64));
+  } else if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
+    // type Inference for Content-based Windows requires the
+    // typeInferencePhaseContext
+    auto contentBasedWindowType =
+        windowType->as<Windowing::ContentBasedWindowType>();
+    if (contentBasedWindowType->getContentBasedSubWindowType() ==
+        Windowing::ContentBasedWindowType::ContentBasedSubWindowType::
+            THRESHOLDWINDOW) {
+      auto thresholdWindow =
+          Windowing::ContentBasedWindowType::asThresholdWindow(
+              contentBasedWindowType);
+      if (!thresholdWindow->inferStamp(inputSchema)) {
         return false;
+      }
     }
-    // infer the default input and output schema
-    NES_DEBUG("LogicalWindowOperator: TypeInferencePhase: infer types for window operator with input schema {}",
-              inputSchema->toString());
+  } else {
+    NES_THROW_RUNTIME_ERROR("Unsupported window type"
+                            << windowDefinition->getWindowType()->toString());
+  }
 
-    // infer type of aggregation
-    auto windowAggregation = windowDefinition->getWindowAggregation();
-    for (const auto& agg : windowAggregation) {
-        agg->inferStamp(inputSchema);
+  if (windowDefinition->isKeyed()) {
+    // infer the data type of the key field.
+    auto keyList = windowDefinition->getKeys();
+    for (const auto& key : keyList) {
+      key->inferStamp(inputSchema);
+      outputSchema->addField(
+          AttributeField::create(key->getFieldName(), key->getStamp()));
     }
+  }
+  for (const auto& agg : windowAggregation) {
+    outputSchema->addField(AttributeField::create(
+        agg->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+        agg->on()->getStamp()));
+  }
 
-    //Construct output schema
-    //First clear()
-    outputSchema->clear();
-    // Distinguish process between different window types (currently time-based and content-based)
-    auto windowType = windowDefinition->getWindowType();
-    if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
-        // typeInference
-        if (!windowType->as<Windowing::TimeBasedWindowType>()->inferStamp(inputSchema)) {
-            return false;
-        }
-        outputSchema = outputSchema
-                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
-                                                  BasicType::UINT64))
-                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
-                                                  BasicType::UINT64));
-    } else if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
-        // type Inference for Content-based Windows requires the typeInferencePhaseContext
-        auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
-        if (contentBasedWindowType->getContentBasedSubWindowType()
-            == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
-            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-            if (!thresholdWindow->inferStamp(inputSchema)) {
-                return false;
-            }
-        }
-    } else {
-        NES_THROW_RUNTIME_ERROR("Unsupported window type" << windowDefinition->getWindowType()->toString());
-    }
+  NES_DEBUG("Outputschema for window={}", outputSchema->toString());
 
-    if (windowDefinition->isKeyed()) {
-
-        // infer the data type of the key field.
-        auto keyList = windowDefinition->getKeys();
-        for (const auto& key : keyList) {
-            key->inferStamp(inputSchema);
-            outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
-        }
-    }
-    for (const auto& agg : windowAggregation) {
-        outputSchema->addField(
-            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
-    }
-
-    NES_DEBUG("Outputschema for window={}", outputSchema->toString());
-
-    return true;
+  return true;
 }
 
 void LogicalWindowOperator::inferStringSignature() {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
-    NES_TRACE("Inferring String signature for {}", operatorNode->toString());
+  OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+  NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
-    //Infer query signatures for child operators
-    for (const auto& child : children) {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-        childOperator->inferStringSignature();
-    }
+  // Infer query signatures for child operators
+  for (const auto& child : children) {
+    const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+    childOperator->inferStringSignature();
+  }
 
-    std::stringstream signatureStream;
-    auto windowType = windowDefinition->getWindowType();
-    auto windowAggregation = windowDefinition->getWindowAggregation();
-    if (windowDefinition->isKeyed()) {
-        signatureStream << "WINDOW-BY-KEY(";
-        for (const auto& key : windowDefinition->getKeys()) {
-            signatureStream << key->toString() << ",";
-        }
-    } else {
-        signatureStream << "WINDOW(";
+  std::stringstream signatureStream;
+  auto windowType = windowDefinition->getWindowType();
+  auto windowAggregation = windowDefinition->getWindowAggregation();
+  if (windowDefinition->isKeyed()) {
+    signatureStream << "WINDOW-BY-KEY(";
+    for (const auto& key : windowDefinition->getKeys()) {
+      signatureStream << key->toString() << ",";
     }
-    signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
-    signatureStream << "AGGREGATION: ";
-    for (const auto& agg : windowAggregation) {
-        signatureStream << agg->toString() << ",";
-    }
-    signatureStream << ")";
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
-    signatureStream << "." << *childSignature.begin()->second.begin();
+  } else {
+    signatureStream << "WINDOW(";
+  }
+  signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
+  signatureStream << "AGGREGATION: ";
+  for (const auto& agg : windowAggregation) {
+    signatureStream << agg->toString() << ",";
+  }
+  signatureStream << ")";
+  auto childSignature =
+      children[0]->as<LogicalOperator>()->getHashBasedSignature();
+  signatureStream << "." << *childSignature.begin()->second.begin();
 
-    auto signature = signatureStream.str();
-    //Update the signature
-    auto hashCode = hashGenerator(signature);
-    hashBasedSignature[hashCode] = {signature};
+  auto signature = signatureStream.str();
+  // Update the signature
+  auto hashCode = hashGenerator(signature);
+  hashBasedSignature[hashCode] = {signature};
 }
 
 std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const {
-    std::vector<std::string> groupByKeyNames = {};
-    auto windowDefinition = this->getWindowDefinition();
-    if (windowDefinition->isKeyed()) {
-        std::vector<FieldAccessExpressionNodePtr> groupByKeys = windowDefinition->getKeys();
-        groupByKeyNames.reserve(groupByKeys.size());
-        for (const auto& groupByKey : groupByKeys) {
-            groupByKeyNames.push_back(groupByKey->getFieldName());
-        }
+  std::vector<std::string> groupByKeyNames = {};
+  auto windowDefinition = this->getWindowDefinition();
+  if (windowDefinition->isKeyed()) {
+    std::vector<FieldAccessExpressionNodePtr> groupByKeys =
+        windowDefinition->getKeys();
+    groupByKeyNames.reserve(groupByKeys.size());
+    for (const auto& groupByKey : groupByKeys) {
+      groupByKeyNames.push_back(groupByKey->getFieldName());
     }
-    return groupByKeyNames;
+  }
+  return groupByKeyNames;
 }
 
-}// namespace NES
+}  // namespace NES

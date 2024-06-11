@@ -22,7 +22,9 @@ PhysicalLimitOperator::PhysicalLimitOperator(OperatorId id,
                                              SchemaPtr inputSchema,
                                              SchemaPtr outputSchema,
                                              uint64_t limit)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId),
+      PhysicalUnaryOperator(id, statisticId, std::move(inputSchema),
+                            std::move(outputSchema)),
       limit(limit) {}
 
 PhysicalOperatorPtr PhysicalLimitOperator::create(OperatorId id,
@@ -30,26 +32,32 @@ PhysicalOperatorPtr PhysicalLimitOperator::create(OperatorId id,
                                                   const SchemaPtr& inputSchema,
                                                   const SchemaPtr& outputSchema,
                                                   uint64_t limit) {
-    return std::make_shared<PhysicalLimitOperator>(id, statisticId, inputSchema, outputSchema, limit);
+  return std::make_shared<PhysicalLimitOperator>(id, statisticId, inputSchema,
+                                                 outputSchema, limit);
 }
 
 uint64_t PhysicalLimitOperator::getLimit() { return limit; }
 
-PhysicalOperatorPtr
-PhysicalLimitOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit) {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), limit);
+PhysicalOperatorPtr PhysicalLimitOperator::create(StatisticId statisticId,
+                                                  SchemaPtr inputSchema,
+                                                  SchemaPtr outputSchema,
+                                                  uint64_t limit) {
+  return create(getNextOperatorId(), statisticId, std::move(inputSchema),
+                std::move(outputSchema), limit);
 }
 
 std::string PhysicalLimitOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalLimitOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    out << "limit: " << limit;
-    out << std::endl;
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalLimitOperator:\n";
+  out << PhysicalUnaryOperator::toString();
+  out << "limit: " << limit;
+  out << std::endl;
+  return out.str();
 }
 
-OperatorPtr PhysicalLimitOperator::copy() { return create(id, statisticId, inputSchema, outputSchema, limit); }
+OperatorPtr PhysicalLimitOperator::copy() {
+  return create(id, statisticId, inputSchema, outputSchema, limit);
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators

@@ -23,62 +23,65 @@ namespace NES::QueryCompilation {
  * The request encapsulates the decomposed query plan and addition properties.
  */
 class QueryCompilationRequest {
-  public:
-    static QueryCompilationRequestPtr create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
+ public:
+  static QueryCompilationRequestPtr create(
+      DecomposedQueryPlanPtr decomposedQueryPlan,
+      Runtime::NodeEnginePtr nodeEngine);
 
-    /**
-     * @brief Enable debugging for this query.
-     */
-    void enableDebugging();
+  /**
+   * @brief Enable debugging for this query.
+   */
+  void enableDebugging();
 
-    /**
-     * @brief Checks if debugging is enabled
-     * @return bool
-     */
-    bool isDebugEnabled() const;
+  /**
+   * @brief Checks if debugging is enabled
+   * @return bool
+   */
+  bool isDebugEnabled() const;
 
-    /**
-    * @brief Checks if optimizations for this query
-    */
-    void enableOptimizations();
+  /**
+   * @brief Checks if optimizations for this query
+   */
+  void enableOptimizations();
 
-    /**
-     * @brief Checks if optimization flags is enabled
-     * @return bool
-     */
-    bool isOptimizeEnabled() const;
+  /**
+   * @brief Checks if optimization flags is enabled
+   * @return bool
+   */
+  bool isOptimizeEnabled() const;
 
-    /**
-    * @brief Enable debugging for this query.
-    */
-    void enableDump();
+  /**
+   * @brief Enable debugging for this query.
+   */
+  void enableDump();
 
-    /**
-     * @brief Checks if dumping to nesviz is enabled
-     * @return bool
-     */
-    bool isDumpEnabled() const;
+  /**
+   * @brief Checks if dumping to nesviz is enabled
+   * @return bool
+   */
+  bool isDumpEnabled() const;
 
-    /**
-     * @brief Gets the Decomposed query plan of this request
-     * @return DecomposedQueryPlanPtr
-     */
-    DecomposedQueryPlanPtr getDecomposedQueryPlan();
+  /**
+   * @brief Gets the Decomposed query plan of this request
+   * @return DecomposedQueryPlanPtr
+   */
+  DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
-    /**
-     * @brief Gets the node engine
-     * @return Runtime::NodeEnginePtr
-     */
-    Runtime::NodeEnginePtr getNodeEngine();
+  /**
+   * @brief Gets the node engine
+   * @return Runtime::NodeEnginePtr
+   */
+  Runtime::NodeEnginePtr getNodeEngine();
 
-  private:
-    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
-    DecomposedQueryPlanPtr decomposedQueryPlan;
-    Runtime::NodeEnginePtr nodeEngine;
-    bool debug;
-    bool optimize;
-    bool dumpQueryPlans;
+ private:
+  QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan,
+                          Runtime::NodeEnginePtr nodeEngine);
+  DecomposedQueryPlanPtr decomposedQueryPlan;
+  Runtime::NodeEnginePtr nodeEngine;
+  bool debug;
+  bool optimize;
+  bool dumpQueryPlans;
 };
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_
+#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_

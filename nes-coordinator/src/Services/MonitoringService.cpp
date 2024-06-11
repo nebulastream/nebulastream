@@ -27,96 +27,108 @@
 #include <utility>
 
 namespace NES {
-MonitoringService::MonitoringService(TopologyPtr topology,
-                                     RequestHandlerServicePtr requestHandlerService,
-                                     Catalogs::Query::QueryCatalogPtr queryCatalog)
+MonitoringService::MonitoringService(
+    TopologyPtr topology, RequestHandlerServicePtr requestHandlerService,
+    Catalogs::Query::QueryCatalogPtr queryCatalog)
     : MonitoringService(topology, requestHandlerService, queryCatalog, true) {}
 
-MonitoringService::MonitoringService(TopologyPtr topology,
-                                     RequestHandlerServicePtr requestHandlerService,
-                                     Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                     bool enable)
+MonitoringService::MonitoringService(
+    TopologyPtr topology, RequestHandlerServicePtr requestHandlerService,
+    Catalogs::Query::QueryCatalogPtr queryCatalog, bool enable)
     : topology(topology), enableMonitoring(enable) {
-    NES_DEBUG("MonitoringService: Initializing with monitoring= {}", enable);
-    monitoringManager =
-        std::make_shared<Monitoring::MonitoringManager>(topology, requestHandlerService, queryCatalog, enableMonitoring);
+  NES_DEBUG("MonitoringService: Initializing with monitoring= {}", enable);
+  monitoringManager = std::make_shared<Monitoring::MonitoringManager>(
+      topology, requestHandlerService, queryCatalog, enableMonitoring);
 }
 
-nlohmann::json MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan) {
-    nlohmann::json metricsJson;
-    auto nodeIds = topology->getAllRegisteredNodeIds();
-    auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, std::move(monitoringPlan));
-    metricsJson["success"] = success;
-    return metricsJson;
+nlohmann::json MonitoringService::registerMonitoringPlanToAllNodes(
+    Monitoring::MonitoringPlanPtr monitoringPlan) {
+  nlohmann::json metricsJson;
+  auto nodeIds = topology->getAllRegisteredNodeIds();
+  auto success = monitoringManager->registerRemoteMonitoringPlans(
+      nodeIds, std::move(monitoringPlan));
+  metricsJson["success"] = success;
+  return metricsJson;
 }
 
 nlohmann::json MonitoringService::requestMonitoringDataAsJson(WorkerId nodeId) {
-    NES_DEBUG("MonitoringService: Requesting monitoring data from worker id= {}", nodeId);
-    return monitoringManager->requestRemoteMonitoringData(nodeId);
+  NES_DEBUG("MonitoringService: Requesting monitoring data from worker id= {}",
+            nodeId);
+  return monitoringManager->requestRemoteMonitoringData(nodeId);
 }
 
 nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
-    nlohmann::json metricsJson;
-    auto nodeIds = topology->getAllRegisteredNodeIds();
-    for (const auto& nodeId : nodeIds) {
-        NES_INFO("MonitoringService: Requesting metrics for node {}", nodeId);
-        metricsJson[nodeId.toString()] = requestMonitoringDataAsJson(nodeId);
-        Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(nodeId);
-        metricsJson[nodeId.toString()][toString(Monitoring::MetricType::RegistrationMetric)] =
-            Monitoring::MetricUtils::toJson(tMetrics)[toString(Monitoring::MetricType::RegistrationMetric)][0]["value"];
-    }
-    return metricsJson;
+  nlohmann::json metricsJson;
+  auto nodeIds = topology->getAllRegisteredNodeIds();
+  for (const auto& nodeId : nodeIds) {
+    NES_INFO("MonitoringService: Requesting metrics for node {}", nodeId);
+    metricsJson[nodeId.toString()] = requestMonitoringDataAsJson(nodeId);
+    Monitoring::StoredNodeMetricsPtr tMetrics =
+        monitoringManager->getMonitoringDataFromMetricStore(nodeId);
+    metricsJson[nodeId.toString()]
+               [toString(Monitoring::MetricType::RegistrationMetric)] =
+                   Monitoring::MetricUtils::toJson(tMetrics)[toString(
+                       Monitoring::MetricType::RegistrationMetric)][0]["value"];
+  }
+  return metricsJson;
 }
 
-nlohmann::json MonitoringService::requestNewestMonitoringDataFromMetricStoreAsJson() {
-    nlohmann::json metricsJson;
-    auto nodeIds = topology->getAllRegisteredNodeIds();
-    for (const auto& nodeId : nodeIds) {
-        NES_INFO("MonitoringService: Requesting metrics for node {}", nodeId);
-        Monitoring::StoredNodeMetricsPtr parsedValues = monitoringManager->getMonitoringDataFromMetricStore(nodeId);
-        metricsJson[nodeId.toString()] = Monitoring::MetricUtils::toJson(parsedValues);
-    }
-    NES_INFO("MonitoringService: MetricTypes from coordinator received\n{}", metricsJson.dump());
-    return metricsJson;
+nlohmann::json
+MonitoringService::requestNewestMonitoringDataFromMetricStoreAsJson() {
+  nlohmann::json metricsJson;
+  auto nodeIds = topology->getAllRegisteredNodeIds();
+  for (const auto& nodeId : nodeIds) {
+    NES_INFO("MonitoringService: Requesting metrics for node {}", nodeId);
+    Monitoring::StoredNodeMetricsPtr parsedValues =
+        monitoringManager->getMonitoringDataFromMetricStore(nodeId);
+    metricsJson[nodeId.toString()] =
+        Monitoring::MetricUtils::toJson(parsedValues);
+  }
+  NES_INFO("MonitoringService: MetricTypes from coordinator received\n{}",
+           metricsJson.dump());
+  return metricsJson;
 }
 
-const Monitoring::MonitoringManagerPtr MonitoringService::getMonitoringManager() const { return monitoringManager; }
+const Monitoring::MonitoringManagerPtr MonitoringService::getMonitoringManager()
+    const {
+  return monitoringManager;
+}
 
 bool MonitoringService::isMonitoringEnabled() const { return enableMonitoring; }
 
 nlohmann::json MonitoringService::startMonitoringStreams() {
-    nlohmann::json output;
-    auto queryIds = monitoringManager->startOrRedeployMonitoringQueries(false);
+  nlohmann::json output;
+  auto queryIds = monitoringManager->startOrRedeployMonitoringQueries(false);
 
-    nlohmann::json elem{};
-    int i = 0;
-    for (auto queryIdPair : queryIds) {
-        elem["logical_stream"] = queryIdPair.first;
-        elem["query_ID"] = queryIdPair.second;
-        output[i++] = elem;
-    }
+  nlohmann::json elem{};
+  int i = 0;
+  for (auto queryIdPair : queryIds) {
+    elem["logical_stream"] = queryIdPair.first;
+    elem["query_ID"] = queryIdPair.second;
+    output[i++] = elem;
+  }
 
-    return output;
+  return output;
 }
 
 nlohmann::json MonitoringService::stopMonitoringStreams() {
-    monitoringManager->stopRunningMonitoringQueries(false);
-    return nlohmann::json::boolean_t(true);
+  monitoringManager->stopRunningMonitoringQueries(false);
+  return nlohmann::json::boolean_t(true);
 }
 
 nlohmann::json MonitoringService::getMonitoringStreams() {
-    nlohmann::json output;
-    auto queryIds = monitoringManager->getDeployedMonitoringQueries();
+  nlohmann::json output;
+  auto queryIds = monitoringManager->getDeployedMonitoringQueries();
 
-    nlohmann::json elem{};
-    int i = 0;
-    for (auto queryIdPair : queryIds) {
-        elem["logical_stream"] = queryIdPair.first;
-        elem["query_ID"] = queryIdPair.second;
-        output[i++] = elem;
-    }
+  nlohmann::json elem{};
+  int i = 0;
+  for (auto queryIdPair : queryIds) {
+    elem["logical_stream"] = queryIdPair.first;
+    elem["query_ID"] = queryIdPair.second;
+    output[i++] = elem;
+  }
 
-    return output;
+  return output;
 }
 
-}// namespace NES
+}  // namespace NES

@@ -39,11 +39,12 @@ template class EnumOption<NES::QueryCompilation::NautilusBackend>;
 template class EnumOption<NES::QueryCompilation::OutputBufferOptimizationLevel>;
 template class EnumOption<NES::QueryCompilation::WindowingStrategy>;
 template class EnumOption<NES::Runtime::QueryExecutionMode>;
-template class EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType>;
+template class EnumOption<
+    NES::Spatial::Mobility::Experimental::LocationProviderType>;
 template class EnumOption<NES::Optimizer::QueryMergerRule>;
 template class EnumOption<NES::LogLevel>;
 template class EnumOption<NES::Optimizer::MemoryLayoutPolicy>;
 template class EnumOption<NES::Optimizer::PlacementAmendmentMode>;
 template class EnumOption<NES::Optimizer::DistributedJoinOptimizationMode>;
 
-}// namespace NES::Configurations
+}  // namespace NES::Configurations

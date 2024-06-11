@@ -22,32 +22,36 @@ namespace NES::Windowing {
  * The AvgAggregationDescriptor aggregation calculates the avg over the window.
  */
 class AvgAggregationDescriptor : public WindowAggregationDescriptor {
-  public:
-    /**
-    * Factory method to creates a avg aggregation on a particular field.
-    */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+ public:
+  /**
+   * Factory method to creates a avg aggregation on a particular field.
+   */
+  static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
 
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+  static WindowAggregationDescriptorPtr create(
+      FieldAccessExpressionNodePtr onField,
+      FieldAccessExpressionNodePtr asField);
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    WindowAggregationDescriptorPtr copy() override;
+  WindowAggregationDescriptorPtr copy() override;
 
-    DataTypePtr getInputStamp() override;
-    DataTypePtr getPartialAggregateStamp() override;
-    DataTypePtr getFinalAggregateStamp() override;
+  DataTypePtr getInputStamp() override;
+  DataTypePtr getPartialAggregateStamp() override;
+  DataTypePtr getFinalAggregateStamp() override;
 
-    virtual ~AvgAggregationDescriptor() = default;
+  virtual ~AvgAggregationDescriptor() = default;
 
-  private:
-    explicit AvgAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    AvgAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+ private:
+  explicit AvgAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+  AvgAggregationDescriptor(ExpressionNodePtr onField,
+                           ExpressionNodePtr asField);
 };
-}// namespace NES::Windowing
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_
+}  // namespace NES::Windowing
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_

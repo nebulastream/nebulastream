@@ -17,9 +17,12 @@
 
 namespace NES::TestUtils {
 QueryCompilation::LowerToExecutableQueryPlanPhasePtr
-TestPhaseProvider::createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool) {
-    auto sinkProvider = std::make_shared<TestUtils::TestSinkProvider>();
-    auto sourceProvider = std::make_shared<TestUtils::TestSourceProvider>(options);
-    return QueryCompilation::LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
+TestPhaseProvider::createLowerToExecutableQueryPlanPhase(
+    QueryCompilation::QueryCompilerOptionsPtr options, bool) {
+  auto sinkProvider = std::make_shared<TestUtils::TestSinkProvider>();
+  auto sourceProvider =
+      std::make_shared<TestUtils::TestSourceProvider>(options);
+  return QueryCompilation::LowerToExecutableQueryPlanPhase::create(
+      sinkProvider, sourceProvider);
 }
-}// namespace NES::TestUtils
+}  // namespace NES::TestUtils

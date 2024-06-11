@@ -18,45 +18,62 @@
 
 namespace NES::Spatial::Util {
 
-Experimental::SpatialType SpatialTypeUtility::stringToNodeType(const std::string spatialTypeString) {
-    if (spatialTypeString == "NO_LOCATION") {
-        return Experimental::SpatialType::NO_LOCATION;
-    } else if (spatialTypeString == "FIXED_LOCATION") {
-        return Experimental::SpatialType::FIXED_LOCATION;
-    } else if (spatialTypeString == "MOBILE_NODE") {
-        return Experimental::SpatialType::MOBILE_NODE;
-    }
-    return Experimental::SpatialType::INVALID;
+Experimental::SpatialType SpatialTypeUtility::stringToNodeType(
+    const std::string spatialTypeString) {
+  if (spatialTypeString == "NO_LOCATION") {
+    return Experimental::SpatialType::NO_LOCATION;
+  } else if (spatialTypeString == "FIXED_LOCATION") {
+    return Experimental::SpatialType::FIXED_LOCATION;
+  } else if (spatialTypeString == "MOBILE_NODE") {
+    return Experimental::SpatialType::MOBILE_NODE;
+  }
+  return Experimental::SpatialType::INVALID;
 }
 
-Experimental::SpatialType SpatialTypeUtility::protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType spatialType) {
-    switch (spatialType) {
-        case NES::Spatial::Protobuf::SpatialType::NO_LOCATION: return Experimental::SpatialType::NO_LOCATION;
-        case NES::Spatial::Protobuf::SpatialType::FIXED_LOCATION: return Experimental::SpatialType::FIXED_LOCATION;
-        case NES::Spatial::Protobuf::SpatialType::MOBILE_NODE: return Experimental::SpatialType::MOBILE_NODE;
-        case NES::Spatial::Protobuf::SpatialType_INT_MIN_SENTINEL_DO_NOT_USE_: return Experimental::SpatialType::INVALID;
-        case NES::Spatial::Protobuf::SpatialType_INT_MAX_SENTINEL_DO_NOT_USE_: return Experimental::SpatialType::INVALID;
-    }
-    return Experimental::SpatialType::INVALID;
+Experimental::SpatialType SpatialTypeUtility::protobufEnumToNodeType(
+    NES::Spatial::Protobuf::SpatialType spatialType) {
+  switch (spatialType) {
+    case NES::Spatial::Protobuf::SpatialType::NO_LOCATION:
+      return Experimental::SpatialType::NO_LOCATION;
+    case NES::Spatial::Protobuf::SpatialType::FIXED_LOCATION:
+      return Experimental::SpatialType::FIXED_LOCATION;
+    case NES::Spatial::Protobuf::SpatialType::MOBILE_NODE:
+      return Experimental::SpatialType::MOBILE_NODE;
+    case NES::Spatial::Protobuf::SpatialType_INT_MIN_SENTINEL_DO_NOT_USE_:
+      return Experimental::SpatialType::INVALID;
+    case NES::Spatial::Protobuf::SpatialType_INT_MAX_SENTINEL_DO_NOT_USE_:
+      return Experimental::SpatialType::INVALID;
+  }
+  return Experimental::SpatialType::INVALID;
 }
 
-std::string SpatialTypeUtility::toString(const Experimental::SpatialType spatialType) {
-    switch (spatialType) {
-        case Experimental::SpatialType::NO_LOCATION: return "NO_LOCATION";
-        case Experimental::SpatialType::FIXED_LOCATION: return "FIXED_LOCATION";
-        case Experimental::SpatialType::MOBILE_NODE: return "MOBILE_NODE";
-        case Experimental::SpatialType::INVALID: return "INVALID";
-    }
+std::string SpatialTypeUtility::toString(
+    const Experimental::SpatialType spatialType) {
+  switch (spatialType) {
+    case Experimental::SpatialType::NO_LOCATION:
+      return "NO_LOCATION";
+    case Experimental::SpatialType::FIXED_LOCATION:
+      return "FIXED_LOCATION";
+    case Experimental::SpatialType::MOBILE_NODE:
+      return "MOBILE_NODE";
+    case Experimental::SpatialType::INVALID:
+      return "INVALID";
+  }
 }
 
-NES::Spatial::Protobuf::SpatialType SpatialTypeUtility::toProtobufEnum(Experimental::SpatialType spatialType) {
-    switch (spatialType) {
-        case Experimental::SpatialType::NO_LOCATION: return NES::Spatial::Protobuf::SpatialType::NO_LOCATION;
-        case Experimental::SpatialType::FIXED_LOCATION: return NES::Spatial::Protobuf::SpatialType::FIXED_LOCATION;
-        case Experimental::SpatialType::MOBILE_NODE: return NES::Spatial::Protobuf::SpatialType::MOBILE_NODE;
-        case Experimental::SpatialType::INVALID:
-            NES_FATAL_ERROR("cannot construct protobuf enum from invalid spatial type, exiting");
-            exit(EXIT_FAILURE);
-    }
+NES::Spatial::Protobuf::SpatialType SpatialTypeUtility::toProtobufEnum(
+    Experimental::SpatialType spatialType) {
+  switch (spatialType) {
+    case Experimental::SpatialType::NO_LOCATION:
+      return NES::Spatial::Protobuf::SpatialType::NO_LOCATION;
+    case Experimental::SpatialType::FIXED_LOCATION:
+      return NES::Spatial::Protobuf::SpatialType::FIXED_LOCATION;
+    case Experimental::SpatialType::MOBILE_NODE:
+      return NES::Spatial::Protobuf::SpatialType::MOBILE_NODE;
+    case Experimental::SpatialType::INVALID:
+      NES_FATAL_ERROR(
+          "cannot construct protobuf enum from invalid spatial type, exiting");
+      exit(EXIT_FAILURE);
+  }
 }
-}// namespace NES::Spatial::Util
+}  // namespace NES::Spatial::Util

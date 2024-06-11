@@ -16,5 +16,7 @@
 
 namespace NES {
 
-RequestTypeNotHandledException::RequestTypeNotHandledException(const std::string& message) : std::runtime_error(message) {}
-}// namespace NES
+RequestTypeNotHandledException::RequestTypeNotHandledException(
+    const std::string& message)
+    : std::runtime_error(message) {}
+}  // namespace NES

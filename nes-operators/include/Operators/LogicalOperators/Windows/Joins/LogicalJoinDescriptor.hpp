@@ -28,129 +28,131 @@ namespace NES::Join {
  * @experimental
  */
 class LogicalJoinDescriptor {
+ public:
+  /**
+   * With this enum we distinguish between options to compose two sources, in
+   * particular, we reuse Join Logic for binary CEP operators which require a
+   * Cartesian product. Thus, INNER_JOIN combines two tuples in case they share
+   * a common key attribute CARTESIAN_PRODUCT combines two tuples regardless if
+   * they share a common attribute.
+   *
+   * Example:
+   * Source1: {(key1,2),(key2,3)}
+   * Source2: {(key1,2),(key2,3)}
+   *
+   * INNER_JOIN: {(Key1,2,2), (key2,3,3)}
+   * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2),
+   * (key2,3,key2,3)}
+   *
+   */
+  enum class JoinType : uint8_t { INNER_JOIN, CARTESIAN_PRODUCT };
 
-  public:
-    /**
-     * With this enum we distinguish between options to compose two sources, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
-     * Thus, INNER_JOIN combines two tuples in case they share a common key attribute
-     * CARTESIAN_PRODUCT combines two tuples regardless if they share a common attribute.
-     *
-     * Example:
-     * Source1: {(key1,2),(key2,3)}
-     * Source2: {(key1,2),(key2,3)}
-     *
-     * INNER_JOIN: {(Key1,2,2), (key2,3,3)}
-     * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
-     *
-     */
-    enum class JoinType : uint8_t { INNER_JOIN, CARTESIAN_PRODUCT };
+  static LogicalJoinDescriptorPtr create(
+      ExpressionNodePtr joinExpression,
+      const Windowing::WindowTypePtr& windowType,
+      uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight,
+      JoinType joinType);
 
-    static LogicalJoinDescriptorPtr create(ExpressionNodePtr joinExpression,
-                                           const Windowing::WindowTypePtr& windowType,
-                                           uint64_t numberOfInputEdgesLeft,
-                                           uint64_t numberOfInputEdgesRight,
-                                           JoinType joinType);
+  explicit LogicalJoinDescriptor(ExpressionNodePtr joinExpression,
+                                 Windowing::WindowTypePtr windowType,
+                                 uint64_t numberOfInputEdgesLeft,
+                                 uint64_t numberOfInputEdgesRight,
+                                 JoinType joinType,
+                                 OriginId originId = INVALID_ORIGIN_ID);
 
-    explicit LogicalJoinDescriptor(ExpressionNodePtr joinExpression,
-                                   Windowing::WindowTypePtr windowType,
-                                   uint64_t numberOfInputEdgesLeft,
-                                   uint64_t numberOfInputEdgesRight,
-                                   JoinType joinType,
-                                   OriginId originId = INVALID_ORIGIN_ID);
-
-    /**
+  /**
    * @brief getter left source type
    */
-    SchemaPtr getLeftSourceType() const;
+  SchemaPtr getLeftSourceType() const;
 
-    /**
+  /**
    * @brief getter of right source type
    */
-    SchemaPtr getRightSourceType() const;
+  SchemaPtr getRightSourceType() const;
 
-    /**
-     * @brief getter/setter for window type
-    */
-    Windowing::WindowTypePtr getWindowType() const;
+  /**
+   * @brief getter/setter for window type
+   */
+  Windowing::WindowTypePtr getWindowType() const;
 
-    /**
-     * @brief getter for on trigger action
-     * @return trigger action
-    */
-    [[nodiscard]] JoinType getJoinType() const;
+  /**
+   * @brief getter for on trigger action
+   * @return trigger action
+   */
+  [[nodiscard]] JoinType getJoinType() const;
 
-    /**
-     * @brief number of input edges. Need to define a clear concept for this
-     * @experimental This is experimental API
-     * @return
-     */
-    uint64_t getNumberOfInputEdgesLeft() const;
+  /**
+   * @brief number of input edges. Need to define a clear concept for this
+   * @experimental This is experimental API
+   * @return
+   */
+  uint64_t getNumberOfInputEdgesLeft() const;
 
-    /**
-     * @brief number of input edges. Need to define a clear concept for this
-     * @return
-     */
-    uint64_t getNumberOfInputEdgesRight() const;
+  /**
+   * @brief number of input edges. Need to define a clear concept for this
+   * @return
+   */
+  uint64_t getNumberOfInputEdgesRight() const;
 
-    /**
-     * @brief Update the left and right source types upon type inference
-     * @param leftSourceType the type of the left source
-     * @param rightSourceType the type of the right source
-     */
-    void updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType);
+  /**
+   * @brief Update the left and right source types upon type inference
+   * @param leftSourceType the type of the left source
+   * @param rightSourceType the type of the right source
+   */
+  void updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType);
 
-    /**
-     * @brief Update the output source type upon type inference
-     * @param outputSchema the type of the output source
-     */
-    void updateOutputDefinition(SchemaPtr outputSchema);
+  /**
+   * @brief Update the output source type upon type inference
+   * @param outputSchema the type of the output source
+   */
+  void updateOutputDefinition(SchemaPtr outputSchema);
 
-    /**
-     * @brief Getter of the output source schema
-     * @return the output source schema
-     */
-    [[nodiscard]] SchemaPtr getOutputSchema() const;
+  /**
+   * @brief Getter of the output source schema
+   * @return the output source schema
+   */
+  [[nodiscard]] SchemaPtr getOutputSchema() const;
 
-    void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
-    void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
+  void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
+  void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
 
-    /**
-     * @brief Getter for the origin id of this window.
-     * @return origin id
-     */
-    [[nodiscard]] OriginId getOriginId() const;
+  /**
+   * @brief Getter for the origin id of this window.
+   * @return origin id
+   */
+  [[nodiscard]] OriginId getOriginId() const;
 
-    /**
-     * @brief Setter for the origin id
-     * @param originId
-     */
-    void setOriginId(OriginId originId);
+  /**
+   * @brief Setter for the origin id
+   * @param originId
+   */
+  void setOriginId(OriginId originId);
 
-    /**
-     * @brief Getter keys
-     * @return keys
-     */
-    [[nodiscard]] ExpressionNodePtr getJoinExpression();
+  /**
+   * @brief Getter keys
+   * @return keys
+   */
+  [[nodiscard]] ExpressionNodePtr getJoinExpression();
 
-    /**
-     * @brief Checks if these two are equal
-     * @param other: LogicalJoinDescriptor that we want to check if they are equal
-     * @return Boolean
-     */
-    bool equals(const LogicalJoinDescriptor& other) const;
+  /**
+   * @brief Checks if these two are equal
+   * @param other: LogicalJoinDescriptor that we want to check if they are equal
+   * @return Boolean
+   */
+  bool equals(const LogicalJoinDescriptor& other) const;
 
-  private:
-    ExpressionNodePtr joinExpression;
-    SchemaPtr leftSourceType = Schema::create();
-    SchemaPtr rightSourceType = Schema::create();
-    SchemaPtr outputSchema = Schema::create();
-    Windowing::WindowTypePtr windowType;
-    uint64_t numberOfInputEdgesLeft;
-    uint64_t numberOfInputEdgesRight;
-    JoinType joinType;
-    OriginId originId;
+ private:
+  ExpressionNodePtr joinExpression;
+  SchemaPtr leftSourceType = Schema::create();
+  SchemaPtr rightSourceType = Schema::create();
+  SchemaPtr outputSchema = Schema::create();
+  Windowing::WindowTypePtr windowType;
+  uint64_t numberOfInputEdgesLeft;
+  uint64_t numberOfInputEdgesRight;
+  JoinType joinType;
+  OriginId originId;
 };
 
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
-}// namespace NES::Join
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
+}  // namespace NES::Join
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_

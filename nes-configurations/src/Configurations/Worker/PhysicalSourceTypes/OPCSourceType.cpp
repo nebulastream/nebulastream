@@ -19,129 +19,188 @@
 
 namespace NES {
 
-OPCSourceTypePtr
-OPCSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig) {
-    return std::make_shared<OPCSourceType>(OPCSourceType(logicalSourceName, physicalSourceName, yamlConfig));
+OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName,
+                                       const std::string& physicalSourceName,
+                                       const Yaml::Node& yamlConfig) {
+  return std::make_shared<OPCSourceType>(
+      OPCSourceType(logicalSourceName, physicalSourceName, yamlConfig));
+}
+
+OPCSourceTypePtr OPCSourceType::create(
+    const std::string& logicalSourceName, const std::string& physicalSourceName,
+    std::map<std::string, std::string> sourceConfigMap) {
+  return std::make_shared<OPCSourceType>(OPCSourceType(
+      logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
 OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName,
-                                       const std::string& physicalSourceName,
-                                       std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<OPCSourceType>(OPCSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
-}
-
-OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
-    return std::make_shared<OPCSourceType>(OPCSourceType(logicalSourceName, physicalSourceName));
+                                       const std::string& physicalSourceName) {
+  return std::make_shared<OPCSourceType>(
+      OPCSourceType(logicalSourceName, physicalSourceName));
 }
 
 OPCSourceType::OPCSourceType(const std::string& logicalSourceName,
                              const std::string& physicalSourceName,
                              std::map<std::string, std::string> sourceConfigMap)
     : OPCSourceType(logicalSourceName, physicalSourceName) {
-    NES_INFO("OPCSourceType: Init default OPC source config object with values from command line args.");
-    auto enumNameString = std::string(magic_enum::enum_name(SourceType::OPC_SOURCE));
-    if (sourceConfigMap.find(enumNameString) != sourceConfigMap.end()) {
-        namespaceIndex->setValue(std::stoi(sourceConfigMap.find(enumNameString)->second));
-    }
-    if (sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
-        nodeIdentifier->setValue(sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG)->second);
-    } else {
-        NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no nodeIdentifier defined! Please define a nodeIdentifier.");
-    }
-    if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
-    } else {
-        NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no userName defined! Please define a userName.");
-    }
-    if (sourceConfigMap.find(Configurations::PASSWORD_CONFIG) != sourceConfigMap.end()) {
-        password->setValue(sourceConfigMap.find(Configurations::PASSWORD_CONFIG)->second);
-    }
+  NES_INFO(
+      "OPCSourceType: Init default OPC source config object with values from "
+      "command line args.");
+  auto enumNameString =
+      std::string(magic_enum::enum_name(SourceType::OPC_SOURCE));
+  if (sourceConfigMap.find(enumNameString) != sourceConfigMap.end()) {
+    namespaceIndex->setValue(
+        std::stoi(sourceConfigMap.find(enumNameString)->second));
+  }
+  if (sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG) !=
+      sourceConfigMap.end()) {
+    nodeIdentifier->setValue(
+        sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG)->second);
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "OPCSourceConfig:: no nodeIdentifier defined! Please define a "
+        "nodeIdentifier.");
+  }
+  if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) !=
+      sourceConfigMap.end()) {
+    userName->setValue(
+        sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "OPCSourceConfig:: no userName defined! Please define a userName.");
+  }
+  if (sourceConfigMap.find(Configurations::PASSWORD_CONFIG) !=
+      sourceConfigMap.end()) {
+    password->setValue(
+        sourceConfigMap.find(Configurations::PASSWORD_CONFIG)->second);
+  }
 }
 
-OPCSourceType::OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+OPCSourceType::OPCSourceType(const std::string& logicalSourceName,
+                             const std::string& physicalSourceName,
+                             Yaml::Node yamlConfig)
     : OPCSourceType(logicalSourceName, physicalSourceName) {
-    NES_INFO("OPCSourceType: Init default OPC source config object with values from YAML file.");
-    if (!yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>() != "\n") {
-        namespaceIndex->setValue(yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::uint32_t>());
-    }
-    if (!yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>() != "\n") {
-        nodeIdentifier->setValue(yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>());
-    } else {
-        NES_THROW_RUNTIME_ERROR("OPCSourceType:: no nodeIdentifier defined! Please define a nodeIdentifier.");
-    }
-    if (!yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>() != "\n") {
-        userName->setValue(yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
-    } else {
-        NES_THROW_RUNTIME_ERROR("OPCSourceType:: no userName defined! Please define a userName.");
-    }
-    if (!yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>() != "\n") {
-        password->setValue(yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>());
-    }
+  NES_INFO(
+      "OPCSourceType: Init default OPC source config object with values from "
+      "YAML file.");
+  if (!yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG]
+           .As<std::string>()
+           .empty() &&
+      yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>() !=
+          "\n") {
+    namespaceIndex->setValue(yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG]
+                                 .As<std::uint32_t>());
+  }
+  if (!yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG]
+           .As<std::string>()
+           .empty() &&
+      yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>() !=
+          "\n") {
+    nodeIdentifier->setValue(
+        yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "OPCSourceType:: no nodeIdentifier defined! Please define a "
+        "nodeIdentifier.");
+  }
+  if (!yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>() != "\n") {
+    userName->setValue(
+        yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "OPCSourceType:: no userName defined! Please define a userName.");
+  }
+  if (!yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>() != "\n") {
+    password->setValue(
+        yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>());
+  }
 }
 
-OPCSourceType::OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::OPC_SOURCE),
-      namespaceIndex(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NAME_SPACE_INDEX_CONFIG,
-                                                                           1,
-                                                                           "namespaceIndex for node, needed for: OPCSource")),
-      nodeIdentifier(Configurations::ConfigurationOption<std::string>::create(Configurations::NODE_IDENTIFIER_CONFIG,
-                                                                              "the.answer",
-                                                                              "node identifier, needed for: OPCSource")),
+OPCSourceType::OPCSourceType(const std::string& logicalSourceName,
+                             const std::string& physicalSourceName)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName,
+                         SourceType::OPC_SOURCE),
+      namespaceIndex(Configurations::ConfigurationOption<uint32_t>::create(
+          Configurations::NAME_SPACE_INDEX_CONFIG, 1,
+          "namespaceIndex for node, needed for: OPCSource")),
+      nodeIdentifier(Configurations::ConfigurationOption<std::string>::create(
+          Configurations::NODE_IDENTIFIER_CONFIG, "the.answer",
+          "node identifier, needed for: OPCSource")),
       userName(Configurations::ConfigurationOption<std::string>::create(
-          Configurations::USER_NAME_CONFIG,
-          "testUser",
-          "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      password(Configurations::ConfigurationOption<std::string>::create(Configurations::PASSWORD_CONFIG,
-                                                                        "",
-                                                                        "password, needed for: OPCSource")) {
-    NES_INFO("OPCSourceType: Init source config object with default values.");
+          Configurations::USER_NAME_CONFIG, "testUser",
+          "userName, needed for: MQTTSource (can be chosen arbitrary), "
+          "OPCSource")),
+      password(Configurations::ConfigurationOption<std::string>::create(
+          Configurations::PASSWORD_CONFIG, "",
+          "password, needed for: OPCSource")) {
+  NES_INFO("OPCSourceType: Init source config object with default values.");
 }
 
 std::string OPCSourceType::toString() {
-    std::stringstream ss;
-    ss << Configurations::NAME_SPACE_INDEX_CONFIG + ":" + namespaceIndex->toStringNameCurrentValue();
-    ss << Configurations::NODE_IDENTIFIER_CONFIG + ":" + nodeIdentifier->toStringNameCurrentValue();
-    ss << Configurations::USER_NAME_CONFIG + ":" + userName->toStringNameCurrentValue();
-    ss << Configurations::PASSWORD_CONFIG + ":" + password->toStringNameCurrentValue();
-    return ss.str();
+  std::stringstream ss;
+  ss << Configurations::NAME_SPACE_INDEX_CONFIG + ":" +
+            namespaceIndex->toStringNameCurrentValue();
+  ss << Configurations::NODE_IDENTIFIER_CONFIG + ":" +
+            nodeIdentifier->toStringNameCurrentValue();
+  ss << Configurations::USER_NAME_CONFIG + ":" +
+            userName->toStringNameCurrentValue();
+  ss << Configurations::PASSWORD_CONFIG + ":" +
+            password->toStringNameCurrentValue();
+  return ss.str();
 }
 
 bool OPCSourceType::equal(const PhysicalSourceTypePtr& other) {
-    if (!other->instanceOf<OPCSourceType>()) {
-        return false;
-    }
-    auto otherSourceConfig = other->as<OPCSourceType>();
-    return namespaceIndex->getValue() == otherSourceConfig->namespaceIndex->getValue()
-        && nodeIdentifier->getValue() == otherSourceConfig->nodeIdentifier->getValue()
-        && userName->getValue() == otherSourceConfig->userName->getValue()
-        && password->getValue() == otherSourceConfig->password->getValue();
+  if (!other->instanceOf<OPCSourceType>()) {
+    return false;
+  }
+  auto otherSourceConfig = other->as<OPCSourceType>();
+  return namespaceIndex->getValue() ==
+             otherSourceConfig->namespaceIndex->getValue() &&
+         nodeIdentifier->getValue() ==
+             otherSourceConfig->nodeIdentifier->getValue() &&
+         userName->getValue() == otherSourceConfig->userName->getValue() &&
+         password->getValue() == otherSourceConfig->password->getValue();
 }
 
-Configurations::IntConfigOption OPCSourceType::getNamespaceIndex() const { return namespaceIndex; }
+Configurations::IntConfigOption OPCSourceType::getNamespaceIndex() const {
+  return namespaceIndex;
+}
 
-Configurations::StringConfigOption OPCSourceType::getNodeIdentifier() const { return nodeIdentifier; }
+Configurations::StringConfigOption OPCSourceType::getNodeIdentifier() const {
+  return nodeIdentifier;
+}
 
-Configurations::StringConfigOption OPCSourceType::getUserName() const { return userName; }
+Configurations::StringConfigOption OPCSourceType::getUserName() const {
+  return userName;
+}
 
-Configurations::StringConfigOption OPCSourceType::getPassword() const { return password; }
+Configurations::StringConfigOption OPCSourceType::getPassword() const {
+  return password;
+}
 
-void OPCSourceType::setNamespaceIndex(uint32_t namespaceIndexValue) { namespaceIndex->setValue(namespaceIndexValue); }
+void OPCSourceType::setNamespaceIndex(uint32_t namespaceIndexValue) {
+  namespaceIndex->setValue(namespaceIndexValue);
+}
 
-void OPCSourceType::setNodeIdentifier(const std::string& nodeIdentifierValue) { nodeIdentifier->setValue(nodeIdentifierValue); }
+void OPCSourceType::setNodeIdentifier(const std::string& nodeIdentifierValue) {
+  nodeIdentifier->setValue(nodeIdentifierValue);
+}
 
-void OPCSourceType::setUserName(const std::string& userNameValue) { userName->setValue(userNameValue); }
+void OPCSourceType::setUserName(const std::string& userNameValue) {
+  userName->setValue(userNameValue);
+}
 
-void OPCSourceType::setPassword(const std::string& passwordValue) { password->setValue(passwordValue); }
+void OPCSourceType::setPassword(const std::string& passwordValue) {
+  password->setValue(passwordValue);
+}
 
 void OPCSourceType::reset() {
-    setNamespaceIndex(namespaceIndex->getDefaultValue());
-    setNodeIdentifier(nodeIdentifier->getDefaultValue());
-    setUserName(userName->getDefaultValue());
-    setPassword(password->getDefaultValue());
+  setNamespaceIndex(namespaceIndex->getDefaultValue());
+  setNodeIdentifier(nodeIdentifier->getDefaultValue());
+  setUserName(userName->getDefaultValue());
+  setPassword(password->getDefaultValue());
 }
 
-}// namespace NES
+}  // namespace NES

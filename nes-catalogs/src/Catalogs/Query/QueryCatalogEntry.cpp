@@ -20,55 +20,80 @@
 
 namespace NES::Catalogs::Query {
 
-QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
-                                     std::string queryString,
-                                     Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     QueryPlanPtr inputQueryPlan,
-                                     QueryState queryStatus)
-    : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(queryPlacementStrategy),
+QueryCatalogEntry::QueryCatalogEntry(
+    QueryId queryId, std::string queryString,
+    Optimizer::PlacementStrategy queryPlacementStrategy,
+    QueryPlanPtr inputQueryPlan, QueryState queryStatus)
+    : queryId(queryId),
+      queryString(std::move(queryString)),
+      queryPlacementStrategy(queryPlacementStrategy),
       inputQueryPlan(std::move(inputQueryPlan)) {
-    // Make sure that initial status is timestamped.
-    setQueryState(queryStatus);
+  // Make sure that initial status is timestamped.
+  setQueryState(queryStatus);
 }
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
-SharedQueryId QueryCatalogEntry::getSharedQueryId() const noexcept { return sharedQueryId; }
+SharedQueryId QueryCatalogEntry::getSharedQueryId() const noexcept {
+  return sharedQueryId;
+}
 
 std::string QueryCatalogEntry::getQueryString() const { return queryString; }
 
-QueryPlanPtr QueryCatalogEntry::getInputQueryPlan() const { return inputQueryPlan; }
+QueryPlanPtr QueryCatalogEntry::getInputQueryPlan() const {
+  return inputQueryPlan;
+}
 
-QueryPlanPtr QueryCatalogEntry::getExecutedQueryPlan() const { return executedQueryPlan; }
+QueryPlanPtr QueryCatalogEntry::getExecutedQueryPlan() const {
+  return executedQueryPlan;
+}
 
-void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) { this->executedQueryPlan = executedQueryPlan; }
+void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
+  this->executedQueryPlan = executedQueryPlan;
+}
 
 QueryState QueryCatalogEntry::getQueryState() const { return queryState; }
 
 void QueryCatalogEntry::setQueryState(QueryState queryStatus) {
-    this->queryState = queryStatus;
-    uint64_t usSinceEpoch =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    history.emplace_back(usSinceEpoch, queryStatus);
+  this->queryState = queryStatus;
+  uint64_t usSinceEpoch =
+      std::chrono::duration_cast<std::chrono::microseconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count();
+  history.emplace_back(usSinceEpoch, queryStatus);
 }
 
-void QueryCatalogEntry::setSharedQueryId(SharedQueryId sharedQueryId) { this->sharedQueryId = sharedQueryId; }
+void QueryCatalogEntry::setSharedQueryId(SharedQueryId sharedQueryId) {
+  this->sharedQueryId = sharedQueryId;
+}
 
-void QueryCatalogEntry::setTerminationReason(std::string terminationReason) { this->terminationReason = terminationReason; }
+void QueryCatalogEntry::setTerminationReason(std::string terminationReason) {
+  this->terminationReason = terminationReason;
+}
 
-std::string QueryCatalogEntry::getMetaInformation() { return terminationReason; }
+std::string QueryCatalogEntry::getMetaInformation() {
+  return terminationReason;
+}
 
 const std::string QueryCatalogEntry::getQueryPlacementStrategyAsString() const {
-    return std::string(magic_enum::enum_name(queryPlacementStrategy));
+  return std::string(magic_enum::enum_name(queryPlacementStrategy));
 }
 
-Optimizer::PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() { return queryPlacementStrategy; }
-
-void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan) {
-    optimizationPhases.insert(std::pair<std::string, QueryPlanPtr>(phaseName, queryPlan));
+Optimizer::PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() {
+  return queryPlacementStrategy;
 }
 
-std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() { return optimizationPhases; }
+void QueryCatalogEntry::addOptimizationPhase(std::string phaseName,
+                                             QueryPlanPtr queryPlan) {
+  optimizationPhases.insert(
+      std::pair<std::string, QueryPlanPtr>(phaseName, queryPlan));
+}
 
-const QueryStateHistory& QueryCatalogEntry::getHistory() const { return history; }
-}// namespace NES::Catalogs::Query
+std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
+  return optimizationPhases;
+}
+
+const QueryStateHistory& QueryCatalogEntry::getHistory() const {
+  return history;
+}
+}  // namespace NES::Catalogs::Query

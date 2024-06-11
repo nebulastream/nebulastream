@@ -16,45 +16,53 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {
-    StreamJoinOperatorHandler::setNumberOfWorkerThreads(numberOfWorkerThreads);
+void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(
+    uint64_t numberOfWorkerThreads) {
+  StreamJoinOperatorHandler::setNumberOfWorkerThreads(numberOfWorkerThreads);
 
-    windowsToFill.reserve(numberOfWorkerThreads);
-    for (auto i = 0_u64; i < numberOfWorkerThreads; ++i) {
-        windowsToFill.emplace_back(std::vector<StreamSlice*>());
+  windowsToFill.reserve(numberOfWorkerThreads);
+  for (auto i = 0_u64; i < numberOfWorkerThreads; ++i) {
+    windowsToFill.emplace_back(std::vector<StreamSlice*>());
+  }
+}
+
+std::vector<StreamSlice*>*
+StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(
+    uint64_t ts, WorkerThreadId workerThreadId) {
+  auto [slicesWriteLocked, windowToSlicesLocked] =
+      folly::acquireLocked(slices, windowToSlices);
+
+  int64_t timestamp = ts;
+  int64_t remainder = (timestamp % windowSlide);
+  int64_t lastStart = (timestamp - remainder);
+  int64_t lowerBound = timestamp - windowSize;
+
+  // Getting the vector for the current worker (via workerThreadId)
+  auto& workerVec = windowsToFill[workerThreadId % windowsToFill.size()];
+  workerVec.clear();
+  for (int64_t start = lastStart; start >= 0 && start > lowerBound;
+       start -= windowSlide) {
+    WindowInfo windowInfo(start, start + windowSize);
+    auto window =
+        getSliceBySliceIdentifier(slicesWriteLocked, windowInfo.windowId);
+    if (window.has_value()) {
+      workerVec.emplace_back(window.value().get());
+    } else {
+      auto newWindow =
+          createNewSlice(windowInfo.windowStart, windowInfo.windowEnd);
+      (*windowToSlicesLocked)[windowInfo].slices.emplace_back(newWindow);
+      (*windowToSlicesLocked)[windowInfo].windowState =
+          WindowInfoState::BOTH_SIDES_FILLING;
+      slicesWriteLocked->emplace_back(newWindow);
+      workerVec.emplace_back(newWindow.get());
     }
+  }
+  return &workerVec;
 }
 
-std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts,
-                                                                                        WorkerThreadId workerThreadId) {
-    auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
-
-    int64_t timestamp = ts;
-    int64_t remainder = (timestamp % windowSlide);
-    int64_t lastStart = (timestamp - remainder);
-    int64_t lowerBound = timestamp - windowSize;
-
-    // Getting the vector for the current worker (via workerThreadId)
-    auto& workerVec = windowsToFill[workerThreadId % windowsToFill.size()];
-    workerVec.clear();
-    for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide) {
-        WindowInfo windowInfo(start, start + windowSize);
-        auto window = getSliceBySliceIdentifier(slicesWriteLocked, windowInfo.windowId);
-        if (window.has_value()) {
-            workerVec.emplace_back(window.value().get());
-        } else {
-            auto newWindow = createNewSlice(windowInfo.windowStart, windowInfo.windowEnd);
-            (*windowToSlicesLocked)[windowInfo].slices.emplace_back(newWindow);
-            (*windowToSlicesLocked)[windowInfo].windowState = WindowInfoState::BOTH_SIDES_FILLING;
-            slicesWriteLocked->emplace_back(newWindow);
-            workerVec.emplace_back(newWindow.get());
-        }
-    }
-    return &workerVec;
+std::vector<WindowInfo>
+StreamJoinOperatorHandlerBucketing::getAllWindowsForSlice(StreamSlice& slice) {
+  // During bucketing one slice represents one window
+  return {WindowInfo(slice.getSliceStart(), slice.getSliceEnd())};
 }
-
-std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsForSlice(StreamSlice& slice) {
-    // During bucketing one slice represents one window
-    return {WindowInfo(slice.getSliceStart(), slice.getSliceEnd())};
-}
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

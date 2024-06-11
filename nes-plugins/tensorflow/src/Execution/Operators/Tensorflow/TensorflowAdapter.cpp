@@ -11,56 +11,62 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <tensorflow/lite/c/c_api.h>
+#include <tensorflow/lite/c/common.h>
+
 #include <Execution/Operators/Tensorflow/TensorflowAdapter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fstream>
 #include <iostream>
-#include <tensorflow/lite/c/c_api.h>
-#include <tensorflow/lite/c/common.h>
 
 namespace NES::Runtime::Execution::Operators {
 
-TensorflowAdapterPtr TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
+TensorflowAdapterPtr TensorflowAdapter::create() {
+  return std::make_shared<TensorflowAdapter>();
+}
 
 void TensorflowAdapter::initializeModel(std::string pathToModel) {
-    NES_DEBUG("INITIALIZING MODEL:  {}", pathToModel);
-    std::ifstream input(pathToModel, std::ios::in | std::ios::binary);
-    std::string bytes((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-    input.close();
-    NES_INFO("MODEL SIZE: {}", std::to_string(bytes.size()));
-    TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
-    interpreter = TfLiteInterpreterCreate(TfLiteModelCreateFromFile(pathToModel.c_str()), options);
-    TfLiteInterpreterAllocateTensors(interpreter);
-    this->inputTensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
-    this->tensorSize = (int) (TfLiteTensorByteSize(inputTensor));
-    this->inputData = (void*) malloc(tensorSize);
+  NES_DEBUG("INITIALIZING MODEL:  {}", pathToModel);
+  std::ifstream input(pathToModel, std::ios::in | std::ios::binary);
+  std::string bytes((std::istreambuf_iterator<char>(input)),
+                    (std::istreambuf_iterator<char>()));
+  input.close();
+  NES_INFO("MODEL SIZE: {}", std::to_string(bytes.size()));
+  TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
+  interpreter = TfLiteInterpreterCreate(
+      TfLiteModelCreateFromFile(pathToModel.c_str()), options);
+  TfLiteInterpreterAllocateTensors(interpreter);
+  this->inputTensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
+  this->tensorSize = (int)(TfLiteTensorByteSize(inputTensor));
+  this->inputData = (void*)malloc(tensorSize);
 }
 
 float TensorflowAdapter::getResultAt(int i) { return outputData[i]; }
 
 void TensorflowAdapter::infer() {
-    //Copy input tensor
-    TfLiteTensorCopyFromBuffer(inputTensor, inputData, tensorSize);
-    //Invoke tensor model and perform inference
-    TfLiteInterpreterInvoke(interpreter);
+  // Copy input tensor
+  TfLiteTensorCopyFromBuffer(inputTensor, inputData, tensorSize);
+  // Invoke tensor model and perform inference
+  TfLiteInterpreterInvoke(interpreter);
 
-    //Clear allocated memory to output
-    if (outputData != nullptr) {
-        free(outputData);
-    }
+  // Clear allocated memory to output
+  if (outputData != nullptr) {
+    free(outputData);
+  }
 
-    const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-    int outputSize = (int) (TfLiteTensorByteSize(outputTensor));
-    outputData = (float*) malloc(outputSize);
+  const TfLiteTensor* outputTensor =
+      TfLiteInterpreterGetOutputTensor(interpreter, 0);
+  int outputSize = (int)(TfLiteTensorByteSize(outputTensor));
+  outputData = (float*)malloc(outputSize);
 
-    //Copy value to the output
-    TfLiteTensorCopyToBuffer(outputTensor, outputData, outputSize);
+  // Copy value to the output
+  TfLiteTensorCopyToBuffer(outputTensor, outputData, outputSize);
 }
 
 TensorflowAdapter::~TensorflowAdapter() {
-    free(inputData);
-    free(outputData);
+  free(inputData);
+  free(outputData);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

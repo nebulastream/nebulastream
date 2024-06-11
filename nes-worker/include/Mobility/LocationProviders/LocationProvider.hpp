@@ -31,59 +31,68 @@ namespace NES {
 namespace Configurations {
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
-}// namespace Configurations
+}  // namespace Configurations
 
 namespace Spatial::DataTypes::Experimental {
 class Waypoint;
-}// namespace Spatial::DataTypes::Experimental
+}  // namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 /**
- * @brief this class is the worker-side interface to access all location related information. It allows querying for the fixed position of a field node or the current position of a mobile node.
+ * @brief this class is the worker-side interface to access all location related
+ * information. It allows querying for the fixed position of a field node or the
+ * current position of a mobile node.
  */
 class LocationProvider {
-  public:
-    /**
-     * Constructor
-     * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed location), MOBILE_NODE or INVALID
-     * @param geoLocation the location of this worker node. Will be ignored if the spatial type is not FIXED_LOCATION
-     */
-    explicit LocationProvider(NES::Spatial::Experimental::SpatialType spatialType,
-                              DataTypes::Experimental::GeoLocation geoLocation);
+ public:
+  /**
+   * Constructor
+   * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed
+   * location), MOBILE_NODE or INVALID
+   * @param geoLocation the location of this worker node. Will be ignored if the
+   * spatial type is not FIXED_LOCATION
+   */
+  explicit LocationProvider(NES::Spatial::Experimental::SpatialType spatialType,
+                            DataTypes::Experimental::GeoLocation geoLocation);
 
-    /**
-     * @brief default destructor
-     */
-    virtual ~LocationProvider() = default;
+  /**
+   * @brief default destructor
+   */
+  virtual ~LocationProvider() = default;
 
-    /**
-     * Experimental
-     * @brief check if this worker runs on a mobile device, has a fixed location, of if there is no location data available
-     */
-    [[nodiscard]] NES::Spatial::Experimental::SpatialType getSpatialType() const;
+  /**
+   * Experimental
+   * @brief check if this worker runs on a mobile device, has a fixed location,
+   * of if there is no location data available
+   */
+  [[nodiscard]] NES::Spatial::Experimental::SpatialType getSpatialType() const;
 
-    /**
-     * Experimental
-     * @brief construct a mobile workers location provider. The supplied worker mobility configuration will be used to determine
-     * which subclass of LocationProvider should be used. This function is experimental.
-     * @param workerConfig : this workers WorkerConfiguration
-     * @return a smart pointer to an object of the LocationProvider class or one of its subclasses
-     */
-    static LocationProviderPtr create(Configurations::WorkerConfigurationPtr workerConfig);
+  /**
+   * Experimental
+   * @brief construct a mobile workers location provider. The supplied worker
+   * mobility configuration will be used to determine which subclass of
+   * LocationProvider should be used. This function is experimental.
+   * @param workerConfig : this workers WorkerConfiguration
+   * @return a smart pointer to an object of the LocationProvider class or one
+   * of its subclasses
+   */
+  static LocationProviderPtr create(
+      Configurations::WorkerConfigurationPtr workerConfig);
 
-    /**
-     * @brief get the current location of the worker
-     * @return a waypoint indicating current location and the timestamp when that location was obtained
-     * */
-    virtual DataTypes::Experimental::Waypoint getCurrentWaypoint();
+  /**
+   * @brief get the current location of the worker
+   * @return a waypoint indicating current location and the timestamp when that
+   * location was obtained
+   * */
+  virtual DataTypes::Experimental::Waypoint getCurrentWaypoint();
 
-  private:
-    DataTypes::Experimental::GeoLocation workerGeoLocation;
-    NES::Spatial::Experimental::SpatialType spatialType;
+ private:
+  DataTypes::Experimental::GeoLocation workerGeoLocation;
+  NES::Spatial::Experimental::SpatialType spatialType;
 };
-}// namespace Spatial::Mobility::Experimental
-}// namespace NES
-#endif// NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_
+}  // namespace Spatial::Mobility::Experimental
+}  // namespace NES
+#endif  // NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_

@@ -24,39 +24,40 @@ using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
  * @brief Represents a @DynamicObject, which relies on a shared library.
  */
 class SharedLibrary : public DynamicObject {
-  public:
-    /**
-     * @brief Creates a new @SharedLibrary Object
-     * @param shareLib
-     * @param soAbsolutePath: absolute path where so file is stored
-     */
-    explicit SharedLibrary(void* shareLib, std::string soAbsolutePath);
-    /**
-     * @brief Loads a shared library from a specific path.
-     * @param absoluteFilePath: absolute path where so file is stored
-     * @return SharedLibraryPtr
-     */
-    static SharedLibraryPtr load(const std::string& absoluteFilePath);
+ public:
+  /**
+   * @brief Creates a new @SharedLibrary Object
+   * @param shareLib
+   * @param soAbsolutePath: absolute path where so file is stored
+   */
+  explicit SharedLibrary(void* shareLib, std::string soAbsolutePath);
+  /**
+   * @brief Loads a shared library from a specific path.
+   * @param absoluteFilePath: absolute path where so file is stored
+   * @return SharedLibraryPtr
+   */
+  static SharedLibraryPtr load(const std::string& absoluteFilePath);
 
-    /**
-     * @brief Destructor for the shared library.
-     * Automatically unloads the shared library from memory.
-     */
-    ~SharedLibrary() override;
+  /**
+   * @brief Destructor for the shared library.
+   * Automatically unloads the shared library from memory.
+   */
+  ~SharedLibrary() override;
 
-  protected:
-    /**
-     * @brief Returns a untyped function pointer to a specific symbol.
-     * @param member on the dynamic object, currently provided as a MangledName.
-     * @return function ptr
-     */
-    [[nodiscard]] void* getInvocableFunctionPtr(const std::string& member) override;
+ protected:
+  /**
+   * @brief Returns a untyped function pointer to a specific symbol.
+   * @param member on the dynamic object, currently provided as a MangledName.
+   * @return function ptr
+   */
+  [[nodiscard]] void* getInvocableFunctionPtr(
+      const std::string& member) override;
 
-  private:
-    void* shareLib;
-    std::string soAbsolutePath;
+ private:
+  void* shareLib;
+  std::string soAbsolutePath;
 };
 
-}// namespace NES::Compiler
+}  // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
+#endif  // NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_

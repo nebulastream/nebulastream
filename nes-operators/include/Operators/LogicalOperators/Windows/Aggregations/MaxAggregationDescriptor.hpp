@@ -20,35 +20,41 @@ namespace NES::Windowing {
 
 /**
  * @brief
- * The MaxAggregationDescriptor aggregation calculates the maximum over the window.
+ * The MaxAggregationDescriptor aggregation calculates the maximum over the
+ * window.
  */
 class MaxAggregationDescriptor : public WindowAggregationDescriptor {
-  public:
-    /**
-     * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
-     */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+ public:
+  /**
+   * Factory method to create a MaxAggregationDescriptor aggregation on a
+   * particular field.
+   */
+  static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
 
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+  static WindowAggregationDescriptorPtr create(
+      FieldAccessExpressionNodePtr onField,
+      FieldAccessExpressionNodePtr asField);
 
-    DataTypePtr getInputStamp() override;
-    DataTypePtr getPartialAggregateStamp() override;
-    DataTypePtr getFinalAggregateStamp() override;
+  DataTypePtr getInputStamp() override;
+  DataTypePtr getPartialAggregateStamp() override;
+  DataTypePtr getFinalAggregateStamp() override;
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    WindowAggregationDescriptorPtr copy() override;
-    MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+  WindowAggregationDescriptorPtr copy() override;
+  MaxAggregationDescriptor(ExpressionNodePtr onField,
+                           ExpressionNodePtr asField);
 
-    virtual ~MaxAggregationDescriptor() = default;
+  virtual ~MaxAggregationDescriptor() = default;
 
-  private:
-    explicit MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+ private:
+  explicit MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
 };
-}// namespace NES::Windowing
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MAXAGGREGATIONDESCRIPTOR_HPP_
+}  // namespace NES::Windowing
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MAXAGGREGATIONDESCRIPTOR_HPP_

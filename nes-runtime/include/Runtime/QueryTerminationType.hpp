@@ -15,38 +15,53 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 
+#include <stdint.h>
+
 #include <Util/Logger/Logger.hpp>
 #include <ostream>
-#include <stdint.h>
 
 namespace NES::Runtime {
 
-enum class QueryTerminationType : uint8_t { Graceful = 0, HardStop, Failure, Invalid };
+enum class QueryTerminationType : uint8_t {
+  Graceful = 0,
+  HardStop,
+  Failure,
+  Invalid
+};
 
-template<typename O = std::ostream>
+template <typename O = std::ostream>
 static O& operator<<(O& os, const QueryTerminationType& type) {
-    switch (type) {
-        case QueryTerminationType::Graceful: return os << "Graceful";
-        case QueryTerminationType::HardStop: return os << "HardStop";
-        case QueryTerminationType::Failure: return os << "Failure";
-        default: return os << "Invalid";
-    }
+  switch (type) {
+    case QueryTerminationType::Graceful:
+      return os << "Graceful";
+    case QueryTerminationType::HardStop:
+      return os << "HardStop";
+    case QueryTerminationType::Failure:
+      return os << "Failure";
+    default:
+      return os << "Invalid";
+  }
 }
 
-}// namespace NES::Runtime
+}  // namespace NES::Runtime
 
 namespace fmt {
-template<>
+template <>
 struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string> {
-    auto format(const NES::Runtime::QueryTerminationType& termination_type, format_context& ctx) -> decltype(ctx.out()) {
-        switch (termination_type) {
-            case NES::Runtime::QueryTerminationType::Graceful: return fmt::format_to(ctx.out(), "Graceful");
-            case NES::Runtime::QueryTerminationType::HardStop: return fmt::format_to(ctx.out(), "HardStop");
-            case NES::Runtime::QueryTerminationType::Failure: return fmt::format_to(ctx.out(), "Failure");
-            default: return fmt::format_to(ctx.out(), "Invalid");
-        }
+  auto format(const NES::Runtime::QueryTerminationType& termination_type,
+              format_context& ctx) -> decltype(ctx.out()) {
+    switch (termination_type) {
+      case NES::Runtime::QueryTerminationType::Graceful:
+        return fmt::format_to(ctx.out(), "Graceful");
+      case NES::Runtime::QueryTerminationType::HardStop:
+        return fmt::format_to(ctx.out(), "HardStop");
+      case NES::Runtime::QueryTerminationType::Failure:
+        return fmt::format_to(ctx.out(), "Failure");
+      default:
+        return fmt::format_to(ctx.out(), "Invalid");
     }
+  }
 };
-}//namespace fmt
+}  // namespace fmt
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_

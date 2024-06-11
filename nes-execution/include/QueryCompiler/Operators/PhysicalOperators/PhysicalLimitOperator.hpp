@@ -22,24 +22,30 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Physical limit operator.
  */
 class PhysicalLimitOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalLimitOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
-    static PhysicalOperatorPtr
-    create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit);
-    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
-    std::string toString() const override;
-    OperatorPtr copy() override;
+ public:
+  PhysicalLimitOperator(OperatorId id, StatisticId statisticId,
+                        SchemaPtr inputSchema, SchemaPtr outputSchema,
+                        uint64_t limit);
+  static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId,
+                                    const SchemaPtr& inputSchema,
+                                    const SchemaPtr& outputSchema,
+                                    uint64_t limit);
+  static PhysicalOperatorPtr create(StatisticId statisticId,
+                                    SchemaPtr inputSchema,
+                                    SchemaPtr outputSchema, uint64_t limit);
+  std::string toString() const override;
+  OperatorPtr copy() override;
 
-    /**
+  /**
    * @brief get the limit.
    * @return limit
    */
-    uint64_t getLimit();
+  uint64_t getLimit();
 
-  private:
-    uint64_t limit;
+ private:
+  uint64_t limit;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALLIMITOPERATOR_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALLIMITOPERATOR_HPP_

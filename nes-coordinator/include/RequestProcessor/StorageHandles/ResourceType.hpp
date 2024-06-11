@@ -20,28 +20,30 @@
 namespace NES::RequestProcessor {
 
 /**
- * @brief This class is used by coordinator side requests to indicate which data structures they need to access to
- * perform an operation so they can acquire locks before starting to execute the request logic.
+ * @brief This class is used by coordinator side requests to indicate which data
+ * structures they need to access to perform an operation so they can acquire
+ * locks before starting to execute the request logic.
  */
 enum class ResourceType : uint8_t {
-    Topology,
-    QueryCatalogService,
-    SourceCatalog,
-    GlobalExecutionPlan,
-    GlobalQueryPlan,
-    UdfCatalog,
-    CoordinatorConfiguration,
-    StatisticProbeHandler,
+  Topology,
+  QueryCatalogService,
+  SourceCatalog,
+  GlobalExecutionPlan,
+  GlobalQueryPlan,
+  UdfCatalog,
+  CoordinatorConfiguration,
+  StatisticProbeHandler,
 };
 
-const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
-                                                    ResourceType::CoordinatorConfiguration,
-                                                    ResourceType::QueryCatalogService,
-                                                    ResourceType::SourceCatalog,
-                                                    ResourceType::GlobalExecutionPlan,
-                                                    ResourceType::GlobalQueryPlan,
-                                                    ResourceType::UdfCatalog,
-                                                    ResourceType::StatisticProbeHandler};
-}// namespace NES::RequestProcessor
+const std::vector<ResourceType> resourceTypeList = {
+    ResourceType::Topology,
+    ResourceType::CoordinatorConfiguration,
+    ResourceType::QueryCatalogService,
+    ResourceType::SourceCatalog,
+    ResourceType::GlobalExecutionPlan,
+    ResourceType::GlobalQueryPlan,
+    ResourceType::UdfCatalog,
+    ResourceType::StatisticProbeHandler};
+}  // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_

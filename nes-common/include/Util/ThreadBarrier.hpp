@@ -25,49 +25,55 @@ namespace NES {
  * The barrier resets when N threads call wait().
  */
 class ThreadBarrier {
-  public:
-    /**
-     * @brief Create a Barrier for size threads
-     * @param size
-     */
-    explicit ThreadBarrier(uint32_t size) : size(size), count(0) {
-        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
+ public:
+  /**
+   * @brief Create a Barrier for size threads
+   * @param size
+   */
+  explicit ThreadBarrier(uint32_t size) : size(size), count(0) {
+    NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads,
+                    "Invalid thread count " << size);
+  }
+
+  ThreadBarrier() = delete;
+
+  ThreadBarrier(const ThreadBarrier&) = delete;
+
+  ThreadBarrier& operator=(const ThreadBarrier&) = delete;
+
+  ~ThreadBarrier() {
+    std::unique_lock<std::mutex> lock(mutex);
+    NES_ASSERT2_FMT(count >= size,
+                    "destroying not completed thread barrier count="
+                        << count << " size=" << size);
+    NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads,
+                    "Invalid thread count " << size);
+  }
+
+  /**
+   * @brief This method will block the calling thread until N threads have
+   * invoke wait().
+   */
+  void wait() {
+    std::unique_lock<std::mutex> lock(mutex);
+    NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads,
+                    "Invalid thread count " << size);
+    if (++count >= size) {
+      cvar.notify_all();
+    } else {
+      // while loop to avoid spurious wakeup
+      while (count < size) {
+        cvar.wait(lock);
+      }
     }
+  }
 
-    ThreadBarrier() = delete;
-
-    ThreadBarrier(const ThreadBarrier&) = delete;
-
-    ThreadBarrier& operator=(const ThreadBarrier&) = delete;
-
-    ~ThreadBarrier() {
-        std::unique_lock<std::mutex> lock(mutex);
-        NES_ASSERT2_FMT(count >= size, "destroying not completed thread barrier count=" << count << " size=" << size);
-        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
-    }
-
-    /**
-     * @brief This method will block the calling thread until N threads have invoke wait().
-     */
-    void wait() {
-        std::unique_lock<std::mutex> lock(mutex);
-        NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
-        if (++count >= size) {
-            cvar.notify_all();
-        } else {
-            // while loop to avoid spurious wakeup
-            while (count < size) {
-                cvar.wait(lock);
-            }
-        }
-    }
-
-  private:
-    const uint32_t size;
-    uint32_t count;
-    std::mutex mutex;
-    std::condition_variable cvar;
+ private:
+  const uint32_t size;
+  uint32_t count;
+  std::mutex mutex;
+  std::condition_variable cvar;
 };
 using ThreadBarrierPtr = std::shared_ptr<ThreadBarrier>;
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_THREADBARRIER_HPP_
+}  // namespace NES
+#endif  // NES_COMMON_INCLUDE_UTIL_THREADBARRIER_HPP_

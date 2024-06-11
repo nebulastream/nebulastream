@@ -21,30 +21,35 @@
 namespace NES::Optimizer {
 
 StatisticIdInferencePhasePtr StatisticIdInferencePhase::create() {
-    return std::make_shared<StatisticIdInferencePhase>(StatisticIdInferencePhase());
+  return std::make_shared<StatisticIdInferencePhase>(
+      StatisticIdInferencePhase());
 }
 
 StatisticIdInferencePhase::StatisticIdInferencePhase() {}
 
 QueryPlanPtr StatisticIdInferencePhase::execute(QueryPlanPtr queryPlan) {
-    performInference(queryPlan->getAllOperators());
-    return queryPlan;
+  performInference(queryPlan->getAllOperators());
+  return queryPlan;
 }
 
-DecomposedQueryPlanPtr StatisticIdInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan) {
-    performInference(decomposedQueryPlan->getAllOperators());
-    return decomposedQueryPlan;
+DecomposedQueryPlanPtr StatisticIdInferencePhase::execute(
+    DecomposedQueryPlanPtr decomposedQueryPlan) {
+  performInference(decomposedQueryPlan->getAllOperators());
+  return decomposedQueryPlan;
 }
 
-void StatisticIdInferencePhase::performInference(std::unordered_set<OperatorPtr> allOperators) {
-    for (auto& op : allOperators) {
-        if (op->instanceOf<SourceLogicalOperatorPtr>()) {
-            NES_DEBUG("Not setting the statisticId of a logical source, as we first have to expand the logical source"
-                      "into physical source.");
-            continue;
-        }
-        op->setStatisticId(getNextStatisticId());
+void StatisticIdInferencePhase::performInference(
+    std::unordered_set<OperatorPtr> allOperators) {
+  for (auto& op : allOperators) {
+    if (op->instanceOf<SourceLogicalOperatorPtr>()) {
+      NES_DEBUG(
+          "Not setting the statisticId of a logical source, as we first have "
+          "to expand the logical source"
+          "into physical source.");
+      continue;
     }
+    op->setStatisticId(getNextStatisticId());
+  }
 }
 
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer

@@ -21,65 +21,68 @@ namespace NES::Statistic {
 class TriggerCondition;
 using TriggerConditionPtr = std::shared_ptr<TriggerCondition>;
 class TriggerCondition {
-  public:
-    /**
-     * @brief Checks if the corresponding callback should be called
-     * @param triggerExpression
-     * @return True or false
-     */
-    [[maybe_unused]] virtual bool shallTrigger(const ExpressionNode& triggerExpression) = 0;
+ public:
+  /**
+   * @brief Checks if the corresponding callback should be called
+   * @param triggerExpression
+   * @return True or false
+   */
+  [[maybe_unused]] virtual bool shallTrigger(
+      const ExpressionNode& triggerExpression) = 0;
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if equal otherwise false
-     */
-    virtual bool operator==(const TriggerCondition& rhs) const = 0;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if equal otherwise false
+   */
+  virtual bool operator==(const TriggerCondition& rhs) const = 0;
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if NOT equal otherwise false
-     */
-    virtual bool operator!=(const TriggerCondition& rhs) const;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if NOT equal otherwise false
+   */
+  virtual bool operator!=(const TriggerCondition& rhs) const;
 
-    /**
-     * @brief Checks if the current TriggerCondition is of type TriggerConditionType
-     * @tparam TriggerCondition
-     * @return bool true if node is of TriggerCondition
-     */
-    template<class TriggerCondition>
-    bool instanceOf() {
-        if (dynamic_cast<TriggerCondition*>(this)) {
-            return true;
-        }
-        return false;
-    };
+  /**
+   * @brief Checks if the current TriggerCondition is of type
+   * TriggerConditionType
+   * @tparam TriggerCondition
+   * @return bool true if node is of TriggerCondition
+   */
+  template <class TriggerCondition>
+  bool instanceOf() {
+    if (dynamic_cast<TriggerCondition*>(this)) {
+      return true;
+    }
+    return false;
+  };
 
-    /**
-     * @brief Checks if the current TriggerCondition is of type const TriggerConditionType
-     * @tparam TriggerCondition
-     * @return bool true if node is of TriggerCondition
-     */
-    template<class TriggerCondition>
-    bool instanceOf() const {
-        if (dynamic_cast<const TriggerCondition*>(this)) {
-            return true;
-        }
-        return false;
-    };
+  /**
+   * @brief Checks if the current TriggerCondition is of type const
+   * TriggerConditionType
+   * @tparam TriggerCondition
+   * @return bool true if node is of TriggerCondition
+   */
+  template <class TriggerCondition>
+  bool instanceOf() const {
+    if (dynamic_cast<const TriggerCondition*>(this)) {
+      return true;
+    }
+    return false;
+  };
 
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    [[nodiscard]] virtual std::string toString() const = 0;
+  /**
+   * @brief Creates a string representation
+   * @return std::string
+   */
+  [[nodiscard]] virtual std::string toString() const = 0;
 
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~TriggerCondition() = default;
+  /**
+   * @brief Virtual destructor
+   */
+  virtual ~TriggerCondition() = default;
 };
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_TRIGGERCONDITION_HPP_

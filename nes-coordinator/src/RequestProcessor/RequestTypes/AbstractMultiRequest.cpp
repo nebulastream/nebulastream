@@ -23,62 +23,68 @@
 
 namespace NES::RequestProcessor {
 
-AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries) : AbstractRequest(maxRetries) {}
+AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries)
+    : AbstractRequest(maxRetries) {}
 
-std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle) {
-    std::vector<AbstractRequestPtr> result;
+std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(
+    const StorageHandlerPtr& storageHandle) {
+  std::vector<AbstractRequestPtr> result;
 
-    //let the first acquired thread execute the main thread and set the done member variable afterwards
-    bool expected = false;
-    if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
-        this->storageHandle = storageHandle;
-        result = executeRequestLogic();
-        std::unique_lock lock(workMutex);
-        done = true;
-        lock.unlock();
+  // let the first acquired thread execute the main thread and set the done
+  // member variable afterwards
+  bool expected = false;
+  if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
+    this->storageHandle = storageHandle;
+    result = executeRequestLogic();
+    std::unique_lock lock(workMutex);
+    done = true;
+    lock.unlock();
 
-        //verify that all requests have been executed
-        if (!subRequestQueue.empty()) {
-            for (auto& subRequedt : subRequestQueue) {
-                NES_ASSERT(subRequedt->executionHasStarted(), "Not all scheduled requests were executed");
-            }
-        }
-        cv.notify_all();
-        return result;
+    // verify that all requests have been executed
+    if (!subRequestQueue.empty()) {
+      for (auto& subRequedt : subRequestQueue) {
+        NES_ASSERT(subRequedt->executionHasStarted(),
+                   "Not all scheduled requests were executed");
+      }
     }
+    cv.notify_all();
+    return result;
+  }
 
-    while (!done) {
-        executeSubRequest();
-    }
-    return {};
+  while (!done) {
+    executeSubRequest();
+  }
+  return {};
 }
 
 bool AbstractMultiRequest::isDone() { return done; }
 
 bool AbstractMultiRequest::executeSubRequest() {
-    std::unique_lock lock(workMutex);
-    while (subRequestQueue.empty()) {
-        if (done) {
-            return false;
-        }
-        cv.wait(lock);
+  std::unique_lock lock(workMutex);
+  while (subRequestQueue.empty()) {
+    if (done) {
+      return false;
     }
-    const AbstractSubRequestPtr subRequest = subRequestQueue.front();
-    subRequestQueue.pop_front();
-    lock.unlock();
-    subRequest->execute();
-    return true;
+    cv.wait(lock);
+  }
+  const AbstractSubRequestPtr subRequest = subRequestQueue.front();
+  subRequestQueue.pop_front();
+  lock.unlock();
+  subRequest->execute();
+  return true;
 }
 
-SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
-    NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
-    auto future = subRequest->getFuture();
+SubRequestFuture AbstractMultiRequest::scheduleSubRequest(
+    AbstractSubRequestPtr subRequest) {
+  NES_ASSERT(!done,
+             "Cannot schedule sub request is parent request is marked as done");
+  auto future = subRequest->getFuture();
 
-    subRequest->setStorageHandler(storageHandle);
+  subRequest->setStorageHandler(storageHandle);
 
-    std::unique_lock lock(workMutex);
-    subRequestQueue.emplace_back(subRequest);
-    cv.notify_all();
-    return SubRequestFuture(subRequest, std::move(future));
+  std::unique_lock lock(workMutex);
+  subRequestQueue.emplace_back(subRequest);
+  cv.notify_all();
+  return SubRequestFuture(subRequest, std::move(future));
 }
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor

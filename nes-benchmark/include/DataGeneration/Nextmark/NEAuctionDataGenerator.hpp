@@ -18,16 +18,17 @@
 namespace NES::Benchmark::DataGeneration {
 
 class NEAuctionDataGenerator : public DataGenerator {
-  public:
-    explicit NEAuctionDataGenerator();
+ public:
+  explicit NEAuctionDataGenerator();
 
-    std::string getName() override;
-    std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
-    SchemaPtr getSchema() override;
-    Configurations::SchemaTypePtr getSchemaType() override;
-    std::string toString() override;
+  std::string getName() override;
+  std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers,
+                                               size_t bufferSize) override;
+  SchemaPtr getSchema() override;
+  Configurations::SchemaTypePtr getSchemaType() override;
+  std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+}  // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_

@@ -26,17 +26,19 @@ class BaseEvent;
 /**
  * @brief This is the listener for runtime events
  */
-class RuntimeEventListener : public NES::detail::virtual_enable_shared_from_this<RuntimeEventListener, false> {
-    friend class NES::Network::ExchangeProtocol;
+class RuntimeEventListener
+    : public NES::detail::virtual_enable_shared_from_this<RuntimeEventListener,
+                                                          false> {
+  friend class NES::Network::ExchangeProtocol;
 
-  protected:
-    /**
-     * @brief API method called upon receiving an event
-     * @param event
-     */
-    virtual void onEvent(Runtime::BaseEvent& event) = 0;
+ protected:
+  /**
+   * @brief API method called upon receiving an event
+   * @param event
+   */
+  virtual void onEvent(Runtime::BaseEvent& event) = 0;
 };
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
-}// namespace NES::Runtime
+}  // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_

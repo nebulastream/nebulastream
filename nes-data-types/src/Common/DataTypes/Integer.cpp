@@ -12,44 +12,53 @@
     limitations under the License.
 */
 
+#include <fmt/format.h>
+
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <algorithm>
 #include <cmath>
-#include <fmt/format.h>
 
 namespace NES {
 
 bool Integer::equals(DataTypePtr otherDataType) {
-    if (otherDataType->isInteger()) {
-        auto otherInteger = as<Integer>(otherDataType);
-        return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound;
-    }
-    return false;
+  if (otherDataType->isInteger()) {
+    auto otherInteger = as<Integer>(otherDataType);
+    return bits == otherInteger->bits &&
+           lowerBound == otherInteger->lowerBound &&
+           upperBound == otherInteger->upperBound;
+  }
+  return false;
 }
 
 DataTypePtr Integer::join(DataTypePtr otherDataType) {
-    // An integer can be joined with integer types and float types.
-    if (otherDataType->isFloat()) {
-        // The other type is a float, thus we return a large enough float as a jointed type.
-        auto otherFloat = as<Float>(otherDataType);
-        auto newBits = std::max(bits, otherFloat->getBits());
-        auto newUpperBound = fmax(static_cast<double>(upperBound), otherFloat->upperBound);
-        auto newLowerBound = fmin(static_cast<double>(lowerBound), otherFloat->lowerBound);
-        return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
-    }
-    if (otherDataType->isInteger()) {
-        // The other type is an Integer, thus we return a large enough integer.
-        auto otherInteger = as<Integer>(otherDataType);
-        auto newBits = std::max(bits, otherInteger->getBits());
-        auto newUpperBound = std::max(upperBound, otherInteger->upperBound);
-        auto newLowerBound = std::min(lowerBound, otherInteger->lowerBound);
-        return DataTypeFactory::createInteger(newBits, newLowerBound, newUpperBound);
-    }
-    return DataTypeFactory::createUndefined();
+  // An integer can be joined with integer types and float types.
+  if (otherDataType->isFloat()) {
+    // The other type is a float, thus we return a large enough float as a
+    // jointed type.
+    auto otherFloat = as<Float>(otherDataType);
+    auto newBits = std::max(bits, otherFloat->getBits());
+    auto newUpperBound =
+        fmax(static_cast<double>(upperBound), otherFloat->upperBound);
+    auto newLowerBound =
+        fmin(static_cast<double>(lowerBound), otherFloat->lowerBound);
+    return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
+  }
+  if (otherDataType->isInteger()) {
+    // The other type is an Integer, thus we return a large enough integer.
+    auto otherInteger = as<Integer>(otherDataType);
+    auto newBits = std::max(bits, otherInteger->getBits());
+    auto newUpperBound = std::max(upperBound, otherInteger->upperBound);
+    auto newLowerBound = std::min(lowerBound, otherInteger->lowerBound);
+    return DataTypeFactory::createInteger(newBits, newLowerBound,
+                                          newUpperBound);
+  }
+  return DataTypeFactory::createUndefined();
 }
 
-std::string Integer::toString() { return fmt::format("INTEGER({} bits)", bits); }
+std::string Integer::toString() {
+  return fmt::format("INTEGER({} bits)", bits);
+}
 
-}// namespace NES
+}  // namespace NES

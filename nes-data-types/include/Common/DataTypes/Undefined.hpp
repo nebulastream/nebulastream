@@ -22,36 +22,37 @@ namespace NES {
  * @brief The Undefined type represents a type for without any meaning.
  */
 class Undefined final : public DataType {
-  public:
-    ~Undefined() override = default;
+ public:
+  ~Undefined() override = default;
 
-    /**
-    * @brief Checks if this data type is Undefined.
-    */
-    [[nodiscard]] bool isUndefined() const override { return true; }
+  /**
+   * @brief Checks if this data type is Undefined.
+   */
+  [[nodiscard]] bool isUndefined() const override { return true; }
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return
-     */
-    bool equals(DataTypePtr otherDataType) override;
+  /**
+   * @brief Checks if two data types are equal.
+   * @param otherDataType
+   * @return
+   */
+  bool equals(DataTypePtr otherDataType) override;
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return DataTypePtr joined data type
-     */
-    DataTypePtr join(DataTypePtr otherDataType) override;
+  /**
+   * @brief Calculates the joined data type between this data type and the
+   * other. If they have no possible joined data type, the coined type is
+   * Undefined.
+   * @param other data type
+   * @return DataTypePtr joined data type
+   */
+  DataTypePtr join(DataTypePtr otherDataType) override;
 
-    /**
-    * @brief Returns a string representation of the data type.
-    * @return string
-    */
-    std::string toString() override;
+  /**
+   * @brief Returns a string representation of the data type.
+   * @return string
+   */
+  std::string toString() override;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_UNDEFINED_HPP_
+#endif  // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_UNDEFINED_HPP_

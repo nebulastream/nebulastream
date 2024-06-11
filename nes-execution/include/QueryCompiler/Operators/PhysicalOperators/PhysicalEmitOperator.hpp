@@ -22,37 +22,44 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief Physical Emit operator.
  */
-class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
-  public:
-    /**
-     * @brief Constructor for the physical emit operator
-     * @param id operator id
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     * @param inputSchema input schema for the emit operator
-     */
-    PhysicalEmitOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema);
+class PhysicalEmitOperator : public PhysicalUnaryOperator,
+                             public AbstractEmitOperator {
+ public:
+  /**
+   * @brief Constructor for the physical emit operator
+   * @param id operator id
+   * @param statisticId: represents the unique identifier of components that we
+   * can track statistics for
+   * @param inputSchema input schema for the emit operator
+   */
+  PhysicalEmitOperator(OperatorId id, StatisticId statisticId,
+                       const SchemaPtr& inputSchema);
 
-    /**
-     * @brief Creates a physical emit operator
-     * @param id operator id
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     * @param inputSchema
-     * @return PhysicalOperatorPtr
-     */
-    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema);
+  /**
+   * @brief Creates a physical emit operator
+   * @param id operator id
+   * @param statisticId: represents the unique identifier of components that we
+   * can track statistics for
+   * @param inputSchema
+   * @return PhysicalOperatorPtr
+   */
+  static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId,
+                                    const SchemaPtr& inputSchema);
 
-    /**
-     * @brief Creates a physical emit operator
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     * @param inputSchema
-     * @return PhysicalOperatorPtr
-     */
-    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema);
+  /**
+   * @brief Creates a physical emit operator
+   * @param statisticId: represents the unique identifier of components that we
+   * can track statistics for
+   * @param inputSchema
+   * @return PhysicalOperatorPtr
+   */
+  static PhysicalOperatorPtr create(StatisticId statisticId,
+                                    SchemaPtr inputSchema);
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    OperatorPtr copy() override;
+  OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEMITOPERATOR_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEMITOPERATOR_HPP_

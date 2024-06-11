@@ -24,46 +24,47 @@
 
 namespace NES::Monitoring {
 /**
-* @brief The LatestEntriesMetricStore that stores all the metrics for monitoring.
-*/
+ * @brief The LatestEntriesMetricStore that stores all the metrics for
+ * monitoring.
+ */
 class AbstractMetricStore {
-  public:
-    //  -- dtor --
-    virtual ~AbstractMetricStore() = default;
+ public:
+  //  -- dtor --
+  virtual ~AbstractMetricStore() = default;
 
-    /**
-     * @brief Returns the type of storage.
-     * @return The storage type.
-     */
-    virtual MetricStoreType getType() const = 0;
+  /**
+   * @brief Returns the type of storage.
+   * @return The storage type.
+   */
+  virtual MetricStoreType getType() const = 0;
 
-    /**
-     * @brief Add a metric for a given node by ID
-     * @param nodeId
-     * @param metrics
-    */
-    virtual void addMetrics(WorkerId nodeId, MetricPtr metrics) = 0;
+  /**
+   * @brief Add a metric for a given node by ID
+   * @param nodeId
+   * @param metrics
+   */
+  virtual void addMetrics(WorkerId nodeId, MetricPtr metrics) = 0;
 
-    /**
-     * @brief Get newest metrics from store
-     * @param nodeId
-     * @return the metric
-    */
-    virtual StoredNodeMetricsPtr getAllMetrics(WorkerId nodeId) = 0;
+  /**
+   * @brief Get newest metrics from store
+   * @param nodeId
+   * @return the metric
+   */
+  virtual StoredNodeMetricsPtr getAllMetrics(WorkerId nodeId) = 0;
 
-    /**
-     * @brief Remove all metrics for a given node.
-     * @param true if metric existed and was removed, else false
-    */
-    virtual bool removeMetrics(WorkerId nodeId) = 0;
+  /**
+   * @brief Remove all metrics for a given node.
+   * @param true if metric existed and was removed, else false
+   */
+  virtual bool removeMetrics(WorkerId nodeId) = 0;
 
-    /**
-     * Checks if any kind of metrics are stored for a given node
-     * @param nodeId
-     * @return True if exists, else false
-    */
-    virtual bool hasMetrics(WorkerId nodeId) = 0;
+  /**
+   * Checks if any kind of metrics are stored for a given node
+   * @param nodeId
+   * @return True if exists, else false
+   */
+  virtual bool hasMetrics(WorkerId nodeId) = 0;
 };
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_

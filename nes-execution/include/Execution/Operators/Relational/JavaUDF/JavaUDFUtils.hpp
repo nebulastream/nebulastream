@@ -164,8 +164,9 @@ Nautilus::TextValue* getStringObjectValue(void* object);
  * @param signature signature of the field
  * @return T value of the field
  */
-template<typename T>
-T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::string signature);
+template <typename T>
+T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
+           std::string signature);
 
 /**
  * Get the value of a boolean field of an object.
@@ -175,7 +176,8 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::st
  * @param fieldIndex index of the field
  * @return bool value of the field
  */
-bool getBooleanField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+bool getBooleanField(void* state, void* classPtr, void* objectPtr,
+                     int fieldIndex);
 
 /**
  * Get the value of a float field of an object.
@@ -185,7 +187,8 @@ bool getBooleanField(void* state, void* classPtr, void* objectPtr, int fieldInde
  * @param fieldIndex index of the field
  * @return float value of the field
  */
-float getFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+float getFloatField(void* state, void* classPtr, void* objectPtr,
+                    int fieldIndex);
 
 /**
  * Get the value of a double field of an object.
@@ -195,7 +198,8 @@ float getFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex
  * @param fieldIndex index of the field
  * @return double value of the field
  */
-double getDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+double getDoubleField(void* state, void* classPtr, void* objectPtr,
+                      int fieldIndex);
 
 /**
  * Get the value of a int field of an object.
@@ -205,7 +209,8 @@ double getDoubleField(void* state, void* classPtr, void* objectPtr, int fieldInd
  * @param fieldIndex index of the field
  * @return int32_t value of the field
  */
-int32_t getIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+int32_t getIntegerField(void* state, void* classPtr, void* objectPtr,
+                        int fieldIndex);
 
 /**
  * Get the value of a long field of an object.
@@ -215,7 +220,8 @@ int32_t getIntegerField(void* state, void* classPtr, void* objectPtr, int fieldI
  * @param fieldIndex index of the field
  * @return int64_t value of the field
  */
-int64_t getLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+int64_t getLongField(void* state, void* classPtr, void* objectPtr,
+                     int fieldIndex);
 
 /**
  * Get the value of a short field of an object.
@@ -225,7 +231,8 @@ int64_t getLongField(void* state, void* classPtr, void* objectPtr, int fieldInde
  * @param fieldIndex index of the field
  * @return int16_t value of the field
  */
-int16_t getShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+int16_t getShortField(void* state, void* classPtr, void* objectPtr,
+                      int fieldIndex);
 
 /**
  * Get the value of a byte field of an object.
@@ -235,7 +242,8 @@ int16_t getShortField(void* state, void* classPtr, void* objectPtr, int fieldInd
  * @param fieldIndex index of the field
  * @return int8_t value of the field
  */
-int8_t getByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+int8_t getByteField(void* state, void* classPtr, void* objectPtr,
+                    int fieldIndex);
 
 /**
  * Get the value of a string field of an object.
@@ -245,7 +253,8 @@ int8_t getByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex
  * @param fieldIndex index of the field
  * @return TextValue* value of the field
  */
-Nautilus::TextValue* getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+Nautilus::TextValue* getStringField(void* state, void* classPtr,
+                                    void* objectPtr, int fieldIndex);
 
 /**
  * Set the value of a field of an object.
@@ -257,8 +266,9 @@ Nautilus::TextValue* getStringField(void* state, void* classPtr, void* objectPtr
  * @param value value to set the field to
  * @param signature signature of the field
  */
-template<typename T>
-void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T value, std::string signature);
+template <typename T>
+void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
+              T value, std::string signature);
 
 /**
  * Set the value of a boolean field of an object.
@@ -268,7 +278,8 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setBooleanField(void* state, void* classPtr, void* objectPtr, int fieldIndex, bool value);
+void setBooleanField(void* state, void* classPtr, void* objectPtr,
+                     int fieldIndex, bool value);
 
 /**
  * Set the value of a float field of an object.
@@ -278,7 +289,8 @@ void setBooleanField(void* state, void* classPtr, void* objectPtr, int fieldInde
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex, float value);
+void setFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
+                   float value);
 
 /**
  * Set the value of a double field of an object.
@@ -288,7 +300,8 @@ void setFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex, double value);
+void setDoubleField(void* state, void* classPtr, void* objectPtr,
+                    int fieldIndex, double value);
 
 /**
  * Set the value of a int field of an object.
@@ -298,7 +311,8 @@ void setDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int32_t value);
+void setIntegerField(void* state, void* classPtr, void* objectPtr,
+                     int fieldIndex, int32_t value);
 
 /**
  * Set the value of a long field of an object.
@@ -308,7 +322,8 @@ void setIntegerField(void* state, void* classPtr, void* objectPtr, int fieldInde
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int64_t value);
+void setLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
+                  int64_t value);
 
 /**
  * Set the value of a short field of an object.
@@ -318,7 +333,8 @@ void setLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex, 
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int16_t value);
+void setShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
+                   int16_t value);
 
 /**
  * Set the value of a byte field of an object.
@@ -328,7 +344,8 @@ void setShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int8_t value);
+void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex,
+                  int8_t value);
 
 /**
  * Set the value of a string field of an object.
@@ -338,8 +355,9 @@ void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex, 
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const Nautilus::TextValue* value);
+void setStringField(void* state, void* classPtr, void* objectPtr,
+                    int fieldIndex, const Nautilus::TextValue* value);
 
-};// namespace NES::Runtime::Execution::Operators
+};  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_

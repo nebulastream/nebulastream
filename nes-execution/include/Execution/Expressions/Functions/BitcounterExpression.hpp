@@ -24,14 +24,14 @@ namespace NES::Runtime::Execution::Expressions {
  * @brief This expression mod the leftSubExpression with the rightSubExpression.
  */
 class BitcounterExpression : public Expression {
-  public:
-    BitcounterExpression(const ExpressionPtr& SubExpression);
-    Value<> execute(NES::Nautilus::Record& record) const override;
+ public:
+  BitcounterExpression(const ExpressionPtr& SubExpression);
+  Value<> execute(NES::Nautilus::Record& record) const override;
 
-  private:
-    const ExpressionPtr SubExpression;
+ private:
+  const ExpressionPtr SubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_BITCOUNTEREXPRESSION_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_BITCOUNTEREXPRESSION_HPP_

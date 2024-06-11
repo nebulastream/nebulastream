@@ -23,23 +23,27 @@
 namespace NES::QueryCompilation {
 
 LowerLogicalToPhysicalOperatorsPtr
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(const PhysicalOperatorProviderPtr& provider) {
-    return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(
+    const PhysicalOperatorProviderPtr& provider) {
+  return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
 }
 
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider)
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(
+    PhysicalOperatorProviderPtr provider)
     : provider(std::move(provider)) {}
 
-DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPlanPtr decomposedQueryPlan) {
-    std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
-    for (const auto& node : nodes) {
-        if (node->instanceOf<PhysicalOperators::PhysicalOperator>()) {
-            NES_DEBUG("Skipped node: {} as it is already a physical operator.", node->toString());
-            continue;
-        }
-        provider->lower(decomposedQueryPlan, node->as<LogicalOperator>());
+DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(
+    DecomposedQueryPlanPtr decomposedQueryPlan) {
+  std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
+  for (const auto& node : nodes) {
+    if (node->instanceOf<PhysicalOperators::PhysicalOperator>()) {
+      NES_DEBUG("Skipped node: {} as it is already a physical operator.",
+                node->toString());
+      continue;
     }
-    return decomposedQueryPlan;
+    provider->lower(decomposedQueryPlan, node->as<LogicalOperator>());
+  }
+  return decomposedQueryPlan;
 }
 
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation

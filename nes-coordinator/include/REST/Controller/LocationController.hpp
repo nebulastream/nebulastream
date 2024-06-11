@@ -28,57 +28,72 @@
 #include OATPP_CODEGEN_BEGIN(ApiController)
 namespace NES::REST::Controller {
 class LocationController : public oatpp::web::server::api::ApiController {
+ public:
+  /**
+   * Constructor with object mapper.
+   * @param objectMapper - default object mapper used to serialize/deserialize
+   * DTOs.
+   * @param completeRouterPrefix - url consisting of base router prefix (e.g
+   * "v1/nes/") and controller specific router prefix (e.g
+   * "connectivityController")
+   */
+  LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                     const oatpp::String& completeRouterPrefix,
+                     const TopologyPtr& topology,
+                     const ErrorHandlerPtr& errorHandler)
+      : oatpp::web::server::api::ApiController(objectMapper,
+                                               completeRouterPrefix),
+        topology(topology),
+        errorHandler(errorHandler) {}
 
-  public:
-    /**
-     * Constructor with object mapper.
-     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-     * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
-     */
-    LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                       const oatpp::String& completeRouterPrefix,
-                       const TopologyPtr& topology,
-                       const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(topology),
-          errorHandler(errorHandler) {}
+  /**
+   * Create a shared object of the API controller
+   * @param objectMapper - default object mapper used to serialize/deserialize
+   * DTOs.
+   * @param routerPrefixAddition - controller specific router prefix (e.g
+   * "connectivityController/")
+   * @return
+   */
+  static std::shared_ptr<LocationController> create(
+      const std::shared_ptr<ObjectMapper>& objectMapper,
+      const TopologyPtr& topology, const std::string& routerPrefixAddition,
+      const ErrorHandlerPtr& errorHandler) {
+    oatpp::String completeRouterPrefix =
+        BASE_ROUTER_PREFIX + routerPrefixAddition;
+    return std::make_shared<LocationController>(
+        objectMapper, completeRouterPrefix, topology, errorHandler);
+  }
 
-    /**
-     * Create a shared object of the API controller
-     * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-     * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
-     * @return
-     */
-    static std::shared_ptr<LocationController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                      const TopologyPtr& topology,
-                                                      const std::string& routerPrefixAddition,
-                                                      const ErrorHandlerPtr& errorHandler) {
-        oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, topology, errorHandler);
+  ENDPOINT("GET", "", getLocationInformationOfASingleNode,
+           QUERY(UInt64, nodeId, "nodeId")) {
+    auto nodeLocationJson =
+        topology->requestNodeLocationDataAsJson(WorkerId(nodeId));
+    if (nodeLocationJson == nullptr) {
+      NES_ERROR("node with id {} does not exist", nodeId);
+      return errorHandler->handleError(
+          Status::CODE_404, "No node with Id: " + std::to_string(nodeId));
     }
+    return createResponse(Status::CODE_200, nodeLocationJson.dump());
+  }
 
-    ENDPOINT("GET", "", getLocationInformationOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
-        auto nodeLocationJson = topology->requestNodeLocationDataAsJson(WorkerId(nodeId));
-        if (nodeLocationJson == nullptr) {
-            NES_ERROR("node with id {} does not exist", nodeId);
-            return errorHandler->handleError(Status::CODE_404, "No node with Id: " + std::to_string(nodeId));
-        }
-        return createResponse(Status::CODE_200, nodeLocationJson.dump());
-    }
+  ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes) {
+    auto locationsJson =
+        topology->requestLocationAndParentDataFromAllMobileNodes();
+    return createResponse(Status::CODE_200, locationsJson.dump());
+  }
 
-    ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes) {
-        auto locationsJson = topology->requestLocationAndParentDataFromAllMobileNodes();
-        return createResponse(Status::CODE_200, locationsJson.dump());
-    }
+  ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode,
+           QUERY(UInt64, nodeId, "nodeId")) {
+    NES_INFO("Received request to fetch reconnect schedule for node with id {}",
+             nodeId);
+    return errorHandler->handleError(Status::CODE_404,
+                                     "Endpoint Not Implemented");
+  }
 
-    ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
-        NES_INFO("Received request to fetch reconnect schedule for node with id {}", nodeId);
-        return errorHandler->handleError(Status::CODE_404, "Endpoint Not Implemented");
-    }
-
-  private:
-    TopologyPtr topology;
-    ErrorHandlerPtr errorHandler;
+ private:
+  TopologyPtr topology;
+  ErrorHandlerPtr errorHandler;
 };
-}// namespace NES::REST::Controller
+}  // namespace NES::REST::Controller
 #include OATPP_CODEGEN_END(ApiController)
-#endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_

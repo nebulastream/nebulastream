@@ -21,39 +21,41 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical Arrow IPC file source
+ * @brief Descriptor defining properties used for creating physical Arrow IPC
+ * file source
  */
 class ArrowSourceDescriptor : public SourceDescriptor {
-  public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      ArrowSourceTypePtr arrowSourceType,
-                                      const std::string logicalSourceName,
-                                      const std::string physicalSourceName);
+ public:
+  static SourceDescriptorPtr create(SchemaPtr schema,
+                                    ArrowSourceTypePtr arrowSourceType,
+                                    const std::string logicalSourceName,
+                                    const std::string physicalSourceName);
 
-    static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType);
+  static SourceDescriptorPtr create(SchemaPtr schema,
+                                    ArrowSourceTypePtr arrowSourceType);
 
-    /**
-     * @brief get source config ptr with all configurations for Arrow source
-     */
-    ArrowSourceTypePtr getSourceConfig() const;
+  /**
+   * @brief get source config ptr with all configurations for Arrow source
+   */
+  ArrowSourceTypePtr getSourceConfig() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+  [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    SourceDescriptorPtr copy() override;
+  SourceDescriptorPtr copy() override;
 
-  private:
-    explicit ArrowSourceDescriptor(SchemaPtr schema,
-                                   ArrowSourceTypePtr sourceConfig,
-                                   std::string logicalSourceName,
-                                   std::string physicalSourceName);
+ private:
+  explicit ArrowSourceDescriptor(SchemaPtr schema,
+                                 ArrowSourceTypePtr sourceConfig,
+                                 std::string logicalSourceName,
+                                 std::string physicalSourceName);
 
-    ArrowSourceTypePtr arrowSourceType;
+  ArrowSourceTypePtr arrowSourceType;
 };
 
 using ArrowSourceDescriptorPtr = std::shared_ptr<ArrowSourceDescriptor>;
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCEDESCRIPTOR_HPP_
+#endif  // NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCEDESCRIPTOR_HPP_

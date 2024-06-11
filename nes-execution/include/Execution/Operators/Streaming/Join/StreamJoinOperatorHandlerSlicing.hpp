@@ -22,16 +22,18 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class implementes the slicing interface while also providing the methods from StreamJoinOperatorHandler
+ * @brief This class implementes the slicing interface while also providing the
+ * methods from StreamJoinOperatorHandler
  */
-class StreamJoinOperatorHandlerSlicing : public virtual JoinOperatorHandlerInterfaceSlicing,
-                                         public virtual StreamJoinOperatorHandler {
-  public:
-    ~StreamJoinOperatorHandlerSlicing() override = default;
-    StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) override;
-    StreamSlice* getCurrentSliceOrCreate() override;
-    std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
+class StreamJoinOperatorHandlerSlicing
+    : public virtual JoinOperatorHandlerInterfaceSlicing,
+      public virtual StreamJoinOperatorHandler {
+ public:
+  ~StreamJoinOperatorHandlerSlicing() override = default;
+  StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) override;
+  StreamSlice* getCurrentSliceOrCreate() override;
+  std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
 };
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERSLICING_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERSLICING_HPP_

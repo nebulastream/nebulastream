@@ -24,8 +24,8 @@ namespace NES::RequestProcessor {
  * @brief the response indicating if the remove query was successfully applied
  */
 struct ISQPRemoveQueryResponse : public ISQPResponse {
-    explicit ISQPRemoveQueryResponse(bool success) : success(success){};
-    bool success;
+  explicit ISQPRemoveQueryResponse(bool success) : success(success){};
+  bool success;
 };
 using ISQPRemoveQueryResponsePtr = std::shared_ptr<ISQPRemoveQueryResponse>;
 
@@ -36,17 +36,16 @@ using ISQPRemoveQueryEventPtr = std::shared_ptr<ISQPRemoveQueryEvent>;
  * @brief Representing the ISQP remove query event
  */
 class ISQPRemoveQueryEvent : public ISQPEvent {
+ public:
+  static ISQPEventPtr create(const QueryId& queryId);
 
-  public:
-    static ISQPEventPtr create(const QueryId& queryId);
+  ISQPRemoveQueryEvent(const QueryId& queryId);
 
-    ISQPRemoveQueryEvent(const QueryId& queryId);
+  QueryId getQueryId() const;
 
-    QueryId getQueryId() const;
-
-  private:
-    QueryId queryId;
+ private:
+  QueryId queryId;
 };
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVEQUERYEVENT_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVEQUERYEVENT_HPP_

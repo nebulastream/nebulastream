@@ -23,21 +23,21 @@ namespace NES::Nautilus::Backends::CPP {
  * @brief Implements the executable for the cpp backend
  */
 class CPPExecutable : public Executable {
-  public:
-    /**
-     * Constructor to create a cpp executable.
-     * @param obj the shared object, which we invoke at runtime.
-     */
-    explicit CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj);
-    ~CPPExecutable() override = default;
+ public:
+  /**
+   * Constructor to create a cpp executable.
+   * @param obj the shared object, which we invoke at runtime.
+   */
+  explicit CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj);
+  ~CPPExecutable() override = default;
 
-  public:
-    void* getInvocableFunctionPtr(const std::string& member) override;
-    bool hasInvocableFunctionPtr() override;
+ public:
+  void* getInvocableFunctionPtr(const std::string& member) override;
+  bool hasInvocableFunctionPtr() override;
 
-  private:
-    std::shared_ptr<Compiler::DynamicObject> obj;
+ private:
+  std::shared_ptr<Compiler::DynamicObject> obj;
 };
-}// namespace NES::Nautilus::Backends::CPP
+}  // namespace NES::Nautilus::Backends::CPP
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_

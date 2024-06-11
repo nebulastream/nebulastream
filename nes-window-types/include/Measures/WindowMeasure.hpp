@@ -20,16 +20,16 @@ namespace NES::Windowing {
  * Defines the measure of a window, common measures are time and count.
  */
 class WindowMeasure {
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    virtual std::string toString() const = 0;
+  /**
+   * @brief Creates a string representation
+   * @return std::string
+   */
+  virtual std::string toString() const = 0;
 
-  public:
-    virtual ~WindowMeasure() = default;
+ public:
+  virtual ~WindowMeasure() = default;
 };
 
-}// namespace NES::Windowing
+}  // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_MEASURES_WINDOWMEASURE_HPP_
+#endif  // NES_WINDOW_TYPES_INCLUDE_MEASURES_WINDOWMEASURE_HPP_

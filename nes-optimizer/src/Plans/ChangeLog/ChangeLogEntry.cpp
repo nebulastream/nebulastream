@@ -20,80 +20,88 @@
 
 namespace NES::Optimizer::Experimental {
 
-ChangeLogEntryPtr ChangeLogEntry::create(std::set<LogicalOperatorPtr> upstreamOperators,
-                                         std::set<LogicalOperatorPtr> downstreamOperators) {
-    return std::make_shared<ChangeLogEntry>(ChangeLogEntry(std::move(upstreamOperators), std::move(downstreamOperators)));
+ChangeLogEntryPtr ChangeLogEntry::create(
+    std::set<LogicalOperatorPtr> upstreamOperators,
+    std::set<LogicalOperatorPtr> downstreamOperators) {
+  return std::make_shared<ChangeLogEntry>(ChangeLogEntry(
+      std::move(upstreamOperators), std::move(downstreamOperators)));
 }
 
-ChangeLogEntry::ChangeLogEntry(std::set<LogicalOperatorPtr> upstreamOperators, std::set<LogicalOperatorPtr> downstreamOperators)
-    : upstreamOperators(std::move(upstreamOperators)), downstreamOperators(std::move(downstreamOperators)),
+ChangeLogEntry::ChangeLogEntry(std::set<LogicalOperatorPtr> upstreamOperators,
+                               std::set<LogicalOperatorPtr> downstreamOperators)
+    : upstreamOperators(std::move(upstreamOperators)),
+      downstreamOperators(std::move(downstreamOperators)),
       poSetOfSubQueryPlan(computePoSet()) {}
 
 std::set<OperatorId> ChangeLogEntry::computePoSet() {
+  if (upstreamOperators.empty() || downstreamOperators.empty()) {
+    return {};
+  }
 
-    if (upstreamOperators.empty() || downstreamOperators.empty()) {
-        return {};
-    }
+  std::set<OperatorId> poSet;
+  std::stack<NodePtr> operatorsToVisit;
+  for (const auto& upstreamOperator : upstreamOperators) {
+    operatorsToVisit.push(upstreamOperator);
+    while (!operatorsToVisit.empty()) {
+      auto visitingOperator = operatorsToVisit.top();
+      operatorsToVisit.pop();
+      // Insert the operator id to the poSet
+      auto inserted = poSet.insert(visitingOperator->as<Operator>()->getId());
 
-    std::set<OperatorId> poSet;
-    std::stack<NodePtr> operatorsToVisit;
-    for (const auto& upstreamOperator : upstreamOperators) {
+      // If insertion was not successful then skip the remainder of operation
+      //  NOTE: this can happen because this operator was already visited.
+      if (!inserted.second) {
+        // Skip rest of the operation
+        continue;
+      }
 
-        operatorsToVisit.push(upstreamOperator);
-        while (!operatorsToVisit.empty()) {
+      // Check if the visiting operator is also one of the downstream operators
+      if (downstreamOperators.find(visitingOperator->as<LogicalOperator>()) !=
+          downstreamOperators.end()) {
+        // Skip rest of the operation
+        continue;
+      }
 
-            auto visitingOperator = operatorsToVisit.top();
-            operatorsToVisit.pop();
-            // Insert the operator id to the poSet
-            auto inserted = poSet.insert(visitingOperator->as<Operator>()->getId());
+      auto downStreamOperatorsToVisit = visitingOperator->getParents();
 
-            //If insertion was not successful then skip the remainder of operation
-            // NOTE: this can happen because this operator was already visited.
-            if (!inserted.second) {
-                // Skip rest of the operation
-                continue;
+      // If there are more than 1 downstream operators then
+      if (downStreamOperatorsToVisit.size() > 1) {
+        // Check all downstream operators if they need to be visited or not
+        for (const auto& downStreamOperatorToVisit :
+             downStreamOperatorsToVisit) {
+          bool visit = false;
+          // If the operator to visit is one of the input downstream operators
+          // then add the operator to visit list
+          if (downstreamOperators.find(
+                  downStreamOperatorToVisit->as<LogicalOperator>()) !=
+              downstreamOperators.end()) {
+            visit = true;
+          } else {  // Check if the path is to be explored
+            // visit only those downstream operators that are connected
+            // to the most downstream operators (or root) of the sub-query plan
+            // captured by the changelog entry
+            for (const auto& downstreamOperator : downstreamOperators) {
+              if (downStreamOperatorToVisit->as<Operator>()
+                      ->containAsGrandParent(downstreamOperator)) {
+                visit = true;
+                // skip rest of the checks
+                break;
+              }
             }
+          }
 
-            // Check if the visiting operator is also one of the downstream operators
-            if (downstreamOperators.find(visitingOperator->as<LogicalOperator>()) != downstreamOperators.end()) {
-                // Skip rest of the operation
-                continue;
-            }
-
-            auto downStreamOperatorsToVisit = visitingOperator->getParents();
-
-            //If there are more than 1 downstream operators then
-            if (downStreamOperatorsToVisit.size() > 1) {
-                // Check all downstream operators if they need to be visited or not
-                for (const auto& downStreamOperatorToVisit : downStreamOperatorsToVisit) {
-                    bool visit = false;
-                    // If the operator to visit is one of the input downstream operators then add the operator to visit list
-                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperator>()) != downstreamOperators.end()) {
-                        visit = true;
-                    } else {// Check if the path is to be explored
-                        // visit only those downstream operators that are connected
-                        // to the most downstream operators (or root) of the sub-query plan captured by the changelog entry
-                        for (const auto& downstreamOperator : downstreamOperators) {
-                            if (downStreamOperatorToVisit->as<Operator>()->containAsGrandParent(downstreamOperator)) {
-                                visit = true;
-                                //skip rest of the checks
-                                break;
-                            }
-                        }
-                    }
-
-                    if (visit) {
-                        //insert the downstream operator for further visit
-                        operatorsToVisit.push(downStreamOperatorToVisit);
-                    }
-                }
-            } else if (downStreamOperatorsToVisit.size() == 1) {
-                //insert the downstream operator for further visit
-                operatorsToVisit.push(downStreamOperatorsToVisit.at(0));
-            }
+          if (visit) {
+            // insert the downstream operator for further visit
+            operatorsToVisit.push(downStreamOperatorToVisit);
+          }
         }
+      } else if (downStreamOperatorsToVisit.size() == 1) {
+        // insert the downstream operator for further visit
+        operatorsToVisit.push(downStreamOperatorsToVisit.at(0));
+      }
     }
-    return poSet;
+  }
+  return poSet;
 }
 
-}// namespace NES::Optimizer::Experimental
+}  // namespace NES::Optimizer::Experimental

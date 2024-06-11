@@ -21,44 +21,47 @@
 namespace NES::Monitoring {
 
 /**
- * The DiskCollector class enables measuring and writing records of class Metrics/Gauge/DiskMetrics into a TupleBuffer.
+ * The DiskCollector class enables measuring and writing records of class
+ * Metrics/Gauge/DiskMetrics into a TupleBuffer.
  */
 class DiskCollector : public MetricCollector {
-  public:
-    explicit DiskCollector();
+ public:
+  explicit DiskCollector();
 
-    /**
-     * @brief Returns the type of metric collector
-     * @return the metric collector type
-     */
-    MetricCollectorType getType() override;
+  /**
+   * @brief Returns the type of metric collector
+   * @return the metric collector type
+   */
+  MetricCollectorType getType() override;
 
-    /**
-     * @brief Fill a buffer with a given metric.
-     * @param tupleBuffer The tuple buffer
-     * @return True if successful, else false
-     */
-    bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
+  /**
+   * @brief Fill a buffer with a given metric.
+   * @param tupleBuffer The tuple buffer
+   * @return True if successful, else false
+   */
+  bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
 
-    /**
-     * @brief Return the schema representing the metrics gathered by the collector.
-     * @return The schema
-     */
-    SchemaPtr getSchema() override;
+  /**
+   * @brief Return the schema representing the metrics gathered by the
+   * collector.
+   * @return The schema
+   */
+  SchemaPtr getSchema() override;
 
-    /**
-     * @brief Read the disk metrics based on the underlying utility systems reader and return the metrics.
-     * @return The metrics object
-     */
-    const MetricPtr readMetric() const override;
+  /**
+   * @brief Read the disk metrics based on the underlying utility systems reader
+   * and return the metrics.
+   * @return The metrics object
+   */
+  const MetricPtr readMetric() const override;
 
-  private:
-    AbstractSystemResourcesReaderPtr resourceReader;
-    SchemaPtr schema;
+ private:
+  AbstractSystemResourcesReaderPtr resourceReader;
+  SchemaPtr schema;
 };
 
 using DiskCollectorPtr = std::shared_ptr<DiskCollector>;
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_

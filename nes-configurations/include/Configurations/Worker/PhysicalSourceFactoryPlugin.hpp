@@ -27,16 +27,19 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 namespace Configurations {
 
 class PhysicalSourceFactoryPlugin {
-  public:
-    PhysicalSourceFactoryPlugin() = default;
-    virtual PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType,
-                                                           const std::map<std::string, std::string>& commandLineParams) = 0;
-    virtual PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig) = 0;
-    virtual ~PhysicalSourceFactoryPlugin() = default;
+ public:
+  PhysicalSourceFactoryPlugin() = default;
+  virtual PhysicalSourceTypePtr createPhysicalSourceType(
+      std::string sourceType,
+      const std::map<std::string, std::string>& commandLineParams) = 0;
+  virtual PhysicalSourceTypePtr createPhysicalSourceType(
+      std::string sourceType, Yaml::Node& yamlConfig) = 0;
+  virtual ~PhysicalSourceFactoryPlugin() = default;
 };
 
-using PhysicalSourceFactoryPluginRegistry = Util::PluginRegistry<PhysicalSourceFactoryPlugin>;
+using PhysicalSourceFactoryPluginRegistry =
+    Util::PluginRegistry<PhysicalSourceFactoryPlugin>;
 
-}// namespace Configurations
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORYPLUGIN_HPP_
+}  // namespace Configurations
+}  // namespace NES
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORYPLUGIN_HPP_

@@ -27,27 +27,33 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 class SerializableDecomposedQueryPlan;
 
 class DecomposedQueryPlanSerializationUtil {
-  public:
-    /**
-     * @brief Serializes a Query Plan and all its root operators to a SerializableQueryPlan object.
-     * @param queryPlan: The query plan
-     * @param serializableDecomposedQueryPlan: pointer to the serializable decomposed query Plan object
-     * @return the pointer to serialized SerializableQueryPlan
-     */
-    static void serializeDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                             SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
+ public:
+  /**
+   * @brief Serializes a Query Plan and all its root operators to a
+   * SerializableQueryPlan object.
+   * @param queryPlan: The query plan
+   * @param serializableDecomposedQueryPlan: pointer to the serializable
+   * decomposed query Plan object
+   * @return the pointer to serialized SerializableQueryPlan
+   */
+  static void serializeDecomposedQueryPlan(
+      const DecomposedQueryPlanPtr& decomposedQueryPlan,
+      SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
 
-    /**
-     * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
-     * @param serializableDecomposedQueryPlan the serialized decomposed query plan.
-     * @return the pointer to the deserialized query plan
-     */
-    static DecomposedQueryPlanPtr
-    deserializeDecomposedQueryPlan(const SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
+  /**
+   * @brief De-serializes the SerializableQueryPlan and all its root operators
+   * back to a QueryPlanPtr
+   * @param serializableDecomposedQueryPlan the serialized decomposed query
+   * plan.
+   * @return the pointer to the deserialized query plan
+   */
+  static DecomposedQueryPlanPtr deserializeDecomposedQueryPlan(
+      const SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
 
-    static NES::QueryState deserializeQueryState(NES::SerializableQueryState serializedQueryState);
+  static NES::QueryState deserializeQueryState(
+      NES::SerializableQueryState serializedQueryState);
 
-    static SerializableQueryState serializeQueryState(QueryState queryState);
+  static SerializableQueryState serializeQueryState(QueryState queryState);
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_DECOMPOSEDQUERYPLANSERIALIZATIONUTIL_HPP_
+}  // namespace NES
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_DECOMPOSEDQUERYPLANSERIALIZATIONUTIL_HPP_

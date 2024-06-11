@@ -22,170 +22,183 @@ namespace NES::Configurations {
 
 BaseConfiguration::BaseConfiguration() : BaseOption(){};
 
-BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description){};
+BaseConfiguration::BaseConfiguration(const std::string& name,
+                                     const std::string& description)
+    : BaseOption(name, description){};
 
 void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
-    auto optionMap = getOptionMap();
-    if (!config.IsMap()) {
-        throw ConfigurationException("Malformed YAML configuration file");
-    }
-    for (auto entry = config.Begin(); entry != config.End(); entry++) {
-        auto identifier = (*entry).first;
-        auto node = (*entry).second;
-        if (!optionMap.contains(identifier)) {
-            throw ConfigurationException("Identifier: " + identifier
-                                         + " is not known. Check if it exposed in the getOptions function.");
-        }
-        // check if config is empty
-        if (node.IsScalar()) {
-            std::string value = node.As<std::string>();
-            if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace)) {
-                throw ConfigurationException("Value for " + identifier + " is empty.");
-            }
-        } else if ((node.IsSequence() || node.IsMap()) && node.Size() == 0) {
-            // if the node is a sequence or map and has no elements
-            throw ConfigurationException("Value for " + identifier + " is empty.");
-        }
-        try {
-            optionMap[identifier]->parseFromYAMLNode(node);
-        } catch (const ConfigurationException& e) {
-            NES_ERROR("Configuration error: ", e.what());
-            throw;
-        }
-    }
-}
-
-void BaseConfiguration::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
-    auto optionMap = getOptionMap();
-
+  auto optionMap = getOptionMap();
+  if (!config.IsMap()) {
+    throw ConfigurationException("Malformed YAML configuration file");
+  }
+  for (auto entry = config.Begin(); entry != config.End(); entry++) {
+    auto identifier = (*entry).first;
+    auto node = (*entry).second;
     if (!optionMap.contains(identifier)) {
-        throw ConfigurationException("Identifier " + identifier + " is not known.");
+      throw ConfigurationException(
+          "Identifier: " + identifier +
+          " is not known. Check if it exposed in the getOptions function.");
     }
-    auto option = optionMap[identifier];
-    if (dynamic_cast<BaseConfiguration*>(option)) {
-        dynamic_cast<BaseConfiguration*>(optionMap[identifier])->overwriteConfigWithCommandLineInput(inputParams);
-    } else {
-        try {
-            optionMap[identifier]->parseFromString(identifier, inputParams);
-        } catch (const ConfigurationException& e) {
-            NES_ERROR("Configuration error: ", e.what());
-            throw;
-        }
+    // check if config is empty
+    if (node.IsScalar()) {
+      std::string value = node.As<std::string>();
+      if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace)) {
+        throw ConfigurationException("Value for " + identifier + " is empty.");
+      }
+    } else if ((node.IsSequence() || node.IsMap()) && node.Size() == 0) {
+      // if the node is a sequence or map and has no elements
+      throw ConfigurationException("Value for " + identifier + " is empty.");
     }
-}
-
-void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
     try {
-        Yaml::Node config;
-        Yaml::Parse(config, filePath.c_str());
-        if (config.IsNone()) {
-            return;
-        }
-        parseFromYAMLNode(config);
-    } catch (const std::exception& ex) {
-        throw ConfigurationException("Exception while loading configurations from " + filePath + ". Exception: " + ex.what());
+      optionMap[identifier]->parseFromYAMLNode(node);
+    } catch (const ConfigurationException& e) {
+      NES_ERROR("Configuration error: ", e.what());
+      throw;
     }
+  }
 }
 
-void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
-    std::map<std::string, std::map<std::string, std::string>> groupedIdentifiers;
-    for (auto parm = inputParams.begin(); parm != inputParams.end(); ++parm) {
-        auto identifier = parm->first;
-        auto value = parm->second;
-        const std::string identifierStart = "--";
-        if (identifier.starts_with(identifierStart)) {
-            // remove the -- in the beginning
-            identifier = identifier.substr(identifierStart.size());
-        }
+void BaseConfiguration::parseFromString(
+    std::string identifier, std::map<std::string, std::string>& inputParams) {
+  auto optionMap = getOptionMap();
 
-        if (identifier.find('.') != std::string::npos) {
-            auto index = std::string(identifier).find('.');
-            auto parentIdentifier = std::string(identifier).substr(0, index);
-            auto childrenIdentifier = std::string(identifier).substr(index + 1, identifier.length());
-            groupedIdentifiers[parentIdentifier].insert({childrenIdentifier, value});
-        } else {
-            groupedIdentifiers[identifier].insert({identifier, value});
-        }
+  if (!optionMap.contains(identifier)) {
+    throw ConfigurationException("Identifier " + identifier + " is not known.");
+  }
+  auto option = optionMap[identifier];
+  if (dynamic_cast<BaseConfiguration*>(option)) {
+    dynamic_cast<BaseConfiguration*>(optionMap[identifier])
+        ->overwriteConfigWithCommandLineInput(inputParams);
+  } else {
+    try {
+      optionMap[identifier]->parseFromString(identifier, inputParams);
+    } catch (const ConfigurationException& e) {
+      NES_ERROR("Configuration error: ", e.what());
+      throw;
+    }
+  }
+}
+
+void BaseConfiguration::overwriteConfigWithYAMLFileInput(
+    const std::string& filePath) {
+  try {
+    Yaml::Node config;
+    Yaml::Parse(config, filePath.c_str());
+    if (config.IsNone()) {
+      return;
+    }
+    parseFromYAMLNode(config);
+  } catch (const std::exception& ex) {
+    throw ConfigurationException(
+        "Exception while loading configurations from " + filePath +
+        ". Exception: " + ex.what());
+  }
+}
+
+void BaseConfiguration::overwriteConfigWithCommandLineInput(
+    const std::map<std::string, std::string>& inputParams) {
+  std::map<std::string, std::map<std::string, std::string>> groupedIdentifiers;
+  for (auto parm = inputParams.begin(); parm != inputParams.end(); ++parm) {
+    auto identifier = parm->first;
+    auto value = parm->second;
+    const std::string identifierStart = "--";
+    if (identifier.starts_with(identifierStart)) {
+      // remove the -- in the beginning
+      identifier = identifier.substr(identifierStart.size());
     }
 
-    for (auto [identifier, values] : groupedIdentifiers) {
-        try {
-            parseFromString(identifier, values);
-        } catch (const ConfigurationException& e) {
-            throw;
-        }
+    if (identifier.find('.') != std::string::npos) {
+      auto index = std::string(identifier).find('.');
+      auto parentIdentifier = std::string(identifier).substr(0, index);
+      auto childrenIdentifier =
+          std::string(identifier).substr(index + 1, identifier.length());
+      groupedIdentifiers[parentIdentifier].insert({childrenIdentifier, value});
+    } else {
+      groupedIdentifiers[identifier].insert({identifier, value});
     }
+  }
+
+  for (auto [identifier, values] : groupedIdentifiers) {
+    try {
+      parseFromString(identifier, values);
+    } catch (const ConfigurationException& e) {
+      throw;
+    }
+  }
 }
 
 std::string BaseConfiguration::toString() {
-    std::stringstream ss;
-    for (auto option : getOptions()) {
-        ss << option->toString() << "\n";
-    }
-    return ss.str();
+  std::stringstream ss;
+  for (auto option : getOptions()) {
+    ss << option->toString() << "\n";
+  }
+  return ss.str();
 }
 
 void BaseConfiguration::clear() {
-    for (auto* option : getOptions()) {
-        option->clear();
-    }
+  for (auto* option : getOptions()) {
+    option->clear();
+  }
 };
 
-std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap() {
-    std::map<std::string, Configurations::BaseOption*> optionMap;
-    for (auto* option : getOptions()) {
-        auto identifier = option->getName();
-        optionMap[identifier] = option;
-    }
-    return optionMap;
+std::map<std::string, Configurations::BaseOption*>
+BaseConfiguration::getOptionMap() {
+  std::map<std::string, Configurations::BaseOption*> optionMap;
+  for (auto* option : getOptions()) {
+    auto identifier = option->getName();
+    optionMap[identifier] = option;
+  }
+  return optionMap;
 }
 
-bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite) {
-    std::ifstream configFile(yamlFilePath);
-    std::stringstream ss;
-    std::string searchKey = "workerId: ";
+bool BaseConfiguration::persistWorkerIdInYamlConfigFile(
+    std::string yamlFilePath, WorkerId workerId, bool withOverwrite) {
+  std::ifstream configFile(yamlFilePath);
+  std::stringstream ss;
+  std::string searchKey = "workerId: ";
 
-    if (!withOverwrite) {
-        std::string yamlValueAsString = workerId.toString();
-        std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
+  if (!withOverwrite) {
+    std::string yamlValueAsString = workerId.toString();
+    std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
 
-        if (!yamlFilePath.empty()) {
-            if (!std::filesystem::exists(yamlFilePath)) {
-                NES_WARNING("Worker.yaml was not found. Creating a new file.");
-            }
-            configFile >> ss.rdbuf();
-            try {
-                std::ofstream output;
-                output.open(yamlFilePath, std::ios::app);// append mode
-                output << yamlConfigValue;
-            } catch (const std::exception& e) {
-                throw ConfigurationException("Exception while persisting in yaml file", e.what());
-            }
-        } else {
-            NES_ERROR("BaseConfiguration: yamlFilePath is empty.");
-            return false;
-        }
+    if (!yamlFilePath.empty()) {
+      if (!std::filesystem::exists(yamlFilePath)) {
+        NES_WARNING("Worker.yaml was not found. Creating a new file.");
+      }
+      configFile >> ss.rdbuf();
+      try {
+        std::ofstream output;
+        output.open(yamlFilePath, std::ios::app);  // append mode
+        output << yamlConfigValue;
+      } catch (const std::exception& e) {
+        throw ConfigurationException("Exception while persisting in yaml file",
+                                     e.what());
+      }
     } else {
-        ss << configFile.rdbuf();
-        std::string yamlContent = ss.str();
-
-        size_t startPos = yamlContent.find(searchKey);
-        if (startPos != std::string::npos) {
-            // move the position to the start of the value
-            startPos += searchKey.size();
-            // find the end of the line
-            size_t endPos = yamlContent.find('\n', startPos);
-            // replace the old value with the new value for workerId
-            yamlContent.replace(startPos, endPos - startPos, workerId.toString());
-        } else {
-            return false;
-        }
-
-        std::ofstream output(yamlFilePath);
-        output << yamlContent;
+      NES_ERROR("BaseConfiguration: yamlFilePath is empty.");
+      return false;
     }
-    configFile.close();
-    return true;
+  } else {
+    ss << configFile.rdbuf();
+    std::string yamlContent = ss.str();
+
+    size_t startPos = yamlContent.find(searchKey);
+    if (startPos != std::string::npos) {
+      // move the position to the start of the value
+      startPos += searchKey.size();
+      // find the end of the line
+      size_t endPos = yamlContent.find('\n', startPos);
+      // replace the old value with the new value for workerId
+      yamlContent.replace(startPos, endPos - startPos, workerId.toString());
+    } else {
+      return false;
+    }
+
+    std::ofstream output(yamlFilePath);
+    output << yamlContent;
+  }
+  configFile.close();
+  return true;
 }
 
-}// namespace NES::Configurations
+}  // namespace NES::Configurations

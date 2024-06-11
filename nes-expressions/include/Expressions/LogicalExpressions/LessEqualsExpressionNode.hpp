@@ -21,25 +21,26 @@ namespace NES {
  * @brief This node represents a less then comparision between the two children.
  */
 class LessEqualsExpressionNode : public LogicalBinaryExpressionNode {
-  public:
-    LessEqualsExpressionNode() = default;
-    ~LessEqualsExpressionNode() override = default;
-    /**
-    * @brief Create a new less then expression
-    */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+ public:
+  LessEqualsExpressionNode() = default;
+  ~LessEqualsExpressionNode() override = default;
+  /**
+   * @brief Create a new less then expression
+   */
+  static ExpressionNodePtr create(ExpressionNodePtr const& left,
+                                  ExpressionNodePtr const& right);
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  protected:
-    explicit LessEqualsExpressionNode(LessEqualsExpressionNode* other);
+ protected:
+  explicit LessEqualsExpressionNode(LessEqualsExpressionNode* other);
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSIONNODE_HPP_

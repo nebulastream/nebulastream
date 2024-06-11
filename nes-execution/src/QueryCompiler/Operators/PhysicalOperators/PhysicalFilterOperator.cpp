@@ -22,38 +22,40 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId),
+      PhysicalUnaryOperator(id, statisticId, std::move(inputSchema),
+                            std::move(outputSchema)),
       predicate(std::move(predicate)) {}
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,
-                                                   StatisticId statisticId,
-                                                   const SchemaPtr& inputSchema,
-                                                   const SchemaPtr& outputSchema,
-                                                   const ExpressionNodePtr& expression) {
-    return std::make_shared<PhysicalFilterOperator>(id, statisticId, inputSchema, outputSchema, expression);
+PhysicalOperatorPtr PhysicalFilterOperator::create(
+    OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema, const ExpressionNodePtr& expression) {
+  return std::make_shared<PhysicalFilterOperator>(id, statisticId, inputSchema,
+                                                  outputSchema, expression);
 }
 
 ExpressionNodePtr PhysicalFilterOperator::getPredicate() { return predicate; }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(StatisticId statisticId,
-                                                   SchemaPtr inputSchema,
-                                                   SchemaPtr outputSchema,
-                                                   ExpressionNodePtr expression) {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(expression));
+PhysicalOperatorPtr PhysicalFilterOperator::create(
+    StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    ExpressionNodePtr expression) {
+  return create(getNextOperatorId(), statisticId, std::move(inputSchema),
+                std::move(outputSchema), std::move(expression));
 }
 
 std::string PhysicalFilterOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalFilterOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalFilterOperator:\n";
+  out << PhysicalUnaryOperator::toString();
+  return out.str();
 }
 
 OperatorPtr PhysicalFilterOperator::copy() {
-    auto result = create(id, statisticId, inputSchema, outputSchema, getPredicate());
-    result->addAllProperties(properties);
-    return result;
+  auto result =
+      create(id, statisticId, inputSchema, outputSchema, getPredicate());
+  result->addAllProperties(properties);
+  return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators

@@ -24,26 +24,32 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                SharedQueryId sharedQueryId,
                                DecomposedQueryPlanId decomposedQueryPlanId,
                                uint64_t numberOfOrigins)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins) {}
+    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId,
+                 decomposedQueryPlanId, numberOfOrigins) {}
 
 NullOutputSink::~NullOutputSink() = default;
 
-SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
+SinkMediumTypes NullOutputSink::getSinkMediumType() {
+  return SinkMediumTypes::NULL_SINK;
+}
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) { return true; }
+bool NullOutputSink::writeData(Runtime::TupleBuffer&,
+                               Runtime::WorkerContextRef) {
+  return true;
+}
 
 std::string NullOutputSink::toString() const {
-    std::stringstream ss;
-    ss << "NULL_SINK(";
-    ss << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "NULL_SINK(";
+  ss << ")";
+  return ss.str();
 }
 
 void NullOutputSink::setup() {
-    // currently not required
+  // currently not required
 }
 void NullOutputSink::shutdown() {
-    // currently not required
+  // currently not required
 }
 
-}// namespace NES
+}  // namespace NES

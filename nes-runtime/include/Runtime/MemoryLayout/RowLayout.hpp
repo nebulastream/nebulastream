@@ -21,55 +21,63 @@
 
 namespace NES::Runtime::MemoryLayouts {
 /**
- * @brief Implements a row layout, that maps all tuples in a tuple buffer to a row-wise layout.
- * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
+ * @brief Implements a row layout, that maps all tuples in a tuple buffer to a
+ * row-wise layout. For a schema with 3 fields (F1, F2, and F3) we retrieve the
+ * following layout.
  *
  * | F1, F2, F3 |
  * | F1, F2, F3 |
  * | F1, F2, F3 |
  *
- * This may be beneficial for processing performance if all fields of the tuple are accessed.
+ * This may be beneficial for processing performance if all fields of the tuple
+ * are accessed.
  */
-class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout> {
+class RowLayout : public MemoryLayout,
+                  public std::enable_shared_from_this<RowLayout> {
+ public:
+  /**
+   * @brief Constructor to create a RowLayout according to a specific schema and
+   * a buffer size.
+   * @param schema the underling schema of this memory layout.
+   * @param bufferSize the expected buffer size.
+   */
+  RowLayout(SchemaPtr schema, uint64_t bufferSize);
 
-  public:
-    /**
-     * @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     */
-    RowLayout(SchemaPtr schema, uint64_t bufferSize);
+  /**
+   * @brief Factory to create a RowLayout
+   * @param schema the underling schema of this memory layout.
+   * @param bufferSize the expected buffer size.
+   * @return std::shared_ptr<RowLayout>
+   */
+  static std::shared_ptr<RowLayout> create(SchemaPtr schema,
+                                           uint64_t bufferSize);
 
-    /**
-     * @brief Factory to create a RowLayout
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     * @return std::shared_ptr<RowLayout>
-     */
-    static std::shared_ptr<RowLayout> create(SchemaPtr schema, uint64_t bufferSize);
+  /**
+   * Gets the offset in bytes of all fields within a single tuple.
+   * For a single tuple with three int64 fields, the second field has a offset
+   * of 8 bytes.
+   * @return vector of field offsets.
+   */
+  const std::vector<uint64_t>& getFieldOffSets() const;
 
-    /**
-     * Gets the offset in bytes of all fields within a single tuple.
-     * For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
-     * @return vector of field offsets.
-     */
-    const std::vector<uint64_t>& getFieldOffSets() const;
+  /**
+   * @brief Calculates the offset in the tuple buffer of a particular field for
+   * a specific tuple. For the row layout the field offset is calculated as
+   * follows: \f$ offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex]
+   * \f$
+   * @param tupleIndex index of the tuple.
+   * @param fieldIndex index of the field.
+   * @throws BufferAccessException if the tuple index or the field index is out
+   * of bounds.
+   * @return offset in the tuple buffer.
+   */
+  [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex,
+                                        uint64_t fieldIndex) const override;
 
-    /**
-     * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
-     * For the row layout the field offset is calculated as follows:
-     * \f$ offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex] \f$
-     * @param tupleIndex index of the tuple.
-     * @param fieldIndex index of the field.
-     * @throws BufferAccessException if the tuple index or the field index is out of bounds.
-     * @return offset in the tuple buffer.
-     */
-    [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
-
-  private:
-    std::vector<uint64_t> fieldOffSets;
+ private:
+  std::vector<uint64_t> fieldOffSets;
 };
 
-}// namespace NES::Runtime::MemoryLayouts
+}  // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_

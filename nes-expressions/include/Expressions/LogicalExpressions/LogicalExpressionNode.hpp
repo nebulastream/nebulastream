@@ -20,9 +20,9 @@ namespace NES {
  * @brief This class just indicates that a node is a logical expression.
  */
 class LogicalExpressionNode {
-  protected:
-    LogicalExpressionNode() = default;
+ protected:
+  LogicalExpressionNode() = default;
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALEXPRESSIONNODE_HPP_

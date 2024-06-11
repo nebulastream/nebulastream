@@ -19,36 +19,48 @@
 
 namespace NES {
 
-DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)){};
+DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start)
+    : start(std::move(start)){};
 
-DepthFirstNodeIterator::iterator DepthFirstNodeIterator::begin() { return iterator(start); }
+DepthFirstNodeIterator::iterator DepthFirstNodeIterator::begin() {
+  return iterator(start);
+}
 
-DepthFirstNodeIterator::iterator DepthFirstNodeIterator::end() { return iterator(); }
+DepthFirstNodeIterator::iterator DepthFirstNodeIterator::end() {
+  return iterator();
+}
 
-DepthFirstNodeIterator::iterator::iterator(const NodePtr& current) { workStack.push(current); }
+DepthFirstNodeIterator::iterator::iterator(const NodePtr& current) {
+  workStack.push(current);
+}
 
 DepthFirstNodeIterator::iterator::iterator() = default;
 
 bool DepthFirstNodeIterator::iterator::operator!=(const iterator& other) const {
-    // todo currently we only check if we reached the end of the iterator.
-    if (workStack.empty() && other.workStack.empty()) {
-        return false;
-    }
-    return true;
+  // todo currently we only check if we reached the end of the iterator.
+  if (workStack.empty() && other.workStack.empty()) {
+    return false;
+  }
+  return true;
 }
 
-NodePtr DepthFirstNodeIterator::iterator::operator*() { return workStack.top(); }
-
-DepthFirstNodeIterator::iterator& DepthFirstNodeIterator::iterator::operator++() {
-    if (workStack.empty()) {
-        NES_DEBUG("DF Iterator: we reached the end of this iterator and will not do anything.");
-    } else {
-        auto current = workStack.top();
-        workStack.pop();
-        for (const auto& child : current->getChildren()) {
-            workStack.push(child);
-        }
-    }
-    return *this;
+NodePtr DepthFirstNodeIterator::iterator::operator*() {
+  return workStack.top();
 }
-}// namespace NES
+
+DepthFirstNodeIterator::iterator&
+DepthFirstNodeIterator::iterator::operator++() {
+  if (workStack.empty()) {
+    NES_DEBUG(
+        "DF Iterator: we reached the end of this iterator and will not do "
+        "anything.");
+  } else {
+    auto current = workStack.top();
+    workStack.pop();
+    for (const auto& child : current->getChildren()) {
+      workStack.push(child);
+    }
+  }
+  return *this;
+}
+}  // namespace NES

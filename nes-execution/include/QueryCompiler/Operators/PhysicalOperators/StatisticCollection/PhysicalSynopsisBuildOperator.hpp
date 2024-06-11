@@ -21,26 +21,28 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
- * @brief Physical operator for building a synopsis. This operator is meant as a parent class and the specific
- * synopsis building operators should extend this class. It merely stores all common members across all synopsis
+ * @brief Physical operator for building a synopsis. This operator is meant as a
+ * parent class and the specific synopsis building operators should extend this
+ * class. It merely stores all common members across all synopsis
  */
 class PhysicalSynopsisBuildOperator {
-  public:
-    PhysicalSynopsisBuildOperator(const std::string_view nameOfFieldToTrack,
-                                  const Statistic::StatisticMetricHash metricHash,
-                                  const Windowing::WindowTypePtr windowType,
-                                  const Statistic::SendingPolicyPtr sendingPolicy);
+ public:
+  PhysicalSynopsisBuildOperator(
+      const std::string_view nameOfFieldToTrack,
+      const Statistic::StatisticMetricHash metricHash,
+      const Windowing::WindowTypePtr windowType,
+      const Statistic::SendingPolicyPtr sendingPolicy);
 
-    const std::string& getNameOfFieldToTrack() const;
-    Statistic::StatisticMetricHash getMetricHash() const;
-    const Windowing::WindowTypePtr& getWindowType() const;
-    const Statistic::SendingPolicyPtr& getSendingPolicy() const;
+  const std::string& getNameOfFieldToTrack() const;
+  Statistic::StatisticMetricHash getMetricHash() const;
+  const Windowing::WindowTypePtr& getWindowType() const;
+  const Statistic::SendingPolicyPtr& getSendingPolicy() const;
 
-  protected:
-    const std::string nameOfFieldToTrack;
-    const Statistic::StatisticMetricHash metricHash;
-    const Windowing::WindowTypePtr windowType;
-    const Statistic::SendingPolicyPtr sendingPolicy;
+ protected:
+  const std::string nameOfFieldToTrack;
+  const Statistic::StatisticMetricHash metricHash;
+  const Windowing::WindowTypePtr windowType;
+  const Statistic::SendingPolicyPtr sendingPolicy;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALSYNOPSISBUILDOPERATOR_HPP_
+}  // namespace NES::QueryCompilation::PhysicalOperators
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALSYNOPSISBUILDOPERATOR_HPP_

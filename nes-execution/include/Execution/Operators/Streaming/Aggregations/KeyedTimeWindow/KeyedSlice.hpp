@@ -20,53 +20,59 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief A keyed slice that contains key value pairs for a specific interval of [start, end[.
+ * @brief A keyed slice that contains key value pairs for a specific interval of
+ * [start, end[.
  */
 class KeyedSlice {
-  public:
-    /**
-     * @brief Constructor to create a new slice that covers a specific range between stat and end.
-     * @param hashMapFactory a factory to create a new hashmap
-     * @param start of the slice
-     * @param end of the slice
-     * @param index of the slice (currently we assume that we can calculate a slice index, to which a specific stream event is assigned).
-     */
-    KeyedSlice(std::unique_ptr<Nautilus::Interface::ChainedHashMap> hashMap, uint64_t start, uint64_t end);
+ public:
+  /**
+   * @brief Constructor to create a new slice that covers a specific range
+   * between stat and end.
+   * @param hashMapFactory a factory to create a new hashmap
+   * @param start of the slice
+   * @param end of the slice
+   * @param index of the slice (currently we assume that we can calculate a
+   * slice index, to which a specific stream event is assigned).
+   */
+  KeyedSlice(std::unique_ptr<Nautilus::Interface::ChainedHashMap> hashMap,
+             uint64_t start, uint64_t end);
 
-    /**
-     * @brief Start of the slice.
-     * @return uint64_t
-     */
-    inline uint64_t getStart() const { return start; }
+  /**
+   * @brief Start of the slice.
+   * @return uint64_t
+   */
+  inline uint64_t getStart() const { return start; }
 
-    /**
-     * @brief End of the slice.
-     * @return uint64_t
-     */
-    inline uint64_t getEnd() const { return end; }
+  /**
+   * @brief End of the slice.
+   * @return uint64_t
+   */
+  inline uint64_t getEnd() const { return end; }
 
-    /**
-     * @brief Checks if a slice covers a specific ts.
-     * A slice cover a cover a range from [startTs, endTs - 1]
-     * @param ts
-     * @return
-     */
-    inline bool coversTs(uint64_t ts) const { return start <= ts && end > ts; }
+  /**
+   * @brief Checks if a slice covers a specific ts.
+   * A slice cover a cover a range from [startTs, endTs - 1]
+   * @param ts
+   * @return
+   */
+  inline bool coversTs(uint64_t ts) const { return start <= ts && end > ts; }
 
-    /**
-     * @brief State of the slice.
-     * @return uint64_t
-     */
-    inline std::unique_ptr<Nautilus::Interface::ChainedHashMap>& getState() { return state; }
+  /**
+   * @brief State of the slice.
+   * @return uint64_t
+   */
+  inline std::unique_ptr<Nautilus::Interface::ChainedHashMap>& getState() {
+    return state;
+  }
 
-    ~KeyedSlice();
+  ~KeyedSlice();
 
-  private:
-    uint64_t start;
-    uint64_t end;
-    std::unique_ptr<Nautilus::Interface::ChainedHashMap> state;
+ private:
+  uint64_t start;
+  uint64_t end;
+  std::unique_ptr<Nautilus::Interface::ChainedHashMap> state;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_

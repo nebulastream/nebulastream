@@ -20,17 +20,18 @@
 namespace NES::Nautilus::IR::Operations {
 
 class CastOperation : public Operation {
-  public:
-    explicit CastOperation(OperationIdentifier identifier, OperationPtr input, Types::StampPtr targetStamp);
-    ~CastOperation() override = default;
+ public:
+  explicit CastOperation(OperationIdentifier identifier, OperationPtr input,
+                         Types::StampPtr targetStamp);
+  ~CastOperation() override = default;
 
-    std::string toString() override;
+  std::string toString() override;
 
-    OperationPtr getInput();
+  OperationPtr getInput();
 
-  private:
-    OperationWPtr input;
+ private:
+  OperationWPtr input;
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CASTOPERATION_HPP_
+}  // namespace NES::Nautilus::IR::Operations
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CASTOPERATION_HPP_

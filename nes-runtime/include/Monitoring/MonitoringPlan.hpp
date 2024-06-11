@@ -25,59 +25,60 @@
 namespace NES::Monitoring {
 
 /**
-* @brief The MonitoringPlan is a config class to represent what metrics shall be collected and how.
-*/
+ * @brief The MonitoringPlan is a config class to represent what metrics shall
+ * be collected and how.
+ */
 class MonitoringPlan {
-  public:
-    static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
-    static MonitoringPlanPtr defaultPlan();
+ public:
+  static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+  static MonitoringPlanPtr defaultPlan();
 
-    /**
-     * @brief Returns the default collectors of the plan.
-     * @return A set of collectors.
-     */
-    static std::set<MetricCollectorType> defaultCollectors();
+  /**
+   * @brief Returns the default collectors of the plan.
+   * @return A set of collectors.
+   */
+  static std::set<MetricCollectorType> defaultCollectors();
 
-    /**
-     * @brief Add a specific metric to the plan
-     * @param metric
-    */
-    bool addMetric(MetricType metric);
+  /**
+   * @brief Add a specific metric to the plan
+   * @param metric
+   */
+  bool addMetric(MetricType metric);
 
-    /**
-     * @brief Checks if a metric is part of the MonitoringPlan
-     * @param metric
-     * @return true if contained, else false
-    */
-    [[nodiscard]] bool hasMetric(MetricType metric) const;
+  /**
+   * @brief Checks if a metric is part of the MonitoringPlan
+   * @param metric
+   * @return true if contained, else false
+   */
+  [[nodiscard]] bool hasMetric(MetricType metric) const;
 
-    /**
-     * @brief Returns a string representation of the plan
-     * @return The string representation
-    */
-    [[nodiscard]] std::string toString() const;
+  /**
+   * @brief Returns a string representation of the plan
+   * @return The string representation
+   */
+  [[nodiscard]] std::string toString() const;
 
-    /**
-     * @brief Returns the MetricType objects that represent the plan.
-     * @return A set of metric type objects.
-    */
-    [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
+  /**
+   * @brief Returns the MetricType objects that represent the plan.
+   * @return A set of metric type objects.
+   */
+  [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
 
-    /**
-     * @brief Returns the MetricType objects that represent the plan.
-     * @return A set of metric type objects.
-    */
-    [[nodiscard]] const std::set<MetricCollectorType> getCollectorTypes() const;
+  /**
+   * @brief Returns the MetricType objects that represent the plan.
+   * @return A set of metric type objects.
+   */
+  [[nodiscard]] const std::set<MetricCollectorType> getCollectorTypes() const;
 
-    friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
+  friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 
-  private:
-    explicit MonitoringPlan(const std::set<MetricType>& metrics);
+ private:
+  explicit MonitoringPlan(const std::set<MetricType>& metrics);
 
-    //enum defined in SerializableDataType.proto
-    std::set<MetricType> metricTypes;
+  // enum defined in SerializableDataType.proto
+  std::set<MetricType> metricTypes;
 };
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGPLAN_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGPLAN_HPP_

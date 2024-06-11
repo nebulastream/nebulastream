@@ -23,11 +23,12 @@
 namespace NES::RequestProcessor {
 
 /**
- * @brief ISQP add node response indicating if the event was applied successfully or not
+ * @brief ISQP add node response indicating if the event was applied
+ * successfully or not
  */
 struct ISQPAddNodeResponse : public ISQPResponse {
-    explicit ISQPAddNodeResponse(bool success) : success(success){};
-    bool success;
+  explicit ISQPAddNodeResponse(bool success) : success(success){};
+  bool success;
 };
 using ISQPAddNodeResponsePtr = std::shared_ptr<ISQPAddNodeResponse>;
 
@@ -35,58 +36,54 @@ class ISQPAddNodeEvent;
 using ISQPAddNodeEventPtr = std::shared_ptr<ISQPAddNodeEvent>;
 
 enum class WorkerType : uint8_t {
-    CLOUD = 0,// Indicates if the node is in the cloud layer. Nodes in the cloud layer are always the root nodes of the topology
-    FOG = 1,  // Indicates if the node is in the fog layer. Nodes in the fog layer connects either with cloud nodes,
-              // other fog nodes, or sensor nodes
-    SENSOR = 2// Indicates if the node is in the sensor layer. Nodes in the sensor layer are always the leaf nodes of the topology
-              // and host physical sources
+  CLOUD = 0,  // Indicates if the node is in the cloud layer. Nodes in the cloud
+              // layer are always the root nodes of the topology
+  FOG =
+      1,  // Indicates if the node is in the fog layer. Nodes in the fog layer
+          // connects either with cloud nodes, other fog nodes, or sensor nodes
+  SENSOR = 2  // Indicates if the node is in the sensor layer. Nodes in the
+              // sensor layer are always the leaf nodes of the topology and host
+              // physical sources
 };
 
 /**
  * @brief ISQP add node represent the event for registering a worker node
  */
 class ISQPAddNodeEvent : public ISQPEvent {
+ public:
+  static ISQPEventPtr create(WorkerType workerType, WorkerId workerId,
+                             const std::string& ipAddress, uint32_t grpcPort,
+                             uint32_t dataPort, uint16_t resources,
+                             const std::map<std::string, std::any>& properties);
 
-  public:
-    static ISQPEventPtr create(WorkerType workerType,
-                               WorkerId workerId,
-                               const std::string& ipAddress,
-                               uint32_t grpcPort,
-                               uint32_t dataPort,
-                               uint16_t resources,
-                               const std::map<std::string, std::any>& properties);
+  ISQPAddNodeEvent(WorkerType workerType, WorkerId workerId,
+                   const std::string& ipAddress, uint32_t grpcPort,
+                   uint32_t dataPort, uint16_t resources,
+                   const std::map<std::string, std::any>& properties);
 
-    ISQPAddNodeEvent(WorkerType workerType,
-                     WorkerId workerId,
-                     const std::string& ipAddress,
-                     uint32_t grpcPort,
-                     uint32_t dataPort,
-                     uint16_t resources,
-                     const std::map<std::string, std::any>& properties);
+  WorkerType getWorkerType() const;
 
-    WorkerType getWorkerType() const;
+  WorkerId getWorkerId() const;
 
-    WorkerId getWorkerId() const;
+  const std::string& getIpAddress() const;
 
-    const std::string& getIpAddress() const;
+  uint32_t getGrpcPort() const;
 
-    uint32_t getGrpcPort() const;
+  uint32_t getDataPort() const;
 
-    uint32_t getDataPort() const;
+  uint16_t getResources() const;
 
-    uint16_t getResources() const;
+  const std::map<std::string, std::any>& getProperties() const;
 
-    const std::map<std::string, std::any>& getProperties() const;
-
-  private:
-    WorkerType workerType;
-    WorkerId workerId;
-    std::string ipAddress;
-    uint32_t grpcPort;
-    uint32_t dataPort;
-    uint16_t resources;
-    std::map<std::string, std::any> properties;
+ private:
+  WorkerType workerType;
+  WorkerId workerId;
+  std::string ipAddress;
+  uint32_t grpcPort;
+  uint32_t dataPort;
+  uint16_t resources;
+  std::map<std::string, std::any> properties;
 };
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDNODEEVENT_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDNODEEVENT_HPP_

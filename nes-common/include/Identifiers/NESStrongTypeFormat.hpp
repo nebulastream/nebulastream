@@ -14,19 +14,23 @@
 
 #ifndef NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_
 #define NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_
-#include <Identifiers/NESStrongType.hpp>
 #include <fmt/core.h>
+
+#include <Identifiers/NESStrongType.hpp>
 
 /**
  * Adds NESStrongType overloads for the fmt formatting library.
- * This allows direct formatting of Identifiers like `fmt::format("{}-{}", SharedQueryId, DecomposedQueryId)`
+ * This allows direct formatting of Identifiers like `fmt::format("{}-{}",
+ * SharedQueryId, DecomposedQueryId)`
  */
 namespace fmt {
-template<typename T, typename Tag, T invalid, T initial>
-struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::string> {
-    auto format(const NES::NESStrongType<T, Tag, invalid, initial>& t, format_context& ctx) const -> decltype(ctx.out()) {
-        return fmt::format_to(ctx.out(), "{}", t.getRawValue());
-    }
+template <typename T, typename Tag, T invalid, T initial>
+struct formatter<NES::NESStrongType<T, Tag, invalid, initial>>
+    : formatter<std::string> {
+  auto format(const NES::NESStrongType<T, Tag, invalid, initial>& t,
+              format_context& ctx) const -> decltype(ctx.out()) {
+    return fmt::format_to(ctx.out(), "{}", t.getRawValue());
+  }
 };
-}// namespace fmt
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_
+}  // namespace fmt
+#endif  // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_

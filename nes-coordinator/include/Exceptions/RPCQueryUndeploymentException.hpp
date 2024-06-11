@@ -19,39 +19,43 @@
 namespace NES::Exceptions {
 
 /**
- * @brief This exception indicates that an rpc to undeploy a query from a worker has failed
+ * @brief This exception indicates that an rpc to undeploy a query from a worker
+ * has failed
  */
-//todo 3915: check if this class can be generalized to include also rpc failures during deployment
+// todo 3915: check if this class can be generalized to include also rpc
+// failures during deployment
 class RPCQueryUndeploymentException : public RequestExecutionException {
-  public:
-    /**
-     * @brief construct an exception
-     * @param message: a string containing a description of the error that occured
-     * @param failedRpcWorkerIds: the execution node ids of the workers that could not be reached vie rpc
-     * @param mode: the mode indicating if the rpc was a register, unregister, start or stop operation
-     */
-    explicit RPCQueryUndeploymentException(const std::string& message,
-                                           std::vector<WorkerId> failedRpcWorkerIds,
-                                           RpcClientMode mode);
+ public:
+  /**
+   * @brief construct an exception
+   * @param message: a string containing a description of the error that occured
+   * @param failedRpcWorkerIds: the execution node ids of the workers that could
+   * not be reached vie rpc
+   * @param mode: the mode indicating if the rpc was a register, unregister,
+   * start or stop operation
+   */
+  explicit RPCQueryUndeploymentException(
+      const std::string& message, std::vector<WorkerId> failedRpcWorkerIds,
+      RpcClientMode mode);
 
-    [[nodiscard]] const char* what() const noexcept override;
+  [[nodiscard]] const char* what() const noexcept override;
 
-    /**
-     * @brief get a list of the nodes that could not be reached
-     * @return a vector of node ids
-     */
-    std::vector<WorkerId> getFailedWorkerIds();
+  /**
+   * @brief get a list of the nodes that could not be reached
+   * @return a vector of node ids
+   */
+  std::vector<WorkerId> getFailedWorkerIds();
 
-    /**
-     * @brief get the mode of the failed operation
-     * @return register, unregister, stop or start
-     */
-    RpcClientMode getMode();
+  /**
+   * @brief get the mode of the failed operation
+   * @return register, unregister, stop or start
+   */
+  RpcClientMode getMode();
 
-  private:
-    std::string message;
-    std::vector<WorkerId> failedWorkerIds;
-    RpcClientMode mode;
+ private:
+  std::string message;
+  std::vector<WorkerId> failedWorkerIds;
+  RpcClientMode mode;
 };
-}// namespace NES::Exceptions
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_
+}  // namespace NES::Exceptions
+#endif  // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_

@@ -23,53 +23,64 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperatorLoweringPlugin {
-  public:
-    TensorflowOperatorLoweringPlugin() { NES_INFO("Load TensorflowOperatorLoweringPlugin"); }
+class TensorflowOperatorLoweringPlugin
+    : public QueryCompilation::NautilusOperatorLoweringPlugin {
+ public:
+  TensorflowOperatorLoweringPlugin() {
+    NES_INFO("Load TensorflowOperatorLoweringPlugin");
+  }
 
-    std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
-    lower(const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) override {
-        if (!physicalOperator->instanceOf<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>()) {
-            return {};
-        }
-        NES_INFO("Lower infer model operator to Tensorflow operator");
-        auto inferModelOperator = physicalOperator->as<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>();
-        auto model = inferModelOperator->getModel();
-
-        // Only accept Tensorflow Lite Models (.tflite file suffix)
-        if (!model.ends_with(".tflite")) {
-            return {};
-        }
-
-        //Fetch the name of input fields
-        std::vector<std::string> inputFields;
-        for (const auto& inputField : inferModelOperator->getInputFields()) {
-            auto fieldAccessExpression = inputField->as<FieldAccessExpressionNode>();
-            inputFields.push_back(fieldAccessExpression->getFieldName());
-        }
-
-        //Fetch the name of output fields
-        std::vector<std::string> outputFields;
-        for (const auto& outputField : inferModelOperator->getOutputFields()) {
-            auto fieldAccessExpression = outputField->as<FieldAccessExpressionNode>();
-            outputFields.push_back(fieldAccessExpression->getFieldName());
-        }
-
-        //build the handler to invoke model during execution
-        auto handler = std::make_shared<Runtime::Execution::Operators::TensorflowInferenceOperatorHandler>(model);
-        operatorHandlers.push_back(handler);
-        auto indexForThisHandler = operatorHandlers.size() - 1;
-
-        //build nautilus infer model operator
-        return std::make_shared<Runtime::Execution::Operators::TensorflowInferenceOperator>(indexForThisHandler,
-                                                                                            inputFields,
-                                                                                            outputFields);
+  std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr> lower(
+      const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr&
+          physicalOperator,
+      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+      override {
+    if (!physicalOperator->instanceOf<QueryCompilation::PhysicalOperators::
+                                          PhysicalInferModelOperator>()) {
+      return {};
     }
+    NES_INFO("Lower infer model operator to Tensorflow operator");
+    auto inferModelOperator = physicalOperator->as<
+        QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>();
+    auto model = inferModelOperator->getModel();
+
+    // Only accept Tensorflow Lite Models (.tflite file suffix)
+    if (!model.ends_with(".tflite")) {
+      return {};
+    }
+
+    // Fetch the name of input fields
+    std::vector<std::string> inputFields;
+    for (const auto& inputField : inferModelOperator->getInputFields()) {
+      auto fieldAccessExpression = inputField->as<FieldAccessExpressionNode>();
+      inputFields.push_back(fieldAccessExpression->getFieldName());
+    }
+
+    // Fetch the name of output fields
+    std::vector<std::string> outputFields;
+    for (const auto& outputField : inferModelOperator->getOutputFields()) {
+      auto fieldAccessExpression = outputField->as<FieldAccessExpressionNode>();
+      outputFields.push_back(fieldAccessExpression->getFieldName());
+    }
+
+    // build the handler to invoke model during execution
+    auto handler = std::make_shared<
+        Runtime::Execution::Operators::TensorflowInferenceOperatorHandler>(
+        model);
+    operatorHandlers.push_back(handler);
+    auto indexForThisHandler = operatorHandlers.size() - 1;
+
+    // build nautilus infer model operator
+    return std::make_shared<
+        Runtime::Execution::Operators::TensorflowInferenceOperator>(
+        indexForThisHandler, inputFields, outputFields);
+  }
 };
 
 // Register tensorflow plugin
-[[maybe_unused]] static QueryCompilation::NautilusOperatorLoweringPluginRegistry::Add<TensorflowOperatorLoweringPlugin>
-    tensorflowOperatorLoweringPlugin;
+[[maybe_unused]] static QueryCompilation::
+    NautilusOperatorLoweringPluginRegistry::Add<
+        TensorflowOperatorLoweringPlugin>
+        tensorflowOperatorLoweringPlugin;
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

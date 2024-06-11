@@ -34,147 +34,148 @@ namespace NES::Benchmark {
  * @brief this class encapsulates a single benchmark run
  */
 class E2ESingleRun {
+  static constexpr auto defaultStopQueryTimeout = std::chrono::seconds(30);
+  static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);
+  static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 
-    static constexpr auto defaultStopQueryTimeout = std::chrono::seconds(30);
-    static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);
-    static constexpr auto sleepDuration = std::chrono::milliseconds(250);
+ public:
+  /**
+   * @brief generates a E2ESingleRun object
+   * @param configPerRun
+   * @param configOverAllRuns
+   * @param portOffSet
+   * @param restPort
+   */
+  explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,
+                        E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+                        uint16_t rpcPort, uint16_t restPort);
 
-  public:
-    /**
-     * @brief generates a E2ESingleRun object
-     * @param configPerRun
-     * @param configOverAllRuns
-     * @param portOffSet
-     * @param restPort
-     */
-    explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,
-                          E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                          uint16_t rpcPort,
-                          uint16_t restPort);
+  /**
+   * @brief destructs this object and clears all buffer managers and data
+   * providers, as well as the coordinator
+   */
+  virtual ~E2ESingleRun();
 
-    /**
-     * @brief destructs this object and clears all buffer managers and data providers, as well as the coordinator
-     */
-    virtual ~E2ESingleRun();
+  /**
+   * @brief this method takes care of running this single experiment.
+   * So it will create the configurations, create the sources, ...
+   */
+  void run();
 
-    /**
-     * @brief this method takes care of running this single experiment.
-     * So it will create the configurations, create the sources, ...
-     */
-    void run();
+  /**
+   * @brief Getter for the coordinator config
+   * @return Returns the coordinatorConfiguration
+   */
+  [[nodiscard]] const CoordinatorConfigurationPtr& getCoordinatorConf() const;
 
-    /**
-     * @brief Getter for the coordinator config
-     * @return Returns the coordinatorConfiguration
-     */
-    [[nodiscard]] const CoordinatorConfigurationPtr& getCoordinatorConf() const;
+  /**
+   * @brief sets up the coordinator config and worker config
+   */
+  void setupCoordinatorConfig();
 
-    /**
-    * @brief sets up the coordinator config and worker config
-    */
-    void setupCoordinatorConfig();
+  /**
+   * @brief creates all sources and the data generator and provider for each
+   */
+  void createSources();
+  /**
+   * @brief Submits all queries to the coordinator
+   * @param requestHandlerService The query service to use
+   * @param queryCatalog The query catalog to use
+   */
+  void submitQueries(RequestHandlerServicePtr requestHandlerService,
+                     Catalogs::Query::QueryCatalogPtr queryCatalog);
 
-    /**
-     * @brief creates all sources and the data generator and provider for each
-     */
-    void createSources();
-    /**
-     * @brief Submits all queries to the coordinator
-     * @param requestHandlerService The query service to use
-     * @param queryCatalog The query catalog to use
-     */
-    void submitQueries(RequestHandlerServicePtr requestHandlerService, Catalogs::Query::QueryCatalogPtr queryCatalog);
+  /**
+   * @brief starts everything necessary for running the queries and measures for
+   * a single query
+   */
+  void runQueries();
 
-    /**
-     * @brief starts everything necessary for running the queries and measures for a single query
-     */
-    void runQueries();
+  /**
+   * @brief stops the queries and everything else, such as coordinator
+   */
+  void stopQueries();
 
-    /**
-     * @brief stops the queries and everything else, such as coordinator
-     */
-    void stopQueries();
+  /**
+   * @brief writes the measurement to the csv file
+   */
+  void writeMeasurementsToCsv();
 
-    /**
-     * @brief writes the measurement to the csv file
-     */
-    void writeMeasurementsToCsv();
+  /**
+   * @brief Getter for the measurements of this run
+   * @return Reference to the measurements
+   */
+  Measurements::Measurements& getMeasurements();
 
-    /**
-     * @brief Getter for the measurements of this run
-     * @return Reference to the measurements
-     */
-    Measurements::Measurements& getMeasurements();
+ private:
+  /**
+   * @brief Creates either KafkaSourceType or LambdaSourceType depending on the
+   * data generator. Also creates a data provider for LambdaSourceType.
+   * @param logicalSourceName
+   * @param physicalSourceName
+   * @param createdBuffers
+   * @param sourceCnt
+   * @param groupId
+   * @param generator
+   * @return KafkaSourceType or LambdaSourceType
+   */
+  PhysicalSourceTypePtr createPhysicalSourceType(
+      std::string logicalSourceName, std::string physicalSourceName,
+      std::vector<Runtime::TupleBuffer>& createdBuffers, size_t sourceCnt,
+      uint64_t groupId, std::string& generator);
 
-  private:
-    /**
-     * @brief Creates either KafkaSourceType or LambdaSourceType depending on the data generator.
-     * Also creates a data provider for LambdaSourceType.
-     * @param logicalSourceName
-     * @param physicalSourceName
-     * @param createdBuffers
-     * @param sourceCnt
-     * @param groupId
-     * @param generator
-     * @return KafkaSourceType or LambdaSourceType
-     */
-    PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName,
-                                                   std::string physicalSourceName,
-                                                   std::vector<Runtime::TupleBuffer>& createdBuffers,
-                                                   size_t sourceCnt,
-                                                   uint64_t groupId,
-                                                   std::string& generator);
+  /**
+   * @brief Collects the measurements for every query. It stops after
+   * numMeasurementsToCollect iterations.
+   */
+  void collectMeasurements();
 
-    /**
-     * @brief Collects the measurements for every query. It stops after numMeasurementsToCollect iterations.
-     */
-    void collectMeasurements();
+  /**
+   * @brief This method is used for waiting until the query gets into running
+   * status or a timeout occurs
+   * @param queryId: the query id to check for
+   * @param queryCatalog: the catalog to look into for status change
+   * @param timeoutInSec: time to wait before stop checking
+   * @return true if query gets into running status else false
+   */
+  static bool waitForQueryToStart(
+      QueryId queryId, const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+      std::chrono::seconds timeoutInSec = defaultStartQueryTimeout);
 
-    /**
-     * @brief This method is used for waiting until the query gets into running status or a timeout occurs
-     * @param queryId: the query id to check for
-     * @param queryCatalog: the catalog to look into for status change
-     * @param timeoutInSec: time to wait before stop checking
-     * @return true if query gets into running status else false
-     */
-    static bool waitForQueryToStart(QueryId queryId,
-                                    const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                    std::chrono::seconds timeoutInSec = defaultStartQueryTimeout);
+  /**
+   * @brief This method is used for waiting until the query gets into stopped
+   * status or a timeout occurs
+   * @param queryId: the query id to check for
+   * @param queryCatalog: the catalog to look into for status change
+   * @param timeoutInSec: time to wait before stop checking
+   * @return true if query gets into stopped status else false
+   */
+  static bool waitForQueryToStop(
+      QueryId queryId, const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+      std::chrono::seconds timeoutInSec = defaultStopQueryTimeout);
 
-    /**
-     * @brief This method is used for waiting until the query gets into stopped status or a timeout occurs
-     * @param queryId: the query id to check for
-     * @param queryCatalog: the catalog to look into for status change
-     * @param timeoutInSec: time to wait before stop checking
-     * @return true if query gets into stopped status else false
-     */
-    static bool waitForQueryToStop(QueryId queryId,
-                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                   std::chrono::seconds timeoutInSec = defaultStopQueryTimeout);
+  /**
+   * @brief Prints query subplan statistics to std::cout
+   * @param timestamp
+   * @param subPlanStatistics
+   * @param processedTasks
+   * @param outStream
+   */
+  static void printQuerySubplanStatistics(
+      uint64_t timestamp, const Runtime::QueryStatisticsPtr& subPlanStatistics,
+      size_t processedTasks, std::ostream& outStream = std::cout);
 
-    /**
-     * @brief Prints query subplan statistics to std::cout
-     * @param timestamp
-     * @param subPlanStatistics
-     * @param processedTasks
-     * @param outStream
-     */
-    static void printQuerySubplanStatistics(uint64_t timestamp,
-                                            const Runtime::QueryStatisticsPtr& subPlanStatistics,
-                                            size_t processedTasks,
-                                            std::ostream& outStream = std::cout);
-
-    E2EBenchmarkConfigPerRun& configPerRun;
-    E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
-    int rpcPortSingleRun;
-    int restPortSingleRun;
-    NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
-    NES::NesCoordinatorPtr coordinator;
-    std::vector<DataProvision::DataProviderPtr> allDataProviders;
-    std::vector<NES::Runtime::BufferManagerPtr> allBufferManagers;
-    Measurements::Measurements measurements;
-    std::vector<QueryId> submittedIds;
+  E2EBenchmarkConfigPerRun& configPerRun;
+  E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
+  int rpcPortSingleRun;
+  int restPortSingleRun;
+  NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
+  NES::NesCoordinatorPtr coordinator;
+  std::vector<DataProvision::DataProviderPtr> allDataProviders;
+  std::vector<NES::Runtime::BufferManagerPtr> allBufferManagers;
+  Measurements::Measurements measurements;
+  std::vector<QueryId> submittedIds;
 };
-}// namespace NES::Benchmark
+}  // namespace NES::Benchmark
 
-#endif// NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_

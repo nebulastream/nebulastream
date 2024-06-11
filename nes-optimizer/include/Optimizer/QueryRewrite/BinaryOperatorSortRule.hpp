@@ -22,7 +22,7 @@ namespace NES {
 class BinaryOperator;
 using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
 
-}// namespace NES
+}  // namespace NES
 
 namespace NES::Optimizer {
 
@@ -30,32 +30,36 @@ class BinaryOperatorSortRule;
 using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
 
 /**
- * @brief This rule sorts children of a binary operators (Join and Union) by qualifier name.
+ * @brief This rule sorts children of a binary operators (Join and Union) by
+ * qualifier name.
  *
  * Example:
- *     1. Query::from("car").unionWith(Query::from("truck")).sink(); =>  Query::from("truck").unionWith(Query::from("car")).sink();
+ *     1. Query::from("car").unionWith(Query::from("truck")).sink(); =>
+ * Query::from("truck").unionWith(Query::from("car")).sink();
  *
- *     2. Query::from("truck").unionWith(Query::from("car")).sink(); =>  Query::from("truck").unionWith(Query::from("car")).sink();
+ *     2. Query::from("truck").unionWith(Query::from("car")).sink(); =>
+ * Query::from("truck").unionWith(Query::from("car")).sink();
  *
- *     3. Query::from("car").joinWith(Query::from("truck")).sink(); =>  Query::from("truck").joinWith(Query::from("car")).sink();
+ *     3. Query::from("car").joinWith(Query::from("truck")).sink(); =>
+ * Query::from("truck").joinWith(Query::from("car")).sink();
  */
 class BinaryOperatorSortRule : public BaseRewriteRule {
+ public:
+  static BinaryOperatorSortRulePtr create();
+  virtual ~BinaryOperatorSortRule() = default;
 
-  public:
-    static BinaryOperatorSortRulePtr create();
-    virtual ~BinaryOperatorSortRule() = default;
+  QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
 
-    QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
+ private:
+  /**
+   * @brief This method takes input as a binary operator and sort the children
+   * alphabetically based on source qualifier name
+   * @param binaryOperator : the input binary operator
+   */
+  static void sortChildren(const BinaryOperatorPtr& binaryOperator);
 
-  private:
-    /**
-     * @brief This method takes input as a binary operator and sort the children alphabetically based on source qualifier name
-     * @param binaryOperator : the input binary operator
-     */
-    static void sortChildren(const BinaryOperatorPtr& binaryOperator);
-
-    BinaryOperatorSortRule();
+  BinaryOperatorSortRule();
 };
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BINARYOPERATORSORTRULE_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BINARYOPERATORSORTRULE_HPP_

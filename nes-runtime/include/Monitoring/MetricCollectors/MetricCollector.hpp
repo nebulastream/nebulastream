@@ -26,67 +26,69 @@ namespace NES::Monitoring {
 class Metric;
 
 /**
- * The metric collector base class. Metric collectors are required for the integration with data sources.
+ * The metric collector base class. Metric collectors are required for the
+ * integration with data sources.
  */
 class MetricCollector {
-  protected:
-    //  -- Constructors --
-    MetricCollector();
-    MetricCollector(WorkerId workerId);
-    MetricCollector(const MetricCollector&) = default;
-    MetricCollector(MetricCollector&&) = default;
-    //  -- Assignment --
-    MetricCollector& operator=(const MetricCollector&) = default;
-    MetricCollector& operator=(MetricCollector&&) = default;
+ protected:
+  //  -- Constructors --
+  MetricCollector();
+  MetricCollector(WorkerId workerId);
+  MetricCollector(const MetricCollector&) = default;
+  MetricCollector(MetricCollector&&) = default;
+  //  -- Assignment --
+  MetricCollector& operator=(const MetricCollector&) = default;
+  MetricCollector& operator=(MetricCollector&&) = default;
 
-  public:
-    //  -- Destructor --
-    virtual ~MetricCollector() = default;
+ public:
+  //  -- Destructor --
+  virtual ~MetricCollector() = default;
 
-    /**
-     * @brief Returns the type of metric collector
-     * @return the metric collector type
-     */
-    virtual MetricCollectorType getType() = 0;
+  /**
+   * @brief Returns the type of metric collector
+   * @return the metric collector type
+   */
+  virtual MetricCollectorType getType() = 0;
 
-    /**
-     * @brief Fill a buffer with a given metric.
-     * @param tupleBuffer The tuple buffer
-     * @return True if successful, else false
-    */
-    virtual bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) = 0;
+  /**
+   * @brief Fill a buffer with a given metric.
+   * @param tupleBuffer The tuple buffer
+   * @return True if successful, else false
+   */
+  virtual bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) = 0;
 
-    /**
-     * @brief Return the schema representing the metrics gathered by the collector.
-     * @return The schema
-    */
-    virtual SchemaPtr getSchema() = 0;
+  /**
+   * @brief Return the schema representing the metrics gathered by the
+   * collector.
+   * @return The schema
+   */
+  virtual SchemaPtr getSchema() = 0;
 
-    /**
-     * @brief Fill a buffer with a given metric.
-     * @param tupleBuffer The tuple buffer
-     * @return True if successful, else false
-     */
-    virtual const MetricPtr readMetric() const = 0;
+  /**
+   * @brief Fill a buffer with a given metric.
+   * @param tupleBuffer The tuple buffer
+   * @return True if successful, else false
+   */
+  virtual const MetricPtr readMetric() const = 0;
 
-    /**
-     * Getter for workerId
-     * @return the workerId
-     */
-    WorkerId getWorkerId() const;
+  /**
+   * Getter for workerId
+   * @return the workerId
+   */
+  WorkerId getWorkerId() const;
 
-    /**
-     * Setter for nodeId
-     * @param NodeId
-     */
-    void setNodeId(const WorkerId nodeId);
+  /**
+   * Setter for nodeId
+   * @param NodeId
+   */
+  void setNodeId(const WorkerId nodeId);
 
-  private:
-    WorkerId workerId;
+ private:
+  WorkerId workerId;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_

@@ -22,31 +22,30 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Physical Filter operator.
  */
 class PhysicalFilterOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalFilterOperator(OperatorId id,
-                           StatisticId statisticId,
-                           SchemaPtr inputSchema,
-                           SchemaPtr outputSchema,
-                           ExpressionNodePtr predicate);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const ExpressionNodePtr& expression);
-    static PhysicalOperatorPtr
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression);
-    std::string toString() const override;
-    OperatorPtr copy() override;
+ public:
+  PhysicalFilterOperator(OperatorId id, StatisticId statisticId,
+                         SchemaPtr inputSchema, SchemaPtr outputSchema,
+                         ExpressionNodePtr predicate);
+  static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId,
+                                    const SchemaPtr& inputSchema,
+                                    const SchemaPtr& outputSchema,
+                                    const ExpressionNodePtr& expression);
+  static PhysicalOperatorPtr create(StatisticId statisticId,
+                                    SchemaPtr inputSchema,
+                                    SchemaPtr outputSchema,
+                                    ExpressionNodePtr expression);
+  std::string toString() const override;
+  OperatorPtr copy() override;
 
-    /**
+  /**
    * @brief get the filter predicate.
    * @return PredicatePtr
    */
-    ExpressionNodePtr getPredicate();
+  ExpressionNodePtr getPredicate();
 
-  private:
-    ExpressionNodePtr predicate;
+ private:
+  ExpressionNodePtr predicate;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFILTEROPERATOR_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFILTEROPERATOR_HPP_

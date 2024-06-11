@@ -17,32 +17,55 @@
 
 namespace NES::RequestProcessor {
 
-void StorageHandler::acquireResources(const RequestId, std::vector<ResourceType>) {}
+void StorageHandler::acquireResources(const RequestId,
+                                      std::vector<ResourceType>) {}
 
 void StorageHandler::releaseResources(const RequestId) {}
 
-Optimizer::GlobalExecutionPlanPtr StorageHandler::getGlobalExecutionPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+Optimizer::GlobalExecutionPlanPtr StorageHandler::getGlobalExecutionPlanHandle(
+    RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
-TopologyHandle StorageHandler::getTopologyHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+TopologyHandle StorageHandler::getTopologyHandle(RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
-QueryCatalogHandle StorageHandler::getQueryCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+QueryCatalogHandle StorageHandler::getQueryCatalogHandle(RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
-GlobalQueryPlanHandle StorageHandler::getGlobalQueryPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+GlobalQueryPlanHandle StorageHandler::getGlobalQueryPlanHandle(RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
-Catalogs::Source::SourceCatalogPtr StorageHandler::getSourceCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+Catalogs::Source::SourceCatalogPtr StorageHandler::getSourceCatalogHandle(
+    RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
-Catalogs::UDF::UDFCatalogPtr StorageHandler::getUDFCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+Catalogs::UDF::UDFCatalogPtr StorageHandler::getUDFCatalogHandle(RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
-Configurations::CoordinatorConfigurationPtr StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
+Configurations::CoordinatorConfigurationPtr
+StorageHandler::getCoordinatorConfiguration(RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
-Optimizer::UMPMCAmendmentQueuePtr StorageHandler::getAmendmentQueue() { NES_NOT_IMPLEMENTED(); }
+Optimizer::UMPMCAmendmentQueuePtr StorageHandler::getAmendmentQueue() {
+  NES_NOT_IMPLEMENTED();
+}
 
-Statistic::StatisticProbeHandlerPtr StorageHandler::getStatisticProbeHandler(RequestId) { NES_NOT_IMPLEMENTED(); }
+Statistic::StatisticProbeHandlerPtr StorageHandler::getStatisticProbeHandler(
+    RequestId) {
+  NES_NOT_IMPLEMENTED();
+}
 
 RequestId StorageHandler::generateRequestId() {
-    std::unique_lock lock(idMutex);
-    auto requestId = nextFreeRequestId.getRawValue();
-    nextFreeRequestId = RequestId((requestId % MAX_REQUEST_ID.getRawValue()) + 1);
-    return RequestId(requestId);
+  std::unique_lock lock(idMutex);
+  auto requestId = nextFreeRequestId.getRawValue();
+  nextFreeRequestId = RequestId((requestId % MAX_REQUEST_ID.getRawValue()) + 1);
+  return RequestId(requestId);
 }
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor

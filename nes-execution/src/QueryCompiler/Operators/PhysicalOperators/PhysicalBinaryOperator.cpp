@@ -22,16 +22,18 @@ PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id,
                                                SchemaPtr leftSchema,
                                                SchemaPtr rightSchema,
                                                SchemaPtr outputSchema)
-    : Operator(id, statisticId), PhysicalOperator(id, statisticId), BinaryOperator(id) {
-    BinaryOperator::setLeftInputSchema(std::move(leftSchema));
-    BinaryOperator::setRightInputSchema(std::move(rightSchema));
-    BinaryOperator::setOutputSchema(std::move(outputSchema));
+    : Operator(id, statisticId),
+      PhysicalOperator(id, statisticId),
+      BinaryOperator(id) {
+  BinaryOperator::setLeftInputSchema(std::move(leftSchema));
+  BinaryOperator::setRightInputSchema(std::move(rightSchema));
+  BinaryOperator::setOutputSchema(std::move(outputSchema));
 }
 
 std::string PhysicalBinaryOperator::toString() const {
-    std::stringstream out;
-    out << BinaryOperator::toString();
-    return out.str();
+  std::stringstream out;
+  out << BinaryOperator::toString();
+  return out.str();
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators

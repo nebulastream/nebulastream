@@ -22,20 +22,23 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This Method returns whether some sub-sequence in the target sequence matches the regular expression rgx .
-* @param textValue as TextValue the text (string) to extract the regexpPattern from
-* @param regexpPattern as TextValue the pattern to match
-*/
+ * @brief This Method returns whether some sub-sequence in the target sequence
+ * matches the regular expression rgx .
+ * @param textValue as TextValue the text (string) to extract the regexpPattern
+ * from
+ * @param regexpPattern as TextValue the pattern to match
+ */
 class SearchingRegex : public Expression {
-  public:
-    SearchingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern);
-    Value<> execute(Record& record) const override;
+ public:
+  SearchingRegex(const ExpressionPtr& textValue,
+                 const ExpressionPtr& regexpPattern);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr textValue;
-    const ExpressionPtr regexpPattern;
+ private:
+  const ExpressionPtr textValue;
+  const ExpressionPtr regexpPattern;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_SEARCHINGREGEX_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_SEARCHINGREGEX_HPP_

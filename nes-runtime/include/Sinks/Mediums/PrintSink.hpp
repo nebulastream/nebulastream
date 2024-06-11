@@ -15,13 +15,12 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
 
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
-
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <iostream>
 
 namespace NES {
 
@@ -29,61 +28,60 @@ namespace NES {
  * @brief this class provides a print sink
  */
 class PrintSink : public SinkMedium {
-  public:
-    /**
-     * @brief Default constructor
-     * @Note the default output will be written to cout
-     */
-    PrintSink(SinkFormatPtr format,
-              Runtime::NodeEnginePtr nodeEngine,
-              uint32_t numOfProducers,
-              SharedQueryId sharedQueryId,
-              DecomposedQueryPlanId decomposedQueryPlanId,
-              std::ostream& pOutputStream = std::cout,
-              uint64_t numberOfOrigins = 1);
+ public:
+  /**
+   * @brief Default constructor
+   * @Note the default output will be written to cout
+   */
+  PrintSink(SinkFormatPtr format, Runtime::NodeEnginePtr nodeEngine,
+            uint32_t numOfProducers, SharedQueryId sharedQueryId,
+            DecomposedQueryPlanId decomposedQueryPlanId,
+            std::ostream& pOutputStream = std::cout,
+            uint64_t numberOfOrigins = 1);
 
-    /**
-     * @brief destructor
-     * @Note this is required by some tests
-     * TODO: find out why this is required
-     */
-    ~PrintSink() override;
+  /**
+   * @brief destructor
+   * @Note this is required by some tests
+   * TODO: find out why this is required
+   */
+  ~PrintSink() override;
 
-    /**
-     * @brief setup method for print sink
-     * @Note required due to derivation but does nothing
-     */
-    void setup() override;
+  /**
+   * @brief setup method for print sink
+   * @Note required due to derivation but does nothing
+   */
+  void setup() override;
 
-    /**
-     * @brief shutdown method for print sink
-     * @Note required due to derivation but does nothing
-     */
-    void shutdown() override;
+  /**
+   * @brief shutdown method for print sink
+   * @Note required due to derivation but does nothing
+   */
+  void shutdown() override;
 
-    /**
-     * @brief method to write the content of a tuple buffer to output console
-     * @param tuple buffer to write
-     * @return bool indicating success of the write
-     */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+  /**
+   * @brief method to write the content of a tuple buffer to output console
+   * @param tuple buffer to write
+   * @return bool indicating success of the write
+   */
+  bool writeData(Runtime::TupleBuffer& inputBuffer,
+                 Runtime::WorkerContextRef) override;
 
-    /**
-     * @brief override the toString method for the print sink
-     * @return returns string describing the print sink
-     */
-    std::string toString() const override;
+  /**
+   * @brief override the toString method for the print sink
+   * @return returns string describing the print sink
+   */
+  std::string toString() const override;
 
-    /**
-    * @brief method to return the type of medium
-    * @return type of medium
-    */
-    SinkMediumTypes getSinkMediumType() override;
+  /**
+   * @brief method to return the type of medium
+   * @return type of medium
+   */
+  SinkMediumTypes getSinkMediumType() override;
 
-  private:
-    std::ostream& outputStream;
+ private:
+  std::ostream& outputStream;
 };
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_

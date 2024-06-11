@@ -34,49 +34,60 @@
 namespace NES {
 
 /**
- * @brief This class is responsible for verifying the content of metrics read by the SystemResourcesReader.
+ * @brief This class is responsible for verifying the content of metrics read by
+ * the SystemResourcesReader.
  */
 class MetricValidator {
-  public:
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MetricPtr metric);
+ public:
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::MetricPtr metric);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::RuntimeMetrics metrics);
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::RuntimeMetrics metrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::RegistrationMetrics metrics);
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::RegistrationMetrics metrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::CpuMetricsWrapper cpuMetrics);
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::CpuMetricsWrapper cpuMetrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::NetworkMetricsWrapper networkMetrics);
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::NetworkMetricsWrapper networkMetrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MemoryMetrics memoryMetrics);
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::MemoryMetrics memoryMetrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::DiskMetrics diskMetrics);
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::DiskMetrics diskMetrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
-                        Monitoring::StoredNodeMetricsPtr storedMetrics,
-                        Monitoring::MetricType expectedType,
-                        WorkerId expectedNodeId,
-                        uint64_t expectedSize);
+  static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                      Monitoring::StoredNodeMetricsPtr storedMetrics,
+                      Monitoring::MetricType expectedType,
+                      WorkerId expectedNodeId, uint64_t expectedSize);
 
-    static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
+  static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader,
+                         nlohmann::json json);
 
-    static bool isValidAllStorage(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
+  static bool isValidAllStorage(
+      Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
 
-    static bool isValidRegistrationMetrics(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
+  static bool isValidRegistrationMetrics(
+      Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
 
-    static bool checkNodeIds(nlohmann::json json, WorkerId nodeId);
+  static bool checkNodeIds(nlohmann::json json, WorkerId nodeId);
 
-    static bool checkNodeIdsStorage(nlohmann::json json, WorkerId nodeId);
+  static bool checkNodeIdsStorage(nlohmann::json json, WorkerId nodeId);
 
-    static bool checkEntriesOfStream(std::set<std::string> setOfStr, nlohmann::json jsons);
+  static bool checkEntriesOfStream(std::set<std::string> setOfStr,
+                                   nlohmann::json jsons);
 
-    static bool checkNodeIds(Monitoring::MetricPtr metric, WorkerId nodeId);
+  static bool checkNodeIds(Monitoring::MetricPtr metric, WorkerId nodeId);
 
-    static bool waitForMonitoringStreamsOrTimeout(const std::set<Monitoring::MetricType>& monitoringStreams,
-                                                  uint16_t maxTimeout,
-                                                  uint64_t restPort);
+  static bool waitForMonitoringStreamsOrTimeout(
+      const std::set<Monitoring::MetricType>& monitoringStreams,
+      uint16_t maxTimeout, uint64_t restPort);
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_

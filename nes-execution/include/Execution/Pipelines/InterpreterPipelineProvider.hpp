@@ -18,13 +18,15 @@
 namespace NES::Runtime::Execution {
 
 /**
- * @brief Creates an executable pipeline stage that can be executed using interpretation
+ * @brief Creates an executable pipeline stage that can be executed using
+ * interpretation
  */
 class InterpreterPipelineProvider : public ExecutablePipelineProvider {
-  public:
-    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                    const Nautilus::CompilationOptions&) override;
+ public:
+  std::unique_ptr<ExecutablePipelineStage> create(
+      std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
+      const Nautilus::CompilationOptions&) override;
 };
-}// namespace NES::Runtime::Execution
+}  // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_

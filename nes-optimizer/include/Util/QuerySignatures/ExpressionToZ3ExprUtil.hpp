@@ -24,49 +24,51 @@ using ExprPtr = std::shared_ptr<expr>;
 
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+}  // namespace z3
 
 namespace NES {
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
-}// namespace NES
+}  // namespace NES
 
 namespace NES::Optimizer {
 
 class Z3ExprAndFieldMap;
 using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
 /**
- * @brief This class is responsible for taking input as a logical expression and generating an equivalent Z3 expression.
+ * @brief This class is responsible for taking input as a logical expression and
+ * generating an equivalent Z3 expression.
  */
 class ExpressionToZ3ExprUtil {
+ public:
+  /**
+   * @brief Convert input expression into an equivalent Z3 expressions
+   * @param expression: the input expression
+   * @param context: Z3 context
+   * @return returns Z3 expression and field map
+   */
+  static Z3ExprAndFieldMapPtr createForExpression(
+      const ExpressionNodePtr& expression, const z3::ContextPtr& context);
 
-  public:
-    /**
-     * @brief Convert input expression into an equivalent Z3 expressions
-     * @param expression: the input expression
-     * @param context: Z3 context
-     * @return returns Z3 expression and field map
-     */
-    static Z3ExprAndFieldMapPtr createForExpression(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
+ private:
+  /**
+   * @brief Convert input Logical expression into an equivalent Z3 expression
+   * @param expression: the input logical expression
+   * @param context: the Z3 context
+   * @return returns Z3 expression and field map
+   */
+  static Z3ExprAndFieldMapPtr createForLogicalExpressions(
+      const ExpressionNodePtr& expression, const z3::ContextPtr& context);
 
-  private:
-    /**
-     * @brief Convert input Logical expression into an equivalent Z3 expression
-     * @param expression: the input logical expression
-     * @param context: the Z3 context
-     * @return returns Z3 expression and field map
-     */
-    static Z3ExprAndFieldMapPtr createForLogicalExpressions(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
-
-    /**
-     * @brief Convert input arithmetic expression into an equivalent Z3 expression
-     * @param expression: the input arithmetic expression
-     * @param context: the Z3 context
-     * @return returns Z3 expression and field map
-     */
-    static Z3ExprAndFieldMapPtr createForArithmeticalExpressions(const ExpressionNodePtr& expression,
-                                                                 const z3::ContextPtr& context);
+  /**
+   * @brief Convert input arithmetic expression into an equivalent Z3 expression
+   * @param expression: the input arithmetic expression
+   * @param context: the Z3 context
+   * @return returns Z3 expression and field map
+   */
+  static Z3ExprAndFieldMapPtr createForArithmeticalExpressions(
+      const ExpressionNodePtr& expression, const z3::ContextPtr& context);
 };
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_EXPRESSIONTOZ3EXPRUTIL_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_UTIL_QUERYSIGNATURES_EXPRESSIONTOZ3EXPRUTIL_HPP_

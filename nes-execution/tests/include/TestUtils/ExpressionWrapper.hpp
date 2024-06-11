@@ -20,53 +20,56 @@
 #include <memory>
 namespace NES::Runtime::Execution::Expressions {
 
-template<typename ExpressionType>
+template <typename ExpressionType>
 class UnaryExpressionWrapper {
-  public:
-    UnaryExpressionWrapper() {
-        auto input = std::make_shared<ReadFieldExpression>("value");
-        expression = std::make_shared<ExpressionType>(input);
-    }
-    Nautilus::Value<> eval(Nautilus::Value<> value) {
-        auto record = Record({{"value", value}});
-        return expression->execute(record);
-    }
+ public:
+  UnaryExpressionWrapper() {
+    auto input = std::make_shared<ReadFieldExpression>("value");
+    expression = std::make_shared<ExpressionType>(input);
+  }
+  Nautilus::Value<> eval(Nautilus::Value<> value) {
+    auto record = Record({{"value", value}});
+    return expression->execute(record);
+  }
 
-    std::shared_ptr<ExpressionType> expression;
+  std::shared_ptr<ExpressionType> expression;
 };
 
-template<typename ExpressionType>
+template <typename ExpressionType>
 class BinaryExpressionWrapper {
-  public:
-    BinaryExpressionWrapper() {
-        auto leftExpression = std::make_shared<ReadFieldExpression>("left");
-        auto rightExpression = std::make_shared<ReadFieldExpression>("right");
-        expression = std::make_shared<ExpressionType>(leftExpression, rightExpression);
-    }
-    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> right) {
-        auto record = Record({{"left", left}, {"right", right}});
-        return expression->execute(record);
-    }
+ public:
+  BinaryExpressionWrapper() {
+    auto leftExpression = std::make_shared<ReadFieldExpression>("left");
+    auto rightExpression = std::make_shared<ReadFieldExpression>("right");
+    expression =
+        std::make_shared<ExpressionType>(leftExpression, rightExpression);
+  }
+  Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> right) {
+    auto record = Record({{"left", left}, {"right", right}});
+    return expression->execute(record);
+  }
 
-    std::shared_ptr<ExpressionType> expression;
+  std::shared_ptr<ExpressionType> expression;
 };
 
-template<typename ExpressionType>
+template <typename ExpressionType>
 class TernaryExpressionWrapper {
-  public:
-    TernaryExpressionWrapper() {
-        auto leftExpression = std::make_shared<ReadFieldExpression>("left");
-        auto midExpression = std::make_shared<ReadFieldExpression>("mid");
-        auto rightExpression = std::make_shared<ReadFieldExpression>("right");
-        expression = std::make_shared<ExpressionType>(leftExpression, midExpression, rightExpression);
-    }
-    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> mid, Nautilus::Value<> right) {
-        auto record = Record({{"left", left}, {"mid", mid}, {"right", right}});
-        return expression->execute(record);
-    }
-    std::shared_ptr<ExpressionType> expression;
+ public:
+  TernaryExpressionWrapper() {
+    auto leftExpression = std::make_shared<ReadFieldExpression>("left");
+    auto midExpression = std::make_shared<ReadFieldExpression>("mid");
+    auto rightExpression = std::make_shared<ReadFieldExpression>("right");
+    expression = std::make_shared<ExpressionType>(leftExpression, midExpression,
+                                                  rightExpression);
+  }
+  Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> mid,
+                         Nautilus::Value<> right) {
+    auto record = Record({{"left", left}, {"mid", mid}, {"right", right}});
+    return expression->execute(record);
+  }
+  std::shared_ptr<ExpressionType> expression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
+#endif  // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_

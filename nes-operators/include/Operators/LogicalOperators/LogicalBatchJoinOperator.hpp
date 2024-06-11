@@ -25,26 +25,29 @@ namespace NES::Experimental {
  * @brief Batch Join operator, which contains an expression as a predicate.
  */
 class LogicalBatchJoinOperator : public LogicalBinaryOperator {
-  public:
-    explicit LogicalBatchJoinOperator(Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition, OperatorId id);
-    ~LogicalBatchJoinOperator() override = default;
+ public:
+  explicit LogicalBatchJoinOperator(
+      Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition,
+      OperatorId id);
+  ~LogicalBatchJoinOperator() override = default;
 
-    /**
-    * @brief get join definition.
-    * @return LogicalJoinDescriptor
-    */
-    Join::Experimental::LogicalBatchJoinDescriptorPtr getBatchJoinDefinition() const;
+  /**
+   * @brief get join definition.
+   * @return LogicalJoinDescriptor
+   */
+  Join::Experimental::LogicalBatchJoinDescriptorPtr getBatchJoinDefinition()
+      const;
 
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
-    //infer schema of two child operators
-    bool inferSchema() override;
-    OperatorPtr copy() override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    void inferStringSignature() override;
+  [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
+  // infer schema of two child operators
+  bool inferSchema() override;
+  OperatorPtr copy() override;
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  void inferStringSignature() override;
 
-  private:
-    Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
+ private:
+  Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
-}// namespace NES::Experimental
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_
+}  // namespace NES::Experimental
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_

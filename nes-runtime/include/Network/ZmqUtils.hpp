@@ -33,70 +33,77 @@ static constexpr int KZmqRecvDefault = 0;
 #endif
 
 /**
-     * Send a message MessageType(args) through an open zmqSocket
-     * @tparam MessageType
-     * @tparam Arguments
-     * @param zmqSocket
-     * @param args
-     */
-template<typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
+ * Send a message MessageType(args) through an open zmqSocket
+ * @tparam MessageType
+ * @tparam Arguments
+ * @param zmqSocket
+ * @param args
+ */
+template <typename MessageType,
+          decltype(kZmqSendDefault) flags = kZmqSendDefault,
+          typename... Arguments>
 void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
-    // create a header message for MessageType
-    Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
-    // create a payload MessageType object to send via zmq
-    MessageType message(std::forward<Arguments>(args)...);// perfect forwarding
-    // create zmq envelopes
-    zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
-    zmq::message_t sendMsg(&message, sizeof(MessageType));
-    // send both messages in one shot
-    auto ret = zmqSocket.send(sendHeader, kZmqSendMore);
-    NES_ASSERT2_FMT(ret.has_value(), "send failed");
-    ret = zmqSocket.send(sendMsg, flags);
-    NES_ASSERT2_FMT(ret.has_value(), "send failed");
+  // create a header message for MessageType
+  Messages::MessageHeader header(MessageType::MESSAGE_TYPE,
+                                 sizeof(MessageType));
+  // create a payload MessageType object to send via zmq
+  MessageType message(std::forward<Arguments>(args)...);  // perfect forwarding
+  // create zmq envelopes
+  zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
+  zmq::message_t sendMsg(&message, sizeof(MessageType));
+  // send both messages in one shot
+  auto ret = zmqSocket.send(sendHeader, kZmqSendMore);
+  NES_ASSERT2_FMT(ret.has_value(), "send failed");
+  ret = zmqSocket.send(sendMsg, flags);
+  NES_ASSERT2_FMT(ret.has_value(), "send failed");
 }
 
 /**
-     * Send a message MessageType(args) through an open zmqSocket with no header
-     * @tparam MessageType
-     * @tparam Arguments
-     * @param zmqSocket
-     * @param args
-     */
-template<typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
+ * Send a message MessageType(args) through an open zmqSocket with no header
+ * @tparam MessageType
+ * @tparam Arguments
+ * @param zmqSocket
+ * @param args
+ */
+template <typename MessageType,
+          decltype(kZmqSendDefault) flags = kZmqSendDefault,
+          typename... Arguments>
 void sendMessageNoHeader(zmq::socket_t& zmqSocket, Arguments&&... args) {
-    // create a payload MessageType object to send via zmq
-    MessageType message(std::forward<Arguments>(args)...);// perfect forwarding
-    // create zmq envelopes
-    zmq::message_t sendMsg(&message, sizeof(MessageType));
-    // send msg messages in one shot
-    NES_ASSERT2_FMT(!!zmqSocket.send(sendMsg, flags), "send failed");
+  // create a payload MessageType object to send via zmq
+  MessageType message(std::forward<Arguments>(args)...);  // perfect forwarding
+  // create zmq envelopes
+  zmq::message_t sendMsg(&message, sizeof(MessageType));
+  // send msg messages in one shot
+  NES_ASSERT2_FMT(!!zmqSocket.send(sendMsg, flags), "send failed");
 }
 
 /**
-     * Send a zmqIdentity followed by a message MessageType(args) via zmqSocket
-     * @tparam MessageType
-     * @tparam Arguments
-     * @param zmqSocket
-     * @param args
-     */
-template<typename MessageType, typename... Arguments>
-void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdentity, Arguments&&... args) {
-    // create a header message for MessageType
-    Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
-    // create a payload MessageType object using args
-    MessageType message(std::forward<Arguments>(args)...);// perfect forwarding
-    // create zmq envelopes
-    zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
-    zmq::message_t sendMsg(&message, sizeof(MessageType));
-    // send all messages in one shot
-    auto ret = zmqSocket.send(zmqIdentity, kZmqSendMore);
-    NES_ASSERT2_FMT(ret.has_value(), "send failed");
-    ret = zmqSocket.send(sendHeader, kZmqSendMore);
-    NES_ASSERT2_FMT(ret.has_value(), "send failed");
-    ret = zmqSocket.send(sendMsg, kZmqSendDefault);
-    NES_ASSERT2_FMT(ret.has_value(), "send failed");
+ * Send a zmqIdentity followed by a message MessageType(args) via zmqSocket
+ * @tparam MessageType
+ * @tparam Arguments
+ * @param zmqSocket
+ * @param args
+ */
+template <typename MessageType, typename... Arguments>
+void sendMessageWithIdentity(zmq::socket_t& zmqSocket,
+                             zmq::message_t& zmqIdentity, Arguments&&... args) {
+  // create a header message for MessageType
+  Messages::MessageHeader header(MessageType::MESSAGE_TYPE,
+                                 sizeof(MessageType));
+  // create a payload MessageType object using args
+  MessageType message(std::forward<Arguments>(args)...);  // perfect forwarding
+  // create zmq envelopes
+  zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
+  zmq::message_t sendMsg(&message, sizeof(MessageType));
+  // send all messages in one shot
+  auto ret = zmqSocket.send(zmqIdentity, kZmqSendMore);
+  NES_ASSERT2_FMT(ret.has_value(), "send failed");
+  ret = zmqSocket.send(sendHeader, kZmqSendMore);
+  NES_ASSERT2_FMT(ret.has_value(), "send failed");
+  ret = zmqSocket.send(sendMsg, kZmqSendDefault);
+  NES_ASSERT2_FMT(ret.has_value(), "send failed");
 }
 
-}// namespace NES::Network
+}  // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_

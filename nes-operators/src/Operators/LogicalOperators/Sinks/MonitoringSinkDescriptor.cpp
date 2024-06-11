@@ -16,20 +16,31 @@
 
 namespace NES {
 
-MonitoringSinkDescriptor::MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins)
+MonitoringSinkDescriptor::MonitoringSinkDescriptor(
+    Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins)
     : SinkDescriptor(numberOfOrigins), collectorType(collectorType) {}
 
-SinkDescriptorPtr MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins) {
-    return std::make_shared<MonitoringSinkDescriptor>(MonitoringSinkDescriptor(collectorType, numberOfOrigins));
+SinkDescriptorPtr MonitoringSinkDescriptor::create(
+    Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins) {
+  return std::make_shared<MonitoringSinkDescriptor>(
+      MonitoringSinkDescriptor(collectorType, numberOfOrigins));
 }
 
-std::string MonitoringSinkDescriptor::toString() const { return "MonitoringSinkDescriptor()"; }
-bool MonitoringSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<MonitoringSinkDescriptor>(); }
-
-Monitoring::MetricCollectorType MonitoringSinkDescriptor::getCollectorType() const { return collectorType; }
-
-void MonitoringSinkDescriptor::setCollectorType(Monitoring::MetricCollectorType collectorType) {
-    this->collectorType = collectorType;
+std::string MonitoringSinkDescriptor::toString() const {
+  return "MonitoringSinkDescriptor()";
+}
+bool MonitoringSinkDescriptor::equal(SinkDescriptorPtr const& other) {
+  return other->instanceOf<MonitoringSinkDescriptor>();
 }
 
-}// namespace NES
+Monitoring::MetricCollectorType MonitoringSinkDescriptor::getCollectorType()
+    const {
+  return collectorType;
+}
+
+void MonitoringSinkDescriptor::setCollectorType(
+    Monitoring::MetricCollectorType collectorType) {
+  this->collectorType = collectorType;
+}
+
+}  // namespace NES

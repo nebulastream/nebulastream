@@ -15,35 +15,36 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
 #define NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
 
-#include <cinttypes>
 #include <stdint.h>
+
+#include <cinttypes>
 #include <string>
 #include <unordered_map>
 
 namespace NES {
 /**
-     * @brief Represents various states a Shared query Plan goes through.
-     *
-     * CREATED: Shared query plan was just created and need to be processed
-     * DEPLOYED: Shared Query Plan was deployed successfully.
-     * PROCESSED: Shared query plan was processed by placement amendment phase.
-     * PARTIALLY_PROCESSED: Shared query plan was only partially processed by placement amendment phase.
-     * UPDATED: A request arrived into the system that either added or removed operators from a Shared Query Plan.
-     * STOPPED: Shared Query Plan was stopped by user.
-     * FAILED: Shared Query Plan failed because of some reason.
-     * MIGRATING: shared query plan is currently being migrated
-     */
+ * @brief Represents various states a Shared query Plan goes through.
+ *
+ * CREATED: Shared query plan was just created and need to be processed
+ * DEPLOYED: Shared Query Plan was deployed successfully.
+ * PROCESSED: Shared query plan was processed by placement amendment phase.
+ * PARTIALLY_PROCESSED: Shared query plan was only partially processed by
+ * placement amendment phase. UPDATED: A request arrived into the system that
+ * either added or removed operators from a Shared Query Plan. STOPPED: Shared
+ * Query Plan was stopped by user. FAILED: Shared Query Plan failed because of
+ * some reason. MIGRATING: shared query plan is currently being migrated
+ */
 enum class SharedQueryPlanStatus : uint8_t {
-    CREATED = 0,
-    DEPLOYED,
-    PROCESSED,
-    PARTIALLY_PROCESSED,
-    UPDATED,
-    STOPPED,
-    FAILED,
-    MIGRATING
+  CREATED = 0,
+  DEPLOYED,
+  PROCESSED,
+  PARTIALLY_PROCESSED,
+  UPDATED,
+  STOPPED,
+  FAILED,
+  MIGRATING
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_

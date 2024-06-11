@@ -22,18 +22,20 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-  * @brief Compares two text object and returns their Jaccard Distance as Double. Throws Exception for Inputs of different length.
-  */
+ * @brief Compares two text object and returns their Jaccard Distance as Double.
+ * Throws Exception for Inputs of different length.
+ */
 class JaccardDistance : public Expression {
-  public:
-    JaccardDistance(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<> execute(Record& record) const override;
+ public:
+  JaccardDistance(const ExpressionPtr& leftSubExpression,
+                  const ExpressionPtr& rightSubExpression);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+ private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JACCARDDISTANCE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JACCARDDISTANCE_HPP_

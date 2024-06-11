@@ -31,48 +31,51 @@ using HashStatisticPair = std::pair<StatisticHash, StatisticPtr>;
  * @brief An interface for any statistic store
  */
 class AbstractStatisticStore {
-  public:
-    /**
-     * @brief Gets all statistics belonging to the statisticHash in the period of [startTs, endTs]
-     * @param statisticHash
-     * @param startTs
-     * @param endTs
-     * @return Vector of StatisticPtr
-     */
-    virtual std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
-                                                    const Windowing::TimeMeasure& startTs,
-                                                    const Windowing::TimeMeasure& endTs) = 0;
+ public:
+  /**
+   * @brief Gets all statistics belonging to the statisticHash in the period of
+   * [startTs, endTs]
+   * @param statisticHash
+   * @param startTs
+   * @param endTs
+   * @return Vector of StatisticPtr
+   */
+  virtual std::vector<StatisticPtr> getStatistics(
+      const StatisticHash& statisticHash, const Windowing::TimeMeasure& startTs,
+      const Windowing::TimeMeasure& endTs) = 0;
 
-    /**
-     * @brief Returns all statistics currently in this store
-     * @return Vector of HashStatisticPair
-     */
-    virtual std::vector<HashStatisticPair> getAllStatistics() = 0;
+  /**
+   * @brief Returns all statistics currently in this store
+   * @return Vector of HashStatisticPair
+   */
+  virtual std::vector<HashStatisticPair> getAllStatistics() = 0;
 
-    /**
-     * @brief Inserts statistic with the statisticHash into a StatisticStore.
-     * @param statisticHash
-     * @param statistic
-     * @return Success
-     */
-    virtual bool insertStatistic(const StatisticHash& statisticHash, StatisticPtr statistic) = 0;
+  /**
+   * @brief Inserts statistic with the statisticHash into a StatisticStore.
+   * @param statisticHash
+   * @param statistic
+   * @return Success
+   */
+  virtual bool insertStatistic(const StatisticHash& statisticHash,
+                               StatisticPtr statistic) = 0;
 
-    /**
-     * @brief Deletes all statistics belonging to the statisticHash in the period of [startTs, endTs]
-     * @param statisticHash
-     * @param startTs
-     * @param endTs
-     * @return Success
-     */
-    virtual bool deleteStatistics(const StatisticHash& statisticHash,
-                                  const Windowing::TimeMeasure& startTs,
-                                  const Windowing::TimeMeasure& endTs) = 0;
+  /**
+   * @brief Deletes all statistics belonging to the statisticHash in the period
+   * of [startTs, endTs]
+   * @param statisticHash
+   * @param startTs
+   * @param endTs
+   * @return Success
+   */
+  virtual bool deleteStatistics(const StatisticHash& statisticHash,
+                                const Windowing::TimeMeasure& startTs,
+                                const Windowing::TimeMeasure& endTs) = 0;
 
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~AbstractStatisticStore() = default;
+  /**
+   * @brief Virtual destructor
+   */
+  virtual ~AbstractStatisticStore() = default;
 };
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_

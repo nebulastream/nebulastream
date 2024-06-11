@@ -15,10 +15,12 @@
 
 namespace NES::Nautilus {
 
-TypeIdentifier::TypeIdentifier(const std::type_info& typeInfo) : typeInfo(typeInfo) {}
+TypeIdentifier::TypeIdentifier(const std::type_info& typeInfo)
+    : typeInfo(typeInfo) {}
 
 const std::type_info& TypeIdentifier::getTypeInfo() const { return typeInfo; }
 
-Typed::Typed(const TypeIdentifier* typeIdentifier) : typeIdentifier(typeIdentifier) {}
+Typed::Typed(const TypeIdentifier* typeIdentifier)
+    : typeIdentifier(typeIdentifier) {}
 
-}// namespace NES::Nautilus
+}  // namespace NES::Nautilus

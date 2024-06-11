@@ -21,25 +21,26 @@ namespace NES {
  * @brief This node represents an equals comparision between the two children.
  */
 class EqualsExpressionNode : public LogicalBinaryExpressionNode {
-  public:
-    EqualsExpressionNode() noexcept = default;
-    ~EqualsExpressionNode() override = default;
-    /**
-    * @brief Create a new equals expression
-    */
-    static ExpressionNodePtr create(ExpressionNodePtr const& left, ExpressionNodePtr const& right);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+ public:
+  EqualsExpressionNode() noexcept = default;
+  ~EqualsExpressionNode() override = default;
+  /**
+   * @brief Create a new equals expression
+   */
+  static ExpressionNodePtr create(ExpressionNodePtr const& left,
+                                  ExpressionNodePtr const& right);
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  protected:
-    explicit EqualsExpressionNode(EqualsExpressionNode* other);
+ protected:
+  explicit EqualsExpressionNode(EqualsExpressionNode* other);
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSIONNODE_HPP_

@@ -25,45 +25,50 @@
 namespace NES::QueryCompilation {
 /**
  * A TimestampField is a wrapper around a FieldName and a Unit of time.
- * This enforces fields carrying time values to be evaluated with respect to a specific timeunit.
+ * This enforces fields carrying time values to be evaluated with respect to a
+ * specific timeunit.
  */
 class TimestampField {
-    enum TimeFunctionType {
-        EVENT_TIME,
-        INGESTION_TIME,
-    };
+  enum TimeFunctionType {
+    EVENT_TIME,
+    INGESTION_TIME,
+  };
 
-  public:
-    friend std::ostream& operator<<(std::ostream& os, const TimestampField& obj);
-    /**
-     * The multiplier is the value which converts from the underlying time value to milliseconds.
-     * E.g. the multiplier for a timestampfield of seconds is 1000
-     * @return Unit Multiplier
-     */
-    [[nodiscard]] Windowing::TimeUnit getUnit() const;
+ public:
+  friend std::ostream& operator<<(std::ostream& os, const TimestampField& obj);
+  /**
+   * The multiplier is the value which converts from the underlying time value
+   * to milliseconds. E.g. the multiplier for a timestampfield of seconds is
+   * 1000
+   * @return Unit Multiplier
+   */
+  [[nodiscard]] Windowing::TimeUnit getUnit() const;
 
-    /**
-     * Name of the field
-     * @return reference to the field name
-     */
-    [[nodiscard]] const std::string& getName() const;
+  /**
+   * Name of the field
+   * @return reference to the field name
+   */
+  [[nodiscard]] const std::string& getName() const;
 
-    [[nodiscard]] const TimeFunctionType& getTimeFunctionType() const;
+  [[nodiscard]] const TimeFunctionType& getTimeFunctionType() const;
 
-    /**
-     * Builds the TimeFunction
-     * @return reference to the field name
-     */
-    [[nodiscard]] Runtime::Execution::Operators::TimeFunctionPtr toTimeFunction() const;
-    static TimestampField IngestionTime();
-    static TimestampField EventTime(std::string fieldName, Windowing::TimeUnit tm);
+  /**
+   * Builds the TimeFunction
+   * @return reference to the field name
+   */
+  [[nodiscard]] Runtime::Execution::Operators::TimeFunctionPtr toTimeFunction()
+      const;
+  static TimestampField IngestionTime();
+  static TimestampField EventTime(std::string fieldName,
+                                  Windowing::TimeUnit tm);
 
-  private:
-    std::string fieldName;
-    Windowing::TimeUnit unit;
-    TimeFunctionType timeFunctionType;
-    TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType);
+ private:
+  std::string fieldName;
+  Windowing::TimeUnit unit;
+  TimeFunctionType timeFunctionType;
+  TimestampField(std::string fieldName, Windowing::TimeUnit unit,
+                 TimeFunctionType timeFunctionType);
 };
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TIMESTAMPFIELD_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TIMESTAMPFIELD_HPP_

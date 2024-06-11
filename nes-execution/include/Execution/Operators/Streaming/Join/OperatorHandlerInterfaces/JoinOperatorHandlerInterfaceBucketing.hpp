@@ -22,16 +22,18 @@
 
 namespace NES::Runtime::Execution::Operators {
 class JoinOperatorHandlerInterfaceBucketing {
-  public:
-    /**
-     * @brief Gets the pointer to all windows (represented by StreamSlices) that should be filled for the given timestamp.
-     * If any windows does not exist for the timestamp, it will be created
-     * @param ts
-     * @param workerThreadId
-     * @return Vector of pointer to StreamSlices
-     */
-    virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId) = 0;
+ public:
+  /**
+   * @brief Gets the pointer to all windows (represented by StreamSlices) that
+   * should be filled for the given timestamp. If any windows does not exist for
+   * the timestamp, it will be created
+   * @param ts
+   * @param workerThreadId
+   * @return Vector of pointer to StreamSlices
+   */
+  virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(
+      uint64_t ts, WorkerThreadId workerThreadId) = 0;
 };
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACEBUCKETING_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACEBUCKETING_HPP_

@@ -12,103 +12,107 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::Runtime::Execution::Expressions {
 
 class FactorialExpressionTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("FactorialExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FactorialExpressionTest test class.");
-    }
+ public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("FactorialExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup FactorialExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down FactorialExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down FactorialExpressionTest test class.");
+  }
 };
 
 TEST_F(FactorialExpressionTest, factorialIntegers) {
-    auto expression = UnaryExpressionWrapper<FactorialExpression>();
+  auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
-    // Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>(4_s8));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>(4_s16));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }// Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(4_s32));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>(4_s64));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  // Int8
+  {
+    auto resultValue = expression.eval(Value<Int8>(4_s8));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int16
+  {
+    auto resultValue = expression.eval(Value<Int16>(4_s16));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }  // Int32
+  {
+    auto resultValue = expression.eval(Value<Int32>(4_s32));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int64
+  {
+    auto resultValue = expression.eval(Value<Int64>(4_s64));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 TEST_F(FactorialExpressionTest, factorialUnsignedIntegers) {
-    auto expression = UnaryExpressionWrapper<FactorialExpression>();
+  auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
-    // UInt8
-    {
-        auto resultValue = expression.eval(Value<UInt8>(4_u8));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // UInt16
-    {
-        auto resultValue = expression.eval(Value<UInt16>(4_u16));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }// UInt32
-    {
-        auto resultValue = expression.eval(Value<UInt32>(4u));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }// UInt64
-    {
-        auto resultValue = expression.eval(Value<UInt64>(4_u64));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  // UInt8
+  {
+    auto resultValue = expression.eval(Value<UInt8>(4_u8));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // UInt16
+  {
+    auto resultValue = expression.eval(Value<UInt16>(4_u16));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }  // UInt32
+  {
+    auto resultValue = expression.eval(Value<UInt32>(4u));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }  // UInt64
+  {
+    auto resultValue = expression.eval(Value<UInt64>(4_u64));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 
-    {
-        auto resultValue = expression.eval(Value<UInt64>(4_u64));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  {
+    auto resultValue = expression.eval(Value<UInt64>(4_u64));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 TEST_F(FactorialExpressionTest, factorialFloat) {
-    auto expression = UnaryExpressionWrapper<FactorialExpression>();
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 4));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 4));
-        ASSERT_EQ(resultValue, (double) 24);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<FactorialExpression>();
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)4));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>((double)4));
+    ASSERT_EQ(resultValue, (double)24);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions

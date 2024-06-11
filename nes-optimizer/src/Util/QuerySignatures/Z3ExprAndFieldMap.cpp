@@ -17,14 +17,19 @@
 
 namespace NES::Optimizer {
 
-Z3ExprAndFieldMap::Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap)
+Z3ExprAndFieldMap::Z3ExprAndFieldMap(
+    z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap)
     : expr(std::move(expr)), fieldMap(std::move(fieldMap)) {}
 
 z3::ExprPtr Z3ExprAndFieldMap::getExpr() { return expr; }
 
-std::map<std::string, z3::ExprPtr> Z3ExprAndFieldMap::getFieldMap() { return fieldMap; }
-
-Z3ExprAndFieldMapPtr Z3ExprAndFieldMap::create(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap) {
-    return std::make_shared<Z3ExprAndFieldMap>(Z3ExprAndFieldMap(std::move(expr), std::move(constMap)));
+std::map<std::string, z3::ExprPtr> Z3ExprAndFieldMap::getFieldMap() {
+  return fieldMap;
 }
-}// namespace NES::Optimizer
+
+Z3ExprAndFieldMapPtr Z3ExprAndFieldMap::create(
+    z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap) {
+  return std::make_shared<Z3ExprAndFieldMap>(
+      Z3ExprAndFieldMap(std::move(expr), std::move(constMap)));
+}
+}  // namespace NES::Optimizer

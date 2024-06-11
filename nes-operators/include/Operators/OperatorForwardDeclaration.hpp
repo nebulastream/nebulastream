@@ -28,7 +28,8 @@ class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class FieldAssignmentExpressionNode;
-using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+using FieldAssignmentExpressionNodePtr =
+    std::shared_ptr<FieldAssignmentExpressionNode>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
@@ -39,7 +40,7 @@ using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 namespace Experimental {
 class LogicalBatchJoinOperator;
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
-}// namespace Experimental
+}  // namespace Experimental
 
 class LogicalUnionOperator;
 using LogicalUnionOperatorPtr = std::shared_ptr<LogicalUnionOperator>;
@@ -57,7 +58,8 @@ class LogicalLimitOperator;
 using LogicalLimitOperatorPtr = std::shared_ptr<LogicalLimitOperator>;
 
 class WatermarkAssignerLogicalOperator;
-using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
+using WatermarkAssignerLogicalOperatorPtr =
+    std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
@@ -71,7 +73,7 @@ using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-}// namespace Catalogs::UDF
+}  // namespace Catalogs::UDF
 
 namespace InferModel {
 class LogicalInferModelOperator;
@@ -79,12 +81,13 @@ using LogicalInferModelOperatorPtr = std::shared_ptr<LogicalInferModelOperator>;
 
 class InferModelOperatorHandler;
 using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
-}// namespace InferModel
+}  // namespace InferModel
 
 namespace Statistic {
 class LogicalStatisticWindowOperator;
-using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
-}// namespace Statistic
+using LogicalStatisticWindowOperatorPtr =
+    std::shared_ptr<LogicalStatisticWindowOperator>;
+}  // namespace Statistic
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
+}  // namespace NES
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

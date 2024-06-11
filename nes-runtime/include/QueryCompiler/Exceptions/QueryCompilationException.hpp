@@ -22,11 +22,12 @@ namespace NES::QueryCompilation {
  * @brief Exception thrown by the query compiler.
  */
 class QueryCompilationException : public Exceptions::RuntimeException {
-  public:
-    explicit QueryCompilationException(const std::string& message,
-                                       std::source_location location = std::source_location::current());
+ public:
+  explicit QueryCompilationException(
+      const std::string& message,
+      std::source_location location = std::source_location::current());
 };
 
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_

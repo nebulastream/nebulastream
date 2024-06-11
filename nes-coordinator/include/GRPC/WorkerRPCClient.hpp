@@ -15,15 +15,16 @@
 #ifndef NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
+#include <WorkerRPCService.grpc.pb.h>
+#include <WorkerRPCService.pb.h>
+#include <grpcpp/grpcpp.h>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <WorkerRPCService.grpc.pb.h>
-#include <WorkerRPCService.pb.h>
-#include <grpcpp/grpcpp.h>
 #include <string>
 #include <thread>
 
@@ -45,7 +46,7 @@ class MonitoringPlan;
 
 class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
-}// namespace Monitoring
+}  // namespace Monitoring
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
@@ -55,12 +56,12 @@ using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 namespace Spatial::DataTypes::Experimental {
 class GeoLocation;
 class Waypoint;
-}// namespace Spatial::DataTypes::Experimental
+}  // namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
-}// namespace Spatial::Mobility::Experimental
+}  // namespace Spatial::Mobility::Experimental
 
 enum class RpcClientMode : uint8_t { Register, Unregister, Start, Stop };
 
@@ -68,192 +69,206 @@ class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 struct RpcAsyncRequest {
-    CompletionQueuePtr completionQueue;
-    RpcClientMode rpcClientMode;
+  CompletionQueuePtr completionQueue;
+  RpcClientMode rpcClientMode;
 };
 
 class WorkerRPCClient {
-  public:
-    template<typename ReplayType>
-    struct AsyncClientCall {
-        // Container for the data we expect from the server.
-        ReplayType reply;
+ public:
+  template <typename ReplayType>
+  struct AsyncClientCall {
+    // Container for the data we expect from the server.
+    ReplayType reply;
 
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
 
-        // Storage for the status of the RPC upon completion.
-        Status status;
+    // Storage for the status of the RPC upon completion.
+    Status status;
 
-        std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
-    };
+    std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
+  };
 
-    /**
-     * @brief Create instance of worker rpc client
-     * @return shared pointer to the worker RPC client
-     */
-    static WorkerRPCClientPtr create();
+  /**
+   * @brief Create instance of worker rpc client
+   * @return shared pointer to the worker RPC client
+   */
+  static WorkerRPCClientPtr create();
 
-    /**
-     * @brief register a query
-     * @param address: address of node where query plan need to be registered
-     * @param decomposedQueryPlan plan to register
-     * @return true if succeeded, else false
-     */
-    bool registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan);
+  /**
+   * @brief register a query
+   * @param address: address of node where query plan need to be registered
+   * @param decomposedQueryPlan plan to register
+   * @return true if succeeded, else false
+   */
+  bool registerQuery(const std::string& address,
+                     const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
-    /**
-     * @brief register a query asynchronously
-     * @param address: address of node where query plan need to be registered
-     * @param query plan to register
-     * @param cq the completion queue
-     */
-    void registerQueryAsync(const std::string& address,
-                            const DecomposedQueryPlanPtr& decomposedQueryPlan,
+  /**
+   * @brief register a query asynchronously
+   * @param address: address of node where query plan need to be registered
+   * @param query plan to register
+   * @param cq the completion queue
+   */
+  void registerQueryAsync(const std::string& address,
+                          const DecomposedQueryPlanPtr& decomposedQueryPlan,
+                          const CompletionQueuePtr& cq);
+
+  /**
+   * @brief ungregisters a query
+   * @param sharedQueryId to unregister query
+   * @return true if succeeded, else false
+   */
+  bool unregisterQuery(const std::string& address, SharedQueryId sharedQueryId);
+
+  /**
+   * @brief ungregisters a query asynchronously
+   * @param sharedQueryId to unregister query
+   */
+  void unregisterQueryAsync(const std::string& address,
+                            SharedQueryId sharedQueryId,
                             const CompletionQueuePtr& cq);
 
-    /**
-     * @brief ungregisters a query
-     * @param sharedQueryId to unregister query
-     * @return true if succeeded, else false
-     */
-    bool unregisterQuery(const std::string& address, SharedQueryId sharedQueryId);
+  /**
+   * @brief method to start a already deployed query
+   * @note if query is not deploy, false is returned
+   * @param sharedQueryId to start
+   * @param decomposedQueryPlanId to start
+   * @return bool indicating success
+   */
+  bool startQuery(const std::string& address, SharedQueryId sharedQueryId,
+                  DecomposedQueryPlanId decomposedQueryPlanId);
 
-    /**
-     * @brief ungregisters a query asynchronously
-     * @param sharedQueryId to unregister query
-     */
-    void unregisterQueryAsync(const std::string& address, SharedQueryId sharedQueryId, const CompletionQueuePtr& cq);
+  /**
+   * @brief method to start a already deployed query asynchronously
+   * @note if query is not deploy, false is returned
+   * @param address the address of the worker
+   * @param sharedQueryId to start
+   * @param decomposedQueryPlanId to start
+   * @param cq the completion queue
+   */
+  void startQueryAsync(const std::string& address, SharedQueryId sharedQueryId,
+                       DecomposedQueryPlanId decomposedQueryPlanId,
+                       const CompletionQueuePtr& cq);
 
-    /**
-     * @brief method to start a already deployed query
-     * @note if query is not deploy, false is returned
-     * @param sharedQueryId to start
-     * @param decomposedQueryPlanId to start
-     * @return bool indicating success
-     */
-    bool startQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+  /**
+   * @brief method to stop a query
+   * @param address address of the new worker
+   * @param sharedQueryId to stop
+   * @param decomposedQueryPlanId to stop
+   * @param terminationType termination type of the query
+   * @return bool indicating success
+   */
+  bool stopQuery(const std::string& address, SharedQueryId sharedQueryId,
+                 DecomposedQueryPlanId decomposedQueryPlanId,
+                 Runtime::QueryTerminationType terminationType);
 
-    /**
-      * @brief method to start a already deployed query asynchronously
-      * @note if query is not deploy, false is returned
-      * @param address the address of the worker
-      * @param sharedQueryId to start
-      * @param decomposedQueryPlanId to start
-      * @param cq the completion queue
-      */
-    void startQueryAsync(const std::string& address,
-                         SharedQueryId sharedQueryId,
-                         DecomposedQueryPlanId decomposedQueryPlanId,
-                         const CompletionQueuePtr& cq);
+  /**
+   * @brief method to stop a query asynchronously
+   * @param address : address of the worker
+   * @param sharedQueryId to stop
+   * @param decomposedQueryPlanId to stop
+   * @param terminationType: the termination type
+   * @param cq: completion queue of grpc requests
+   */
+  void stopQueryAsync(const std::string& address, SharedQueryId sharedQueryId,
+                      DecomposedQueryPlanId decomposedQueryPlanId,
+                      Runtime::QueryTerminationType terminationType,
+                      const CompletionQueuePtr& cq);
 
-    /**
-     * @brief method to stop a query
-     * @param address address of the new worker
-     * @param sharedQueryId to stop
-     * @param decomposedQueryPlanId to stop
-     * @param terminationType termination type of the query
-     * @return bool indicating success
-     */
-    bool stopQuery(const std::string& address,
-                   SharedQueryId sharedQueryId,
-                   DecomposedQueryPlanId decomposedQueryPlanId,
-                   Runtime::QueryTerminationType terminationType);
+  /**
+   * @brief Registers to a remote worker node its monitoring plan.
+   * @param ipAddress
+   * @param the monitoring plan
+   * @return bool if successful
+   */
+  bool registerMonitoringPlan(const std::string& address,
+                              const Monitoring::MonitoringPlanPtr& plan);
 
-    /**
-     * @brief method to stop a query asynchronously
-     * @param address : address of the worker
-     * @param sharedQueryId to stop
-     * @param decomposedQueryPlanId to stop
-     * @param terminationType: the termination type
-     * @param cq: completion queue of grpc requests
-     */
-    void stopQueryAsync(const std::string& address,
-                        SharedQueryId sharedQueryId,
-                        DecomposedQueryPlanId decomposedQueryPlanId,
-                        Runtime::QueryTerminationType terminationType,
-                        const CompletionQueuePtr& cq);
+  /**
+   * @brief Requests from a remote worker node its monitoring data.
+   * @param ipAddress
+   * @return true if successful, else false
+   */
+  std::string requestMonitoringData(const std::string& address);
 
-    /**
-     * @brief Registers to a remote worker node its monitoring plan.
-     * @param ipAddress
-     * @param the monitoring plan
-     * @return bool if successful
-     */
-    bool registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan);
+  /**
+   * @brief Requests remote worker to start buffering data on a single
+   * NetworkSink identified by a query sub plan Id and a global sinkId. Once
+   * buffering starts, the Network Sink no longer sends data downstream
+   * @param ipAddress
+   * @param querySubPlanId : the id of the query sub plan to which the Network
+   * Sink belongs
+   * @param uniqueNetworkSinDescriptorId : unique id of the network sink
+   * descriptor. Used to find the Network Sink to buffer data on.
+   * @return true if successful, else false
+   */
+  bool bufferData(const std::string& address, uint64_t querySubPlanId,
+                  uint64_t uniqueNetworkSinDescriptorId);
 
-    /**
-     * @brief Requests from a remote worker node its monitoring data.
-     * @param ipAddress
-     * @return true if successful, else false
-     */
-    std::string requestMonitoringData(const std::string& address);
+  /**
+   * @brief requests a remote worker to reconfigure a NetworkSink so that the
+   * NetworkSink changes where it sends data to (changes downstream node)
+   * @param ipAddress
+   * @param newNodeId : the id of the node that the Network Sink will send data
+   * to after reconfiguration
+   * @param newHostname : the hostname of the node that the NetworkSink should
+   * send data to
+   * @param newPort : the port of the node that the NetworkSink should send data
+   * to
+   * @param querySubPlanId : the id of the query sub plan to which the Network
+   * Sink belongs
+   * @param uniqueNetworkSinDescriptorId : unique id of the network sink
+   * descriptor. Used to find the Network Sink to buffer data on.
+   * @return true if successful, else false
+   */
+  bool updateNetworkSink(const std::string& address, uint64_t newNodeId,
+                         const std::string& newHostname, uint32_t newPort,
+                         uint64_t querySubPlanId,
+                         uint64_t uniqueNetworkSinDescriptorId);
 
-    /**
-     * @brief Requests remote worker to start buffering data on a single NetworkSink identified by
-     * a query sub plan Id and a global sinkId.
-     * Once buffering starts, the Network Sink no longer sends data downstream
-     * @param ipAddress
-     * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
-     * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
-     * @return true if successful, else false
-     */
-    bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
+  /**
+   * @brief This functions loops over all queues and wait for the async calls
+   * return
+   * @param rpcAsyncRequests: rpc requests made
+   * @return true if all calls returned
+   * @throws RpcException: Creates RPC exception with failedRPCCalls and mode
+   */
+  void checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAsyncRequests);
 
-    /**
-     * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
-     * @param ipAddress
-     * @param newNodeId : the id of the node that the Network Sink will send data to after reconfiguration
-     * @param newHostname : the hostname of the node that the NetworkSink should send data to
-     * @param newPort : the port of the node that the NetworkSink should send data to
-     * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
-     * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
-     * @return true if successful, else false
-     */
-    bool updateNetworkSink(const std::string& address,
-                           uint64_t newNodeId,
-                           const std::string& newHostname,
-                           uint32_t newPort,
-                           uint64_t querySubPlanId,
-                           uint64_t uniqueNetworkSinDescriptorId);
+  /**
+   * @brief method to propagate new epoch timestamp to source
+   * @param timestamp: max timestamp of current epoch
+   * @param queryId: query id which sources belong to
+   * @param address: ip address of the source
+   * @return bool indicating success
+   */
+  bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId,
+                          const std::string& address);
 
-    /**
-     * @brief This functions loops over all queues and wait for the async calls return
-     * @param rpcAsyncRequests: rpc requests made
-     * @return true if all calls returned
-     * @throws RpcException: Creates RPC exception with failedRPCCalls and mode
-     */
-    void checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAsyncRequests);
+  /**
+   * @brief method to check the health of the worker
+   * @param address: ip address of the source
+   * @return bool indicating success
+   */
+  bool checkHealth(const std::string& address, std::string healthServiceName);
 
-    /**
-     * @brief method to propagate new epoch timestamp to source
-     * @param timestamp: max timestamp of current epoch
-     * @param queryId: query id which sources belong to
-     * @param address: ip address of the source
-     * @return bool indicating success
-     */
-    bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address);
+  /**
+   * @brief method to check the location of any node. If the node is a mobile
+   * node, its current location will be returned. If the node is a field node,
+   * its fixed location will be returned. If the node does not have a known
+   * location, an invalid location will be returned
+   * @param address: the ip address of the node
+   * @return location representing the nodes location or invalid if no such
+   * location exists
+   */
+  NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(
+      const std::string& address);
 
-    /**
-     * @brief method to check the health of the worker
-     * @param address: ip address of the source
-     * @return bool indicating success
-     */
-    bool checkHealth(const std::string& address, std::string healthServiceName);
-
-    /**
-     * @brief method to check the location of any node. If the node is a mobile node, its current location will be returned.
-     * If the node is a field node, its fixed location will be returned. If the node does not have a known location, an
-     * invalid location will be returned
-     * @param address: the ip address of the node
-     * @return location representing the nodes location or invalid if no such location exists
-     */
-    NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
-
-  private:
-    WorkerRPCClient() = default;
+ private:
+  WorkerRPCClient() = default;
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_

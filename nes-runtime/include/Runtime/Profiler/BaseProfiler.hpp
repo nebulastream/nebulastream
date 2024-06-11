@@ -22,20 +22,21 @@ namespace NES::Runtime::Profiler {
  * @brief This is base profiler class to implement own profiler (e.g., PAPI)
  */
 class BaseProfiler {
-  public:
-    /**
-     * @brief start sampling
-     * @return the tsc representing the moment we start sampling
-     */
-    virtual uint64_t startSampling() = 0;
+ public:
+  /**
+   * @brief start sampling
+   * @return the tsc representing the moment we start sampling
+   */
+  virtual uint64_t startSampling() = 0;
 
-    /**
-     * @brief stop sampling
-     * @param numItems the number of items (records/buffers/...) processed from the moment we started
-     * @return the tsc representing the moment we stop sampling
-     */
-    virtual uint64_t stopSampling(std::size_t numItems) = 0;
+  /**
+   * @brief stop sampling
+   * @param numItems the number of items (records/buffers/...) processed from
+   * the moment we started
+   * @return the tsc representing the moment we stop sampling
+   */
+  virtual uint64_t stopSampling(std::size_t numItems) = 0;
 };
-}// namespace NES::Runtime::Profiler
+}  // namespace NES::Runtime::Profiler
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_

@@ -20,19 +20,24 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-NonKeyedBucketPreAggregationHandler::NonKeyedBucketPreAggregationHandler(uint64_t windowSize,
-                                                                         uint64_t windowSlide,
-                                                                         const std::vector<OriginId>& origins)
-    : AbstractBucketPreAggregationHandler<NonKeyedSlice, NonKeyedBucketStore>(windowSize, windowSlide, origins) {}
+NonKeyedBucketPreAggregationHandler::NonKeyedBucketPreAggregationHandler(
+    uint64_t windowSize, uint64_t windowSlide,
+    const std::vector<OriginId>& origins)
+    : AbstractBucketPreAggregationHandler<NonKeyedSlice, NonKeyedBucketStore>(
+          windowSize, windowSlide, origins) {}
 
-void NonKeyedBucketPreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {
-    defaultState = std::make_unique<State>(entrySize);
-    for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto threadLocal = std::make_unique<NonKeyedBucketStore>(entrySize, windowSize, windowSlide, defaultState);
-        threadLocalBuckets.emplace_back(std::move(threadLocal));
-    }
+void NonKeyedBucketPreAggregationHandler::setup(
+    Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {
+  defaultState = std::make_unique<State>(entrySize);
+  for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
+    auto threadLocal = std::make_unique<NonKeyedBucketStore>(
+        entrySize, windowSize, windowSlide, defaultState);
+    threadLocalBuckets.emplace_back(std::move(threadLocal));
+  }
 }
 
-const State* NonKeyedBucketPreAggregationHandler::getDefaultState() const { return defaultState.get(); }
+const State* NonKeyedBucketPreAggregationHandler::getDefaultState() const {
+  return defaultState.get();
+}
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

@@ -19,8 +19,8 @@
 
 namespace NES {
 class RequestTypeNotHandledException : public std::runtime_error {
-  public:
-    explicit RequestTypeNotHandledException(const std::string& message);
+ public:
+  explicit RequestTypeNotHandledException(const std::string& message);
 };
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_REQUESTTYPENOTHANDLEDEXCEPTION_HPP_
+}  // namespace NES
+#endif  // NES_COORDINATOR_INCLUDE_EXCEPTIONS_REQUESTTYPENOTHANDLEDEXCEPTION_HPP_

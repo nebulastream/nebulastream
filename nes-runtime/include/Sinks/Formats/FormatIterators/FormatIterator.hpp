@@ -20,28 +20,33 @@
 namespace NES {
 
 /**
- * @brief this class is used for iterating over a single buffer and extracting out the tuples
+ * @brief this class is used for iterating over a single buffer and extracting
+ * out the tuples
  */
 class FormatIterator {
-  public:
-    explicit FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes sinkFormatType);
+ public:
+  explicit FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer,
+                          FormatTypes sinkFormatType);
 
-    /**
-     * @brief Starts a new iterator with a bufferIndex of 0
-     * @return iteratorPtr
-     */
-    Iterator begin() { return Iterator(0, buffer, schema, sinkFormatType); };
+  /**
+   * @brief Starts a new iterator with a bufferIndex of 0
+   * @return iteratorPtr
+   */
+  Iterator begin() { return Iterator(0, buffer, schema, sinkFormatType); };
 
-    /**
-    * @brief The end of this iterator has a bufferIndex that is equal to the number of tuples in the TupleBuffer
-    * @return iteratorPtr
-    */
-    Iterator end() { return Iterator(buffer.getNumberOfTuples(), buffer, schema, sinkFormatType); };
+  /**
+   * @brief The end of this iterator has a bufferIndex that is equal to the
+   * number of tuples in the TupleBuffer
+   * @return iteratorPtr
+   */
+  Iterator end() {
+    return Iterator(buffer.getNumberOfTuples(), buffer, schema, sinkFormatType);
+  };
 
-  private:
-    SchemaPtr schema;
-    Runtime::TupleBuffer buffer;
-    FormatTypes sinkFormatType;
+ private:
+  SchemaPtr schema;
+  Runtime::TupleBuffer buffer;
+  FormatTypes sinkFormatType;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_
+}  // namespace NES
+#endif  // NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_

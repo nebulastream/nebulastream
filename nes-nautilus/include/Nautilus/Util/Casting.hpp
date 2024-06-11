@@ -18,48 +18,49 @@
 namespace NES {
 
 // polyfill because concepts do not exist on all platforms yet.
-template<typename _From, typename _To>
-concept convertible_to = std::is_convertible_v<_From, _To> && requires { static_cast<_To>(std::declval<_From>()); };
+template <typename _From, typename _To>
+concept convertible_to = std::is_convertible_v<_From, _To> &&
+                         requires { static_cast<_To>(std::declval<_From>()); };
 
 class TypeCastable {
-  public:
-    enum class Kind : uint8_t {
-        IntegerValue,
-        FloatValue,
-        BooleanValue,
-        TraceValue,
-        DoubleValue,
-        MemRef,
-    };
-    TypeCastable(Kind k) : kind(k) {}
-    Kind getKind() const { return kind; }
+ public:
+  enum class Kind : uint8_t {
+    IntegerValue,
+    FloatValue,
+    BooleanValue,
+    TraceValue,
+    DoubleValue,
+    MemRef,
+  };
+  TypeCastable(Kind k) : kind(k) {}
+  Kind getKind() const { return kind; }
 
-  private:
-    const Kind kind;
+ private:
+  const Kind kind;
 };
 
-template<typename T>
+template <typename T>
 concept GetType = requires(T a) {
-    { T::type } -> convertible_to<TypeCastable::Kind>;
+  { T::type } -> convertible_to<TypeCastable::Kind>;
 };
 
-template<class X, class Y>
-    requires(std::is_base_of<Y, X>::value == false)
+template <class X, class Y>
+  requires(std::is_base_of<Y, X>::value == false)
 inline constexpr bool instanceOf(const std::unique_ptr<Y>&) {
-    return false;
+  return false;
 }
 
-template<GetType X, class Y>
-    requires(std::is_base_of<Y, X>::value == true)
+template <GetType X, class Y>
+  requires(std::is_base_of<Y, X>::value == true)
 inline bool instanceOf(const std::unique_ptr<Y>& y) {
-    return X::type == y->getKind();
+  return X::type == y->getKind();
 }
 
-template<GetType X>
+template <GetType X>
 inline bool instanceOf(const TypeCastable& y) {
-    return X::type == y.getKind();
+  return X::type == y.getKind();
 }
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTING_HPP_
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTING_HPP_

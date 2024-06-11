@@ -18,48 +18,52 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalExternalOperator::PhysicalExternalOperator(OperatorId id,
-                                                   StatisticId statisticId,
-                                                   SchemaPtr inputSchema,
-                                                   SchemaPtr outputSchema,
-                                                   Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+PhysicalExternalOperator::PhysicalExternalOperator(
+    OperatorId id, StatisticId statisticId, SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage)
+    : Operator(id, statisticId),
+      PhysicalUnaryOperator(id, statisticId, std::move(inputSchema),
+                            std::move(outputSchema)),
       executablePipelineStage(std::move(executablePipelineStage)) {}
 
-PhysicalOperatorPtr
-PhysicalExternalOperator::create(StatisticId statisticId,
-                                 const SchemaPtr& inputSchema,
-                                 const SchemaPtr& outputSchema,
-                                 const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage) {
-    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, executablePipelineStage);
+PhysicalOperatorPtr PhysicalExternalOperator::create(
+    StatisticId statisticId, const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema,
+    const Runtime::Execution::ExecutablePipelineStagePtr&
+        executablePipelineStage) {
+  return create(getNextOperatorId(), statisticId, inputSchema, outputSchema,
+                executablePipelineStage);
 }
-PhysicalOperatorPtr
-PhysicalExternalOperator::create(OperatorId id,
-                                 StatisticId statisticId,
-                                 const SchemaPtr& inputSchema,
-                                 const SchemaPtr& outputSchema,
-                                 const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage) {
-    return std::make_shared<PhysicalExternalOperator>(id, statisticId, inputSchema, outputSchema, executablePipelineStage);
+PhysicalOperatorPtr PhysicalExternalOperator::create(
+    OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema,
+    const Runtime::Execution::ExecutablePipelineStagePtr&
+        executablePipelineStage) {
+  return std::make_shared<PhysicalExternalOperator>(
+      id, statisticId, inputSchema, outputSchema, executablePipelineStage);
 }
 
 std::string PhysicalExternalOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalExternalOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    out << executablePipelineStage->getCodeAsString();
-    out << std::endl;
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalExternalOperator:\n";
+  out << PhysicalUnaryOperator::toString();
+  out << executablePipelineStage->getCodeAsString();
+  out << std::endl;
+  return out.str();
 }
 
 OperatorPtr PhysicalExternalOperator::copy() {
-    auto result = create(id, statisticId, inputSchema, outputSchema, executablePipelineStage);
-    result->addAllProperties(properties);
-    return result;
+  auto result = create(id, statisticId, inputSchema, outputSchema,
+                       executablePipelineStage);
+  result->addAllProperties(properties);
+  return result;
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr PhysicalExternalOperator::getExecutablePipelineStage() {
-    return executablePipelineStage;
+Runtime::Execution::ExecutablePipelineStagePtr
+PhysicalExternalOperator::getExecutablePipelineStage() {
+  return executablePipelineStage;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators

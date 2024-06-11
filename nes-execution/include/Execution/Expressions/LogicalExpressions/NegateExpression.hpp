@@ -19,16 +19,17 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expressions returns a Boolean values that is the negation of subExpression.
+ * @brief This expressions returns a Boolean values that is the negation of
+ * subExpression.
  */
 class NegateExpression : public Expression {
-  public:
-    NegateExpression(ExpressionPtr subExpression);
-    Value<> execute(Record& record) const override;
+ public:
+  NegateExpression(ExpressionPtr subExpression);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr subExpression;
+ private:
+  const ExpressionPtr subExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_

@@ -21,19 +21,23 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This task models the merge task of an a specific slice, with a start and a end.
+ * @brief This task models the merge task of an a specific slice, with a start
+ * and a end.
  */
-template<typename SliceType>
+template <typename SliceType>
 struct SliceMergeTask {
-    uint64_t sequenceNumber;
-    uint64_t chunkNumber;
-    bool lastChunk;
-    uint64_t startSlice;
-    uint64_t endSlice;
-    std::vector<std::shared_ptr<SliceType>> slices;
-    ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber, chunkNumber, lastChunk); }
+  uint64_t sequenceNumber;
+  uint64_t chunkNumber;
+  bool lastChunk;
+  uint64_t startSlice;
+  uint64_t endSlice;
+  std::vector<std::shared_ptr<SliceType>> slices;
+  ~SliceMergeTask() {
+    NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber,
+              chunkNumber, lastChunk);
+  }
 };
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_

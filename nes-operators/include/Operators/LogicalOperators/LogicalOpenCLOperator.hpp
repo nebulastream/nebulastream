@@ -20,49 +20,50 @@
 namespace NES {
 
 class LogicalOpenCLOperator : public UDFLogicalOperator {
+ public:
+  LogicalOpenCLOperator(Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor,
+                        OperatorId id);
 
-  public:
-    LogicalOpenCLOperator(Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id);
+  /**
+   * @see Node#toString
+   */
+  std::string toString() const override;
 
-    /**
-     * @see Node#toString
-     */
-    std::string toString() const override;
+  /**
+   * @see Operator#copy
+   */
+  OperatorPtr copy() override;
 
-    /**
-     * @see Operator#copy
-     */
-    OperatorPtr copy() override;
+  /**
+   * @see Node#equal
+   *
+   * Two LogicalOpenCLOperator are equal when the wrapped JavaUDFDescriptor are
+   * equal.
+   */
+  [[nodiscard]] bool equal(const NodePtr& other) const override;
 
-    /**
-     * @see Node#equal
-     *
-     * Two LogicalOpenCLOperator are equal when the wrapped JavaUDFDescriptor are equal.
-     */
-    [[nodiscard]] bool equal(const NodePtr& other) const override;
+  /**
+   * @see Node#isIdentical
+   */
+  [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 
-    /**
-     * @see Node#isIdentical
-     */
-    [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
+  [[nodiscard]] const std::string& getOpenClCode() const;
 
-    [[nodiscard]] const std::string& getOpenClCode() const;
+  void setOpenClCode(const std::string& openClCode);
 
-    void setOpenClCode(const std::string& openClCode);
+  [[nodiscard]] size_t getDeviceId() const;
 
-    [[nodiscard]] size_t getDeviceId() const;
+  void setDeviceId(const size_t deviceId);
 
-    void setDeviceId(const size_t deviceId);
+  /**
+   * Getter for the Java UDF descriptor.
+   * @return The descriptor of the Java UDF used in the map operation.
+   */
+  Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor() const;
 
-    /**
-     * Getter for the Java UDF descriptor.
-     * @return The descriptor of the Java UDF used in the map operation.
-     */
-    Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor() const;
-
-  private:
-    std::string openCLCode;
-    size_t deviceId;
+ private:
+  std::string openCLCode;
+  size_t deviceId;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_
+}  // namespace NES
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_

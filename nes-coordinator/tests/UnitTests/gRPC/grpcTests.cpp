@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -28,8 +31,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include <iostream>
 
 using namespace std;
@@ -39,128 +40,133 @@ namespace NES {
 using namespace Configurations;
 
 class GrpcTests : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("GrpcTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup grpc test class.");
-    }
+ public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("GrpcTests.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup grpc test class.");
+  }
 };
 
 /**
-* Test of Notification from Worker to Coordinator of a failed Query.
-*/
+ * Test of Notification from Worker to Coordinator of a failed Query.
+ */
 TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
-    // Setup Coordinator
-    auto window = Schema::create()
-                      ->addField(createField("win", BasicType::UINT64))
-                      ->addField(createField("id1", BasicType::UINT64))
-                      ->addField(createField("timestamp", BasicType::UINT64));
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    NES_INFO("GrpcNotifyQueryFailureTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("GrpcNotifyQueryFailureTest: Coordinator started successfully");
+  // Setup Coordinator
+  auto window = Schema::create()
+                    ->addField(createField("win", BasicType::UINT64))
+                    ->addField(createField("id1", BasicType::UINT64))
+                    ->addField(createField("timestamp", BasicType::UINT64));
+  CoordinatorConfigurationPtr coordinatorConfig =
+      CoordinatorConfiguration::createDefault();
+  coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+  NES_INFO("GrpcNotifyQueryFailureTest: Start coordinator");
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+  crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
+  uint64_t port = crd->startCoordinator(/**blocking**/ false);
+  EXPECT_NE(port, 0UL);
+  NES_INFO("GrpcNotifyQueryFailureTest: Coordinator started successfully");
 
-    NES_INFO("GrpcNotifyQueryFailureTest: Start worker");
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    auto srcConf1 = CSVSourceType::create("Win1", "test_stream1");
-    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf1->setNumberOfBuffersToProduce(0);
-    wrkConf->physicalSourceTypes.add(srcConf1);
-    coordinatorConfig->restPort = *restPort;
-    wrkConf->coordinatorPort = *rpcCoordinatorPort;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    NES_INFO("GrpcNotifyQueryFailureTest: Worker started successfully");
+  NES_INFO("GrpcNotifyQueryFailureTest: Start worker");
+  WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+  auto srcConf1 = CSVSourceType::create("Win1", "test_stream1");
+  srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) /
+                        "window.csv");
+  srcConf1->setNumberOfTuplesToProducePerBuffer(0);
+  srcConf1->setNumberOfBuffersToProduce(0);
+  wrkConf->physicalSourceTypes.add(srcConf1);
+  coordinatorConfig->restPort = *restPort;
+  wrkConf->coordinatorPort = *rpcCoordinatorPort;
+  NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
+  bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+  EXPECT_TRUE(retStart);
+  NES_INFO("GrpcNotifyQueryFailureTest: Worker started successfully");
 
-    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalog();
+  RequestHandlerServicePtr requestHandlerService =
+      crd->getRequestHandlerService();
+  auto queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
-    NES_INFO("GrpcNotifyQueryFailureTest: Submit query");
-    string query =
-        R"(Query::from("Win1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
+  std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
+  NES_INFO("GrpcNotifyQueryFailureTest: Submit query");
+  string query = R"(Query::from("Win1").sink(FileSinkDescriptor::create(")" +
+                 outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+  QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(
+      query, Optimizer::PlacementStrategy::BottomUp);
+  EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    auto subQueryId = DecomposedQueryPlanId(1);
-    std::string errormsg = "Query failed.";
-    bool successOfNotifyingQueryFailure =
-        wrk->notifyQueryFailure(UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId), subQueryId, errormsg);
+  auto subQueryId = DecomposedQueryPlanId(1);
+  std::string errormsg = "Query failed.";
+  bool successOfNotifyingQueryFailure = wrk->notifyQueryFailure(
+      UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId), subQueryId,
+      errormsg);
 
-    EXPECT_TRUE(successOfNotifyingQueryFailure);
+  EXPECT_TRUE(successOfNotifyingQueryFailure);
 
-    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalog));
+  EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalog));
 
-    // stop coordinator and worker
-    NES_INFO("GrpcNotifyQueryFailureTest: Stop worker");
-    bool retStopWrk = wrk->stop(true);
-    EXPECT_TRUE(retStopWrk);
+  // stop coordinator and worker
+  NES_INFO("GrpcNotifyQueryFailureTest: Stop worker");
+  bool retStopWrk = wrk->stop(true);
+  EXPECT_TRUE(retStopWrk);
 
-    NES_INFO("GrpcNotifyQueryFailureTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("GrpcNotifyQueryFailureTest: Test finished");
+  NES_INFO("GrpcNotifyQueryFailureTest: Stop Coordinator");
+  bool retStopCord = crd->stopCoordinator(true);
+  EXPECT_TRUE(retStopCord);
+  NES_INFO("GrpcNotifyQueryFailureTest: Test finished");
 
-    int response = remove(outputFilePath1.c_str());
-    EXPECT_TRUE(response == 0);
+  int response = remove(outputFilePath1.c_str());
+  EXPECT_TRUE(response == 0);
 }
 
 /**
-* Test if errors are transferred from Worker to Coordinator.
-*/
+ * Test if errors are transferred from Worker to Coordinator.
+ */
 TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
+  // Setup Coordinator
+  auto window = Schema::create()
+                    ->addField(createField("win", BasicType::UINT64))
+                    ->addField(createField("id1", BasicType::UINT64))
+                    ->addField(createField("timestamp", BasicType::UINT64));
+  auto coordinatorConfig = CoordinatorConfiguration::createDefault();
+  coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+  coordinatorConfig->restPort = *restPort;
+  coordinatorConfig->worker.numberOfBuffersInGlobalBufferManager = 2 * 1024;
+  NES_DEBUG("start coordinator");
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+  crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
+  uint64_t port = crd->startCoordinator(/**blocking**/ false);
+  EXPECT_NE(port, 0UL);
+  NES_INFO("AndOperatorTest: Coordinator started successfully");
 
-    // Setup Coordinator
-    auto window = Schema::create()
-                      ->addField(createField("win", BasicType::UINT64))
-                      ->addField(createField("id1", BasicType::UINT64))
-                      ->addField(createField("timestamp", BasicType::UINT64));
-    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.numberOfBuffersInGlobalBufferManager = 2 * 1024;
-    NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+  // Setup Worker 1
+  NES_INFO("AndOperatorTest: Start worker 1");
+  WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+  workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+  auto srcConf1 = CSVSourceType::create("Win1", "test_stream1");
+  srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) /
+                        "window.csv");
+  srcConf1->setNumberOfTuplesToProducePerBuffer(0);
+  srcConf1->setNumberOfBuffersToProduce(0);
+  workerConfig1->physicalSourceTypes.add(srcConf1);
+  NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+  bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+  EXPECT_TRUE(retStart1);
+  NES_INFO("GrpcNotifyErrorTest: Worker started successfully");
 
-    // Setup Worker 1
-    NES_INFO("AndOperatorTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    auto srcConf1 = CSVSourceType::create("Win1", "test_stream1");
-    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf1->setNumberOfBuffersToProduce(0);
-    workerConfig1->physicalSourceTypes.add(srcConf1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("GrpcNotifyErrorTest: Worker started successfully");
+  auto workerId = wrk1->getWorkerId();
+  std::string errormsg = "Too much memory allocation";
+  bool successOfTransferringErrors = wrk1->notifyErrors(workerId, errormsg);
+  EXPECT_TRUE(successOfTransferringErrors);
 
-    auto workerId = wrk1->getWorkerId();
-    std::string errormsg = "Too much memory allocation";
-    bool successOfTransferringErrors = wrk1->notifyErrors(workerId, errormsg);
-    EXPECT_TRUE(successOfTransferringErrors);
+  // stop coordinator and worker
+  NES_INFO("GrpcNotifyErrorTest: Stop worker");
+  bool retStopWrk = wrk1->stop(true);
+  EXPECT_TRUE(retStopWrk);
 
-    // stop coordinator and worker
-    NES_INFO("GrpcNotifyErrorTest: Stop worker");
-    bool retStopWrk = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk);
-
-    NES_INFO("GGrpcNotifyErrorTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("GrpcNotifyErrorTest: Test finished");
+  NES_INFO("GGrpcNotifyErrorTest: Stop Coordinator");
+  bool retStopCord = crd->stopCoordinator(true);
+  EXPECT_TRUE(retStopCord);
+  NES_INFO("GrpcNotifyErrorTest: Test finished");
 }
 
-}// namespace NES
+}  // namespace NES

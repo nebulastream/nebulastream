@@ -23,38 +23,43 @@ class NonKeyedSlice;
 using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 class MultiOriginWatermarkProcessor;
 /**
- * @brief The NonKeyedSliceMergingHandler merges thread local pre-aggregated slices for non-keyed
- * tumbling and sliding window aggregations.
+ * @brief The NonKeyedSliceMergingHandler merges thread local pre-aggregated
+ * slices for non-keyed tumbling and sliding window aggregations.
  */
 class NonKeyedSliceMergingHandler : public OperatorHandler {
-  public:
-    /**
-     * @brief Constructor for the NonKeyedSliceMergingHandler
-     * @param windowDefinition
-     */
-    NonKeyedSliceMergingHandler();
+ public:
+  /**
+   * @brief Constructor for the NonKeyedSliceMergingHandler
+   * @param windowDefinition
+   */
+  NonKeyedSliceMergingHandler();
 
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
+  void setup(Runtime::Execution::PipelineExecutionContext& ctx,
+             uint64_t entrySize);
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
+  void start(
+      Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+      uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+  void stop(Runtime::QueryTerminationType queryTerminationType,
+            Runtime::Execution::PipelineExecutionContextPtr
+                pipelineExecutionContext) override;
 
-    /**
-     * @brief Creates a new global slice for a specific slice merge task
-     * @param sliceMergeTask SliceMergeTask
-     * @return GlobalSlicePtr
-     */
-    NonKeyedSlicePtr createGlobalSlice(SliceMergeTask<NonKeyedSlice>* sliceMergeTask);
-    const State* getDefaultState() const;
+  /**
+   * @brief Creates a new global slice for a specific slice merge task
+   * @param sliceMergeTask SliceMergeTask
+   * @return GlobalSlicePtr
+   */
+  NonKeyedSlicePtr createGlobalSlice(
+      SliceMergeTask<NonKeyedSlice>* sliceMergeTask);
+  const State* getDefaultState() const;
 
-    ~NonKeyedSliceMergingHandler();
+  ~NonKeyedSliceMergingHandler();
 
-  private:
-    uint64_t entrySize;
-    std::unique_ptr<State> defaultState;
+ private:
+  uint64_t entrySize;
+  std::unique_ptr<State> defaultState;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGHANDLER_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGHANDLER_HPP_

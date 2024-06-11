@@ -23,35 +23,35 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 /**
  * @brief DataSource interface to register a new physical data source plugin.
- * Implementations of this plugin must implement createDatasource that translates a source descriptor to a DataSourcePtr.
+ * Implementations of this plugin must implement createDatasource that
+ * translates a source descriptor to a DataSourcePtr.
  */
 class DataSourcePlugin {
-  public:
-    DataSourcePlugin() = default;
+ public:
+  DataSourcePlugin() = default;
 
-    /**
-     * @brief Translates a source descriptor to a data source.
-     * @param sourceId id of the source
-     * @param originId id of the origin for which data is produced.
-     * @param sourceDescriptor the source descriptor.
-     * @param nodeEngine reference to the node engine
-     * @param numSourceLocalBuffers number of source buffers that can be allocated.
-     * @param successors the successor pipeline, which is used to emit data.
-     * @return std::optional<DataSourcePtr>
-     */
-    virtual std::optional<DataSourcePtr>
-    createDataSource(OperatorId sourceId,
-                     OriginId originId,
-                     StatisticId statisticId,
-                     const SourceDescriptorPtr& sourceDescriptor,
-                     const Runtime::NodeEnginePtr& nodeEngine,
-                     size_t numSourceLocalBuffers,
-                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) = 0;
+  /**
+   * @brief Translates a source descriptor to a data source.
+   * @param sourceId id of the source
+   * @param originId id of the origin for which data is produced.
+   * @param sourceDescriptor the source descriptor.
+   * @param nodeEngine reference to the node engine
+   * @param numSourceLocalBuffers number of source buffers that can be
+   * allocated.
+   * @param successors the successor pipeline, which is used to emit data.
+   * @return std::optional<DataSourcePtr>
+   */
+  virtual std::optional<DataSourcePtr> createDataSource(
+      OperatorId sourceId, OriginId originId, StatisticId statisticId,
+      const SourceDescriptorPtr& sourceDescriptor,
+      const Runtime::NodeEnginePtr& nodeEngine, size_t numSourceLocalBuffers,
+      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>&
+          successors) = 0;
 
-    virtual ~DataSourcePlugin() = default;
+  virtual ~DataSourcePlugin() = default;
 };
 
 using SourcePluginRegistry = Util::PluginRegistry<DataSourcePlugin>;
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_

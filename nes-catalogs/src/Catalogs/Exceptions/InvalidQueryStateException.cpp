@@ -18,19 +18,23 @@
 
 namespace NES::Exceptions {
 
-InvalidQueryStateException::InvalidQueryStateException(const std::vector<QueryState>& expectedState, QueryState actualState)
-    : RequestExecutionException("Invalid query status"), actualState(actualState) {
-
-    std::stringstream expectedStatus;
-    for (auto const& state : expectedState) {
-        expectedStatus << std::string(magic_enum::enum_name(state)) << " ";
-    }
-    message = "InvalidQueryStateException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
-        + std::string(magic_enum::enum_name(actualState));
+InvalidQueryStateException::InvalidQueryStateException(
+    const std::vector<QueryState>& expectedState, QueryState actualState)
+    : RequestExecutionException("Invalid query status"),
+      actualState(actualState) {
+  std::stringstream expectedStatus;
+  for (auto const& state : expectedState) {
+    expectedStatus << std::string(magic_enum::enum_name(state)) << " ";
+  }
+  message = "InvalidQueryStateException: Expected query to be in [" +
+            expectedStatus.str() + "] but found to be in " +
+            std::string(magic_enum::enum_name(actualState));
 }
 
-const char* InvalidQueryStateException::what() const noexcept { return message.c_str(); }
+const char* InvalidQueryStateException::what() const noexcept {
+  return message.c_str();
+}
 
 QueryState InvalidQueryStateException::getActualState() { return actualState; }
 
-}// namespace NES::Exceptions
+}  // namespace NES::Exceptions

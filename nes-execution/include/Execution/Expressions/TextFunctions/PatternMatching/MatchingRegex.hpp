@@ -22,22 +22,27 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This expression matches a given pattern in a given String and returns true in case of a full match. For partial matches please use SearchingRegex.
+ * @brief This expression matches a given pattern in a given String and returns
+ * true in case of a full match. For partial matches please use SearchingRegex.
  * Set caseSensitive to true for case insensitive matching
-* @param textValue as TextValue the text (string) to extract the regexpPattern from
-* @param regexpPattern as TextValue the pattern to extract
-* @param caseSensitive as Boolean indicates if matching should be done case sensitive
-*/
+ * @param textValue as TextValue the text (string) to extract the regexpPattern
+ * from
+ * @param regexpPattern as TextValue the pattern to extract
+ * @param caseSensitive as Boolean indicates if matching should be done case
+ * sensitive
+ */
 class MatchingRegex : public Expression {
-  public:
-    MatchingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern, const ExpressionPtr& caseSensitive);
-    Value<> execute(Record& record) const override;
+ public:
+  MatchingRegex(const ExpressionPtr& textValue,
+                const ExpressionPtr& regexpPattern,
+                const ExpressionPtr& caseSensitive);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr textValue;
-    const ExpressionPtr regexpPattern;
-    const ExpressionPtr caseSensitive;
+ private:
+  const ExpressionPtr textValue;
+  const ExpressionPtr regexpPattern;
+  const ExpressionPtr caseSensitive;
 };
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_MATCHINGREGEX_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_MATCHINGREGEX_HPP_

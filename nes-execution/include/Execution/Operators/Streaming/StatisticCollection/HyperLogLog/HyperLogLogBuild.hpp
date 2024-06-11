@@ -23,27 +23,29 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Operator that builds a HyperLogLog sketch (https://en.wikipedia.org/wiki/HyperLogLog) from a field in the input record
+ * @brief Operator that builds a HyperLogLog sketch
+ * (https://en.wikipedia.org/wiki/HyperLogLog) from a field in the input record
  */
 class HyperLogLogBuild : public ExecutableOperator {
-  public:
-    HyperLogLogBuild(const uint64_t operatorHandlerIndex,
-                     const std::string_view fieldToTrackFieldName,
-                     const Statistic::StatisticMetricHash metricHash,
-                     TimeFunctionPtr timeFunction);
+ public:
+  HyperLogLogBuild(const uint64_t operatorHandlerIndex,
+                   const std::string_view fieldToTrackFieldName,
+                   const Statistic::StatisticMetricHash metricHash,
+                   TimeFunctionPtr timeFunction);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+  void open(ExecutionContext& executionCtx,
+            RecordBuffer& recordBuffer) const override;
+  void execute(ExecutionContext& ctx, Record& record) const override;
+  void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-  private:
-    const uint64_t operatorHandlerIndex;
-    const std::string fieldToTrackFieldName;
-    const Statistic::StatisticMetricHash metricHash;
-    const TimeFunctionPtr timeFunction;
-    const std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash;
+ private:
+  const uint64_t operatorHandlerIndex;
+  const std::string fieldToTrackFieldName;
+  const Statistic::StatisticMetricHash metricHash;
+  const TimeFunctionPtr timeFunction;
+  const std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_HYPERLOGLOG_HYPERLOGLOGBUILD_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_HYPERLOGLOG_HYPERLOGLOGBUILD_HPP_

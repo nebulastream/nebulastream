@@ -21,15 +21,16 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class Atan2Expression : public Expression {
-  public:
-    Atan2Expression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<> execute(Record& record) const override;
+ public:
+  Atan2Expression(const ExpressionPtr& leftSubExpression,
+                  const ExpressionPtr& rightSubExpression);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+ private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATAN2EXPRESSION_HPP_

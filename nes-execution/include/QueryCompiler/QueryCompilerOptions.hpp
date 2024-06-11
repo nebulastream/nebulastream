@@ -33,176 +33,181 @@ namespace NES::QueryCompilation {
  * @brief Set of common options for the query compiler
  */
 class QueryCompilerOptions {
-  public:
-    enum class FilterProcessingStrategy : uint8_t {
-        // Uses a branches to process filter expressions
-        BRANCHED,
-        // Uses predication for filter expressions if possible
-        PREDICATION
-    };
+ public:
+  enum class FilterProcessingStrategy : uint8_t {
+    // Uses a branches to process filter expressions
+    BRANCHED,
+    // Uses predication for filter expressions if possible
+    PREDICATION
+  };
 
-    class StreamHashJoinOptions {
-      public:
-        /**
-         * @brief getter for max hash table size
-         * @return
-         */
-        uint64_t getTotalSizeForDataStructures() const;
-
-        /**
-         * @brief setter for max hash table size
-         * @param total_size_for_data_structures
-         */
-        void setTotalSizeForDataStructures(uint64_t totalSizeForDataStructures);
-
-        /**
-         * @brief get the number of partitions for the hash join
-         * @return number of partitions
-         */
-        uint64_t getNumberOfPartitions() const;
-
-        /**
-         * @brief get the number of partitions for the hash join
-         * @param num
-         */
-        void setNumberOfPartitions(uint64_t num);
-
-        /**
-         * @brief get the size of each page in the hash table
-         * @return page size
-         */
-        uint64_t getPageSize() const;
-
-        /**
-         * @brief set the size of each page in the hash table
-         * @param size
-         */
-        void setPageSize(uint64_t size);
-
-        /**
-         * @brief get the number of pre-allocated pages in the hash table per bucket
-         * @return number of pages
-         */
-        uint64_t getPreAllocPageCnt() const;
-
-        /**
-        * @brief  get the number of pre-allocated pages in the hash table per bucket
-        * @param cnt
-        */
-        void setPreAllocPageCnt(uint64_t cnt);
-
-      private:
-        uint64_t numberOfPartitions;
-        uint64_t pageSize;
-        uint64_t preAllocPageCnt;
-        uint64_t totalSizeForDataStructures;
-    };
-
-    using StreamHashJoinOptionsPtr = std::shared_ptr<StreamHashJoinOptions>;
-
+  class StreamHashJoinOptions {
+   public:
     /**
-     * @brief Creates the default options.
-     * @return QueryCompilerOptionsPtr
-     */
-    static QueryCompilerOptionsPtr createDefaultOptions();
-
-    [[nodiscard]] PipeliningStrategy getPipeliningStrategy() const;
-
-    void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
-
-    [[nodiscard]] QueryCompilerType getQueryCompiler() const;
-
-    void setQueryCompiler(QueryCompilerType queryCompilerType);
-
-    [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
-
-    void setCompilationStrategy(CompilationStrategy compilationStrategy);
-
-    void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
-
-    [[nodiscard]] QueryCompilerOptions::FilterProcessingStrategy getFilterProcessingStrategy() const;
-
-    /**
-     * @brief Sets desired buffer optimization strategy.
-     */
-    void setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level);
-
-    /**
-     * @brief Returns desired buffer optimization strategy.
-     */
-    [[nodiscard]] OutputBufferOptimizationLevel getOutputBufferOptimizationLevel() const;
-
-    /**
-     * @brief Sets the number of local buffers per source.
-     * @param num of buffers
-     */
-    void setNumSourceLocalBuffers(uint64_t num);
-
-    /**
-     * @brief Returns the number of local source buffers.
-     * @return uint64_t
-     */
-    uint64_t getNumSourceLocalBuffers() const;
-
-    WindowingStrategy getWindowingStrategy() const;
-
-    /**
-     * @brief Sets the strategy for the stream join
-     * @param strategy
-     */
-    void setStreamJoinStrategy(QueryCompilation::StreamJoinStrategy strategy);
-
-    /**
-     * @brief gets the stream join strategy.
+     * @brief getter for max hash table size
      * @return
      */
-    [[nodiscard]] QueryCompilation::StreamJoinStrategy getStreamJoinStrategy() const;
+    uint64_t getTotalSizeForDataStructures() const;
 
     /**
-     * @brief Return hash join options
-     * @return
+     * @brief setter for max hash table size
+     * @param total_size_for_data_structures
      */
-    StreamHashJoinOptionsPtr getHashJoinOptions();
+    void setTotalSizeForDataStructures(uint64_t totalSizeForDataStructures);
 
     /**
-     * @brief Set compiler options
-     * @param streamHashJoinOptions
+     * @brief get the number of partitions for the hash join
+     * @return number of partitions
      */
-    void setHashJoinOptions(StreamHashJoinOptionsPtr streamHashJoinOptions);
-
-    void setWindowingStrategy(WindowingStrategy windowingStrategy);
-
-    [[nodiscard]] NautilusBackend getNautilusBackend() const;
-    void setNautilusBackend(const NautilusBackend nautilusBackend);
-
-    [[nodiscard]] const DumpMode& getDumpMode() const;
-    void setDumpMode(DumpMode dumpMode);
+    uint64_t getNumberOfPartitions() const;
 
     /**
-     * @brief Set the path to the CUDA SDK
-     * @param cudaSdkPath the CUDA SDK path
+     * @brief get the number of partitions for the hash join
+     * @param num
      */
-    void setCUDASdkPath(const std::string& cudaSdkPath);
+    void setNumberOfPartitions(uint64_t num);
 
     /**
-     * @brief Get the path to the CUDA SDK
+     * @brief get the size of each page in the hash table
+     * @return page size
      */
-    const std::string getCUDASdkPath() const;
+    uint64_t getPageSize() const;
 
-  protected:
-    uint64_t numSourceLocalBuffers;
-    OutputBufferOptimizationLevel outputBufferOptimizationLevel;
-    PipeliningStrategy pipeliningStrategy;
-    CompilationStrategy compilationStrategy;
-    FilterProcessingStrategy filterProcessingStrategy;
-    WindowingStrategy windowingStrategy;
-    QueryCompilerType queryCompiler;
-    NautilusBackend nautilusBackend;
-    DumpMode dumpMode;
-    StreamHashJoinOptionsPtr hashJoinOptions;
-    std::string cudaSdkPath;
-    StreamJoinStrategy joinStrategy;
+    /**
+     * @brief set the size of each page in the hash table
+     * @param size
+     */
+    void setPageSize(uint64_t size);
+
+    /**
+     * @brief get the number of pre-allocated pages in the hash table per bucket
+     * @return number of pages
+     */
+    uint64_t getPreAllocPageCnt() const;
+
+    /**
+     * @brief  get the number of pre-allocated pages in the hash table per
+     * bucket
+     * @param cnt
+     */
+    void setPreAllocPageCnt(uint64_t cnt);
+
+   private:
+    uint64_t numberOfPartitions;
+    uint64_t pageSize;
+    uint64_t preAllocPageCnt;
+    uint64_t totalSizeForDataStructures;
+  };
+
+  using StreamHashJoinOptionsPtr = std::shared_ptr<StreamHashJoinOptions>;
+
+  /**
+   * @brief Creates the default options.
+   * @return QueryCompilerOptionsPtr
+   */
+  static QueryCompilerOptionsPtr createDefaultOptions();
+
+  [[nodiscard]] PipeliningStrategy getPipeliningStrategy() const;
+
+  void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
+
+  [[nodiscard]] QueryCompilerType getQueryCompiler() const;
+
+  void setQueryCompiler(QueryCompilerType queryCompilerType);
+
+  [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
+
+  void setCompilationStrategy(CompilationStrategy compilationStrategy);
+
+  void setFilterProcessingStrategy(
+      FilterProcessingStrategy filterProcessingStrategy);
+
+  [[nodiscard]] QueryCompilerOptions::FilterProcessingStrategy
+  getFilterProcessingStrategy() const;
+
+  /**
+   * @brief Sets desired buffer optimization strategy.
+   */
+  void setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level);
+
+  /**
+   * @brief Returns desired buffer optimization strategy.
+   */
+  [[nodiscard]] OutputBufferOptimizationLevel getOutputBufferOptimizationLevel()
+      const;
+
+  /**
+   * @brief Sets the number of local buffers per source.
+   * @param num of buffers
+   */
+  void setNumSourceLocalBuffers(uint64_t num);
+
+  /**
+   * @brief Returns the number of local source buffers.
+   * @return uint64_t
+   */
+  uint64_t getNumSourceLocalBuffers() const;
+
+  WindowingStrategy getWindowingStrategy() const;
+
+  /**
+   * @brief Sets the strategy for the stream join
+   * @param strategy
+   */
+  void setStreamJoinStrategy(QueryCompilation::StreamJoinStrategy strategy);
+
+  /**
+   * @brief gets the stream join strategy.
+   * @return
+   */
+  [[nodiscard]] QueryCompilation::StreamJoinStrategy getStreamJoinStrategy()
+      const;
+
+  /**
+   * @brief Return hash join options
+   * @return
+   */
+  StreamHashJoinOptionsPtr getHashJoinOptions();
+
+  /**
+   * @brief Set compiler options
+   * @param streamHashJoinOptions
+   */
+  void setHashJoinOptions(StreamHashJoinOptionsPtr streamHashJoinOptions);
+
+  void setWindowingStrategy(WindowingStrategy windowingStrategy);
+
+  [[nodiscard]] NautilusBackend getNautilusBackend() const;
+  void setNautilusBackend(const NautilusBackend nautilusBackend);
+
+  [[nodiscard]] const DumpMode& getDumpMode() const;
+  void setDumpMode(DumpMode dumpMode);
+
+  /**
+   * @brief Set the path to the CUDA SDK
+   * @param cudaSdkPath the CUDA SDK path
+   */
+  void setCUDASdkPath(const std::string& cudaSdkPath);
+
+  /**
+   * @brief Get the path to the CUDA SDK
+   */
+  const std::string getCUDASdkPath() const;
+
+ protected:
+  uint64_t numSourceLocalBuffers;
+  OutputBufferOptimizationLevel outputBufferOptimizationLevel;
+  PipeliningStrategy pipeliningStrategy;
+  CompilationStrategy compilationStrategy;
+  FilterProcessingStrategy filterProcessingStrategy;
+  WindowingStrategy windowingStrategy;
+  QueryCompilerType queryCompiler;
+  NautilusBackend nautilusBackend;
+  DumpMode dumpMode;
+  StreamHashJoinOptionsPtr hashJoinOptions;
+  std::string cudaSdkPath;
+  StreamJoinStrategy joinStrategy;
 };
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_

@@ -29,70 +29,71 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class is the second phase of the stream join. The actual implementation (nested-loops, probing hash tables)
- * is not part of this class. This class takes care of the close() functionality as this universal.
+ * @brief This class is the second phase of the stream join. The actual
+ * implementation (nested-loops, probing hash tables) is not part of this class.
+ * This class takes care of the close() functionality as this universal.
  * Furthermore, it provides a method of creating the joined tuple
  */
 class StreamJoinProbe : public StreamJoinOperator, public Operator {
-  public:
-    /**
-     * @brief Constructor for a StreamJoinProbe
-     * @param operatorHandlerIndex
-     * @param joinSchema
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
-     * @param windowMetaData
-     * @param joinStrategy
-     * @param windowingStrategy
-     * @param withDeletion
-     */
-    StreamJoinProbe(const uint64_t operatorHandlerIndex,
-                    const JoinSchema& joinSchema,
-                    Expressions::ExpressionPtr joinExpression,
-                    const WindowMetaData& windowMetaData,
-                    QueryCompilation::StreamJoinStrategy joinStrategy,
-                    QueryCompilation::WindowingStrategy windowingStrategy,
-                    bool withDeletion = true);
+ public:
+  /**
+   * @brief Constructor for a StreamJoinProbe
+   * @param operatorHandlerIndex
+   * @param joinSchema
+   * @param joinFieldNameLeft
+   * @param joinFieldNameRight
+   * @param windowMetaData
+   * @param joinStrategy
+   * @param windowingStrategy
+   * @param withDeletion
+   */
+  StreamJoinProbe(const uint64_t operatorHandlerIndex,
+                  const JoinSchema& joinSchema,
+                  Expressions::ExpressionPtr joinExpression,
+                  const WindowMetaData& windowMetaData,
+                  QueryCompilation::StreamJoinStrategy joinStrategy,
+                  QueryCompilation::WindowingStrategy windowingStrategy,
+                  bool withDeletion = true);
 
-    /**
-     * @brief Checks the current watermark and then deletes all slices/windows that are not valid anymore
-     * @param executionCtx
-     * @param recordBuffer
-     */
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+  /**
+   * @brief Checks the current watermark and then deletes all slices/windows
+   * that are not valid anymore
+   * @param executionCtx
+   * @param recordBuffer
+   */
+  void close(ExecutionContext& executionCtx,
+             RecordBuffer& recordBuffer) const override;
 
-    /**
-     * @brief Terminates the operator by deleting all slices/windows
-     * @param executionCtx
-     */
-    void terminate(ExecutionContext& executionCtx) const override;
+  /**
+   * @brief Terminates the operator by deleting all slices/windows
+   * @param executionCtx
+   */
+  void terminate(ExecutionContext& executionCtx) const override;
 
-    /**
-     * @brief Creates a joined record out of the left and right record
-     * @param joinedRecord
-     * @param leftRecord
-     * @param rightRecord
-     * @param windowStart
-     * @param windowEnd
-     */
-    void createJoinedRecord(Record& joinedRecord,
-                            Record& leftRecord,
-                            Record& rightRecord,
-                            const Value<UInt64>& windowStart,
-                            const Value<UInt64>& windowEnd) const;
+  /**
+   * @brief Creates a joined record out of the left and right record
+   * @param joinedRecord
+   * @param leftRecord
+   * @param rightRecord
+   * @param windowStart
+   * @param windowEnd
+   */
+  void createJoinedRecord(Record& joinedRecord, Record& leftRecord,
+                          Record& rightRecord, const Value<UInt64>& windowStart,
+                          const Value<UInt64>& windowEnd) const;
 
-  protected:
-    const uint64_t operatorHandlerIndex;
-    const JoinSchema joinSchema;
-    bool withDeletion;
-    Expressions::ExpressionPtr joinExpression;
+ protected:
+  const uint64_t operatorHandlerIndex;
+  const JoinSchema joinSchema;
+  bool withDeletion;
+  Expressions::ExpressionPtr joinExpression;
 
-    // TODO these will be replaced by an interface function with #3691
-    const std::string joinFieldNameLeft;
-    const std::string joinFieldNameRight;
+  // TODO these will be replaced by an interface function with #3691
+  const std::string joinFieldNameLeft;
+  const std::string joinFieldNameRight;
 
-    const WindowMetaData windowMetaData;
+  const WindowMetaData windowMetaData;
 };
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINPROBE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINPROBE_HPP_

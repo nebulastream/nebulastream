@@ -12,26 +12,29 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Vectorization/Unvectorize.hpp>
-
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Vectorization/Unvectorize.hpp>
 #include <Execution/RecordBuffer.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-Unvectorize::Unvectorize(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-                         std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
+Unvectorize::Unvectorize(
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+    std::vector<Record::RecordFieldIdentifier> projections)
+    : memoryProvider(std::move(memoryProvider)),
+      projections(std::move(projections)) {}
 
-void Unvectorize::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    if (hasChild()) {
-        auto numberOfRecords = recordBuffer.getNumRecords();
-        auto bufferAddress = recordBuffer.getBuffer();
-        for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
-            auto record = memoryProvider->read(projections, bufferAddress, i);
-            child->execute(ctx, record);
-        }
+void Unvectorize::execute(ExecutionContext& ctx,
+                          RecordBuffer& recordBuffer) const {
+  if (hasChild()) {
+    auto numberOfRecords = recordBuffer.getNumRecords();
+    auto bufferAddress = recordBuffer.getBuffer();
+    for (Value<UInt64> i = (uint64_t)0; i < numberOfRecords;
+         i = i + (uint64_t)1) {
+      auto record = memoryProvider->read(projections, bufferAddress, i);
+      child->execute(ctx, record);
     }
+  }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

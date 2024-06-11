@@ -23,38 +23,51 @@
 namespace NES {
 std::pair<std::basic_string<char>, std::basic_string<char>>
 findEquiJoinKeyNames(std::shared_ptr<NES::ExpressionNode> joinExpression) {
-    std::basic_string<char> leftJoinKeyNameEqui;
-    std::basic_string<char> rightJoinKeyNameEqui;
+  std::basic_string<char> leftJoinKeyNameEqui;
+  std::basic_string<char> rightJoinKeyNameEqui;
 
-    // Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<std::shared_ptr<NES::BinaryExpressionNode>> visitedExpressions;
+  // Maintain a list of visited nodes as there are multiple root nodes
+  std::unordered_set<std::shared_ptr<NES::BinaryExpressionNode>>
+      visitedExpressions;
 
-    NES_DEBUG("Iterate over all ExpressionNode to check join field.");
+  NES_DEBUG("Iterate over all ExpressionNode to check join field.");
 
-    auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
-    for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
-        if ((*itr)->instanceOf<BinaryExpressionNode>()) {
-            auto visitingOp = (*itr)->as<BinaryExpressionNode>();
-            if (visitedExpressions.contains(visitingOp)) {
-                // skip rest of the steps as the node found in already visited node list
-                continue;
-            } else {
-                visitedExpressions.insert(visitingOp);
-                //Find the schema for left and right join key
-                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()
-                    && (*itr)->instanceOf<EqualsExpressionNode>()) {
-                    const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft()->as<FieldAccessExpressionNode>();
-                    leftJoinKeyNameEqui = leftJoinKey->getFieldName();
+  auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
+  for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end();
+       ++itr) {
+    if ((*itr)->instanceOf<BinaryExpressionNode>()) {
+      auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+      if (visitedExpressions.contains(visitingOp)) {
+        // skip rest of the steps as the node found in already visited node list
+        continue;
+      } else {
+        visitedExpressions.insert(visitingOp);
+        // Find the schema for left and right join key
+        if (!(*itr)
+                 ->as<BinaryExpressionNode>()
+                 ->getLeft()
+                 ->instanceOf<BinaryExpressionNode>() &&
+            (*itr)->instanceOf<EqualsExpressionNode>()) {
+          const auto leftJoinKey = (*itr)
+                                       ->as<BinaryExpressionNode>()
+                                       ->getLeft()
+                                       ->as<FieldAccessExpressionNode>();
+          leftJoinKeyNameEqui = leftJoinKey->getFieldName();
 
-                    const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight()->as<FieldAccessExpressionNode>();
-                    rightJoinKeyNameEqui = rightJoinKey->getFieldName();
+          const auto rightJoinKey = (*itr)
+                                        ->as<BinaryExpressionNode>()
+                                        ->getRight()
+                                        ->as<FieldAccessExpressionNode>();
+          rightJoinKeyNameEqui = rightJoinKey->getFieldName();
 
-                    NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
-                    visitedExpressions.insert(visitingOp);
-                }// if Equals
-            }    // else new node
-        }        // if binary expression
-    }            // for
-    return std::make_pair(leftJoinKeyNameEqui, rightJoinKeyNameEqui);
+          NES_DEBUG(
+              "LogicalJoinOperator: Inserting operator in collection of "
+              "already visited node.");
+          visitedExpressions.insert(visitingOp);
+        }  // if Equals
+      }    // else new node
+    }      // if binary expression
+  }        // for
+  return std::make_pair(leftJoinKeyNameEqui, rightJoinKeyNameEqui);
 }
-}// namespace NES
+}  // namespace NES

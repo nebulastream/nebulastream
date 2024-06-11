@@ -15,8 +15,13 @@
 #include <Exceptions/QueryUndeploymentException.hpp>
 
 namespace NES::Exceptions {
-const char* QueryUndeploymentException::what() const noexcept { return RequestExecutionException::what(); }
-QueryUndeploymentException::QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string& message)
-    : RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), "QueryUndeploymentException: " + message) {}
+const char* QueryUndeploymentException::what() const noexcept {
+  return RequestExecutionException::what();
+}
+QueryUndeploymentException::QueryUndeploymentException(
+    SharedQueryId sharedQueryId, const std::string& message)
+    : RequestExecutionException(
+          UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId),
+          "QueryUndeploymentException: " + message) {}
 
-}// namespace NES::Exceptions
+}  // namespace NES::Exceptions

@@ -11,82 +11,87 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/AcosExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
-#include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
 
 class AcosExpressionTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("AcosExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AcosExpressionTest test class.");
-    }
+ public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("AcosExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup AcosExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down AcosExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down AcosExpressionTest test class.");
+  }
 };
 
 TEST_F(AcosExpressionTest, evaluateAcosExpressionInteger) {
-    auto expression = UnaryExpressionWrapper<AcosExpression>();
-    // Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>(1_s8));
-        ASSERT_EQ(resultValue, (float) 0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<AcosExpression>();
+  // Int8
+  {
+    auto resultValue = expression.eval(Value<Int8>(1_s8));
+    ASSERT_EQ(resultValue, (float)0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 
-    // Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(1_s32));
-        ASSERT_EQ(resultValue, (float) 0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>(1_s64));
-        ASSERT_EQ(resultValue, (float) 0);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  // Int32
+  {
+    auto resultValue = expression.eval(Value<Int32>(1_s32));
+    ASSERT_EQ(resultValue, (float)0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Int64
+  {
+    auto resultValue = expression.eval(Value<Int64>(1_s64));
+    ASSERT_EQ(resultValue, (float)0);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 TEST_F(AcosExpressionTest, evaluateAcosExpressionFloat) {
-    auto expression = UnaryExpressionWrapper<AcosExpression>();
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue, std::acos(0.5));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue, std::acos(0.5));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 0.5));
-        ASSERT_EQ(resultValue, std::acos(0.5));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 0.5));
-        ASSERT_EQ(resultValue, std::acos(0.5));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<AcosExpression>();
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)0.5));
+    ASSERT_EQ(resultValue, std::acos(0.5));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)0.5));
+    ASSERT_EQ(resultValue, std::acos(0.5));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>((double)0.5));
+    ASSERT_EQ(resultValue, std::acos(0.5));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>((double)0.5));
+    ASSERT_EQ(resultValue, std::acos(0.5));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 /**
-* @brief If we execute the expression on a boolean it should throw an exception.
-*/
+ * @brief If we execute the expression on a boolean it should throw an
+ * exception.
+ */
 TEST_F(AcosExpressionTest, evaluateAcosExpressionOnWrongType) {
-    auto expression = UnaryExpressionWrapper<AcosExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
+  auto expression = UnaryExpressionWrapper<AcosExpression>();
+  ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
 }
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions

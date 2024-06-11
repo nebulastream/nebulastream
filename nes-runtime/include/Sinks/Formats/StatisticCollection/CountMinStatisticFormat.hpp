@@ -20,36 +20,42 @@
 namespace NES::Statistic {
 
 /**
- * @brief StatisticSinkFormat that creates/builds CountMin-Sketches from a tuple buffer
+ * @brief StatisticSinkFormat that creates/builds CountMin-Sketches from a tuple
+ * buffer
  */
 class CountMinStatisticFormat : public AbstractStatisticFormat {
-  public:
-    static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+ public:
+  static StatisticFormatPtr create(
+      Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
-    static StatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                     std::function<std::string(const std::string&)> postProcessingData,
-                                     std::function<std::string(const std::string&)> preProcessingData);
+  static StatisticFormatPtr create(
+      Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+      std::function<std::string(const std::string&)> postProcessingData,
+      std::function<std::string(const std::string&)> preProcessingData);
 
-    std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) override;
+  std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(
+      Runtime::TupleBuffer& buffer) override;
 
-    [[nodiscard]] std::string toString() const override;
+  [[nodiscard]] std::string toString() const override;
 
-    ~CountMinStatisticFormat() override;
-    std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                                                                 Runtime::BufferManager& bufferManager) override;
+  ~CountMinStatisticFormat() override;
+  std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(
+      const std::vector<HashStatisticPair>& statisticsPlusHashes,
+      Runtime::BufferManager& bufferManager) override;
 
-  private:
-    CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
-                            Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                            std::function<std::string(const std::string&)> postProcessingData,
-                            std::function<std::string(const std::string&)> preProcessingData);
+ private:
+  CountMinStatisticFormat(
+      const std::string& qualifierNameWithSeparator,
+      Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+      std::function<std::string(const std::string&)> postProcessingData,
+      std::function<std::string(const std::string&)> preProcessingData);
 
-    const std::string widthFieldName;
-    const std::string depthFieldName;
-    const std::string numberOfBitsInKeyFieldName;
-    const std::string countMinDataFieldName;
+  const std::string widthFieldName;
+  const std::string depthFieldName;
+  const std::string numberOfBitsInKeyFieldName;
+  const std::string countMinDataFieldName;
 };
 
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICFORMAT_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICFORMAT_HPP_

@@ -25,35 +25,34 @@ class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 /**
- * @brief A thread local slice store for global (non-keyed) tumbling and sliding windows,
- * which stores slices for a specific thread.
- * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
- * As the slice store is only using by a single thread, we don't have to protect its functions for concurrent accesses.
+ * @brief A thread local slice store for global (non-keyed) tumbling and sliding
+ * windows, which stores slices for a specific thread. In the current
+ * implementation we handle tumbling windows as sliding widows with
+ * windowSize==windowSlide. As the slice store is only using by a single thread,
+ * we don't have to protect its functions for concurrent accesses.
  */
 class KeyedBucketStore : public BucketStore<KeyedSlice> {
-  public:
-    static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
+ public:
+  static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
 
-    /**
-     * @brief Constructor to create a new thread local keyed slice store
-     * @param keySize size of the key in bytes
-     * @param valueSize size of the value in bytes
-     * @param windowSize size of the window in ms
-     * @param windowSlide size of the window slide in ms
-     * @param numberOfKeys number of expected keys
-     */
-    explicit KeyedBucketStore(uint64_t keySize,
-                              uint64_t valueSize,
-                              uint64_t windowSize,
-                              uint64_t windowSlide,
-                              uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
-    ~KeyedBucketStore() = default;
+  /**
+   * @brief Constructor to create a new thread local keyed slice store
+   * @param keySize size of the key in bytes
+   * @param valueSize size of the value in bytes
+   * @param windowSize size of the window in ms
+   * @param windowSlide size of the window slide in ms
+   * @param numberOfKeys number of expected keys
+   */
+  explicit KeyedBucketStore(uint64_t keySize, uint64_t valueSize,
+                            uint64_t windowSize, uint64_t windowSlide,
+                            uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
+  ~KeyedBucketStore() = default;
 
-  private:
-    KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
-    const uint64_t keySize;
-    const uint64_t valueSize;
-    const uint64_t numberOfKeys;
+ private:
+  KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
+  const uint64_t keySize;
+  const uint64_t valueSize;
+  const uint64_t numberOfKeys;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETSTORE_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETSTORE_HPP_

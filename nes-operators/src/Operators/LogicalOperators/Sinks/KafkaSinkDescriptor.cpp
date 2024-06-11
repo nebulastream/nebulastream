@@ -19,7 +19,10 @@ KafkaSinkDescriptor::KafkaSinkDescriptor(const std::string& sinkFormat,
                                          const std::string& topic,
                                          const std::string& brokers,
                                          uint64_t timeout)
-    : sinkFormat(sinkFormat), topic(topic), brokers(brokers), timeout(timeout) {}
+    : sinkFormat(sinkFormat),
+      topic(topic),
+      brokers(brokers),
+      timeout(timeout) {}
 
 const std::string& KafkaSinkDescriptor::getTopic() const { return topic; }
 
@@ -31,20 +34,27 @@ SinkDescriptorPtr KafkaSinkDescriptor::create(const std::string& sinkFormat,
                                               const std::string& topic,
                                               const std::string& brokers,
                                               uint64_t timeout) {
-    return std::make_shared<KafkaSinkDescriptor>(KafkaSinkDescriptor(sinkFormat, topic, brokers, timeout));
+  return std::make_shared<KafkaSinkDescriptor>(
+      KafkaSinkDescriptor(sinkFormat, topic, brokers, timeout));
 }
 
-std::string KafkaSinkDescriptor::toString() const { return "KafkaSinkDescriptor()"; }
+std::string KafkaSinkDescriptor::toString() const {
+  return "KafkaSinkDescriptor()";
+}
 
 bool KafkaSinkDescriptor::equal(SinkDescriptorPtr const& other) {
-    if (!other->instanceOf<KafkaSinkDescriptor>()) {
-        return false;
-    }
-    auto otherSinkDescriptor = other->as<KafkaSinkDescriptor>();
-    return topic == otherSinkDescriptor->topic && brokers == otherSinkDescriptor->brokers
-        && sinkFormat == otherSinkDescriptor->sinkFormat && timeout == otherSinkDescriptor->timeout;
+  if (!other->instanceOf<KafkaSinkDescriptor>()) {
+    return false;
+  }
+  auto otherSinkDescriptor = other->as<KafkaSinkDescriptor>();
+  return topic == otherSinkDescriptor->topic &&
+         brokers == otherSinkDescriptor->brokers &&
+         sinkFormat == otherSinkDescriptor->sinkFormat &&
+         timeout == otherSinkDescriptor->timeout;
 }
 
-std::string KafkaSinkDescriptor::getSinkFormatAsString() const { return sinkFormat; }
+std::string KafkaSinkDescriptor::getSinkFormatAsString() const {
+  return sinkFormat;
+}
 
-}// namespace NES
+}  // namespace NES

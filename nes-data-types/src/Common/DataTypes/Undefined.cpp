@@ -17,9 +17,13 @@
 
 namespace NES {
 
-bool Undefined::equals(DataTypePtr otherDataType) { return otherDataType->isUndefined(); }
+bool Undefined::equals(DataTypePtr otherDataType) {
+  return otherDataType->isUndefined();
+}
 
-DataTypePtr Undefined::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
+DataTypePtr Undefined::join(DataTypePtr) {
+  return DataTypeFactory::createUndefined();
+}
 std::string Undefined::toString() { return "Undefined"; }
 
-}// namespace NES
+}  // namespace NES

@@ -18,18 +18,21 @@
 namespace NES {
 
 /*
-* Defines the power function and registers it to the FunctionRegistry.
-*/
+ * Defines the power function and registers it to the FunctionRegistry.
+ */
 class PowerFunction : public BinaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferBinary(const DataTypePtr& left, const DataTypePtr& right) const override {
-        if (!left->isNumeric() || !right->isNumeric()) {
-            NES_THROW_RUNTIME_ERROR("PowerExpressions can only be evaluated on numeric values.");
-        }
-        return DataTypeFactory::createDouble();
+ public:
+  [[nodiscard]] DataTypePtr inferBinary(
+      const DataTypePtr& left, const DataTypePtr& right) const override {
+    if (!left->isNumeric() || !right->isNumeric()) {
+      NES_THROW_RUNTIME_ERROR(
+          "PowerExpressions can only be evaluated on numeric values.");
     }
+    return DataTypeFactory::createDouble();
+  }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<PowerFunction> powerFunction("power");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<PowerFunction>
+    powerFunction("power");
 
-}// namespace NES
+}  // namespace NES

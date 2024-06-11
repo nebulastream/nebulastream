@@ -18,18 +18,21 @@
 namespace NES {
 
 /*
-* Defines the radians function and registers it to the FunctionRegistry.
-*/
+ * Defines the radians function and registers it to the FunctionRegistry.
+ */
 class RadiansFunction : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
-            NES_THROW_RUNTIME_ERROR("RadiansExpressions can only be evaluated on numeric values.");
-        }
-        return DataTypeFactory::createDouble();
+ public:
+  [[nodiscard]] DataTypePtr inferUnary(
+      const DataTypePtr& input) const override {
+    if (!input->isNumeric()) {
+      NES_THROW_RUNTIME_ERROR(
+          "RadiansExpressions can only be evaluated on numeric values.");
     }
+    return DataTypeFactory::createDouble();
+  }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<RadiansFunction> RadiansFunction("radians");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<RadiansFunction>
+    RadiansFunction("radians");
 
-}// namespace NES
+}  // namespace NES

@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 
 namespace NES {
 using Exceptions::InvalidQueryStateException;
@@ -26,35 +27,40 @@ using Exceptions::QueryNotFoundException;
 using Exceptions::RequestExecutionException;
 
 class RequestExecutionExceptionTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup RequestExecutionException test class.");
-    }
+ public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup RequestExecutionException test class.");
+  }
 
-    static void TearDownTestCase() { NES_INFO("Tear down RequestExecutionException test class."); }
+  static void TearDownTestCase() {
+    NES_INFO("Tear down RequestExecutionException test class.");
+  }
 };
 
 /**
- * @brief Checks if the instanceOf() function returns true only for the actual class of the object
+ * @brief Checks if the instanceOf() function returns true only for the actual
+ * class of the object
  */
 TEST_F(RequestExecutionExceptionTest, testInstanceOf) {
-    InvalidQueryStateException invalidQueryStatusException({QueryState::STOPPED}, QueryState::MARKED_FOR_FAILURE);
-    RequestExecutionException& test1 = invalidQueryStatusException;
-    ASSERT_TRUE(test1.instanceOf<InvalidQueryStateException>());
-    ASSERT_FALSE(test1.instanceOf<QueryNotFoundException>());
-    ASSERT_FALSE(test1.instanceOf<Exceptions::QueryUndeploymentException>());
+  InvalidQueryStateException invalidQueryStatusException(
+      {QueryState::STOPPED}, QueryState::MARKED_FOR_FAILURE);
+  RequestExecutionException& test1 = invalidQueryStatusException;
+  ASSERT_TRUE(test1.instanceOf<InvalidQueryStateException>());
+  ASSERT_FALSE(test1.instanceOf<QueryNotFoundException>());
+  ASSERT_FALSE(test1.instanceOf<Exceptions::QueryUndeploymentException>());
 
-    QueryNotFoundException queryNotFoundException("not found");
-    RequestExecutionException& test2 = queryNotFoundException;
-    ASSERT_FALSE(test2.instanceOf<InvalidQueryStateException>());
-    ASSERT_TRUE(test2.instanceOf<QueryNotFoundException>());
-    ASSERT_FALSE(test2.instanceOf<Exceptions::QueryUndeploymentException>());
+  QueryNotFoundException queryNotFoundException("not found");
+  RequestExecutionException& test2 = queryNotFoundException;
+  ASSERT_FALSE(test2.instanceOf<InvalidQueryStateException>());
+  ASSERT_TRUE(test2.instanceOf<QueryNotFoundException>());
+  ASSERT_FALSE(test2.instanceOf<Exceptions::QueryUndeploymentException>());
 
-    Exceptions::QueryUndeploymentException queryUndeploymentException(SharedQueryId(1), "could not undeploy");
-    RequestExecutionException& test3 = queryUndeploymentException;
-    ASSERT_FALSE(test3.instanceOf<InvalidQueryStateException>());
-    ASSERT_FALSE(test3.instanceOf<QueryNotFoundException>());
-    ASSERT_TRUE(test3.instanceOf<Exceptions::QueryUndeploymentException>());
+  Exceptions::QueryUndeploymentException queryUndeploymentException(
+      SharedQueryId(1), "could not undeploy");
+  RequestExecutionException& test3 = queryUndeploymentException;
+  ASSERT_FALSE(test3.instanceOf<InvalidQueryStateException>());
+  ASSERT_FALSE(test3.instanceOf<QueryNotFoundException>());
+  ASSERT_TRUE(test3.instanceOf<Exceptions::QueryUndeploymentException>());
 }
-}// namespace NES
+}  // namespace NES

@@ -22,49 +22,53 @@ class FieldRenameExpressionNode;
 using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
 
 /**
- * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .as in the query
+ * @brief A FieldRenameExpressionNode allows us to rename an attribute value via
+ * .as in the query
  */
 class FieldRenameExpressionNode : public ExpressionNode {
-  public:
-    /**
-     * @brief Create FieldRename Expression node
-     * @param fieldName : name of the field
-     * @param newFieldName : new name of the field
-     * @param datatype : the data type
-     * @return pointer to the FieldRenameExpressionNode
-     */
-    static ExpressionNodePtr create(FieldAccessExpressionNodePtr originalField, std::string newFieldName);
+ public:
+  /**
+   * @brief Create FieldRename Expression node
+   * @param fieldName : name of the field
+   * @param newFieldName : new name of the field
+   * @param datatype : the data type
+   * @return pointer to the FieldRenameExpressionNode
+   */
+  static ExpressionNodePtr create(FieldAccessExpressionNodePtr originalField,
+                                  std::string newFieldName);
 
-    [[nodiscard]] std::string toString() const override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-    std::string getNewFieldName() const;
+  std::string getNewFieldName() const;
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-    FieldAccessExpressionNodePtr getOriginalField() const;
+  FieldAccessExpressionNodePtr getOriginalField() const;
 
-  protected:
-    explicit FieldRenameExpressionNode(const FieldRenameExpressionNodePtr other);
+ protected:
+  explicit FieldRenameExpressionNode(const FieldRenameExpressionNodePtr other);
 
-  private:
-    FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName);
+ private:
+  FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField,
+                            std::string newFieldName);
 
-    FieldAccessExpressionNodePtr originalField;
-    std::string newFieldName;
+  FieldAccessExpressionNodePtr originalField;
+  std::string newFieldName;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_

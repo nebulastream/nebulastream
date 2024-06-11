@@ -24,47 +24,54 @@
 
 namespace NES::Compiler {
 
-JITCompiler::JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers,
-                         bool useCompilationCache)
-    : languageCompilers(std::move(languageCompilers)), useCompilationCache(useCompilationCache),
+JITCompiler::JITCompiler(
+    std::map<const Language, std::shared_ptr<const LanguageCompiler>>
+        languageCompilers,
+    bool useCompilationCache)
+    : languageCompilers(std::move(languageCompilers)),
+      useCompilationCache(useCompilationCache),
       compilationCache(std::make_shared<CompilationCache>()) {}
 
-std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const CompilationRequest> request) {
-    if (request->getSourceCode() == nullptr) {
-        throw CompilerException("No source code provided");
-    }
-    auto language = request->getSourceCode()->getLanguage();
-    auto languageCompiler = languageCompilers.find(language);
+std::future<CompilationResult> JITCompiler::handleRequest(
+    std::shared_ptr<const CompilationRequest> request) {
+  if (request->getSourceCode() == nullptr) {
+    throw CompilerException("No source code provided");
+  }
+  auto language = request->getSourceCode()->getLanguage();
+  auto languageCompiler = languageCompilers.find(language);
 
-    if (languageCompiler == languageCompilers.end()) {
-        throw CompilerException("No language compiler found for language: " + getLanguageAsString(language));
-    }
+  if (languageCompiler == languageCompilers.end()) {
+    throw CompilerException("No language compiler found for language: " +
+                            getLanguageAsString(language));
+  }
 
-    auto compiler = languageCompiler->second;
-    auto useCache = this->useCompilationCache;
-    auto cache = this->compilationCache;
-    auto asyncResult = std::async(std::launch::async, [compiler, request, useCache, cache]() {
+  auto compiler = languageCompiler->second;
+  auto useCache = this->useCompilationCache;
+  auto cache = this->compilationCache;
+  auto asyncResult =
+      std::async(std::launch::async, [compiler, request, useCache, cache]() {
         auto sourceCode = *request->getSourceCode();
         if (useCache) {
-            if (cache->contains(sourceCode)) {
-                NES_DEBUG("Reuse existing binary instead of compiling it");
-                return cache->get(sourceCode);
-            } else {
-                auto result = compiler->compile(request);
-                cache->insert(sourceCode, result);
-                return result;
-            }
+          if (cache->contains(sourceCode)) {
+            NES_DEBUG("Reuse existing binary instead of compiling it");
+            return cache->get(sourceCode);
+          } else {
+            auto result = compiler->compile(request);
+            cache->insert(sourceCode, result);
+            return result;
+          }
         } else {
-            return compiler->compile(request);
+          return compiler->compile(request);
         }
-    });
-    return asyncResult;
+      });
+  return asyncResult;
 }
 
-std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const CompilationRequest> request) {
-    return handleRequest(request);
+std::future<CompilationResult> JITCompiler::compile(
+    std::shared_ptr<const CompilationRequest> request) {
+  return handleRequest(request);
 }
 
 JITCompiler::~JITCompiler() { NES_DEBUG("~JITCompiler"); }
 
-}// namespace NES::Compiler
+}  // namespace NES::Compiler

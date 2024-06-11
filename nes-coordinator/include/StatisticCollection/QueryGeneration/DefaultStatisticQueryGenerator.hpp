@@ -24,34 +24,35 @@ namespace NES::Statistic {
  * metric types ----> Synopsis
  */
 class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator {
-  public:
-    /**
-     * @brief Creates a DefaultStatisticQueryGenerator
-     * @return AbstractStatisticQueryGeneratorPtr
-     */
-    static StatisticQueryGeneratorPtr create();
+ public:
+  /**
+   * @brief Creates a DefaultStatisticQueryGenerator
+   * @return AbstractStatisticQueryGeneratorPtr
+   */
+  static StatisticQueryGeneratorPtr create();
 
-    /**
-     * @brief Create a statistic query via a mapping strategy
-     * @param characteristic
-     * @param window
-     * @param sendingPolicy
-     * @param triggerCondition
-     * @param queryCatalog
-     * @return Query
-     */
-    Query createStatisticQuery(const Characteristic& characteristic,
-                               const Windowing::WindowTypePtr& window,
-                               const SendingPolicyPtr& sendingPolicy,
-                               const TriggerConditionPtr& triggerCondition,
-                               const Catalogs::Query::QueryCatalog& queryCatalog) override;
+  /**
+   * @brief Create a statistic query via a mapping strategy
+   * @param characteristic
+   * @param window
+   * @param sendingPolicy
+   * @param triggerCondition
+   * @param queryCatalog
+   * @return Query
+   */
+  Query createStatisticQuery(
+      const Characteristic& characteristic,
+      const Windowing::WindowTypePtr& window,
+      const SendingPolicyPtr& sendingPolicy,
+      const TriggerConditionPtr& triggerCondition,
+      const Catalogs::Query::QueryCatalog& queryCatalog) override;
 
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~DefaultStatisticQueryGenerator();
+  /**
+   * @brief Virtual destructor
+   */
+  virtual ~DefaultStatisticQueryGenerator();
 };
 
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_DEFAULTSTATISTICQUERYGENERATOR_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_DEFAULTSTATISTICQUERYGENERATOR_HPP_

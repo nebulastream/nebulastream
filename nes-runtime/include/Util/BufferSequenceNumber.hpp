@@ -22,63 +22,74 @@
 namespace NES {
 
 /**
- * @brief The Buffer Sequence Number class encapsulates a unique id for every tuple buffer in the system.
- * It consists out of a sequence number and an origin id. Their combination allows uniquely define a tuple buffer in the system.
+ * @brief The Buffer Sequence Number class encapsulates a unique id for every
+ * tuple buffer in the system. It consists out of a sequence number and an
+ * origin id. Their combination allows uniquely define a tuple buffer in the
+ * system.
  */
 class BufferSequenceNumber {
+ public:
+  BufferSequenceNumber() = default;
+  /**
+   * @brief Constructor, which creates new buffer sequence number out of pair
+   * sequnce number and origin id
+   * @param sequenceNumber sequence number
+   * @param originId origin id
+   * @return buffer sequence number
+   */
+  BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId)
+      : sequenceNumber(sequenceNumber), originId(originId){};
 
-  public:
-    BufferSequenceNumber() = default;
-    /**
-     * @brief Constructor, which creates new buffer sequence number out of pair sequnce number and origin id
-     * @param sequenceNumber sequence number
-     * @param originId origin id
-     * @return buffer sequence number
-     */
-    BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId){};
+  /**
+   * @brief Getter for a sequence number of a buffer sequence number
+   * @return sequence number
+   */
+  uint64_t getSequenceNumber() const;
 
-    /**
-     * @brief Getter for a sequence number of a buffer sequence number
-     * @return sequence number
-     */
-    uint64_t getSequenceNumber() const;
+  /**
+   * @brief Getter for an origin id of a buffer sequence number
+   * @return origin id
+   */
+  uint64_t getOriginId() const;
 
-    /**
-     * @brief Getter for an origin id of a buffer sequence number
-     * @return origin id
-     */
-    uint64_t getOriginId() const;
-
-  private:
-    uint64_t sequenceNumber;
-    uint64_t originId;
-    friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
-        return lhs.sequenceNumber < rhs.sequenceNumber;
-    }
-    friend bool operator<=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
-        return lhs.sequenceNumber <= rhs.sequenceNumber;
-    }
-    friend bool operator>(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
-        return lhs.sequenceNumber > rhs.sequenceNumber;
-    }
-    friend bool operator>=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
-        return lhs.sequenceNumber >= rhs.sequenceNumber;
-    }
-    friend bool operator==(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
-        return lhs.sequenceNumber == rhs.sequenceNumber;
-    }
-    friend bool operator!=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
-        return lhs.sequenceNumber != rhs.sequenceNumber;
-    }
+ private:
+  uint64_t sequenceNumber;
+  uint64_t originId;
+  friend bool operator<(const BufferSequenceNumber& lhs,
+                        const BufferSequenceNumber& rhs) {
+    return lhs.sequenceNumber < rhs.sequenceNumber;
+  }
+  friend bool operator<=(const BufferSequenceNumber& lhs,
+                         const BufferSequenceNumber& rhs) {
+    return lhs.sequenceNumber <= rhs.sequenceNumber;
+  }
+  friend bool operator>(const BufferSequenceNumber& lhs,
+                        const BufferSequenceNumber& rhs) {
+    return lhs.sequenceNumber > rhs.sequenceNumber;
+  }
+  friend bool operator>=(const BufferSequenceNumber& lhs,
+                         const BufferSequenceNumber& rhs) {
+    return lhs.sequenceNumber >= rhs.sequenceNumber;
+  }
+  friend bool operator==(const BufferSequenceNumber& lhs,
+                         const BufferSequenceNumber& rhs) {
+    return lhs.sequenceNumber == rhs.sequenceNumber;
+  }
+  friend bool operator!=(const BufferSequenceNumber& lhs,
+                         const BufferSequenceNumber& rhs) {
+    return lhs.sequenceNumber != rhs.sequenceNumber;
+  }
 };
 
 using BufferSequenceNumberPtr = std::shared_ptr<BufferSequenceNumber>;
-}// namespace NES
+}  // namespace NES
 
 namespace std {
-template<>
+template <>
 struct hash<NES::BufferSequenceNumber> {
-    uint64_t operator()(const NES::BufferSequenceNumber& sn) const { return sn.getSequenceNumber() ^ sn.getOriginId(); }
+  uint64_t operator()(const NES::BufferSequenceNumber& sn) const {
+    return sn.getSequenceNumber() ^ sn.getOriginId();
+  }
 };
-}// namespace std
-#endif// NES_RUNTIME_INCLUDE_UTIL_BUFFERSEQUENCENUMBER_HPP_
+}  // namespace std
+#endif  // NES_RUNTIME_INCLUDE_UTIL_BUFFERSEQUENCENUMBER_HPP_

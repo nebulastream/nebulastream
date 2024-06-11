@@ -27,25 +27,28 @@ class GeoLocation;
 namespace Util {
 
 /**
-     * @brief utility functions for handling google s2 datatypes
-     */
+ * @brief utility functions for handling google s2 datatypes
+ */
 class S2Utilities {
-  public:
-    /**
-     * Converts a Location object to and s2 point
-     * @param location the location object
-     * @return an s2 point representing the location as the input object
-     */
-    static S2Point geoLocationToS2Point(NES::Spatial::DataTypes::Experimental::GeoLocation location);
+ public:
+  /**
+   * Converts a Location object to and s2 point
+   * @param location the location object
+   * @return an s2 point representing the location as the input object
+   */
+  static S2Point geoLocationToS2Point(
+      NES::Spatial::DataTypes::Experimental::GeoLocation location);
 
-    /**
-     * Converts an s2 point to a location object
-     * @param point the s2 point
-     * @return a location object representing the some location as the input object
-     */
-    static NES::Spatial::DataTypes::Experimental::GeoLocation s2pointToLocation(S2Point point);
+  /**
+   * Converts an s2 point to a location object
+   * @param point the s2 point
+   * @return a location object representing the some location as the input
+   * object
+   */
+  static NES::Spatial::DataTypes::Experimental::GeoLocation s2pointToLocation(
+      S2Point point);
 };
-}// namespace Util
-}// namespace NES::Spatial
+}  // namespace Util
+}  // namespace NES::Spatial
 #endif
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_

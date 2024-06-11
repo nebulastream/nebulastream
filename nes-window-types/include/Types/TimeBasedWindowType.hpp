@@ -25,40 +25,39 @@ class TimeBasedWindowType;
 using TimeBasedWindowTypePtr = std::shared_ptr<TimeBasedWindowType>;
 
 class TimeBasedWindowType : public WindowType {
+ public:
+  explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
 
-  public:
-    explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
+  ~TimeBasedWindowType() override = default;
+  /**
+   * @brief Get the time characteristic of the window.
+   * @return
+   */
+  [[nodiscard]] TimeCharacteristicPtr getTimeCharacteristic() const;
 
-    ~TimeBasedWindowType() override = default;
-    /**
-     * @brief Get the time characteristic of the window.
-     * @return
-     */
-    [[nodiscard]] TimeCharacteristicPtr getTimeCharacteristic() const;
+  /**
+   * @brief method to get the window size
+   * @return size of window
+   */
+  virtual TimeMeasure getSize() = 0;
 
-    /**
-     * @brief method to get the window size
-     * @return size of window
-     */
-    virtual TimeMeasure getSize() = 0;
+  /**
+   * @brief method to get the window slide
+   * @return slide of the window
+   */
+  virtual TimeMeasure getSlide() = 0;
 
-    /**
-     * @brief method to get the window slide
-     * @return slide of the window
-     */
-    virtual TimeMeasure getSlide() = 0;
+  /**
+   * @brief Infer stamp of time based window type
+   * @param schema : the schema of the window
+   * @return true if success else false
+   */
+  bool inferStamp(const SchemaPtr& schema) override;
 
-    /**
-     * @brief Infer stamp of time based window type
-     * @param schema : the schema of the window
-     * @return true if success else false
-     */
-    bool inferStamp(const SchemaPtr& schema) override;
-
-  protected:
-    TimeCharacteristicPtr timeCharacteristic;
+ protected:
+  TimeCharacteristicPtr timeCharacteristic;
 };
 
-}// namespace NES::Windowing
+}  // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_
+#endif  // NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_

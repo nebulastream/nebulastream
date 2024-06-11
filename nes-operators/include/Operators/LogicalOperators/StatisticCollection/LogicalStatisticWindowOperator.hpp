@@ -23,89 +23,88 @@
 namespace NES::Statistic {
 
 class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
-  public:
-    LogicalStatisticWindowOperator(OperatorId id,
-                                   Windowing::WindowTypePtr windowType,
-                                   WindowStatisticDescriptorPtr windowStatisticDescriptor,
-                                   StatisticMetricHash metricHash,
-                                   SendingPolicyPtr sendingPolicy,
-                                   TriggerConditionPtr triggerCondition);
+ public:
+  LogicalStatisticWindowOperator(
+      OperatorId id, Windowing::WindowTypePtr windowType,
+      WindowStatisticDescriptorPtr windowStatisticDescriptor,
+      StatisticMetricHash metricHash, SendingPolicyPtr sendingPolicy,
+      TriggerConditionPtr triggerCondition);
 
-    /**
-     * @brief Infers the schema for this StatisticWindowOperatorNode
-     * @return Success
-     */
-    bool inferSchema() override;
+  /**
+   * @brief Infers the schema for this StatisticWindowOperatorNode
+   * @return Success
+   */
+  bool inferSchema() override;
 
-    /**
-     * @brief Compares for equality
-     * @param rhs
-     * @return True, if equal, otherwise false.
-     */
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  /**
+   * @brief Compares for equality
+   * @param rhs
+   * @return True, if equal, otherwise false.
+   */
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-    /**
-     * @brief Checks if the nodes are equal
-     * @param rhs
-     * @return True, if equal and have the same ID, otherwise false.
-     */
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+  /**
+   * @brief Checks if the nodes are equal
+   * @param rhs
+   * @return True, if equal and have the same ID, otherwise false.
+   */
+  [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
 
-    /**
-     * @brief Infers the string signature
-     */
-    void inferStringSignature() override;
+  /**
+   * @brief Infers the string signature
+   */
+  void inferStringSignature() override;
 
-    /**
-     * @brief Getter for the SendingPolicy
-     * @return SendingPolicyPtr
-     */
-    SendingPolicyPtr getSendingPolicy() const;
+  /**
+   * @brief Getter for the SendingPolicy
+   * @return SendingPolicyPtr
+   */
+  SendingPolicyPtr getSendingPolicy() const;
 
-    /**
-     * @brief Getter for the TriggerCondition
-     * @return TriggerConditionPtr
-     */
-    TriggerConditionPtr getTriggerCondition() const;
+  /**
+   * @brief Getter for the TriggerCondition
+   * @return TriggerConditionPtr
+   */
+  TriggerConditionPtr getTriggerCondition() const;
 
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    std::string toString() const override;
+  /**
+   * @brief Creates a string representation
+   * @return std::string
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief Creates a copy of this operator with
-     * @return
-     */
-    OperatorPtr copy() override;
+  /**
+   * @brief Creates a copy of this operator with
+   * @return
+   */
+  OperatorPtr copy() override;
 
-    /**
-     * @brief Getter for the window type
-     * @return WindowTypePtr
-     */
-    Windowing::WindowTypePtr getWindowType() const;
+  /**
+   * @brief Getter for the window type
+   * @return WindowTypePtr
+   */
+  Windowing::WindowTypePtr getWindowType() const;
 
-    /**
-     * @brief Getter for the windowStatisticDescriptor
-     * @return WindowStatisticDescriptorPtr
-     */
-    WindowStatisticDescriptorPtr getWindowStatisticDescriptor() const;
+  /**
+   * @brief Getter for the windowStatisticDescriptor
+   * @return WindowStatisticDescriptorPtr
+   */
+  WindowStatisticDescriptorPtr getWindowStatisticDescriptor() const;
 
-    /**
-     * @brief Getter for the metric hash
-     * @return MetricHash
-     */
-    StatisticMetricHash getMetricHash() const;
+  /**
+   * @brief Getter for the metric hash
+   * @return MetricHash
+   */
+  StatisticMetricHash getMetricHash() const;
 
-  private:
-    Windowing::WindowTypePtr windowType;
-    WindowStatisticDescriptorPtr windowStatisticDescriptor;
-    StatisticMetricHash metricHash;
-    SendingPolicyPtr sendingPolicy;
-    TriggerConditionPtr triggerCondition;
+ private:
+  Windowing::WindowTypePtr windowType;
+  WindowStatisticDescriptorPtr windowStatisticDescriptor;
+  StatisticMetricHash metricHash;
+  SendingPolicyPtr sendingPolicy;
+  TriggerConditionPtr triggerCondition;
 };
 
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_

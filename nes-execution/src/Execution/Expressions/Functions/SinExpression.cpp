@@ -19,46 +19,49 @@
 #include <cmath>
 namespace NES::Runtime::Execution::Expressions {
 
-SinExpression::SinExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+SinExpression::SinExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
     : subExpression(subExpression) {}
 
 /**
-  * @brief This method calculates the sine of X.
-  * This function is basically a wrapper for std::sin and enables us to use it in our execution engine framework.
-  * @param x double
-  * @return double
-  */
+ * @brief This method calculates the sine of X.
+ * This function is basically a wrapper for std::sin and enables us to use it in
+ * our execution engine framework.
+ * @param x double
+ * @return double
+ */
 double calculateSin(double x) { return std::sin(x); }
 
 Value<> SinExpression::execute(NES::Nautilus::Record& record) const {
+  Value subValue = subExpression->execute(record);
 
-    Value subValue = subExpression->execute(record);
-
-    if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateSin", calculateSin, subValue.as<Double>());
-    } else {
-        // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on a numeric input argument that is ether Integer or Float.");
-    }
+  if (subValue->isType<Int8>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int8>());
+  } else if (subValue->isType<Int16>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int16>());
+  } else if (subValue->isType<Int32>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int32>());
+  } else if (subValue->isType<Int64>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int64>());
+  } else if (subValue->isType<UInt8>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt8>());
+  } else if (subValue->isType<UInt16>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt16>());
+  } else if (subValue->isType<UInt32>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt32>());
+  } else if (subValue->isType<UInt64>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt64>());
+  } else if (subValue->isType<Float>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<Float>());
+  } else if (subValue->isType<Double>()) {
+    return FunctionCall<>("calculateSin", calculateSin, subValue.as<Double>());
+  } else {
+    // If no type was applicable we throw an exception.
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on a numeric input argument that is "
+        "ether Integer or Float.");
+  }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SinExpression>> sinFunction("sin");
-}// namespace NES::Runtime::Execution::Expressions
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SinExpression>>
+    sinFunction("sin");
+}  // namespace NES::Runtime::Execution::Expressions

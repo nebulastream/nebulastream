@@ -25,76 +25,92 @@
 
 namespace NES::QueryCompilation {
 
-NautilusCompilationPhase::NautilusCompilationPhase(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
+NautilusCompilationPhase::NautilusCompilationPhase(
+    const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
     : compilerOptions(compilerOptions) {}
 
-std::shared_ptr<NautilusCompilationPhase>
-NautilusCompilationPhase::create(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
-    return std::make_shared<NautilusCompilationPhase>(compilerOptions);
+std::shared_ptr<NautilusCompilationPhase> NautilusCompilationPhase::create(
+    const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
+  return std::make_shared<NautilusCompilationPhase>(compilerOptions);
 }
 
-PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan) {
-    NES_DEBUG("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
-    for (const auto& pipeline : queryPlan->getPipelines()) {
-        if (pipeline->isOperatorPipeline()) {
-            apply(pipeline);
-        }
+PipelineQueryPlanPtr NautilusCompilationPhase::apply(
+    PipelineQueryPlanPtr queryPlan) {
+  NES_DEBUG("Generate code for query plan {} - {}", queryPlan->getQueryId(),
+            queryPlan->getQuerySubPlanId());
+  for (const auto& pipeline : queryPlan->getPipelines()) {
+    if (pipeline->isOperatorPipeline()) {
+      apply(pipeline);
     }
-    return queryPlan;
+  }
+  return queryPlan;
 }
 
-std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
-    switch (compilerOptions->getNautilusBackend()) {
-        case NautilusBackend::INTERPRETER: {
-            return "PipelineInterpreter";
-        };
-        case NautilusBackend::MLIR_COMPILER_BACKEND: {
-            return "PipelineCompiler";
-        };
-        case NautilusBackend::BC_INTERPRETER_BACKEND: {
-            return "BCInterpreter";
-        };
-        case NautilusBackend::CPP_COMPILER_BACKEND: {
-            return "CPPPipelineCompiler";
-        };
-        default: {
-            NES_THROW_RUNTIME_ERROR("No pipeline compiler implemented for this backend");
-        }
+std::string getPipelineProviderIdentifier(
+    const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
+  switch (compilerOptions->getNautilusBackend()) {
+    case NautilusBackend::INTERPRETER: {
+      return "PipelineInterpreter";
+    };
+    case NautilusBackend::MLIR_COMPILER_BACKEND: {
+      return "PipelineCompiler";
+    };
+    case NautilusBackend::BC_INTERPRETER_BACKEND: {
+      return "BCInterpreter";
+    };
+    case NautilusBackend::CPP_COMPILER_BACKEND: {
+      return "CPPPipelineCompiler";
+    };
+    default: {
+      NES_THROW_RUNTIME_ERROR(
+          "No pipeline compiler implemented for this backend");
     }
+  }
 }
 
-OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline) {
-    auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
-    NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
-    auto rootOperator = pipelineRoots[0];
-    auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
-    Nautilus::CompilationOptions options;
-    auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
-                                  pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
-                                  pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
-                                  pipeline->getPipelineId());
-    options.setIdentifier(identifier);
+OperatorPipelinePtr NautilusCompilationPhase::apply(
+    OperatorPipelinePtr pipeline) {
+  auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
+  NES_ASSERT(pipelineRoots.size() == 1,
+             "A pipeline should have a single root operator.");
+  auto rootOperator = pipelineRoots[0];
+  auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
+  Nautilus::CompilationOptions options;
+  auto identifier = fmt::format(
+      "NautilusCompilation-{}-{}-{}",
+      pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
+      pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
+      pipeline->getPipelineId());
+  options.setIdentifier(identifier);
 
-    // enable dump to console if the compiler options are set
-    options.setDumpToConsole(compilerOptions->getDumpMode() == DumpMode::CONSOLE
-                             || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+  // enable dump to console if the compiler options are set
+  options.setDumpToConsole(
+      compilerOptions->getDumpMode() == DumpMode::CONSOLE ||
+      compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
-    // enable dump to file if the compiler options are set
-    options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE
-                          || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+  // enable dump to file if the compiler options are set
+  options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE ||
+                        compilerOptions->getDumpMode() ==
+                            DumpMode::FILE_AND_CONSOLE);
 
-    options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
+  options.setProxyInlining(compilerOptions->getCompilationStrategy() ==
+                           CompilationStrategy::PROXY_INLINING);
 
-    options.setCUDASdkPath(compilerOptions->getCUDASdkPath());
+  options.setCUDASdkPath(compilerOptions->getCUDASdkPath());
 
-    auto providerName = getPipelineProviderIdentifier(compilerOptions);
-    auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);
-    auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline(), options);
-    // we replace the current pipeline operators with an executable operator.
-    // this allows us to keep the pipeline structure.
-    auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
-    pipeline->getDecomposedQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
-    return pipeline;
+  auto providerName = getPipelineProviderIdentifier(compilerOptions);
+  auto& provider =
+      Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(
+          providerName);
+  auto pipelineStage =
+      provider->create(nautilusPipeline->getNautilusPipeline(), options);
+  // we replace the current pipeline operators with an executable operator.
+  // this allows us to keep the pipeline structure.
+  auto executableOperator = ExecutableOperator::create(
+      std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
+  pipeline->getDecomposedQueryPlan()->replaceRootOperator(rootOperator,
+                                                          executableOperator);
+  return pipeline;
 }
 
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation

@@ -18,18 +18,21 @@
 namespace NES {
 
 /*
-* Defines the sin function and registers it to the FunctionRegistry.
-*/
+ * Defines the sin function and registers it to the FunctionRegistry.
+ */
 class SinFunction : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
-            NES_THROW_RUNTIME_ERROR("SinExpressions can only be evaluated on numeric values.");
-        }
-        return DataTypeFactory::createDouble();
+ public:
+  [[nodiscard]] DataTypePtr inferUnary(
+      const DataTypePtr& input) const override {
+    if (!input->isNumeric()) {
+      NES_THROW_RUNTIME_ERROR(
+          "SinExpressions can only be evaluated on numeric values.");
     }
+    return DataTypeFactory::createDouble();
+  }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<SinFunction> sinFunction("sin");
+[[maybe_unused]] const static LogicalFunctionRegistry::Add<SinFunction>
+    sinFunction("sin");
 
-}// namespace NES
+}  // namespace NES

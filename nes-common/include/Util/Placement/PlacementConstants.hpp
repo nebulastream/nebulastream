@@ -19,18 +19,30 @@
 
 namespace NES::Optimizer {
 
-const std::string PINNED_WORKER_ID = "PINNED_WORKER_ID";// Property indicating the location where the operator is pinned
+const std::string PINNED_WORKER_ID =
+    "PINNED_WORKER_ID";  // Property indicating the location where the operator
+                         // is pinned
 const std::string PLACED_DECOMPOSED_PLAN_ID =
-    "PLACED_DECOMPOSED_PLAN_ID";          // Property indicating the id of the decomposed plan that contains this operator
-const std::string PROCESSED = "PROCESSED";// Property indicating if operator was processed for placement
+    "PLACED_DECOMPOSED_PLAN_ID";  // Property indicating the id of the
+                                  // decomposed plan that contains this operator
+const std::string PROCESSED =
+    "PROCESSED";  // Property indicating if operator was processed for placement
 const std::string CO_LOCATED_UPSTREAM_OPERATORS =
-    "CO_LOCATED_UPSTREAM_OPERATORS";// Property indicating if operator was processed for placement
+    "CO_LOCATED_UPSTREAM_OPERATORS";  // Property indicating if operator was
+                                      // processed for placement
 const std::string CONNECTED_SYS_SUB_PLAN_DETAILS =
-    "CONNECTED_SYS_SUB_PLAN_DETAILS";// Property describing the details of the connected downstream system generated sub plans locations and query sub plan ids
+    "CONNECTED_SYS_SUB_PLAN_DETAILS";  // Property describing the details of the
+                                       // connected downstream system generated
+                                       // sub plans locations and query sub plan
+                                       // ids
 const std::string UPSTREAM_LOGICAL_OPERATOR_ID =
-    "UPSTREAM_LOGICAL_OPERATOR_ID";// Property containing the id of the next upstream non system operator of a system generated operator
+    "UPSTREAM_LOGICAL_OPERATOR_ID";  // Property containing the id of the next
+                                     // upstream non system operator of a system
+                                     // generated operator
 const std::string DOWNSTREAM_LOGICAL_OPERATOR_ID =
-    "DOWNSTREAM_LOGICAL_OPERATOR_ID";// Property containing the id of the next downstream non system operator of a system generated operator
-}// namespace NES::Optimizer
+    "DOWNSTREAM_LOGICAL_OPERATOR_ID";  // Property containing the id of the next
+                                       // downstream non system operator of a
+                                       // system generated operator
+}  // namespace NES::Optimizer
 
-#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTCONSTANTS_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTCONSTANTS_HPP_

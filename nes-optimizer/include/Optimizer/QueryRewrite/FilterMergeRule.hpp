@@ -29,7 +29,7 @@ using OperatorPtr = std::shared_ptr<Operator>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-}// namespace NES
+}  // namespace NES
 
 namespace NES::Optimizer {
 
@@ -37,19 +37,20 @@ class FilterMergeRule;
 using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
 
 /**
- * @brief This rewrite rule identifies sequences of consecutive filters. The filters are combined together
- * into one filter where the predicate is a conjunction of the predicates of the original filters.
- * This reduces the number of operators in the query plan and should provide a performance benefit.
- * It is especially useful after splitting up and pushing down the filters.
+ * @brief This rewrite rule identifies sequences of consecutive filters. The
+ * filters are combined together into one filter where the predicate is a
+ * conjunction of the predicates of the original filters. This reduces the
+ * number of operators in the query plan and should provide a performance
+ * benefit. It is especially useful after splitting up and pushing down the
+ * filters.
  *
  * Example:
  *
  *      |
  *    Filter(a == 1)
  *      |                             |
- *    Filter(b > 0)          ===>   Filter((a == 1) && (b > 0) && (c < 2) && (a > 2)
- *      |                             |
- *    Filter(c < 2)
+ *    Filter(b > 0)          ===>   Filter((a == 1) && (b > 0) && (c < 2) && (a
+ * > 2) |                             | Filter(c < 2)
  *      |
  *    Filter(a > 2)
  *      |
@@ -57,26 +58,27 @@ using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
  */
 
 class FilterMergeRule : public BaseRewriteRule {
+ public:
+  static FilterMergeRulePtr create();
+  FilterMergeRule() = default;
+  virtual ~FilterMergeRule() = default;
 
-  public:
-    static FilterMergeRulePtr create();
-    FilterMergeRule() = default;
-    virtual ~FilterMergeRule() = default;
+  /**
+   * @brief Apply Filter Merge rule on input query plan
+   * @param queryPlan: the original query plan
+   * @return updated logical query plan
+   */
+  QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-    /**
-     * @brief Apply Filter Merge rule on input query plan
-     * @param queryPlan: the original query plan
-     * @return updated logical query plan
-     */
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
-
-  private:
-    /**
-     * @brief Given a filter, retrieve all the consecutive filters (including the filter itself).
-     * @param firstFilter: the filter to check
-     * @return vector of filters
-     */
-    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
+ private:
+  /**
+   * @brief Given a filter, retrieve all the consecutive filters (including the
+   * filter itself).
+   * @param firstFilter: the filter to check
+   * @return vector of filters
+   */
+  static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(
+      const NES::LogicalFilterOperatorPtr& firstFilter);
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
+}  // namespace NES::Optimizer
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_

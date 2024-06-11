@@ -23,23 +23,22 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * A window sink computes the final window result using the window slice store.
  */
 class PhysicalWindowOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalWindowOperator(OperatorId id,
-                           StatisticId statisticId,
-                           SchemaPtr inputSchema,
-                           SchemaPtr outputSchema,
-                           Windowing::LogicalWindowDescriptorPtr windowDefinition);
-    const Windowing::LogicalWindowDescriptorPtr& getWindowDefinition() const;
+ public:
+  PhysicalWindowOperator(
+      OperatorId id, StatisticId statisticId, SchemaPtr inputSchema,
+      SchemaPtr outputSchema,
+      Windowing::LogicalWindowDescriptorPtr windowDefinition);
+  const Windowing::LogicalWindowDescriptorPtr& getWindowDefinition() const;
 
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
-    std::string toString() const override;
+  /**
+   * @brief returns the string representation of the class
+   * @return the string representation of the class
+   */
+  std::string toString() const override;
 
-  protected:
-    Windowing::LogicalWindowDescriptorPtr windowDefinition;
+ protected:
+  Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWOPERATOR_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWOPERATOR_HPP_

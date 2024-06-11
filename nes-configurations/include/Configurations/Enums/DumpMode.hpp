@@ -19,14 +19,14 @@
 
 namespace NES::QueryCompilation {
 enum class DumpMode : uint8_t {
-    // Disables all dumping
-    NONE,
-    // Dumps intermediate representations to console, std:out
-    CONSOLE,
-    // Dumps intermediate representations to file
-    FILE,
-    // Dumps intermediate representations to console and file
-    FILE_AND_CONSOLE
+  // Disables all dumping
+  NONE,
+  // Dumps intermediate representations to console, std:out
+  CONSOLE,
+  // Dumps intermediate representations to file
+  FILE,
+  // Dumps intermediate representations to console and file
+  FILE_AND_CONSOLE
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DUMPMODE_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DUMPMODE_HPP_

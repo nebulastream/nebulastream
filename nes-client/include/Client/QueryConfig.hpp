@@ -24,24 +24,25 @@ namespace NES::Client {
  * @brief Interface to set configuration parameters for a query.
  */
 class QueryConfig {
-  public:
-    explicit QueryConfig(Optimizer::PlacementStrategy placementType = Optimizer::PlacementStrategy::BottomUp);
+ public:
+  explicit QueryConfig(Optimizer::PlacementStrategy placementType =
+                           Optimizer::PlacementStrategy::BottomUp);
 
-    /**
-     * @brief Returns the placement type.
-     * @return PlacementStrategy
-     */
-    Optimizer::PlacementStrategy getPlacementType() const;
+  /**
+   * @brief Returns the placement type.
+   * @return PlacementStrategy
+   */
+  Optimizer::PlacementStrategy getPlacementType() const;
 
-    /**
-     * @brief Sets the placement type
-     * @param placementType
-     */
-    void setPlacementType(Optimizer::PlacementStrategy placementType);
+  /**
+   * @brief Sets the placement type
+   * @param placementType
+   */
+  void setPlacementType(Optimizer::PlacementStrategy placementType);
 
-  private:
-    Optimizer::PlacementStrategy placementType;
+ private:
+  Optimizer::PlacementStrategy placementType;
 };
-}// namespace NES::Client
+}  // namespace NES::Client
 
-#endif// NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
+#endif  // NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_

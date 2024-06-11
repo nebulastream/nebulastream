@@ -24,31 +24,30 @@ namespace NES::QueryCompilation {
  * @brief Provider to transform a sink descriptor to executable DataSink
  */
 class DataSinkProvider {
-  public:
-    /**
-     * @brief Factory method for creating a DataSinkProvider
-     * @return DataSinkProvider
-     */
-    static DataSinkProviderPtr create();
+ public:
+  /**
+   * @brief Factory method for creating a DataSinkProvider
+   * @return DataSinkProvider
+   */
+  static DataSinkProviderPtr create();
 
-    /**
-     * @brief Lowers a sink descriptor to a executable data sink.
-     * @param operatorId id of this sink
-     * @param sinkDescriptor the sink descriptor
-     * @param schema the schema of the sink
-     * @param nodeEngine the node engine
-     * @param querySubPlanId
-     * @return DataSinkPtr
-     */
-    virtual DataSinkPtr lower(OperatorId sinkId,
-                              SinkDescriptorPtr sinkDescriptor,
-                              SchemaPtr schema,
-                              Runtime::NodeEnginePtr nodeEngine,
-                              const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                              size_t numOfProducers);
+  /**
+   * @brief Lowers a sink descriptor to a executable data sink.
+   * @param operatorId id of this sink
+   * @param sinkDescriptor the sink descriptor
+   * @param schema the schema of the sink
+   * @param nodeEngine the node engine
+   * @param querySubPlanId
+   * @return DataSinkPtr
+   */
+  virtual DataSinkPtr lower(
+      OperatorId sinkId, SinkDescriptorPtr sinkDescriptor, SchemaPtr schema,
+      Runtime::NodeEnginePtr nodeEngine,
+      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+      size_t numOfProducers);
 
-    virtual ~DataSinkProvider() = default;
+  virtual ~DataSinkProvider() = default;
 };
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_

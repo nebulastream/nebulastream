@@ -17,10 +17,10 @@
 
 namespace NES {
 class GrpcLibraryInizializer {
-  public:
-    GrpcLibraryInizializer();
-    ~GrpcLibraryInizializer();
+ public:
+  GrpcLibraryInizializer();
+  ~GrpcLibraryInizializer();
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_

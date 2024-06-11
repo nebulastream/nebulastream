@@ -17,18 +17,18 @@
 namespace NES::Nautilus {
 class Any;
 typedef std::shared_ptr<Any> AnyPtr;
-}// namespace NES::Nautilus
+}  // namespace NES::Nautilus
 namespace NES::Nautilus::Tracing {
 
 /**
  * @brief Captures a constant value in the trace.
  */
 class ConstantValue {
-  public:
-    ConstantValue(const AnyPtr& anyPtr);
-    AnyPtr value;
-    friend std::ostream& operator<<(std::ostream& os, const ConstantValue& tag);
+ public:
+  ConstantValue(const AnyPtr& anyPtr);
+  AnyPtr value;
+  friend std::ostream& operator<<(std::ostream& os, const ConstantValue& tag);
 };
-}// namespace NES::Nautilus::Tracing
+}  // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_CONSTANTVALUE_HPP_
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_CONSTANTVALUE_HPP_

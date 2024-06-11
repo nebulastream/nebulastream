@@ -28,14 +28,17 @@
 
 namespace NES::TestUtils {
 
-/// utility method necessary if one wants to write a test that uses a mocked sink using a test sink descriptor
+/// utility method necessary if one wants to write a test that uses a mocked
+/// sink using a test sink descriptor
 inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
-    QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
-    auto phaseProvider = std::make_shared<TestPhaseProvider>();
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    return QueryCompilation::NautilusQueryCompiler::create(options, phaseProvider);
+    QueryCompilation::QueryCompilerOptionsPtr options =
+        QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
+  auto phaseProvider = std::make_shared<TestPhaseProvider>();
+  auto cppCompiler = Compiler::CPPCompiler::create();
+  return QueryCompilation::NautilusQueryCompiler::create(options,
+                                                         phaseProvider);
 }
 
-}// namespace NES::TestUtils
+}  // namespace NES::TestUtils
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERYCOMPILER_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERYCOMPILER_HPP_

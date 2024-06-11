@@ -22,16 +22,16 @@ namespace NES {
  * @brief This method collects the call stacks and prints it
  */
 std::string collectAndPrintStacktrace() {
-    backward::StackTrace stackTrace;
-    backward::Printer printer;
-    stackTrace.load_here(CALLSTACK_MAX_SIZE);
-    printer.object = true;
-    printer.color_mode = backward::ColorMode::always;
-    std::stringbuf buffer;
-    std::ostream os(&buffer);
-    printer.print(stackTrace, os);
-    NES_ERROR("Stacktrace:\n {}", buffer.str());
-    return buffer.str();
+  backward::StackTrace stackTrace;
+  backward::Printer printer;
+  stackTrace.load_here(CALLSTACK_MAX_SIZE);
+  printer.object = true;
+  printer.color_mode = backward::ColorMode::always;
+  std::stringbuf buffer;
+  std::ostream os(&buffer);
+  printer.print(stackTrace, os);
+  NES_ERROR("Stacktrace:\n {}", buffer.str());
+  return buffer.str();
 }
 /**
  * @brief This method only collects the call stacks
@@ -40,15 +40,15 @@ std::string collectAndPrintStacktrace() {
  * to avoid duplicate printing of the stack
  */
 std::string collectStacktrace() {
-    backward::StackTrace stackTrace;
-    backward::Printer printer;
-    stackTrace.load_here(CALLSTACK_MAX_SIZE);
-    printer.object = true;
-    printer.color_mode = backward::ColorMode::always;
-    std::stringbuf buffer;
-    std::ostream os(&buffer);
-    printer.print(stackTrace, os);
-    return buffer.str();
+  backward::StackTrace stackTrace;
+  backward::Printer printer;
+  stackTrace.load_here(CALLSTACK_MAX_SIZE);
+  printer.object = true;
+  printer.color_mode = backward::ColorMode::always;
+  std::stringbuf buffer;
+  std::ostream os(&buffer);
+  printer.print(stackTrace, os);
+  return buffer.str();
 }
 
-}// namespace NES
+}  // namespace NES

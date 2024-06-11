@@ -21,21 +21,22 @@
 namespace NES {
 
 /**
- * @brief Union operator that Union two sources together. This operator behaves similar to the unionWith operator in RDBMS.
+ * @brief Union operator that Union two sources together. This operator behaves
+ * similar to the unionWith operator in RDBMS.
  */
 class LogicalUnionOperator : public LogicalBinaryOperator {
-  public:
-    explicit LogicalUnionOperator(OperatorId id);
-    ~LogicalUnionOperator() override = default;
+ public:
+  explicit LogicalUnionOperator(OperatorId id);
+  ~LogicalUnionOperator() override = default;
 
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
-    //infer schema of two child operators
-    bool inferSchema() override;
-    void inferInputOrigins() override;
-    void inferStringSignature() override;
-    OperatorPtr copy() override;
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
+  std::string toString() const override;
+  // infer schema of two child operators
+  bool inferSchema() override;
+  void inferInputOrigins() override;
+  void inferStringSignature() override;
+  OperatorPtr copy() override;
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNIONOPERATOR_HPP_
+}  // namespace NES
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNIONOPERATOR_HPP_

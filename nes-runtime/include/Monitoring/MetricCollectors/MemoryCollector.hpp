@@ -18,42 +18,45 @@
 namespace NES::Monitoring {
 
 /**
- * The MemoryCollector class enables measuring and writing records of class Metrics/Gauge/MemoryMetrics into a TupleBuffer.
+ * The MemoryCollector class enables measuring and writing records of class
+ * Metrics/Gauge/MemoryMetrics into a TupleBuffer.
  */
 class MemoryCollector : public MetricCollector {
-  public:
-    explicit MemoryCollector();
+ public:
+  explicit MemoryCollector();
 
-    /**
-     * @brief Returns the type of metric collector
-     * @return the metric collector type
-     */
-    MetricCollectorType getType() override;
+  /**
+   * @brief Returns the type of metric collector
+   * @return the metric collector type
+   */
+  MetricCollectorType getType() override;
 
-    /**
-     * @brief Fill a buffer with a given metric.
-     * @param tupleBuffer The tuple buffer
-     * @return True if successful, else false
-     */
-    bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
+  /**
+   * @brief Fill a buffer with a given metric.
+   * @param tupleBuffer The tuple buffer
+   * @return True if successful, else false
+   */
+  bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
 
-    /**
-     * @brief Return the schema representing the metrics gathered by the collector.
-     * @return The schema
-     */
-    SchemaPtr getSchema() override;
+  /**
+   * @brief Return the schema representing the metrics gathered by the
+   * collector.
+   * @return The schema
+   */
+  SchemaPtr getSchema() override;
 
-    /**
-     * @brief Read the Memory metrics based on the underlying utility systems reader and return the metrics.
-     * @return The metrics object
-     */
-    const MetricPtr readMetric() const override;
+  /**
+   * @brief Read the Memory metrics based on the underlying utility systems
+   * reader and return the metrics.
+   * @return The metrics object
+   */
+  const MetricPtr readMetric() const override;
 
-  private:
-    AbstractSystemResourcesReaderPtr resourceReader;
-    SchemaPtr schema;
+ private:
+  AbstractSystemResourcesReaderPtr resourceReader;
+  SchemaPtr schema;
 };
 
 using MemoryCollectorPtr = std::shared_ptr<MemoryCollector>;
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring

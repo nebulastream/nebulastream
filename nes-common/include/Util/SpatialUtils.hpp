@@ -28,12 +28,12 @@ namespace NES::SpatialUtils {
 double const earthRadiusMeters = 6378137.0;
 
 /**
-* @brief converts an angle in degrees to radians
-* @param degrees is the angle in degrees
-* @return the angle in radians
-*/
+ * @brief converts an angle in degrees to radians
+ * @param degrees is the angle in degrees
+ * @return the angle in radians
+ */
 double degreesToRadians(double degrees);
 
-}// namespace NES::SpatialUtils
+}  // namespace NES::SpatialUtils
 
-#endif// NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_

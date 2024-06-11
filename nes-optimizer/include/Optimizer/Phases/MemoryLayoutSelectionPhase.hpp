@@ -23,60 +23,66 @@ namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-}// namespace NES
+}  // namespace NES
 
 namespace NES::Optimizer {
 
 class MemoryLayoutSelectionPhase;
-using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
+using MemoryLayoutSelectionPhasePtr =
+    std::shared_ptr<MemoryLayoutSelectionPhase>;
 
 /**
- * @brief This optimization phase selects a memory layout for a particular query.
- * To this end, it traverses all operators in a query plan and sets the selected memory layout information to the schema.
- * Currently the phase supports two MemoryLayoutPolicies:
+ * @brief This optimization phase selects a memory layout for a particular
+ * query. To this end, it traverses all operators in a query plan and sets the
+ * selected memory layout information to the schema. Currently the phase
+ * supports two MemoryLayoutPolicies:
  * 1. FORCE_ROW_LAYOUT:
  *      This policy enforces a row layout for all operators within an query.
  * 2. FORCE_COLUMN_LAYOUT (experimental):
  *      This policy enforces a column layout for all operators within an query.
  *
- * This phase can't guarantee that a selected layout is really executable, as currently not all data sources support the columnar layout.
- * This would result in failed queryIdAndCatalogEntryMapping at the worker side.
- * Therefore the column layout is currently only experimental.
+ * This phase can't guarantee that a selected layout is really executable, as
+ * currently not all data sources support the columnar layout. This would result
+ * in failed queryIdAndCatalogEntryMapping at the worker side. Therefore the
+ * column layout is currently only experimental.
  */
 class MemoryLayoutSelectionPhase {
-  public:
-    /**
-     * @brief Represents a particular MemoryLayoutPolicy to select different strategies.
-     */
+ public:
+  /**
+   * @brief Represents a particular MemoryLayoutPolicy to select different
+   * strategies.
+   */
 
-    /**
-     * @brief Method for creating a new MemoryLayoutSelectionPhase requires to pass the memory layout policy
-     * @param policy to select the memory layout for a query
-     * @return MemoryLayoutSelectionPhasePtr
-     */
-    static MemoryLayoutSelectionPhasePtr create(MemoryLayoutPolicy policy);
+  /**
+   * @brief Method for creating a new MemoryLayoutSelectionPhase requires to
+   * pass the memory layout policy
+   * @param policy to select the memory layout for a query
+   * @return MemoryLayoutSelectionPhasePtr
+   */
+  static MemoryLayoutSelectionPhasePtr create(MemoryLayoutPolicy policy);
 
-    /**
-     * @brief Selects the memory layout for all operators within an query.
-     * @param queryPlan : the input query plan
-     */
-    QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
+  /**
+   * @brief Selects the memory layout for all operators within an query.
+   * @param queryPlan : the input query plan
+   */
+  QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
 
-  private:
-    /**
-     * @brief Constructor for MemoryLayoutSelectionPhase
-     * @param policy to select the memory layout for a query
-     */
-    MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy);
+ private:
+  /**
+   * @brief Constructor for MemoryLayoutSelectionPhase
+   * @param policy to select the memory layout for a query
+   */
+  MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy);
 
-  private:
-    MemoryLayoutPolicy policy;
+ private:
+  MemoryLayoutPolicy policy;
 };
 
-static const std::map<std::string, MemoryLayoutPolicy> stringToMemoryLayoutPolicy{
-    {"FORCE_ROW_LAYOUT", MemoryLayoutPolicy::FORCE_ROW_LAYOUT},
-    {"FORCE_COLUMN_LAYOUT", MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}};
+static const std::map<std::string, MemoryLayoutPolicy>
+    stringToMemoryLayoutPolicy{
+        {"FORCE_ROW_LAYOUT", MemoryLayoutPolicy::FORCE_ROW_LAYOUT},
+        {"FORCE_COLUMN_LAYOUT", MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}};
 
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_

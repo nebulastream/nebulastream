@@ -23,37 +23,44 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief Limit operator handler to manage the global state of a limit operator
  */
-class LimitOperatorHandler : public Runtime::Execution::OperatorHandler,
-                             public ::NES::detail::virtual_enable_shared_from_this<LimitOperatorHandler, false> {
-  public:
-    /**
-     * @brief Creates the operator handler.
-     */
-    explicit LimitOperatorHandler(const uint64_t limit) : limit(limit){};
-    void start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) { NES_DEBUG("start LimitOperatorHandler"); }
+class LimitOperatorHandler
+    : public Runtime::Execution::OperatorHandler,
+      public ::NES::detail::virtual_enable_shared_from_this<
+          LimitOperatorHandler, false> {
+ public:
+  /**
+   * @brief Creates the operator handler.
+   */
+  explicit LimitOperatorHandler(const uint64_t limit) : limit(limit){};
+  void start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
+    NES_DEBUG("start LimitOperatorHandler");
+  }
 
-    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
-        NES_DEBUG("shutdown LimitOperatorHandler: {}", queryTerminationType);
-    }
-    const uint64_t limit;
-    std::atomic<uint64_t> counter = 0;
+  void stop(Runtime::QueryTerminationType queryTerminationType,
+            Runtime::Execution::PipelineExecutionContextPtr) {
+    NES_DEBUG("shutdown LimitOperatorHandler: {}", queryTerminationType);
+  }
+  const uint64_t limit;
+  std::atomic<uint64_t> counter = 0;
 };
 
 /**
- * @brief Limit operator that limits the number of records returned by the query.
+ * @brief Limit operator that limits the number of records returned by the
+ * query.
  */
 class Limit : public ExecutableOperator {
-  public:
-    /**
-     * @brief Creates a limit operator
-     * @param limitRecords number of records to limit
-     */
-    explicit Limit(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex){};
-    void execute(ExecutionContext& ctx, Record& record) const override;
+ public:
+  /**
+   * @brief Creates a limit operator
+   * @param limitRecords number of records to limit
+   */
+  explicit Limit(const uint64_t operatorHandlerIndex)
+      : operatorHandlerIndex(operatorHandlerIndex){};
+  void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
-    const uint64_t operatorHandlerIndex;
+ private:
+  const uint64_t operatorHandlerIndex;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_LIMIT_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_LIMIT_HPP_

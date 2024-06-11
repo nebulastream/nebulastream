@@ -29,90 +29,105 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class MapPythonUDFQueryExecutionTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("MapPythonUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup MapPythonUDFQueryExecutionTest test class.");
-    }
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseIntegrationTest::SetUp();
-        NES_DEBUG("Setting up Nautilus Compiler");
-        executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(dumpMode);
-    }
+ public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("MapPythonUDFQueryExecutionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_DEBUG(
+        "QueryExecutionTest: Setup MapPythonUDFQueryExecutionTest test class.");
+  }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseIntegrationTest::SetUp();
+    NES_DEBUG("Setting up Nautilus Compiler");
+    executionEngine =
+        std::make_shared<NES::Testing::TestExecutionEngine>(dumpMode);
+  }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override {
-        Testing::BaseIntegrationTest::TearDown();
-        NES_DEBUG("QueryExecutionTest: Tear down MapPythonUDFQueryExecutionTest test case.");
-        ASSERT_TRUE(executionEngine->stop());
-    }
+  /* Will be called before a test is executed. */
+  void TearDown() override {
+    Testing::BaseIntegrationTest::TearDown();
+    NES_DEBUG(
+        "QueryExecutionTest: Tear down MapPythonUDFQueryExecutionTest test "
+        "case.");
+    ASSERT_TRUE(executionEngine->stop());
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("MapPythonUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_DEBUG(
+        "MapPythonUDFQueryExecutionTest: Tear down QueryExecutionTest test "
+        "class.");
+  }
 
-    std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
-    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
+  std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
+  static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId =
+      INVALID_DECOMPOSED_QUERY_PLAN_ID;
+  static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
 constexpr auto numberOfRecords = 10;
 constexpr auto udfIncrement = 10;
 
 /**
-* This helper function fills a buffer with test data
-*/
+ * This helper function fills a buffer with test data
+ */
 void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
-    NES_DEBUG("Filling tuple buffer with test data")
-    for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++) {
-        buf[recordIndex][0].write<int32_t>(recordIndex);
-    }
-    buf.setNumberOfTuples(numberOfRecords);
+  NES_DEBUG("Filling tuple buffer with test data")
+  for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++) {
+    buf[recordIndex][0].write<int32_t>(recordIndex);
+  }
+  buf.setNumberOfTuples(numberOfRecords);
 }
 
 /**
-* @brief Test simple UDF with integer objects as input and output (IntegerMapFunction<Integer, Integer>)
-* The UDF increments incoming tuples by 10.
-*/
+ * @brief Test simple UDF with integer objects as input and output
+ * (IntegerMapFunction<Integer, Integer>) The UDF increments incoming tuples
+ * by 10.
+ */
 TEST_F(MapPythonUDFQueryExecutionTest, MapPythonUdf) {
-    auto schema = Schema::create()->addField("id", BasicType::INT32);
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
-    auto testSink = executionEngine->createDataSink(schema);
-    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+  auto schema = Schema::create()->addField("id", BasicType::INT32);
+  auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
+  auto testSink = executionEngine->createDataSink(schema);
+  auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    auto functionName = "integer_test";
-    auto functionString = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
+  auto functionName = "integer_test";
+  auto functionString = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
 
-    auto pythonUDFDescriptor = Catalogs::UDF::PythonUDFDescriptorBuilder{}
-                                   .setFunctionName(functionName)
-                                   .setFunctionString(functionString)
-                                   .setOutputSchema(outputSchema)
-                                   .build();
+  auto pythonUDFDescriptor = Catalogs::UDF::PythonUDFDescriptorBuilder{}
+                                 .setFunctionName(functionName)
+                                 .setFunctionString(functionString)
+                                 .setOutputSchema(outputSchema)
+                                 .build();
 
-    NES_DEBUG("Set up Descriptor");
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor).mapUDF(pythonUDFDescriptor).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           query.getQueryPlan()->getRootOperators());
-    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
-    auto source = executionEngine->getDataSource(plan, 0);
-    NES_DEBUG("submitted query and got source");
-    ASSERT_TRUE(!!source);
-    auto inputBuffer = executionEngine->getBuffer(schema);
-    fillBuffer(inputBuffer);
-    source->emitBuffer(inputBuffer);
-    testSink->waitTillCompleted();
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-    auto resultBuffer = testSink->getResultBuffer(0);
+  NES_DEBUG("Set up Descriptor");
+  auto testSinkDescriptor =
+      std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+  auto query = TestQuery::from(testSourceDescriptor)
+                   .mapUDF(pythonUDFDescriptor)
+                   .sink(testSinkDescriptor);
+  auto decomposedQueryPlan = DecomposedQueryPlan::create(
+      defaultDecomposedQueryPlanId, defaultSharedQueryId,
+      INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
+  auto plan = executionEngine->submitQuery(decomposedQueryPlan);
+  auto source = executionEngine->getDataSource(plan, 0);
+  NES_DEBUG("submitted query and got source");
+  ASSERT_TRUE(!!source);
+  auto inputBuffer = executionEngine->getBuffer(schema);
+  fillBuffer(inputBuffer);
+  source->emitBuffer(inputBuffer);
+  testSink->waitTillCompleted();
+  EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+  auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), numberOfRecords);
-    for (uint32_t recordIndex = 0u; recordIndex < numberOfRecords; ++recordIndex) {
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), recordIndex + udfIncrement);
-    }
-    ASSERT_TRUE(executionEngine->stopQuery(plan));
-    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+  EXPECT_EQ(resultBuffer.getNumberOfTuples(), numberOfRecords);
+  for (uint32_t recordIndex = 0u; recordIndex < numberOfRecords;
+       ++recordIndex) {
+    EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(),
+              recordIndex + udfIncrement);
+  }
+  ASSERT_TRUE(executionEngine->stopQuery(plan));
+  ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+#endif  // NAUTILUS_PYTHON_UDF_ENABLED

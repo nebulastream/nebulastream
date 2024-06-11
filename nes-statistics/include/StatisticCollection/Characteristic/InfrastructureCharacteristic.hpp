@@ -19,53 +19,55 @@
 namespace NES::Statistic {
 
 /**
- * @brief Represents an infrastructure characteristic that results in collecting statistics for a given node/worker
+ * @brief Represents an infrastructure characteristic that results in collecting
+ * statistics for a given node/worker
  */
 class InfrastructureStatistic : public Characteristic {
-  public:
-    /**
-     * @brief Creates a InfrastructureStatistic
-     * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
-     * @param nodeId: Id of the node to collect the statistic
-     * @return CharacteristicPtr
-     */
-    static CharacteristicPtr create(MetricPtr type, WorkerId nodeId);
+ public:
+  /**
+   * @brief Creates a InfrastructureStatistic
+   * @param type: What type of metric, i.e., selectivity, cardinality, data
+   * distribution, ...
+   * @param nodeId: Id of the node to collect the statistic
+   * @return CharacteristicPtr
+   */
+  static CharacteristicPtr create(MetricPtr type, WorkerId nodeId);
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if equal otherwise false
-     */
-    bool operator==(const Characteristic& rhs) const override;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if equal otherwise false
+   */
+  bool operator==(const Characteristic& rhs) const override;
 
-    /**
-     * @brief Implementing a hash method
-     * @return Hash
-     */
-    size_t hash() const override;
+  /**
+   * @brief Implementing a hash method
+   * @return Hash
+   */
+  size_t hash() const override;
 
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    std::string toString() const override;
+  /**
+   * @brief Creates a string representation
+   * @return std::string
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief Gets the nodeId
-     * @return WorkerId
-     */
-    WorkerId getNodeId() const;
+  /**
+   * @brief Gets the nodeId
+   * @return WorkerId
+   */
+  WorkerId getNodeId() const;
 
-  private:
-    /**
-     * @brief Creates an InfrastructureCharacteristic
-     * @param type
-     * @param nodeId
-     */
-    InfrastructureStatistic(const MetricPtr type, const WorkerId nodeId);
+ private:
+  /**
+   * @brief Creates an InfrastructureCharacteristic
+   * @param type
+   * @param nodeId
+   */
+  InfrastructureStatistic(const MetricPtr type, const WorkerId nodeId);
 
-    WorkerId nodeId;
+  WorkerId nodeId;
 };
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_
+#endif  // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_

@@ -21,10 +21,11 @@
 
 namespace NES::TestUtils {
 class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
-  public:
-    QueryCompilation::LowerToExecutableQueryPlanPhasePtr
-    createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool) override;
+ public:
+  QueryCompilation::LowerToExecutableQueryPlanPhasePtr
+  createLowerToExecutableQueryPlanPhase(
+      QueryCompilation::QueryCompilerOptionsPtr options, bool) override;
 };
-}// namespace NES::TestUtils
+}  // namespace NES::TestUtils
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_

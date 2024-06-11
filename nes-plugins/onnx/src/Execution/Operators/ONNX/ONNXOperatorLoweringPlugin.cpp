@@ -23,53 +23,60 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class ONNXOperatorLoweringPlugin : public QueryCompilation::NautilusOperatorLoweringPlugin {
-  public:
-    ONNXOperatorLoweringPlugin() { NES_INFO("Load ONNXOperatorLoweringPlugin"); }
+class ONNXOperatorLoweringPlugin
+    : public QueryCompilation::NautilusOperatorLoweringPlugin {
+ public:
+  ONNXOperatorLoweringPlugin() { NES_INFO("Load ONNXOperatorLoweringPlugin"); }
 
-    std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
-    lower(const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) override {
-        if (!physicalOperator->instanceOf<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>()) {
-            return {};
-        }
-        NES_INFO("Lower infer model operator to ONNX operator");
-        auto inferModelOperator = physicalOperator->as<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>();
-        auto model = inferModelOperator->getModel();
-        // Only accept ONNX Models (.onnx file suffix)
-        if (!model.ends_with(".onnx")) {
-            NES_DEBUG("Model {} is not a ONNX model", model);
-            return {};
-        }
-
-        //Fetch the name of input fields
-        std::vector<std::string> inputFields;
-        for (const auto& inputField : inferModelOperator->getInputFields()) {
-            auto fieldAccessExpression = inputField->as<FieldAccessExpressionNode>();
-            inputFields.push_back(fieldAccessExpression->getFieldName());
-        }
-
-        //Fetch the name of output fields
-        std::vector<std::string> outputFields;
-        for (const auto& outputField : inferModelOperator->getOutputFields()) {
-            auto fieldAccessExpression = outputField->as<FieldAccessExpressionNode>();
-            outputFields.push_back(fieldAccessExpression->getFieldName());
-        }
-
-        //build the handler to invoke model during execution
-        auto handler = std::make_shared<Runtime::Execution::Operators::ONNXInferenceOperatorHandler>(model);
-        operatorHandlers.push_back(handler);
-        auto indexForThisHandler = operatorHandlers.size() - 1;
-
-        //build nautilus infer model operator
-        return std::make_shared<Runtime::Execution::Operators::ONNXInferenceOperator>(indexForThisHandler,
-                                                                                      inputFields,
-                                                                                      outputFields);
+  std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr> lower(
+      const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr&
+          physicalOperator,
+      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+      override {
+    if (!physicalOperator->instanceOf<QueryCompilation::PhysicalOperators::
+                                          PhysicalInferModelOperator>()) {
+      return {};
     }
+    NES_INFO("Lower infer model operator to ONNX operator");
+    auto inferModelOperator = physicalOperator->as<
+        QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>();
+    auto model = inferModelOperator->getModel();
+    // Only accept ONNX Models (.onnx file suffix)
+    if (!model.ends_with(".onnx")) {
+      NES_DEBUG("Model {} is not a ONNX model", model);
+      return {};
+    }
+
+    // Fetch the name of input fields
+    std::vector<std::string> inputFields;
+    for (const auto& inputField : inferModelOperator->getInputFields()) {
+      auto fieldAccessExpression = inputField->as<FieldAccessExpressionNode>();
+      inputFields.push_back(fieldAccessExpression->getFieldName());
+    }
+
+    // Fetch the name of output fields
+    std::vector<std::string> outputFields;
+    for (const auto& outputField : inferModelOperator->getOutputFields()) {
+      auto fieldAccessExpression = outputField->as<FieldAccessExpressionNode>();
+      outputFields.push_back(fieldAccessExpression->getFieldName());
+    }
+
+    // build the handler to invoke model during execution
+    auto handler = std::make_shared<
+        Runtime::Execution::Operators::ONNXInferenceOperatorHandler>(model);
+    operatorHandlers.push_back(handler);
+    auto indexForThisHandler = operatorHandlers.size() - 1;
+
+    // build nautilus infer model operator
+    return std::make_shared<
+        Runtime::Execution::Operators::ONNXInferenceOperator>(
+        indexForThisHandler, inputFields, outputFields);
+  }
 };
 
 // Register ONNX plugin
-[[maybe_unused]] static QueryCompilation::NautilusOperatorLoweringPluginRegistry::Add<ONNXOperatorLoweringPlugin>
-    ONNXOperatorLoweringPlugin;
+[[maybe_unused]] static QueryCompilation::
+    NautilusOperatorLoweringPluginRegistry::Add<ONNXOperatorLoweringPlugin>
+        ONNXOperatorLoweringPlugin;
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

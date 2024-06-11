@@ -20,47 +20,64 @@
 
 namespace NES::Windowing {
 
-CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(field) {
-    this->aggregationType = Type::Count;
+CountAggregationDescriptor::CountAggregationDescriptor(
+    FieldAccessExpressionNodePtr field)
+    : WindowAggregationDescriptor(field) {
+  this->aggregationType = Type::Count;
 }
-CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
+CountAggregationDescriptor::CountAggregationDescriptor(
+    ExpressionNodePtr field, ExpressionNodePtr asField)
     : WindowAggregationDescriptor(field, asField) {
-    this->aggregationType = Type::Count;
+  this->aggregationType = Type::Count;
 }
 
-WindowAggregationDescriptorPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
-                                                                  FieldAccessExpressionNodePtr asField) {
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
+WindowAggregationDescriptorPtr CountAggregationDescriptor::create(
+    FieldAccessExpressionNodePtr onField,
+    FieldAccessExpressionNodePtr asField) {
+  return std::make_shared<CountAggregationDescriptor>(
+      CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
 WindowAggregationDescriptorPtr CountAggregationDescriptor::on() {
-    auto countField = FieldAccessExpressionNode::create("count");
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
+  auto countField = FieldAccessExpressionNode::create("count");
+  return std::make_shared<CountAggregationDescriptor>(
+      CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
 void CountAggregationDescriptor::inferStamp(SchemaPtr schema) {
+  auto attributeNameResolver =
+      schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+  auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
 
-    auto attributeNameResolver = schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
+  // If on and as field name are different then append the attribute name
+  // resolver from on field to the as field
+  if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+    asField->as<FieldAccessExpressionNode>()->updateFieldName(
+        attributeNameResolver + asFieldName);
+  } else {
+    auto fieldName = asFieldName.substr(
+        asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    asField->as<FieldAccessExpressionNode>()->updateFieldName(
+        attributeNameResolver + fieldName);
+  }
 
-    //If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + asFieldName);
-    } else {
-        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + fieldName);
-    }
-
-    // a count aggregation is always on an uint 64
-    onField->setStamp(DataTypeFactory::createUInt64());
-    asField->setStamp(onField->getStamp());
+  // a count aggregation is always on an uint 64
+  onField->setStamp(DataTypeFactory::createUInt64());
+  asField->setStamp(onField->getStamp());
 }
 
 WindowAggregationDescriptorPtr CountAggregationDescriptor::copy() {
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+  return std::make_shared<CountAggregationDescriptor>(
+      CountAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
-DataTypePtr CountAggregationDescriptor::getInputStamp() { return DataTypeFactory::createUInt64(); }
-DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp() { return DataTypeFactory::createUInt64(); }
-DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp() { return DataTypeFactory::createUInt64(); }
+DataTypePtr CountAggregationDescriptor::getInputStamp() {
+  return DataTypeFactory::createUInt64();
+}
+DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp() {
+  return DataTypeFactory::createUInt64();
+}
+DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp() {
+  return DataTypeFactory::createUInt64();
+}
 
-}// namespace NES::Windowing
+}  // namespace NES::Windowing

@@ -36,9 +36,9 @@ using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
-}// namespace Execution
+}  // namespace Execution
 
-}// namespace Runtime
+}  // namespace Runtime
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
@@ -56,7 +56,7 @@ using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-}// namespace Join
+}  // namespace Join
 
 namespace Windowing {
 
@@ -67,12 +67,14 @@ class WindowOperatorHandler;
 using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
 
 class WatermarkStrategyDescriptor;
-using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
+using WatermarkStrategyDescriptorPtr =
+    std::shared_ptr<WatermarkStrategyDescriptor>;
 
 class WindowAggregationDescriptor;
-using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
+using WindowAggregationDescriptorPtr =
+    std::shared_ptr<WindowAggregationDescriptor>;
 
-}// namespace Windowing
+}  // namespace Windowing
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -116,19 +118,23 @@ class OperatorPipeline;
 using OperatorPipelinePtr = std::shared_ptr<OperatorPipeline>;
 
 class LowerLogicalToPhysicalOperators;
-using LowerLogicalToPhysicalOperatorsPtr = std::shared_ptr<LowerLogicalToPhysicalOperators>;
+using LowerLogicalToPhysicalOperatorsPtr =
+    std::shared_ptr<LowerLogicalToPhysicalOperators>;
 
 class PhysicalOperatorProvider;
 using PhysicalOperatorProviderPtr = std::shared_ptr<PhysicalOperatorProvider>;
 
 class GeneratableOperatorProvider;
-using GeneratableOperatorProviderPtr = std::shared_ptr<GeneratableOperatorProvider>;
+using GeneratableOperatorProviderPtr =
+    std::shared_ptr<GeneratableOperatorProvider>;
 
 class LowerPhysicalToGeneratableOperators;
-using LowerPhysicalToGeneratableOperatorsPtr = std::shared_ptr<LowerPhysicalToGeneratableOperators>;
+using LowerPhysicalToGeneratableOperatorsPtr =
+    std::shared_ptr<LowerPhysicalToGeneratableOperators>;
 
 class LowerToExecutableQueryPlanPhase;
-using LowerToExecutableQueryPlanPhasePtr = std::shared_ptr<LowerToExecutableQueryPlanPhase>;
+using LowerToExecutableQueryPlanPhasePtr =
+    std::shared_ptr<LowerToExecutableQueryPlanPhase>;
 
 class PipelineQueryPlan;
 using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
@@ -140,7 +146,8 @@ class BufferOptimizationPhase;
 using BufferOptimizationPhasePtr = std::shared_ptr<BufferOptimizationPhase>;
 
 class PredicationOptimizationPhase;
-using PredicationOptimizationPhasePtr = std::shared_ptr<PredicationOptimizationPhase>;
+using PredicationOptimizationPhasePtr =
+    std::shared_ptr<PredicationOptimizationPhase>;
 
 class PipeliningPhase;
 using PipeliningPhasePtr = std::shared_ptr<PipeliningPhase>;
@@ -158,7 +165,7 @@ namespace Phases {
 class PhaseFactory;
 using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 
-}// namespace Phases
+}  // namespace Phases
 
 namespace PhysicalOperators {
 class PhysicalOperator;
@@ -166,10 +173,10 @@ using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 
 class PhysicalCountMinBuildOperator;
 class PhysicalHyperLogLogBuildOperator;
-}// namespace PhysicalOperators
+}  // namespace PhysicalOperators
 
-}// namespace QueryCompilation
+}  // namespace QueryCompilation
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_

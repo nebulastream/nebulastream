@@ -27,80 +27,81 @@ using DataTypePtr = std::shared_ptr<DataType>;
  * @brief Base data type, which is the parent class for all other data types.
  */
 class DataType {
-  public:
-    virtual ~DataType() = default;
-    /**
-     * @brief Checks if this data type is Undefined.
-     */
-    [[nodiscard]] virtual bool isUndefined() const;
+ public:
+  virtual ~DataType() = default;
+  /**
+   * @brief Checks if this data type is Undefined.
+   */
+  [[nodiscard]] virtual bool isUndefined() const;
 
-    /**
+  /**
    * @brief Checks if this data type is Boolean.
    */
-    [[nodiscard]] virtual bool isBoolean() const;
+  [[nodiscard]] virtual bool isBoolean() const;
 
-    /**
-    * @brief Checks if this data type is Numeric.
-    */
-    [[nodiscard]] virtual bool isNumeric() const;
+  /**
+   * @brief Checks if this data type is Numeric.
+   */
+  [[nodiscard]] virtual bool isNumeric() const;
 
-    /**
-    * @brief Checks if this data type is Integer.
-    */
-    [[nodiscard]] virtual bool isInteger() const;
+  /**
+   * @brief Checks if this data type is Integer.
+   */
+  [[nodiscard]] virtual bool isInteger() const;
 
-    /**
-    * @brief Checks if this data type is Float.
-    */
-    [[nodiscard]] virtual bool isFloat() const;
+  /**
+   * @brief Checks if this data type is Float.
+   */
+  [[nodiscard]] virtual bool isFloat() const;
 
-    /**
-    * @brief Checks if this data type is ArrayType.
-    */
-    [[nodiscard]] virtual bool isArray() const;
+  /**
+   * @brief Checks if this data type is ArrayType.
+   */
+  [[nodiscard]] virtual bool isArray() const;
 
-    /**
-    * @brief Checks if this data type is ArrayType.
-    */
-    [[nodiscard]] virtual bool isCharArray() const;
+  /**
+   * @brief Checks if this data type is ArrayType.
+   */
+  [[nodiscard]] virtual bool isCharArray() const;
 
-    /**
-    * @brief Checks if this data type is Char.
-    */
-    [[nodiscard]] virtual bool isChar() const;
+  /**
+   * @brief Checks if this data type is Char.
+   */
+  [[nodiscard]] virtual bool isChar() const;
 
-    /**
-    * @brief Checks if this data type is Char.
-    */
-    [[nodiscard]] virtual bool isText() const;
+  /**
+   * @brief Checks if this data type is Char.
+   */
+  [[nodiscard]] virtual bool isText() const;
 
-    template<class DataType>
-    static std::shared_ptr<DataType> as(DataTypePtr ptr) {
-        return std::dynamic_pointer_cast<DataType>(ptr);
-    }
+  template <class DataType>
+  static std::shared_ptr<DataType> as(DataTypePtr ptr) {
+    return std::dynamic_pointer_cast<DataType>(ptr);
+  }
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return
-     */
-    virtual bool equals(DataTypePtr otherDataType) = 0;
+  /**
+   * @brief Checks if two data types are equal.
+   * @param otherDataType
+   * @return
+   */
+  virtual bool equals(DataTypePtr otherDataType) = 0;
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return DataTypePtr joined data type
-     */
-    virtual DataTypePtr join(DataTypePtr otherDataType) = 0;
+  /**
+   * @brief Calculates the joined data type between this data type and the
+   * other. If they have no possible joined data type, the coined type is
+   * Undefined.
+   * @param other data type
+   * @return DataTypePtr joined data type
+   */
+  virtual DataTypePtr join(DataTypePtr otherDataType) = 0;
 
-    /**
-     * @brief Returns a string representation of the data type.
-     * @return string
-     */
-    virtual std::string toString() = 0;
+  /**
+   * @brief Returns a string representation of the data type.
+   * @return string
+   */
+  virtual std::string toString() = 0;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_
+#endif  // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_

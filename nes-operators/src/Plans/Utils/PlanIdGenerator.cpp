@@ -17,18 +17,19 @@
 
 namespace NES {
 QueryId PlanIdGenerator::getNextQueryId() {
-    static std::atomic_uint64_t id = INITIAL_QUERY_ID.getRawValue();
-    return QueryId(id++);
+  static std::atomic_uint64_t id = INITIAL_QUERY_ID.getRawValue();
+  return QueryId(id++);
 }
 
 SharedQueryId PlanIdGenerator::getNextSharedQueryId() {
-    static std::atomic_uint64_t id = INITIAL_SHARED_QUERY_ID.getRawValue();
-    return SharedQueryId(id++);
+  static std::atomic_uint64_t id = INITIAL_SHARED_QUERY_ID.getRawValue();
+  return SharedQueryId(id++);
 }
 
 DecomposedQueryPlanId PlanIdGenerator::getNextDecomposedQueryPlanId() {
-    static std::atomic_uint64_t id = INITIAL_DECOMPOSED_QUERY_PLAN_ID.getRawValue();
-    return DecomposedQueryPlanId(id++);
+  static std::atomic_uint64_t id =
+      INITIAL_DECOMPOSED_QUERY_PLAN_ID.getRawValue();
+  return DecomposedQueryPlanId(id++);
 }
 
-}// namespace NES
+}  // namespace NES

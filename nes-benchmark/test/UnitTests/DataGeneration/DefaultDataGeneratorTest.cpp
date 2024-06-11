@@ -24,119 +24,138 @@
 
 namespace NES::Benchmark::DataGeneration {
 class DefaultDataGeneratorTest : public Testing::BaseIntegrationTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("DefaultDataGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DefaultDataGeneratorTest test class.");
-    }
+ public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("DefaultDataGeneratorTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup DefaultDataGeneratorTest test class.");
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseIntegrationTest::SetUp();
-        NES_INFO("Setup DefaultDataGeneratorTest test case.");
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseIntegrationTest::SetUp();
+    NES_INFO("Setup DefaultDataGeneratorTest test case.");
+  }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override {
-        NES_INFO("Tear down DefaultDataGeneratorTest test case.");
-        Testing::BaseIntegrationTest::TearDown();
-    }
+  /* Will be called before a test is executed. */
+  void TearDown() override {
+    NES_INFO("Tear down DefaultDataGeneratorTest test case.");
+    Testing::BaseIntegrationTest::TearDown();
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down DefaultDataGeneratorTest test class.");
+  }
 };
 
 const auto minValue = 0;
 const auto maxValue = 1000;
 
 /**
-     * @brief Testing if DefaultDataGenerator::getSchema() works by comparing versus a hardcoded truth
-     */
+ * @brief Testing if DefaultDataGenerator::getSchema() works by comparing versus
+ * a hardcoded truth
+ */
 TEST_F(DefaultDataGeneratorTest, getSchemaTest) {
-    auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
-    auto schemaDefault = defaultDataGenerator->getSchema();
+  auto defaultDataGenerator =
+      std::make_unique<DefaultDataGenerator>(minValue, maxValue);
+  auto schemaDefault = defaultDataGenerator->getSchema();
 
-    auto expectedSchema = NES::Schema::create()
-                              ->addField(createField("id", BasicType::UINT64))
-                              ->addField(createField("value", BasicType::UINT64))
-                              ->addField(createField("payload", BasicType::UINT64))
-                              ->addField(createField("timestamp", BasicType::UINT64));
+  auto expectedSchema =
+      NES::Schema::create()
+          ->addField(createField("id", BasicType::UINT64))
+          ->addField(createField("value", BasicType::UINT64))
+          ->addField(createField("payload", BasicType::UINT64))
+          ->addField(createField("timestamp", BasicType::UINT64));
 
-    ASSERT_TRUE(expectedSchema->equals(schemaDefault, true));
+  ASSERT_TRUE(expectedSchema->equals(schemaDefault, true));
 }
 
 /**
-     * @brief Testing if DefaultDataGenerator::getName() works by comparing versus a hardcoded truth
-     */
+ * @brief Testing if DefaultDataGenerator::getName() works by comparing versus a
+ * hardcoded truth
+ */
 TEST_F(DefaultDataGeneratorTest, getNameTest) {
-    auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
-    auto nameDefault = defaultDataGenerator->getName();
+  auto defaultDataGenerator =
+      std::make_unique<DefaultDataGenerator>(minValue, maxValue);
+  auto nameDefault = defaultDataGenerator->getName();
 
-    auto expectedName = "Uniform";
+  auto expectedName = "Uniform";
 
-    ASSERT_EQ(nameDefault, expectedName);
+  ASSERT_EQ(nameDefault, expectedName);
 }
 
 /**
-     * @brief Testing if DefaultDataGenerator::toString() works by comparing versus a hardcoded truth
-     */
+ * @brief Testing if DefaultDataGenerator::toString() works by comparing versus
+ * a hardcoded truth
+ */
 TEST_F(DefaultDataGeneratorTest, toStringTest) {
-    std::ostringstream oss;
+  std::ostringstream oss;
 
-    auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
-    auto stringDefault = defaultDataGenerator->toString();
+  auto defaultDataGenerator =
+      std::make_unique<DefaultDataGenerator>(minValue, maxValue);
+  auto stringDefault = defaultDataGenerator->toString();
 
-    oss << defaultDataGenerator->getName() << " (" << minValue << ", " << maxValue << ")";
-    auto expectedString = oss.str();
+  oss << defaultDataGenerator->getName() << " (" << minValue << ", " << maxValue
+      << ")";
+  auto expectedString = oss.str();
 
-    ASSERT_EQ(stringDefault, expectedString);
+  ASSERT_EQ(stringDefault, expectedString);
 }
 
 /**
-     * @brief Testing if DefaultDataGenerator::createData() works by creating tuples and then comparing the expected tupleBuffers
-     * with the created one's from the DefaultDataGenerator
-     */
+ * @brief Testing if DefaultDataGenerator::createData() works by creating tuples
+ * and then comparing the expected tupleBuffers with the created one's from the
+ * DefaultDataGenerator
+ */
 TEST_F(DefaultDataGeneratorTest, createDataTest) {
-    size_t numberOfBuffers = 10;
+  size_t numberOfBuffers = 10;
 
-    auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
-    auto bufferManager = std::make_shared<Runtime::BufferManager>();
-    defaultDataGenerator->setBufferManager(bufferManager);
-    auto dataDefault = defaultDataGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());
+  auto defaultDataGenerator =
+      std::make_unique<DefaultDataGenerator>(minValue, maxValue);
+  auto bufferManager = std::make_shared<Runtime::BufferManager>();
+  defaultDataGenerator->setBufferManager(bufferManager);
+  auto dataDefault = defaultDataGenerator->createData(
+      numberOfBuffers, bufferManager->getBufferSize());
 
-    std::vector<Runtime::TupleBuffer> expectedData;
-    expectedData.reserve(numberOfBuffers);
+  std::vector<Runtime::TupleBuffer> expectedData;
+  expectedData.reserve(numberOfBuffers);
 
-    auto memoryLayout = defaultDataGenerator->getMemoryLayout(bufferManager->getBufferSize());
+  auto memoryLayout =
+      defaultDataGenerator->getMemoryLayout(bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
-        Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
+  for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+    auto testBuffer =
+        Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        std::mt19937 generator(GENERATOR_SEED_DEFAULT);
-        std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
+    std::mt19937 generator(GENERATOR_SEED_DEFAULT);
+    std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue,
+                                                                   maxValue);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
-            auto value = uniformIntDistribution(generator);
-            testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-            testBuffer[curRecord]["value"].write<uint64_t>(value);
-            testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-            testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
-        }
-
-        testBuffer.setNumberOfTuples(testBuffer.getCapacity());
-        expectedData.emplace_back(bufferRef);
+    for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity();
+         ++curRecord) {
+      auto value = uniformIntDistribution(generator);
+      testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+      testBuffer[curRecord]["value"].write<uint64_t>(value);
+      testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+      testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
     }
 
-    ASSERT_EQ(dataDefault.size(), expectedData.size());
+    testBuffer.setNumberOfTuples(testBuffer.getCapacity());
+    expectedData.emplace_back(bufferRef);
+  }
 
-    for (uint64_t i = 0; i < dataDefault.size(); ++i) {
-        auto dataBuffer = dataDefault[i];
-        auto expectedBuffer = expectedData[i];
+  ASSERT_EQ(dataDefault.size(), expectedData.size());
 
-        ASSERT_EQ(dataBuffer.getBufferSize(), expectedBuffer.getBufferSize());
-        ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(), dataBuffer.getBufferSize()) == 0);
-    }
+  for (uint64_t i = 0; i < dataDefault.size(); ++i) {
+    auto dataBuffer = dataDefault[i];
+    auto expectedBuffer = expectedData[i];
+
+    ASSERT_EQ(dataBuffer.getBufferSize(), expectedBuffer.getBufferSize());
+    ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(),
+                       dataBuffer.getBufferSize()) == 0);
+  }
 }
-}//namespace NES::Benchmark::DataGeneration
+}  // namespace NES::Benchmark::DataGeneration

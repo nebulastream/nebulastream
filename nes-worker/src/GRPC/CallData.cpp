@@ -18,45 +18,45 @@
 namespace NES {
 
 CallData::CallData(WorkerRPCServer& service) : service(service) {
-    // Invoke the serving logic right away.
+  // Invoke the serving logic right away.
 }
 
 void CallData::proceed() {
-    // What we get from the client.
-    RegisterQueryRequest request;
-    //
-    //    // What we send back to the client.
-    RegisterQueryReply reply;
+  // What we get from the client.
+  RegisterQueryRequest request;
+  //
+  //    // What we send back to the client.
+  RegisterQueryReply reply;
 
-    ServerContext ctx;
-    grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder(&ctx);
+  ServerContext ctx;
+  grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder(&ctx);
 
-    if (status == CallStatus::CREATE) {
-        NES_DEBUG("RequestInSyncInCreate={}", request.DebugString());
-        // Make this instance progress to the PROCESS state.
-        status = CallStatus::PROCESS;
+  if (status == CallStatus::CREATE) {
+    NES_DEBUG("RequestInSyncInCreate={}", request.DebugString());
+    // Make this instance progress to the PROCESS state.
+    status = CallStatus::PROCESS;
 
-        // As part of the initial CREATE state, we *request* that the system
-        // start processing requests. In this request, "this" acts are
-        // the tag uniquely identifying the request (so that different CallData
-        // instances can serve different requests concurrently), in this case
-        // the memory address of this CallData instance.
-    } else if (status == CallStatus::PROCESS) {
-        NES_DEBUG("RequestInSyncInProcess={}", request.DebugString());
-        // Spawn a new CallData instance to serve new clients while we process
-        // the one for this CallData. The instance will deallocate itself as
-        // part of its FINISH state.
-        service.RegisterQuery(&ctx, &request, &reply);
+    // As part of the initial CREATE state, we *request* that the system
+    // start processing requests. In this request, "this" acts are
+    // the tag uniquely identifying the request (so that different CallData
+    // instances can serve different requests concurrently), in this case
+    // the memory address of this CallData instance.
+  } else if (status == CallStatus::PROCESS) {
+    NES_DEBUG("RequestInSyncInProcess={}", request.DebugString());
+    // Spawn a new CallData instance to serve new clients while we process
+    // the one for this CallData. The instance will deallocate itself as
+    // part of its FINISH state.
+    service.RegisterQuery(&ctx, &request, &reply);
 
-        // And we are done! Let the gRPC Runtime know we've finished, using the
-        // memory address of this instance as the uniquely identifying tag for
-        // the event.
-        status = CallStatus::FINISH;
-        responder.Finish(reply, Status::OK, this);
-    } else {
-        NES_DEBUG("RequestInSyncInFinish={}", request.DebugString());
-        NES_ASSERT(status == CallStatus::FINISH, "RequestInSyncInFinish failed");
-    }
+    // And we are done! Let the gRPC Runtime know we've finished, using the
+    // memory address of this instance as the uniquely identifying tag for
+    // the event.
+    status = CallStatus::FINISH;
+    responder.Finish(reply, Status::OK, this);
+  } else {
+    NES_DEBUG("RequestInSyncInFinish={}", request.DebugString());
+    NES_ASSERT(status == CallStatus::FINISH, "RequestInSyncInFinish failed");
+  }
 }
 
-}// namespace NES
+}  // namespace NES

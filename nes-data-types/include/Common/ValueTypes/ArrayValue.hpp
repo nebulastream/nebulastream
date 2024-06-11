@@ -22,21 +22,22 @@
 namespace NES {
 
 class [[nodiscard]] ArrayValue final : public ValueType {
-  public:
-    inline ArrayValue(DataTypePtr type, std::vector<std::string>&& values) noexcept
-        : ValueType(type), values(std::move(values)) {}
+ public:
+  inline ArrayValue(DataTypePtr type,
+                    std::vector<std::string>&& values) noexcept
+      : ValueType(type), values(std::move(values)) {}
 
-    ~ArrayValue() override = default;
+  ~ArrayValue() override = default;
 
-    /// @brief Returns a string representation of this value
-    [[nodiscard]] std::string toString() const noexcept override;
+  /// @brief Returns a string representation of this value
+  [[nodiscard]] std::string toString() const noexcept override;
 
-    /// @brief Checks if two values are equal
-    [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept override;
+  /// @brief Checks if two values are equal
+  [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept override;
 
-    std::vector<std::string> const values;
+  std::vector<std::string> const values;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_
+#endif  // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_ARRAYVALUE_HPP_

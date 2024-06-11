@@ -15,47 +15,52 @@
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 
 namespace NES::Nautilus::IR::Operations {
-ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
-                                       OperationIdentifier identifier,
-                                       std::vector<OperationWPtr> inputArguments,
-                                       Types::StampPtr resultType)
-    : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+ProxyCallOperation::ProxyCallOperation(
+    ProxyCallType proxyCallType, OperationIdentifier identifier,
+    std::vector<OperationWPtr> inputArguments, Types::StampPtr resultType)
+    : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType),
+      proxyCallType(proxyCallType),
       inputArguments(std::move(inputArguments)) {}
 
-ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
-                                       std::string functionSymbol,
-                                       void* functionPtr,
-                                       OperationIdentifier identifier,
-                                       std::vector<OperationWPtr> inputArguments,
-                                       Types::StampPtr resultType)
-    : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
-      mangedFunctionSymbol(functionSymbol), functionPtr(functionPtr), inputArguments(std::move(inputArguments)) {}
+ProxyCallOperation::ProxyCallOperation(
+    ProxyCallType proxyCallType, std::string functionSymbol, void* functionPtr,
+    OperationIdentifier identifier, std::vector<OperationWPtr> inputArguments,
+    Types::StampPtr resultType)
+    : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType),
+      proxyCallType(proxyCallType),
+      mangedFunctionSymbol(functionSymbol),
+      functionPtr(functionPtr),
+      inputArguments(std::move(inputArguments)) {}
 
-Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
+Operation::ProxyCallType ProxyCallOperation::getProxyCallType() {
+  return proxyCallType;
+}
 std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
-    std::vector<OperationPtr> args;
-    for (auto input : inputArguments) {
-        args.emplace_back(input.lock());
-    }
-    return args;
+  std::vector<OperationPtr> args;
+  for (auto input : inputArguments) {
+    args.emplace_back(input.lock());
+  }
+  return args;
 }
 
 std::string ProxyCallOperation::toString() {
-    std::string baseString = "";
-    if (!identifier.empty()) {
-        baseString = identifier + " = ";
+  std::string baseString = "";
+  if (!identifier.empty()) {
+    baseString = identifier + " = ";
+  }
+  baseString = baseString + getFunctionSymbol() + "(";
+  if (!inputArguments.empty()) {
+    baseString += inputArguments[0].lock()->getIdentifier();
+    for (int i = 1; i < (int)inputArguments.size(); ++i) {
+      baseString += ", " + inputArguments.at(i).lock()->getIdentifier();
     }
-    baseString = baseString + getFunctionSymbol() + "(";
-    if (!inputArguments.empty()) {
-        baseString += inputArguments[0].lock()->getIdentifier();
-        for (int i = 1; i < (int) inputArguments.size(); ++i) {
-            baseString += ", " + inputArguments.at(i).lock()->getIdentifier();
-        }
-    }
-    return baseString + ")";
+  }
+  return baseString + ")";
 }
-std::string ProxyCallOperation::getFunctionSymbol() { return mangedFunctionSymbol; }
+std::string ProxyCallOperation::getFunctionSymbol() {
+  return mangedFunctionSymbol;
+}
 
 void* ProxyCallOperation::getFunctionPtr() { return functionPtr; }
 
-}// namespace NES::Nautilus::IR::Operations
+}  // namespace NES::Nautilus::IR::Operations

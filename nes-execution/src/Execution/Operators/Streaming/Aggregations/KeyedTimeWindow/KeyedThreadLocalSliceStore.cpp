@@ -25,14 +25,19 @@ KeyedThreadLocalSliceStore::KeyedThreadLocalSliceStore(uint64_t keySize,
                                                        uint64_t windowSize,
                                                        uint64_t windowSlide,
                                                        uint64_t numberOfKeys)
-    : ThreadLocalSliceStore(windowSize, windowSlide), keySize(keySize), valueSize(valueSize), numberOfKeys(numberOfKeys) {}
+    : ThreadLocalSliceStore(windowSize, windowSlide),
+      keySize(keySize),
+      valueSize(valueSize),
+      numberOfKeys(numberOfKeys) {}
 
-KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
-    // allocate hash map
-    NES_DEBUG("allocateNewSlice {}-{}", startTs, endTs);
-    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
-    auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
-    return std::make_unique<KeyedSlice>(std::move(hashMap), startTs, endTs);
+KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs,
+                                                           uint64_t endTs) {
+  // allocate hash map
+  NES_DEBUG("allocateNewSlice {}-{}", startTs, endTs);
+  auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+  auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(
+      keySize, valueSize, numberOfKeys, std::move(allocator));
+  return std::make_unique<KeyedSlice>(std::move(hashMap), startTs, endTs);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

@@ -19,23 +19,26 @@
 
 namespace NES::Runtime::Execution::Aggregation {
 class AvgAggregationFunction : public AggregationFunction {
+ public:
+  AvgAggregationFunction(
+      const PhysicalTypePtr& inputType, const PhysicalTypePtr& resultType,
+      const Expressions::ExpressionPtr& inputExpression,
+      const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
-  public:
-    AvgAggregationFunction(const PhysicalTypePtr& inputType,
-                           const PhysicalTypePtr& resultType,
-                           const Expressions::ExpressionPtr& inputExpression,
-                           const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
+  void lift(Nautilus::Value<Nautilus::MemRef> state,
+            Nautilus::Record& inputRecord) override;
+  void combine(Nautilus::Value<Nautilus::MemRef> state1,
+               Nautilus::Value<Nautilus::MemRef> state2) override;
+  void lower(Nautilus::Value<Nautilus::MemRef> state,
+             Nautilus::Record& resultRecord) override;
+  void reset(Nautilus::Value<Nautilus::MemRef> state) override;
+  uint64_t getSize() override;
 
-    void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) override;
-    void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
-    void lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRecord) override;
-    void reset(Nautilus::Value<Nautilus::MemRef> state) override;
-    uint64_t getSize() override;
-
-  private:
-    PhysicalTypePtr countType;
-    Nautilus::Value<Nautilus::MemRef> loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
+ private:
+  PhysicalTypePtr countType;
+  Nautilus::Value<Nautilus::MemRef> loadSumMemRef(
+      const Nautilus::Value<Nautilus::MemRef>& memref);
 };
-}// namespace NES::Runtime::Execution::Aggregation
+}  // namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_

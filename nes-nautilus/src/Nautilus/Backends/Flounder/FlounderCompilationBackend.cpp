@@ -18,16 +18,19 @@
 
 namespace NES::Nautilus::Backends::Flounder {
 
-std::unique_ptr<Executable>
-FlounderCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions&, const DumpHelper& dumpHelper) {
-    Timer timer("CompilationBasedPipelineExecutionEngine");
-    timer.start();
-    auto lp = Flounder::FlounderLoweringProvider();
-    auto executable = lp.lower(ir, dumpHelper);
-    timer.snapshot("Flounder generation");
-    return std::make_unique<FlounderExecutable>(std::move(executable));
+std::unique_ptr<Executable> FlounderCompilationBackend::compile(
+    std::shared_ptr<IR::IRGraph> ir, const CompilationOptions&,
+    const DumpHelper& dumpHelper) {
+  Timer timer("CompilationBasedPipelineExecutionEngine");
+  timer.start();
+  auto lp = Flounder::FlounderLoweringProvider();
+  auto executable = lp.lower(ir, dumpHelper);
+  timer.snapshot("Flounder generation");
+  return std::make_unique<FlounderExecutable>(std::move(executable));
 }
 
-[[maybe_unused]] static CompilationBackendRegistry::Add<FlounderCompilationBackend> flounderCompilerBackend("Flounder");
+[[maybe_unused]] static CompilationBackendRegistry::Add<
+    FlounderCompilationBackend>
+    flounderCompilerBackend("Flounder");
 
-}// namespace NES::Nautilus::Backends::Flounder
+}  // namespace NES::Nautilus::Backends::Flounder

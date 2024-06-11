@@ -28,51 +28,51 @@ class TensorflowAdapter;
 typedef std::shared_ptr<TensorflowAdapter> TensorflowAdapterPtr;
 
 class TensorflowAdapter {
-  public:
-    static TensorflowAdapterPtr create();
+ public:
+  static TensorflowAdapterPtr create();
 
-    TensorflowAdapter() = default;
+  TensorflowAdapter() = default;
 
-    ~TensorflowAdapter();
+  ~TensorflowAdapter();
 
-    /**
-     * @brief Initialize tensorflow model
-     * @param pathToModel file containing the serialized model
-     */
-    void initializeModel(std::string pathToModel);
+  /**
+   * @brief Initialize tensorflow model
+   * @param pathToModel file containing the serialized model
+   */
+  void initializeModel(std::string pathToModel);
 
-    /**
-     * @brief Add input for model inference
-     * @param index: location of the input value
-     * @param value: the input value
-     */
-    template<class T>
-    void addModelInput(int index, T value) {
-        ((T*) inputData)[index] = value;
-    };
+  /**
+   * @brief Add input for model inference
+   * @param index: location of the input value
+   * @param value: the input value
+   */
+  template <class T>
+  void addModelInput(int index, T value) {
+    ((T*)inputData)[index] = value;
+  };
 
-    /**
-     * @brief runs the tensorflow model of a single tuple
-     */
-    void infer();
+  /**
+   * @brief runs the tensorflow model of a single tuple
+   */
+  void infer();
 
-    /**
-     * @brief accesses the ith field of the output
-     * @param i index of the output value
-     * @return float value
-     */
-    float getResultAt(int i);
+  /**
+   * @brief accesses the ith field of the output
+   * @param i index of the output value
+   * @return float value
+   */
+  float getResultAt(int i);
 
-  private:
-    TfLiteInterpreter* interpreter{};
-    TfLiteTensor* inputTensor;
-    int tensorSize;
-    void* inputData{};
-    // TODO https://github.com/nebulastream/nebulastream/issues/3424
-    // Right now we only support 32-bit floats as output.
-    float* outputData{};
+ private:
+  TfLiteInterpreter* interpreter{};
+  TfLiteTensor* inputTensor;
+  int tensorSize;
+  void* inputData{};
+  // TODO https://github.com/nebulastream/nebulastream/issues/3424
+  // Right now we only support 32-bit floats as output.
+  float* outputData{};
 };
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWADAPTER_HPP_
+#endif  // NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWADAPTER_HPP_

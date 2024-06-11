@@ -21,48 +21,52 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical default source
+ * @brief Descriptor defining properties used for creating physical default
+ * source
  */
 class DefaultSourceDescriptor : public SourceDescriptor {
+ public:
+  static SourceDescriptorPtr create(SchemaPtr schema,
+                                    uint64_t numbersOfBufferToProduce,
+                                    uint64_t frequency);
+  static SourceDescriptorPtr create(SchemaPtr schema, std::string sourceName,
+                                    uint64_t numbersOfBufferToProduce,
+                                    uint64_t frequency);
 
-  public:
-    static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency);
-    static SourceDescriptorPtr
-    create(SchemaPtr schema, std::string sourceName, uint64_t numbersOfBufferToProduce, uint64_t frequency);
+  /**
+   * @brief Get number of buffers to be produced
+   */
+  uint64_t getNumbersOfBufferToProduce() const;
 
-    /**
-     * @brief Get number of buffers to be produced
-     */
-    uint64_t getNumbersOfBufferToProduce() const;
+  /**
+   * @brief Get the frequency to produce the buffers
+   */
+  std::chrono::milliseconds getSourceGatheringInterval() const;
 
-    /**
-     * @brief Get the frequency to produce the buffers
-     */
-    std::chrono::milliseconds getSourceGatheringInterval() const;
+  /**
+   * @brief Get the frequency as number of times units
+   */
+  uint64_t getSourceGatheringIntervalCount() const;
 
-    /**
-     * @brief Get the frequency as number of times units
-     */
-    uint64_t getSourceGatheringIntervalCount() const;
+  [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+  std::string toString() const override;
 
-    std::string toString() const override;
+  SourceDescriptorPtr copy() override;
 
-    SourceDescriptorPtr copy() override;
-
-  private:
-    explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency);
-    explicit DefaultSourceDescriptor(SchemaPtr schema,
-                                     std::string sourceName,
-                                     uint64_t numbersOfBufferToProduce,
-                                     uint64_t sourceGatheringInterval);
-    const uint64_t numbersOfBufferToProduce;
-    const std::chrono::milliseconds sourceGatheringInterval;
+ private:
+  explicit DefaultSourceDescriptor(SchemaPtr schema,
+                                   uint64_t numbersOfBufferToProduce,
+                                   uint64_t frequency);
+  explicit DefaultSourceDescriptor(SchemaPtr schema, std::string sourceName,
+                                   uint64_t numbersOfBufferToProduce,
+                                   uint64_t sourceGatheringInterval);
+  const uint64_t numbersOfBufferToProduce;
+  const std::chrono::milliseconds sourceGatheringInterval;
 };
 
 using DefaultSourceDescriptorPtr = std::shared_ptr<DefaultSourceDescriptor>;
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_DEFAULTSOURCEDESCRIPTOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_DEFAULTSOURCEDESCRIPTOR_HPP_

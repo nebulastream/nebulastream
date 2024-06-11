@@ -15,23 +15,27 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
 
-#include "Exceptions/RuntimeException.hpp"
 #include <string>
+
+#include "Exceptions/RuntimeException.hpp"
 namespace NES::Configurations {
 
 /**
- * @brief This exception is thrown when an error occurs during configuration processing.
+ * @brief This exception is thrown when an error occurs during configuration
+ * processing.
  */
 class ConfigurationException : public Exceptions::RuntimeException {
-  public:
-    /**
-     * @brief Construct a configuration exception from a message and include the current stack trace.
-     * @param message The exception message.
-     */
-    explicit ConfigurationException(const std::string& message,
-                                    std::string&& stacktrace = collectAndPrintStacktrace(),
-                                    std::source_location location = std::source_location::current());
+ public:
+  /**
+   * @brief Construct a configuration exception from a message and include the
+   * current stack trace.
+   * @param message The exception message.
+   */
+  explicit ConfigurationException(
+      const std::string& message,
+      std::string&& stacktrace = collectAndPrintStacktrace(),
+      std::source_location location = std::source_location::current());
 };
 
-}// namespace NES::Configurations
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
+}  // namespace NES::Configurations
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_

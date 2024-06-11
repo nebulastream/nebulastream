@@ -15,23 +15,27 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
 
-#include "Configurations/Validation/ConfigurationValidation.hpp"
 #include <string>
+
+#include "Configurations/Validation/ConfigurationValidation.hpp"
 
 namespace NES::Configurations {
 
 /**
-* @brief This class implements validation for parameters that should represent non-negative integers
-*/
+ * @brief This class implements validation for parameters that should represent
+ * non-negative integers
+ */
 class NumberValidation : public ConfigurationValidation {
-  public:
-    /**
-     * @brief Method to check the validity of a parameter as a non-negative integer
-     * @param number number to validate
-     * @return true if the parameter is a valid non-negative integer, false otherwise
-     */
-    bool isValid(const std::string& number) const override;
+ public:
+  /**
+   * @brief Method to check the validity of a parameter as a non-negative
+   * integer
+   * @param number number to validate
+   * @return true if the parameter is a valid non-negative integer, false
+   * otherwise
+   */
+  bool isValid(const std::string& number) const override;
 };
-}// namespace NES::Configurations
+}  // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_

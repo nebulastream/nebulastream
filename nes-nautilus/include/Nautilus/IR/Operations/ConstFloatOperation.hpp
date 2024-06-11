@@ -20,21 +20,22 @@
 namespace NES::Nautilus::IR::Operations {
 
 class ConstFloatOperation : public Operation {
-  public:
-    explicit ConstFloatOperation(OperationIdentifier identifier, double constantValue, Types::StampPtr stamp);
-    ~ConstFloatOperation() override = default;
+ public:
+  explicit ConstFloatOperation(OperationIdentifier identifier,
+                               double constantValue, Types::StampPtr stamp);
+  ~ConstFloatOperation() override = default;
 
-    double getValue();
+  double getValue();
 
-    template<class T>
-    T getFloatViaType();
+  template <class T>
+  T getFloatViaType();
 
-    std::string toString() override;
-    static bool classof(const Operation* Op);
+  std::string toString() override;
+  static bool classof(const Operation* Op);
 
-  private:
-    double constantValue;
+ private:
+  double constantValue;
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTFLOATOPERATION_HPP_
+}  // namespace NES::Nautilus::IR::Operations
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTFLOATOPERATION_HPP_

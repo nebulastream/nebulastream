@@ -17,56 +17,62 @@
 #include <Expressions/ExpressionNode.hpp>
 namespace NES {
 /**
- * @brief A case expression has at least one when expression and one default expression.
- * All when expressions are evaluated and the first one with a true condition is returned.
+ * @brief A case expression has at least one when expression and one default
+ * expression. All when expressions are evaluated and the first one with a true
+ * condition is returned.
  */
 class CaseExpressionNode : public ExpressionNode {
-  public:
-    explicit CaseExpressionNode(DataTypePtr stamp);
-    ~CaseExpressionNode() noexcept override = default;
+ public:
+  explicit CaseExpressionNode(DataTypePtr stamp);
+  ~CaseExpressionNode() noexcept override = default;
 
-    /**
-     * @brief Create a new Case expression node.
-     * @param whenExps : a vector of when expression nodes.
-     * @param defaultExp : the expression to select, if no when expression evaluates to a value
-     */
-    static ExpressionNodePtr create(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp);
+  /**
+   * @brief Create a new Case expression node.
+   * @param whenExps : a vector of when expression nodes.
+   * @param defaultExp : the expression to select, if no when expression
+   * evaluates to a value
+   */
+  static ExpressionNodePtr create(
+      std::vector<ExpressionNodePtr> const& whenExps,
+      ExpressionNodePtr const& defaultExp);
 
-    /**
-     * @brief set the children nodes of this expression.
-     * @param whenExps : a vector of when expression nodes.
-     * @param defaultExp : the expression to select, if no when expression evaluates to a value
-     */
-    void setChildren(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp);
+  /**
+   * @brief set the children nodes of this expression.
+   * @param whenExps : a vector of when expression nodes.
+   * @param defaultExp : the expression to select, if no when expression
+   * evaluates to a value
+   */
+  void setChildren(std::vector<ExpressionNodePtr> const& whenExps,
+                   ExpressionNodePtr const& defaultExp);
 
-    /**
-     * @brief gets the vector of when children.
-     */
-    std::vector<ExpressionNodePtr> getWhenChildren() const;
+  /**
+   * @brief gets the vector of when children.
+   */
+  std::vector<ExpressionNodePtr> getWhenChildren() const;
 
-    /**
-     * @brief gets the node representing the default child.
-     */
-    ExpressionNodePtr getDefaultExp() const;
+  /**
+   * @brief gets the node representing the default child.
+   */
+  ExpressionNodePtr getDefaultExp() const;
 
-    /**
-     * @brief Infers the stamp of this expression node.
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of this expression node.
+   * @param schema the current schema.
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
+  [[nodiscard]] bool equal(NodePtr const& rhs) const final;
+  [[nodiscard]] std::string toString() const final;
 
-    /**
-     * @brief Create a deep copy of this expression node.
-     * @return ExpressionNodePtr
-     */
-    ExpressionNodePtr copy() final;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() final;
 
-  protected:
-    explicit CaseExpressionNode(CaseExpressionNode* other);
+ protected:
+  explicit CaseExpressionNode(CaseExpressionNode* other);
 };
 
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_
+}  // namespace NES
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_

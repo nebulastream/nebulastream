@@ -30,87 +30,86 @@ namespace NES::Runtime {
  *    - no statistics are gathered
  */
 class ThreadPool {
-  public:
-    /**
-     * @brief default constructor
-     * @param nodeId the id of this node
-     * @param queryManager
-     * @param number of threads to use
-     * @param sourcePinningPositionList, a list of where to pin the
-     */
-    explicit ThreadPool(WorkerId nodeId,
-                        QueryManagerPtr queryManager,
-                        uint32_t numThreads,
-                        std::vector<BufferManagerPtr> bufferManagers,
-                        uint64_t numberOfBuffersPerWorker,
-                        HardwareManagerPtr hardwareManager,
-                        std::vector<uint64_t> workerPinningPositionList);
+ public:
+  /**
+   * @brief default constructor
+   * @param nodeId the id of this node
+   * @param queryManager
+   * @param number of threads to use
+   * @param sourcePinningPositionList, a list of where to pin the
+   */
+  explicit ThreadPool(WorkerId nodeId, QueryManagerPtr queryManager,
+                      uint32_t numThreads,
+                      std::vector<BufferManagerPtr> bufferManagers,
+                      uint64_t numberOfBuffersPerWorker,
+                      HardwareManagerPtr hardwareManager,
+                      std::vector<uint64_t> workerPinningPositionList);
 
-    /**
-     * @brief default destructor
-     */
-    ~ThreadPool();
+  /**
+   * @brief default destructor
+   */
+  ~ThreadPool();
 
-  public:
-    /**
-       * @brief stop the Thread pool
-       * 1.) check if thread pool is already running,
-       *    - if no, return false
-       *    - if yes set to running to false
-       * 2.) waking up all sleeping threads, during their next getWork,
-       * they will recognize that the execution should terminate and exit running routine
-       * 3.) join all threads, i.e., wait till all threads return
-       * @return indicate if stop succeed
-       */
-    bool stop();
+ public:
+  /**
+   * @brief stop the Thread pool
+   * 1.) check if thread pool is already running,
+   *    - if no, return false
+   *    - if yes set to running to false
+   * 2.) waking up all sleeping threads, during their next getWork,
+   * they will recognize that the execution should terminate and exit running
+   * routine 3.) join all threads, i.e., wait till all threads return
+   * @return indicate if stop succeed
+   */
+  bool stop();
 
-    bool isRunning() const { return running; }
+  bool isRunning() const { return running; }
 
-    /**
-     * @brief start the Thread pool
-     * 1.) check if thread pool is already running,
-     *    - if yes, return false
-     *    - if not set to running to true
-     * 2.) spawn n threads and bind them to the running routine (routine that probes queue for runnable tasks)
-     * @return indicate if start succeed
-     */
-    bool start(const std::vector<uint64_t> threadToQueueMapping = {});
+  /**
+   * @brief start the Thread pool
+   * 1.) check if thread pool is already running,
+   *    - if yes, return false
+   *    - if not set to running to true
+   * 2.) spawn n threads and bind them to the running routine (routine that
+   * probes queue for runnable tasks)
+   * @return indicate if start succeed
+   */
+  bool start(const std::vector<uint64_t> threadToQueueMapping = {});
 
-    /**
-       * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
-       * 1.) Check if running is still true
-       * 2.) If yes, request work from query manager (blocking until tasks get available)
-       * 3.) If task is valid, execute the task and completeWork
-       * 4.) Repeat
-       */
-    void runningRoutine(WorkerContext&& workerContext);
+  /**
+   * @brief running routine of threads, in this routine, threads repeatedly
+   * execute the following steps 1.) Check if running is still true 2.) If yes,
+   * request work from query manager (blocking until tasks get available) 3.) If
+   * task is valid, execute the task and completeWork 4.) Repeat
+   */
+  void runningRoutine(WorkerContext&& workerContext);
 
-  public:
-    /**
-     * @brief get the current number of threads in thread pool
-     * @return number of current threads
-     */
-    uint32_t getNumberOfThreads() const;
+ public:
+  /**
+   * @brief get the current number of threads in thread pool
+   * @return number of current threads
+   */
+  uint32_t getNumberOfThreads() const;
 
-  private:
-    //indicating if the thread pool is running, used for multi-thread execution
-    const WorkerId nodeId;
-    std::atomic<bool> running{false};
-    const uint32_t numThreads;
-    std::vector<std::thread> threads{};
-    mutable std::recursive_mutex reconfigLock;
-    QueryManagerPtr queryManager;
-    std::vector<BufferManagerPtr> bufferManagers;
+ private:
+  // indicating if the thread pool is running, used for multi-thread execution
+  const WorkerId nodeId;
+  std::atomic<bool> running{false};
+  const uint32_t numThreads;
+  std::vector<std::thread> threads{};
+  mutable std::recursive_mutex reconfigLock;
+  QueryManagerPtr queryManager;
+  std::vector<BufferManagerPtr> bufferManagers;
 
-    uint64_t numberOfBuffersPerWorker;
-    /// this is a list of slots where we pin the worker, one after the other
-    std::vector<uint64_t> workerPinningPositionList;
+  uint64_t numberOfBuffersPerWorker;
+  /// this is a list of slots where we pin the worker, one after the other
+  std::vector<uint64_t> workerPinningPositionList;
 
-    HardwareManagerPtr hardwareManager;
+  HardwareManagerPtr hardwareManager;
 };
 
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
 
-}// namespace NES::Runtime
+}  // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_THREADPOOL_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_THREADPOOL_HPP_

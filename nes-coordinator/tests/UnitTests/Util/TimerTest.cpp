@@ -12,23 +12,26 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+#include <unistd.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>
-#include <gtest/gtest.h>
 #include <thread>
-#include <unistd.h>
 
 namespace NES {
 class TimerTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("TimerTest.log", NES::LogLevel::LOG_DEBUG);
+ public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("TimerTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("TimerTest test class SetUpTestCase.");
-    }
-    static void TearDownTestCase() { NES_INFO("TimerTest test class TearDownTestCase."); }
+    NES_INFO("TimerTest test class SetUpTestCase.");
+  }
+  static void TearDownTestCase() {
+    NES_INFO("TimerTest test class TearDownTestCase.");
+  }
 };
 
 /**
@@ -36,16 +39,16 @@ class TimerTest : public Testing::BaseUnitTest {
  * @result Measured runtime is 2 sec with 0.1 sec slack
  */
 TEST(UtilFunctionTest, startAndPause) {
-    Timer timer = Timer("testComponent");
-    timer.start();
-    sleep(1);
-    timer.pause();
-    sleep(1);
-    timer.start();
-    sleep(1);
-    timer.pause();
+  Timer timer = Timer("testComponent");
+  timer.start();
+  sleep(1);
+  timer.pause();
+  sleep(1);
+  timer.start();
+  sleep(1);
+  timer.pause();
 
-    EXPECT_NEAR(timer.getRuntime(), 2000000000, 100000000);
+  EXPECT_NEAR(timer.getRuntime(), 2000000000, 100000000);
 }
 
 /**
@@ -53,47 +56,48 @@ TEST(UtilFunctionTest, startAndPause) {
  * @result Measured runtime and snapshot runtime is 1 sec with 0.05 sec slack
  */
 TEST(UtilFunctionTest, snapshotTaking) {
-    Timer timer = Timer("testComponent");
-    timer.start();
-    sleep(1);
-    timer.snapshot("test");
-    timer.pause();
+  Timer timer = Timer("testComponent");
+  timer.start();
+  sleep(1);
+  timer.snapshot("test");
+  timer.pause();
 
-    //std::cout << timer.getRuntime();
-    auto snapshots = timer.getSnapshots();
-    EXPECT_NEAR(timer.getRuntime(), 1000000000, 50000000);
-    EXPECT_TRUE(snapshots[0].name == "testComponent_test");
-    EXPECT_NEAR(snapshots[0].getRuntime(), 1000000000, 50000000);
+  // std::cout << timer.getRuntime();
+  auto snapshots = timer.getSnapshots();
+  EXPECT_NEAR(timer.getRuntime(), 1000000000, 50000000);
+  EXPECT_TRUE(snapshots[0].name == "testComponent_test");
+  EXPECT_NEAR(snapshots[0].getRuntime(), 1000000000, 50000000);
 }
 
 /**
  * @brief Test if timer merging works properly.
- * @result Measured runtime is 2 sec with 0.1 sec slack. Snapshot runtime is 1 sec with 0.05 sec slack
+ * @result Measured runtime is 2 sec with 0.1 sec slack. Snapshot runtime is 1
+ * sec with 0.05 sec slack
  */
 TEST(UtilFunctionTest, mergeTimers) {
-    Timer timer1 = Timer("testComponent1");
-    timer1.start();
-    sleep(1);
-    timer1.snapshot("test1");
-    timer1.pause();
-    //std::cout << timer1;
+  Timer timer1 = Timer("testComponent1");
+  timer1.start();
+  sleep(1);
+  timer1.snapshot("test1");
+  timer1.pause();
+  // std::cout << timer1;
 
-    Timer timer2 = Timer("testComponent2");
-    timer2.start();
-    sleep(1);
-    timer2.snapshot("test2");
-    timer2.pause();
-    timer1.merge(timer2);
+  Timer timer2 = Timer("testComponent2");
+  timer2.start();
+  sleep(1);
+  timer2.snapshot("test2");
+  timer2.pause();
+  timer1.merge(timer2);
 
-    //std::cout << timer1;
-    auto snapshots = timer1.getSnapshots();
-    EXPECT_NEAR(timer1.getRuntime(), 2000000000, 1000000000);
-    EXPECT_EQ(snapshots[0].name, "testComponent1_test1");
-    EXPECT_NEAR(snapshots[0].getRuntime(), 1000000000, 500000000);
-    EXPECT_EQ(snapshots[1].name, "testComponent1_testComponent2");
-    EXPECT_NEAR(snapshots[1].getRuntime(), 1000000000, 500000000);
-    EXPECT_EQ(snapshots[1].children[0].name, "testComponent2_test2");
-    EXPECT_NEAR(snapshots[1].children[0].getRuntime(), 1000000000, 500000000);
+  // std::cout << timer1;
+  auto snapshots = timer1.getSnapshots();
+  EXPECT_NEAR(timer1.getRuntime(), 2000000000, 1000000000);
+  EXPECT_EQ(snapshots[0].name, "testComponent1_test1");
+  EXPECT_NEAR(snapshots[0].getRuntime(), 1000000000, 500000000);
+  EXPECT_EQ(snapshots[1].name, "testComponent1_testComponent2");
+  EXPECT_NEAR(snapshots[1].getRuntime(), 1000000000, 500000000);
+  EXPECT_EQ(snapshots[1].children[0].name, "testComponent2_test2");
+  EXPECT_NEAR(snapshots[1].children[0].getRuntime(), 1000000000, 500000000);
 }
 
 /**
@@ -101,25 +105,25 @@ TEST(UtilFunctionTest, mergeTimers) {
  * @result Measured runtime is 1.3003 sec with 0.05 sec slack
  */
 TEST(UtilFunctionTest, differentTimeUnits) {
-    Timer timer1 = Timer<std::chrono::seconds>("testComponent");
-    timer1.start();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::this_thread::sleep_for(std::chrono::microseconds(300));
-    timer1.snapshot("test");
-    timer1.pause();
+  Timer timer1 = Timer<std::chrono::seconds>("testComponent");
+  timer1.start();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  std::this_thread::sleep_for(std::chrono::microseconds(300));
+  timer1.snapshot("test");
+  timer1.pause();
 
-    Timer timer2 = Timer<std::chrono::milliseconds>("testComponent");
-    timer2.start();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::this_thread::sleep_for(std::chrono::microseconds(300));
-    timer2.snapshot("test");
-    timer2.pause();
+  Timer timer2 = Timer<std::chrono::milliseconds>("testComponent");
+  timer2.start();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  std::this_thread::sleep_for(std::chrono::microseconds(300));
+  timer2.snapshot("test");
+  timer2.pause();
 
-    // runtime returned in int64_t, so expect no precision
-    EXPECT_NEAR(timer1.getPrintTime(), 1000, 100);
-    EXPECT_NEAR(timer2.getPrintTime(), 1300, 100);
+  // runtime returned in int64_t, so expect no precision
+  EXPECT_NEAR(timer1.getPrintTime(), 1000, 100);
+  EXPECT_NEAR(timer2.getPrintTime(), 1300, 100);
 }
 
 /**
@@ -127,16 +131,17 @@ TEST(UtilFunctionTest, differentTimeUnits) {
  * @result Measured runtime is 1.3003 sec with 0.05 sec slack
  */
 TEST(UtilFunctionTest, differentMeasurePrecision) {
-    Timer timer1 = Timer<std::chrono::duration<double>, std::ratio<1>>("testComponent");
-    timer1.start();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::this_thread::sleep_for(std::chrono::microseconds(300));
-    timer1.snapshot("test");
-    timer1.pause();
+  Timer timer1 =
+      Timer<std::chrono::duration<double>, std::ratio<1>>("testComponent");
+  timer1.start();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  std::this_thread::sleep_for(std::chrono::microseconds(300));
+  timer1.snapshot("test");
+  timer1.pause();
 
-    // need to use print time, as runtime will round to full seconds
-    EXPECT_NEAR(timer1.getPrintTime(), 1.3, 0.1);
+  // need to use print time, as runtime will round to full seconds
+  EXPECT_NEAR(timer1.getPrintTime(), 1.3, 0.1);
 }
 
 /**
@@ -144,22 +149,24 @@ TEST(UtilFunctionTest, differentMeasurePrecision) {
  * @result Measured runtime is 1.3 sec with 0.05 sec slack
  */
 TEST(UtilFunctionTest, differentPrintPrecision) {
-    Timer timer1 = Timer<std::chrono::seconds, std::ratio<1, 1>, int64_t>("testComponent");
-    timer1.start();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    timer1.snapshot("test");
-    timer1.pause();
+  Timer timer1 =
+      Timer<std::chrono::seconds, std::ratio<1, 1>, int64_t>("testComponent");
+  timer1.start();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  timer1.snapshot("test");
+  timer1.pause();
 
-    Timer timer2 = Timer<std::chrono::milliseconds, std::ratio<1, 1>, float>("testComponent");
-    timer2.start();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    timer2.snapshot("test");
-    timer2.pause();
+  Timer timer2 = Timer<std::chrono::milliseconds, std::ratio<1, 1>, float>(
+      "testComponent");
+  timer2.start();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  timer2.snapshot("test");
+  timer2.pause();
 
-    EXPECT_NEAR(timer1.getPrintTime(), 1, 0.1);
-    EXPECT_NEAR(timer2.getPrintTime(), 1.3, 0.1);
+  EXPECT_NEAR(timer1.getPrintTime(), 1, 0.1);
+  EXPECT_NEAR(timer2.getPrintTime(), 1.3, 0.1);
 }
 
-}// namespace NES
+}  // namespace NES

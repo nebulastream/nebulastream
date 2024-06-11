@@ -21,34 +21,35 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class probes the join for a triggered window. It receives a left and right window/slice (via an id) and a hash bucket id.
- * It then performs an equality check for each left and right tuple.
+ * @brief This class probes the join for a triggered window. It receives a left
+ * and right window/slice (via an id) and a hash bucket id. It then performs an
+ * equality check for each left and right tuple.
  */
 class HJProbe : public StreamJoinProbe {
-  public:
-    /**
-     * @brief Constructor for a HJProbe join phase
-     * @param operatorHandlerIndex
-     * @param joinSchema
-     * @param windowMetaData
-     * @param joinStrategy
-     * @param windowingStrategy
-     * @param withDeletion
-     */
-    HJProbe(const uint64_t operatorHandlerIndex,
-            const JoinSchema& joinSchema,
-            const Expressions::ExpressionPtr joinExpression,
-            const WindowMetaData& windowMetaData,
-            QueryCompilation::StreamJoinStrategy joinStrategy,
-            QueryCompilation::WindowingStrategy windowingStrategy,
-            bool withDeletion = true);
+ public:
+  /**
+   * @brief Constructor for a HJProbe join phase
+   * @param operatorHandlerIndex
+   * @param joinSchema
+   * @param windowMetaData
+   * @param joinStrategy
+   * @param windowingStrategy
+   * @param withDeletion
+   */
+  HJProbe(const uint64_t operatorHandlerIndex, const JoinSchema& joinSchema,
+          const Expressions::ExpressionPtr joinExpression,
+          const WindowMetaData& windowMetaData,
+          QueryCompilation::StreamJoinStrategy joinStrategy,
+          QueryCompilation::WindowingStrategy windowingStrategy,
+          bool withDeletion = true);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+  void open(ExecutionContext& executionCtx,
+            RecordBuffer& recordBuffer) const override;
 
-  protected:
-    const MemoryProvider::MemoryProviderPtr leftMemProvider;
-    const MemoryProvider::MemoryProviderPtr rightMemProvider;
+ protected:
+  const MemoryProvider::MemoryProviderPtr leftMemProvider;
+  const MemoryProvider::MemoryProviderPtr rightMemProvider;
 };
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBE_HPP_

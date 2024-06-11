@@ -29,19 +29,19 @@ namespace NES {
  * Update: Update running query.
  */
 enum class RequestType : uint8_t {
-    AddQuery = 0,
-    StopQuery,
-    RestartQuery,
-    FailQuery,
-    MigrateQuery,
-    UpdateQuery,
-    AddTopologyNode,
-    RemoveTopologyNode,
-    MigrateTopologyNode,
-    AddTopologyLink,
-    RemoveTopologyLink
+  AddQuery = 0,
+  StopQuery,
+  RestartQuery,
+  FailQuery,
+  MigrateQuery,
+  UpdateQuery,
+  AddTopologyNode,
+  RemoveTopologyNode,
+  MigrateTopologyNode,
+  AddTopologyLink,
+  RemoveTopologyLink
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_

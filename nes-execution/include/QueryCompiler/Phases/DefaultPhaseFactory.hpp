@@ -21,17 +21,21 @@ namespace NES::QueryCompilation::Phases {
  * @brief The default phase factory creates a default set of phases.
  */
 class DefaultPhaseFactory : public PhaseFactory {
-  public:
-    virtual ~DefaultPhaseFactory() = default;
-    static PhaseFactoryPtr create();
-    LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
-    PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
-    AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
-    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
-                                                                             bool sourceSharing) override;
-    BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
+ public:
+  virtual ~DefaultPhaseFactory() = default;
+  static PhaseFactoryPtr create();
+  LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(
+      QueryCompilerOptionsPtr options) override;
+  PipeliningPhasePtr createPipeliningPhase(
+      QueryCompilerOptionsPtr options) override;
+  AddScanAndEmitPhasePtr createAddScanAndEmitPhase(
+      QueryCompilerOptionsPtr options) override;
+  LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(
+      QueryCompilerOptionsPtr options, bool sourceSharing) override;
+  BufferOptimizationPhasePtr createBufferOptimizationPhase(
+      QueryCompilerOptionsPtr options) override;
 };
 
-}// namespace NES::QueryCompilation::Phases
+}  // namespace NES::QueryCompilation::Phases
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_

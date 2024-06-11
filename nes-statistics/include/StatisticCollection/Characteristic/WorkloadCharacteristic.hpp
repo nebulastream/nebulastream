@@ -19,62 +19,66 @@
 namespace NES::Statistic {
 
 /**
- * @brief Represents a workload characteristic that results in collecting statistics for an operator in a query
+ * @brief Represents a workload characteristic that results in collecting
+ * statistics for an operator in a query
  */
 class WorkloadCharacteristic : public Characteristic {
-  public:
-    /**
-     * @brief Creates a WorkloadCharacteristic
-     * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
-     * @param queryId: Query to collect the statistics for
-     * @param operatorId: Operator to collect the statistics for
-     * @return CharacteristicPtr
-     */
-    static CharacteristicPtr create(MetricPtr type, QueryId queryId, OperatorId operatorId);
+ public:
+  /**
+   * @brief Creates a WorkloadCharacteristic
+   * @param type: What type of metric, i.e., selectivity, cardinality, data
+   * distribution, ...
+   * @param queryId: Query to collect the statistics for
+   * @param operatorId: Operator to collect the statistics for
+   * @return CharacteristicPtr
+   */
+  static CharacteristicPtr create(MetricPtr type, QueryId queryId,
+                                  OperatorId operatorId);
 
-    /**
-     * @brief Gets the queryId
-     * @return QueryId
-     */
-    QueryId getQueryId() const;
+  /**
+   * @brief Gets the queryId
+   * @return QueryId
+   */
+  QueryId getQueryId() const;
 
-    /**
-     * @brief Gets the operatorId
-     * @return OperatorId
-     */
-    OperatorId getOperatorId() const;
+  /**
+   * @brief Gets the operatorId
+   * @return OperatorId
+   */
+  OperatorId getOperatorId() const;
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if equal otherwise false
-     */
-    bool operator==(const Characteristic& rhs) const override;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if equal otherwise false
+   */
+  bool operator==(const Characteristic& rhs) const override;
 
-    /**
-     * @brief Implementing a hash method
-     * @return Hash
-     */
-    size_t hash() const override;
+  /**
+   * @brief Implementing a hash method
+   * @return Hash
+   */
+  size_t hash() const override;
 
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    std::string toString() const override;
+  /**
+   * @brief Creates a string representation
+   * @return std::string
+   */
+  std::string toString() const override;
 
-  private:
-    /**
-     * @brief Creates a WorkloadCharacteristic
-     * @param type
-     * @param queryId
-     * @param operatorId
-     */
-    WorkloadCharacteristic(MetricPtr type, QueryId queryId, OperatorId operatorId);
+ private:
+  /**
+   * @brief Creates a WorkloadCharacteristic
+   * @param type
+   * @param queryId
+   * @param operatorId
+   */
+  WorkloadCharacteristic(MetricPtr type, QueryId queryId,
+                         OperatorId operatorId);
 
-    QueryId queryId;
-    OperatorId operatorId;
+  QueryId queryId;
+  OperatorId operatorId;
 };
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_WORKLOADCHARACTERISTIC_HPP_
+#endif  // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_WORKLOADCHARACTERISTIC_HPP_

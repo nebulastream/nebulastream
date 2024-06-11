@@ -24,38 +24,41 @@
 namespace NES::QueryCompilation {
 
 /**
- * @brief This phase scans all pipelines and determines if the OutputBufferOptimizationLevel (level) requested by the user can be applied.
- * It then notes the correct OutputBufferAllocationStrategy in the Emit operator of the pipeline.
+ * @brief This phase scans all pipelines and determines if the
+ * OutputBufferOptimizationLevel (level) requested by the user can be applied.
+ * It then notes the correct OutputBufferAllocationStrategy in the Emit operator
+ * of the pipeline.
  */
 class BufferOptimizationPhase {
-  public:
-    /**
-     * @brief Constructor to create a BufferOptimizationPhase
-     */
-    explicit BufferOptimizationPhase(OutputBufferOptimizationLevel level);
+ public:
+  /**
+   * @brief Constructor to create a BufferOptimizationPhase
+   */
+  explicit BufferOptimizationPhase(OutputBufferOptimizationLevel level);
 
-    /**
-     * @brief Create a BufferOptimizationPhase
-     */
-    static BufferOptimizationPhasePtr create(OutputBufferOptimizationLevel level);
+  /**
+   * @brief Create a BufferOptimizationPhase
+   */
+  static BufferOptimizationPhasePtr create(OutputBufferOptimizationLevel level);
 
-    /**
-     * @brief Applies the phase on a pipelined query plan. Analyzes every pipeline to see if buffer optimization can be applied.
-     * @param pipelined query plan
-     * @return PipelineQueryPlanPtr
-     */
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan);
+  /**
+   * @brief Applies the phase on a pipelined query plan. Analyzes every pipeline
+   * to see if buffer optimization can be applied.
+   * @param pipelined query plan
+   * @return PipelineQueryPlanPtr
+   */
+  PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan);
 
-    /**
-     * @brief Analyzes pipeline to see if buffer optimization can be applied.
-     * @param pipeline
-     * @return OperatorPipelinePtr
-     */
-    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
+  /**
+   * @brief Analyzes pipeline to see if buffer optimization can be applied.
+   * @param pipeline
+   * @return OperatorPipelinePtr
+   */
+  OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
-  private:
-    [[maybe_unused]] OutputBufferOptimizationLevel level;
+ private:
+  [[maybe_unused]] OutputBufferOptimizationLevel level;
 };
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_

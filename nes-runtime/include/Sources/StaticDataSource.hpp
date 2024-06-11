@@ -27,121 +27,128 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 
 namespace Runtime::detail {
 class MemorySegment;
-}// namespace Runtime::detail
+}  // namespace Runtime::detail
 
 namespace Experimental {
 /**
  * @brief Table Source
  * todo Still under development
  */
-class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRecycler {
-  public:
-    /**
-     * @brief The constructor of a StaticDataSource
-     * @param schema the schema of the data
-     * @param pathTableFile
-     * @param lateStart wether to start the source late
-     * @param bufferManager pointer to the buffer manager
-     * @param queryManager pointer to the query manager
-     * @param operatorId current operator id
-     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-     * @param statisticId represents the unique identifier of components that we can track statistics for
-     * @param numSourceLocalBuffers the number of buffers allocated to a source
-     * @param physicalSourceName the name and unique identifier of a physical source
-     * @param successors the subsequent operators in the pipeline to which the data is pushed
-     */
-    explicit StaticDataSource(SchemaPtr schema,
-                              std::string pathTableFile,
-                              const bool lateStart,
-                              ::NES::Runtime::BufferManagerPtr bufferManager,
-                              ::NES::Runtime::QueryManagerPtr queryManager,
-                              OperatorId operatorId,
-                              OriginId originId,
-                              StatisticId statisticId,
-                              size_t numSourceLocalBuffers,
-                              const std::string& physicalSourceName,
-                              std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
+class StaticDataSource : public GeneratorSource,
+                         public ::NES::Runtime::BufferRecycler {
+ public:
+  /**
+   * @brief The constructor of a StaticDataSource
+   * @param schema the schema of the data
+   * @param pathTableFile
+   * @param lateStart wether to start the source late
+   * @param bufferManager pointer to the buffer manager
+   * @param queryManager pointer to the query manager
+   * @param operatorId current operator id
+   * @param originId represents the identifier of the upstream operator that
+   * represents the origin of the input stream
+   * @param statisticId represents the unique identifier of components that we
+   * can track statistics for
+   * @param numSourceLocalBuffers the number of buffers allocated to a source
+   * @param physicalSourceName the name and unique identifier of a physical
+   * source
+   * @param successors the subsequent operators in the pipeline to which the
+   * data is pushed
+   */
+  explicit StaticDataSource(
+      SchemaPtr schema, std::string pathTableFile, const bool lateStart,
+      ::NES::Runtime::BufferManagerPtr bufferManager,
+      ::NES::Runtime::QueryManagerPtr queryManager, OperatorId operatorId,
+      OriginId originId, StatisticId statisticId, size_t numSourceLocalBuffers,
+      const std::string& physicalSourceName,
+      std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline>
+          successors);
 
-    /**
-     * @brief overwrite DataSource::start(). Only start runningRoutine, if lateStart==false.
-     */
-    bool start() final;
+  /**
+   * @brief overwrite DataSource::start(). Only start runningRoutine, if
+   * lateStart==false.
+   */
+  bool start() final;
 
-    /**
-     * @brief method to start the source, calls DataSource::start().
-     * 1.) check if bool running is true, if true return if not start source
-     * 2.) start new thread with runningRoutine
-     */
-    bool startStaticDataSourceManually();
+  /**
+   * @brief method to start the source, calls DataSource::start().
+   * 1.) check if bool running is true, if true return if not start source
+   * 2.) start new thread with runningRoutine
+   */
+  bool startStaticDataSourceManually();
 
-    /**
-     * @brief API method called upon receiving an event. At startSourceEvent, start source.
-     * @param event
-     */
-    void onEvent(Runtime::BaseEvent&) final;
+  /**
+   * @brief API method called upon receiving an event. At startSourceEvent,
+   * start source.
+   * @param event
+   */
+  void onEvent(Runtime::BaseEvent&) final;
 
-    void open() override;
+  void open() override;
 
-    void preloadBuffers();
+  void preloadBuffers();
 
-    /**
-     * @brief This method is implemented only to comply with the API: it will crash the system if called.
-     * @return a nullopt
-     */
-    std::optional<::NES::Runtime::TupleBuffer> receiveData() override;
+  /**
+   * @brief This method is implemented only to comply with the API: it will
+   * crash the system if called.
+   * @return a nullopt
+   */
+  std::optional<::NES::Runtime::TupleBuffer> receiveData() override;
 
-    /**
-     * @brief Provides a string representation of the source
-     * @return The string representation of the source
-     */
-    std::string toString() const override;
+  /**
+   * @brief Provides a string representation of the source
+   * @return The string representation of the source
+   */
+  std::string toString() const override;
 
-    /**
-     * @brief Provides the type of the source
-     * @return the type of the source
-     */
-    SourceType getType() const override;
+  /**
+   * @brief Provides the type of the source
+   * @return the type of the source
+   */
+  SourceType getType() const override;
 
-    virtual void recyclePooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
+  virtual void recyclePooledBuffer(
+      ::NES::Runtime::detail::MemorySegment*) override{};
 
-    /**
-     * @brief Interface method for unpooled buffer recycling
-     * @param buffer the buffer to recycle
-     */
-    virtual void recycleUnpooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
+  /**
+   * @brief Interface method for unpooled buffer recycling
+   * @param buffer the buffer to recycle
+   */
+  virtual void recycleUnpooledBuffer(
+      ::NES::Runtime::detail::MemorySegment*) override{};
 
-  private:
-    /* message & late start system */
-    bool lateStart;
-    bool startCalled = false;
-    mutable std::mutex startConfigMutex;
+ private:
+  /* message & late start system */
+  bool lateStart;
+  bool startCalled = false;
+  mutable std::mutex startConfigMutex;
 
-    /* preloading */
-    bool eagerLoading = true;
-    bool onlySendDataWhenLoadingIsFinished = true;
+  /* preloading */
+  bool eagerLoading = true;
+  bool onlySendDataWhenLoadingIsFinished = true;
 
-    /* file parsing */
-    bool fileEnded = false;
-    std::ifstream input;
-    CSVParserPtr inputParser;
-    uint64_t currentPositionInFile{0};
-    std::vector<Runtime::TupleBuffer> filledBuffers;
+  /* file parsing */
+  bool fileEnded = false;
+  std::ifstream input;
+  CSVParserPtr inputParser;
+  uint64_t currentPositionInFile{0};
+  std::vector<Runtime::TupleBuffer> filledBuffers;
 
-    std::string pathTableFile;
-    uint64_t numTuplesPerBuffer;
-    uint64_t tupleSizeInBytes;
-    uint64_t bufferSize;
+  std::string pathTableFile;
+  uint64_t numTuplesPerBuffer;
+  uint64_t tupleSizeInBytes;
+  uint64_t bufferSize;
 
-    size_t numTuples;// in table
-    size_t numTuplesEmitted = 0;
-    size_t numBuffersEmitted = 0;
+  size_t numTuples;  // in table
+  size_t numTuplesEmitted = 0;
+  size_t numBuffersEmitted = 0;
 
-    void fillBuffer(::NES::Runtime::MemoryLayouts::TestTupleBuffer& buffer);
+  void fillBuffer(::NES::Runtime::MemoryLayouts::TestTupleBuffer& buffer);
 };
 
 using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;
 
-}// namespace Experimental
-}// namespace NES
+}  // namespace Experimental
+}  // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_

@@ -24,7 +24,7 @@ using NodePtr = std::shared_ptr<Node>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-}// namespace NES
+}  // namespace NES
 
 namespace NES::Optimizer {
 
@@ -32,32 +32,37 @@ class FilterSplitUpRule;
 using FilterSplitUpRulePtr = std::shared_ptr<FilterSplitUpRule>;
 
 /**
- * @brief This class is responsible for altering the query plan to split up each filter operator into as small parts as possible.
- *  1.) A filter with an andExpression as a predicate can be split up into two separate filters.
- *  2.) A filter with a negated OrExpression can be reformulated deMorgans rules and can be split up afterwards.
+ * @brief This class is responsible for altering the query plan to split up each
+ * filter operator into as small parts as possible. 1.) A filter with an
+ * andExpression as a predicate can be split up into two separate filters. 2.) A
+ * filter with a negated OrExpression can be reformulated deMorgans rules and
+ * can be split up afterwards.
  */
 class FilterSplitUpRule : public BaseRewriteRule {
-  public:
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+ public:
+  QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-    static FilterSplitUpRulePtr create();
-    virtual ~FilterSplitUpRule() = default;
+  static FilterSplitUpRulePtr create();
+  virtual ~FilterSplitUpRule() = default;
 
-  private:
-    explicit FilterSplitUpRule();
+ private:
+  explicit FilterSplitUpRule();
 
-    /**
-     * If it is possible this method splits up a filterOperator into multiple filterOperators.
-     * If our query plan contains a parentOperaters->filter(expression1 && expression2)->childOperator.
-     * This plan gets rewritten to parentOperaters->filter(expression1)->filter(expression2)->childOperator. We will call splitUpFilters()
-     * on the new flters as well
-     * If our query plan contains a parentOperaters->filter(!(expression1 || expression2))->childOperator, we use deMorgan to
-     * reformulate the predicate to an andExpression and call splitUpFilter on the Filter.
-     * @param filterOperator the filter operator node that we want to split up
-     */
-    void splitUpFilters(LogicalFilterOperatorPtr filterOperator);
+  /**
+   * If it is possible this method splits up a filterOperator into multiple
+   * filterOperators. If our query plan contains a
+   * parentOperaters->filter(expression1 && expression2)->childOperator. This
+   * plan gets rewritten to
+   * parentOperaters->filter(expression1)->filter(expression2)->childOperator.
+   * We will call splitUpFilters() on the new flters as well If our query plan
+   * contains a parentOperaters->filter(!(expression1 ||
+   * expression2))->childOperator, we use deMorgan to reformulate the predicate
+   * to an andExpression and call splitUpFilter on the Filter.
+   * @param filterOperator the filter operator node that we want to split up
+   */
+  void splitUpFilters(LogicalFilterOperatorPtr filterOperator);
 };
 
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERSPLITUPRULE_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERSPLITUPRULE_HPP_

@@ -20,4 +20,4 @@ SynopsesStatistic::SynopsesStatistic(const Windowing::TimeMeasure& startTs,
                                      const Windowing::TimeMeasure& endTs,
                                      uint64_t observedTuples)
     : Statistic(startTs, endTs, observedTuples) {}
-}// namespace NES::Statistic
+}  // namespace NES::Statistic

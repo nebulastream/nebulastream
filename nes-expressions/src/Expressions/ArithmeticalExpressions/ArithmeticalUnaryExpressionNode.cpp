@@ -18,41 +18,48 @@
 #include <utility>
 namespace NES {
 
-ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(DataTypePtr stamp) : UnaryExpressionNode(std::move(stamp)) {}
-ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(ArithmeticalUnaryExpressionNode* other)
+ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(
+    DataTypePtr stamp)
+    : UnaryExpressionNode(std::move(stamp)) {}
+ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(
+    ArithmeticalUnaryExpressionNode* other)
     : UnaryExpressionNode(other) {}
 
 /**
- * @brief The current implementation of type inference for arithmetical expressions expects that both
- * operands of an arithmetical expression have numerical stamps.
- * If this is valid we derived the joined stamp of the left and right operand.
- * (e.g., left:int8, right:int32 -> int32)
+ * @brief The current implementation of type inference for arithmetical
+ * expressions expects that both operands of an arithmetical expression have
+ * numerical stamps. If this is valid we derived the joined stamp of the left
+ * and right operand. (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
 void ArithmeticalUnaryExpressionNode::inferStamp(SchemaPtr schema) {
-    // infer stamp of child
-    auto child = this->child();
-    child->inferStamp(schema);
+  // infer stamp of child
+  auto child = this->child();
+  child->inferStamp(schema);
 
-    // get stamp from child
-    auto child_stamp = child->getStamp();
-    if (!child_stamp->isNumeric()) {
-        NES_THROW_RUNTIME_ERROR("Error during stamp inference. Types need to be Numerical but child was: {}",
-                                child->getStamp()->toString());
-    }
+  // get stamp from child
+  auto child_stamp = child->getStamp();
+  if (!child_stamp->isNumeric()) {
+    NES_THROW_RUNTIME_ERROR(
+        "Error during stamp inference. Types need to be Numerical but child "
+        "was: {}",
+        child->getStamp()->toString());
+  }
 
-    this->stamp = child_stamp;
-    NES_TRACE("We assigned the following stamp: {}", toString());
+  this->stamp = child_stamp;
+  NES_TRACE("We assigned the following stamp: {}", toString());
 }
 
 bool ArithmeticalUnaryExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<ArithmeticalUnaryExpressionNode>()) {
-        auto otherAddNode = rhs->as<ArithmeticalUnaryExpressionNode>();
-        return child()->equal(otherAddNode->child());
-    }
-    return false;
+  if (rhs->instanceOf<ArithmeticalUnaryExpressionNode>()) {
+    auto otherAddNode = rhs->as<ArithmeticalUnaryExpressionNode>();
+    return child()->equal(otherAddNode->child());
+  }
+  return false;
 }
 
-std::string ArithmeticalUnaryExpressionNode::toString() const { return "ArithmeticalExpression()"; }
+std::string ArithmeticalUnaryExpressionNode::toString() const {
+  return "ArithmeticalExpression()";
+}
 
-}// namespace NES
+}  // namespace NES

@@ -30,56 +30,59 @@ class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 /**
- * @brief this indicates an expression, which is a parameter for a FilterOperator or a MapOperator.
- * Each expression declares a stamp, which expresses the data type of this expression.
- * A stamp can be of a concrete type or invalid if the data type was not yet inferred.
+ * @brief this indicates an expression, which is a parameter for a
+ * FilterOperator or a MapOperator. Each expression declares a stamp, which
+ * expresses the data type of this expression. A stamp can be of a concrete type
+ * or invalid if the data type was not yet inferred.
  */
 class ExpressionNode : public Node {
+ public:
+  explicit ExpressionNode(DataTypePtr stamp);
 
-  public:
-    explicit ExpressionNode(DataTypePtr stamp);
+  ~ExpressionNode() override = default;
 
-    ~ExpressionNode() override = default;
+  /**
+   * @brief Indicates if this expression is a predicate -> if its result stamp
+   * is a boolean
+   * @return
+   */
+  bool isPredicate() const;
 
-    /**
-     * @brief Indicates if this expression is a predicate -> if its result stamp is a boolean
-     * @return
-     */
-    bool isPredicate() const;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  virtual void inferStamp(SchemaPtr schema);
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    virtual void inferStamp(SchemaPtr schema);
+  /**
+   * @brief returns the stamp as the data type which is produced by this
+   * expression.
+   * @return Stamp
+   */
+  DataTypePtr getStamp() const;
 
-    /**
-     * @brief returns the stamp as the data type which is produced by this expression.
-     * @return Stamp
-     */
-    DataTypePtr getStamp() const;
+  /**
+   * @brief sets the stamp of this expression.
+   * @param stamp
+   */
+  void setStamp(DataTypePtr stamp);
 
-    /**
-     * @brief sets the stamp of this expression.
-     * @param stamp
-     */
-    void setStamp(DataTypePtr stamp);
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  virtual ExpressionNodePtr copy() = 0;
 
-    /**
-     * @brief Create a deep copy of this expression node.
-     * @return ExpressionNodePtr
-     */
-    virtual ExpressionNodePtr copy() = 0;
+ protected:
+  explicit ExpressionNode(const ExpressionNode* other);
 
-  protected:
-    explicit ExpressionNode(const ExpressionNode* other);
-
-    /**
-     * @brief declares the type of this expression.
-     * todo replace the direct usage of data types with a stamp abstraction.
-     */
-    DataTypePtr stamp;
+  /**
+   * @brief declares the type of this expression.
+   * todo replace the direct usage of data types with a stamp abstraction.
+   */
+  DataTypePtr stamp;
 };
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_
+}  // namespace NES
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_

@@ -20,18 +20,18 @@
 
 namespace NES::Nautilus::IR::Operations {
 class StoreOperation : public Operation {
-  public:
-    explicit StoreOperation(OperationPtr value, OperationPtr address);
-    ~StoreOperation() override = default;
+ public:
+  explicit StoreOperation(OperationPtr value, OperationPtr address);
+  ~StoreOperation() override = default;
 
-    OperationPtr getValue();
-    OperationPtr getAddress();
+  OperationPtr getValue();
+  OperationPtr getAddress();
 
-    std::string toString() override;
+  std::string toString() override;
 
-  private:
-    OperationWPtr value;
-    OperationWPtr address;
+ private:
+  OperationWPtr value;
+  OperationWPtr address;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
+}  // namespace NES::Nautilus::IR::Operations
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_

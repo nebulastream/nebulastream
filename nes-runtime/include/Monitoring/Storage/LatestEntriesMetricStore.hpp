@@ -21,51 +21,52 @@
 namespace NES::Monitoring {
 
 /**
-* @brief The LatestEntriesMetricStore that stores all the metrics for monitoring.
-*/
+ * @brief The LatestEntriesMetricStore that stores all the metrics for
+ * monitoring.
+ */
 class LatestEntriesMetricStore : public AbstractMetricStore {
-  public:
-    explicit LatestEntriesMetricStore();
-    ~LatestEntriesMetricStore() = default;
+ public:
+  explicit LatestEntriesMetricStore();
+  ~LatestEntriesMetricStore() = default;
 
-    /**
-     * @brief Returns the type of storage.
-     * @return The storage type.
-     */
-    virtual MetricStoreType getType() const override;
+  /**
+   * @brief Returns the type of storage.
+   * @return The storage type.
+   */
+  virtual MetricStoreType getType() const override;
 
-    /**
-     * @brief Add a metric for a given node by ID
-     * @param nodeId
-     * @param metrics
-    */
-    void addMetrics(WorkerId nodeId, MetricPtr metrics) override;
+  /**
+   * @brief Add a metric for a given node by ID
+   * @param nodeId
+   * @param metrics
+   */
+  void addMetrics(WorkerId nodeId, MetricPtr metrics) override;
 
-    /**
-     * @brief Get newest metrics from store
-     * @param nodeId
-     * @return the metric
-    */
-    virtual StoredNodeMetricsPtr getAllMetrics(WorkerId nodeId) override;
+  /**
+   * @brief Get newest metrics from store
+   * @param nodeId
+   * @return the metric
+   */
+  virtual StoredNodeMetricsPtr getAllMetrics(WorkerId nodeId) override;
 
-    /**
-     * @brief Remove all metrics for a given node.
-     * @param true if metric existed and was removed, else false
-    */
-    bool removeMetrics(WorkerId nodeId) override;
+  /**
+   * @brief Remove all metrics for a given node.
+   * @param true if metric existed and was removed, else false
+   */
+  bool removeMetrics(WorkerId nodeId) override;
 
-    /**
-     * Checks if any kind of metrics are stored for a given node
-     * @param nodeId
-     * @return True if exists, else false
-    */
-    bool hasMetrics(WorkerId nodeId) override;
+  /**
+   * Checks if any kind of metrics are stored for a given node
+   * @param nodeId
+   * @return True if exists, else false
+   */
+  bool hasMetrics(WorkerId nodeId) override;
 
-  private:
-    std::unordered_map<WorkerId, StoredNodeMetricsPtr> storedMetrics;
-    mutable std::mutex storeMutex;
+ private:
+  std::unordered_map<WorkerId, StoredNodeMetricsPtr> storedMetrics;
+  mutable std::mutex storeMutex;
 };
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_LATESTENTRIESMETRICSTORE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_STORAGE_LATESTENTRIESMETRICSTORE_HPP_

@@ -28,31 +28,32 @@ namespace NES {
  * @brief TestQuery api for testing.
  */
 class TestQuery : public Query {
-  public:
-    /**
-     * @brief Creates a query from a SourceDescriptor
-     * @param descriptor
-     * @return Query
-     */
-    static Query from(const SourceDescriptorPtr& descriptor) {
-        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
-        auto queryPlan = QueryPlan::create(sourceOperator);
-        return {queryPlan};
-    }
+ public:
+  /**
+   * @brief Creates a query from a SourceDescriptor
+   * @param descriptor
+   * @return Query
+   */
+  static Query from(const SourceDescriptorPtr& descriptor) {
+    auto sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(descriptor);
+    auto queryPlan = QueryPlan::create(sourceOperator);
+    return {queryPlan};
+  }
 
-    /**
-     * @brief Creates a query from an input schema
-     * @param inputSchema
-     * @return Query
-     */
-    static Query from(const SchemaPtr& inputSchema) {
-        auto sourceOperator =
-            LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(inputSchema)));
-        auto queryPlan = QueryPlan::create(sourceOperator);
-        return {queryPlan};
-    }
+  /**
+   * @brief Creates a query from an input schema
+   * @param inputSchema
+   * @return Query
+   */
+  static Query from(const SchemaPtr& inputSchema) {
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(
+        SchemaSourceDescriptor::create(std::move(inputSchema)));
+    auto queryPlan = QueryPlan::create(sourceOperator);
+    return {queryPlan};
+  }
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_

@@ -20,21 +20,21 @@
 namespace NES::Nautilus::IR::Types {
 
 class Stamp : public Typed {
-  public:
-    Stamp(const TypeIdentifier* typeIdentifier);
-    virtual ~Stamp() = default;
-    bool isInteger();
-    bool isFloat();
-    bool isArray();
-    bool isBoolean();
-    bool isVoid();
-    bool isAddress();
+ public:
+  Stamp(const TypeIdentifier* typeIdentifier);
+  virtual ~Stamp() = default;
+  bool isInteger();
+  bool isFloat();
+  bool isArray();
+  bool isBoolean();
+  bool isVoid();
+  bool isAddress();
 
-    virtual const std::string toString() const = 0;
+  virtual const std::string toString() const = 0;
 };
 
 using StampPtr = std::shared_ptr<Stamp>;
 
-}// namespace NES::Nautilus::IR::Types
+}  // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMP_HPP_
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMP_HPP_

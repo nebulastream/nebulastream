@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_BUFFERACCESSEXCEPTION_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
-
 #include <string>
 
 namespace NES {
@@ -25,16 +24,17 @@ namespace NES {
  * @brief This exception is thrown when an error occurs during UDF processing.
  */
 class BufferAccessException : public Exceptions::RuntimeException {
-  public:
-    /**
-     * @brief Construct a UDF exception from a message and include the current stack trace.
-     * @param message The exception message.
-     */
-    explicit BufferAccessException(const std::string& message);
+ public:
+  /**
+   * @brief Construct a UDF exception from a message and include the current
+   * stack trace.
+   * @param message The exception message.
+   */
+  explicit BufferAccessException(const std::string& message);
 
-  private:
-    const std::string message;
+ private:
+  const std::string message;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_BUFFERACCESSEXCEPTION_HPP_
+}  // namespace NES
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_BUFFERACCESSEXCEPTION_HPP_

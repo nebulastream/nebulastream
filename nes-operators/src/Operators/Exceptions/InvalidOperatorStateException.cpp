@@ -12,30 +12,32 @@
     limitations under the License.
 */
 
+#include <fmt/core.h>
+
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <fmt/core.h>
 #include <sstream>
 
 namespace NES::Exceptions {
 
-InvalidOperatorStateException::InvalidOperatorStateException(OperatorId operatorId,
-                                                             const std::vector<OperatorState>& expectedState,
-                                                             NES::OperatorState actualState)
+InvalidOperatorStateException::InvalidOperatorStateException(
+    OperatorId operatorId, const std::vector<OperatorState>& expectedState,
+    NES::OperatorState actualState)
     : RequestExecutionException("Invalid operator state") {
-
-    std::stringstream expectedStatusString;
-    for (const auto& state : expectedState) {
-        expectedStatusString << std::string(magic_enum::enum_name(state)) << " ";
-    }
-    message = fmt::format(
-        "InvalidOperatorStateException: Operator with id {}. Expected operator state to be in [{}] but found to be in {}",
-        operatorId,
-        expectedStatusString.str(),
-        magic_enum::enum_name(actualState));
+  std::stringstream expectedStatusString;
+  for (const auto& state : expectedState) {
+    expectedStatusString << std::string(magic_enum::enum_name(state)) << " ";
+  }
+  message = fmt::format(
+      "InvalidOperatorStateException: Operator with id {}. Expected operator "
+      "state to be in [{}] but found to be in {}",
+      operatorId, expectedStatusString.str(),
+      magic_enum::enum_name(actualState));
 }
 
-const char* InvalidOperatorStateException::what() const noexcept { return message.c_str(); }
+const char* InvalidOperatorStateException::what() const noexcept {
+  return message.c_str();
+}
 
-}// namespace NES::Exceptions
+}  // namespace NES::Exceptions

@@ -22,28 +22,31 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief The vectorized selection operator that applies the kernel programming model to a single-record selection operator.
+ * @brief The vectorized selection operator that applies the kernel programming
+ * model to a single-record selection operator.
  */
 class VectorizedSelection : public VectorizableOperator {
-  public:
-    /**
-     * @brief Constructor.
-     * @param expression the predicate expression
-     * @param memoryProvider the memory provider
-     * @param projections the projection vector
-     */
-    explicit VectorizedSelection(const Expressions::ExpressionPtr& expression,
-                                 std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-                                 std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
+ public:
+  /**
+   * @brief Constructor.
+   * @param expression the predicate expression
+   * @param memoryProvider the memory provider
+   * @param projections the projection vector
+   */
+  explicit VectorizedSelection(
+      const Expressions::ExpressionPtr& expression,
+      std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+      std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
 
-    void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+  void execute(ExecutionContext& ctx,
+               RecordBuffer& recordBuffer) const override;
 
-  private:
-    Expressions::ExpressionPtr expression;
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-    std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
+ private:
+  Expressions::ExpressionPtr expression;
+  std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+  std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZEDSELECTION_HPP_
+#endif  // NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZEDSELECTION_HPP_

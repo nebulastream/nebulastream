@@ -19,18 +19,20 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression returns true if leftSubExpression is less then rightSubExpression.
+ * @brief This expression returns true if leftSubExpression is less then
+ * rightSubExpression.
  */
 class LessThanExpression : public Expression {
-  public:
-    LessThanExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+ public:
+  LessThanExpression(ExpressionPtr leftSubExpression,
+                     ExpressionPtr rightSubExpression);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+ private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSTHANEXPRESSION_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSTHANEXPRESSION_HPP_

@@ -23,26 +23,25 @@ namespace NES {
  * @brief Descriptor defining referencing a logical source.
  */
 class LogicalSourceDescriptor : public SourceDescriptor {
+ public:
+  /**
+   * @brief Factory method to create a new logical source descriptor.
+   * @param logicalSourceName Name of this source
+   * @return SourceDescriptorPtr
+   */
+  static SourceDescriptorPtr create(std::string logicalSourceName);
 
-  public:
-    /**
-     * @brief Factory method to create a new logical source descriptor.
-     * @param logicalSourceName Name of this source
-     * @return SourceDescriptorPtr
-     */
-    static SourceDescriptorPtr create(std::string logicalSourceName);
+  [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+  std::string toString() const override;
+  SourceDescriptorPtr copy() override;
 
-    std::string toString() const override;
-    SourceDescriptorPtr copy() override;
-
-  private:
-    explicit LogicalSourceDescriptor(std::string logicalSourceName);
+ private:
+  explicit LogicalSourceDescriptor(std::string logicalSourceName);
 };
 
 using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_

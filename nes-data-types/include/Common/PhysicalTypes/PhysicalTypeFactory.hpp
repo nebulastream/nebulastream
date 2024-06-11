@@ -26,22 +26,24 @@ class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
 /**
- * @brief The physical type factory converts a nes data type into a physical representation.
- * This is implemented as an abstract factory, as in the future we could identify different data type mappings, depending on the underling hardware.
+ * @brief The physical type factory converts a nes data type into a physical
+ * representation. This is implemented as an abstract factory, as in the future
+ * we could identify different data type mappings, depending on the underling
+ * hardware.
  */
 class PhysicalTypeFactory {
-  public:
-    PhysicalTypeFactory() = default;
-    virtual ~PhysicalTypeFactory() = default;
+ public:
+  PhysicalTypeFactory() = default;
+  virtual ~PhysicalTypeFactory() = default;
 
-    /**
-     * @brief Translates a nes data type into a corresponding physical type.
-     * @param dataType
-     * @return PhysicalTypePtr
-     */
-    virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const = 0;
+  /**
+   * @brief Translates a nes data type into a corresponding physical type.
+   * @param dataType
+   * @return PhysicalTypePtr
+   */
+  virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const = 0;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEFACTORY_HPP_
+#endif  // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEFACTORY_HPP_

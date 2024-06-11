@@ -22,18 +22,20 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-  * @brief Compares two text object and returns their Hamming Distance, -1 if inputs have different lengths.
-  */
+ * @brief Compares two text object and returns their Hamming Distance, -1 if
+ * inputs have different lengths.
+ */
 class HammingDistance : public Expression {
-  public:
-    HammingDistance(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<> execute(Record& record) const override;
+ public:
+  HammingDistance(const ExpressionPtr& leftSubExpression,
+                  const ExpressionPtr& rightSubExpression);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+ private:
+  const ExpressionPtr leftSubExpression;
+  const ExpressionPtr rightSubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_HAMMINGDISTANCE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_HAMMINGDISTANCE_HPP_

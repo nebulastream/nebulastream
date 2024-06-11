@@ -38,121 +38,151 @@
 using namespace NES;
 
 class RenameSourceToProjectOperatorRuleTest : public Testing::BaseUnitTest {
+ public:
+  SchemaPtr schema;
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
+  std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
-  public:
-    SchemaPtr schema;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+  /* Will be called before all tests in this class are started. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case.");
+  }
 
-    /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case.");
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    schema = Schema::create()
+                 ->addField("a", BasicType::UINT32)
+                 ->addField("b", BasicType::UINT32);
+    udfCatalog = Catalogs::UDF::UDFCatalog::create();
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
-        udfCatalog = Catalogs::UDF::UDFCatalog::create();
-    }
-
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
-        NES_INFO("Setup FilterPushDownTest test case.");
-        std::map<std::string, std::any> properties;
-        properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-        TopologyNodePtr physicalNode = TopologyNode::create(WorkerId(1), "localhost", 4000, 4002, 4, properties);
-        PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
-        LogicalSourcePtr logicalSource = LogicalSource::create("x", schema);
-        auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
-        sourceCatalog->addLogicalSource("src", schema);
-        sourceCatalog->addPhysicalSource("src", sce);
-    }
+  void setupSensorNodeAndSourceCatalog(
+      const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
+    NES_INFO("Setup FilterPushDownTest test case.");
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
+        NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    TopologyNodePtr physicalNode = TopologyNode::create(
+        WorkerId(1), "localhost", 4000, 4002, 4, properties);
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
+    LogicalSourcePtr logicalSource = LogicalSource::create("x", schema);
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(
+        physicalSource, logicalSource, physicalNode->getId());
+    sourceCatalog->addLogicalSource("src", schema);
+    sourceCatalog->addPhysicalSource("src", sce);
+  }
 };
 
-TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperator) {
+TEST_F(RenameSourceToProjectOperatorRuleTest,
+       testAddingSingleSourceRenameOperator) {
+  // Prepare
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query = Query::from("src")
+                    .map(Attribute("b") = Attribute("b") + Attribute("a"))
+                    .as("x")
+                    .sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto renameSourceOperators =
+      queryPlan->getOperatorByType<RenameSourceOperator>();
+  EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
-    EXPECT_TRUE(!renameSourceOperators.empty());
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan);
+  auto renameSourceToProjectOperatorRule =
+      Optimizer::RenameSourceToProjectOperatorRule::create();
+  auto updatedQueryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
 
-    auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
-    auto updatedQueryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
+  typeInferencePhase->execute(updatedQueryPlan);
 
-    typeInferencePhase->execute(updatedQueryPlan);
+  renameSourceOperators =
+      updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
+  EXPECT_TRUE(renameSourceOperators.empty());
 
-    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
-    EXPECT_TRUE(renameSourceOperators.empty());
-
-    auto projectOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
-    EXPECT_TRUE(projectOperators.size() == 1);
+  auto projectOperators =
+      updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
+  EXPECT_TRUE(projectOperators.size() == 1);
 }
 
-TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOperator) {
+TEST_F(RenameSourceToProjectOperatorRuleTest,
+       testAddingMultipleSourceRenameOperator) {
+  // Prepare
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query = Query::from("src")
+                    .as("y")
+                    .map(Attribute("b") = Attribute("b") + Attribute("a"))
+                    .as("x")
+                    .sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query =
-        Query::from("src").as("y").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto renameSourceOperators =
+      queryPlan->getOperatorByType<RenameSourceOperator>();
+  EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
-    EXPECT_TRUE(!renameSourceOperators.empty());
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan);
+  auto renameSourceToProjectOperatorRule =
+      Optimizer::RenameSourceToProjectOperatorRule::create();
+  auto updatedQueryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
 
-    auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
-    auto updatedQueryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
+  typeInferencePhase->execute(updatedQueryPlan);
 
-    typeInferencePhase->execute(updatedQueryPlan);
+  renameSourceOperators =
+      updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
+  EXPECT_TRUE(renameSourceOperators.empty());
 
-    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
-    EXPECT_TRUE(renameSourceOperators.empty());
-
-    auto projectOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
-    EXPECT_TRUE(projectOperators.size() == 2);
+  auto projectOperators =
+      updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
+  EXPECT_TRUE(projectOperators.size() == 2);
 }
 
-TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWithProject) {
+TEST_F(RenameSourceToProjectOperatorRuleTest,
+       testAddingSourceRenameOperatorWithProject) {
+  // Prepare
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query = Query::from("src")
+                    .project(Attribute("b"), Attribute("a"))
+                    .map(Attribute("b") = Attribute("b") + Attribute("a"))
+                    .as("x")
+                    .sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("src")
-                      .project(Attribute("b"), Attribute("a"))
-                      .map(Attribute("b") = Attribute("b") + Attribute("a"))
-                      .as("x")
-                      .sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto renameSourceOperators =
+      queryPlan->getOperatorByType<RenameSourceOperator>();
+  EXPECT_TRUE(!renameSourceOperators.empty());
 
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
-    EXPECT_TRUE(!renameSourceOperators.empty());
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  typeInferencePhase->execute(queryPlan);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    typeInferencePhase->execute(queryPlan);
+  auto renameSourceToProjectOperatorRule =
+      Optimizer::RenameSourceToProjectOperatorRule::create();
+  auto updatedQueryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
 
-    auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
-    auto updatedQueryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
+  typeInferencePhase->execute(updatedQueryPlan);
 
-    typeInferencePhase->execute(updatedQueryPlan);
+  renameSourceOperators =
+      updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
+  EXPECT_TRUE(renameSourceOperators.empty());
 
-    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
-    EXPECT_TRUE(renameSourceOperators.empty());
-
-    auto projectOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
-    EXPECT_TRUE(projectOperators.size() == 2);
+  auto projectOperators =
+      updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
+  EXPECT_TRUE(projectOperators.size() == 2);
 }

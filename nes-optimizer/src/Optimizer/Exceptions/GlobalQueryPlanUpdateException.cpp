@@ -15,6 +15,7 @@
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 
 namespace NES {
-GlobalQueryPlanUpdateException::GlobalQueryPlanUpdateException(const std::string& message)
+GlobalQueryPlanUpdateException::GlobalQueryPlanUpdateException(
+    const std::string& message)
     : Exceptions::RequestExecutionException(message) {}
-}// namespace NES
+}  // namespace NES

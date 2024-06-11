@@ -20,18 +20,18 @@
 
 namespace NES::Nautilus::IR::Operations {
 class ReturnOperation : public Operation {
-  public:
-    ReturnOperation();
-    ReturnOperation(OperationPtr returnValue);
-    ~ReturnOperation() override = default;
+ public:
+  ReturnOperation();
+  ReturnOperation(OperationPtr returnValue);
+  ~ReturnOperation() override = default;
 
-    OperationPtr getReturnValue();
-    bool hasReturnValue();
+  OperationPtr getReturnValue();
+  bool hasReturnValue();
 
-    std::string toString() override;
+  std::string toString() override;
 
-  private:
-    OperationWPtr returnValue;
+ private:
+  OperationWPtr returnValue;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_
+}  // namespace NES::Nautilus::IR::Operations
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_

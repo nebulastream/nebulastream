@@ -19,80 +19,84 @@
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-
 #include <vector>
 
 namespace NES::Monitoring {
 
 /**
- * @brief Wrapper class to represent a tuple buffer with multiple NetworkMetrics objects.
+ * @brief Wrapper class to represent a tuple buffer with multiple NetworkMetrics
+ * objects.
  */
 class NetworkMetricsWrapper {
-  public:
-    NetworkMetricsWrapper();
-    NetworkMetricsWrapper(WorkerId nodeId);
-    NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
+ public:
+  NetworkMetricsWrapper();
+  NetworkMetricsWrapper(WorkerId nodeId);
+  NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
 
-    /**
-     * @brief Writes a wrapper object to a given TupleBuffer.
-     * @param buf
-     * @param tupleIndex
-    */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
+  /**
+   * @brief Writes a wrapper object to a given TupleBuffer.
+   * @param buf
+   * @param tupleIndex
+   */
+  void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
-    /**
-     * @brief Parses a wrapper object from a given TupleBuffer.
-     * @param buf
-     * @param tupleIndex
-    */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+  /**
+   * @brief Parses a wrapper object from a given TupleBuffer.
+   * @param buf
+   * @param tupleIndex
+   */
+  void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
-    /**
-     * @brief Returns the Network metrics for a given core
-     * @param NetworkCore core number
-     * @return the Network metrics
-    */
-    [[nodiscard]] NetworkMetrics getNetworkValue(uint64_t interfaceNo) const;
+  /**
+   * @brief Returns the Network metrics for a given core
+   * @param NetworkCore core number
+   * @return the Network metrics
+   */
+  [[nodiscard]] NetworkMetrics getNetworkValue(uint64_t interfaceNo) const;
 
-    void addNetworkMetrics(NetworkMetrics&& nwValue);
+  void addNetworkMetrics(NetworkMetrics&& nwValue);
 
-    [[nodiscard]] uint64_t size() const;
+  [[nodiscard]] uint64_t size() const;
 
-    std::vector<std::string> getInterfaceNames();
+  std::vector<std::string> getInterfaceNames();
 
-    WorkerId getNodeId() const;
-    void setNodeId(WorkerId nodeId);
+  WorkerId getNodeId() const;
+  void setNodeId(WorkerId nodeId);
 
-    /**
-     * @brief Returns the metrics as json
-     * @return Json containing the metrics
-    */
-    nlohmann::json toJson() const;
+  /**
+   * @brief Returns the metrics as json
+   * @return Json containing the metrics
+   */
+  nlohmann::json toJson() const;
 
-    bool operator==(const NetworkMetricsWrapper& rhs) const;
-    bool operator!=(const NetworkMetricsWrapper& rhs) const;
+  bool operator==(const NetworkMetricsWrapper& rhs) const;
+  bool operator!=(const NetworkMetricsWrapper& rhs) const;
 
-  private:
-    std::vector<NetworkMetrics> networkMetrics;
-    WorkerId nodeId;
-    uint64_t timestamp;
+ private:
+  std::vector<NetworkMetrics> networkMetrics;
+  WorkerId nodeId;
+  uint64_t timestamp;
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
+ * @brief The serialize method to write metrics into the given Schema and
+ * TupleBuffer.
  * @param the metrics
  * @param the TupleBuffer
  * @param the tuple index indicating the location of the tuple
-*/
-void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+ */
+void writeToBuffer(const NetworkMetricsWrapper& metrics,
+                   Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
- * @brief The deserialize method to read metrics from the given Schema and TupleBuffer.
+ * @brief The deserialize method to read metrics from the given Schema and
+ * TupleBuffer.
  * @param the metrics
  * @param the TupleBuffer
  * @param the tuple index indicating the location of the tuple
-*/
-void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+ */
+void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf,
+                    uint64_t tupleIndex);
 
 /**
  * @brief Parses the metric to JSON
@@ -101,6 +105,6 @@ void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, u
  */
 nlohmann::json asJson(const NetworkMetricsWrapper& metrics);
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP_

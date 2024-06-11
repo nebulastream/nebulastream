@@ -15,10 +15,9 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_GENERATORSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_GENERATORSOURCE_HPP_
 
+#include <Sources/DataSource.hpp>
 #include <iostream>
 #include <sstream>
-
-#include <Sources/DataSource.hpp>
 #include <utility>
 
 namespace NES {
@@ -26,60 +25,58 @@ namespace NES {
 /**
  * @brief this class implements the generator source
  * @Limitations:
- *    - This class can currently not be serialized/deserialized mostly due to the templates
+ *    - This class can currently not be serialized/deserialized mostly due to
+ * the templates
  */
 class GeneratorSource : public DataSource {
-  public:
-    /**
+ public:
+  /**
    * @brief constructor to create a generator source
    * @param schema of the data that this source produces
    * @param bufferManager pointer to the buffer manager
    * @param queryManager pointer to the query manager
-   * @param numberOfBuffersToProduce the number of buffers to be produced by the source
+   * @param numberOfBuffersToProduce the number of buffers to be produced by the
+   * source
    * @param operatorId current operator id
-   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-   * @param statisticId represents the unique identifier of components that we can track statistics for
+   * @param originId represents the identifier of the upstream operator that
+   * represents the origin of the input stream
+   * @param statisticId represents the unique identifier of components that we
+   * can track statistics for
    * @param numSourceLocalBuffers the number of buffers allocated to a source
-   * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
-   * @param physicalSourceName the name and unique identifier of a physical source
-   * @param successors the subsequent operators in the pipeline to which the data is pushed
+   * @param gatheringMode the gathering mode (INTERVAL_MODE,
+   * INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+   * @param physicalSourceName the name and unique identifier of a physical
+   * source
+   * @param successors the subsequent operators in the pipeline to which the
+   * data is pushed
    */
-    GeneratorSource(SchemaPtr schema,
-                    Runtime::BufferManagerPtr bufferManager,
-                    Runtime::QueryManagerPtr queryManager,
-                    uint64_t numberOfBufferToProduce,
-                    OperatorId operatorId,
-                    OriginId originId,
-                    StatisticId statisticId,
-                    size_t numSourceLocalBuffers,
-                    GatheringMode gatheringMode,
-                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                    const std::string& physicalSourceName = std::string("defaultPhysicalStreamName"))
-        : DataSource(std::move(schema),
-                     std::move(bufferManager),
-                     std::move(queryManager),
-                     operatorId,
-                     originId,
-                     statisticId,
-                     numSourceLocalBuffers,
-                     gatheringMode,
-                     physicalSourceName,
-                     std::move(successors)) {
-        this->numberOfBuffersToProduce = numberOfBufferToProduce;
-    }
-    /**
+  GeneratorSource(
+      SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
+      Runtime::QueryManagerPtr queryManager, uint64_t numberOfBufferToProduce,
+      OperatorId operatorId, OriginId originId, StatisticId statisticId,
+      size_t numSourceLocalBuffers, GatheringMode gatheringMode,
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+      const std::string& physicalSourceName =
+          std::string("defaultPhysicalStreamName"))
+      : DataSource(std::move(schema), std::move(bufferManager),
+                   std::move(queryManager), operatorId, originId, statisticId,
+                   numSourceLocalBuffers, gatheringMode, physicalSourceName,
+                   std::move(successors)) {
+    this->numberOfBuffersToProduce = numberOfBufferToProduce;
+  }
+  /**
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-    std::optional<Runtime::TupleBuffer> receiveData() override = 0;
+  std::optional<Runtime::TupleBuffer> receiveData() override = 0;
 
-    /**
-     * @brief override the toString method for the generator source
-     * @return returns string describing the generator source
-     */
-    std::string toString() const override;
-    SourceType getType() const override;
+  /**
+   * @brief override the toString method for the generator source
+   * @return returns string describing the generator source
+   */
+  std::string toString() const override;
+  SourceType getType() const override;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_GENERATORSOURCE_HPP_
+}  // namespace NES
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_GENERATORSOURCE_HPP_

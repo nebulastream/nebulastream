@@ -18,7 +18,8 @@
 #include <cmath>
 namespace NES::Runtime::Execution::Expressions {
 
-FactorialExpression::FactorialExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
+FactorialExpression::FactorialExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
     : SubExpression(SubExpression) {}
 
 /**
@@ -29,34 +30,47 @@ FactorialExpression::FactorialExpression(const NES::Runtime::Execution::Expressi
 double calculateFactorial(double x) { return std::tgamma(x + 1); }
 
 Value<> FactorialExpression::execute(NES::Nautilus::Record& record) const {
-    // Evaluate the left sub expression and retrieve the value.
-    Value leftValue = SubExpression->execute(record);
+  // Evaluate the left sub expression and retrieve the value.
+  Value leftValue = SubExpression->execute(record);
 
-    if (leftValue->isType<Int8>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Int8>());
-    } else if (leftValue->isType<Int16>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Int16>());
-    } else if (leftValue->isType<Int32>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Int32>());
-    } else if (leftValue->isType<Int64>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Int64>());
-    } else if (leftValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<UInt8>());
-    } else if (leftValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<UInt16>());
-    } else if (leftValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<UInt32>());
-    } else if (leftValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<UInt64>());
-    } else if (leftValue->isType<Float>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
-        return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Double>());
-    } else {
-        // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
-    }
+  if (leftValue->isType<Int8>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<Int8>());
+  } else if (leftValue->isType<Int16>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<Int16>());
+  } else if (leftValue->isType<Int32>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<Int32>());
+  } else if (leftValue->isType<Int64>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<Int64>());
+  } else if (leftValue->isType<UInt8>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<UInt8>());
+  } else if (leftValue->isType<UInt16>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<UInt16>());
+  } else if (leftValue->isType<UInt32>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<UInt32>());
+  } else if (leftValue->isType<UInt64>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<UInt64>());
+  } else if (leftValue->isType<Float>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<Float>());
+  } else if (leftValue->isType<Double>()) {
+    return FunctionCall<>("calculateFactorial", calculateFactorial,
+                          leftValue.as<Double>());
+  } else {
+    // If no type was applicable we throw an exception.
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on numeric input arguments that are "
+        "either Integer or Float.");
+  }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<FactorialExpression>> factorialFunction("factorial");
-}// namespace NES::Runtime::Execution::Expressions
+static ExecutableFunctionRegistry::Add<
+    UnaryFunctionProvider<FactorialExpression>>
+    factorialFunction("factorial");
+}  // namespace NES::Runtime::Execution::Expressions

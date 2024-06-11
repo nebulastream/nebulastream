@@ -18,18 +18,20 @@
 namespace NES::Runtime::Execution {
 
 /**
- * @brief The executable pipeline stage represents the executable part of a an specific pipeline.
- * @Usage this pipeline is the empty pipeline that just retuns without doing processing, during execution, if tasks get invalid, we will switch the
+ * @brief The executable pipeline stage represents the executable part of a an
+ * specific pipeline.
+ * @Usage this pipeline is the empty pipeline that just retuns without doing
+ * processing, during execution, if tasks get invalid, we will switch the
  * function pointer to this one
- * For instance, during code generation we generate an implementation of this class, which defines all virtual functions.
+ * For instance, during code generation we generate an implementation of this
+ * class, which defines all virtual functions.
  *
  */
 class DiscardingExecutablePipelineStage : public ExecutablePipelineStage {
-
-  public:
-    ExecutionResult execute(TupleBuffer& inputTupleBuffer,
-                            PipelineExecutionContext& pipelineExecutionContext,
-                            WorkerContext& workerContext) override;
+ public:
+  ExecutionResult execute(TupleBuffer& inputTupleBuffer,
+                          PipelineExecutionContext& pipelineExecutionContext,
+                          WorkerContext& workerContext) override;
 };
-}// namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
+}  // namespace NES::Runtime::Execution
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_

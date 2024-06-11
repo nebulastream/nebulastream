@@ -23,37 +23,46 @@ namespace NES::Compiler {
 class CompilationCache;
 using CompilationCachePtr = std::shared_ptr<CompilationCache>;
 /**
- * @brief The JIT compiler handles compilation requests and dispatches them to the right language compiler implementation.
+ * @brief The JIT compiler handles compilation requests and dispatches them to
+ * the right language compiler implementation.
  */
 class JITCompiler {
-  public:
-    /**
-     * @brief Constructor to create a new jit compiler with a fixed set of language compilers.
-     * @param languageCompilers set of language compilers.
-     * @param useCompilationCache
-     */
-    JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers, bool useCompilationCache);
-    /**
-     * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
-     * @param request Compilation request
-     * @return Future of the CompilationResult
-     */
-    [[nodiscard]] std::future<CompilationResult> compile(std::shared_ptr<const CompilationRequest> request);
+ public:
+  /**
+   * @brief Constructor to create a new jit compiler with a fixed set of
+   * language compilers.
+   * @param languageCompilers set of language compilers.
+   * @param useCompilationCache
+   */
+  JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>>
+                  languageCompilers,
+              bool useCompilationCache);
+  /**
+   * @brief Processes a compilation request and dispatches it to the correct
+   * compiler implementation.
+   * @param request Compilation request
+   * @return Future of the CompilationResult
+   */
+  [[nodiscard]] std::future<CompilationResult> compile(
+      std::shared_ptr<const CompilationRequest> request);
 
-    ~JITCompiler();
+  ~JITCompiler();
 
-  private:
-    /**
-     * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
-     * @param request Compilation request
-     * @return Future of the CompilationResult
-     */
-    [[nodiscard]] std::future<CompilationResult> handleRequest(std::shared_ptr<const CompilationRequest> request);
-    const std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
-    bool useCompilationCache;
-    CompilationCachePtr compilationCache;
+ private:
+  /**
+   * @brief Processes a compilation request and dispatches it to the correct
+   * compiler implementation.
+   * @param request Compilation request
+   * @return Future of the CompilationResult
+   */
+  [[nodiscard]] std::future<CompilationResult> handleRequest(
+      std::shared_ptr<const CompilationRequest> request);
+  const std::map<const Language, std::shared_ptr<const LanguageCompiler>>
+      languageCompilers;
+  bool useCompilationCache;
+  CompilationCachePtr compilationCache;
 };
 
-}// namespace NES::Compiler
+}  // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_JITCOMPILER_HPP_
+#endif  // NES_COMPILER_INCLUDE_COMPILER_JITCOMPILER_HPP_

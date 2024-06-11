@@ -23,23 +23,25 @@
 namespace NES::Runtime::Execution {
 
 class PipelinePlan {
-  public:
-    struct Pipeline {
-        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
-        std::shared_ptr<MockedPipelineExecutionContext> ctx;
-    };
-    void appendPipeline(std::shared_ptr<PhysicalOperatorPipeline> pipeline, std::shared_ptr<MockedPipelineExecutionContext> ctx) {
-        Pipeline pipe = {std::move(pipeline), std::move(ctx)};
-        pipelines.emplace_back(pipe);
-    }
-    Pipeline& getPipeline(uint64_t index) {
-        NES_ASSERT(pipelines.size() > index, "Pipeline with index " << index << " does not exist!");
-        return pipelines[index];
-    }
+ public:
+  struct Pipeline {
+    std::shared_ptr<PhysicalOperatorPipeline> pipeline;
+    std::shared_ptr<MockedPipelineExecutionContext> ctx;
+  };
+  void appendPipeline(std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+                      std::shared_ptr<MockedPipelineExecutionContext> ctx) {
+    Pipeline pipe = {std::move(pipeline), std::move(ctx)};
+    pipelines.emplace_back(pipe);
+  }
+  Pipeline& getPipeline(uint64_t index) {
+    NES_ASSERT(pipelines.size() > index,
+               "Pipeline with index " << index << " does not exist!");
+    return pipelines[index];
+  }
 
-  private:
-    std::vector<Pipeline> pipelines;
+ private:
+  std::vector<Pipeline> pipelines;
 };
 
-}// namespace NES::Runtime::Execution
-#endif// NES_EXECUTION_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
+}  // namespace NES::Runtime::Execution
+#endif  // NES_EXECUTION_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_

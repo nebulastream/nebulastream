@@ -12,48 +12,55 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <gtest/gtest.h>
 
 namespace NES {
 
 class LocationUnitTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Location test class.");
-    }
+ public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup Location test class.");
+  }
 
-    static void TearDownTestCase() { NES_INFO("Tear down GeographilcalLocationUnitTest test class."); }
+  static void TearDownTestCase() {
+    NES_INFO("Tear down GeographilcalLocationUnitTest test class.");
+  }
 };
 
 TEST_F(LocationUnitTest, testExceptionHandling) {
-    ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation(200, 0),
-                 NES::Spatial::Exception::CoordinatesOutOfRangeException);
-    ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation(200, 200),
-                 NES::Spatial::Exception::CoordinatesOutOfRangeException);
-    ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("200, 0"),
-                 NES::Spatial::Exception::CoordinatesOutOfRangeException);
-    ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("200. 0"),
-                 NES::Spatial::Exception::CoordinatesOutOfRangeException);
-    ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("12ee2, 122sff"),
-                 NES::Spatial::Exception::CoordinatesOutOfRangeException);
+  ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation(200, 0),
+               NES::Spatial::Exception::CoordinatesOutOfRangeException);
+  ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation(200, 200),
+               NES::Spatial::Exception::CoordinatesOutOfRangeException);
+  ASSERT_THROW(
+      NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("200, 0"),
+      NES::Spatial::Exception::CoordinatesOutOfRangeException);
+  ASSERT_THROW(
+      NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("200. 0"),
+      NES::Spatial::Exception::CoordinatesOutOfRangeException);
+  ASSERT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(
+                   "12ee2, 122sff"),
+               NES::Spatial::Exception::CoordinatesOutOfRangeException);
 
-    auto geoLoc = NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("23, 110");
-    EXPECT_EQ(geoLoc.getLatitude(), 23);
-    EXPECT_EQ(geoLoc.getLongitude(), 110);
-    ASSERT_TRUE(geoLoc.isValid());
-    auto invalidGeoLoc1 = NES::Spatial::DataTypes::Experimental::GeoLocation();
-    auto invalidGeoLoc2 = NES::Spatial::DataTypes::Experimental::GeoLocation();
-    EXPECT_FALSE(invalidGeoLoc1.isValid());
-    EXPECT_TRUE(std::isnan(invalidGeoLoc1.getLatitude()));
-    ASSERT_TRUE(std::isnan(invalidGeoLoc1.getLongitude()));
+  auto geoLoc =
+      NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("23, 110");
+  EXPECT_EQ(geoLoc.getLatitude(), 23);
+  EXPECT_EQ(geoLoc.getLongitude(), 110);
+  ASSERT_TRUE(geoLoc.isValid());
+  auto invalidGeoLoc1 = NES::Spatial::DataTypes::Experimental::GeoLocation();
+  auto invalidGeoLoc2 = NES::Spatial::DataTypes::Experimental::GeoLocation();
+  EXPECT_FALSE(invalidGeoLoc1.isValid());
+  EXPECT_TRUE(std::isnan(invalidGeoLoc1.getLatitude()));
+  ASSERT_TRUE(std::isnan(invalidGeoLoc1.getLongitude()));
 
-    EXPECT_EQ(invalidGeoLoc1, invalidGeoLoc2);
-    ASSERT_NE(geoLoc, invalidGeoLoc1);
+  EXPECT_EQ(invalidGeoLoc1, invalidGeoLoc2);
+  ASSERT_NE(geoLoc, invalidGeoLoc1);
 }
-}// namespace NES
+}  // namespace NES

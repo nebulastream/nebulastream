@@ -28,187 +28,200 @@ class RecordBuffer;
 namespace Operators {
 class Operator;
 class OperatorState;
-}// namespace Operators
+}  // namespace Operators
 
 /**
- * The execution context manages state of operators within a pipeline and provides access to some global functionality.
- * We differentiate between local and global operator state.
- * Local operator state lives throughout one pipeline invocation. It gets initialized in the open call and cleared in the close call.
- * Global operator state lives throughout the whole existence of the pipeline. It gets initialized in the setup call and cleared in the terminate call.
+ * The execution context manages state of operators within a pipeline and
+ * provides access to some global functionality. We differentiate between local
+ * and global operator state. Local operator state lives throughout one pipeline
+ * invocation. It gets initialized in the open call and cleared in the close
+ * call. Global operator state lives throughout the whole existence of the
+ * pipeline. It gets initialized in the setup call and cleared in the terminate
+ * call.
  */
 class ExecutionContext final {
-  public:
-    /**
-     * @brief Create new execution context with mem refs to the worker context and the pipeline context.
-     * @param workerContext reference to the worker context.
-     * @param pipelineContext reference to the pipeline context.
-     */
-    ExecutionContext(const Value<MemRef>& workerContext, const Value<MemRef>& pipelineContext);
+ public:
+  /**
+   * @brief Create new execution context with mem refs to the worker context and
+   * the pipeline context.
+   * @param workerContext reference to the worker context.
+   * @param pipelineContext reference to the pipeline context.
+   */
+  ExecutionContext(const Value<MemRef>& workerContext,
+                   const Value<MemRef>& pipelineContext);
 
-    /**
-     * @brief Set local operator state that keeps state in a single pipeline invocation.
-     * @param op reference to the operator to identify the state.
-     * @param state operator state.
-     */
-    void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
+  /**
+   * @brief Set local operator state that keeps state in a single pipeline
+   * invocation.
+   * @param op reference to the operator to identify the state.
+   * @param state operator state.
+   */
+  void setLocalOperatorState(const Operators::Operator* op,
+                             std::unique_ptr<Operators::OperatorState> state);
 
-    /**
-     * @brief Get the operator state by the operator reference.
-     * @param op operator reference
-     * @return operator state.
-     */
-    Operators::OperatorState* getLocalState(const Operators::Operator* op);
+  /**
+   * @brief Get the operator state by the operator reference.
+   * @param op operator reference
+   * @return operator state.
+   */
+  Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
-    /**
-     * @brief Get the global operator state.
-     * @param handlerIndex reference to the operator to identify the state.
-     */
-    Value<MemRef> getGlobalOperatorHandler(uint64_t handlerIndex);
+  /**
+   * @brief Get the global operator state.
+   * @param handlerIndex reference to the operator to identify the state.
+   */
+  Value<MemRef> getGlobalOperatorHandler(uint64_t handlerIndex);
 
-    /**
-     * @brief Get worker thread id of the current execution.
-     * @return ValueId<WorkerThreadId>
-     */
-    ValueId<WorkerThreadId> getWorkerThreadId();
+  /**
+   * @brief Get worker thread id of the current execution.
+   * @return ValueId<WorkerThreadId>
+   */
+  ValueId<WorkerThreadId> getWorkerThreadId();
 
-    /**
-     * @brief Allocate a new tuple buffer.
-     * @return Value<MemRef>
-     */
-    Value<MemRef> allocateBuffer();
+  /**
+   * @brief Allocate a new tuple buffer.
+   * @return Value<MemRef>
+   */
+  Value<MemRef> allocateBuffer();
 
-    /**
-     * @brief Emit a record buffer to the next pipeline or sink.
-     * @param record buffer.
-     */
-    void emitBuffer(const RecordBuffer& rb);
+  /**
+   * @brief Emit a record buffer to the next pipeline or sink.
+   * @param record buffer.
+   */
+  void emitBuffer(const RecordBuffer& rb);
 
-    /**
-     * @brief Returns the pipeline context
-     * @return Value<MemRef> to the pipeline context
-     */
-    const Value<MemRef>& getPipelineContext() const;
+  /**
+   * @brief Returns the pipeline context
+   * @return Value<MemRef> to the pipeline context
+   */
+  const Value<MemRef>& getPipelineContext() const;
 
-    /**
-     * @brief Returns the worker context
-     * @return Value<MemRef> to the worker context
-     */
-    const Value<MemRef>& getWorkerContext() const;
+  /**
+   * @brief Returns the worker context
+   * @return Value<MemRef> to the worker context
+   */
+  const Value<MemRef>& getWorkerContext() const;
 
-    /**
-     * @brief Returns the current origin id. This is set in the scan.
-     * @return Value<UInt64> origin id
-     */
-    const Value<UInt64>& getOriginId() const;
+  /**
+   * @brief Returns the current origin id. This is set in the scan.
+   * @return Value<UInt64> origin id
+   */
+  const Value<UInt64>& getOriginId() const;
 
-    /**
-     * @brief Returns the current statistic id. This is set in the Operator::open()
-     * @return Value<UInt64> statistic id
-     */
-    const Value<UInt64>& getCurrentStatisticId() const;
+  /**
+   * @brief Returns the current statistic id. This is set in the
+   * Operator::open()
+   * @return Value<UInt64> statistic id
+   */
+  const Value<UInt64>& getCurrentStatisticId() const;
 
-    /**
-     * @brief Sets the current origin id.
-     * @param origin
-     */
-    void setOrigin(Value<UInt64> origin);
+  /**
+   * @brief Sets the current origin id.
+   * @param origin
+   */
+  void setOrigin(Value<UInt64> origin);
 
-    /**
-     * @brief Sets the current statistic id of the current tuple buffer in this execution context
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     */
-    void setCurrentStatisticId(Value<UInt64> statisticId);
+  /**
+   * @brief Sets the current statistic id of the current tuple buffer in this
+   * execution context
+   * @param statisticId: represents the unique identifier of components that we
+   * can track statistics for
+   */
+  void setCurrentStatisticId(Value<UInt64> statisticId);
 
-    /**
-     * @brief Returns the current watermark ts. This is set in the scan.
-     * @return Value<UInt64> watermark ts
-     */
-    const Value<UInt64>& getWatermarkTs() const;
+  /**
+   * @brief Returns the current watermark ts. This is set in the scan.
+   * @return Value<UInt64> watermark ts
+   */
+  const Value<UInt64>& getWatermarkTs() const;
 
-    /**
-     * @brief Sets the current valid watermark ts.
-     * @param watermarkTs
-     */
-    void setWatermarkTs(Value<UInt64> watermarkTs);
+  /**
+   * @brief Sets the current valid watermark ts.
+   * @param watermarkTs
+   */
+  void setWatermarkTs(Value<UInt64> watermarkTs);
 
-    /**
-     * @brief Sets the current sequence number
-     * @param sequenceNumber
-     */
-    void setSequenceNumber(Value<UInt64> sequenceNumber);
+  /**
+   * @brief Sets the current sequence number
+   * @param sequenceNumber
+   */
+  void setSequenceNumber(Value<UInt64> sequenceNumber);
 
-    /**
-     * @brief Returns current sequence number
-     * @return Value<UInt64> sequence number
-     */
-    const Value<UInt64>& getSequenceNumber() const;
+  /**
+   * @brief Returns current sequence number
+   * @return Value<UInt64> sequence number
+   */
+  const Value<UInt64>& getSequenceNumber() const;
 
-    /**
-     * @brief Returns current chunk number
-     * @return Value<UInt64> chunk number
-     */
-    const Value<UInt64>& getChunkNumber() const;
+  /**
+   * @brief Returns current chunk number
+   * @return Value<UInt64> chunk number
+   */
+  const Value<UInt64>& getChunkNumber() const;
 
-    /**
-     * @brief Sets the current chunk number
-     * @param chunkNumber
-     */
-    void setChunkNumber(Value<UInt64> chunkNumber);
+  /**
+   * @brief Sets the current chunk number
+   * @param chunkNumber
+   */
+  void setChunkNumber(Value<UInt64> chunkNumber);
 
-    /**
-     * @brief Returns last chunk
-     * @return Value<Boolean>&
-     */
-    const Value<Boolean>& getLastChunk() const;
+  /**
+   * @brief Returns last chunk
+   * @return Value<Boolean>&
+   */
+  const Value<Boolean>& getLastChunk() const;
 
-    /**
-     * @brief Removes the sequence state for the current <OrigindId, SequenceNumber>
-     */
-    void removeSequenceState() const;
+  /**
+   * @brief Removes the sequence state for the current <OrigindId,
+   * SequenceNumber>
+   */
+  void removeSequenceState() const;
 
-    /**
-     * @brief Checks if all chunks have been seen
-     * @return True or false
-     */
-    Value<Boolean> isLastChunk() const;
+  /**
+   * @brief Checks if all chunks have been seen
+   * @return True or false
+   */
+  Value<Boolean> isLastChunk() const;
 
-    /**
-     * @brief Gets the next chunk number for the emitted tuple buffers
-     * @return Value<UInt64>
-     */
-    Value<UInt64> getNextChunkNr() const;
+  /**
+   * @brief Gets the next chunk number for the emitted tuple buffers
+   * @return Value<UInt64>
+   */
+  Value<UInt64> getNextChunkNr() const;
 
-    /**
-     * @brief Sets last chunk
-     * @param isLastChunk
-     */
-    void setLastChunk(Value<Boolean> isLastChunk);
+  /**
+   * @brief Sets last chunk
+   * @param isLastChunk
+   */
+  void setLastChunk(Value<Boolean> isLastChunk);
 
-    /**
-     * @brief Returns the current time stamp ts. This is set by a time function
-     * @return Value<UInt64> timestamp ts
-     */
-    const Value<UInt64>& getCurrentTs() const;
+  /**
+   * @brief Returns the current time stamp ts. This is set by a time function
+   * @return Value<UInt64> timestamp ts
+   */
+  const Value<UInt64>& getCurrentTs() const;
 
-    /**
-     * @brief Sets the current processing timestamp.
-     * @param ts
-     */
-    void setCurrentTs(Value<UInt64> ts);
+  /**
+   * @brief Sets the current processing timestamp.
+   * @param ts
+   */
+  void setCurrentTs(Value<UInt64> ts);
 
-  private:
-    std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    Value<MemRef> workerContext;
-    Value<MemRef> pipelineContext;
-    Value<UInt64> origin;
-    Value<UInt64> statisticId;
-    Value<UInt64> watermarkTs;
-    Value<UInt64> currentTs;
-    Value<UInt64> sequenceNumber;
-    Value<UInt64> chunkNumber;
-    Value<Boolean> lastChunk;
+ private:
+  std::unordered_map<const Operators::Operator*,
+                     std::unique_ptr<Operators::OperatorState>>
+      localStateMap;
+  Value<MemRef> workerContext;
+  Value<MemRef> pipelineContext;
+  Value<UInt64> origin;
+  Value<UInt64> statisticId;
+  Value<UInt64> watermarkTs;
+  Value<UInt64> currentTs;
+  Value<UInt64> sequenceNumber;
+  Value<UInt64> chunkNumber;
+  Value<Boolean> lastChunk;
 };
 
-}// namespace NES::Runtime::Execution
+}  // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_

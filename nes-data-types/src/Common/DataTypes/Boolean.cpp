@@ -17,15 +17,17 @@
 
 namespace NES {
 
-bool Boolean::equals(DataTypePtr otherDataType) { return otherDataType->isBoolean(); }
+bool Boolean::equals(DataTypePtr otherDataType) {
+  return otherDataType->isBoolean();
+}
 
 DataTypePtr Boolean::join(DataTypePtr otherDataType) {
-    if (otherDataType->isBoolean()) {
-        return DataTypeFactory::createBoolean();
-    }
-    return DataTypeFactory::createUndefined();
+  if (otherDataType->isBoolean()) {
+    return DataTypeFactory::createBoolean();
+  }
+  return DataTypeFactory::createUndefined();
 }
 
 std::string Boolean::toString() { return "Boolean"; }
 
-}// namespace NES
+}  // namespace NES

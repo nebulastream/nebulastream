@@ -21,17 +21,18 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression calculates the logarithm of the gamma function value of the subExpression.
+ * @brief This expression calculates the logarithm of the gamma function value
+ * of the subExpression.
  */
 class LGammaExpression : public Expression {
-  public:
-    LGammaExpression(const ExpressionPtr& SubExpression);
-    Value<> execute(Record& record) const override;
+ public:
+  LGammaExpression(const ExpressionPtr& SubExpression);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr SubExpression;
+ private:
+  const ExpressionPtr SubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LGAMMAEXPRESSION_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LGAMMAEXPRESSION_HPP_

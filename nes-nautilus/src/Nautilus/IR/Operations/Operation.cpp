@@ -15,15 +15,19 @@
 #include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR::Operations {
-Operation::Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp)
+Operation::Operation(OperationType opType, OperationIdentifier identifier,
+                     Types::StampPtr stamp)
     : opType(opType), identifier(identifier), stamp(stamp) {}
-Operation::Operation(OperationType opType, Types::StampPtr stamp) : opType(opType), identifier(""), stamp(stamp) {}
+Operation::Operation(OperationType opType, Types::StampPtr stamp)
+    : opType(opType), identifier(""), stamp(stamp) {}
 Operation::OperationType Operation::getOperationType() const { return opType; }
 OperationIdentifier Operation::getIdentifier() { return identifier; }
 const Types::StampPtr& Operation::getStamp() const { return stamp; }
 
-void Operation::addUsage(const Operation* operation) { usages.emplace_back(operation); }
+void Operation::addUsage(const Operation* operation) {
+  usages.emplace_back(operation);
+}
 
 const std::vector<const Operation*>& Operation::getUsages() { return usages; }
 
-}// namespace NES::Nautilus::IR::Operations
+}  // namespace NES::Nautilus::IR::Operations

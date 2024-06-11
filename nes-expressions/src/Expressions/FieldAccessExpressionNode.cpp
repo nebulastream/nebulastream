@@ -18,47 +18,58 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <utility>
 namespace NES {
-FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)
+FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp,
+                                                     std::string fieldName)
     : ExpressionNode(std::move(stamp)), fieldName(std::move(fieldName)){};
 
-FieldAccessExpressionNode::FieldAccessExpressionNode(FieldAccessExpressionNode* other)
+FieldAccessExpressionNode::FieldAccessExpressionNode(
+    FieldAccessExpressionNode* other)
     : ExpressionNode(other), fieldName(other->getFieldName()){};
 
-ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp, std::string fieldName) {
-    return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(std::move(stamp), std::move(fieldName)));
+ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp,
+                                                    std::string fieldName) {
+  return std::make_shared<FieldAccessExpressionNode>(
+      FieldAccessExpressionNode(std::move(stamp), std::move(fieldName)));
 }
 
 ExpressionNodePtr FieldAccessExpressionNode::create(std::string fieldName) {
-    return create(DataTypeFactory::createUndefined(), std::move(fieldName));
+  return create(DataTypeFactory::createUndefined(), std::move(fieldName));
 }
 
 bool FieldAccessExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<FieldAccessExpressionNode>()) {
-        auto otherFieldRead = rhs->as<FieldAccessExpressionNode>();
-        return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp->equals(stamp);
-    }
-    return false;
+  if (rhs->instanceOf<FieldAccessExpressionNode>()) {
+    auto otherFieldRead = rhs->as<FieldAccessExpressionNode>();
+    return otherFieldRead->fieldName == fieldName &&
+           otherFieldRead->stamp->equals(stamp);
+  }
+  return false;
 }
 
-std::string FieldAccessExpressionNode::getFieldName() const { return fieldName; }
+std::string FieldAccessExpressionNode::getFieldName() const {
+  return fieldName;
+}
 
-void FieldAccessExpressionNode::updateFieldName(std::string fieldName) { this->fieldName = std::move(fieldName); }
+void FieldAccessExpressionNode::updateFieldName(std::string fieldName) {
+  this->fieldName = std::move(fieldName);
+}
 
 std::string FieldAccessExpressionNode::toString() const {
-    return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
+  return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
 }
 
 void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
-    // check if the access field is defined in the schema.
-    auto existingField = schema->getField(fieldName);
-    if (existingField) {
-        fieldName = existingField->getName();
-        stamp = existingField->getDataType();
-        return;
-    }
-    throw std::logic_error("FieldAccessExpression: the field " + fieldName + " is not defined in the schema "
-                           + schema->toString());
+  // check if the access field is defined in the schema.
+  auto existingField = schema->getField(fieldName);
+  if (existingField) {
+    fieldName = existingField->getName();
+    stamp = existingField->getDataType();
+    return;
+  }
+  throw std::logic_error("FieldAccessExpression: the field " + fieldName +
+                         " is not defined in the schema " + schema->toString());
 }
 
-ExpressionNodePtr FieldAccessExpressionNode::copy() { return std::make_shared<FieldAccessExpressionNode>(*this); }
-}// namespace NES
+ExpressionNodePtr FieldAccessExpressionNode::copy() {
+  return std::make_shared<FieldAccessExpressionNode>(*this);
+}
+}  // namespace NES

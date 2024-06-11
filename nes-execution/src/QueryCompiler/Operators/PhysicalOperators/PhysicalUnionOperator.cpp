@@ -15,20 +15,22 @@
 #include <sstream>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& schema) {
-    return create(id, statisticId, schema, schema, schema);
-}
-
 PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id,
                                                   StatisticId statisticId,
-                                                  const SchemaPtr& leftSchema,
-                                                  const SchemaPtr& rightSchema,
-                                                  const SchemaPtr& outputSchema) {
-    return std::make_shared<PhysicalUnionOperator>(id, statisticId, leftSchema, rightSchema, outputSchema);
+                                                  const SchemaPtr& schema) {
+  return create(id, statisticId, schema, schema, schema);
 }
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(StatisticId statisticId, const SchemaPtr& schema) {
-    return create(getNextOperatorId(), statisticId, schema);
+PhysicalOperatorPtr PhysicalUnionOperator::create(
+    OperatorId id, StatisticId statisticId, const SchemaPtr& leftSchema,
+    const SchemaPtr& rightSchema, const SchemaPtr& outputSchema) {
+  return std::make_shared<PhysicalUnionOperator>(id, statisticId, leftSchema,
+                                                 rightSchema, outputSchema);
+}
+
+PhysicalOperatorPtr PhysicalUnionOperator::create(StatisticId statisticId,
+                                                  const SchemaPtr& schema) {
+  return create(getNextOperatorId(), statisticId, schema);
 }
 
 PhysicalUnionOperator::PhysicalUnionOperator(OperatorId id,
@@ -36,14 +38,19 @@ PhysicalUnionOperator::PhysicalUnionOperator(OperatorId id,
                                              const SchemaPtr& leftSchema,
                                              const SchemaPtr& rightSchema,
                                              const SchemaPtr& outputSchema)
-    : Operator(id, statisticId), PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema) {}
+    : Operator(id, statisticId),
+      PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema,
+                             outputSchema) {}
 
 std::string PhysicalUnionOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalUnionOperator:\n";
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalUnionOperator:\n";
+  return out.str();
 }
-OperatorPtr PhysicalUnionOperator::copy() { return create(id, statisticId, leftInputSchema, rightInputSchema, outputSchema); }
+OperatorPtr PhysicalUnionOperator::copy() {
+  return create(id, statisticId, leftInputSchema, rightInputSchema,
+                outputSchema);
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators

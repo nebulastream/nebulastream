@@ -18,10 +18,10 @@
 namespace NES::Configurations {
 
 bool NumberValidation::isValid(const std::string& parameter) const {
-    std::regex numberRegex("^\\d+$");
-    if (!std::regex_match(parameter, numberRegex)) {
-        return false;
-    }
-    return true;
+  std::regex numberRegex("^\\d+$");
+  if (!std::regex_match(parameter, numberRegex)) {
+    return false;
+  }
+  return true;
 }
-}// namespace NES::Configurations
+}  // namespace NES::Configurations

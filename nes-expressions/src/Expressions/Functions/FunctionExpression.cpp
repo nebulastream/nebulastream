@@ -17,48 +17,57 @@
 
 namespace NES {
 
-FunctionExpression::FunctionExpression(DataTypePtr stamp, std::string functionName, std::unique_ptr<LogicalFunction> function)
-    : ExpressionNode(std::move(stamp)), functionName(std::move(functionName)), function(std::move(function)) {}
+FunctionExpression::FunctionExpression(
+    DataTypePtr stamp, std::string functionName,
+    std::unique_ptr<LogicalFunction> function)
+    : ExpressionNode(std::move(stamp)),
+      functionName(std::move(functionName)),
+      function(std::move(function)) {}
 
-ExpressionNodePtr FunctionExpression::create(const DataTypePtr& stamp,
-                                             const std::string& functionName,
-                                             const std::vector<ExpressionNodePtr>& arguments) {
-    auto function = LogicalFunctionRegistry::createPlugin(functionName);
-    auto expression = std::make_shared<FunctionExpression>(stamp, functionName, std::move(function));
-    for (const auto& arg : arguments) {
-        expression->addChild(arg);
-    }
-    return expression;
+ExpressionNodePtr FunctionExpression::create(
+    const DataTypePtr& stamp, const std::string& functionName,
+    const std::vector<ExpressionNodePtr>& arguments) {
+  auto function = LogicalFunctionRegistry::createPlugin(functionName);
+  auto expression = std::make_shared<FunctionExpression>(stamp, functionName,
+                                                         std::move(function));
+  for (const auto& arg : arguments) {
+    expression->addChild(arg);
+  }
+  return expression;
 }
 
 void FunctionExpression::inferStamp(SchemaPtr schema) {
-    std::vector<DataTypePtr> argumentTypes;
-    for (const auto& input : getArguments()) {
-        input->inferStamp(schema);
-        argumentTypes.emplace_back(input->getStamp());
-    }
-    auto resultStamp = function->inferStamp(argumentTypes);
-    setStamp(resultStamp);
+  std::vector<DataTypePtr> argumentTypes;
+  for (const auto& input : getArguments()) {
+    input->inferStamp(schema);
+    argumentTypes.emplace_back(input->getStamp());
+  }
+  auto resultStamp = function->inferStamp(argumentTypes);
+  setStamp(resultStamp);
 }
 
 std::string FunctionExpression::toString() const { return functionName; }
 
 bool FunctionExpression::equal(const NodePtr& rhs) const {
-    if (rhs->instanceOf<FunctionExpression>()) {
-        auto otherAddNode = rhs->as<FunctionExpression>();
-        return functionName == otherAddNode->functionName;
-    }
-    return false;
+  if (rhs->instanceOf<FunctionExpression>()) {
+    auto otherAddNode = rhs->as<FunctionExpression>();
+    return functionName == otherAddNode->functionName;
+  }
+  return false;
 }
 
-ExpressionNodePtr FunctionExpression::copy() { return FunctionExpression::create(stamp, functionName, getArguments()); }
-const std::string& FunctionExpression::getFunctionName() const { return functionName; }
+ExpressionNodePtr FunctionExpression::copy() {
+  return FunctionExpression::create(stamp, functionName, getArguments());
+}
+const std::string& FunctionExpression::getFunctionName() const {
+  return functionName;
+}
 std::vector<ExpressionNodePtr> FunctionExpression::getArguments() const {
-    std::vector<ExpressionNodePtr> arguments;
-    for (const auto& child : getChildren()) {
-        arguments.emplace_back(child->as<ExpressionNode>());
-    }
-    return arguments;
+  std::vector<ExpressionNodePtr> arguments;
+  for (const auto& child : getChildren()) {
+    arguments.emplace_back(child->as<ExpressionNode>());
+  }
+  return arguments;
 }
 
-}// namespace NES
+}  // namespace NES

@@ -15,11 +15,12 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_GRPC_WORKERSTATISTICRPCCLIENT_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_GRPC_WORKERSTATISTICRPCCLIENT_HPP_
 
-#include <Statistics/StatisticRequests.hpp>
-#include <Statistics/StatisticValue.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
+
+#include <Statistics/StatisticRequests.hpp>
+#include <Statistics/StatisticValue.hpp>
 
 using grpc::Channel;
 using grpc::ClientAsyncResponseReader;
@@ -32,36 +33,38 @@ class WorkerStatisticRPCClient;
 using WorkerStatisticRPCClientPtr = std::shared_ptr<WorkerStatisticRPCClient>;
 
 class WorkerStatisticRPCClient {
-  public:
-    template<typename ReplayType>
-    struct AsyncClientCall {
-        // Container for the data we expect from the server.
-        ReplayType reply;
+ public:
+  template <typename ReplayType>
+  struct AsyncClientCall {
+    // Container for the data we expect from the server.
+    ReplayType reply;
 
-        // Context for the client. It could be used to convey extra information to
-        // the server and/or tweak certain RPC behaviors.
-        ClientContext context;
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
 
-        // Storage for the status of the RPC upon completion.
-        Status status;
+    // Storage for the status of the RPC upon completion.
+    Status status;
 
-        std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
-    };
+    std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
+  };
 
-    static WorkerStatisticRPCClientPtr create();
+  static WorkerStatisticRPCClientPtr create();
 
-    /**
-     * @brief method to probe a statistic
-     * @param probeRequest
-     * @param gRPCAddress
-     * @return Vector of StatisticValues
-     */
-    std::vector<StatisticValue<>> probeStatistics(const StatisticProbeRequestGRPC& probeRequest, const std::string& gRPCAddress);
+  /**
+   * @brief method to probe a statistic
+   * @param probeRequest
+   * @param gRPCAddress
+   * @return Vector of StatisticValues
+   */
+  std::vector<StatisticValue<>> probeStatistics(
+      const StatisticProbeRequestGRPC& probeRequest,
+      const std::string& gRPCAddress);
 
-  private:
-    WorkerStatisticRPCClient() = default;
+ private:
+  WorkerStatisticRPCClient() = default;
 };
 
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_GRPC_WORKERSTATISTICRPCCLIENT_HPP_
+#endif  // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_GRPC_WORKERSTATISTICRPCCLIENT_HPP_

@@ -29,77 +29,84 @@ class RegistrationMetrics;
 class RuntimeMetrics;
 
 /**
-* @brief This is an abstract class so derived classes can collect basic system information
-* Warning: Only Linux distributions are currently supported
-*/
+ * @brief This is an abstract class so derived classes can collect basic system
+ * information Warning: Only Linux distributions are currently supported
+ */
 class AbstractSystemResourcesReader {
-  public:
-    //  -- Constructors --
-    AbstractSystemResourcesReader();
-    AbstractSystemResourcesReader(const AbstractSystemResourcesReader&) = default;
-    AbstractSystemResourcesReader(AbstractSystemResourcesReader&&) = default;
-    //  -- Assignment --
-    AbstractSystemResourcesReader& operator=(const AbstractSystemResourcesReader&) = default;
-    AbstractSystemResourcesReader& operator=(AbstractSystemResourcesReader&&) = default;
-    //  -- dtor --
-    virtual ~AbstractSystemResourcesReader() = default;
+ public:
+  //  -- Constructors --
+  AbstractSystemResourcesReader();
+  AbstractSystemResourcesReader(const AbstractSystemResourcesReader&) = default;
+  AbstractSystemResourcesReader(AbstractSystemResourcesReader&&) = default;
+  //  -- Assignment --
+  AbstractSystemResourcesReader& operator=(
+      const AbstractSystemResourcesReader&) = default;
+  AbstractSystemResourcesReader& operator=(AbstractSystemResourcesReader&&) =
+      default;
+  //  -- dtor --
+  virtual ~AbstractSystemResourcesReader() = default;
 
-    /**
-    * @brief This methods reads runtime system metrics that are used within NES (e.g., memory usage, cpu load).
-    * @return A RuntimeMetrics object containing the metrics.
-    */
-    virtual RuntimeMetrics readRuntimeNesMetrics();
+  /**
+   * @brief This methods reads runtime system metrics that are used within NES
+   * (e.g., memory usage, cpu load).
+   * @return A RuntimeMetrics object containing the metrics.
+   */
+  virtual RuntimeMetrics readRuntimeNesMetrics();
 
-    /**
-    * @brief This methods reads system metrics that are used within NES (e.g., totalMemoryBytes, core num.).
-    * @return A NodeRegistrationMetrics object containing the metrics.
-    */
-    virtual RegistrationMetrics readRegistrationMetrics();
+  /**
+   * @brief This methods reads system metrics that are used within NES (e.g.,
+   * totalMemoryBytes, core num.).
+   * @return A NodeRegistrationMetrics object containing the metrics.
+   */
+  virtual RegistrationMetrics readRegistrationMetrics();
 
-    /**
-    * @brief This method reads CPU information.
-    * Warning: Does not return correct values in containerized environments.
-    * @return A CpuMetricsWrapper object containing a vector<CpuMetrics> objects.
-    */
-    virtual CpuMetricsWrapper readCpuStats();
+  /**
+   * @brief This method reads CPU information.
+   * Warning: Does not return correct values in containerized environments.
+   * @return A CpuMetricsWrapper object containing a vector<CpuMetrics> objects.
+   */
+  virtual CpuMetricsWrapper readCpuStats();
 
-    /**
-    * @brief This method reads memory information from the operating system.
-    * Warning: Does not return correct values in containerized environments.
-    * @return A map with the memory information
-    */
-    virtual MemoryMetrics readMemoryStats();
+  /**
+   * @brief This method reads memory information from the operating system.
+   * Warning: Does not return correct values in containerized environments.
+   * @return A map with the memory information
+   */
+  virtual MemoryMetrics readMemoryStats();
 
-    /**
-    * @brief This method reads disk stats from statvfs
-    * Warning: Does not return correct values in containerized environments.
-    * @return A map with the disk stats
-    */
-    virtual DiskMetrics readDiskStats();
+  /**
+   * @brief This method reads disk stats from statvfs
+   * Warning: Does not return correct values in containerized environments.
+   * @return A map with the disk stats
+   */
+  virtual DiskMetrics readDiskStats();
 
-    /**
-    * @brief This methods reads network statistics for each interface and returns a wrapper object containing this information.
-    * @return A NetworkMetricsWrapper object containing the network statistics for each available interface.
-    */
-    virtual NetworkMetricsWrapper readNetworkStats();
+  /**
+   * @brief This methods reads network statistics for each interface and returns
+   * a wrapper object containing this information.
+   * @return A NetworkMetricsWrapper object containing the network statistics
+   * for each available interface.
+   */
+  virtual NetworkMetricsWrapper readNetworkStats();
 
-    /**
-     * @brief Getter for the wall clock time.
-    * @return Returns the wall clock time of the system in nanoseconds.
-    */
-    virtual uint64_t getWallTimeInNs();
+  /**
+   * @brief Getter for the wall clock time.
+   * @return Returns the wall clock time of the system in nanoseconds.
+   */
+  virtual uint64_t getWallTimeInNs();
 
-    /**
-     * @brief Getter for the reader type.
-     * @return The SystemResourcesReaderType
-     */
-    [[nodiscard]] SystemResourcesReaderType getReaderType() const;
+  /**
+   * @brief Getter for the reader type.
+   * @return The SystemResourcesReaderType
+   */
+  [[nodiscard]] SystemResourcesReaderType getReaderType() const;
 
-  protected:
-    SystemResourcesReaderType readerType;
+ protected:
+  SystemResourcesReaderType readerType;
 };
-using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
+using AbstractSystemResourcesReaderPtr =
+    std::shared_ptr<AbstractSystemResourcesReader>;
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_ABSTRACTSYSTEMRESOURCESREADER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_ABSTRACTSYSTEMRESOURCESREADER_HPP_

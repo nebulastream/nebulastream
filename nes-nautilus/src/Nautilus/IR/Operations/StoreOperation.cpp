@@ -19,9 +19,11 @@
 namespace NES::Nautilus::IR::Operations {
 
 StoreOperation::StoreOperation(OperationPtr value, OperationPtr address)
-    : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()), value(value), address(address) {
-    address->addUsage(this);
-    value->addUsage(this);
+    : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()),
+      value(value),
+      address(address) {
+  address->addUsage(this);
+  value->addUsage(this);
 }
 
 OperationPtr StoreOperation::getValue() { return value.lock(); }
@@ -29,6 +31,7 @@ OperationPtr StoreOperation::getValue() { return value.lock(); }
 OperationPtr StoreOperation::getAddress() { return address.lock(); }
 
 std::string StoreOperation::toString() {
-    return "store(" + getValue()->getIdentifier() + ", " + getAddress()->getIdentifier() + ")";
+  return "store(" + getValue()->getIdentifier() + ", " +
+         getAddress()->getIdentifier() + ")";
 }
-}// namespace NES::Nautilus::IR::Operations
+}  // namespace NES::Nautilus::IR::Operations

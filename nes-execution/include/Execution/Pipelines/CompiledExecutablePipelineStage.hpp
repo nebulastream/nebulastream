@@ -32,27 +32,32 @@ namespace NES::Runtime::Execution {
 class PhysicalOperatorPipeline;
 
 /**
- * @brief A compiled executable pipeline stage uses nautilus to compile a pipeline to a code snippet.
+ * @brief A compiled executable pipeline stage uses nautilus to compile a
+ * pipeline to a code snippet.
  */
 class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
-  public:
-    CompiledExecutablePipelineStage(const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
-                                    const std::string& compilationBackend,
-                                    const Nautilus::CompilationOptions& options);
-    uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
-    ExecutionResult execute(TupleBuffer& inputTupleBuffer,
-                            PipelineExecutionContext& pipelineExecutionContext,
-                            WorkerContext& workerContext) override;
-    std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper, Timer<>& timer);
+ public:
+  CompiledExecutablePipelineStage(
+      const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
+      const std::string& compilationBackend,
+      const Nautilus::CompilationOptions& options);
+  uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
+  ExecutionResult execute(TupleBuffer& inputTupleBuffer,
+                          PipelineExecutionContext& pipelineExecutionContext,
+                          WorkerContext& workerContext) override;
+  std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper,
+                                                       Timer<>& timer);
 
-  private:
-    std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
-    std::string compilationBackend;
-    const Nautilus::CompilationOptions options;
-    std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> executablePipeline;
-    Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> pipelineFunction;
+ private:
+  std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
+  std::string compilationBackend;
+  const Nautilus::CompilationOptions options;
+  std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>>
+      executablePipeline;
+  Nautilus::Backends::Executable::Invocable<void, void*, void*, void*>
+      pipelineFunction;
 };
 
-}// namespace NES::Runtime::Execution
+}  // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_

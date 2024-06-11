@@ -17,10 +17,10 @@
 namespace NES::Runtime::Execution::Operators {
 
 void Map::execute(ExecutionContext& ctx, Record& record) const {
-    // assume that map expression performs a field write
-    mapExpression->execute(record);
-    // call next operator
-    child->execute(ctx, record);
+  // assume that map expression performs a field write
+  mapExpression->execute(record);
+  // call next operator
+  child->execute(ctx, record);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

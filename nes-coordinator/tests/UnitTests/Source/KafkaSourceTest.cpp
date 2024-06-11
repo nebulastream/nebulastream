@@ -12,6 +12,9 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
+#include <cppkafka/cppkafka.h>
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -22,15 +25,13 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Services/RequestHandlerService.hpp>
-#include <Sinks/Mediums//KafkaSink.hpp>
+#include <Sinks/Mediums  //KafkaSink.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <cppkafka/cppkafka.h>
 #include <cstring>
-#include <gtest/gtest.h>
 #include <string>
 #include <thread>
 
@@ -54,102 +55,84 @@ namespace NES {
  * NOTE: this test requires a running kafka instance
  */
 class KafkaSourceTest : public Testing::BaseIntegrationTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("KAFKASourceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("KAFKASOURCETEST::SetUpTestCase()");
-    }
+ public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("KAFKASourceTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_DEBUG("KAFKASOURCETEST::SetUpTestCase()");
+  }
 
-    void SetUp() override {
-        Testing::BaseIntegrationTest::SetUp();
-        NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
-        test_schema = Schema::create()->addField("var", BasicType::UINT32);
-        kafkaSourceType = KafkaSourceType::create("Kafka", "Kafka1");
-        auto workerConfigurations = WorkerConfiguration::create();
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
-                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                         .build();
-    }
+  void SetUp() override {
+    Testing::BaseIntegrationTest::SetUp();
+    NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
+    test_schema = Schema::create()->addField("var", BasicType::UINT32);
+    kafkaSourceType = KafkaSourceType::create("Kafka", "Kafka1");
+    auto workerConfigurations = WorkerConfiguration::create();
+    nodeEngine =
+        Runtime::NodeEngineBuilder::create(workerConfigurations)
+            .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+            .build();
+  }
 
-    /* Will be called after a test is executed. */
-    void TearDown() override {
-        ASSERT_TRUE(nodeEngine->stop());
-        Testing::BaseIntegrationTest::TearDown();
-        NES_DEBUG("KAFKASOURCETEST::TearDown() Tear down MQTTSourceTest");
-    }
+  /* Will be called after a test is executed. */
+  void TearDown() override {
+    ASSERT_TRUE(nodeEngine->stop());
+    Testing::BaseIntegrationTest::TearDown();
+    NES_DEBUG("KAFKASOURCETEST::TearDown() Tear down MQTTSourceTest");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("KAFKASOURCETEST::TearDownTestCases() Tear down KAFKASourceTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_DEBUG(
+        "KAFKASOURCETEST::TearDownTestCases() Tear down KAFKASourceTest test "
+        "class.");
+  }
 
-    Runtime::NodeEnginePtr nodeEngine{nullptr};
+  Runtime::NodeEnginePtr nodeEngine{nullptr};
 
-    SchemaPtr test_schema;
-    uint64_t buffer_size{};
-    KafkaSourceTypePtr kafkaSourceType;
+  SchemaPtr test_schema;
+  uint64_t buffer_size{};
+  KafkaSourceTypePtr kafkaSourceType;
 
-    const std::string brokers = std::string(KAFKA_BROKER);
-    const std::string topic = std::string("sourceTest");
-    const std::string groupId = std::string("0");
+  const std::string brokers = std::string(KAFKA_BROKER);
+  const std::string topic = std::string("sourceTest");
+  const std::string groupId = std::string("0");
 };
 
 /**
  * Tests basic set up of Kafka source
  */
 TEST_F(KafkaSourceTest, KafkaSourceInit) {
-    auto kafkaSource = createKafkaSource(test_schema,
-                                         nodeEngine->getBufferManager(),
-                                         nodeEngine->getQueryManager(),
-                                         2,
-                                         brokers,
-                                         topic,
-                                         groupId,
-                                         true,
-                                         100,
-                                         "earliest",
-                                         kafkaSourceType,
-                                         OPERATORID,
-                                         ORIGINID,
-                                         INVALID_STATISTIC_ID,
-                                         NUMSOURCELOCALBUFFERS,
-                                         1,
-                                         "defaultPhysicalStreamName",
-                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+  auto kafkaSource = createKafkaSource(
+      test_schema, nodeEngine->getBufferManager(),
+      nodeEngine->getQueryManager(), 2, brokers, topic, groupId, true, 100,
+      "earliest", kafkaSourceType, OPERATORID, ORIGINID, INVALID_STATISTIC_ID,
+      NUMSOURCELOCALBUFFERS, 1, "defaultPhysicalStreamName",
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-    SUCCEED();
+  SUCCEED();
 }
 /**
  * Test if schema, Kafka server address, clientId, user, and topic are the same
  */
 TEST_F(KafkaSourceTest, KafkaSourcePrint) {
+  auto kafkaSource = createKafkaSource(
+      test_schema, nodeEngine->getBufferManager(),
+      nodeEngine->getQueryManager(), 2, brokers, topic, groupId, true, 100,
+      "earliest", kafkaSourceType, OPERATORID, ORIGINID, INVALID_STATISTIC_ID,
+      NUMSOURCELOCALBUFFERS, 1, "defaultPhysicalStreamName",
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-    auto kafkaSource = createKafkaSource(test_schema,
-                                         nodeEngine->getBufferManager(),
-                                         nodeEngine->getQueryManager(),
-                                         2,
-                                         brokers,
-                                         topic,
-                                         groupId,
-                                         true,
-                                         100,
-                                         "earliest",
-                                         kafkaSourceType,
-                                         OPERATORID,
-                                         ORIGINID,
-                                         INVALID_STATISTIC_ID,
-                                         NUMSOURCELOCALBUFFERS,
-                                         1,
-                                         "defaultPhysicalStreamName",
-                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+  std::string expected =
+      "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits)), BROKER(localhost:9092), "
+      "TOPIC(sourceTest). "
+      "OFFSETMODE(earliest). BATCHSIZE(1). ";
 
-    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits)), BROKER(localhost:9092), TOPIC(sourceTest). "
-                           "OFFSETMODE(earliest). BATCHSIZE(1). ";
+  EXPECT_EQ(kafkaSource->toString(), expected);
 
-    EXPECT_EQ(kafkaSource->toString(), expected);
+  NES_DEBUG("kafka string={}", kafkaSource->toString());
 
-    NES_DEBUG("kafka string={}", kafkaSource->toString());
-
-    SUCCEED();
+  SUCCEED();
 }
 
 #ifdef RUNNING_KAFKA_INSTANCE
@@ -157,235 +140,241 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
  * Tests if obtained value is valid.
  */
 TEST_F(KafkaSourceTest, KafkaTestNative) {
-    int partition_value = -1;
+  int partition_value = -1;
 
-    //    #####################
-    // Construct the configuration
-    cppkafka::Configuration config = {{"metadata.broker.list", brokers},
-                                      {"group.id", "123"},
-                                      {"auto.offset.reset", "earliest"},
-                                      // Disable auto commit
-                                      {"enable.auto.commit", false}};
+  //    #####################
+  // Construct the configuration
+  cppkafka::Configuration config = {{"metadata.broker.list", brokers},
+                                    {"group.id", "123"},
+                                    {"auto.offset.reset", "earliest"},
+                                    // Disable auto commit
+                                    {"enable.auto.commit", false}};
 
-    // Create the consumer
-    cppkafka::Consumer consumer(config);
+  // Create the consumer
+  cppkafka::Consumer consumer(config);
 
-    // Print the assigned partitions on assignment
-    consumer.set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
+  // Print the assigned partitions on assignment
+  consumer.set_assignment_callback(
+      [](const cppkafka::TopicPartitionList& partitions) {
         NES_DEBUG("Got assigned: {}", partitions);
-    });
+      });
 
-    // Print the revoked partitions on revocation
-    consumer.set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
+  // Print the revoked partitions on revocation
+  consumer.set_revocation_callback(
+      [](const cppkafka::TopicPartitionList& partitions) {
         NES_DEBUG("Got revoked: {}", partitions);
-    });
+      });
 
-    // Subscribe to the topic
-    consumer.subscribe({topic});
+  // Subscribe to the topic
+  consumer.subscribe({topic});
 
-    NES_DEBUG("Consuming messages from topic {}", topic);
-    //    ##################################
+  NES_DEBUG("Consuming messages from topic {}", topic);
+  //    ##################################
 
-    // Create a message builder for this topic
-    cppkafka::MessageBuilder builder(topic);
+  // Create a message builder for this topic
+  cppkafka::MessageBuilder builder(topic);
 
-    // Get the partition we want to write to. If no partition is provided, this will be
-    // an unassigned one
-    if (partition_value != -1) {
-        builder.partition(partition_value);
+  // Get the partition we want to write to. If no partition is provided, this
+  // will be an unassigned one
+  if (partition_value != -1) {
+    builder.partition(partition_value);
+  }
+
+  // Construct the configuration
+  cppkafka::Configuration configProd = {{"metadata.broker.list", KAFKA_BROKER}};
+
+  // Create the producer
+  cppkafka::Producer producer(configProd);
+
+  NES_DEBUG("Producing messages into topic {}", topic);
+
+  // Produce a message!
+  string message = "32";
+  builder.payload(message);
+
+  // Actually produce the message we've built
+  producer.produce(builder);
+  // ################################
+  bool pollSuccessFull = false;
+  size_t cnt = 0;
+  while (!pollSuccessFull) {
+    NES_DEBUG("run ={}", cnt++);
+    if (cnt > 10) {
+      break;
     }
-
-    // Construct the configuration
-    cppkafka::Configuration configProd = {{"metadata.broker.list", KAFKA_BROKER}};
-
-    // Create the producer
-    cppkafka::Producer producer(configProd);
-
-    NES_DEBUG("Producing messages into topic {}", topic);
-
-    // Produce a message!
-    string message = "32";
-    builder.payload(message);
-
-    // Actually produce the message we've built
-    producer.produce(builder);
-    //################################
-    bool pollSuccessFull = false;
-    size_t cnt = 0;
-    while (!pollSuccessFull) {
-        NES_DEBUG("run ={}", cnt++);
-        if (cnt > 10) {
-            break;
+    cppkafka::Message msg = consumer.poll();
+    if (msg) {
+      // If we managed to get a message
+      if (msg.get_error()) {
+        // Ignore EOF notifications from rdkafka
+        if (!msg.is_eof()) {
+          NES_DEBUG("[+] Received error notification: {}", msg.get_error());
         }
-        cppkafka::Message msg = consumer.poll();
-        if (msg) {
-            // If we managed to get a message
-            if (msg.get_error()) {
-                // Ignore EOF notifications from rdkafka
-                if (!msg.is_eof()) {
-                    NES_DEBUG("[+] Received error notification: {}", msg.get_error());
-                }
-            } else {
-                // Print the key (if any)
-                if (msg.get_key()) {
-                    NES_DEBUG(" {} -> ", msg.get_key());
-                }
-                // Print the payload
-                NES_DEBUG("{}", msg.get_payload());
-
-                // Now commit the message
-                consumer.commit(msg);
-                std::string_view payload_view(reinterpret_cast<const char*>(msg.get_payload().get_data()), message.size());
-                EXPECT_EQ(payload_view, message);
-                pollSuccessFull = true;
-            }
+      } else {
+        // Print the key (if any)
+        if (msg.get_key()) {
+          NES_DEBUG(" {} -> ", msg.get_key());
         }
+        // Print the payload
+        NES_DEBUG("{}", msg.get_payload());
+
+        // Now commit the message
+        consumer.commit(msg);
+        std::string_view payload_view(
+            reinterpret_cast<const char*>(msg.get_payload().get_data()),
+            message.size());
+        EXPECT_EQ(payload_view, message);
+        pollSuccessFull = true;
+      }
     }
+  }
 
-    EXPECT_EQ(true, pollSuccessFull);
+  EXPECT_EQ(true, pollSuccessFull);
 }
 
 /**
  * Tests if obtained value is valid.
  */
 TEST_F(KafkaSourceTest, KafkaSourceValue) {
-    auto kafkaSource = createKafkaSource(test_schema,
-                                         nodeEngine->getBufferManager(),
-                                         nodeEngine->getQueryManager(),
-                                         2,
-                                         brokers,
-                                         topic,
-                                         groupId,
-                                         true,
-                                         100,
-                                         "earliest",
-                                         OPERATORID,
-                                         OPERATORID,
-                                         INVALID_STATISTIC_ID,
-                                         NUMSOURCELOCALBUFFERS,
-                                         1,
-                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
+  auto kafkaSource = createKafkaSource(
+      test_schema, nodeEngine->getBufferManager(),
+      nodeEngine->getQueryManager(), 2, brokers, topic, groupId, true, 100,
+      "earliest", OPERATORID, OPERATORID, INVALID_STATISTIC_ID,
+      NUMSOURCELOCALBUFFERS, 1,
+      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+  auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
 
-    //first call to connect
-    auto tuple_bufferJ = kafkaSource->receiveData();
+  // first call to connect
+  auto tuple_bufferJ = kafkaSource->receiveData();
 
-    cppkafka::Configuration config = {{"metadata.broker.list", brokers.c_str()},
-                                      {"group.id", groupId},
-                                      {"enable.auto.commit", true}};
-    cppkafka::Producer producer(config);
+  cppkafka::Configuration config = {{"metadata.broker.list", brokers.c_str()},
+                                    {"group.id", groupId},
+                                    {"enable.auto.commit", true}};
+  cppkafka::Producer producer(config);
 
-    // Produce a message!
-    string message = "32";
-    producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
-    producer.flush();
+  // Produce a message!
+  string message = "32";
+  producer.produce(
+      cppkafka::MessageBuilder(topic).partition(0).payload(message));
+  producer.flush();
 
-    auto tuple_buffer = kafkaSource->receiveData();
-    EXPECT_TRUE(tuple_buffer.has_value());
-    auto* tuple = (char*) tuple_buffer->getBuffer();
-    std::string str(tuple);
-    std::string expected = "32";
-    NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: {}. Received value is: {}",
-              expected,
-              str);
-    EXPECT_EQ(str, expected);
+  auto tuple_buffer = kafkaSource->receiveData();
+  EXPECT_TRUE(tuple_buffer.has_value());
+  auto* tuple = (char*)tuple_buffer->getBuffer();
+  std::string str(tuple);
+  std::string expected = "32";
+  NES_DEBUG(
+      "KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected "
+      "value is: {}. Received value is: {}",
+      expected, str);
+  EXPECT_EQ(str, expected);
 }
 
 // Disabled, because it requires a manually set up Kafka broker
 TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
-    // submit message to kafka
-    cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
-    cppkafka::Producer producer(config);
-    string message = R"({"var": 6})";
-    producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
-    producer.flush();
+  // submit message to kafka
+  cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
+  cppkafka::Producer producer(config);
+  string message = R"({"var": 6})";
+  producer.produce(
+      cppkafka::MessageBuilder(topic).partition(0).payload(message));
+  producer.flush();
 
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+  CoordinatorConfigurationPtr coordinatorConfig =
+      CoordinatorConfiguration::createDefault();
+  WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+  coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+  coordinatorConfig->restPort = *restPort;
+  wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("KAFKASOURCETEST:: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    //register logical source
-    std::string source = R"(Schema::create()->addField(createField("var", BasicType::UINT32));)";
-    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
+  NES_INFO("KAFKASOURCETEST:: Start coordinator");
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+  uint64_t port = crd->startCoordinator(/**blocking**/ false);
+  EXPECT_NE(port, 0UL);
+  // register logical source
+  std::string source =
+      R"(Schema::create()->addField(createField("var", BasicType::UINT32));)";
+  crd->getSourceCatalogService()->registerLogicalSource("stream", source);
+  NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
-    NES_INFO("KAFKASOURCETEST:: Start worker 1");
-    wrkConf->coordinatorPort = port;
-    kafkaSourceType->setBrokers(KAFKA_BROKER);
-    kafkaSourceType->setTopic(topic);
-    kafkaSourceType->setGroupId(groupId);
-    kafkaSourceType->setAutoCommit(true);
-    kafkaSourceType->setConnectionTimeout(100);
-    kafkaSourceType->setNumberOfBuffersToProduce(1);
-    auto physicalSource = PhysicalSource::create("stream", "test_stream", kafkaSourceType);
-    wrkConf->physicalSources.add(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("KAFKASOURCETEST: Worker1 started successfully");
+  NES_INFO("KAFKASOURCETEST:: Start worker 1");
+  wrkConf->coordinatorPort = port;
+  kafkaSourceType->setBrokers(KAFKA_BROKER);
+  kafkaSourceType->setTopic(topic);
+  kafkaSourceType->setGroupId(groupId);
+  kafkaSourceType->setAutoCommit(true);
+  kafkaSourceType->setConnectionTimeout(100);
+  kafkaSourceType->setNumberOfBuffersToProduce(1);
+  auto physicalSource =
+      PhysicalSource::create("stream", "test_stream", kafkaSourceType);
+  wrkConf->physicalSources.add(physicalSource);
+  NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+  bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+  EXPECT_TRUE(retStart1);
+  NES_INFO("KAFKASOURCETEST: Worker1 started successfully");
 
-    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalog();
+  RequestHandlerServicePtr requestHandlerService =
+      crd->getRequestHandlerService();
+  auto queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = getTestResourceFolder() / "test.out";
-    NES_INFO("KAFKASOURCETEST: Submit query");
-    string query =
-        R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    sleep(2);
-    NES_INFO("KAFKASOURCETEST: Remove query");
-    requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+  std::string outputFilePath = getTestResourceFolder() / "test.out";
+  NES_INFO("KAFKASOURCETEST: Submit query");
+  string query =
+      R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" +
+      outputFilePath + R"("));)";
+  QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(
+      query, Optimizer::PlacementStrategy::BottomUp);
+  GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+  EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+  sleep(2);
+  NES_INFO("KAFKASOURCETEST: Remove query");
+  requestHandlerService->validateAndQueueStopQueryRequest(queryId);
+  EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    std::ifstream ifs(outputFilePath.c_str());
-    ASSERT_TRUE(ifs.good());
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+  std::ifstream ifs(outputFilePath.c_str());
+  ASSERT_TRUE(ifs.good());
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|stream$var:UINT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|6|\n"
-                             "+----------------------------------------------------+";
+  string expectedContent =
+      "+----------------------------------------------------+\n"
+      "|stream$var:UINT32|\n"
+      "+----------------------------------------------------+\n"
+      "|6|\n"
+      "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+  NES_INFO("TCPSourceIntegrationTest: content=" << content);
+  NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+  EXPECT_EQ(content, expectedContent);
 
-    NES_INFO("KAFKASOURCETEST: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
+  NES_INFO("KAFKASOURCETEST: Stop worker 1");
+  bool retStopWrk1 = wrk1->stop(true);
+  EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("KAFKASOURCETEST: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("KAFKASOURCETEST: Test finished");
+  NES_INFO("KAFKASOURCETEST: Stop Coordinator");
+  bool retStopCord = crd->stopCoordinator(true);
+  EXPECT_TRUE(retStopCord);
+  NES_INFO("KAFKASOURCETEST: Test finished");
 }
 
 // Disabled, because it requires a manually set up Kafka broker
 TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+  CoordinatorConfigurationPtr coordinatorConfig =
+      CoordinatorConfiguration::createDefault();
+  WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+  coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+  coordinatorConfig->restPort = *restPort;
+  wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("KAFKASOURCETEST:: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    //register logical source qnv
-    std::string source =
-        R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
+  NES_INFO("KAFKASOURCETEST:: Start coordinator");
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+  uint64_t port = crd->startCoordinator(/**blocking**/ false);
+  EXPECT_NE(port, 0UL);
+  // register logical source qnv
+  std::string source =
+      R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
                             ->addField(createField("hospitalId", BasicType::UINT64))
                             ->addField(createField("stationId", BasicType::UINT64))
                             ->addField(createField("patientId", BasicType::UINT64))
@@ -394,48 +383,52 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
                             ->addField(createField("healthStatusDuration", BasicType::UINT32))
                             ->addField(createField("recovered", BasicType::BOOLEAN))
                             ->addField(createField("dead", BasicType::BOOLEAN));)";
-    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
+  crd->getSourceCatalogService()->registerLogicalSource("stream", source);
+  NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
-    NES_INFO("KAFKASOURCETEST:: Start worker 1");
-    wrkConf->coordinatorPort = port;
-    kafkaSourceType->setBrokers(KAFKA_BROKER);
-    kafkaSourceType->setTopic(topic);
-    kafkaSourceType->setGroupId(groupId);
-    kafkaSourceType->setAutoCommit(true);
-    kafkaSourceType->setConnectionTimeout(100);
-    kafkaSourceType->setNumberOfBuffersToProduce(2);
-    auto physicalSource = PhysicalSource::create("stream", "test_stream", kafkaSourceType);
-    wrkConf->physicalSources.add(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+  NES_INFO("KAFKASOURCETEST:: Start worker 1");
+  wrkConf->coordinatorPort = port;
+  kafkaSourceType->setBrokers(KAFKA_BROKER);
+  kafkaSourceType->setTopic(topic);
+  kafkaSourceType->setGroupId(groupId);
+  kafkaSourceType->setAutoCommit(true);
+  kafkaSourceType->setConnectionTimeout(100);
+  kafkaSourceType->setNumberOfBuffersToProduce(2);
+  auto physicalSource =
+      PhysicalSource::create("stream", "test_stream", kafkaSourceType);
+  wrkConf->physicalSources.add(physicalSource);
+  NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+  bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+  EXPECT_TRUE(retStart1);
+  NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalog();
+  RequestHandlerServicePtr requestHandlerService =
+      crd->getRequestHandlerService();
+  auto queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = getTestResourceFolder() / "test.out";
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    sleep(2);
-    NES_INFO("QueryDeploymentTest: Remove query");
-    requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+  std::string outputFilePath = getTestResourceFolder() / "test.out";
+  NES_INFO("QueryDeploymentTest: Submit query");
+  string query =
+      R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")" +
+      outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+  QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(
+      query, Optimizer::PlacementStrategy::BottomUp);
+  GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+  EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+  sleep(2);
+  NES_INFO("QueryDeploymentTest: Remove query");
+  requestHandlerService->validateAndQueueStopQueryRequest(queryId);
+  EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
+  NES_INFO("QueryDeploymentTest: Stop worker 1");
+  bool retStopWrk1 = wrk1->stop(true);
+  EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+  NES_INFO("QueryDeploymentTest: Stop Coordinator");
+  bool retStopCord = crd->stopCoordinator(true);
+  EXPECT_TRUE(retStopCord);
+  NES_INFO("QueryDeploymentTest: Test finished");
 }
 #endif
-}// namespace NES
+}  // namespace NES
 #endif

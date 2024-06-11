@@ -19,37 +19,38 @@
 namespace NES::Statistic {
 
 /**
- * @brief Collects the rate of buffers are used on a node. A positive number means that there are more buffer being
- * freed than allocated/acquired. A negative number the opposite. The unit is buffers/second
+ * @brief Collects the rate of buffers are used on a node. A positive number
+ * means that there are more buffer being freed than allocated/acquired. A
+ * negative number the opposite. The unit is buffers/second
  */
 class BufferRate : public StatisticMetric {
-  public:
-    /**
-     * @brief Creates a BufferRate wrapped in a MetricPtr
-     * @return MetricPtr
-     */
-    static MetricPtr create();
+ public:
+  /**
+   * @brief Creates a BufferRate wrapped in a MetricPtr
+   * @return MetricPtr
+   */
+  static MetricPtr create();
 
-    /**
-     * @brief Checks for equality
-     * @param rhs
-     * @return True, if equal otherwise false
-     */
-    bool operator==(const StatisticMetric& rhs) const override;
+  /**
+   * @brief Checks for equality
+   * @param rhs
+   * @return True, if equal otherwise false
+   */
+  bool operator==(const StatisticMetric& rhs) const override;
 
-    /**
-     * @brief Creates a string representation
-     * @return String representation
-     */
-    std::string toString() const override;
+  /**
+   * @brief Creates a string representation
+   * @return String representation
+   */
+  std::string toString() const override;
 
-  private:
-    /**
-     * @brief Private constructor for BufferRate
-     */
-    explicit BufferRate();
+ private:
+  /**
+   * @brief Private constructor for BufferRate
+   */
+  explicit BufferRate();
 };
 
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_BUFFERRATE_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_BUFFERRATE_HPP_

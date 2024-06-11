@@ -20,7 +20,7 @@
 namespace z3 {
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+}  // namespace z3
 
 namespace NES::Optimizer {
 
@@ -28,15 +28,21 @@ class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 
 class Z3SignatureBasedCompleteQueryMergerRule;
-using Z3SignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<Z3SignatureBasedCompleteQueryMergerRule>;
+using Z3SignatureBasedCompleteQueryMergerRulePtr =
+    std::shared_ptr<Z3SignatureBasedCompleteQueryMergerRule>;
 
 /**
- * @brief Z3SignatureBasedCompleteQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
- * only a single representative operator chain should exists in the Global Query Plan for all of them.
- * Effectively this rule will prune the global query plan for duplicate operators.
+ * @brief Z3SignatureBasedCompleteQueryMergerRule is responsible for merging
+ * together all equal Queries within the Global Query Plan, such that, after
+ * running this rule only a single representative operator chain should exists
+ * in the Global Query Plan for all of them. Effectively this rule will prune
+ * the global query plan for duplicate operators.
  *
- * Following are the conditions for the two queryIdAndCatalogEntryMapping to be equivalent:
- *  - For each global query node for first query, there should exists an equal global query node in the other query (except for the node with the sink operator).
+ * Following are the conditions for the two queryIdAndCatalogEntryMapping to be
+ * equivalent:
+ *  - For each global query node for first query, there should exists an equal
+ * global query node in the other query (except for the node with the sink
+ * operator).
  *
  *
  * Following is the example:
@@ -45,43 +51,44 @@ using Z3SignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<Z3SignatureBa
  *                                                         /     \
  *                                                       /        \
  *                                                     /           \
- *                                         GQN1({Sink1},{Q1})  GQN5({Sink2},{Q2})
+ *                                         GQN1({Sink1},{Q1}) GQN5({Sink2},{Q2})
  *                                                |                 |
  *                                        GQN2({Map1},{Q1})    GQN6({Map1},{Q2})
  *                                                |                 |
- *                                     GQN3({Filter1},{Q1})    GQN7({Filter1},{Q2})
+ *                                     GQN3({Filter1},{Q1}) GQN7({Filter1},{Q2})
  *                                                |                 |
- *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
+ *                                  GQN4({Source(Car)},{Q1})
+ * GQN8({Source(Car)},{Q2})
  *
  *
- * After running the Z3SignatureBasedCompleteQueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the Z3SignatureBasedCompleteQueryMergerRule, the resulting
+ * Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \
  *                                                        /       \
- *                                           GQN1({Sink1},{Q1}) GQN5({Sink2},{Q2})
- *                                                        \      /
- *                                                         \   /
- *                                                   GQN2({Map1},{Q1,Q2})
+ *                                           GQN1({Sink1},{Q1})
+ * GQN5({Sink2},{Q2}) \      / \   / GQN2({Map1},{Q1,Q2})
  *                                                           |
  *                                                  GQN3({Filter1},{Q1,Q2})
  *                                                           |
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class Z3SignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
+class Z3SignatureBasedCompleteQueryMergerRule final
+    : public BaseQueryMergerRule {
+ public:
+  static Z3SignatureBasedCompleteQueryMergerRulePtr create(
+      z3::ContextPtr context);
 
-  public:
-    static Z3SignatureBasedCompleteQueryMergerRulePtr create(z3::ContextPtr context);
+  bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-    bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
+  ~Z3SignatureBasedCompleteQueryMergerRule() noexcept final = default;
 
-    ~Z3SignatureBasedCompleteQueryMergerRule() noexcept final = default;
-
-  private:
-    explicit Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);
-    SignatureEqualityUtilPtr signatureEqualityUtil;
+ private:
+  explicit Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);
+  SignatureEqualityUtilPtr signatureEqualityUtil;
 };
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP_

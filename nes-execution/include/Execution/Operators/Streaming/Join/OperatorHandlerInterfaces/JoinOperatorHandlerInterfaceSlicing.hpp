@@ -18,21 +18,23 @@
 
 namespace NES::Runtime::Execution::Operators {
 class JoinOperatorHandlerInterfaceSlicing {
-  public:
-    /**
-     * @brief Retrieves the slice that corresponds to the timestamp. If no window exists for the timestamp, one gets created
-     * @param timestamp
-     * @return StreamSlicePtr
-     */
-    virtual StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) = 0;
+ public:
+  /**
+   * @brief Retrieves the slice that corresponds to the timestamp. If no window
+   * exists for the timestamp, one gets created
+   * @param timestamp
+   * @return StreamSlicePtr
+   */
+  virtual StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) = 0;
 
-    /**
-     * @brief Returns the current slice, by current we mean the last added window to the list. If no slice exists,
-     * a slice for the timestamp 0 will be created
-     * @return StreamSlice*
-     */
-    virtual StreamSlice* getCurrentSliceOrCreate() = 0;
+  /**
+   * @brief Returns the current slice, by current we mean the last added window
+   * to the list. If no slice exists, a slice for the timestamp 0 will be
+   * created
+   * @return StreamSlice*
+   */
+  virtual StreamSlice* getCurrentSliceOrCreate() = 0;
 };
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACESLICING_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACESLICING_HPP_

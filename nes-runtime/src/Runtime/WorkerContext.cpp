@@ -27,18 +27,21 @@ WorkerContext::WorkerContext(WorkerThreadId workerId,
                              uint64_t numberOfBuffersPerWorker,
                              uint32_t queueId)
     : workerId(workerId), queueId(queueId) {
-    //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the parameter
-    localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
-    localBufferPoolTLS.reset(localBufferPool.get(), [](auto*, folly::TLPDestructionMode) {
-        // nop
-    });
-    NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
-    NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
+  // we changed from a local pool to a fixed sized pool as it allows us to
+  // manage the numbers that are hold in the cache via the parameter
+  localBufferPool =
+      bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
+  localBufferPoolTLS.reset(localBufferPool.get(),
+                           [](auto*, folly::TLPDestructionMode) {
+                             // nop
+                           });
+  NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
+  NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
 }
 
 WorkerContext::~WorkerContext() {
-    localBufferPool->destroy();
-    localBufferPoolTLS.reset(nullptr);
+  localBufferPool->destroy();
+  localBufferPoolTLS.reset(nullptr);
 }
 
 WorkerThreadId WorkerContext::getId() const { return workerId; }
@@ -46,210 +49,264 @@ WorkerThreadId WorkerContext::getId() const { return workerId; }
 uint32_t WorkerContext::getQueueId() const { return queueId; }
 
 void WorkerContext::setObjectRefCnt(void* object, uint32_t refCnt) {
-    objectRefCounters[reinterpret_cast<uintptr_t>(object)] = refCnt;
+  objectRefCounters[reinterpret_cast<uintptr_t>(object)] = refCnt;
 }
 
 uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
-    auto ptr = reinterpret_cast<uintptr_t>(object);
-    if (auto it = objectRefCounters.find(ptr); it != objectRefCounters.end()) {
-        auto val = it->second--;
-        if (val == 1) {
-            objectRefCounters.erase(it);
-        }
-        return val;
+  auto ptr = reinterpret_cast<uintptr_t>(object);
+  if (auto it = objectRefCounters.find(ptr); it != objectRefCounters.end()) {
+    auto val = it->second--;
+    if (val == 1) {
+      objectRefCounters.erase(it);
     }
-    return 0;
+    return val;
+  }
+  return 0;
 }
 
-TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
+TupleBuffer WorkerContext::allocateTupleBuffer() {
+  return localBufferPool->getBufferBlocking();
+}
 
-void WorkerContext::storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel) {
-    NES_TRACE("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
-    dataChannels[id] = std::move(channel);
+void WorkerContext::storeNetworkChannel(OperatorId id,
+                                        Network::NetworkChannelPtr&& channel) {
+  NES_TRACE("WorkerContext: storing channel for operator {}  for context {}",
+            id, workerId);
+  dataChannels[id] = std::move(channel);
 }
 
 void WorkerContext::storeNetworkChannelFuture(
     OperatorId id,
-    std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
-    NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
-    dataChannelFutures[id] = std::move(channelFuture);
+    std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&&
+        channelFuture) {
+  NES_TRACE(
+      "WorkerContext: storing channel future for operator {}  for context {}",
+      id, workerId);
+  dataChannelFutures[id] = std::move(channelFuture);
 }
 
 void WorkerContext::storeEventChannelFuture(
-    OperatorId id,
-    std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
-    NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
-    reverseEventChannelFutures[id] = std::move(channelFuture);
+    OperatorId id, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>,
+                             std::promise<bool>>&& channelFuture) {
+  NES_TRACE(
+      "WorkerContext: storing channel future for operator {}  for context {}",
+      id, workerId);
+  reverseEventChannelFutures[id] = std::move(channelFuture);
 }
 
 void WorkerContext::createStorage(Network::NesPartition nesPartition) {
-    this->storage[nesPartition] = std::make_shared<BufferStorage>();
+  this->storage[nesPartition] = std::make_shared<BufferStorage>();
 }
 
-void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->insertBuffer(buffer);
-    } else {
-        NES_WARNING("No buffer storage found for partition {}, buffer was dropped", nesPartition);
+void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition,
+                                      NES::Runtime::TupleBuffer buffer) {
+  auto iteratorPartitionId = this->storage.find(nesPartition);
+  if (iteratorPartitionId != this->storage.end()) {
+    this->storage[nesPartition]->insertBuffer(buffer);
+  } else {
+    NES_WARNING("No buffer storage found for partition {}, buffer was dropped",
+                nesPartition);
+  }
+}
+
+void WorkerContext::insertIntoReconnectBufferStorage(
+    OperatorId operatorId, NES::Runtime::TupleBuffer buffer) {
+  reconnectBufferStorage[operatorId].push(std::move(buffer));
+}
+
+bool WorkerContext::trimStorage(Network::NesPartition nesPartition,
+                                uint64_t timestamp) {
+  auto iteratorPartitionId = this->storage.find(nesPartition);
+  if (iteratorPartitionId != this->storage.end()) {
+    this->storage[nesPartition]->trimBuffer(timestamp);
+    return true;
+  }
+  return false;
+}
+
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(
+    Network::NesPartition nesPartition) {
+  auto iteratorPartitionId = this->storage.find(nesPartition);
+  if (iteratorPartitionId != this->storage.end()) {
+    return this->storage[nesPartition]->getTopElementFromQueue();
+  }
+  return {};
+}
+
+std::optional<NES::Runtime::TupleBuffer>
+WorkerContext::removeBufferFromReconnectBufferStorage(OperatorId operatorId) {
+  auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
+  if (iteratorAtOperatorId != reconnectBufferStorage.end() &&
+      !iteratorAtOperatorId->second.empty()) {
+    auto buffer = iteratorAtOperatorId->second.front();
+    iteratorAtOperatorId->second.pop();
+    if (iteratorAtOperatorId->second.empty()) {
+      reconnectBufferStorage.erase(iteratorAtOperatorId);
     }
+    return buffer;
+  }
+  return {};
 }
 
-void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES::Runtime::TupleBuffer buffer) {
-    reconnectBufferStorage[operatorId].push(std::move(buffer));
+void WorkerContext::removeTopTupleFromStorage(
+    Network::NesPartition nesPartition) {
+  auto iteratorPartitionId = this->storage.find(nesPartition);
+  if (iteratorPartitionId != this->storage.end()) {
+    this->storage[nesPartition]->removeTopElementFromQueue();
+  }
 }
 
-bool WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->trimBuffer(timestamp);
-        return true;
+bool WorkerContext::releaseNetworkChannel(
+    OperatorId id, Runtime::QueryTerminationType terminationType,
+    uint16_t sendingThreadCount, uint64_t currentMessageSequenceNumber) {
+  NES_TRACE("WorkerContext: releasing channel for operator {} for context {}",
+            id, workerId);
+  if (auto it = dataChannels.find(id); it != dataChannels.end()) {
+    if (auto& channel = it->second; channel) {
+      channel->close(terminationType, sendingThreadCount,
+                     currentMessageSequenceNumber);
     }
-    return false;
+    dataChannels.erase(it);
+    return true;
+  }
+  return false;
 }
 
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        return this->storage[nesPartition]->getTopElementFromQueue();
+void WorkerContext::storeEventOnlyChannel(
+    OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel) {
+  NES_TRACE("WorkerContext: storing channel for operator {}  for context {}",
+            id, workerId);
+  reverseEventChannels[id] = std::move(channel);
+}
+
+bool WorkerContext::releaseEventOnlyChannel(
+    OperatorId id, Runtime::QueryTerminationType terminationType) {
+  NES_TRACE("WorkerContext: releasing channel for operator {} for context {}",
+            id, workerId);
+  if (auto it = reverseEventChannels.find(id);
+      it != reverseEventChannels.end()) {
+    if (auto& channel = it->second; channel) {
+      channel->close(terminationType);
     }
-    return {};
-}
-
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::removeBufferFromReconnectBufferStorage(OperatorId operatorId) {
-    auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
-    if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
-        auto buffer = iteratorAtOperatorId->second.front();
-        iteratorAtOperatorId->second.pop();
-        if (iteratorAtOperatorId->second.empty()) {
-            reconnectBufferStorage.erase(iteratorAtOperatorId);
-        }
-        return buffer;
-    }
-    return {};
-}
-
-void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->removeTopElementFromQueue();
-    }
-}
-
-bool WorkerContext::releaseNetworkChannel(OperatorId id,
-                                          Runtime::QueryTerminationType terminationType,
-                                          uint16_t sendingThreadCount,
-                                          uint64_t currentMessageSequenceNumber) {
-    NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
-    if (auto it = dataChannels.find(id); it != dataChannels.end()) {
-        if (auto& channel = it->second; channel) {
-            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber);
-        }
-        dataChannels.erase(it);
-        return true;
-    }
-    return false;
-}
-
-void WorkerContext::storeEventOnlyChannel(OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel) {
-    NES_TRACE("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
-    reverseEventChannels[id] = std::move(channel);
-}
-
-bool WorkerContext::releaseEventOnlyChannel(OperatorId id, Runtime::QueryTerminationType terminationType) {
-    NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
-    if (auto it = reverseEventChannels.find(id); it != reverseEventChannels.end()) {
-        if (auto& channel = it->second; channel) {
-            channel->close(terminationType);
-        }
-        reverseEventChannels.erase(it);
-        return true;
-    }
-    return false;
+    reverseEventChannels.erase(it);
+    return true;
+  }
+  return false;
 }
 
 Network::NetworkChannel* WorkerContext::getNetworkChannel(OperatorId ownerId) {
-    NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
-    auto it = dataChannels.find(ownerId);// note we assume it's always available
-    return (*it).second.get();
+  NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}",
+            ownerId, workerId);
+  auto it = dataChannels.find(ownerId);  // note we assume it's always available
+  return (*it).second.get();
 }
 
-std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(OperatorId operatorId) {
-    NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
-    auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
-    auto& [futureReference, promiseReference] = iteratorOperatorId->second;
-    if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        auto channel = iteratorOperatorId->second.first.get();
-        iteratorOperatorId->second.second.set_value(true);
-        dataChannelFutures.erase(iteratorOperatorId);
-        return channel;
-    }
-    //if the operation has not completed yet, return a nullopt
-    return std::nullopt;
-}
-
-std::optional<Network::EventOnlyNetworkChannelPtr> WorkerContext::getAsyncEventChannelConnectionResult(OperatorId operatorId) {
-    NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
-    auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
-    auto& [futureReference, promiseReference] = iteratorOperatorId->second;
-    if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        auto channel = iteratorOperatorId->second.first.get();
-        iteratorOperatorId->second.second.set_value(true);
-        reverseEventChannelFutures.erase(iteratorOperatorId);
-        return channel;
-    }
-    //if the operation has not completed yet, return a nullopt
-    return std::nullopt;
-}
-
-bool WorkerContext::isAsyncConnectionInProgress(OperatorId operatorId) {
-    NES_TRACE("WorkerContext: checking existence of channel future for operator {} for context {}", operatorId, workerId);
-    return dataChannelFutures.contains(operatorId);
-}
-
-Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(OperatorId operatorId) {
-    NES_TRACE("WorkerContext: retrieving event only channel for operator {} for context {}", operatorId, workerId);
-    auto iteratorOperatorId = reverseEventChannels.find(operatorId);// note we assume it's always available
-    return (*iteratorOperatorId).second.get();
-}
-
-LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
-
-LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
-
-Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(OperatorId operatorId) {
-    auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
-    //blocking wait on get
+std::optional<Network::NetworkChannelPtr>
+WorkerContext::getAsyncConnectionResult(OperatorId operatorId) {
+  NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}",
+            operatorId, workerId);
+  auto iteratorOperatorId = dataChannelFutures.find(
+      operatorId);  // note we assume it's always available
+  auto& [futureReference, promiseReference] = iteratorOperatorId->second;
+  if (futureReference.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::ready) {
     auto channel = iteratorOperatorId->second.first.get();
     iteratorOperatorId->second.second.set_value(true);
     dataChannelFutures.erase(iteratorOperatorId);
     return channel;
+  }
+  // if the operation has not completed yet, return a nullopt
+  return std::nullopt;
 }
 
-Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventChannel(OperatorId operatorId) {
-    auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
-    //blocking wait on get
+std::optional<Network::EventOnlyNetworkChannelPtr>
+WorkerContext::getAsyncEventChannelConnectionResult(OperatorId operatorId) {
+  NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}",
+            operatorId, workerId);
+  auto iteratorOperatorId = reverseEventChannelFutures.find(
+      operatorId);  // note we assume it's always available
+  auto& [futureReference, promiseReference] = iteratorOperatorId->second;
+  if (futureReference.wait_for(std::chrono::seconds(0)) ==
+      std::future_status::ready) {
     auto channel = iteratorOperatorId->second.first.get();
     iteratorOperatorId->second.second.set_value(true);
     reverseEventChannelFutures.erase(iteratorOperatorId);
     return channel;
+  }
+  // if the operation has not completed yet, return a nullopt
+  return std::nullopt;
+}
+
+bool WorkerContext::isAsyncConnectionInProgress(OperatorId operatorId) {
+  NES_TRACE(
+      "WorkerContext: checking existence of channel future for operator {} for "
+      "context {}",
+      operatorId, workerId);
+  return dataChannelFutures.contains(operatorId);
+}
+
+Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(
+    OperatorId operatorId) {
+  NES_TRACE(
+      "WorkerContext: retrieving event only channel for operator {} for "
+      "context {}",
+      operatorId, workerId);
+  auto iteratorOperatorId = reverseEventChannels.find(
+      operatorId);  // note we assume it's always available
+  return (*iteratorOperatorId).second.get();
+}
+
+LocalBufferPool* WorkerContext::getBufferProviderTLS() {
+  return localBufferPoolTLS.get();
+}
+
+LocalBufferPoolPtr WorkerContext::getBufferProvider() {
+  return localBufferPool;
+}
+
+Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(
+    OperatorId operatorId) {
+  auto iteratorOperatorId = dataChannelFutures.find(
+      operatorId);  // note we assume it's always available
+  // blocking wait on get
+  auto channel = iteratorOperatorId->second.first.get();
+  iteratorOperatorId->second.second.set_value(true);
+  dataChannelFutures.erase(iteratorOperatorId);
+  return channel;
+}
+
+Network::EventOnlyNetworkChannelPtr
+WorkerContext::waitForAsyncConnectionEventChannel(OperatorId operatorId) {
+  auto iteratorOperatorId = reverseEventChannelFutures.find(
+      operatorId);  // note we assume it's always available
+  // blocking wait on get
+  auto channel = iteratorOperatorId->second.first.get();
+  iteratorOperatorId->second.second.set_value(true);
+  reverseEventChannelFutures.erase(iteratorOperatorId);
+  return channel;
 }
 
 void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
-    auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
-    auto& promise = iteratorOperatorId->second.second;
-    //signal connection process to stop
-    promise.set_value(true);
-    //wait for the future to be set, so we can make sure that channel is closed in case it has already been created
-    auto& future = iteratorOperatorId->second.first;
-    auto channel = future.get();
-    if (channel) {
-        channel->close(QueryTerminationType::Failure);
-    }
-    dataChannelFutures.erase(iteratorOperatorId);
+  auto iteratorOperatorId = dataChannelFutures.find(
+      operatorId);  // note we assume it's always available
+  auto& promise = iteratorOperatorId->second.second;
+  // signal connection process to stop
+  promise.set_value(true);
+  // wait for the future to be set, so we can make sure that channel is closed
+  // in case it has already been created
+  auto& future = iteratorOperatorId->second.first;
+  auto channel = future.get();
+  if (channel) {
+    channel->close(QueryTerminationType::Failure);
+  }
+  dataChannelFutures.erase(iteratorOperatorId);
 }
 
-bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return dataChannels.contains(operatorId); }
+bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) {
+  return dataChannels.contains(operatorId);
+}
 
-bool WorkerContext::doesEventChannelExist(OperatorId operatorId) { return reverseEventChannels.contains(operatorId); }
-}// namespace NES::Runtime
+bool WorkerContext::doesEventChannelExist(OperatorId operatorId) {
+  return reverseEventChannels.contains(operatorId);
+}
+}  // namespace NES::Runtime

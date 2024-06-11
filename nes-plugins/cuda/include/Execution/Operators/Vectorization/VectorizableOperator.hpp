@@ -20,25 +20,28 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Base class of executable operators which work on fixed-size blocks (vectors) of tuples.
+ * @brief Base class of executable operators which work on fixed-size blocks
+ * (vectors) of tuples.
  */
 class VectorizableOperator : public ExecutableOperator {
-  public:
-    /**
-     * @brief This method is called by the upstream operator (parent) and passes a tuple buffer for execution.
-     * @param ctx the execution context that allows accesses to local and global state.
-     * @param records the records that should be processed.
-     */
-    virtual void execute(ExecutionContext& ctx, RecordBuffer& records) const = 0;
+ public:
+  /**
+   * @brief This method is called by the upstream operator (parent) and passes a
+   * tuple buffer for execution.
+   * @param ctx the execution context that allows accesses to local and global
+   * state.
+   * @param records the records that should be processed.
+   */
+  virtual void execute(ExecutionContext& ctx, RecordBuffer& records) const = 0;
 
-    virtual ~VectorizableOperator() = default;
+  virtual ~VectorizableOperator() = default;
 
-  private:
-    virtual void execute(ExecutionContext& ctx, Record& record) const override;
+ private:
+  virtual void execute(ExecutionContext& ctx, Record& record) const override;
 };
 
 using VectorizableOperatorPtr = std::shared_ptr<const VectorizableOperator>;
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_
+#endif  // NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_

@@ -27,11 +27,16 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 /**
  * @brief Defines common arithmetical operations between expression nodes.
  */
-ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator-(ExpressionNodePtr leftExp,
+                            ExpressionNodePtr rightExp);
+ExpressionNodePtr operator+(ExpressionNodePtr leftExp,
+                            ExpressionNodePtr rightExp);
+ExpressionNodePtr operator*(ExpressionNodePtr leftExp,
+                            ExpressionNodePtr rightExp);
+ExpressionNodePtr operator/(ExpressionNodePtr leftExp,
+                            ExpressionNodePtr rightExp);
+ExpressionNodePtr operator%(ExpressionNodePtr leftExp,
+                            ExpressionNodePtr rightExp);
 ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr ABS(const ExpressionNodePtr& exp);
@@ -52,7 +57,8 @@ ExpressionNodePtr operator++(ExpressionNodePtr exp, int value);
 ExpressionNodePtr operator--(ExpressionNodePtr exp, int value);
 
 /**
- * @brief Defines common binary arithmetical operations between a constant and an expression node.
+ * @brief Defines common binary arithmetical operations between a constant and
+ * an expression node.
  */
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp);
@@ -63,7 +69,8 @@ ExpressionNodePtr MOD(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 
 /**
- * @brief Defines common binary arithmetical operations between an expression node and a constant.
+ * @brief Defines common binary arithmetical operations between an expression
+ * node and a constant.
  */
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp);
@@ -74,7 +81,8 @@ ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 
 /**
- * @brief Defines common binary arithmetical operations between two expression items.
+ * @brief Defines common binary arithmetical operations between two expression
+ * items.
  */
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionItem rightExp);
@@ -104,5 +112,5 @@ ExpressionNodePtr operator--(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp, int);
 ExpressionNodePtr operator--(ExpressionItem exp, int);
 
-}// namespace NES
-#endif// NES_CLIENT_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
+}  // namespace NES
+#endif  // NES_CLIENT_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_

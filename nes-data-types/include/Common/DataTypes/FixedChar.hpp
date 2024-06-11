@@ -23,19 +23,20 @@ namespace NES {
 /**
  * @brief FixedChar(n), where n is a positive integer.
  * FixedChar can store strings up to n characters (not bytes) in length.
- * If the string to be stored is shorter than the declared length, values of type FixedChar will be space-padded.
+ * If the string to be stored is shorter than the declared length, values of
+ * type FixedChar will be space-padded.
  */
 class FixedChar final : public ArrayType {
-  public:
-    /**
-     * @brief Constructs a new Char(n)
-     * @param length length of the char
-     */
-    explicit FixedChar(uint64_t length) noexcept;
+ public:
+  /**
+   * @brief Constructs a new Char(n)
+   * @param length length of the char
+   */
+  explicit FixedChar(uint64_t length) noexcept;
 
-    ~FixedChar() override = default;
+  ~FixedChar() override = default;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_
+#endif  // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_

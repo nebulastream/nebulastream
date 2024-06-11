@@ -12,17 +12,21 @@
     limitations under the License.
 */
 
+#include <mlir/IR/MLIRContext.h>
+
 #include <Nautilus/Backends/MLIR/MLIRExecutable.hpp>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <mlir/IR/MLIRContext.h>
 
 namespace NES::Nautilus::Backends::MLIR {
-MLIRExecutable::MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine) : engine(std::move(engine)) {}
+MLIRExecutable::MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine)
+    : engine(std::move(engine)) {}
 
-void* MLIRExecutable::getInvocableFunctionPtr(const std::string& member) { return engine->lookup(member).get(); }
+void* MLIRExecutable::getInvocableFunctionPtr(const std::string& member) {
+  return engine->lookup(member).get();
+}
 bool MLIRExecutable::hasInvocableFunctionPtr() { return true; }
 MLIRExecutable::~MLIRExecutable() { NES_DEBUG("~MLIRExecutable"); }
 
-}// namespace NES::Nautilus::Backends::MLIR
+}  // namespace NES::Nautilus::Backends::MLIR

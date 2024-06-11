@@ -16,13 +16,15 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-AndExpression::AndExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
+AndExpression::AndExpression(ExpressionPtr leftSubExpression,
+                             ExpressionPtr rightSubExpression)
+    : leftSubExpression(std::move(leftSubExpression)),
+      rightSubExpression(rightSubExpression){};
 
 Value<> AndExpression::execute(Record& record) const {
-    Value<> leftValue = leftSubExpression->execute(record);
-    Value<> rightValue = rightSubExpression->execute(record);
-    return leftValue && rightValue;
+  Value<> leftValue = leftSubExpression->execute(record);
+  Value<> rightValue = rightSubExpression->execute(record);
+  return leftValue && rightValue;
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions

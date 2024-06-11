@@ -24,56 +24,66 @@
 namespace NES::Optimizer {
 
 ProjectBeforeUnionOperatorRulePtr ProjectBeforeUnionOperatorRule::create() {
-    return std::make_shared<ProjectBeforeUnionOperatorRule>(ProjectBeforeUnionOperatorRule());
+  return std::make_shared<ProjectBeforeUnionOperatorRule>(
+      ProjectBeforeUnionOperatorRule());
 }
 
 QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
-
-    NES_DEBUG("Before applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    for (auto& unionOperator : unionOperators) {
-        auto rightInputSchema = unionOperator->getRightInputSchema();
-        auto leftInputSchema = unionOperator->getLeftInputSchema();
-        //Only apply the rule when right side and left side schema are different
-        if (!rightInputSchema->equals(leftInputSchema, false)) {
-            //Construct project operator for mapping rightInputSource To leftInputSource
-            auto projectOperator = constructProjectOperator(rightInputSchema, leftInputSchema);
-            auto childrenToUnionOperator = unionOperator->getChildren();
-            for (auto& child : childrenToUnionOperator) {
-                auto childOutputSchema = child->as<LogicalOperator>()->getOutputSchema();
-                //Find the child that matches the right schema and inset the project operator there
-                if (rightInputSchema->equals(childOutputSchema, false)) {
-                    child->insertBetweenThisAndParentNodes(projectOperator);
-                    break;
-                }
-            }
+  NES_DEBUG(
+      "Before applying ProjectBeforeUnionOperatorRule to the query plan: {}",
+      queryPlan->toString());
+  auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+  for (auto& unionOperator : unionOperators) {
+    auto rightInputSchema = unionOperator->getRightInputSchema();
+    auto leftInputSchema = unionOperator->getLeftInputSchema();
+    // Only apply the rule when right side and left side schema are different
+    if (!rightInputSchema->equals(leftInputSchema, false)) {
+      // Construct project operator for mapping rightInputSource To
+      // leftInputSource
+      auto projectOperator =
+          constructProjectOperator(rightInputSchema, leftInputSchema);
+      auto childrenToUnionOperator = unionOperator->getChildren();
+      for (auto& child : childrenToUnionOperator) {
+        auto childOutputSchema =
+            child->as<LogicalOperator>()->getOutputSchema();
+        // Find the child that matches the right schema and inset the project
+        // operator there
+        if (rightInputSchema->equals(childOutputSchema, false)) {
+          child->insertBetweenThisAndParentNodes(projectOperator);
+          break;
         }
+      }
     }
-    NES_DEBUG("After applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
-    return queryPlan;
+  }
+  NES_DEBUG(
+      "After applying ProjectBeforeUnionOperatorRule to the query plan: {}",
+      queryPlan->toString());
+  return queryPlan;
 }
 
-LogicalOperatorPtr ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& sourceSchema,
-                                                                            const SchemaPtr& destinationSchema) {
-    NES_TRACE("Computing Projection operator for Source Schema{} and Destination schema {}",
-              sourceSchema->toString(),
-              destinationSchema->toString());
-    //Fetch source and destination schema fields
-    auto sourceFields = sourceSchema->fields;
-    auto destinationFields = destinationSchema->fields;
-    std::vector<ExpressionNodePtr> projectExpressions;
-    //Compute projection expressions
-    for (uint64_t i = 0; i < sourceSchema->getSize(); i++) {
-        auto field = sourceFields[i];
-        auto updatedFieldName = destinationFields[i]->getName();
-        //Compute field access and field rename expression
-        auto originalField = FieldAccessExpressionNode::create(field->getDataType(), field->getName());
-        auto fieldRenameExpression =
-            FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
-        projectExpressions.push_back(fieldRenameExpression);
-    }
-    //Create Projection operator
-    return LogicalOperatorFactory::createProjectionOperator(projectExpressions);
+LogicalOperatorPtr ProjectBeforeUnionOperatorRule::constructProjectOperator(
+    const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema) {
+  NES_TRACE(
+      "Computing Projection operator for Source Schema{} and Destination "
+      "schema {}",
+      sourceSchema->toString(), destinationSchema->toString());
+  // Fetch source and destination schema fields
+  auto sourceFields = sourceSchema->fields;
+  auto destinationFields = destinationSchema->fields;
+  std::vector<ExpressionNodePtr> projectExpressions;
+  // Compute projection expressions
+  for (uint64_t i = 0; i < sourceSchema->getSize(); i++) {
+    auto field = sourceFields[i];
+    auto updatedFieldName = destinationFields[i]->getName();
+    // Compute field access and field rename expression
+    auto originalField = FieldAccessExpressionNode::create(field->getDataType(),
+                                                           field->getName());
+    auto fieldRenameExpression = FieldRenameExpressionNode::create(
+        originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
+    projectExpressions.push_back(fieldRenameExpression);
+  }
+  // Create Projection operator
+  return LogicalOperatorFactory::createProjectionOperator(projectExpressions);
 }
 
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer

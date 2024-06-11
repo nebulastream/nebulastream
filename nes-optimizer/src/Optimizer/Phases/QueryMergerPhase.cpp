@@ -30,57 +30,67 @@
 
 namespace NES::Optimizer {
 
-QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context,
-                                             const Configurations::OptimizerConfiguration optimizerConfiguration) {
-    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(std::move(context), optimizerConfiguration));
+QueryMergerPhasePtr QueryMergerPhase::create(
+    z3::ContextPtr context,
+    const Configurations::OptimizerConfiguration optimizerConfiguration) {
+  return std::make_shared<QueryMergerPhase>(
+      QueryMergerPhase(std::move(context), optimizerConfiguration));
 }
 
-QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, const Configurations::OptimizerConfiguration optimizerConfiguration) {
-
-    switch (optimizerConfiguration.queryMergerRule) {
-        case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
-            queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
-            break;
-        case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
-            queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
-            break;
-        case QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule:
-        case QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule:
-            queryMergerRule = HashSignatureBasedCompleteQueryMergerRule::create();
-            break;
-        case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
-            queryMergerRule = Z3SignatureBasedPartialQueryMergerRule::create(std::move(context));
-            break;
-        case QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule:
-            queryMergerRule = Z3SignatureBasedPartialQueryMergerBottomUpRule::create(std::move(context));
-            break;
-        case QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule:
-            queryMergerRule = Z3SignatureBasedBottomUpQueryContainmentRule::create(
-                std::move(context),
-                optimizerConfiguration.allowExhaustiveContainmentCheck.getValue());
-            break;
-        case QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule:
-            queryMergerRule = Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(
-                std::move(context),
-                optimizerConfiguration.allowExhaustiveContainmentCheck.getValue());
-            break;
-        case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
-            queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
-            break;
-        case QueryMergerRule::HashSignatureBasedPartialQueryMergerRule:
-        case QueryMergerRule::ImprovedHashSignatureBasedPartialQueryMergerRule:
-            queryMergerRule = HashSignatureBasedPartialQueryMergerRule::create();
-            break;
-        case QueryMergerRule::HybridCompleteQueryMergerRule:
-            queryMergerRule = HybridCompleteQueryMergerRule::create(std::move(context));
-            break;
-        case QueryMergerRule::DefaultQueryMergerRule: queryMergerRule = DefaultQueryMergerRule::create();
-    }
+QueryMergerPhase::QueryMergerPhase(
+    z3::ContextPtr context,
+    const Configurations::OptimizerConfiguration optimizerConfiguration) {
+  switch (optimizerConfiguration.queryMergerRule) {
+    case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
+      queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+      break;
+    case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
+      queryMergerRule =
+          Z3SignatureBasedCompleteQueryMergerRule::create(context);
+      break;
+    case QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule:
+    case QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule:
+      queryMergerRule = HashSignatureBasedCompleteQueryMergerRule::create();
+      break;
+    case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
+      queryMergerRule =
+          Z3SignatureBasedPartialQueryMergerRule::create(std::move(context));
+      break;
+    case QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule:
+      queryMergerRule = Z3SignatureBasedPartialQueryMergerBottomUpRule::create(
+          std::move(context));
+      break;
+    case QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule:
+      queryMergerRule = Z3SignatureBasedBottomUpQueryContainmentRule::create(
+          std::move(context),
+          optimizerConfiguration.allowExhaustiveContainmentCheck.getValue());
+      break;
+    case QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule:
+      queryMergerRule =
+          Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(
+              std::move(context),
+              optimizerConfiguration.allowExhaustiveContainmentCheck
+                  .getValue());
+      break;
+    case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
+      queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
+      break;
+    case QueryMergerRule::HashSignatureBasedPartialQueryMergerRule:
+    case QueryMergerRule::ImprovedHashSignatureBasedPartialQueryMergerRule:
+      queryMergerRule = HashSignatureBasedPartialQueryMergerRule::create();
+      break;
+    case QueryMergerRule::HybridCompleteQueryMergerRule:
+      queryMergerRule =
+          HybridCompleteQueryMergerRule::create(std::move(context));
+      break;
+    case QueryMergerRule::DefaultQueryMergerRule:
+      queryMergerRule = DefaultQueryMergerRule::create();
+  }
 }
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
-    return queryMergerRule->apply(std::move(globalQueryPlan));
+  NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
+  return queryMergerRule->apply(std::move(globalQueryPlan));
 }
 
-}// namespace NES::Optimizer
+}  // namespace NES::Optimizer

@@ -13,10 +13,12 @@
 */
 
 #include <Exceptions/LocationProviderException.hpp>
-
 #include <utility>
 namespace NES::Spatial::Exception {
-LocationProviderException::LocationProviderException(std::string message) : message(std::move(message)) {}
+LocationProviderException::LocationProviderException(std::string message)
+    : message(std::move(message)) {}
 
-const char* LocationProviderException::what() const noexcept { return message.c_str(); }
-}// namespace NES::Spatial::Exception
+const char* LocationProviderException::what() const noexcept {
+  return message.c_str();
+}
+}  // namespace NES::Spatial::Exception

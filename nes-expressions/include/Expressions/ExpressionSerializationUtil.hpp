@@ -32,34 +32,44 @@ class SerializableExpression_CaseExpression;
 class SerializableExpression_FunctionExpression;
 
 /**
-* @brief The ExpressionSerializationUtil offers functionality to serialize and de-serialize expression nodes to the
-* corresponding protobuffer object.
-*/
+ * @brief The ExpressionSerializationUtil offers functionality to serialize and
+ * de-serialize expression nodes to the corresponding protobuffer object.
+ */
 class ExpressionSerializationUtil {
-  public:
-    /**
-    * @brief Serializes a expression node and all its children to a SerializableDataType object.
-    * @param expressionNode The root expression node to serialize.
-    * @param serializedExpression The corresponding protobuff object, which is used to capture the state of the object.
-    * @return the modified serializedExpression
-    */
-    static SerializableExpression* serializeExpression(const ExpressionNodePtr& expressionNode,
-                                                       SerializableExpression* serializedExpression);
+ public:
+  /**
+   * @brief Serializes a expression node and all its children to a
+   * SerializableDataType object.
+   * @param expressionNode The root expression node to serialize.
+   * @param serializedExpression The corresponding protobuff object, which is
+   * used to capture the state of the object.
+   * @return the modified serializedExpression
+   */
+  static SerializableExpression* serializeExpression(
+      const ExpressionNodePtr& expressionNode,
+      SerializableExpression* serializedExpression);
 
-    /**
-    * @brief De-serializes the SerializableExpression and all its children to a corresponding ExpressionNodePtr
-    * @param serializedExpression the serialized expression.
-    * @return ExpressionNodePtr
-    */
-    static ExpressionNodePtr deserializeExpression(const SerializableExpression& serializedExpression);
+  /**
+   * @brief De-serializes the SerializableExpression and all its children to a
+   * corresponding ExpressionNodePtr
+   * @param serializedExpression the serialized expression.
+   * @return ExpressionNodePtr
+   */
+  static ExpressionNodePtr deserializeExpression(
+      const SerializableExpression& serializedExpression);
 
-  private:
-    static void serializeLogicalExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
-    static void serializeArithmeticalExpressions(const ExpressionNodePtr& expression,
-                                                 SerializableExpression* serializedExpression);
-    static ExpressionNodePtr deserializeLogicalExpressions(const SerializableExpression& serializedExpression);
-    static ExpressionNodePtr deserializeArithmeticalExpressions(const SerializableExpression& serializedExpression);
+ private:
+  static void serializeLogicalExpressions(
+      const ExpressionNodePtr& expression,
+      SerializableExpression* serializedExpression);
+  static void serializeArithmeticalExpressions(
+      const ExpressionNodePtr& expression,
+      SerializableExpression* serializedExpression);
+  static ExpressionNodePtr deserializeLogicalExpressions(
+      const SerializableExpression& serializedExpression);
+  static ExpressionNodePtr deserializeArithmeticalExpressions(
+      const SerializableExpression& serializedExpression);
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONSERIALIZATIONUTIL_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONSERIALIZATIONUTIL_HPP_

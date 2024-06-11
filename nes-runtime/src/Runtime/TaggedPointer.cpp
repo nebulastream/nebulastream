@@ -18,31 +18,31 @@
 
 namespace NES {
 
-template<typename T>
+template <typename T>
 TaggedPointer<T>::TaggedPointer(T* ptr, uint16_t tag) {
-    reset(ptr, tag);
+  reset(ptr, tag);
 }
 
-template<typename T>
+template <typename T>
 TaggedPointer<T>& TaggedPointer<T>::operator=(T* ptr) {
-    reset(ptr);
-    return *this;
+  reset(ptr);
+  return *this;
 }
 
-template<typename T>
+template <typename T>
 TaggedPointer<T>::operator bool() const {
-    return get() != nullptr;
+  return get() != nullptr;
 }
 
-template<typename T>
+template <typename T>
 void TaggedPointer<T>::reset(T* ptr, uint16_t tag) {
-    uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
-    NES_ASSERT(!(pointer >> 48), "invalid pointer");
-    pointer |= static_cast<uintptr_t>(tag) << 48;
-    data = pointer;
+  uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
+  NES_ASSERT(!(pointer >> 48), "invalid pointer");
+  pointer |= static_cast<uintptr_t>(tag) << 48;
+  data = pointer;
 }
 
 // explicit instantiation of tagged ptr
 template class TaggedPointer<Runtime::detail::BufferControlBlock>;
 
-}// namespace NES
+}  // namespace NES

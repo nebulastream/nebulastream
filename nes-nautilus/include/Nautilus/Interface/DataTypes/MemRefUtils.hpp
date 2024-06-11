@@ -19,7 +19,7 @@
 namespace NES {
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}// namespace NES
+}  // namespace NES
 
 namespace NES::Nautilus::MemRefUtils {
 
@@ -38,7 +38,8 @@ Value<> loadValue(Value<MemRef>& ptr, const PhysicalTypePtr& dataType);
  * @param size
  * @return true if both are the same.
  */
-bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size);
+bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2,
+               Value<UInt64>&& size);
 
 /**
  * @brief Performs a mem copy of size bytes from the source to the destination.
@@ -46,17 +47,20 @@ bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size)
  * @param source
  * @param size
  */
-void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source, Value<UInt64>&& size);
+void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source,
+             Value<UInt64>&& size);
 
 /**
- * @brief Get member returns the MemRef to a specific class member as an offset to a objectReference.
+ * @brief Get member returns the MemRef to a specific class member as an offset
+ * to a objectReference.
  * @note This assumes the offsetof works for the classType.
  * @param objectReference reference to the object that contains the member.
  * @param classType type of a class or struct
  * @param member a member that is part of the classType
  */
-#define getMember(objectReference, classType, member)                                                                            \
-    (objectReference + ((uint64_t) __builtin_offsetof(classType, member))).as<NES::Nautilus::MemRef>()
+#define getMember(objectReference, classType, member)                    \
+  (objectReference + ((uint64_t) __builtin_offsetof(classType, member))) \
+      .as<NES::Nautilus::MemRef>()
 
-}// namespace NES::Nautilus::MemRefUtils
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
+}  // namespace NES::Nautilus::MemRefUtils
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_

@@ -17,16 +17,17 @@
 namespace NES::Benchmark::DataGeneration {
 
 class ManufacturingEquipmentDataGenerator : public DataGenerator {
-  public:
-    explicit ManufacturingEquipmentDataGenerator();
+ public:
+  explicit ManufacturingEquipmentDataGenerator();
 
-    std::string getName() override;
-    std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
-    SchemaPtr getSchema() override;
-    Configurations::SchemaTypePtr getSchemaType() override;
-    std::string toString() override;
+  std::string getName() override;
+  std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers,
+                                               size_t bufferSize) override;
+  SchemaPtr getSchema() override;
+  Configurations::SchemaTypePtr getSchemaType() override;
+  std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+}  // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_MANUFACTURINGEQUIPMENTDATAGENERATOR_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_MANUFACTURINGEQUIPMENTDATAGENERATOR_HPP_

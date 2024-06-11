@@ -17,45 +17,51 @@
 #include <utility>
 
 namespace NES::Experimental::TopologyPrediction {
-TopologyDelta::TopologyDelta(std::vector<TopologyLinkInformation> added, std::vector<TopologyLinkInformation> removed)
+TopologyDelta::TopologyDelta(std::vector<TopologyLinkInformation> added,
+                             std::vector<TopologyLinkInformation> removed)
     : added(std::move(added)), removed(std::move(removed)) {}
 
 std::string TopologyDelta::toString() const {
-    std::stringstream deltaString;
+  std::stringstream deltaString;
 
-    deltaString << "added: {";
-    deltaString << topologyLinkInformationListToString(added);
-    deltaString << "}, ";
+  deltaString << "added: {";
+  deltaString << topologyLinkInformationListToString(added);
+  deltaString << "}, ";
 
-    deltaString << "removed: {";
-    deltaString << topologyLinkInformationListToString(removed);
-    deltaString << "}";
+  deltaString << "removed: {";
+  deltaString << topologyLinkInformationListToString(removed);
+  deltaString << "}";
 
-    return deltaString.str();
+  return deltaString.str();
 }
 
-std::string TopologyDelta::topologyLinkInformationListToString(const std::vector<TopologyLinkInformation>& topologyLinks) {
-    std::stringstream deltaString;
+std::string TopologyDelta::topologyLinkInformationListToString(
+    const std::vector<TopologyLinkInformation>& topologyLinks) {
+  std::stringstream deltaString;
 
-    if (topologyLinks.empty()) {
-        return "";
-    }
+  if (topologyLinks.empty()) {
+    return "";
+  }
 
-    //add first item to string
-    auto addedIter = topologyLinks.cbegin();
+  // add first item to string
+  auto addedIter = topologyLinks.cbegin();
+  deltaString << addedIter->toString();
+  ++addedIter;
+
+  // add comma separated additional items
+  for (; addedIter != topologyLinks.cend(); ++addedIter) {
+    deltaString << ", ";
     deltaString << addedIter->toString();
-    ++addedIter;
+  }
 
-    //add comma separated additional items
-    for (; addedIter != topologyLinks.cend(); ++addedIter) {
-        deltaString << ", ";
-        deltaString << addedIter->toString();
-    }
-
-    return deltaString.str();
+  return deltaString.str();
 }
 
-const std::vector<TopologyLinkInformation>& TopologyDelta::getAdded() const { return added; }
+const std::vector<TopologyLinkInformation>& TopologyDelta::getAdded() const {
+  return added;
+}
 
-const std::vector<TopologyLinkInformation>& TopologyDelta::getRemoved() const { return removed; }
-}// namespace NES::Experimental::TopologyPrediction
+const std::vector<TopologyLinkInformation>& TopologyDelta::getRemoved() const {
+  return removed;
+}
+}  // namespace NES::Experimental::TopologyPrediction

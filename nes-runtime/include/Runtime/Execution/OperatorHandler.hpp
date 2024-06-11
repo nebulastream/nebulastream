@@ -25,59 +25,64 @@ namespace NES::Runtime::Execution {
  * @brief Interface to handle specific operator state.
  */
 class OperatorHandler : public Reconfigurable {
-  public:
-    /**
-     * @brief Default constructor
-     */
-    OperatorHandler() = default;
+ public:
+  /**
+   * @brief Default constructor
+   */
+  OperatorHandler() = default;
 
-    /**
-     * @brief Starts the operator handler.
-     * @param pipelineExecutionContext
-     * @param localStateVariableId
-     * @param stateManager
-     */
-    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) = 0;
+  /**
+   * @brief Starts the operator handler.
+   * @param pipelineExecutionContext
+   * @param localStateVariableId
+   * @param stateManager
+   */
+  virtual void start(PipelineExecutionContextPtr pipelineExecutionContext,
+                     uint32_t localStateVariableId) = 0;
 
-    /**
-     * @brief Stops the operator handler.
-     * @param pipelineExecutionContext
-     */
-    virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+  /**
+   * @brief Stops the operator handler.
+   * @param pipelineExecutionContext
+   */
+  virtual void stop(QueryTerminationType terminationType,
+                    PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
-    /**
-     * @brief Default deconstructor
-     */
-    ~OperatorHandler() override = default;
+  /**
+   * @brief Default deconstructor
+   */
+  ~OperatorHandler() override = default;
 
-    /**
-     * @brief Checks if the current operator handler is of type OperatorHandlerType
-     * @tparam OperatorHandlerType
-     * @return bool true if node is of OperatorHandlerType
-     */
-    template<class OperatorHandlerType>
-    bool instanceOf() {
-        if (dynamic_cast<OperatorHandlerType*>(this)) {
-            return true;
-        };
-        return false;
+  /**
+   * @brief Checks if the current operator handler is of type
+   * OperatorHandlerType
+   * @tparam OperatorHandlerType
+   * @return bool true if node is of OperatorHandlerType
+   */
+  template <class OperatorHandlerType>
+  bool instanceOf() {
+    if (dynamic_cast<OperatorHandlerType*>(this)) {
+      return true;
     };
+    return false;
+  };
 
-    /**
-    * @brief Dynamically casts the node to a OperatorHandlerType
-    * @tparam OperatorHandlerType
-    * @return returns a shared pointer of the OperatorHandlerType
-    */
-    template<class OperatorHandlerType>
-    std::shared_ptr<OperatorHandlerType> as() {
-        if (instanceOf<OperatorHandlerType>()) {
-            return std::dynamic_pointer_cast<OperatorHandlerType>(this->shared_from_this());
-        }
-        throw Exceptions::RuntimeException("OperatorHandler:: we performed an invalid cast of operator to type "
-                                           + std::string(typeid(OperatorHandlerType).name()));
+  /**
+   * @brief Dynamically casts the node to a OperatorHandlerType
+   * @tparam OperatorHandlerType
+   * @return returns a shared pointer of the OperatorHandlerType
+   */
+  template <class OperatorHandlerType>
+  std::shared_ptr<OperatorHandlerType> as() {
+    if (instanceOf<OperatorHandlerType>()) {
+      return std::dynamic_pointer_cast<OperatorHandlerType>(
+          this->shared_from_this());
     }
+    throw Exceptions::RuntimeException(
+        "OperatorHandler:: we performed an invalid cast of operator to type " +
+        std::string(typeid(OperatorHandlerType).name()));
+  }
 };
 
-}// namespace NES::Runtime::Execution
+}  // namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_

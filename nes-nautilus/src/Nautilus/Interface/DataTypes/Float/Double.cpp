@@ -16,16 +16,32 @@
 namespace NES::Nautilus {
 
 Double::Double(double value) : TraceableType(&type), value(value){};
-Nautilus::IR::Types::StampPtr Double::getType() const { return Nautilus::IR::Types::StampFactory::createDoubleStamp(); }
+Nautilus::IR::Types::StampPtr Double::getType() const {
+  return Nautilus::IR::Types::StampFactory::createDoubleStamp();
+}
 std::shared_ptr<Any> Double::copy() { return create<Double>(value); }
-std::shared_ptr<Double> Double::add(const Double& otherValue) const { return create<Double>(value + otherValue.value); }
-std::shared_ptr<Double> Double::sub(const Double& otherValue) const { return create<Double>(value - otherValue.value); }
-std::shared_ptr<Double> Double::mul(const Double& otherValue) const { return create<Double>(value * otherValue.value); }
-std::shared_ptr<Double> Double::div(const Double& otherValue) const { return create<Double>(value / otherValue.value); }
-std::shared_ptr<Boolean> Double::equals(const Double& otherValue) const { return create<Boolean>(value == otherValue.value); }
-std::shared_ptr<Boolean> Double::lessThan(const Double& otherValue) const { return create<Boolean>(value < otherValue.value); }
-std::shared_ptr<Boolean> Double::greaterThan(const Double& otherValue) const { return create<Boolean>(value > otherValue.value); }
+std::shared_ptr<Double> Double::add(const Double& otherValue) const {
+  return create<Double>(value + otherValue.value);
+}
+std::shared_ptr<Double> Double::sub(const Double& otherValue) const {
+  return create<Double>(value - otherValue.value);
+}
+std::shared_ptr<Double> Double::mul(const Double& otherValue) const {
+  return create<Double>(value * otherValue.value);
+}
+std::shared_ptr<Double> Double::div(const Double& otherValue) const {
+  return create<Double>(value / otherValue.value);
+}
+std::shared_ptr<Boolean> Double::equals(const Double& otherValue) const {
+  return create<Boolean>(value == otherValue.value);
+}
+std::shared_ptr<Boolean> Double::lessThan(const Double& otherValue) const {
+  return create<Boolean>(value < otherValue.value);
+}
+std::shared_ptr<Boolean> Double::greaterThan(const Double& otherValue) const {
+  return create<Boolean>(value > otherValue.value);
+}
 double Double::getValue() const { return value; }
 std::string Double::toString() { return std::to_string(value); }
 
-}// namespace NES::Nautilus
+}  // namespace NES::Nautilus

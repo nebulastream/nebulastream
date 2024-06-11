@@ -25,33 +25,36 @@ namespace NES::Runtime::Execution::Operators {
  * @brief Batch operator for keyed aggregations.
  */
 class BatchKeyedAggregation : public ExecutableOperator {
-  public:
-    /**
-     * @brief Creates a keyed batch aggregation operator.
-     * @param operatorHandlerIndex operator handler index.
-     * @param keyExpressions expressions to derive the key values.
-     * @param keyDataTypes types of the key values.
-     * @param aggregationExpressions expressions to derive the aggregation values.
-     * @param aggregationFunctions aggregation functions
-     * @param hashFunction hash function
-     */
-    BatchKeyedAggregation(uint64_t operatorHandlerIndex,
-                          const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                          const std::vector<PhysicalTypePtr>& keyDataTypes,
-                          const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                          std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
-    void setup(ExecutionContext& executionCtx) const override;
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
+ public:
+  /**
+   * @brief Creates a keyed batch aggregation operator.
+   * @param operatorHandlerIndex operator handler index.
+   * @param keyExpressions expressions to derive the key values.
+   * @param keyDataTypes types of the key values.
+   * @param aggregationExpressions expressions to derive the aggregation values.
+   * @param aggregationFunctions aggregation functions
+   * @param hashFunction hash function
+   */
+  BatchKeyedAggregation(
+      uint64_t operatorHandlerIndex,
+      const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+      const std::vector<PhysicalTypePtr>& keyDataTypes,
+      const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>&
+          aggregationFunctions,
+      std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+  void setup(ExecutionContext& executionCtx) const override;
+  void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+  void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
-    const uint64_t operatorHandlerIndex;
-    const std::vector<Expressions::ExpressionPtr> keyExpressions;
-    const std::vector<PhysicalTypePtr> keyDataTypes;
-    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
-    uint64_t keySize;
-    uint64_t valueSize;
+ private:
+  const uint64_t operatorHandlerIndex;
+  const std::vector<Expressions::ExpressionPtr> keyExpressions;
+  const std::vector<PhysicalTypePtr> keyDataTypes;
+  const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>
+      aggregationFunctions;
+  const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
+  uint64_t keySize;
+  uint64_t valueSize;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATION_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATION_HPP_

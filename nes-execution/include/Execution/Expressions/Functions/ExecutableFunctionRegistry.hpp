@@ -22,50 +22,58 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief The function provider, is the base class, which registers an expression in the engine.
+ * @brief The function provider, is the base class, which registers an
+ * expression in the engine.
  */
 class FunctionExpressionProvider {
-  public:
-    /**
-     * @brief Creates a new function expression, which a set of arguments.
-     * @param args aruments for the function expression
-     * @return std::unique_ptr<Expression>
-     */
-    virtual std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) = 0;
-    virtual ~FunctionExpressionProvider() = default;
+ public:
+  /**
+   * @brief Creates a new function expression, which a set of arguments.
+   * @param args aruments for the function expression
+   * @return std::unique_ptr<Expression>
+   */
+  virtual std::unique_ptr<Expression> create(
+      std::vector<ExpressionPtr>& args) = 0;
+  virtual ~FunctionExpressionProvider() = default;
 };
 
 /**
  * @brief A function provider for unary function expressions.
  * @tparam T
  */
-template<typename T>
+template <typename T>
 class UnaryFunctionProvider : public FunctionExpressionProvider {
-  public:
-    std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) override {
-        NES_ASSERT(args.size() == 1, "A unary function should receive one argument");
-        return std::make_unique<T>(args[0]);
-    };
+ public:
+  std::unique_ptr<Expression> create(
+      std::vector<ExpressionPtr>& args) override {
+    NES_ASSERT(args.size() == 1,
+               "A unary function should receive one argument");
+    return std::make_unique<T>(args[0]);
+  };
 };
 
 /**
  * @brief A function provider for binary function expressions.
  * @tparam T
  */
-template<typename T>
+template <typename T>
 class BinaryFunctionProvider : public FunctionExpressionProvider {
-  public:
-    std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) override {
-        NES_ASSERT(args.size() == 2, "A binary function should receive two arguments");
-        return std::make_unique<T>(args[0], args[1]);
-    };
+ public:
+  std::unique_ptr<Expression> create(
+      std::vector<ExpressionPtr>& args) override {
+    NES_ASSERT(args.size() == 2,
+               "A binary function should receive two arguments");
+    return std::make_unique<T>(args[0], args[1]);
+  };
 };
 
 /**
- * @brief The ExecutableFunctionRegistry manages all executable function expressions for the engine.
+ * @brief The ExecutableFunctionRegistry manages all executable function
+ * expressions for the engine.
  */
-using ExecutableFunctionRegistry = Util::PluginFactory<FunctionExpressionProvider>;
+using ExecutableFunctionRegistry =
+    Util::PluginFactory<FunctionExpressionProvider>;
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_

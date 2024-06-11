@@ -15,64 +15,52 @@
 #include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalHyperLogLogBuildOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalHyperLogLogBuildOperator::create(const OperatorId operatorId,
-                                                             const StatisticId statisticId,
-                                                             const SchemaPtr& inputSchema,
-                                                             const SchemaPtr& outputSchema,
-                                                             const std::string& nameOfFieldToTrack,
-                                                             const uint64_t width,
-                                                             const Statistic::StatisticMetricHash metricHash,
-                                                             const Windowing::WindowTypePtr windowType,
-                                                             const Statistic::SendingPolicyPtr sendingPolicy) {
-    return std::make_shared<PhysicalHyperLogLogBuildOperator>(PhysicalHyperLogLogBuildOperator(operatorId,
-                                                                                               statisticId,
-                                                                                               inputSchema,
-                                                                                               outputSchema,
-                                                                                               nameOfFieldToTrack,
-                                                                                               width,
-                                                                                               metricHash,
-                                                                                               windowType,
-                                                                                               sendingPolicy));
+PhysicalOperatorPtr PhysicalHyperLogLogBuildOperator::create(
+    const OperatorId operatorId, const StatisticId statisticId,
+    const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+    const std::string& nameOfFieldToTrack, const uint64_t width,
+    const Statistic::StatisticMetricHash metricHash,
+    const Windowing::WindowTypePtr windowType,
+    const Statistic::SendingPolicyPtr sendingPolicy) {
+  return std::make_shared<PhysicalHyperLogLogBuildOperator>(
+      PhysicalHyperLogLogBuildOperator(operatorId, statisticId, inputSchema,
+                                       outputSchema, nameOfFieldToTrack, width,
+                                       metricHash, windowType, sendingPolicy));
 }
 
-PhysicalOperatorPtr PhysicalHyperLogLogBuildOperator::create(const StatisticId statisticId,
-                                                             const SchemaPtr& inputSchema,
-                                                             const SchemaPtr& outputSchema,
-                                                             const std::string& nameOfFieldToTrack,
-                                                             const uint64_t width,
-                                                             const Statistic::StatisticMetricHash metricHash,
-                                                             const Windowing::WindowTypePtr windowType,
-                                                             const Statistic::SendingPolicyPtr sendingPolicy) {
-    return create(getNextOperatorId(),
-                  statisticId,
-                  inputSchema,
-                  outputSchema,
-                  nameOfFieldToTrack,
-                  width,
-                  metricHash,
-                  windowType,
-                  sendingPolicy);
+PhysicalOperatorPtr PhysicalHyperLogLogBuildOperator::create(
+    const StatisticId statisticId, const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema, const std::string& nameOfFieldToTrack,
+    const uint64_t width, const Statistic::StatisticMetricHash metricHash,
+    const Windowing::WindowTypePtr windowType,
+    const Statistic::SendingPolicyPtr sendingPolicy) {
+  return create(getNextOperatorId(), statisticId, inputSchema, outputSchema,
+                nameOfFieldToTrack, width, metricHash, windowType,
+                sendingPolicy);
 }
 
-PhysicalHyperLogLogBuildOperator::PhysicalHyperLogLogBuildOperator(const OperatorId id,
-                                                                   const StatisticId statisticId,
-                                                                   const SchemaPtr& inputSchema,
-                                                                   const SchemaPtr& outputSchema,
-                                                                   const std::string& nameOfFieldToTrack,
-                                                                   const uint64_t width,
-                                                                   const Statistic::StatisticMetricHash metricHash,
-                                                                   const Windowing::WindowTypePtr windowType,
-                                                                   const Statistic::SendingPolicyPtr sendingPolicy)
-    : Operator(id, statisticId), PhysicalSynopsisBuildOperator(nameOfFieldToTrack, metricHash, windowType, sendingPolicy),
-      PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), width(width) {}
+PhysicalHyperLogLogBuildOperator::PhysicalHyperLogLogBuildOperator(
+    const OperatorId id, const StatisticId statisticId,
+    const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+    const std::string& nameOfFieldToTrack, const uint64_t width,
+    const Statistic::StatisticMetricHash metricHash,
+    const Windowing::WindowTypePtr windowType,
+    const Statistic::SendingPolicyPtr sendingPolicy)
+    : Operator(id, statisticId),
+      PhysicalSynopsisBuildOperator(nameOfFieldToTrack, metricHash, windowType,
+                                    sendingPolicy),
+      PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema),
+      width(width) {}
 
 OperatorPtr PhysicalHyperLogLogBuildOperator::copy() {
-    auto copy =
-        create(id, statisticId, inputSchema, outputSchema, nameOfFieldToTrack, width, metricHash, windowType, sendingPolicy);
-    copy->as<PhysicalHyperLogLogBuildOperator>()->setInputOriginIds(inputOriginIds);
-    return copy;
+  auto copy =
+      create(id, statisticId, inputSchema, outputSchema, nameOfFieldToTrack,
+             width, metricHash, windowType, sendingPolicy);
+  copy->as<PhysicalHyperLogLogBuildOperator>()->setInputOriginIds(
+      inputOriginIds);
+  return copy;
 }
 
 uint64_t PhysicalHyperLogLogBuildOperator::getWidth() const { return width; }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators

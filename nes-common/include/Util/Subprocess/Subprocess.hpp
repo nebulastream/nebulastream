@@ -14,61 +14,63 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
 #define NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
+#include <unistd.h>
+
 #include <atomic>
 #include <cstdio>
 #include <iostream>
 #include <thread>
-#include <unistd.h>
 #include <vector>
 
 namespace NES::Util {
 
 /**
  * @brief This class spawns a new subprocess and executes a specific command.
- * As soon as the subprocess object goes out of scope the subprocess is terminated.
+ * As soon as the subprocess object goes out of scope the subprocess is
+ * terminated.
  */
 class Subprocess {
-  public:
-    /**
-     * @brief Spawns a new subprocess with a specific cmd command and arguments.
-     * @param cmd that should be executed
-     * @param argv arguments
-     */
-    Subprocess(std::string cmd, std::vector<std::string> argv);
-    ~Subprocess();
+ public:
+  /**
+   * @brief Spawns a new subprocess with a specific cmd command and arguments.
+   * @param cmd that should be executed
+   * @param argv arguments
+   */
+  Subprocess(std::string cmd, std::vector<std::string> argv);
+  ~Subprocess();
 
-    /**
-     * Method to kill a process
-     * @return success code
-     */
-    bool kill();
+  /**
+   * Method to kill a process
+   * @return success code
+   */
+  bool kill();
 
-    /**
-     * Method to get the pid of a process
-     * @retun pid
-     */
-    uint64_t getPid();
+  /**
+   * Method to get the pid of a process
+   * @retun pid
+   */
+  uint64_t getPid();
 
-  private:
-    /**
-     * @brief read a _IO_FILE and pipe the content to an output stream
-     * @param file _IO_FILE
-     * @param ostream
-     */
-    static void readFromFile(FILE* file, std::ostream& ostream);
+ private:
+  /**
+   * @brief read a _IO_FILE and pipe the content to an output stream
+   * @param file _IO_FILE
+   * @param ostream
+   */
+  static void readFromFile(FILE* file, std::ostream& ostream);
 
-    /**
-     * @brief execute the cmd and all its arguments in the child process.
-     * @param argv arguments
-     */
-    void executeCommandInChildProcess(const std::vector<std::string>& argv);
-    pid_t pid;
-    int outPipe[2];
-    FILE* outputFile;
-    std::atomic_bool stopped = false;
-    std::thread logThread;
+  /**
+   * @brief execute the cmd and all its arguments in the child process.
+   * @param argv arguments
+   */
+  void executeCommandInChildProcess(const std::vector<std::string>& argv);
+  pid_t pid;
+  int outPipe[2];
+  FILE* outputFile;
+  std::atomic_bool stopped = false;
+  std::thread logThread;
 };
 
-}// namespace NES::Util
+}  // namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_

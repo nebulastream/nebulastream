@@ -18,10 +18,13 @@
 #include <utility>
 namespace NES::Nautilus::Backends::CPP {
 
-CPPExecutable::CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj) : obj(std::move(obj)) {}
+CPPExecutable::CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj)
+    : obj(std::move(obj)) {}
 
-void* CPPExecutable::getInvocableFunctionPtr(const std::string&) { return obj->getInvocableMember<void*>("execute"); }
+void* CPPExecutable::getInvocableFunctionPtr(const std::string&) {
+  return obj->getInvocableMember<void*>("execute");
+}
 
 bool CPPExecutable::hasInvocableFunctionPtr() { return true; }
 
-}// namespace NES::Nautilus::Backends::CPP
+}  // namespace NES::Nautilus::Backends::CPP

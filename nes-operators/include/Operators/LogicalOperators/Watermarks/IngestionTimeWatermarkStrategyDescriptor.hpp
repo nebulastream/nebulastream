@@ -20,26 +20,28 @@
 namespace NES::Windowing {
 
 class IngestionTimeWatermarkStrategyDescriptor;
-using IngestionTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<IngestionTimeWatermarkStrategyDescriptor>;
+using IngestionTimeWatermarkStrategyDescriptorPtr =
+    std::shared_ptr<IngestionTimeWatermarkStrategyDescriptor>;
 
-class IngestionTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
-  public:
-    static WatermarkStrategyDescriptorPtr create();
+class IngestionTimeWatermarkStrategyDescriptor
+    : public WatermarkStrategyDescriptor {
+ public:
+  static WatermarkStrategyDescriptorPtr create();
 
-    bool equal(WatermarkStrategyDescriptorPtr other) override;
-    std::string toString() override;
+  bool equal(WatermarkStrategyDescriptorPtr other) override;
+  std::string toString() override;
 
-    /**
-     * @brief Infer schema of watermark strategy descriptor
-     * @param schema : the schema to be used for inferring the types
-     * @return true if success else false
-     */
-    bool inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infer schema of watermark strategy descriptor
+   * @param schema : the schema to be used for inferring the types
+   * @return true if success else false
+   */
+  bool inferStamp(SchemaPtr schema) override;
 
-  private:
-    explicit IngestionTimeWatermarkStrategyDescriptor();
+ private:
+  explicit IngestionTimeWatermarkStrategyDescriptor();
 };
 
-}// namespace NES::Windowing
+}  // namespace NES::Windowing
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_INGESTIONTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_INGESTIONTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_

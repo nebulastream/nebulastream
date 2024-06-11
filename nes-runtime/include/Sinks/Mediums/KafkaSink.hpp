@@ -15,88 +15,85 @@
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 
 #ifdef ENABLE_KAFKA_BUILD
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
-
 namespace cppkafka {
 class Configuration;
 class Producer;
 class MessageBuilder;
-}// namespace cppkafka
+}  // namespace cppkafka
 namespace NES {
 
 class KafkaSink : public SinkMedium {
-    constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
+  constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
 
-  public:
-    /**
-    * Constructor for a kafka Sink
-    * @param format format of the sink
-    * @param nodeEngine
-    * @param numOfProducers
-    * @param brokers list of brokers to connect to
-    * @param topic list of topics to push to
-    * @param sharedQueryId
-    * @param decomposedQueryPlanId
-    * @param kafkaProducerTimeout timeout how long to wait until the push fails
-    * @param numberOfOrigins
-    */
-    KafkaSink(SinkFormatPtr format,
-              Runtime::NodeEnginePtr nodeEngine,
-              uint32_t numOfProducers,
-              const std::string& brokers,
-              const std::string& topic,
-              SharedQueryId sharedQueryId,
-              DecomposedQueryPlanId decomposedQueryPlanId,
-              const uint64_t kafkaProducerTimeout = 10 * 1000,
-              uint64_t numberOfOrigins = 1);
+ public:
+  /**
+   * Constructor for a kafka Sink
+   * @param format format of the sink
+   * @param nodeEngine
+   * @param numOfProducers
+   * @param brokers list of brokers to connect to
+   * @param topic list of topics to push to
+   * @param sharedQueryId
+   * @param decomposedQueryPlanId
+   * @param kafkaProducerTimeout timeout how long to wait until the push fails
+   * @param numberOfOrigins
+   */
+  KafkaSink(SinkFormatPtr format, Runtime::NodeEnginePtr nodeEngine,
+            uint32_t numOfProducers, const std::string& brokers,
+            const std::string& topic, SharedQueryId sharedQueryId,
+            DecomposedQueryPlanId decomposedQueryPlanId,
+            const uint64_t kafkaProducerTimeout = 10 * 1000,
+            uint64_t numberOfOrigins = 1);
 
-    ~KafkaSink() override;
+  ~KafkaSink() override;
 
-    /**
-     * @brief Get sink type
-     */
-    SinkMediumTypes getSinkMediumType() override;
+  /**
+   * @brief Get sink type
+   */
+  SinkMediumTypes getSinkMediumType() override;
 
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+  bool writeData(Runtime::TupleBuffer& inputBuffer,
+                 Runtime::WorkerContextRef) override;
 
-    void setup() override;
-    void shutdown() override;
+  void setup() override;
+  void shutdown() override;
 
-    /**
-     * @brief Get broker list
-     */
-    std::string getBrokers() const;
+  /**
+   * @brief Get broker list
+   */
+  std::string getBrokers() const;
 
-    /**
-     * @brief Get kafka topic name
-     */
-    std::string getTopic() const;
+  /**
+   * @brief Get kafka topic name
+   */
+  std::string getTopic() const;
 
-    /**
-     * @brief Get kafka producer timeout
-     */
-    uint64_t getKafkaProducerTimeout() const;
-    std::string toString() const override;
+  /**
+   * @brief Get kafka producer timeout
+   */
+  uint64_t getKafkaProducerTimeout() const;
+  std::string toString() const override;
 
-  private:
-    void connect();
+ private:
+  void connect();
 
-    std::string brokers;
-    std::string topic;
+  std::string brokers;
+  std::string topic;
 
-    std::unique_ptr<cppkafka::Configuration> config;
-    std::unique_ptr<cppkafka::Producer> producer;
-    std::unique_ptr<cppkafka::MessageBuilder> msgBuilder;
+  std::unique_ptr<cppkafka::Configuration> config;
+  std::unique_ptr<cppkafka::Producer> producer;
+  std::unique_ptr<cppkafka::MessageBuilder> msgBuilder;
 
-    std::chrono::milliseconds kafkaProducerTimeout;
+  std::chrono::milliseconds kafkaProducerTimeout;
 };
 using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
-}// namespace NES
-#endif// ENABLE_KAFKA_BUILD
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+}  // namespace NES
+#endif  // ENABLE_KAFKA_BUILD
+#endif  // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

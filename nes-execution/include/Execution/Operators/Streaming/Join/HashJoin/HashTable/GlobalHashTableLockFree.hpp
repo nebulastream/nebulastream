@@ -27,37 +27,36 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class represents a hash map and ensures thread safety by compare and swaps
+ * @brief This class represents a hash map and ensures thread safety by compare
+ * and swaps
  */
 class GlobalHashTableLockFree : public StreamJoinHashTable {
+ public:
+  /**
+   * @brief Constructor for a GlobalHashTableLockFree that
+   * @param sizeOfRecord
+   * @param numPartitions
+   * @param fixedPagesAllocator
+   * @param pageSize
+   * @param preAllocPageSizeCnt
+   */
+  explicit GlobalHashTableLockFree(size_t sizeOfRecord, size_t numPartitions,
+                                   FixedPagesAllocator& fixedPagesAllocator,
+                                   size_t pageSize, size_t preAllocPageSizeCnt);
 
-  public:
-    /**
-     * @brief Constructor for a GlobalHashTableLockFree that
-     * @param sizeOfRecord
-     * @param numPartitions
-     * @param fixedPagesAllocator
-     * @param pageSize
-     * @param preAllocPageSizeCnt
-     */
-    explicit GlobalHashTableLockFree(size_t sizeOfRecord,
-                                     size_t numPartitions,
-                                     FixedPagesAllocator& fixedPagesAllocator,
-                                     size_t pageSize,
-                                     size_t preAllocPageSizeCnt);
+  GlobalHashTableLockFree(const GlobalHashTableLockFree&) = delete;
 
-    GlobalHashTableLockFree(const GlobalHashTableLockFree&) = delete;
+  GlobalHashTableLockFree& operator=(const GlobalHashTableLockFree&) = delete;
 
-    GlobalHashTableLockFree& operator=(const GlobalHashTableLockFree&) = delete;
+  virtual ~GlobalHashTableLockFree() = default;
 
-    virtual ~GlobalHashTableLockFree() = default;
-
-    /**
-     * @brief Inserts the key into this hash table by returning a pointer to a free memory space
-     * @param key
-     * @return Pointer to free memory space where the data shall be written
-     */
-    virtual uint8_t* insert(uint64_t key) const override;
+  /**
+   * @brief Inserts the key into this hash table by returning a pointer to a
+   * free memory space
+   * @param key
+   * @return Pointer to free memory space where the data shall be written
+   */
+  virtual uint8_t* insert(uint64_t key) const override;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKFREE_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKFREE_HPP_

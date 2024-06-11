@@ -22,30 +22,30 @@
 namespace NES {
 
 /**
- * @brief This class is responsible for creating logical source descriptor to physical source.
+ * @brief This class is responsible for creating logical source descriptor to
+ * physical source.
  */
 class ConvertLogicalToPhysicalSource {
+ public:
+  /**
+   * @brief This method produces corresponding physical source for an input
+   * logical source descriptor
+   * @param operator id: the operator id
+   * @param sourceDescriptor : the logical source descriptor
+   * @return Data source pointer for the physical source
+   */
+  static DataSourcePtr createDataSource(
+      OperatorId operatorId, OriginId originId, StatisticId statisticId,
+      const SourceDescriptorPtr& sourceDescriptor,
+      const Runtime::NodeEnginePtr& nodeEngine, size_t numSourceLocalBuffers,
+      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>&
+          successors =
+              std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-  public:
-    /**
-     * @brief This method produces corresponding physical source for an input logical source descriptor
-     * @param operator id: the operator id
-     * @param sourceDescriptor : the logical source descriptor
-     * @return Data source pointer for the physical source
-     */
-    static DataSourcePtr createDataSource(OperatorId operatorId,
-                                          OriginId originId,
-                                          StatisticId statisticId,
-                                          const SourceDescriptorPtr& sourceDescriptor,
-                                          const Runtime::NodeEnginePtr& nodeEngine,
-                                          size_t numSourceLocalBuffers,
-                                          const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors =
-                                              std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-
-  private:
-    ConvertLogicalToPhysicalSource() = default;
+ private:
+  ConvertLogicalToPhysicalSource() = default;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_

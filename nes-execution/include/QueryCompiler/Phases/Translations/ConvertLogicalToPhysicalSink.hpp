@@ -24,29 +24,29 @@ class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
- * @brief This class is responsible for creating the physical sink from Logical sink description
+ * @brief This class is responsible for creating the physical sink from Logical
+ * sink description
  */
 class ConvertLogicalToPhysicalSink {
+ public:
+  /**
+   * @brief This method is responsible for creating the physical sink from
+   * logical sink descriptor
+   * @param sinkDescriptor: logical sink descriptor
+   * @param nodeEngine: the running node engine where the sink is deployed
+   * @param querySubPlanId: the id of the owning subplan
+   * @return Data sink pointer representing the physical sink
+   */
+  static DataSinkPtr createDataSink(
+      OperatorId operatorId, const SinkDescriptorPtr& sinkDescriptor,
+      const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine,
+      const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan,
+      size_t numOfProducers);
 
-  public:
-    /**
-     * @brief This method is responsible for creating the physical sink from logical sink descriptor
-     * @param sinkDescriptor: logical sink descriptor
-     * @param nodeEngine: the running node engine where the sink is deployed
-     * @param querySubPlanId: the id of the owning subplan
-     * @return Data sink pointer representing the physical sink
-     */
-    static DataSinkPtr createDataSink(OperatorId operatorId,
-                                      const SinkDescriptorPtr& sinkDescriptor,
-                                      const SchemaPtr& schema,
-                                      const Runtime::NodeEnginePtr& nodeEngine,
-                                      const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan,
-                                      size_t numOfProducers);
-
-  private:
-    ConvertLogicalToPhysicalSink() = default;
+ private:
+  ConvertLogicalToPhysicalSink() = default;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_CONVERTLOGICALTOPHYSICALSINK_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_CONVERTLOGICALTOPHYSICALSINK_HPP_

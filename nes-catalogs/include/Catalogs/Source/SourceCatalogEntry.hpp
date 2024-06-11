@@ -42,56 +42,58 @@ using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
  *
  */
 class SourceCatalogEntry {
+ public:
+  /**
+   * @brief Create the shared pointer for the source catalog entry
+   * @param physicalSource: physical source name
+   * @param logicalSource: the logical source name
+   * @param topologyNodeId: the if of topology node
+   * @return shared pointer to Source catalog entry
+   */
+  static SourceCatalogEntryPtr create(PhysicalSourcePtr physicalSource,
+                                      LogicalSourcePtr logicalSource,
+                                      WorkerId topologyNodeId);
 
-  public:
-    /**
-     * @brief Create the shared pointer for the source catalog entry
-     * @param physicalSource: physical source name
-     * @param logicalSource: the logical source name
-     * @param topologyNodeId: the if of topology node
-     * @return shared pointer to Source catalog entry
-     */
-    static SourceCatalogEntryPtr
-    create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
+  /**
+   * @brief Get the physical source
+   * @return the shared pointer to the physical source
+   */
+  const PhysicalSourcePtr& getPhysicalSource() const;
 
-    /**
-     * @brief Get the physical source
-     * @return the shared pointer to the physical source
-     */
-    const PhysicalSourcePtr& getPhysicalSource() const;
+  /**
+   * @brief Get the logical source
+   * @return the shared pointer to the logical source
+   */
+  const LogicalSourcePtr& getLogicalSource() const;
 
-    /**
-     * @brief Get the logical source
-     * @return the shared pointer to the logical source
-     */
-    const LogicalSourcePtr& getLogicalSource() const;
+  /**
+   * @brief Get the topology node
+   * @return the shared pointer to the topology node
+   */
+  WorkerId getTopologyNodeId() const;
 
-    /**
-     * @brief Get the topology node
-     * @return the shared pointer to the topology node
-     */
-    WorkerId getTopologyNodeId() const;
+  /**
+   * @brief Get the string rep of the source catalog entry
+   * @return string rep of the source catalog entry
+   */
+  std::string toString();
 
-    /**
-     * @brief Get the string rep of the source catalog entry
-     * @return string rep of the source catalog entry
-     */
-    std::string toString();
+ private:
+  /**
+   * @brief Constructor
+   * @param physicalSource : the physical source pointer
+   * @param logicalSource : the logical source pointer
+   * @param topologyNodeId : the topology node id
+   */
+  explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource,
+                              LogicalSourcePtr logicalSource,
+                              WorkerId topologyNodeId);
 
-  private:
-    /**
-     * @brief Constructor
-     * @param physicalSource : the physical source pointer
-     * @param logicalSource : the logical source pointer
-     * @param topologyNodeId : the topology node id
-     */
-    explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
-
-    PhysicalSourcePtr physicalSource;
-    LogicalSourcePtr logicalSource;
-    WorkerId topologyNodeId;
+  PhysicalSourcePtr physicalSource;
+  LogicalSourcePtr logicalSource;
+  WorkerId topologyNodeId;
 };
-}// namespace Catalogs::Source
-}// namespace NES
+}  // namespace Catalogs::Source
+}  // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_

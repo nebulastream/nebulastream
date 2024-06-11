@@ -18,6 +18,6 @@ namespace NES {
 
 BufferAccessException::BufferAccessException(const std::string& message)
     : Exceptions::RuntimeException(message, NES::collectStacktrace()) {
-    NES_ERROR("{}", message);
+  NES_ERROR("{}", message);
 }
-}// namespace NES
+}  // namespace NES

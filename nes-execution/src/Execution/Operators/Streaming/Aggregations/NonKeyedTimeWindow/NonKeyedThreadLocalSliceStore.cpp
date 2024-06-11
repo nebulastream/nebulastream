@@ -18,15 +18,18 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-NonKeyedThreadLocalSliceStore::NonKeyedThreadLocalSliceStore(uint64_t entrySize,
-                                                             uint64_t windowSize,
-                                                             uint64_t windowSlide,
-                                                             const std::unique_ptr<State>& defaultState)
-    : ThreadLocalSliceStore(windowSize, windowSlide), entrySize(entrySize), defaultState(defaultState) {}
+NonKeyedThreadLocalSliceStore::NonKeyedThreadLocalSliceStore(
+    uint64_t entrySize, uint64_t windowSize, uint64_t windowSlide,
+    const std::unique_ptr<State>& defaultState)
+    : ThreadLocalSliceStore(windowSize, windowSlide),
+      entrySize(entrySize),
+      defaultState(defaultState) {}
 
-GlobalSlicePtr NonKeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
-    NES_DEBUG("Allocate Slices {}-{}", startTs, endTs);
-    return std::make_unique<NonKeyedSlice>(entrySize, startTs, endTs, defaultState);
+GlobalSlicePtr NonKeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs,
+                                                               uint64_t endTs) {
+  NES_DEBUG("Allocate Slices {}-{}", startTs, endTs);
+  return std::make_unique<NonKeyedSlice>(entrySize, startTs, endTs,
+                                         defaultState);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

@@ -18,31 +18,31 @@ namespace NES::Nautilus::Tracing {
  * @brief The OpCode enum defines the different traceable primitive operations.
  */
 enum class OpCode : uint8_t {
-    ADD,
-    SUB,
-    DIV,
-    MOD,
-    MUL,
-    EQUALS,
-    LESS_THAN,
-    GREATER_THAN,
-    NEGATE,
-    BITWISE_AND,
-    BITWISE_OR,
-    BITWISE_XOR,
-    BITWISE_LEFT_SHIFT,
-    BITWISE_RIGHT_SHIFT,
-    AND,
-    OR,
-    CMP,
-    JMP,
-    CONST,
-    ASSIGN,
-    RETURN,
-    LOAD,
-    STORE,
-    CALL,
-    CAST
+  ADD,
+  SUB,
+  DIV,
+  MOD,
+  MUL,
+  EQUALS,
+  LESS_THAN,
+  GREATER_THAN,
+  NEGATE,
+  BITWISE_AND,
+  BITWISE_OR,
+  BITWISE_XOR,
+  BITWISE_LEFT_SHIFT,
+  BITWISE_RIGHT_SHIFT,
+  AND,
+  OR,
+  CMP,
+  JMP,
+  CONST,
+  ASSIGN,
+  RETURN,
+  LOAD,
+  STORE,
+  CALL,
+  CAST
 };
-}// namespace NES::Nautilus::Tracing
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
+}  // namespace NES::Nautilus::Tracing
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_

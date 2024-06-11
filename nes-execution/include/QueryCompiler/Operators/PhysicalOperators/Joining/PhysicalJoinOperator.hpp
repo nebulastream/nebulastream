@@ -21,15 +21,15 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * This operator receives input records and adds them to its operator state.
  */
 class PhysicalJoinOperator {
-  public:
-    Join::JoinOperatorHandlerPtr getJoinHandler();
+ public:
+  Join::JoinOperatorHandlerPtr getJoinHandler();
 
-    virtual ~PhysicalJoinOperator() noexcept = default;
+  virtual ~PhysicalJoinOperator() noexcept = default;
 
-  protected:
-    explicit PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler);
+ protected:
+  explicit PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler);
 
-    Join::JoinOperatorHandlerPtr operatorHandler;
+  Join::JoinOperatorHandlerPtr operatorHandler;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
+}  // namespace NES::QueryCompilation::PhysicalOperators
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_

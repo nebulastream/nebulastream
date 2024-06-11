@@ -25,9 +25,10 @@ using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
 
 /**
  * @brief Defines a UDF call operation.
-**/
-ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArgs);
+ **/
+ExpressionNodePtr CALL(const NES::ExpressionItem& udfName,
+                       std::vector<ExpressionNodePtr> functionArgs);
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
+#endif  // NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_

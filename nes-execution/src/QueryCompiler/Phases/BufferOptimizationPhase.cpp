@@ -19,21 +19,29 @@
 
 namespace NES::QueryCompilation {
 
-BufferOptimizationPhasePtr BufferOptimizationPhase::BufferOptimizationPhase::create(OutputBufferOptimizationLevel level) {
-    return std::make_shared<BufferOptimizationPhase>(level);
+BufferOptimizationPhasePtr
+BufferOptimizationPhase::BufferOptimizationPhase::create(
+    OutputBufferOptimizationLevel level) {
+  return std::make_shared<BufferOptimizationPhase>(level);
 }
 
-BufferOptimizationPhase::BufferOptimizationPhase(OutputBufferOptimizationLevel level) : level(level) {}
+BufferOptimizationPhase::BufferOptimizationPhase(
+    OutputBufferOptimizationLevel level)
+    : level(level) {}
 
-PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
-    for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
-        if (pipeline->isOperatorPipeline()) {
-            apply(pipeline);
-        }
+PipelineQueryPlanPtr BufferOptimizationPhase::apply(
+    PipelineQueryPlanPtr pipelinedQueryPlan) {
+  for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
+    if (pipeline->isOperatorPipeline()) {
+      apply(pipeline);
     }
-    return pipelinedQueryPlan;
+  }
+  return pipelinedQueryPlan;
 }
 
-OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) { return operatorPipeline; }
+OperatorPipelinePtr BufferOptimizationPhase::apply(
+    OperatorPipelinePtr operatorPipeline) {
+  return operatorPipeline;
+}
 
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation

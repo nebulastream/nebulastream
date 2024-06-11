@@ -20,19 +20,20 @@
 namespace NES::Nautilus::IR::Operations {
 
 class DivOperation : public Operation {
-  public:
-    DivOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
-    ~DivOperation() override = default;
+ public:
+  DivOperation(OperationIdentifier identifier, OperationPtr leftInput,
+               OperationPtr rightInput);
+  ~DivOperation() override = default;
 
-    OperationPtr getLeftInput();
-    OperationPtr getRightInput();
+  OperationPtr getLeftInput();
+  OperationPtr getRightInput();
 
-    std::string toString() override;
-    bool classof(const Operation* Op);
+  std::string toString() override;
+  bool classof(const Operation* Op);
 
-  private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+ private:
+  OperationWPtr leftInput;
+  OperationWPtr rightInput;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_DIVOPERATION_HPP_
+}  // namespace NES::Nautilus::IR::Operations
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_DIVOPERATION_HPP_

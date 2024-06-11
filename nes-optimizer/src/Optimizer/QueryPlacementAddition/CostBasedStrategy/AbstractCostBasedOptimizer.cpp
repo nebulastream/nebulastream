@@ -17,4 +17,5 @@
 NES::Optimizer::AbstractCostBasedOptimizer::AbstractCostBasedOptimizer(
     const std::set<LogicalOperatorPtr>& pinnedUpstreamOperators,
     const std::set<LogicalOperatorPtr>& pinnedDownstreamOperators)
-    : pinnedUpstreamOperators(pinnedUpstreamOperators), pinnedDownstreamOperators(pinnedDownstreamOperators) {}
+    : pinnedUpstreamOperators(pinnedUpstreamOperators),
+      pinnedDownstreamOperators(pinnedDownstreamOperators) {}

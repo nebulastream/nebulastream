@@ -11,89 +11,108 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <fmt/format.h>
+
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
-#include <fmt/format.h>
 
 namespace NES {
 
-LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), BinaryOperator(id) {}
+LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id)
+    : Operator(id), LogicalOperator(id), BinaryOperator(id) {}
 
 bool LogicalBinaryOperator::inferSchema() {
+  distinctSchemas.clear();
+  // Check the number of child operators
+  if (children.size() < 2) {
+    NES_ERROR(
+        "BinaryOperator: this operator should have at least two child "
+        "operators");
+    throw TypeInferenceException(
+        "BinaryOperator: this node should have at least two child operators");
+  }
 
-    distinctSchemas.clear();
-    //Check the number of child operators
-    if (children.size() < 2) {
-        NES_ERROR("BinaryOperator: this operator should have at least two child operators");
-        throw TypeInferenceException("BinaryOperator: this node should have at least two child operators");
+  // Infer schema of all child operators
+  for (const auto& child : children) {
+    if (!child->as<LogicalOperator>()->inferSchema()) {
+      NES_ERROR(
+          "BinaryOperator: failed inferring the schema of the child operator");
+      throw TypeInferenceException(
+          "BinaryOperator: failed inferring the schema of the child operator");
     }
+  }
 
-    // Infer schema of all child operators
-    for (const auto& child : children) {
-        if (!child->as<LogicalOperator>()->inferSchema()) {
-            NES_ERROR("BinaryOperator: failed inferring the schema of the child operator");
-            throw TypeInferenceException("BinaryOperator: failed inferring the schema of the child operator");
-        }
+  // Identify different type of schemas from children operators
+  for (const auto& child : children) {
+    auto childOutputSchema = child->as<Operator>()->getOutputSchema();
+    auto found =
+        std::find_if(distinctSchemas.begin(), distinctSchemas.end(),
+                     [&](const SchemaPtr& distinctSchema) {
+                       return childOutputSchema->equals(distinctSchema, false);
+                     });
+    if (found == distinctSchemas.end()) {
+      distinctSchemas.push_back(childOutputSchema);
     }
+  }
 
-    //Identify different type of schemas from children operators
-    for (const auto& child : children) {
-        auto childOutputSchema = child->as<Operator>()->getOutputSchema();
-        auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](const SchemaPtr& distinctSchema) {
-            return childOutputSchema->equals(distinctSchema, false);
-        });
-        if (found == distinctSchemas.end()) {
-            distinctSchemas.push_back(childOutputSchema);
-        }
-    }
+  // validate that only two different type of schema were present
+  if (distinctSchemas.size() > 2) {
+    throw TypeInferenceException(
+        fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 "
+                    "or less distinct schemas.",
+                    distinctSchemas.size()));
+  }
 
-    //validate that only two different type of schema were present
-    if (distinctSchemas.size() > 2) {
-        throw TypeInferenceException(
-            fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 or less distinct schemas.",
-                        distinctSchemas.size()));
-    }
-
-    return true;
+  return true;
 }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const SchemaPtr& schema) const {
-    std::vector<OperatorPtr> operators;
-    for (const auto& child : getChildren()) {
-        auto childOperator = child->as<Operator>();
-        if (childOperator->getOutputSchema()->equals(schema, false)) {
-            operators.emplace_back(childOperator);
-        }
+std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(
+    const SchemaPtr& schema) const {
+  std::vector<OperatorPtr> operators;
+  for (const auto& child : getChildren()) {
+    auto childOperator = child->as<Operator>();
+    if (childOperator->getOutputSchema()->equals(schema, false)) {
+      operators.emplace_back(childOperator);
     }
-    return operators;
+  }
+  return operators;
 }
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getLeftOperators() const { return getOperatorsBySchema(getLeftInputSchema()); }
+std::vector<OperatorPtr> LogicalBinaryOperator::getLeftOperators() const {
+  return getOperatorsBySchema(getLeftInputSchema());
+}
 
-std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() const { return getOperatorsBySchema(getRightInputSchema()); }
+std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() const {
+  return getOperatorsBySchema(getRightInputSchema());
+}
 
 void LogicalBinaryOperator::inferInputOrigins() {
-    // in the default case we collect all input origins from the children/upstream operators
-    std::vector<OriginId> leftInputOriginIds;
-    for (auto child : this->getLeftOperators()) {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-        childOperator->inferInputOrigins();
-        auto childInputOriginIds = childOperator->getOutputOriginIds();
-        leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
-    }
-    this->leftInputOriginIds = leftInputOriginIds;
+  // in the default case we collect all input origins from the children/upstream
+  // operators
+  std::vector<OriginId> leftInputOriginIds;
+  for (auto child : this->getLeftOperators()) {
+    const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+    childOperator->inferInputOrigins();
+    auto childInputOriginIds = childOperator->getOutputOriginIds();
+    leftInputOriginIds.insert(leftInputOriginIds.end(),
+                              childInputOriginIds.begin(),
+                              childInputOriginIds.end());
+  }
+  this->leftInputOriginIds = leftInputOriginIds;
 
-    std::vector<OriginId> rightInputOriginIds;
-    for (auto child : this->getRightOperators()) {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
-        childOperator->inferInputOrigins();
-        auto childInputOriginIds = childOperator->getOutputOriginIds();
-        rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
-    }
-    this->rightInputOriginIds = rightInputOriginIds;
+  std::vector<OriginId> rightInputOriginIds;
+  for (auto child : this->getRightOperators()) {
+    const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+    childOperator->inferInputOrigins();
+    auto childInputOriginIds = childOperator->getOutputOriginIds();
+    rightInputOriginIds.insert(rightInputOriginIds.end(),
+                               childInputOriginIds.begin(),
+                               childInputOriginIds.end());
+  }
+  this->rightInputOriginIds = rightInputOriginIds;
 }
 
-}// namespace NES
+}  // namespace NES

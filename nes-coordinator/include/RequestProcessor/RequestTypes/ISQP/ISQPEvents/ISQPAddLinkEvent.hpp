@@ -24,8 +24,8 @@ namespace NES::RequestProcessor {
  * @brief the response indicating if the add link event was successfully applied
  */
 struct ISQPAddLinkResponse : public ISQPResponse {
-    explicit ISQPAddLinkResponse(bool success) : success(success){};
-    bool success;
+  explicit ISQPAddLinkResponse(bool success) : success(success){};
+  bool success;
 };
 using ISQPAddLinkResponsePtr = std::shared_ptr<ISQPAddLinkResponse>;
 
@@ -33,23 +33,24 @@ class ISQPAddLinkEvent;
 using ISQPAddLinkEventPtr = std::shared_ptr<ISQPAddLinkEvent>;
 
 /**
- * @brief Representing the ISQP add link event indicating a new link is established between two worker node ids
+ * @brief Representing the ISQP add link event indicating a new link is
+ * established between two worker node ids
  */
 class ISQPAddLinkEvent : public ISQPEvent {
+ public:
+  static ISQPEventPtr create(const WorkerId& parentNodeId,
+                             const WorkerId& childWorkerId);
 
-  public:
-    static ISQPEventPtr create(const WorkerId& parentNodeId, const WorkerId& childWorkerId);
+  ISQPAddLinkEvent(const WorkerId& parentNodeId, const WorkerId& childWorkerId);
 
-    ISQPAddLinkEvent(const WorkerId& parentNodeId, const WorkerId& childWorkerId);
+  WorkerId getParentNodeId() const;
 
-    WorkerId getParentNodeId() const;
+  WorkerId getChildNodeId() const;
 
-    WorkerId getChildNodeId() const;
-
-  private:
-    WorkerId parentNodeId;
-    WorkerId childNodeId;
+ private:
+  WorkerId parentNodeId;
+  WorkerId childNodeId;
 };
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDLINKEVENT_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDLINKEVENT_HPP_

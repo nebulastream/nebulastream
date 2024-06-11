@@ -31,24 +31,25 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
  * @brief The LogicalSource wraps the source name and the schema.
  */
 class LogicalSource {
-  public:
-    static LogicalSourcePtr create(const std::string& logicalSourceName, const SchemaPtr& schema);
+ public:
+  static LogicalSourcePtr create(const std::string& logicalSourceName,
+                                 const SchemaPtr& schema);
 
-    /**
-     * @brief Gets the logical source name
-     */
-    std::string getLogicalSourceName();
+  /**
+   * @brief Gets the logical source name
+   */
+  std::string getLogicalSourceName();
 
-    /**
-     * @brief Gets the schema
-     */
-    SchemaPtr getSchema();
+  /**
+   * @brief Gets the schema
+   */
+  SchemaPtr getSchema();
 
-  private:
-    LogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema);
+ private:
+  LogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema);
 
-    std::string logicalSourceName;
-    SchemaPtr schema;
+  std::string logicalSourceName;
+  SchemaPtr schema;
 };
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_
+}  // namespace NES
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_

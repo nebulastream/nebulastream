@@ -17,8 +17,8 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief The physical multiplex operator
- * This operator has multiple upstream operators and forwards it to exactly one down-stream operator.
- * Thus it has multiple child nodes and one parent nodes.
+ * This operator has multiple upstream operators and forwards it to exactly one
+ * down-stream operator. Thus it has multiple child nodes and one parent nodes.
  * Example query plan:
  *
  * DataSource --- OperatorX ---
@@ -29,23 +29,23 @@ namespace NES::QueryCompilation::PhysicalOperators {
  *
  */
 class PhysicalUnionOperator : public PhysicalBinaryOperator {
-  public:
-    PhysicalUnionOperator(OperatorId id,
-                          StatisticId statisticId,
-                          const SchemaPtr& leftSchema,
-                          const SchemaPtr& rightSchema,
-                          const SchemaPtr& outputSchema);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& leftSchema,
-                                      const SchemaPtr& rightSchema,
-                                      const SchemaPtr& outputSchema);
-    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr& schema);
-    static PhysicalOperatorPtr create(StatisticId statisticId, const SchemaPtr& schema);
-    std::string toString() const override;
-    OperatorPtr copy() override;
+ public:
+  PhysicalUnionOperator(OperatorId id, StatisticId statisticId,
+                        const SchemaPtr& leftSchema,
+                        const SchemaPtr& rightSchema,
+                        const SchemaPtr& outputSchema);
+  static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId,
+                                    const SchemaPtr& leftSchema,
+                                    const SchemaPtr& rightSchema,
+                                    const SchemaPtr& outputSchema);
+  static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId,
+                                    const SchemaPtr& schema);
+  static PhysicalOperatorPtr create(StatisticId statisticId,
+                                    const SchemaPtr& schema);
+  std::string toString() const override;
+  OperatorPtr copy() override;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNIONOPERATOR_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNIONOPERATOR_HPP_

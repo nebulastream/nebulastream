@@ -23,52 +23,65 @@
 namespace NES::Benchmark::IngestionRateGeneration {
 
 /**
- * @brief This class defines the different types of supported ingestion rate generators.
+ * @brief This class defines the different types of supported ingestion rate
+ * generators.
  */
-enum class IngestionRateDistribution : uint8_t { UNIFORM, SINUS, COSINUS, CUSTOM, UNDEFINED };
+enum class IngestionRateDistribution : uint8_t {
+  UNIFORM,
+  SINUS,
+  COSINUS,
+  CUSTOM,
+  UNDEFINED
+};
 
 class IngestionRateGenerator;
 using IngestionRateGeneratorPtr = std::unique_ptr<IngestionRateGenerator>;
 
 /**
- * @brief This class is used by the ExternalProvider to create a vector of potentially different ingestion rates in order to support dynamic ingestion rates.
+ * @brief This class is used by the ExternalProvider to create a vector of
+ * potentially different ingestion rates in order to support dynamic ingestion
+ * rates.
  */
 class IngestionRateGenerator {
-  public:
-    /**
-     * @brief constructor for an ingestion rate generator
-     */
-    explicit IngestionRateGenerator() = default;
+ public:
+  /**
+   * @brief constructor for an ingestion rate generator
+   */
+  explicit IngestionRateGenerator() = default;
 
-    /**
-     * @brief virtual destructor
-     */
-    virtual ~IngestionRateGenerator() = default;
+  /**
+   * @brief virtual destructor
+   */
+  virtual ~IngestionRateGenerator() = default;
 
-    /**
-     * @brief creates a vector of ingestion rates
-     * @return vector of predefined ingestion rates
-     */
-    virtual std::vector<uint64_t> generateIngestionRates() = 0;
+  /**
+   * @brief creates a vector of ingestion rates
+   * @return vector of predefined ingestion rates
+   */
+  virtual std::vector<uint64_t> generateIngestionRates() = 0;
 
-    /**
-      * @brief creates a specific type of ingestion rate generator based on the given ingestion rate distribution
-      * @param configOverAllRuns
-      * @return pointer to a type of ingestion rate generator
-      */
-    static IngestionRateGeneratorPtr createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
+  /**
+   * @brief creates a specific type of ingestion rate generator based on the
+   * given ingestion rate distribution
+   * @param configOverAllRuns
+   * @return pointer to a type of ingestion rate generator
+   */
+  static IngestionRateGeneratorPtr createIngestionRateGenerator(
+      E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
-  protected:
-    uint64_t ingestionRateCount = 0;
+ protected:
+  uint64_t ingestionRateCount = 0;
 
-  private:
-    /**
-     * @brief determines whether the given ingestion rate distribution is supported
-     * @param ingestionRateDistribution
-     * @return IngestionRateDistribution
-     */
-    static IngestionRateDistribution getDistributionFromString(std::string& ingestionRateDistribution);
+ private:
+  /**
+   * @brief determines whether the given ingestion rate distribution is
+   * supported
+   * @param ingestionRateDistribution
+   * @return IngestionRateDistribution
+   */
+  static IngestionRateDistribution getDistributionFromString(
+      std::string& ingestionRateDistribution);
 };
-}// namespace NES::Benchmark::IngestionRateGeneration
+}  // namespace NES::Benchmark::IngestionRateGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_INGESTIONRATEGENERATOR_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_INGESTIONRATEGENERATOR_HPP_

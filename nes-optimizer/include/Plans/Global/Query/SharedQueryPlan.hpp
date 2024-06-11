@@ -48,22 +48,26 @@ using ChangeLogPtr = std::unique_ptr<ChangeLog>;
 
 class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
-}// namespace Experimental
-}// namespace Optimizer
+}  // namespace Experimental
+}  // namespace Optimizer
 
 using Timestamp = uint64_t;
 
 struct RemovedEdge {
-    WorkerId downstreamWorkerId;
-    WorkerId upstreamWorkerId;
+  WorkerId downstreamWorkerId;
+  WorkerId upstreamWorkerId;
 };
 
-using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>>;
+using ChangeLogEntries = std::vector<
+    std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>>;
 
 /**
- * @brief This class holds a query plan shared by multiple queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the sink nodes of all
- * the queryIdAndCatalogEntryMapping participating in the shared query plan. A Global Query Plan can consists of multiple Shared Query Plans.
- * Additionally, a query con share only one Shared Query Plan within a Global Query Plan.
+ * @brief This class holds a query plan shared by multiple
+ * queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the
+ * sink nodes of all the queryIdAndCatalogEntryMapping participating in the
+ * shared query plan. A Global Query Plan can consists of multiple Shared Query
+ * Plans. Additionally, a query con share only one Shared Query Plan within a
+ * Global Query Plan.
  *
  * Example:
  *
@@ -100,174 +104,198 @@ using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimenta
  * deployed: false
  * newMetaData: true
  *
- * In the above Shared query plan, we have two QueryPlans with Sink1 and sink2 as respective sink nodes.
- * A SharedQueryPlan consists of a unique:
+ * In the above Shared query plan, we have two QueryPlans with Sink1 and sink2
+ * as respective sink nodes. A SharedQueryPlan consists of a unique:
  *
- * - sharedQueryPlanId : this id is equivalent to the Query Id assigned to the user queryId. Since, there can be more than one query that can be merged
- *                      together we generate a unique Shared Query Id that can be associated to more than one Query Ids.
+ * - sharedQueryPlanId : this id is equivalent to the Query Id assigned to the
+ * user queryId. Since, there can be more than one query that can be merged
+ *                      together we generate a unique Shared Query Id that can
+ * be associated to more than one Query Ids.
  * - queryPlan : the query plan for the shared query plan
  * - queryIdToSinkOperatorMap: the mapping among the query and the sink operator
- * - queryIds : A vector of original Query Ids participating in the shared query plan
+ * - queryIds : A vector of original Query Ids participating in the shared query
+ * plan
  * - sinkOperators: A vector of sink operators in the query plan.
  * - deployed : A boolean flag indicating if the query plan is deployed or not.
- * - newMetaData : A boolean flag indicating if the meta data is a newly created one (i.e. it was never deployed before).
+ * - newMetaData : A boolean flag indicating if the meta data is a newly created
+ * one (i.e. it was never deployed before).
  *
  */
 class SharedQueryPlan {
+ public:
+  static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
 
-  public:
-    static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
+  /**
+   * @brief: Add all downstream operators of the query with input id starting
+   * from the matched operator
+   * @param queryId : id of the input query
+   * @param matchedOperatorPairs : the matched operator pairs
+   */
+  void addQuery(QueryId queryId,
+                const std::vector<Optimizer::MatchedOperatorPairPtr>&
+                    matchedOperatorPairs);
 
-    /**
-     * @brief: Add all downstream operators of the query with input id starting from the matched operator
-     * @param queryId : id of the input query
-     * @param matchedOperatorPairs : the matched operator pairs
-     */
-    void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs);
+  /**
+   * @brief Remove a Query, the associated exclusive operators, and clear sink
+   * and query id vectors
+   * @param queryId : the original query Id
+   * @return true if successful
+   */
+  bool removeQuery(QueryId queryId);
 
-    /**
-     * @brief Remove a Query, the associated exclusive operators, and clear sink and query id vectors
-     * @param queryId : the original query Id
-     * @return true if successful
-     */
-    bool removeQuery(QueryId queryId);
+  /**
+   * @brief Mark all operators between (excluding) upstream and downstream
+   * operators for re-operator placement
+   * @param upstreamOperatorIds: upstream operator ids
+   * @param downstreamOperatorIds: downstream Operator ids
+   */
+  void performReOperatorPlacement(
+      const std::set<OperatorId>& upstreamOperatorIds,
+      const std::set<OperatorId>& downstreamOperatorIds);
 
-    /**
-     * @brief Mark all operators between (excluding) upstream and downstream operators for re-operator placement
-     * @param upstreamOperatorIds: upstream operator ids
-     * @param downstreamOperatorIds: downstream Operator ids
-     */
-    void performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
-                                    const std::set<OperatorId>& downstreamOperatorIds);
+  /**
+   * @brief Method to update the placement information and state of the shared
+   * query plan operators
+   * @param updatedOperators: operators with new mappings
+   */
+  void updateOperators(const std::set<LogicalOperatorPtr>& updatedOperators);
 
-    /**
-     * @brief Method to update the placement information and state of the shared query plan operators
-     * @param updatedOperators: operators with new mappings
-     */
-    void updateOperators(const std::set<LogicalOperatorPtr>& updatedOperators);
+  /**
+   * @brief Clear all MetaData information
+   */
+  void clear();
 
-    /**
-     * @brief Clear all MetaData information
-     */
-    void clear();
+  /**
+   * @brief Get the Query plan for deployment build from the information within
+   * this metadata
+   * @return the query plan with all the interconnected logical operators
+   */
+  QueryPlanPtr getQueryPlan();
 
-    /**
-     * @brief Get the Query plan for deployment build from the information within this metadata
-     * @return the query plan with all the interconnected logical operators
-     */
-    QueryPlanPtr getQueryPlan();
+  /**
+   * @brief Check if the metadata is empty
+   * @return true if vector of queryIds is empty
+   */
+  bool isEmpty();
 
-    /**
-     * @brief Check if the metadata is empty
-     * @return true if vector of queryIds is empty
-     */
-    bool isEmpty();
+  /**
+   * @brief Get the vector of sink operators sharing common upstream operators
+   * @return the vector of Sink Operators
+   */
+  std::vector<LogicalOperatorPtr> getSinkOperators();
 
-    /**
-     * @brief Get the vector of sink operators sharing common upstream operators
-     * @return the vector of Sink Operators
-     */
-    std::vector<LogicalOperatorPtr> getSinkOperators();
+  /**
+   * @brief Get the collection of registered query ids and their sink operators
+   * @return map of registered query ids and their sink operators
+   */
+  std::map<QueryId, std::set<LogicalOperatorPtr>> getQueryIdToSinkOperatorMap();
 
-    /**
-     * @brief Get the collection of registered query ids and their sink operators
-     * @return map of registered query ids and their sink operators
-     */
-    std::map<QueryId, std::set<LogicalOperatorPtr>> getQueryIdToSinkOperatorMap();
+  /**
+   * @brief Get the shared query id
+   * @return shared query id
+   */
+  [[nodiscard]] SharedQueryId getId() const;
 
-    /**
-     * @brief Get the shared query id
-     * @return shared query id
-     */
-    [[nodiscard]] SharedQueryId getId() const;
+  /**
+   * @brief Get all query ids part of the SharedQueryPlan
+   * @return vector of query ids
+   */
+  std::vector<QueryId> getQueryIds();
 
-    /**
-     * @brief Get all query ids part of the SharedQueryPlan
-     * @return vector of query ids
-     */
-    std::vector<QueryId> getQueryIds();
+  /**
+   * @brief Get the change log entries of the shared query plan change until the
+   * timestamp.
+   * @param timestamp: the timestamp until the change log entries need to be
+   * retrieved
+   * @return the change log entries with timestamp of their creation
+   */
+  ChangeLogEntries getChangeLogEntries(Timestamp timestamp);
 
-    /**
-     * @brief Get the change log entries of the shared query plan change until the timestamp.
-     * @param timestamp: the timestamp until the change log entries need to be retrieved
-     * @return the change log entries with timestamp of their creation
-     */
-    ChangeLogEntries getChangeLogEntries(Timestamp timestamp);
+  /**
+   * @brief Create and store new change log entries from all input failed change
+   * log entries. Following is the logic:
+   * 1. Iterate over the upstream pinned operators to compute an updated
+   * upstream pinned operator set by finding connected downstream operators that
+   * are pinned during the previous process.
+   * 2. Iterate over the downstream pinned operators to compute an updated
+   * downstream pinned operator set by finding connected upstream operators that
+   * are pinned during the previous process.
+   * @param changeLogEntries : failed change log entries
+   */
+  void recordFailedChangeLogEntries(
+      std::vector<Optimizer::Experimental::ChangeLogEntryPtr>
+          failedChangeLogEntries);
 
-    /**
-     * @brief Create and store new change log entries from all input failed change log entries. Following is the logic:
-     * 1. Iterate over the upstream pinned operators to compute an updated upstream pinned operator set by finding
-     * connected downstream operators that are pinned during the previous process.
-     * 2. Iterate over the downstream pinned operators to compute an updated downstream pinned operator set by finding
-     * connected upstream operators that are pinned during the previous process.
-     * @param changeLogEntries : failed change log entries
-     */
-    void recordFailedChangeLogEntries(std::vector<Optimizer::Experimental::ChangeLogEntryPtr> failedChangeLogEntries);
+  /**
+   * @brief: update the timestamp till which the changes have been processed
+   * @param timestamp: the new timestamp in micro seconds
+   */
+  void updateProcessedChangeLogTimestamp(Timestamp timestamp);
 
-    /**
-     * @brief: update the timestamp till which the changes have been processed
-     * @param timestamp: the new timestamp in micro seconds
-     */
-    void updateProcessedChangeLogTimestamp(Timestamp timestamp);
+  /**
+   * @brief Get the hash based signature for the shared query plan
+   * @return collection of hash based signatures
+   */
+  std::map<size_t, std::set<std::string>> getHashBasedSignature();
 
-    /**
-     * @brief Get the hash based signature for the shared query plan
-     * @return collection of hash based signatures
-     */
-    std::map<size_t, std::set<std::string>> getHashBasedSignature();
+  /**
+   * Get the status of the shared query plan
+   * @return Current status of the query plan
+   */
+  [[nodiscard]] SharedQueryPlanStatus getStatus() const;
 
-    /**
-     * Get the status of the shared query plan
-     * @return Current status of the query plan
-     */
-    [[nodiscard]] SharedQueryPlanStatus getStatus() const;
+  /**
+   * Set the status of the shared query plan
+   * @param newStatus : the status of the shared query plan
+   */
+  void setStatus(SharedQueryPlanStatus newStatus);
 
-    /**
-     * Set the status of the shared query plan
-     * @param newStatus : the status of the shared query plan
-     */
-    void setStatus(SharedQueryPlanStatus newStatus);
+  /**
+   * @brief Get the placement strategy for the shared query plan
+   * @return placement strategy
+   */
+  [[nodiscard]] Optimizer::PlacementStrategy getPlacementStrategy() const;
 
-    /**
-     * @brief Get the placement strategy for the shared query plan
-     * @return placement strategy
-     */
-    [[nodiscard]] Optimizer::PlacementStrategy getPlacementStrategy() const;
+ private:
+  explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
-  private:
-    explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
+  /**
+   * @brief Recursively mark input and all its connected upstream operators for
+   * To-Be-Removed. The function terminates upon encountering an upstream
+   * operator that is connected to another downstream operator and returns it as
+   * output.
+   * @param connectedDownStreamOperator : the operator to remove
+   * @return last upstream operators that was marked for removal
+   */
+  std::set<LogicalOperatorPtr> markOperatorsToBeRemoved(
+      const LogicalOperatorPtr& connectedDownStreamOperator);
 
-    /**
-     * @brief Recursively mark input and all its connected upstream operators for To-Be-Removed. The function terminates upon encountering
-     * an upstream operator that is connected to another downstream operator and returns it as output.
-     * @param connectedDownStreamOperator : the operator to remove
-     * @return last upstream operators that was marked for removal
-     */
-    std::set<LogicalOperatorPtr> markOperatorsToBeRemoved(const LogicalOperatorPtr& connectedDownStreamOperator);
+  /**
+   * @brief Recursively remove the input and all its subsequent upstream
+   * operators that are marked as Removed.
+   */
+  void removeOperator(const LogicalOperatorPtr& operatorToRemove);
 
-    /**
-     * @brief Recursively remove the input and all its subsequent upstream operators that are marked as Removed.
-     */
-    void removeOperator(const LogicalOperatorPtr& operatorToRemove);
+  /**
+   * @brief Update the hash based signatures with new values
+   * @param hashValue: The hash value
+   * @param stringSignature: The string signature
+   */
+  void updateHashBasedSignature(size_t hashValue,
+                                const std::string& stringSignature);
 
-    /**
-     * @brief Update the hash based signatures with new values
-     * @param hashValue: The hash value
-     * @param stringSignature: The string signature
-     */
-    void updateHashBasedSignature(size_t hashValue, const std::string& stringSignature);
-
-    SharedQueryId sharedQueryId;
-    SharedQueryPlanStatus sharedQueryPlanStatus;
-    QueryPlanPtr queryPlan;
-    std::map<QueryId, std::set<LogicalOperatorPtr>> queryIdToSinkOperatorMap;
-    std::vector<QueryId> runningQueryIds;
-    std::vector<QueryId> removeQueryIds;
-    //FIXME: #2274 We have to figure out a way to change it once a query is removed
-    std::map<size_t, std::set<std::string>> hashBasedSignatures;
-    Optimizer::PlacementStrategy placementStrategy;
-    Optimizer::Experimental::ChangeLogPtr changeLog;
+  SharedQueryId sharedQueryId;
+  SharedQueryPlanStatus sharedQueryPlanStatus;
+  QueryPlanPtr queryPlan;
+  std::map<QueryId, std::set<LogicalOperatorPtr>> queryIdToSinkOperatorMap;
+  std::vector<QueryId> runningQueryIds;
+  std::vector<QueryId> removeQueryIds;
+  // FIXME: #2274 We have to figure out a way to change it once a query is
+  // removed
+  std::map<size_t, std::set<std::string>> hashBasedSignatures;
+  Optimizer::PlacementStrategy placementStrategy;
+  Optimizer::Experimental::ChangeLogPtr changeLog;
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_

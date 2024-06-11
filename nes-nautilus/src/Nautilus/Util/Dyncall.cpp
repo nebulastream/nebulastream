@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <Nautilus/Util/Dyncall.hpp>
 #include <dyncall.h>
+
+#include <Nautilus/Util/Dyncall.hpp>
 
 namespace NES::Nautilus::Backends::BC {
 
@@ -46,10 +47,10 @@ double Dyncall::callD(void* value) { return dcCallDouble(vm, value); }
 
 void* Dyncall::callPtr(void* value) { return dcCallPointer(vm, value); }
 Dyncall& Dyncall::getVM() {
-    static Dyncall vm;
-    return vm;
+  static Dyncall vm;
+  return vm;
 }
 
 void Dyncall::reset() { dcReset(vm); }
 
-}// namespace NES::Nautilus::Backends::BC
+}  // namespace NES::Nautilus::Backends::BC

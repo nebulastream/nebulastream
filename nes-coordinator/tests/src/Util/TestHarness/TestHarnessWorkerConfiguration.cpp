@@ -15,57 +15,87 @@
 
 namespace NES {
 
-TestHarnessWorkerConfigurationPtr TestHarnessWorkerConfiguration::create(WorkerConfigurationPtr workerConfiguration,
-                                                                         WorkerId workerId) {
-    return std::make_shared<TestHarnessWorkerConfiguration>(
-        TestHarnessWorkerConfiguration(std::move(workerConfiguration), TestHarnessWorkerSourceType::NonSource, workerId));
+TestHarnessWorkerConfigurationPtr TestHarnessWorkerConfiguration::create(
+    WorkerConfigurationPtr workerConfiguration, WorkerId workerId) {
+  return std::make_shared<TestHarnessWorkerConfiguration>(
+      TestHarnessWorkerConfiguration(std::move(workerConfiguration),
+                                     TestHarnessWorkerSourceType::NonSource,
+                                     workerId));
 }
 
-TestHarnessWorkerConfigurationPtr TestHarnessWorkerConfiguration::create(WorkerConfigurationPtr workerConfiguration,
-                                                                         std::string logicalSourceName,
-                                                                         std::string physicalSourceName,
-                                                                         TestHarnessWorkerSourceType sourceType,
-                                                                         WorkerId workerId) {
-    return std::make_shared<TestHarnessWorkerConfiguration>(TestHarnessWorkerConfiguration(std::move(workerConfiguration),
-                                                                                           std::move(logicalSourceName),
-                                                                                           std::move(physicalSourceName),
-                                                                                           sourceType,
-                                                                                           workerId));
+TestHarnessWorkerConfigurationPtr TestHarnessWorkerConfiguration::create(
+    WorkerConfigurationPtr workerConfiguration, std::string logicalSourceName,
+    std::string physicalSourceName, TestHarnessWorkerSourceType sourceType,
+    WorkerId workerId) {
+  return std::make_shared<TestHarnessWorkerConfiguration>(
+      TestHarnessWorkerConfiguration(
+          std::move(workerConfiguration), std::move(logicalSourceName),
+          std::move(physicalSourceName), sourceType, workerId));
 }
 
-TestHarnessWorkerConfiguration::TestHarnessWorkerConfiguration(WorkerConfigurationPtr workerConfiguration,
-                                                               TestHarnessWorkerSourceType sourceType,
-                                                               WorkerId workerId)
-    : workerConfiguration(std::move(workerConfiguration)), sourceType(sourceType), workerId(workerId){};
+TestHarnessWorkerConfiguration::TestHarnessWorkerConfiguration(
+    WorkerConfigurationPtr workerConfiguration,
+    TestHarnessWorkerSourceType sourceType, WorkerId workerId)
+    : workerConfiguration(std::move(workerConfiguration)),
+      sourceType(sourceType),
+      workerId(workerId){};
 
-TestHarnessWorkerConfiguration::TestHarnessWorkerConfiguration(WorkerConfigurationPtr workerConfiguration,
-                                                               std::string logicalSourceName,
-                                                               std::string physicalSourceName,
-                                                               TestHarnessWorkerSourceType sourceType,
-                                                               WorkerId workerId)
-    : workerConfiguration(std::move(workerConfiguration)), logicalSourceName(std::move(logicalSourceName)),
-      physicalSourceName(std::move(physicalSourceName)), sourceType(sourceType), workerId(workerId){};
+TestHarnessWorkerConfiguration::TestHarnessWorkerConfiguration(
+    WorkerConfigurationPtr workerConfiguration, std::string logicalSourceName,
+    std::string physicalSourceName, TestHarnessWorkerSourceType sourceType,
+    WorkerId workerId)
+    : workerConfiguration(std::move(workerConfiguration)),
+      logicalSourceName(std::move(logicalSourceName)),
+      physicalSourceName(std::move(physicalSourceName)),
+      sourceType(sourceType),
+      workerId(workerId){};
 
-void TestHarnessWorkerConfiguration::setQueryStatusListener(const NesWorkerPtr& nesWorker) { this->nesWorker = nesWorker; }
-
-PhysicalSourceTypePtr TestHarnessWorkerConfiguration::getPhysicalSourceType() const { return physicalSource; }
-
-const WorkerConfigurationPtr& TestHarnessWorkerConfiguration::getWorkerConfiguration() const { return workerConfiguration; }
-
-TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType TestHarnessWorkerConfiguration::getSourceType() const {
-    return sourceType;
+void TestHarnessWorkerConfiguration::setQueryStatusListener(
+    const NesWorkerPtr& nesWorker) {
+  this->nesWorker = nesWorker;
 }
-void TestHarnessWorkerConfiguration::setPhysicalSourceType(PhysicalSourceTypePtr physicalSource) {
-    this->physicalSource = physicalSource;
+
+PhysicalSourceTypePtr TestHarnessWorkerConfiguration::getPhysicalSourceType()
+    const {
+  return physicalSource;
 }
-const std::vector<uint8_t*>& TestHarnessWorkerConfiguration::getRecords() const { return records; }
 
-void TestHarnessWorkerConfiguration::addRecord(uint8_t* record) { records.push_back(record); }
+const WorkerConfigurationPtr&
+TestHarnessWorkerConfiguration::getWorkerConfiguration() const {
+  return workerConfiguration;
+}
 
-WorkerId TestHarnessWorkerConfiguration::getWorkerId() const { return workerId; }
+TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType
+TestHarnessWorkerConfiguration::getSourceType() const {
+  return sourceType;
+}
+void TestHarnessWorkerConfiguration::setPhysicalSourceType(
+    PhysicalSourceTypePtr physicalSource) {
+  this->physicalSource = physicalSource;
+}
+const std::vector<uint8_t*>& TestHarnessWorkerConfiguration::getRecords()
+    const {
+  return records;
+}
 
-const std::string& TestHarnessWorkerConfiguration::getLogicalSourceName() const { return logicalSourceName; }
+void TestHarnessWorkerConfiguration::addRecord(uint8_t* record) {
+  records.push_back(record);
+}
 
-const std::string& TestHarnessWorkerConfiguration::getPhysicalSourceName() const { return physicalSourceName; }
-const NesWorkerPtr& TestHarnessWorkerConfiguration::getNesWorker() const { return nesWorker; }
-}// namespace NES
+WorkerId TestHarnessWorkerConfiguration::getWorkerId() const {
+  return workerId;
+}
+
+const std::string& TestHarnessWorkerConfiguration::getLogicalSourceName()
+    const {
+  return logicalSourceName;
+}
+
+const std::string& TestHarnessWorkerConfiguration::getPhysicalSourceName()
+    const {
+  return physicalSourceName;
+}
+const NesWorkerPtr& TestHarnessWorkerConfiguration::getNesWorker() const {
+  return nesWorker;
+}
+}  // namespace NES

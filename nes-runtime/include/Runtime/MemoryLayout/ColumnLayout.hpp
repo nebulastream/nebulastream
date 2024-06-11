@@ -21,53 +21,60 @@ namespace NES::Runtime::MemoryLayouts {
 
 class ColumnLayout;
 /**
- * @brief Implements a columnar layout, that maps all tuples in a tuple buffer to a column-wise layout.
- * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
+ * @brief Implements a columnar layout, that maps all tuples in a tuple buffer
+ * to a column-wise layout. For a schema with 3 fields (F1, F2, and F3) we
+ * retrieve the following layout.
  *
  * | F1, F1, F1 |
  * | F2, F2, F2 |
  * | F3, F3, F3 |
  *
- * This may be beneficial for processing performance if only a subset fields of the tuple are accessed.
+ * This may be beneficial for processing performance if only a subset fields of
+ * the tuple are accessed.
  */
-class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout> {
-  public:
-    /**
-     * @brief Constructor to create a ColumnLayout according to a specific schema and a buffer size.
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     */
-    ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
+class ColumnLayout : public MemoryLayout,
+                     public std::enable_shared_from_this<ColumnLayout> {
+ public:
+  /**
+   * @brief Constructor to create a ColumnLayout according to a specific schema
+   * and a buffer size.
+   * @param schema the underling schema of this memory layout.
+   * @param bufferSize the expected buffer size.
+   */
+  ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
 
-    /**
-     * @brief Factory to create a ColumnLayout
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     * @return ColumnLayoutPtr
-     */
-    static ColumnLayoutPtr create(SchemaPtr schema, uint64_t bufferSize);
+  /**
+   * @brief Factory to create a ColumnLayout
+   * @param schema the underling schema of this memory layout.
+   * @param bufferSize the expected buffer size.
+   * @return ColumnLayoutPtr
+   */
+  static ColumnLayoutPtr create(SchemaPtr schema, uint64_t bufferSize);
 
-    /**
-     * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
-     * For the column layout the field offset is calculated as follows:
-     * \f$ offSet = (recordIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex] \f$
-     * @param tupleIndex index of the tuple.
-     * @param fieldIndex index of the field.
-     * @throws BufferAccessException if the tuple index or the field index is out of bounds.
-     * @return offset in the tuple buffer.
-     */
-    [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
+  /**
+   * @brief Calculates the offset in the tuple buffer of a particular field for
+   * a specific tuple. For the column layout the field offset is calculated as
+   * follows: \f$ offSet = (recordIndex * physicalFieldSizes[fieldIndex]) +
+   * columnOffsets[fieldIndex] \f$
+   * @param tupleIndex index of the tuple.
+   * @param fieldIndex index of the field.
+   * @throws BufferAccessException if the tuple index or the field index is out
+   * of bounds.
+   * @return offset in the tuple buffer.
+   */
+  [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex,
+                                        uint64_t fieldIndex) const override;
 
-    /**
-     * Get the column offset vector
-     * @return columnOffset
-     */
-    const std::vector<uint64_t>& getColumnOffsets() const;
+  /**
+   * Get the column offset vector
+   * @return columnOffset
+   */
+  const std::vector<uint64_t>& getColumnOffsets() const;
 
-  private:
-    std::vector<uint64_t> columnOffsets;
+ private:
+  std::vector<uint64_t> columnOffsets;
 };
 
-}// namespace NES::Runtime::MemoryLayouts
+}  // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_

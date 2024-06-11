@@ -32,20 +32,22 @@ using QueryStateHistory = std::vector<QueryStateHistoryEntry>;
  * Also includes code to transform to JSON.
  */
 class QueryStateHistoryEntry {
-  public:
-    QueryStateHistoryEntry(const uint64_t timestampInUs, const QueryState queryState)
-        : timestampInUs(timestampInUs), queryState(queryState) {}
-    // We cannot use the JSON helper macros, because we want to return a string representation of the QueryState enum.
-    /** @brief Transfor this query status history entry to JSON.
-     *  (There is no corresponding method from_json method.)
-     */
-    friend void to_json(nlohmann::json&, const QueryStateHistoryEntry&);
+ public:
+  QueryStateHistoryEntry(const uint64_t timestampInUs,
+                         const QueryState queryState)
+      : timestampInUs(timestampInUs), queryState(queryState) {}
+  // We cannot use the JSON helper macros, because we want to return a string
+  // representation of the QueryState enum.
+  /** @brief Transfor this query status history entry to JSON.
+   *  (There is no corresponding method from_json method.)
+   */
+  friend void to_json(nlohmann::json&, const QueryStateHistoryEntry&);
 
-  private:
-    uint64_t timestampInUs;
-    QueryState queryState;
+ private:
+  uint64_t timestampInUs;
+  QueryState queryState;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_

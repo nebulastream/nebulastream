@@ -25,17 +25,18 @@ using Timestamp = uint64_t;
 namespace Spatial::Mobility::Experimental {
 
 /**
- * @brief A struct containing the reconnect prediction consisting of expected reconnect time and expected new parent as well as
- * the location where the device is expected to be located at the time of reconnect
+ * @brief A struct containing the reconnect prediction consisting of expected
+ * reconnect time and expected new parent as well as the location where the
+ * device is expected to be located at the time of reconnect
  * 1. The location where the reconnect is expected to take place
  * 2. The id of the next worker that this worker can connect to.
  * 3. The time when the reconnection will occur.
  */
 struct ReconnectPoint {
-    NES::Spatial::DataTypes::Experimental::GeoLocation pointGeoLocation;
-    WorkerId newParentId;
-    Timestamp expectedTime;
+  NES::Spatial::DataTypes::Experimental::GeoLocation pointGeoLocation;
+  WorkerId newParentId;
+  Timestamp expectedTime;
 };
-}// namespace Spatial::Mobility::Experimental
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
+}  // namespace Spatial::Mobility::Experimental
+}  // namespace NES
+#endif  // NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_

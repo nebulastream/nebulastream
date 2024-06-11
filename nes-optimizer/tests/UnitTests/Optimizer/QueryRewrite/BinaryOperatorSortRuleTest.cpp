@@ -32,263 +32,290 @@
 using namespace NES;
 
 class BinaryOperatorSortRuleTest : public Testing::BaseUnitTest {
+ public:
+  std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+  /* Will be called before all tests in this class are started. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("BinaryOperatorSortRuleTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
+  }
 
-  public:
-    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
-    /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("BinaryOperatorSortRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    udfCatalog = Catalogs::UDF::UDFCatalog::create();
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        udfCatalog = Catalogs::UDF::UDFCatalog::create();
-    }
-
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-        NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
-        auto schema1 = Schema::create()
-                           ->addField("id", BasicType::UINT32)
-                           ->addField("value", BasicType::UINT64)
-                           ->addField("ts", BasicType::UINT64);
-        auto schema2 = Schema::create()
-                           ->addField("id", BasicType::UINT32)
-                           ->addField("value", BasicType::UINT64)
-                           ->addField("ts", BasicType::UINT64);
-        sourceCatalog->addLogicalSource("src1", schema1);
-        sourceCatalog->addLogicalSource("src2", schema2);
-    }
+  void setupSensorNodeAndSourceCatalog(
+      const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+    NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
+    auto schema1 = Schema::create()
+                       ->addField("id", BasicType::UINT32)
+                       ->addField("value", BasicType::UINT64)
+                       ->addField("ts", BasicType::UINT64);
+    auto schema2 = Schema::create()
+                       ->addField("id", BasicType::UINT32)
+                       ->addField("value", BasicType::UINT64)
+                       ->addField("ts", BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src1", schema1);
+    sourceCatalog->addLogicalSource("src2", schema2);
+  }
 };
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSortedChildren) {
+TEST_F(BinaryOperatorSortRuleTest,
+       testBinaryOperatorSortRuleForUnionWithUnSortedChildren) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery = Query::from("src1");
+  Query query =
+      Query::from("src2").unionWith(subQuery).sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery = Query::from("src1");
-    Query query = Query::from("src2").unionWith(subQuery).sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(unionOperators.size(), 1U);
+  auto unionChildren = unionOperators[0]->getChildren();
 
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(unionOperators.size(), 1U);
-    auto unionChildren = unionOperators[0]->getChildren();
+  typeInferencePhase->execute(queryPlan);
 
-    typeInferencePhase->execute(queryPlan);
+  auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
+  binaryOperatorSortRule->apply(queryPlan);
 
-    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
-    binaryOperatorSortRule->apply(queryPlan);
+  auto updatedUnionOperators =
+      queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(updatedUnionOperators.size(), 1U);
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1U);
+  auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
-    auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
-
-    EXPECT_EQ(unionChildren[0], updatedUnionChildren[1]);
-    EXPECT_EQ(unionChildren[1], updatedUnionChildren[0]);
+  EXPECT_EQ(unionChildren[0], updatedUnionChildren[1]);
+  EXPECT_EQ(unionChildren[1], updatedUnionChildren[0]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedChildren) {
+TEST_F(BinaryOperatorSortRuleTest,
+       testBinaryOperatorSortRuleForUnionWithSortedChildren) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery = Query::from("src2");
+  Query query =
+      Query::from("src1").unionWith(subQuery).sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery = Query::from("src2");
-    Query query = Query::from("src1").unionWith(subQuery).sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(unionOperators.size(), 1U);
+  auto unionChildren = unionOperators[0]->getChildren();
 
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(unionOperators.size(), 1U);
-    auto unionChildren = unionOperators[0]->getChildren();
+  typeInferencePhase->execute(queryPlan);
 
-    typeInferencePhase->execute(queryPlan);
+  auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
+  binaryOperatorSortRule->apply(queryPlan);
 
-    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
-    binaryOperatorSortRule->apply(queryPlan);
+  auto updatedUnionOperators =
+      queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(updatedUnionOperators.size(), 1U);
+  auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1U);
-    auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
-
-    EXPECT_EQ(unionChildren[0], updatedUnionChildren[0]);
-    EXPECT_EQ(unionChildren[1], updatedUnionChildren[1]);
+  EXPECT_EQ(unionChildren[0], updatedUnionChildren[0]);
+  EXPECT_EQ(unionChildren[1], updatedUnionChildren[1]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSortedChildren) {
+TEST_F(BinaryOperatorSortRuleTest,
+       testBinaryOperatorSortRuleForJoinWithUnSortedChildren) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")),
+                                       Milliseconds(4), Milliseconds(2));
 
-    auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery = Query::from("src1");
+  Query query = Query::from("src2")
+                    .joinWith(subQuery)
+                    .where(Attribute("id") == Attribute("id"))
+                    .window(windowType1)
+                    .sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery = Query::from("src1");
-    Query query = Query::from("src2")
-                      .joinWith(subQuery)
-                      .where(Attribute("id") == Attribute("id"))
-                      .window(windowType1)
-                      .sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(joinOperators.size(), 1U);
+  auto joinChildren = joinOperators[0]->getChildren();
 
-    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(joinOperators.size(), 1U);
-    auto joinChildren = joinOperators[0]->getChildren();
+  typeInferencePhase->execute(queryPlan);
 
-    typeInferencePhase->execute(queryPlan);
+  auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
+  binaryOperatorSortRule->apply(queryPlan);
 
-    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
-    binaryOperatorSortRule->apply(queryPlan);
+  auto updatedJoinOperators =
+      queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(updatedJoinOperators.size(), 1U);
+  auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1U);
-    auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
-
-    EXPECT_EQ(joinChildren[0], updatedJoinChildren[1]);
-    EXPECT_EQ(joinChildren[1], updatedJoinChildren[0]);
+  EXPECT_EQ(joinChildren[0], updatedJoinChildren[1]);
+  EXPECT_EQ(joinChildren[1], updatedJoinChildren[0]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedChildren) {
+TEST_F(BinaryOperatorSortRuleTest,
+       testBinaryOperatorSortRuleForJoinWithSortedChildren) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")),
+                                       Milliseconds(4), Milliseconds(2));
 
-    auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery = Query::from("src2");
+  Query query = Query::from("src1")
+                    .joinWith(subQuery)
+                    .where(Attribute("id") == Attribute("id"))
+                    .window(windowType1)
+                    .sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery = Query::from("src2");
-    Query query = Query::from("src1")
-                      .joinWith(subQuery)
-                      .where(Attribute("id") == Attribute("id"))
-                      .window(windowType1)
-                      .sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(joinOperators.size(), 1U);
+  auto joinChildren = joinOperators[0]->getChildren();
 
-    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(joinOperators.size(), 1U);
-    auto joinChildren = joinOperators[0]->getChildren();
+  typeInferencePhase->execute(queryPlan);
 
-    typeInferencePhase->execute(queryPlan);
+  auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
+  binaryOperatorSortRule->apply(queryPlan);
 
-    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
-    binaryOperatorSortRule->apply(queryPlan);
+  auto updatedJoinOperators =
+      queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(updatedJoinOperators.size(), 1U);
+  auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1U);
-    auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
-
-    EXPECT_EQ(joinChildren[0], updatedJoinChildren[0]);
-    EXPECT_EQ(joinChildren[1], updatedJoinChildren[1]);
+  EXPECT_EQ(joinChildren[0], updatedJoinChildren[0]);
+  EXPECT_EQ(joinChildren[1], updatedJoinChildren[1]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithUnSortedChildren) {
+TEST_F(BinaryOperatorSortRuleTest,
+       testBinaryOperatorSortRuleForJoinAnUnionWithUnSortedChildren) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")),
+                                       Milliseconds(4), Milliseconds(2));
 
-    auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("src1");
+  Query subQuery2 = Query::from("src1");
+  Query query = Query::from("src2")
+                    .unionWith(subQuery1)
+                    .joinWith(subQuery2)
+                    .where(Attribute("id") == Attribute("id"))
+                    .window(windowType1)
+                    .sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("src1");
-    Query subQuery2 = Query::from("src1");
-    Query query = Query::from("src2")
-                      .unionWith(subQuery1)
-                      .joinWith(subQuery2)
-                      .where(Attribute("id") == Attribute("id"))
-                      .window(windowType1)
-                      .sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(unionOperators.size(), 1U);
+  auto unionChildren = unionOperators[0]->getChildren();
 
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(unionOperators.size(), 1U);
-    auto unionChildren = unionOperators[0]->getChildren();
+  auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(joinOperators.size(), 1U);
+  auto joinChildren = joinOperators[0]->getChildren();
 
-    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(joinOperators.size(), 1U);
-    auto joinChildren = joinOperators[0]->getChildren();
+  typeInferencePhase->execute(queryPlan);
 
-    typeInferencePhase->execute(queryPlan);
+  auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
+  binaryOperatorSortRule->apply(queryPlan);
 
-    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
-    binaryOperatorSortRule->apply(queryPlan);
+  auto updatedUnionOperators =
+      queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(updatedUnionOperators.size(), 1U);
+  auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1U);
-    auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
+  EXPECT_EQ(unionChildren[0], updatedUnionChildren[1]);
+  EXPECT_EQ(unionChildren[1], updatedUnionChildren[0]);
 
-    EXPECT_EQ(unionChildren[0], updatedUnionChildren[1]);
-    EXPECT_EQ(unionChildren[1], updatedUnionChildren[0]);
+  auto updatedJoinOperators =
+      queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(updatedJoinOperators.size(), 1U);
+  auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1U);
-    auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
-
-    EXPECT_EQ(joinChildren[0], updatedJoinChildren[1]);
-    EXPECT_EQ(joinChildren[1], updatedJoinChildren[0]);
+  EXPECT_EQ(joinChildren[0], updatedJoinChildren[1]);
+  EXPECT_EQ(joinChildren[1], updatedJoinChildren[0]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWithSortedChildren) {
+TEST_F(BinaryOperatorSortRuleTest,
+       testBinaryOperatorSortRuleForJoinAndUnionWithSortedChildren) {
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  setupSensorNodeAndSourceCatalog(sourceCatalog);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    setupSensorNodeAndSourceCatalog(sourceCatalog);
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")),
+                                       Milliseconds(4), Milliseconds(2));
 
-    auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
+  // Prepare
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query subQuery1 = Query::from("src2");
+  Query subQuery2 = Query::from("src2");
+  Query query = Query::from("src1")
+                    .unionWith(subQuery1)
+                    .joinWith(subQuery2)
+                    .where(Attribute("id") == Attribute("id"))
+                    .window(windowType1)
+                    .sink(printSinkDescriptor);
+  const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("src2");
-    Query subQuery2 = Query::from("src2");
-    Query query = Query::from("src1")
-                      .unionWith(subQuery1)
-                      .joinWith(subQuery2)
-                      .where(Attribute("id") == Attribute("id"))
-                      .window(windowType1)
-                      .sink(printSinkDescriptor);
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
+  auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(unionOperators.size(), 1U);
+  auto unionChildren = unionOperators[0]->getChildren();
 
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(unionOperators.size(), 1U);
-    auto unionChildren = unionOperators[0]->getChildren();
+  auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(joinOperators.size(), 1U);
+  auto joinChildren = joinOperators[0]->getChildren();
 
-    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(joinOperators.size(), 1U);
-    auto joinChildren = joinOperators[0]->getChildren();
+  typeInferencePhase->execute(queryPlan);
 
-    typeInferencePhase->execute(queryPlan);
+  auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
+  binaryOperatorSortRule->apply(queryPlan);
 
-    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
-    binaryOperatorSortRule->apply(queryPlan);
+  auto updatedUnionOperators =
+      queryPlan->getOperatorByType<LogicalUnionOperator>();
+  EXPECT_EQ(updatedUnionOperators.size(), 1U);
+  auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
-    EXPECT_EQ(updatedUnionOperators.size(), 1U);
-    auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
+  EXPECT_EQ(unionChildren[0], updatedUnionChildren[0]);
+  EXPECT_EQ(unionChildren[1], updatedUnionChildren[1]);
 
-    EXPECT_EQ(unionChildren[0], updatedUnionChildren[0]);
-    EXPECT_EQ(unionChildren[1], updatedUnionChildren[1]);
+  auto updatedJoinOperators =
+      queryPlan->getOperatorByType<LogicalJoinOperator>();
+  EXPECT_EQ(updatedJoinOperators.size(), 1U);
+  auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
-    EXPECT_EQ(updatedJoinOperators.size(), 1U);
-    auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
-
-    EXPECT_EQ(joinChildren[0], updatedJoinChildren[0]);
-    EXPECT_EQ(joinChildren[1], updatedJoinChildren[1]);
+  EXPECT_EQ(joinChildren[0], updatedJoinChildren[0]);
+  EXPECT_EQ(joinChildren[1], updatedJoinChildren[1]);
 }

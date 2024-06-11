@@ -12,28 +12,32 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Util/TopologyLinkInformation.hpp>
-#include <gtest/gtest.h>
 
 namespace NES {
 
 class TopologyLinkInformationTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() { NES::Logger::setupLogging("TopologyLinkInformationTest.log", NES::LogLevel::LOG_DEBUG); }
+ public:
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("TopologyLinkInformationTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+  }
 };
 
 TEST_F(TopologyLinkInformationTest, testToString) {
-    TopologyLinkInformation link(1, 2);
-    ASSERT_EQ(link.toString(), "1->2");
+  TopologyLinkInformation link(1, 2);
+  ASSERT_EQ(link.toString(), "1->2");
 }
 
 TEST_F(TopologyLinkInformationTest, testEquality) {
-    TopologyLinkInformation link(1, 2);
-    TopologyLinkInformation link2(2, 1);
-    TopologyLinkInformation link3(1, 2);
-    ASSERT_EQ(link, link3);
-    ASSERT_NE(link, link2);
-    ASSERT_NE(link3, link2);
+  TopologyLinkInformation link(1, 2);
+  TopologyLinkInformation link2(2, 1);
+  TopologyLinkInformation link3(1, 2);
+  ASSERT_EQ(link, link3);
+  ASSERT_NE(link, link2);
+  ASSERT_NE(link3, link2);
 }
-}// namespace NES
+}  // namespace NES

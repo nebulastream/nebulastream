@@ -11,50 +11,54 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/AsinExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::Runtime::Execution::Expressions {
 
 class AsinExpressionTest : public Testing::BaseUnitTest {
+ public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("SinExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup SinExpressionTest test class.");
+  }
 
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("SinExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SinExpressionTest test class.");
-    }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SinExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down SinExpressionTest test class.");
+  }
 };
 
 TEST_F(AsinExpressionTest, evaluateSinExpressionFloat) {
-    auto expression = UnaryExpressionWrapper<AsinExpression>();
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 1));
-        ASSERT_EQ(resultValue, (double) std::asin((double) 1));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 1));
-        ASSERT_EQ(resultValue, (double) std::asin((double) 1));
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<AsinExpression>();
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)1));
+    ASSERT_EQ(resultValue, (double)std::asin((double)1));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>((double)1));
+    ASSERT_EQ(resultValue, (double)std::asin((double)1));
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 /**
-* @brief If we execute the expression on a boolean it should throw an exception.
-*/
+ * @brief If we execute the expression on a boolean it should throw an
+ * exception.
+ */
 TEST_F(AsinExpressionTest, evaluateAsinExpressionOnWrongType) {
-    auto expression = UnaryExpressionWrapper<AsinExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+  auto expression = UnaryExpressionWrapper<AsinExpression>();
+  ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions

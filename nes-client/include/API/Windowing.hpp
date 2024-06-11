@@ -31,16 +31,18 @@ class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowAggregationDescriptor;
-using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
+using WindowAggregationDescriptorPtr =
+    std::shared_ptr<WindowAggregationDescriptor>;
 
 class TimeMeasure;
 class TimeCharacteristic;
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 class WatermarkStrategyDescriptor;
-using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-}// namespace Windowing
-}// namespace NES
+using WatermarkStrategyDescriptorPtr =
+    std::shared_ptr<WatermarkStrategyDescriptor>;
+}  // namespace Windowing
+}  // namespace NES
 /**
  * @brief The following declares API functions for windowing.
  */
@@ -49,29 +51,33 @@ namespace NES::API {
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
 class WindowAggregation {
-  public:
-    WindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
-    API::WindowAggregationPtr as(const ExpressionItem& asField);
-    const Windowing::WindowAggregationDescriptorPtr aggregation;
+ public:
+  WindowAggregation(
+      Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
+  API::WindowAggregationPtr as(const ExpressionItem& asField);
+  const Windowing::WindowAggregationDescriptorPtr aggregation;
 };
 
 /**
  * @brief Defines a Sum Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param ExpressionItem Attribute("field-name") the field which should be
+ * aggregated.
  * @return A descriptor of the aggregation function.
  */
 API::WindowAggregationPtr Sum(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Min Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param ExpressionItem Attribute("field-name") the field which should be
+ * aggregated.
  * @return A descriptor of the aggregation function.
  */
 API::WindowAggregationPtr Min(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Max Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param ExpressionItem Attribute("field-name") the field which should be
+ * aggregated.
  * @return A descriptor of the aggregation function.
  */
 API::WindowAggregationPtr Max(const ExpressionItem& onField);
@@ -90,7 +96,8 @@ API::WindowAggregationPtr Median(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Agg Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param ExpressionItem Attribute("field-name") the field which should be
+ * aggregated.
  * @return A descriptor of the aggregation function.
  */
 API::WindowAggregationPtr Avg(const ExpressionItem& onField);
@@ -108,7 +115,8 @@ Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField);
  * @param Timeunit
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, const Windowing::TimeUnit& unit);
+Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField,
+                                           const Windowing::TimeUnit& unit);
 
 /**
  * @brief Defines a ingestion time as a time characteristic for a window.
@@ -177,12 +185,12 @@ Windowing::TimeUnit Hours();
 Windowing::TimeUnit Days();
 
 /**
- * @brief This function provides access to the creation ts (ingestion ts) of an individual record.
- * This is assigned by the data source.
+ * @brief This function provides access to the creation ts (ingestion ts) of an
+ * individual record. This is assigned by the data source.
  * @return ExpressionNodePtr
  */
 [[maybe_unused]] ExpressionNodePtr RecordCreationTs();
 
-}// namespace NES::API
+}  // namespace NES::API
 
-#endif// NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
+#endif  // NES_CLIENT_INCLUDE_API_WINDOWING_HPP_

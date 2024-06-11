@@ -26,75 +26,76 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
  * @brief This class is used for representing the description of a sink operator
  */
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
+ public:
+  /**
+   * @brief Ctor to create a new sink descriptor
+   * @param numberOfOrigins: number of origins of a given query
+   * @param addTimestamp flat to indicate if timestamp shall be added when
+   * writing to sink
+   * @return descriptor for sink
+   */
+  SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp);
+  explicit SinkDescriptor(uint64_t numberOfOrigins);
+  SinkDescriptor();
 
-  public:
-    /**
-     * @brief Ctor to create a new sink descriptor
-     * @param numberOfOrigins: number of origins of a given query
-     * @param addTimestamp flat to indicate if timestamp shall be added when writing to sink
-     * @return descriptor for sink
-     */
-    SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp);
-    explicit SinkDescriptor(uint64_t numberOfOrigins);
-    SinkDescriptor();
+  virtual ~SinkDescriptor() = default;
 
-    virtual ~SinkDescriptor() = default;
-
-    /**
-    * @brief Checks if the current node is of type SinkMedium
-    * @tparam SinkType
-    * @return bool true if node is of SinkMedium
-    */
-    template<class SinkType>
-    bool instanceOf() const {
-        if (dynamic_cast<const SinkType*>(this)) {
-            return true;
-        }
-        return false;
-    };
-
-    /**
-     * @brief getter for number of origins
-     * @return number of origins
-     */
-    uint64_t getNumberOfOrigins() const;
-
-    /**
-     * @brief getter for addTimestamp field
-     * @return addTimestamp
-     */
-    bool getAddTimestamp() const;
-
-    /**
-    * @brief Dynamically casts the node to a NodeType
-    * @tparam NodeType
-    * @return returns a shared pointer of the NodeType
-    */
-    template<class SinkType>
-    std::shared_ptr<SinkType> as() const {
-        if (instanceOf<SinkType>()) {
-            return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
-        }
-        throw std::bad_cast();
+  /**
+   * @brief Checks if the current node is of type SinkMedium
+   * @tparam SinkType
+   * @return bool true if node is of SinkMedium
+   */
+  template <class SinkType>
+  bool instanceOf() const {
+    if (dynamic_cast<const SinkType*>(this)) {
+      return true;
     }
-    template<class SinkType>
-    std::shared_ptr<SinkType> as() {
-        return std::const_pointer_cast<SinkType>(const_cast<const SinkDescriptor*>(this)->as<const SinkType>());
+    return false;
+  };
+
+  /**
+   * @brief getter for number of origins
+   * @return number of origins
+   */
+  uint64_t getNumberOfOrigins() const;
+
+  /**
+   * @brief getter for addTimestamp field
+   * @return addTimestamp
+   */
+  bool getAddTimestamp() const;
+
+  /**
+   * @brief Dynamically casts the node to a NodeType
+   * @tparam NodeType
+   * @return returns a shared pointer of the NodeType
+   */
+  template <class SinkType>
+  std::shared_ptr<SinkType> as() const {
+    if (instanceOf<SinkType>()) {
+      return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
     }
+    throw std::bad_cast();
+  }
+  template <class SinkType>
+  std::shared_ptr<SinkType> as() {
+    return std::const_pointer_cast<SinkType>(
+        const_cast<const SinkDescriptor*>(this)->as<const SinkType>());
+  }
 
-    template<class SinkType>
-    std::shared_ptr<SinkType> as_if() {
-        return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
-    }
+  template <class SinkType>
+  std::shared_ptr<SinkType> as_if() {
+    return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
+  }
 
-    virtual std::string toString() const = 0;
-    [[nodiscard]] virtual bool equal(SinkDescriptorPtr const& other) = 0;
+  virtual std::string toString() const = 0;
+  [[nodiscard]] virtual bool equal(SinkDescriptorPtr const& other) = 0;
 
-  protected:
-    uint64_t numberOfOrigins;
-    bool addTimestamp;
+ protected:
+  uint64_t numberOfOrigins;
+  bool addTimestamp;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_

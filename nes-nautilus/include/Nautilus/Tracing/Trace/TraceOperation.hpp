@@ -29,22 +29,24 @@ class OperationRef;
  * @brief Represents an individual operation in a trace.
  */
 class TraceOperation {
-  public:
-    TraceOperation(OpCode op);
-    TraceOperation(OpCode op, const std::vector<InputVariant>& input);
-    TraceOperation(OpCode op, ValueRef result, const std::vector<InputVariant>& input);
-    TraceOperation(const TraceOperation& other) = default;
-    TraceOperation(const TraceOperation&& other);
-    TraceOperation& operator=(const TraceOperation& other);
-    TraceOperation& operator=(const TraceOperation&& other);
-    ~TraceOperation() = default;
-    OpCode op;
-    InputVariant result;
-    std::vector<InputVariant> input;
-    std::shared_ptr<OperationRef> operationRef;
-    friend std::ostream& operator<<(std::ostream& os, const TraceOperation& operation);
+ public:
+  TraceOperation(OpCode op);
+  TraceOperation(OpCode op, const std::vector<InputVariant>& input);
+  TraceOperation(OpCode op, ValueRef result,
+                 const std::vector<InputVariant>& input);
+  TraceOperation(const TraceOperation& other) = default;
+  TraceOperation(const TraceOperation&& other);
+  TraceOperation& operator=(const TraceOperation& other);
+  TraceOperation& operator=(const TraceOperation&& other);
+  ~TraceOperation() = default;
+  OpCode op;
+  InputVariant result;
+  std::vector<InputVariant> input;
+  std::shared_ptr<OperationRef> operationRef;
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const TraceOperation& operation);
 };
 
-}// namespace NES::Nautilus::Tracing
+}  // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_

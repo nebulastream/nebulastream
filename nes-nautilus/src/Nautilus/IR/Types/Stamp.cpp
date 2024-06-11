@@ -34,4 +34,4 @@ bool Stamp::isBoolean() { return isa<BooleanStamp>(*this); }
 
 bool Stamp::isVoid() { return isa<VoidStamp>(*this); }
 
-}// namespace NES::Nautilus::IR::Types
+}  // namespace NES::Nautilus::IR::Types

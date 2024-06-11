@@ -21,68 +21,76 @@
 namespace NES::Catalogs::UDF {
 
 JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() const {
-    return JavaUDFDescriptor::create(className,
-                                     methodName,
-                                     instance,
-                                     byteCodeList,
-                                     inputSchema,
-                                     outputSchema,
-                                     inputClassName,
-                                     outputClassName);
+  return JavaUDFDescriptor::create(className, methodName, instance,
+                                   byteCodeList, inputSchema, outputSchema,
+                                   inputClassName, outputClassName);
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(std::string_view classFilePath) {
-    for (auto& [className, byteCode] : byteCodeList) {
-        std::string copy = className;
-        std::replace(copy.begin(), copy.end(), '.', '/');
-        const auto fileName = std::filesystem::path(classFilePath) / fmt::format("{}.class", copy);
-        NES_DEBUG("Loading byte code: class={}, file={}", className, fileName.string());
-        std::ifstream classFile(fileName, std::fstream::binary);
-        NES_ASSERT(classFile, "Could not find class file: " << fileName);
-        classFile.seekg(0, std::ios_base::end);
-        auto fileSize = classFile.tellg();
-        classFile.seekg(0, std::ios_base::beg);
-        byteCode.resize(fileSize);
-        classFile.read(byteCode.data(), byteCode.size());
-    }
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(
+    std::string_view classFilePath) {
+  for (auto& [className, byteCode] : byteCodeList) {
+    std::string copy = className;
+    std::replace(copy.begin(), copy.end(), '.', '/');
+    const auto fileName =
+        std::filesystem::path(classFilePath) / fmt::format("{}.class", copy);
+    NES_DEBUG("Loading byte code: class={}, file={}", className,
+              fileName.string());
+    std::ifstream classFile(fileName, std::fstream::binary);
+    NES_ASSERT(classFile, "Could not find class file: " << fileName);
+    classFile.seekg(0, std::ios_base::end);
+    auto fileSize = classFile.tellg();
+    classFile.seekg(0, std::ios_base::beg);
+    byteCode.resize(fileSize);
+    classFile.read(byteCode.data(), byteCode.size());
+  }
+  return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(std::string_view newClassName) {
-    this->className = newClassName;
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(
+    std::string_view newClassName) {
+  this->className = newClassName;
+  return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(std::string_view newMethodName) {
-    this->methodName = newMethodName;
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(
+    std::string_view newMethodName) {
+  this->methodName = newMethodName;
+  return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInstance(const jni::JavaSerializedInstance& newInstance) {
-    this->instance = newInstance;
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInstance(
+    const jni::JavaSerializedInstance& newInstance) {
+  this->instance = newInstance;
+  return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setByteCodeList(const jni::JavaUDFByteCodeList& newByteCodeList) {
-    this->byteCodeList = newByteCodeList;
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setByteCodeList(
+    const jni::JavaUDFByteCodeList& newByteCodeList) {
+  this->byteCodeList = newByteCodeList;
+  return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema) {
-    this->outputSchema = newOutputSchema;
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputSchema(
+    const SchemaPtr& newOutputSchema) {
+  this->outputSchema = newOutputSchema;
+  return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInputClassName(std::string_view newInputClassName) {
-    this->inputClassName = newInputClassName;
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInputClassName(
+    std::string_view newInputClassName) {
+  this->inputClassName = newInputClassName;
+  return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputClassName(std::string_view newOutputClassName) {
-    this->outputClassName = newOutputClassName;
-    return *this;
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputClassName(
+    std::string_view newOutputClassName) {
+  this->outputClassName = newOutputClassName;
+  return *this;
 }
 
-JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor() { return JavaUDFDescriptorBuilder().build(); }
+JavaUDFDescriptorPtr
+JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor() {
+  return JavaUDFDescriptorBuilder().build();
+}
 
-}// namespace NES::Catalogs::UDF
+}  // namespace NES::Catalogs::UDF

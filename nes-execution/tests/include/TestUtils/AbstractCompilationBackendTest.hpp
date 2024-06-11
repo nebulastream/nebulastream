@@ -15,6 +15,9 @@
 #ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 #define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 
+#include <gtest/gtest-param-test.h>
+#include <gtest/gtest.h>
+
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
@@ -22,25 +25,24 @@
 #include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <gtest/gtest-param-test.h>
-#include <gtest/gtest.h>
 
 namespace NES::Nautilus {
 /**
  * @brief This is an abstract test class for compilation backend tests
  */
-class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std::string> {
-  public:
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
-    Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
-    Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
-    std::unique_ptr<Nautilus::Backends::Executable>
-    prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
-            const CompilationOptions& options = CompilationOptions(),
-            const DumpHelper& dumpHelper = DumpHelper::create("", true, false, ""));
+class AbstractCompilationBackendTest
+    : public ::testing::WithParamInterface<std::string> {
+ public:
+  Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+  Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
+  Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
+  Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
+  Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
+  std::unique_ptr<Nautilus::Backends::Executable> prepare(
+      std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
+      const CompilationOptions& options = CompilationOptions(),
+      const DumpHelper& dumpHelper = DumpHelper::create("", true, false, ""));
 };
-}// namespace NES::Nautilus
+}  // namespace NES::Nautilus
 
-#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
+#endif  // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_

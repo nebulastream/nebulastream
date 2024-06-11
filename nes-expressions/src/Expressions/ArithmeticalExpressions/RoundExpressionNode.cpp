@@ -22,39 +22,43 @@
 
 namespace NES {
 
-RoundExpressionNode::RoundExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+RoundExpressionNode::RoundExpressionNode(DataTypePtr stamp)
+    : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
 
-RoundExpressionNode::RoundExpressionNode(RoundExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
+RoundExpressionNode::RoundExpressionNode(RoundExpressionNode* other)
+    : ArithmeticalUnaryExpressionNode(other) {}
 
 ExpressionNodePtr RoundExpressionNode::create(ExpressionNodePtr const& child) {
-    auto roundNode = std::make_shared<RoundExpressionNode>(child->getStamp());
-    roundNode->setChild(child);
-    return roundNode;
+  auto roundNode = std::make_shared<RoundExpressionNode>(child->getStamp());
+  roundNode->setChild(child);
+  return roundNode;
 }
 
 void RoundExpressionNode::inferStamp(SchemaPtr schema) {
-    // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+  // infer stamp of child, check if its numerical, assume same stamp
+  ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("RoundExpressionNode: converted stamp to float: {}", toString());
+  // if stamp is integer, convert stamp to float
+  stamp = DataTypeFactory::createFloatFromInteger(stamp);
+  NES_TRACE("RoundExpressionNode: converted stamp to float: {}", toString());
 }
 
 bool RoundExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<RoundExpressionNode>()) {
-        auto otherRoundNode = rhs->as<RoundExpressionNode>();
-        return child()->equal(otherRoundNode->child());
-    }
-    return false;
+  if (rhs->instanceOf<RoundExpressionNode>()) {
+    auto otherRoundNode = rhs->as<RoundExpressionNode>();
+    return child()->equal(otherRoundNode->child());
+  }
+  return false;
 }
 
 std::string RoundExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << "ROUND(" << children[0]->toString() << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "ROUND(" << children[0]->toString() << ")";
+  return ss.str();
 }
 
-ExpressionNodePtr RoundExpressionNode::copy() { return RoundExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr RoundExpressionNode::copy() {
+  return RoundExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+}  // namespace NES

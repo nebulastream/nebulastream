@@ -24,23 +24,23 @@ class NonKeyedSlice;
 using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 
 /**
- * @brief A thread local slice store for global (non-keyed) tumbling and sliding windows,
- * which stores slices for a specific thread.
- * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
- * As the slice store is only using by a single thread, we don't have to protect its functions for concurrent accesses.
+ * @brief A thread local slice store for global (non-keyed) tumbling and sliding
+ * windows, which stores slices for a specific thread. In the current
+ * implementation we handle tumbling windows as sliding widows with
+ * windowSize==windowSlide. As the slice store is only using by a single thread,
+ * we don't have to protect its functions for concurrent accesses.
  */
 class NonKeyedBucketStore : public BucketStore<NonKeyedSlice> {
-  public:
-    explicit NonKeyedBucketStore(uint64_t entrySize,
-                                 uint64_t windowSize,
-                                 uint64_t windowSlide,
-                                 const std::unique_ptr<State>& defaultState);
-    ~NonKeyedBucketStore() = default;
+ public:
+  explicit NonKeyedBucketStore(uint64_t entrySize, uint64_t windowSize,
+                               uint64_t windowSlide,
+                               const std::unique_ptr<State>& defaultState);
+  ~NonKeyedBucketStore() = default;
 
-  private:
-    NonKeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
-    const uint64_t entrySize;
-    const std::unique_ptr<State>& defaultState;
+ private:
+  NonKeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
+  const uint64_t entrySize;
+  const std::unique_ptr<State>& defaultState;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_

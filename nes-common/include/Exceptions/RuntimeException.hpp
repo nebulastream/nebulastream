@@ -25,41 +25,41 @@ namespace NES::Exceptions {
 
 /**
  * @brief Exception to be used to report errors and stacktraces
- * This is meant to be used for NES-related errors, wrap std exceptions with their own stacktrace, etc..
+ * This is meant to be used for NES-related errors, wrap std exceptions with
+ * their own stacktrace, etc..
  */
 class RuntimeException : virtual public std::exception {
+ protected:
+  std::string errorMessage;  ///< Error message
 
-  protected:
-    std::string errorMessage;///< Error message
+ public:
+  /** Constructor
+   *  @param msg The error message
+   *  @param stacktrace Error stacktrace
+   */
+  explicit RuntimeException(
+      std::string msg, std::string&& stacktrace = collectStacktrace(),
+      const std::source_location location = std::source_location::current());
 
-  public:
-    /** Constructor
-     *  @param msg The error message
-     *  @param stacktrace Error stacktrace
-     */
-    explicit RuntimeException(std::string msg,
-                              std::string&& stacktrace = collectStacktrace(),
-                              const std::source_location location = std::source_location::current());
+  /** Constructor
+   *  @param msg The error message
+   *  @param stacktrace Error stacktrace
+   */
+  explicit RuntimeException(std::string msg, const std::string& stacktrace);
 
-    /** Constructor
-    *  @param msg The error message
-    *  @param stacktrace Error stacktrace
-    */
-    explicit RuntimeException(std::string msg, const std::string& stacktrace);
+  /** Destructor.
+   *  Virtual to allow for subclassing.
+   */
+  ~RuntimeException() noexcept override = default;
 
-    /** Destructor.
-     *  Virtual to allow for subclassing.
-     */
-    ~RuntimeException() noexcept override = default;
-
-    /** Returns a pointer to the (constant) error description.
-     *  @return A pointer to a const char*. The underlying memory
-     *  is in possession of the Except object. Callers must
-     *  not attempt to free the memory.
-     */
-    [[nodiscard]] const char* what() const noexcept override;
+  /** Returns a pointer to the (constant) error description.
+   *  @return A pointer to a const char*. The underlying memory
+   *  is in possession of the Except object. Callers must
+   *  not attempt to free the memory.
+   */
+  [[nodiscard]] const char* what() const noexcept override;
 };
 
-}// namespace NES::Exceptions
+}  // namespace NES::Exceptions
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#endif  // NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_

@@ -21,22 +21,23 @@
 namespace NES::Monitoring {
 
 /**
-* @brief The metric types of NES represented in the subdirectories of Metrics/..
-*/
+ * @brief The metric types of NES represented in the subdirectories of
+ * Metrics/..
+ */
 enum class MetricType : uint8_t {
-    CpuMetric,
-    DiskMetric,
-    MemoryMetric,
-    NetworkMetric,
-    RuntimeMetric,
-    RegistrationMetric,
-    WrappedCpuMetrics,
-    WrappedNetworkMetrics,
-    UnknownMetric
+  CpuMetric,
+  DiskMetric,
+  MemoryMetric,
+  NetworkMetric,
+  RuntimeMetric,
+  RegistrationMetric,
+  WrappedCpuMetrics,
+  WrappedNetworkMetrics,
+  UnknownMetric
 };
 
 std::string toString(MetricType metricType);
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_

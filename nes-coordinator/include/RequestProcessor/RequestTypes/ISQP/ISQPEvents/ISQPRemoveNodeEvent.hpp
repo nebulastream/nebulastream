@@ -21,11 +21,12 @@
 namespace NES::RequestProcessor {
 
 /**
- * @brief the response indicating if the remove node event was successfully applied
+ * @brief the response indicating if the remove node event was successfully
+ * applied
  */
 struct ISQPRemoveNodeResponse : public ISQPResponse {
-    explicit ISQPRemoveNodeResponse(bool success) : success(success){};
-    bool success;
+  explicit ISQPRemoveNodeResponse(bool success) : success(success){};
+  bool success;
 };
 using ISQPRemoveNodeResponsePtr = std::shared_ptr<ISQPRemoveNodeResponse>;
 
@@ -36,27 +37,26 @@ using ISQPRemoveNodeEventPtr = std::shared_ptr<ISQPRemoveNodeEvent>;
  * @brief ISQP event indicating the node removal
  */
 class ISQPRemoveNodeEvent : public ISQPEvent {
+ public:
+  static ISQPEventPtr create(const WorkerId& workerId,
+                             const std::vector<WorkerId>& downstreamWorkerIds,
+                             const std::vector<WorkerId>& upstreamWorkerIds);
 
-  public:
-    static ISQPEventPtr create(const WorkerId& workerId,
-                               const std::vector<WorkerId>& downstreamWorkerIds,
-                               const std::vector<WorkerId>& upstreamWorkerIds);
+  ISQPRemoveNodeEvent(const WorkerId& workerId,
+                      const std::vector<WorkerId>& downstreamWorkerIds,
+                      const std::vector<WorkerId>& upstreamWorkerIds);
 
-    ISQPRemoveNodeEvent(const WorkerId& workerId,
-                        const std::vector<WorkerId>& downstreamWorkerIds,
-                        const std::vector<WorkerId>& upstreamWorkerIds);
+  WorkerId getWorkerId() const;
 
-    WorkerId getWorkerId() const;
+  const std::vector<WorkerId>& getDownstreamWorkerIds() const;
 
-    const std::vector<WorkerId>& getDownstreamWorkerIds() const;
+  const std::vector<WorkerId>& getUpstreamWorkerIds() const;
 
-    const std::vector<WorkerId>& getUpstreamWorkerIds() const;
-
-  private:
-    WorkerId workerId;
-    std::vector<WorkerId> downstreamWorkerIds;
-    std::vector<WorkerId> upstreamWorkerIds;
+ private:
+  WorkerId workerId;
+  std::vector<WorkerId> downstreamWorkerIds;
+  std::vector<WorkerId> upstreamWorkerIds;
 };
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVENODEEVENT_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVENODEEVENT_HPP_

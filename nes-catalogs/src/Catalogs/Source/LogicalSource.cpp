@@ -18,17 +18,20 @@
 
 namespace NES {
 
-LogicalSourcePtr LogicalSource::create(const std::string& logicalSourceName, const SchemaPtr& schema) {
-    return std::make_shared<LogicalSource>(LogicalSource(std::move(logicalSourceName), std::move(schema)));
+LogicalSourcePtr LogicalSource::create(const std::string& logicalSourceName,
+                                       const SchemaPtr& schema) {
+  return std::make_shared<LogicalSource>(
+      LogicalSource(std::move(logicalSourceName), std::move(schema)));
 }
 
-LogicalSource::LogicalSource(const std::string& logicalSourceName, const SchemaPtr& schemaPtr)
+LogicalSource::LogicalSource(const std::string& logicalSourceName,
+                             const SchemaPtr& schemaPtr)
     : logicalSourceName(logicalSourceName) {
-    schema = schemaPtr->copy();
+  schema = schemaPtr->copy();
 }
 
 SchemaPtr LogicalSource::getSchema() { return schema; }
 
 std::string LogicalSource::getLogicalSourceName() { return logicalSourceName; }
 
-}// namespace NES
+}  // namespace NES

@@ -18,22 +18,28 @@
 
 namespace NES::Configurations {
 
-SchemaType::SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails) : schemaFieldDetails(std::move(schemaFieldDetails)) {}
+SchemaType::SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails)
+    : schemaFieldDetails(std::move(schemaFieldDetails)) {}
 
-SchemaTypePtr SchemaType::create(const std::vector<SchemaFieldDetail>& schemaFieldDetails) {
-    return std::make_shared<SchemaType>(SchemaType(schemaFieldDetails));
+SchemaTypePtr SchemaType::create(
+    const std::vector<SchemaFieldDetail>& schemaFieldDetails) {
+  return std::make_shared<SchemaType>(SchemaType(schemaFieldDetails));
 }
 
-const std::vector<SchemaFieldDetail>& SchemaType::getSchemaFieldDetails() const { return schemaFieldDetails; }
+const std::vector<SchemaFieldDetail>& SchemaType::getSchemaFieldDetails()
+    const {
+  return schemaFieldDetails;
+}
 
 bool SchemaType::contains(const std::string& fieldName) {
-    for (const auto& schemaFieldDetail : this->schemaFieldDetails) {
-        NES_TRACE("contain compare field={} with other={}", schemaFieldDetail.fieldName, fieldName);
-        if (schemaFieldDetail.fieldName == fieldName) {
-            return true;
-        }
+  for (const auto& schemaFieldDetail : this->schemaFieldDetails) {
+    NES_TRACE("contain compare field={} with other={}",
+              schemaFieldDetail.fieldName, fieldName);
+    if (schemaFieldDetail.fieldName == fieldName) {
+      return true;
     }
-    return false;
+  }
+  return false;
 }
 
-}// namespace NES::Configurations
+}  // namespace NES::Configurations

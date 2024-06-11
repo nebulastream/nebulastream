@@ -19,32 +19,36 @@
 namespace NES::Nautilus::IR::Operations {
 
 class BasicBlockInvocation : public Operation {
-  public:
-    BasicBlockInvocation();
-    void setBlock(BasicBlockPtr block);
-    BasicBlockPtr getBlock() const;
-    void addArgument(OperationPtr argument);
-    void removeArgument(uint64_t argumentIndex);
+ public:
+  BasicBlockInvocation();
+  void setBlock(BasicBlockPtr block);
+  BasicBlockPtr getBlock() const;
+  void addArgument(OperationPtr argument);
+  void removeArgument(uint64_t argumentIndex);
 
-    /**
-     * @brief Iterate over args, find arg that matches OperationPtr and return index.
-     * 
-     * @return int: arg index for provided OperationPtr. Is -1 if no arg that matches OperationPtr was found.
-     */
-    int getOperationArgIndex(Operations::OperationPtr);
+  /**
+   * @brief Iterate over args, find arg that matches OperationPtr and return
+   * index.
+   *
+   * @return int: arg index for provided OperationPtr. Is -1 if no arg that
+   * matches OperationPtr was found.
+   */
+  int getOperationArgIndex(Operations::OperationPtr);
 
-    /**
-     * @brief Get all arguments of next block invocation, meaning all args of the branching operation (br, if, loop,..)
-     * 
-     * @return std::vector<OperationPtr> : vector with all arguments of the next block invocation.
-     */
-    std::vector<OperationPtr> getArguments() const;
-    std::string toString() override;
+  /**
+   * @brief Get all arguments of next block invocation, meaning all args of the
+   * branching operation (br, if, loop,..)
+   *
+   * @return std::vector<OperationPtr> : vector with all arguments of the next
+   * block invocation.
+   */
+  std::vector<OperationPtr> getArguments() const;
+  std::string toString() override;
 
-  private:
-    BasicBlockPtr basicBlock;
-    std::vector<OperationWPtr> operations;
+ private:
+  BasicBlockPtr basicBlock;
+  std::vector<OperationWPtr> operations;
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
+}  // namespace NES::Nautilus::IR::Operations
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_

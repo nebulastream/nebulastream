@@ -18,33 +18,48 @@
 #include <utility>
 namespace NES::Nautilus::IR::Operations {
 LoopOperation::LoopOperation(LoopType loopType)
-    : Operation(Operation::OperationType::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
+    : Operation(Operation::OperationType::LoopOp,
+                Types::StampFactory::createVoidStamp()),
+      loopType(loopType) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
 // Todo leads to segfault
-void LoopOperation::setLoopType(LoopOperation::LoopType loopType) { this->loopType = loopType; }
+void LoopOperation::setLoopType(LoopOperation::LoopType loopType) {
+  this->loopType = loopType;
+}
 
-BasicBlockInvocation& LoopOperation::getLoopBodyBlock() { return loopBodyBlock; }
-BasicBlockInvocation& LoopOperation::getLoopFalseBlock() { return loopFalseBlock; }
-// void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) { this->loopBodyBlock = loopBodyBlock.getBlock(); }
-// void LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) { this->loopFalseBlock = loopFalseBlock.getBlock(); }
-BasicBlockInvocation& LoopOperation::getLoopHeadBlock() { return loopHeadBlock; }
+BasicBlockInvocation& LoopOperation::getLoopBodyBlock() {
+  return loopBodyBlock;
+}
+BasicBlockInvocation& LoopOperation::getLoopFalseBlock() {
+  return loopFalseBlock;
+}
+// void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) {
+// this->loopBodyBlock = loopBodyBlock.getBlock(); } void
+// LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) {
+// this->loopFalseBlock = loopFalseBlock.getBlock(); }
+BasicBlockInvocation& LoopOperation::getLoopHeadBlock() {
+  return loopHeadBlock;
+}
 BasicBlockInvocation& LoopOperation::getLoopEndBlock() { return loopEndBlock; }
 
-void LoopOperation::setLoopInfo(std::shared_ptr<LoopInfo> loopInfo) { this->loopInfo = loopInfo; }
+void LoopOperation::setLoopInfo(std::shared_ptr<LoopInfo> loopInfo) {
+  this->loopInfo = loopInfo;
+}
 
 std::shared_ptr<LoopInfo> LoopOperation::getLoopInfo() { return loopInfo; }
 
 std::string LoopOperation::toString() {
-    std::string baseString = "loop " + loopHeadBlock.getBlock()->getIdentifier() + "(";
-    auto loopBlockArgs = loopHeadBlock.getArguments();
-    if (loopBlockArgs.size() > 0) {
-        baseString += loopBlockArgs[0]->getIdentifier();
-        for (int i = 1; i < (int) loopBlockArgs.size(); ++i) {
-            baseString += ", " + loopBlockArgs.at(i)->getIdentifier();
-        }
+  std::string baseString =
+      "loop " + loopHeadBlock.getBlock()->getIdentifier() + "(";
+  auto loopBlockArgs = loopHeadBlock.getArguments();
+  if (loopBlockArgs.size() > 0) {
+    baseString += loopBlockArgs[0]->getIdentifier();
+    for (int i = 1; i < (int)loopBlockArgs.size(); ++i) {
+      baseString += ", " + loopBlockArgs.at(i)->getIdentifier();
     }
-    return baseString + ")";
+  }
+  return baseString + ")";
 }
 
-}// namespace NES::Nautilus::IR::Operations
+}  // namespace NES::Nautilus::IR::Operations

@@ -17,20 +17,28 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 
-BranchOperation::BranchOperation() : Operation(OperationType::BranchOp, Types::StampFactory::createVoidStamp()), basicBlock() {}
+BranchOperation::BranchOperation()
+    : Operation(OperationType::BranchOp,
+                Types::StampFactory::createVoidStamp()),
+      basicBlock() {}
 
-BasicBlockInvocation& BranchOperation::getNextBlockInvocation() { return basicBlock; }
+BasicBlockInvocation& BranchOperation::getNextBlockInvocation() {
+  return basicBlock;
+}
 
 std::string BranchOperation::toString() {
-    std::string baseString = "br Block_" + basicBlock.getBlock()->getIdentifier() + "(";
-    if (basicBlock.getBlock()->getArguments().size() > 0) {
-        baseString += basicBlock.getArguments().at(0)->getIdentifier();
-        for (int i = 1; i < (int) basicBlock.getArguments().size(); ++i) {
-            baseString += ", " + basicBlock.getArguments().at(i)->getIdentifier();
-        }
+  std::string baseString =
+      "br Block_" + basicBlock.getBlock()->getIdentifier() + "(";
+  if (basicBlock.getBlock()->getArguments().size() > 0) {
+    baseString += basicBlock.getArguments().at(0)->getIdentifier();
+    for (int i = 1; i < (int)basicBlock.getArguments().size(); ++i) {
+      baseString += ", " + basicBlock.getArguments().at(i)->getIdentifier();
     }
-    return baseString + ")";
+  }
+  return baseString + ")";
 }
-bool BranchOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::BranchOp; }
+bool BranchOperation::classof(const Operation* Op) {
+  return Op->getOperationType() == OperationType::BranchOp;
+}
 
-}// namespace NES::Nautilus::IR::Operations
+}  // namespace NES::Nautilus::IR::Operations

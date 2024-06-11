@@ -16,11 +16,12 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-NegateExpression::NegateExpression(ExpressionPtr subExpression) : subExpression(std::move(subExpression)){};
+NegateExpression::NegateExpression(ExpressionPtr subExpression)
+    : subExpression(std::move(subExpression)){};
 
 Value<> NegateExpression::execute(Record& record) const {
-    Value<> leftValue = subExpression->execute(record);
-    return !leftValue;
+  Value<> leftValue = subExpression->execute(record);
+  return !leftValue;
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions

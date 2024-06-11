@@ -20,25 +20,28 @@ namespace NES {
 /**
  * @brief This node represents an arithmetical expression.
  */
-class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public ArithmeticalExpressionNode {
-  public:
-    /**
-     * @brief Infers the stamp of this arithmetical expression node.
-     * Currently the type inference is equal for all arithmetical expression and expects numerical data types as operands.
-     * @param typeInferencePhaseContext
-     * @param schema the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
+class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode,
+                                        public ArithmeticalExpressionNode {
+ public:
+  /**
+   * @brief Infers the stamp of this arithmetical expression node.
+   * Currently the type inference is equal for all arithmetical expression and
+   * expects numerical data types as operands.
+   * @param typeInferencePhaseContext
+   * @param schema the current schema.
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-  protected:
-    explicit ArithmeticalUnaryExpressionNode(DataTypePtr stamp);
-    explicit ArithmeticalUnaryExpressionNode(ArithmeticalUnaryExpressionNode* other);
-    ~ArithmeticalUnaryExpressionNode() noexcept override = default;
+ protected:
+  explicit ArithmeticalUnaryExpressionNode(DataTypePtr stamp);
+  explicit ArithmeticalUnaryExpressionNode(
+      ArithmeticalUnaryExpressionNode* other);
+  ~ArithmeticalUnaryExpressionNode() noexcept override = default;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_

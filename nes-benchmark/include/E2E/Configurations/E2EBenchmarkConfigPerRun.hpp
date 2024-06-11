@@ -22,51 +22,54 @@
 namespace NES::Benchmark {
 
 class E2EBenchmarkConfigPerRun {
+ public:
+  /**
+   * @brief creates a E2EBenchmarkConfigPerRun object and sets the default
+   * values
+   */
+  explicit E2EBenchmarkConfigPerRun();
 
-  public:
-    /**
-     * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
-     */
-    explicit E2EBenchmarkConfigPerRun();
+  /**
+   * @brief creates a string representation of this object
+   * @return the string representation
+   */
+  std::string toString();
 
-    /**
-     * @brief creates a string representation of this object
-     * @return the string representation
-     */
-    std::string toString();
+  /**
+   * @brief parses and generates the config for the parameters changing per run
+   * runs by parsing the yamlConfig
+   * @param yamlConfig
+   * @return
+   */
+  static std::vector<E2EBenchmarkConfigPerRun> generateAllConfigsPerRun(
+      Yaml::Node yamlConfig);
 
-    /**
-     * @brief parses and generates the config for the parameters changing per run
-     * runs by parsing the yamlConfig
-     * @param yamlConfig
-     * @return
-     */
-    static std::vector<E2EBenchmarkConfigPerRun> generateAllConfigsPerRun(Yaml::Node yamlConfig);
+  /**
+   * @brief Creates string representation of the number of physical sources
+   * @return string representation
+   */
+  std::string getStringLogicalSourceToNumberOfPhysicalSources() const;
 
-    /**
-     * @brief Creates string representation of the number of physical sources
-     * @return string representation
-     */
-    std::string getStringLogicalSourceToNumberOfPhysicalSources() const;
+  /**
+   * @brief Creates a vector of maps for the number of physical sources for each
+   * logical source
+   * @param yamlConfig
+   * @return vector of created experiments
+   */
+  static std::vector<std::map<std::string, uint64_t>>
+  generateMapsLogicalSrcToNumberOfPhysicalSources(Yaml::Node yamlConfig);
 
-    /**
-     * @brief Creates a vector of maps for the number of physical sources for each logical source
-     * @param yamlConfig
-     * @return vector of created experiments
-     */
-    static std::vector<std::map<std::string, uint64_t>> generateMapsLogicalSrcToNumberOfPhysicalSources(Yaml::Node yamlConfig);
-
-    Configurations::IntConfigOption numberOfWorkerThreads;
-    std::map<std::string, uint64_t> logicalSrcToNoPhysicalSrc;
-    Configurations::IntConfigOption bufferSizeInBytes;
-    Configurations::IntConfigOption numberOfBuffersInGlobalBufferManager;
-    Configurations::IntConfigOption numberOfBuffersInSourceLocalBufferPool;
-    Configurations::IntConfigOption numberOfQueriesToDeploy;
-    Configurations::IntConfigOption pageSize;
-    Configurations::IntConfigOption preAllocPageCnt;
-    Configurations::IntConfigOption numberOfPartitions;
-    Configurations::LongConfigOption maxHashTableSize;
+  Configurations::IntConfigOption numberOfWorkerThreads;
+  std::map<std::string, uint64_t> logicalSrcToNoPhysicalSrc;
+  Configurations::IntConfigOption bufferSizeInBytes;
+  Configurations::IntConfigOption numberOfBuffersInGlobalBufferManager;
+  Configurations::IntConfigOption numberOfBuffersInSourceLocalBufferPool;
+  Configurations::IntConfigOption numberOfQueriesToDeploy;
+  Configurations::IntConfigOption pageSize;
+  Configurations::IntConfigOption preAllocPageCnt;
+  Configurations::IntConfigOption numberOfPartitions;
+  Configurations::LongConfigOption maxHashTableSize;
 };
-}// namespace NES::Benchmark
+}  // namespace NES::Benchmark
 
-#endif// NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGPERRUN_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGPERRUN_HPP_

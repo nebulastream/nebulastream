@@ -20,33 +20,34 @@ namespace NES {
  * @brief This node represents an ROUND (absolut value) expression.
  */
 class RoundExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
-    explicit RoundExpressionNode(DataTypePtr stamp);
-    ~RoundExpressionNode() noexcept override = default;
-    /**
-     * @brief Create a new ROUND expression
-     */
-    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+ public:
+  explicit RoundExpressionNode(DataTypePtr stamp);
+  ~RoundExpressionNode() noexcept override = default;
+  /**
+   * @brief Create a new ROUND expression
+   */
+  [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  private:
-    explicit RoundExpressionNode(RoundExpressionNode* other);
+ private:
+  explicit RoundExpressionNode(RoundExpressionNode* other);
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ROUNDEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ROUNDEXPRESSIONNODE_HPP_

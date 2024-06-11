@@ -42,14 +42,14 @@ namespace Catalogs {
 namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+}  // namespace Source
 
 namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+}  // namespace UDF
 
-}// namespace Catalogs
+}  // namespace Catalogs
 
 namespace Optimizer {
 
@@ -57,58 +57,71 @@ class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 /**
- * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
- * If this is not possible it throws an Runtime exception.
+ * @brief The type inference phase receives and query plan and infers all input
+ * and output schemata for all operators. If this is not possible it throws an
+ * Runtime exception.
  */
 class TypeInferencePhase {
-  public:
-    /**
-     * @brief Factory method to create a type inference phase.
-     * @return TypeInferencePhasePtr
-     */
-    static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                        Catalogs::UDF::UDFCatalogPtr udfCatalog);
+ public:
+  /**
+   * @brief Factory method to create a type inference phase.
+   * @return TypeInferencePhasePtr
+   */
+  static TypeInferencePhasePtr create(
+      Catalogs::Source::SourceCatalogPtr sourceCatalog,
+      Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
-    /**
-     * @brief Performs type inference on the given query plan.
-     * This involves the following steps.
-     * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
-     * 2. Propagate the input and output schemas from source operators to the sink operators.
-     * 3. If a operator contains expression, we infer the result stamp of this operators.
-     * @param queryPlan the query plan
-     */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+  /**
+   * @brief Performs type inference on the given query plan.
+   * This involves the following steps.
+   * 1. Replacing a logical source descriptor with the correct source descriptor
+   * form the source catalog.
+   * 2. Propagate the input and output schemas from source operators to the sink
+   * operators.
+   * 3. If a operator contains expression, we infer the result stamp of this
+   * operators.
+   * @param queryPlan the query plan
+   */
+  QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-    /**
-     * @brief Performs type inference on the given decomposed query plan.
-     * This involves the following steps.
-     * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
-     * 2. Propagate the input and output schemas from source operators to the sink operators.
-     * 3. If a operator contains expression, we infer the result stamp of this operators.
-     * @param decomposedQueryPlan the decomposed query plan
-     */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
+  /**
+   * @brief Performs type inference on the given decomposed query plan.
+   * This involves the following steps.
+   * 1. Replacing a logical source descriptor with the correct source descriptor
+   * form the source catalog.
+   * 2. Propagate the input and output schemas from source operators to the sink
+   * operators.
+   * 3. If a operator contains expression, we infer the result stamp of this
+   * operators.
+   * @param decomposedQueryPlan the decomposed query plan
+   */
+  DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-  private:
-    /**
-     * @brief Infer schema for all operators between given source and sink operators.
-     * @param planId: the id of the plan
-     * @param sourceOperators : the source operators
-     * @param sinkOperators : the sink operators
-     * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
-     * @return QueryPlanPtr
-     * @throws TypeInferenceException if inferring the data types into the query failed
-     * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
-     */
-    void performTypeInference(QueryId planId,
-                              std::vector<SourceLogicalOperatorPtr> sourceOperators,
-                              std::vector<SinkLogicalOperatorPtr> sinkOperators);
+ private:
+  /**
+   * @brief Infer schema for all operators between given source and sink
+   * operators.
+   * @param planId: the id of the plan
+   * @param sourceOperators : the source operators
+   * @param sinkOperators : the sink operators
+   * @throws RuntimeException if it was not possible to infer the data types of
+   * schemas and expression
+   * @return QueryPlanPtr
+   * @throws TypeInferenceException if inferring the data types into the query
+   * failed
+   * @throws LogicalSourceNotFoundException if a logical source with the given
+   * source name could not be found
+   */
+  void performTypeInference(
+      QueryId planId, std::vector<SourceLogicalOperatorPtr> sourceOperators,
+      std::vector<SinkLogicalOperatorPtr> sinkOperators);
 
-    explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UDFCatalogPtr udfCatalog;
+  explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                              Catalogs::UDF::UDFCatalogPtr udfCatalog);
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
+  Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
-}// namespace Optimizer
-}// namespace NES
+}  // namespace Optimizer
+}  // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_

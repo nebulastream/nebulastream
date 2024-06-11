@@ -20,33 +20,34 @@ namespace NES {
  * @brief This node represents an CEIL (ceiling of) expression.
  */
 class CeilExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
-    explicit CeilExpressionNode(DataTypePtr stamp);
-    ~CeilExpressionNode() noexcept override = default;
-    /**
-     * @brief Create a new CEIL expression
-     */
-    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+ public:
+  explicit CeilExpressionNode(DataTypePtr stamp);
+  ~CeilExpressionNode() noexcept override = default;
+  /**
+   * @brief Create a new CEIL expression
+   */
+  [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  private:
-    explicit CeilExpressionNode(CeilExpressionNode* other);
+ private:
+  explicit CeilExpressionNode(CeilExpressionNode* other);
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CEILEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_CEILEXPRESSIONNODE_HPP_

@@ -15,8 +15,9 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
 
-#include <Execution/Aggregation/Util/HyperLogLog.hpp>
 #include <Execution/Aggregation/Util/digestible.h>
+
+#include <Execution/Aggregation/Util/HyperLogLog.hpp>
 #include <cstdint>
 #include <numeric>
 namespace NES::Runtime::Execution::Aggregation {
@@ -27,62 +28,69 @@ namespace NES::Runtime::Execution::Aggregation {
 struct AggregationValue {};
 
 /**
- * Class for average aggregation Value, maintains sum and count to calc avg in the lower function
+ * Class for average aggregation Value, maintains sum and count to calc avg in
+ * the lower function
  */
-template<typename T>
+template <typename T>
 struct AvgAggregationValue : AggregationValue {
-    uint64_t count = 0;
-    T sum = 0;
+  uint64_t count = 0;
+  T sum = 0;
 };
 
 /**
  * Class for sum aggregation Value, maintains the sum of all occurred tuples
  */
-template<typename T>
+template <typename T>
 struct SumAggregationValue : AggregationValue {
-    T sum = 0;
+  T sum = 0;
 };
 
 /**
  * Class for count aggregation Value, maintains the number of occurred tuples
  */
-template<typename T>
+template <typename T>
 struct CountAggregationValue : AggregationValue {
-    T count = 0;
+  T count = 0;
 };
 
 /**
- * Class for min aggregation Value, maintains the min value of all occurred tuples
+ * Class for min aggregation Value, maintains the min value of all occurred
+ * tuples
  */
-template<typename T>
+template <typename T>
 struct MinAggregationValue : AggregationValue {
-    T min = std::numeric_limits<T>::max();
+  T min = std::numeric_limits<T>::max();
 };
 
 /**
- * Class for max aggregation Value, maintains the max value of all occurred tuples
+ * Class for max aggregation Value, maintains the max value of all occurred
+ * tuples
  */
-template<typename T>
+template <typename T>
 struct MaxAggregationValue : AggregationValue {
-    T max = std::numeric_limits<T>::min();
+  T max = std::numeric_limits<T>::min();
 };
 
 /**
- * Class for HyperLogLog Algorithm, maintains the approximate distinct count value of all occurred tuples
+ * Class for HyperLogLog Algorithm, maintains the approximate distinct count
+ * value of all occurred tuples
  */
 struct HyperLogLogDistinctCountApproximationValue : AggregationValue {
-    //TODO: #3889 for approximation we require some flexibility to define the size, e.g., appr. window count, etc. to get the best possible result
-    hll::HyperLogLog hyperLogLog = hll::HyperLogLog(10);
+  // TODO: #3889 for approximation we require some flexibility to define the
+  // size, e.g., appr. window count, etc. to get the best possible result
+  hll::HyperLogLog hyperLogLog = hll::HyperLogLog(10);
 };
 
 /**
- * Class for quantile aggregation Value, maintains the quantile value of all occurred tuples
+ * Class for quantile aggregation Value, maintains the quantile value of all
+ * occurred tuples
  */
 struct QuantileEstimationValue : AggregationValue {
-    //TODO: #3889 here the same, unsigned is fix, size depends on use case? might be abitrary for this algorithm
-    digestible::tdigest<float, unsigned> digest = digestible::tdigest(10);
+  // TODO: #3889 here the same, unsigned is fix, size depends on use case? might
+  // be abitrary for this algorithm
+  digestible::tdigest<float, unsigned> digest = digestible::tdigest(10);
 };
 
-}// namespace NES::Runtime::Execution::Aggregation
+}  // namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_

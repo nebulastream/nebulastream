@@ -19,44 +19,52 @@ namespace NES {
 
 AndExpressionNode::AndExpressionNode() = default;
 
-AndExpressionNode::AndExpressionNode(AndExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
+AndExpressionNode::AndExpressionNode(AndExpressionNode* other)
+    : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
-    auto andNode = std::make_shared<AndExpressionNode>();
-    andNode->setChildren(left, right);
-    return andNode;
+ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr& left,
+                                            const ExpressionNodePtr& right) {
+  auto andNode = std::make_shared<AndExpressionNode>();
+  andNode->setChildren(left, right);
+  return andNode;
 }
 
 bool AndExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<AndExpressionNode>()) {
-        auto otherAndNode = rhs->as<AndExpressionNode>();
-        return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
-    }
-    return false;
+  if (rhs->instanceOf<AndExpressionNode>()) {
+    auto otherAndNode = rhs->as<AndExpressionNode>();
+    return getLeft()->equal(otherAndNode->getLeft()) &&
+           getRight()->equal(otherAndNode->getRight());
+  }
+  return false;
 }
 
 std::string AndExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << children[0]->toString() << "&&" << children[1]->toString();
-    return ss.str();
+  std::stringstream ss;
+  ss << children[0]->toString() << "&&" << children[1]->toString();
+  return ss.str();
 }
 
 void AndExpressionNode::inferStamp(SchemaPtr schema) {
-    // delegate stamp inference of children
-    ExpressionNode::inferStamp(schema);
-    // check if children stamp is correct
-    if (!getLeft()->isPredicate()) {
-        NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: "
-                                + getLeft()->getStamp()->toString());
-    }
+  // delegate stamp inference of children
+  ExpressionNode::inferStamp(schema);
+  // check if children stamp is correct
+  if (!getLeft()->isPredicate()) {
+    NES_THROW_RUNTIME_ERROR(
+        "AND Expression Node: the stamp of left child must be boolean, but "
+        "was: " +
+        getLeft()->getStamp()->toString());
+  }
 
-    if (!getRight()->isPredicate()) {
-        NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: "
-                                + getRight()->getStamp()->toString());
-    }
+  if (!getRight()->isPredicate()) {
+    NES_THROW_RUNTIME_ERROR(
+        "AND Expression Node: the stamp of left child must be boolean, but "
+        "was: " +
+        getRight()->getStamp()->toString());
+  }
 }
 ExpressionNodePtr AndExpressionNode::copy() {
-    return AndExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+  return AndExpressionNode::create(children[0]->as<ExpressionNode>()->copy(),
+                                   children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+}  // namespace NES

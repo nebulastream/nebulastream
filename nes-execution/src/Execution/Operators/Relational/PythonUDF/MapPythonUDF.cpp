@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
+#include <Python.h>
+
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -23,7 +25,6 @@
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Python.h>
 #include <cstring>
 #include <fstream>
 #include <utility>
@@ -36,38 +37,44 @@ namespace NES::Runtime::Execution::Operators {
  * @return the result of the python udf
  */
 void* executeMapUdf(void* state) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
 
-    // get module and python arguments for the udf
-    // we need the module bc inside this module is the python udf
-    auto* pythonArguments = handler->getPythonArguments();
-    pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "No arguments for the python udf can be found.");
+  // get module and python arguments for the udf
+  // we need the module bc inside this module is the python udf
+  auto* pythonArguments = handler->getPythonArguments();
+  pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__,
+                              "No arguments for the python udf can be found.");
 
-    PyObject* module = handler->getPythonModule();
-    pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "Could not get the python module.");
+  PyObject* module = handler->getPythonModule();
+  pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__,
+                              "Could not get the python module.");
 
-    // we get the python function
-    auto pythonFunction = PyObject_GetAttrString(module, handler->getFunctionName().c_str());
-    pythonInterpreterErrorCheck(pythonArguments,
-                                __func__,
-                                __LINE__,
-                                "Could not find the python udf " + handler->getFunctionName() + " inside the module");
+  // we get the python function
+  auto pythonFunction =
+      PyObject_GetAttrString(module, handler->getFunctionName().c_str());
+  pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__,
+                              "Could not find the python udf " +
+                                  handler->getFunctionName() +
+                                  " inside the module");
 
-    if (!PyCallable_Check(pythonFunction)) {
-        //  PyCallable_Check returns 1 if the object is callable (= is a function) and 0 otherwise.
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("Function not callable");
+  if (!PyCallable_Check(pythonFunction)) {
+    //  PyCallable_Check returns 1 if the object is callable (= is a function)
+    //  and 0 otherwise.
+    if (PyErr_Occurred()) {
+      PyErr_Print();
+      PyErr_Clear();
     }
+    NES_THROW_RUNTIME_ERROR("Function not callable");
+  }
 
-    // execute python udf
-    auto result = PyObject_CallObject(pythonFunction, pythonArguments);
-    pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "Something went wrong. Result of the Python UDF is NULL");
+  // execute python udf
+  auto result = PyObject_CallObject(pythonFunction, pythonArguments);
+  pythonInterpreterErrorCheck(
+      pythonArguments, __func__, __LINE__,
+      "Something went wrong. Result of the Python UDF is NULL");
 
-    return result;
+  return result;
 }
 
 /**
@@ -76,13 +83,13 @@ void* executeMapUdf(void* state) {
  * @param value boolean value
  */
 void createBooleanPythonObject(void* state, bool value) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    if (value) {
-        handler->setPythonVariable(Py_True);
-    } else {
-        handler->setPythonVariable(Py_False);
-    }
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  if (value) {
+    handler->setPythonVariable(Py_True);
+  } else {
+    handler->setPythonVariable(Py_False);
+  }
 }
 
 /**
@@ -91,11 +98,11 @@ void createBooleanPythonObject(void* state, bool value) {
  * @param value float value
  */
 void createFloatPythonObject(void* state, float value) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
-    // Calling this function returns a PyFloatObject
-    handler->setPythonVariable(PyFloat_FromDouble(value));
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
+  // Calling this function returns a PyFloatObject
+  handler->setPythonVariable(PyFloat_FromDouble(value));
 }
 
 /**
@@ -104,11 +111,11 @@ void createFloatPythonObject(void* state, float value) {
  * @param value double value
  */
 void createDoublePythonObject(void* state, double value) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
-    // Calling this function returns a PyFloatObject
-    handler->setPythonVariable(PyFloat_FromDouble(value));
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
+  // Calling this function returns a PyFloatObject
+  handler->setPythonVariable(PyFloat_FromDouble(value));
 }
 
 /**
@@ -117,11 +124,11 @@ void createDoublePythonObject(void* state, double value) {
  * @param value integer value
  */
 void createIntegerPythonObject(void* state, int32_t value) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
-    handler->setPythonVariable(PyLong_FromLong(value));
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  // The Python C-API only has PyLong_FromLong for all Integer Objects
+  // Calling this function returns a PyLongObject
+  handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
@@ -130,11 +137,11 @@ void createIntegerPythonObject(void* state, int32_t value) {
  * @param value long value
  */
 void createLongPythonObject(void* state, int64_t value) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
-    handler->setPythonVariable(PyLong_FromLong(value));
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  // The Python C-API only has PyLong_FromLong for all Integer Objects
+  // Calling this function returns a PyLongObject
+  handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
@@ -143,11 +150,11 @@ void createLongPythonObject(void* state, int64_t value) {
  * @param value short value
  */
 void createShortPythonObject(void* state, int16_t value) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
-    handler->setPythonVariable(PyLong_FromLong(value));
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  // The Python C-API only has PyLong_FromLong for all Integer Objects
+  // Calling this function returns a PyLongObject
+  handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
@@ -156,11 +163,11 @@ void createShortPythonObject(void* state, int16_t value) {
  * @param value byte value
  */
 void createBytePythonObject(void* state, int8_t value) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
-    handler->setPythonVariable(PyLong_FromLong(value));
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  // The Python C-API only has PyLong_FromLong for all Integer Objects
+  // Calling this function returns a PyLongObject
+  handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
@@ -168,9 +175,9 @@ void createBytePythonObject(void* state, int8_t value) {
  * @param state PythonUDFOperatorHandler
  */
 void createPythonEnvironment(void* state) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    handler->initPython();
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  handler->initPython();
 }
 
 /**
@@ -179,25 +186,26 @@ void createPythonEnvironment(void* state) {
  * @param size of tuple
  */
 void initPythonTupleSize(void* state, int size) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    PyObject* pythonArguments = handler->getPythonArguments();
-    pythonArguments = PyTuple_New(size);
-    handler->setPythonArguments(pythonArguments);
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  PyObject* pythonArguments = handler->getPythonArguments();
+  pythonArguments = PyTuple_New(size);
+  handler->setPythonArguments(pythonArguments);
 }
 
 /**
- * @brief Adds the value that we set in the create functions into the python tuple (the argument)
+ * @brief Adds the value that we set in the create functions into the python
+ * tuple (the argument)
  * @param state PythonUDFOperatorHandler
  * @param position position inside tuple
  */
 void setPythonArgumentAtPosition(void* state, int position) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    PyObject* pythonArguments = handler->getPythonArguments();
-    PyObject* pythonValue = handler->getPythonVariable();
-    PyTuple_SetItem(pythonArguments, position, pythonValue);
-    handler->setPythonArguments(pythonArguments);
+  NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  PyObject* pythonArguments = handler->getPythonArguments();
+  PyObject* pythonValue = handler->getPythonVariable();
+  PyTuple_SetItem(pythonArguments, position, pythonValue);
+  handler->setPythonArguments(pythonArguments);
 }
 /**
  * @brief Transforms python object output into c++ data types
@@ -208,42 +216,44 @@ void setPythonArgumentAtPosition(void* state, int position) {
  * @param tupleSize
  * @return
  */
-template<typename T>
+template <typename T>
 T transformOutputType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    auto output = static_cast<PyObject*>(outputPtr);
-    if (tupleSize > 1) {
-        output = PyTuple_GetItem(output, position);
-    }
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  auto output = static_cast<PyObject*>(outputPtr);
+  if (tupleSize > 1) {
+    output = PyTuple_GetItem(output, position);
+  }
 
-    // value in the specific data type that we want to transform the PyObject into
-    T value;
-    if constexpr (std::is_same<T, bool>::value) {
-        if (PyObject_IsTrue(output)) {
-            value = true;
-        } else {
-            value = false;
-        }
-    } else if constexpr (std::is_same<T, float>::value) {
-        // The Python C-API only has PyFloat_AsDouble for all Floating Point Objects
-        // Calling this function returns a double
-        value = PyFloat_AsDouble(output);
-    } else if constexpr (std::is_same<T, double>::value) {
-        value = PyFloat_AsDouble(output);
-    } else if constexpr (std::is_same<T, int64_t>::value) {
-        // The Python C-API only has PyLong_AsLong for all Integer Objects
-        // Calling this function returns a long because all integers are implemented as long in Python
-        value = PyLong_AsLong(output);
-    } else if constexpr (std::is_same<T, int32_t>::value) {
-        value = PyLong_AsLong(output);
-    } else if constexpr (std::is_same<T, int16_t>::value) {
-        value = PyLong_AsLong(output);
-    } else if constexpr (std::is_same<T, int8_t>::value) {
-        value = PyLong_AsLong(output);
+  // value in the specific data type that we want to transform the PyObject into
+  T value;
+  if constexpr (std::is_same<T, bool>::value) {
+    if (PyObject_IsTrue(output)) {
+      value = true;
     } else {
-        NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
+      value = false;
     }
-    return value;
+  } else if constexpr (std::is_same<T, float>::value) {
+    // The Python C-API only has PyFloat_AsDouble for all Floating Point Objects
+    // Calling this function returns a double
+    value = PyFloat_AsDouble(output);
+  } else if constexpr (std::is_same<T, double>::value) {
+    value = PyFloat_AsDouble(output);
+  } else if constexpr (std::is_same<T, int64_t>::value) {
+    // The Python C-API only has PyLong_AsLong for all Integer Objects
+    // Calling this function returns a long because all integers are implemented
+    // as long in Python
+    value = PyLong_AsLong(output);
+  } else if constexpr (std::is_same<T, int32_t>::value) {
+    value = PyLong_AsLong(output);
+  } else if constexpr (std::is_same<T, int16_t>::value) {
+    value = PyLong_AsLong(output);
+  } else if constexpr (std::is_same<T, int8_t>::value) {
+    value = PyLong_AsLong(output);
+  } else {
+    NES_THROW_RUNTIME_ERROR("Unsupported type: " +
+                            std::string(typeid(T).name()));
+  }
+  return value;
 }
 
 /**
@@ -254,8 +264,8 @@ T transformOutputType(void* outputPtr, int position, int tupleSize) {
  * @return transformed output as a c++ data type
  */
 bool transformBooleanType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    return transformOutputType<bool>(outputPtr, position, tupleSize);
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  return transformOutputType<bool>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -266,8 +276,8 @@ bool transformBooleanType(void* outputPtr, int position, int tupleSize) {
  * @return transformed output as a c++  data type
  */
 float transformFloatType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    return transformOutputType<float>(outputPtr, position, tupleSize);
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  return transformOutputType<float>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -278,8 +288,8 @@ float transformFloatType(void* outputPtr, int position, int tupleSize) {
  * @return transformed output as a c++  data type
  */
 double transformDoubleType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    return transformOutputType<double>(outputPtr, position, tupleSize);
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  return transformOutputType<double>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -290,8 +300,8 @@ double transformDoubleType(void* outputPtr, int position, int tupleSize) {
  * @return transformed output as a c++  data type
  */
 int32_t transformIntegerType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    return transformOutputType<int32_t>(outputPtr, position, tupleSize);
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  return transformOutputType<int32_t>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -302,8 +312,8 @@ int32_t transformIntegerType(void* outputPtr, int position, int tupleSize) {
  * @return transformed output as a c++  data type
  */
 int64_t transformLongType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    return transformOutputType<int64_t>(outputPtr, position, tupleSize);
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  return transformOutputType<int64_t>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -314,8 +324,8 @@ int64_t transformLongType(void* outputPtr, int position, int tupleSize) {
  * @return transformed output as a c++  data type
  */
 int16_t transformShortType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    return transformOutputType<int16_t>(outputPtr, position, tupleSize);
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  return transformOutputType<int16_t>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -326,8 +336,8 @@ int16_t transformShortType(void* outputPtr, int position, int tupleSize) {
  * @return transformed output as a c++  data type
  */
 int8_t transformByteType(void* outputPtr, int position, int tupleSize) {
-    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
-    return transformOutputType<int8_t>(outputPtr, position, tupleSize);
+  NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+  return transformOutputType<int8_t>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -335,9 +345,9 @@ int8_t transformByteType(void* outputPtr, int position, int tupleSize) {
  * @param state
  */
 void finalizePython(void* state) {
-    NES_ASSERT2_FMT(state != nullptr, "OutputPtr should not be null");
-    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    handler->finalize();
+  NES_ASSERT2_FMT(state != nullptr, "OutputPtr should not be null");
+  auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+  handler->finalize();
 }
 
 /**
@@ -346,82 +356,100 @@ void finalizePython(void* state) {
  * @param record input record
  */
 void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
-    auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+  auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    FunctionCall("createPythonEnvironment", createPythonEnvironment, handler);
+  FunctionCall("createPythonEnvironment", createPythonEnvironment, handler);
 
-    FunctionCall("initPythonTupleSize", initPythonTupleSize, handler, Value<Int32>((int) inputSchema->fields.size()));
+  FunctionCall("initPythonTupleSize", initPythonTupleSize, handler,
+               Value<Int32>((int)inputSchema->fields.size()));
 
-    // check for data type
-    for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
-        auto field = inputSchema->fields[i];
-        auto fieldName = field->getName();
+  // check for data type
+  for (int i = 0; i < (int)inputSchema->fields.size(); i++) {
+    auto field = inputSchema->fields[i];
+    auto fieldName = field->getName();
 
-        if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-            FunctionCall("createBooleanPythonObject", createBooleanPythonObject, handler, record.read(fieldName).as<Boolean>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
-            FunctionCall("createFloatPythonObject", createFloatPythonObject, handler, record.read(fieldName).as<Float>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
-            FunctionCall("createDoublePythonObject", createDoublePythonObject, handler, record.read(fieldName).as<Double>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-            FunctionCall("createIntegerPythonObject",
-                         createIntegerPythonObject,
-                         handler,
-                         record.read(fieldName).as<Int32>());// Integer
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-            FunctionCall("createLongPythonObject", createLongPythonObject, handler, record.read(fieldName).as<Int64>());// Long
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-            FunctionCall("createShortPythonObject", createShortPythonObject, handler, record.read(fieldName).as<Int16>());// Short
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-            FunctionCall("createBytePythonObject", createBytePythonObject, handler, record.read(fieldName).as<Int8>());// Byte
-        } else {
-            NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
-        }
-        FunctionCall("setPythonArgumentAtPosition", setPythonArgumentAtPosition, handler, Value<Int32>(i));
+    if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+      FunctionCall("createBooleanPythonObject", createBooleanPythonObject,
+                   handler, record.read(fieldName).as<Boolean>());
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+      FunctionCall("createFloatPythonObject", createFloatPythonObject, handler,
+                   record.read(fieldName).as<Float>());
+    } else if (field->getDataType()->isEquals(
+                   DataTypeFactory::createDouble())) {
+      FunctionCall("createDoublePythonObject", createDoublePythonObject,
+                   handler, record.read(fieldName).as<Double>());
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+      FunctionCall("createIntegerPythonObject", createIntegerPythonObject,
+                   handler,
+                   record.read(fieldName).as<Int32>());  // Integer
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+      FunctionCall("createLongPythonObject", createLongPythonObject, handler,
+                   record.read(fieldName).as<Int64>());  // Long
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+      FunctionCall("createShortPythonObject", createShortPythonObject, handler,
+                   record.read(fieldName).as<Int16>());  // Short
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+      FunctionCall("createBytePythonObject", createBytePythonObject, handler,
+                   record.read(fieldName).as<Int8>());  // Byte
+    } else {
+      NES_THROW_RUNTIME_ERROR("Unsupported type: " +
+                              std::string(field->getDataType()->toString()));
     }
-    auto outputPtr = FunctionCall<>("executeMapUdf", executeMapUdf, handler);
+    FunctionCall("setPythonArgumentAtPosition", setPythonArgumentAtPosition,
+                 handler, Value<Int32>(i));
+  }
+  auto outputPtr = FunctionCall<>("executeMapUdf", executeMapUdf, handler);
 
-    record = Record();
+  record = Record();
 
-    int outputSize = (int) outputSchema->fields.size();
-    for (int i = 0; i < outputSize; i++) {
-        auto field = outputSchema->fields[i];
-        auto fieldName = field->getName();
+  int outputSize = (int)outputSchema->fields.size();
+  for (int i = 0; i < outputSize; i++) {
+    auto field = outputSchema->fields[i];
+    auto fieldName = field->getName();
 
-        if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-            Value<> val =
-                FunctionCall("transformBooleanType", transformBooleanType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
-            Value<> val =
-                FunctionCall("transformFloatType", transformFloatType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
-            Value<> val =
-                FunctionCall("transformDoubleType", transformDoubleType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-            Value<> val =
-                FunctionCall("transformIntegerType", transformIntegerType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val);// Integer
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-            Value<> val =
-                FunctionCall("transformLongType", transformLongType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val);// Long
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-            Value<> val =
-                FunctionCall("transformShortType", transformShortType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val);// Short
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-            Value<> val =
-                FunctionCall("transformByteType", transformByteType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val);// Byte
-        } else {
-            NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
-        }
+    if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+      Value<> val =
+          FunctionCall("transformBooleanType", transformBooleanType, outputPtr,
+                       Value<Int32>(i), Value<Int32>(outputSize));
+      record.write(fieldName, val);
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+      Value<> val =
+          FunctionCall("transformFloatType", transformFloatType, outputPtr,
+                       Value<Int32>(i), Value<Int32>(outputSize));
+      record.write(fieldName, val);
+    } else if (field->getDataType()->isEquals(
+                   DataTypeFactory::createDouble())) {
+      Value<> val =
+          FunctionCall("transformDoubleType", transformDoubleType, outputPtr,
+                       Value<Int32>(i), Value<Int32>(outputSize));
+      record.write(fieldName, val);
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+      Value<> val =
+          FunctionCall("transformIntegerType", transformIntegerType, outputPtr,
+                       Value<Int32>(i), Value<Int32>(outputSize));
+      record.write(fieldName, val);  // Integer
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+      Value<> val =
+          FunctionCall("transformLongType", transformLongType, outputPtr,
+                       Value<Int32>(i), Value<Int32>(outputSize));
+      record.write(fieldName, val);  // Long
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+      Value<> val =
+          FunctionCall("transformShortType", transformShortType, outputPtr,
+                       Value<Int32>(i), Value<Int32>(outputSize));
+      record.write(fieldName, val);  // Short
+    } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+      Value<> val =
+          FunctionCall("transformByteType", transformByteType, outputPtr,
+                       Value<Int32>(i), Value<Int32>(outputSize));
+      record.write(fieldName, val);  // Byte
+    } else {
+      NES_THROW_RUNTIME_ERROR("Unsupported type: " +
+                              std::string(field->getDataType()->toString()));
     }
-    // Trigger execution of next operator
-    child->execute(ctx, (Record&) record);
+  }
+  // Trigger execution of next operator
+  child->execute(ctx, (Record&)record);
 }
 
 /**
@@ -429,8 +457,8 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
  * @param ctx execution context
  */
 void MapPythonUDF::terminate(ExecutionContext& ctx) const {
-    auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    FunctionCall<>("finalizePython", finalizePython, handler);
+  auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+  FunctionCall<>("finalizePython", finalizePython, handler);
 }
-}// namespace NES::Runtime::Execution::Operators
-#endif//NAUTILUS_PYTHON_UDF_ENABLED
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NAUTILUS_PYTHON_UDF_ENABLED

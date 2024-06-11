@@ -25,34 +25,36 @@
 namespace NES::Statistic {
 
 class AbstractStatisticQueryGenerator;
-using StatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
+using StatisticQueryGeneratorPtr =
+    std::shared_ptr<AbstractStatisticQueryGenerator>;
 
 /**
  * @brief Interface for creating a statistic query
  */
 class AbstractStatisticQueryGenerator {
-  public:
-    /**
-     * @brief Creates a query that is used for creating the statistics
-     * @param characteristic
-     * @param window
-     * @param sendingPolicy
-     * @param triggerCondition
-     * @param queryCatalog
-     * @return Query
-     */
-    virtual Query createStatisticQuery(const Characteristic& characteristic,
-                                       const Windowing::WindowTypePtr& window,
-                                       const SendingPolicyPtr& sendingPolicy,
-                                       const TriggerConditionPtr& triggerCondition,
-                                       const Catalogs::Query::QueryCatalog& queryCatalog) = 0;
+ public:
+  /**
+   * @brief Creates a query that is used for creating the statistics
+   * @param characteristic
+   * @param window
+   * @param sendingPolicy
+   * @param triggerCondition
+   * @param queryCatalog
+   * @return Query
+   */
+  virtual Query createStatisticQuery(
+      const Characteristic& characteristic,
+      const Windowing::WindowTypePtr& window,
+      const SendingPolicyPtr& sendingPolicy,
+      const TriggerConditionPtr& triggerCondition,
+      const Catalogs::Query::QueryCatalog& queryCatalog) = 0;
 
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~AbstractStatisticQueryGenerator() = default;
+  /**
+   * @brief Virtual destructor
+   */
+  virtual ~AbstractStatisticQueryGenerator() = default;
 };
 
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_

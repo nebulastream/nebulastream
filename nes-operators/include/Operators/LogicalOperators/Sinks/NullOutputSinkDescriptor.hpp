@@ -23,22 +23,21 @@ namespace NES {
  * @brief Descriptor defining properties used for creating physical print sink
  */
 class NullOutputSinkDescriptor : public SinkDescriptor {
+ public:
+  /**
+   * @brief Factory method to create a new prink sink descriptor
+   * @return descriptor for print sink
+   */
+  static SinkDescriptorPtr create(uint64_t numberOfOrigins = 1);
+  std::string toString() const override;
+  [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
-  public:
-    /**
-     * @brief Factory method to create a new prink sink descriptor
-     * @return descriptor for print sink
-     */
-    static SinkDescriptorPtr create(uint64_t numberOfOrigins = 1);
-    std::string toString() const override;
-    [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
-
-  private:
-    explicit NullOutputSinkDescriptor(uint64_t numberOfOrigins);
+ private:
+  explicit NullOutputSinkDescriptor(uint64_t numberOfOrigins);
 };
 
 using NullOutputSinkDescriptorPtr = std::shared_ptr<NullOutputSinkDescriptor>;
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NULLOUTPUTSINKDESCRIPTOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NULLOUTPUTSINKDESCRIPTOR_HPP_

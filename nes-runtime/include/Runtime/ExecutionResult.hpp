@@ -20,16 +20,18 @@
 namespace NES {
 
 enum class ExecutionResult : uint8_t {
-    /// Execution completed successfully
-    Ok = 0,
-    /// Execution completed unsuccessfully -> Must handle error
-    Error,
-    /// Query Execution completed successfully and no further data are to be expected
-    Finished,
-    /// All Queries Execution completed successfully and no further data are to be expected
-    AllFinished
+  /// Execution completed successfully
+  Ok = 0,
+  /// Execution completed unsuccessfully -> Must handle error
+  Error,
+  /// Query Execution completed successfully and no further data are to be
+  /// expected
+  Finished,
+  /// All Queries Execution completed successfully and no further data are to be
+  /// expected
+  AllFinished
 };
 
 }
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_

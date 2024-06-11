@@ -25,7 +25,8 @@
 #include <CL/cl.h>
 #endif
 #else
-// Define some OpenCL types, so that this header file compiles, and we don't need #ifdef's everywhere.
+// Define some OpenCL types, so that this header file compiles, and we don't
+// need #ifdef's everywhere.
 using cl_platform_id = unsigned;
 using cl_device_id = unsigned;
 #endif
@@ -33,34 +34,38 @@ using cl_device_id = unsigned;
 namespace NES::Runtime {
 
 /**
- * Data structure to hold the information about the available OpenCL devices in a worker.
+ * Data structure to hold the information about the available OpenCL devices in
+ * a worker.
  *
- * In contrast to OpenCLDeviceInfo, this struct also holds the OpenCL platform ID and device ID to access the device using the OpenCL API.
+ * In contrast to OpenCLDeviceInfo, this struct also holds the OpenCL platform
+ * ID and device ID to access the device using the OpenCL API.
  */
 struct WorkerOpenCLDeviceInfo {
-  public:
-    WorkerOpenCLDeviceInfo(const cl_platform_id platformId, const cl_device_id deviceId, const OpenCLDeviceInfo& deviceInfo)
-        : platformId(platformId), deviceId(deviceId), deviceInfo(deviceInfo) {}
+ public:
+  WorkerOpenCLDeviceInfo(const cl_platform_id platformId,
+                         const cl_device_id deviceId,
+                         const OpenCLDeviceInfo& deviceInfo)
+      : platformId(platformId), deviceId(deviceId), deviceInfo(deviceInfo) {}
 
-  public:
-    const cl_platform_id platformId;
-    const cl_device_id deviceId;
-    const OpenCLDeviceInfo deviceInfo;
+ public:
+  const cl_platform_id platformId;
+  const cl_device_id deviceId;
+  const OpenCLDeviceInfo deviceInfo;
 };
 
 /**
  * Retrieve and store information about installed OpenCL devices.
  */
 class OpenCLManager {
-  public:
-    OpenCLManager();
+ public:
+  OpenCLManager();
 
-    const std::vector<WorkerOpenCLDeviceInfo>& getDevices() const;
+  const std::vector<WorkerOpenCLDeviceInfo>& getDevices() const;
 
-  private:
-    std::vector<WorkerOpenCLDeviceInfo> devices;
+ private:
+  std::vector<WorkerOpenCLDeviceInfo> devices;
 };
 
-}// namespace NES::Runtime
+}  // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_

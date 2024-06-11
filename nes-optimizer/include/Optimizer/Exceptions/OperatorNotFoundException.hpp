@@ -21,12 +21,13 @@
 
 namespace NES::Exceptions {
 /**
- * @brief This Exception is thrown if we obtain an invalid node, e.g. nullptr, or cannot find a node
+ * @brief This Exception is thrown if we obtain an invalid node, e.g. nullptr,
+ * or cannot find a node
  */
 class OperatorNotFoundException : public RequestExecutionException {
-  public:
-    explicit OperatorNotFoundException(const std::string& message);
+ public:
+  explicit OperatorNotFoundException(const std::string& message);
 };
-}// namespace NES::Exceptions
+}  // namespace NES::Exceptions
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_OPERATORNOTFOUNDEXCEPTION_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_OPERATORNOTFOUNDEXCEPTION_HPP_

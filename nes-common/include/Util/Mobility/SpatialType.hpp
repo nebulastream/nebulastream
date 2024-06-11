@@ -20,14 +20,17 @@
 namespace NES::Spatial::Experimental {
 
 /**
- * this enum defines different types workers can have regarding their spatial information
+ * this enum defines different types workers can have regarding their spatial
+ * information
  */
 enum class SpatialType : uint8_t {
-    NO_LOCATION = 0,   //the worker does not have a known location
-    FIXED_LOCATION = 1,//the worker has a known fixed location that will not change after its creation
-    MOBILE_NODE = 2,   //the worker runs on a mobile device which might change its location anytime
-    INVALID = 3        //no valid worker type
+  NO_LOCATION = 0,     // the worker does not have a known location
+  FIXED_LOCATION = 1,  // the worker has a known fixed location that will not
+                       // change after its creation
+  MOBILE_NODE = 2,  // the worker runs on a mobile device which might change its
+                    // location anytime
+  INVALID = 3  // no valid worker type
 };
-}// namespace NES::Spatial::Experimental
+}  // namespace NES::Spatial::Experimental
 
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPE_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPE_HPP_

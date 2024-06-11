@@ -20,30 +20,30 @@ namespace NES {
  * @brief A unary expression is used to represent expressions with one child.
  */
 class UnaryExpressionNode : public ExpressionNode {
-  public:
-    explicit UnaryExpressionNode(DataTypePtr stamp);
+ public:
+  explicit UnaryExpressionNode(DataTypePtr stamp);
 
-    /**
-     * @brief set the child node of this expression.
-     * @param child ExpressionNodePtr
-     */
-    void setChild(const ExpressionNodePtr& child);
+  /**
+   * @brief set the child node of this expression.
+   * @param child ExpressionNodePtr
+   */
+  void setChild(const ExpressionNodePtr& child);
 
-    /**
-     * @brief returns the child of this expression
-     * @return
-     */
-    ExpressionNodePtr child() const;
+  /**
+   * @brief returns the child of this expression
+   * @return
+   */
+  ExpressionNodePtr child() const;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override = 0;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override = 0;
 
-  protected:
-    explicit UnaryExpressionNode(UnaryExpressionNode* other);
+ protected:
+  explicit UnaryExpressionNode(UnaryExpressionNode* other);
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_

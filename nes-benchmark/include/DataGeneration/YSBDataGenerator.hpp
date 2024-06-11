@@ -19,18 +19,19 @@
 namespace NES::Benchmark::DataGeneration {
 
 class YSBDataGenerator : public DataGenerator {
-  public:
-    std::string getName() override;
+ public:
+  std::string getName() override;
 
-    std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
+  std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers,
+                                               size_t bufferSize) override;
 
-    SchemaPtr getSchema() override;
+  SchemaPtr getSchema() override;
 
-    Configurations::SchemaTypePtr getSchemaType() override;
+  Configurations::SchemaTypePtr getSchemaType() override;
 
-    std::string toString() override;
+  std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+}  // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_YSBDATAGENERATOR_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_YSBDATAGENERATOR_HPP_

@@ -18,37 +18,39 @@
 namespace NES {
 
 /**
- * @brief This is a utility, which provides an context, to dump state (e.g., query plans or irs) to a file or the console.
+ * @brief This is a utility, which provides an context, to dump state (e.g.,
+ * query plans or irs) to a file or the console.
  */
 class DumpHelper {
-  public:
-    /**
-     * @brief Factory method to create the dump utility.
-     * @param contextIdentifier the global identifier for all elements that are dumped by this context
-     * @param dumpToConsole indicator if content is dumped to console
-     * @param dumpToFile indicator if content is dumped to file
-     * @param outputPath output path if content is dumped to a file
-     * @return DumpHelper
-     */
-    static DumpHelper create(const std::string& contextIdentifier,
-                             bool dumpToConsole,
-                             bool dumpToFile,
-                             const std::string& outputPath = std::string());
+ public:
+  /**
+   * @brief Factory method to create the dump utility.
+   * @param contextIdentifier the global identifier for all elements that are
+   * dumped by this context
+   * @param dumpToConsole indicator if content is dumped to console
+   * @param dumpToFile indicator if content is dumped to file
+   * @param outputPath output path if content is dumped to a file
+   * @return DumpHelper
+   */
+  static DumpHelper create(const std::string& contextIdentifier,
+                           bool dumpToConsole, bool dumpToFile,
+                           const std::string& outputPath = std::string());
 
-    /**
-     * @brief Function to dump a specific entity using this context.
-     * @param name identifier of this entry.
-     * @param output the content that should be dumped.
-     */
-    void dump(const std::string_view& name, const std::string_view& output) const;
+  /**
+   * @brief Function to dump a specific entity using this context.
+   * @param name identifier of this entry.
+   * @param output the content that should be dumped.
+   */
+  void dump(const std::string_view& name, const std::string_view& output) const;
 
-  private:
-    explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath);
-    const std::string contextIdentifier;
-    const bool dumpToConsole;
-    const bool dumpToFile;
-    const std::string outputPath;
+ private:
+  explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole,
+                      bool dumpToFile, std::string outputPath);
+  const std::string contextIdentifier;
+  const bool dumpToConsole;
+  const bool dumpToFile;
+  const std::string outputPath;
 };
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_

@@ -16,18 +16,24 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 
-BitWiseOrOperation::BitWiseOrOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::BitWiseOr, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
+BitWiseOrOperation::BitWiseOrOperation(OperationIdentifier identifier,
+                                       OperationPtr leftInput,
+                                       OperationPtr rightInput)
+    : Operation(OperationType::BitWiseOr, identifier, leftInput->getStamp()),
+      leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
-    leftInput->addUsage(this);
-    rightInput->addUsage(this);
+  leftInput->addUsage(this);
+  rightInput->addUsage(this);
 }
 
 std::string BitWiseOrOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " | " + getRightInput()->getIdentifier();
+  return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " | " +
+         getRightInput()->getIdentifier();
 }
-bool BitWiseOrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::BitWiseOr; }
+bool BitWiseOrOperation::classof(const Operation* Op) {
+  return Op->getOperationType() == OperationType::BitWiseOr;
+}
 
 OperationPtr BitWiseOrOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr BitWiseOrOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::Nautilus::IR::Operations
+}  // namespace NES::Nautilus::IR::Operations

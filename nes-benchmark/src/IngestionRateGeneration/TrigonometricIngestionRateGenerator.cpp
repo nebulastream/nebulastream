@@ -15,35 +15,42 @@
 #include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
-TrigonometricIngestionRateGenerator::TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution,
-                                                                         uint64_t ingestionRateInBuffers,
-                                                                         uint64_t ingestionRateCount,
-                                                                         uint64_t numberOfPeriods)
-    : IngestionRateGenerator(), ingestionRateDistribution(ingestionRateDistribution),
-      ingestionRateInBuffers(ingestionRateInBuffers), numberOfPeriods(numberOfPeriods) {
-
-    IngestionRateGenerator::ingestionRateCount = ingestionRateCount;
+TrigonometricIngestionRateGenerator::TrigonometricIngestionRateGenerator(
+    IngestionRateDistribution ingestionRateDistribution,
+    uint64_t ingestionRateInBuffers, uint64_t ingestionRateCount,
+    uint64_t numberOfPeriods)
+    : IngestionRateGenerator(),
+      ingestionRateDistribution(ingestionRateDistribution),
+      ingestionRateInBuffers(ingestionRateInBuffers),
+      numberOfPeriods(numberOfPeriods) {
+  IngestionRateGenerator::ingestionRateCount = ingestionRateCount;
 }
 
-std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestionRates() {
-    for (uint64_t i = 0; i < ingestionRateCount; ++i) {
-        if (ingestionRateDistribution == IngestionRateDistribution::SINUS) {
-            uint64_t curIngestionRate = round(getSinValue(i) * ingestionRateInBuffers);
-            predefinedIngestionRates.push_back(curIngestionRate);
-        } else if (ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
-            uint64_t curIngestionRate = round(getCosValue(i) * ingestionRateInBuffers);
-            predefinedIngestionRates.push_back(curIngestionRate);
-        }
+std::vector<std::uint64_t>
+TrigonometricIngestionRateGenerator::generateIngestionRates() {
+  for (uint64_t i = 0; i < ingestionRateCount; ++i) {
+    if (ingestionRateDistribution == IngestionRateDistribution::SINUS) {
+      uint64_t curIngestionRate =
+          round(getSinValue(i) * ingestionRateInBuffers);
+      predefinedIngestionRates.push_back(curIngestionRate);
+    } else if (ingestionRateDistribution ==
+               IngestionRateDistribution::COSINUS) {
+      uint64_t curIngestionRate =
+          round(getCosValue(i) * ingestionRateInBuffers);
+      predefinedIngestionRates.push_back(curIngestionRate);
     }
+  }
 
-    return predefinedIngestionRates;
+  return predefinedIngestionRates;
 }
 
 double TrigonometricIngestionRateGenerator::getSinValue(uint64_t xValue) {
-    return (0.5 * (1 + sin(2.0 * PI() * xValue * (numberOfPeriods / (double) ingestionRateCount))));
+  return (0.5 * (1 + sin(2.0 * PI() * xValue *
+                         (numberOfPeriods / (double)ingestionRateCount))));
 }
 
 double TrigonometricIngestionRateGenerator::getCosValue(uint64_t xValue) {
-    return (0.5 * (1 + cos(2.0 * PI() * xValue * (numberOfPeriods / (double) ingestionRateCount))));
+  return (0.5 * (1 + cos(2.0 * PI() * xValue *
+                         (numberOfPeriods / (double)ingestionRateCount))));
 }
-}// namespace NES::Benchmark::IngestionRateGeneration
+}  // namespace NES::Benchmark::IngestionRateGeneration

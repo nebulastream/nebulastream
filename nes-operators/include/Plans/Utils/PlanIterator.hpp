@@ -27,9 +27,9 @@ class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**
- * @brief Iterator for query plans, which correctly handles multiple sources and sinks.
- * The iterator visits each operator exactly one time in the following order:
- * top-to-bottom and left-to-right
+ * @brief Iterator for query plans, which correctly handles multiple sources and
+ * sinks. The iterator visits each operator exactly one time in the following
+ * order: top-to-bottom and left-to-right
  *
  * Example Query Plan:
  *
@@ -48,61 +48,62 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
  * #6 - Source 2
  */
 class PlanIterator {
-  public:
-    explicit PlanIterator(QueryPlanPtr queryPlan);
+ public:
+  explicit PlanIterator(QueryPlanPtr queryPlan);
 
-    explicit PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan);
+  explicit PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
-        friend class PlanIterator;
+  class iterator : public std::iterator<std::forward_iterator_tag, NodePtr,
+                                        NodePtr, NodePtr*, NodePtr&> {
+    friend class PlanIterator;
 
-      public:
-        /**
-         * @brief Moves the iterator to the next node.
-         * If we reach the end of the iterator we will ignore this operation.
-         * @return iterator
-         */
-        iterator& operator++();
-
-        /**
-         * @brief Checks if the iterators are not at the same position
-         */
-        bool operator!=(const iterator& other) const;
-
-        /**
-         * @brief Gets the node at the current iterator position.
-         * @return
-         */
-        NodePtr operator*();
-
-      private:
-        explicit iterator(const std::vector<OperatorPtr>& rootOperators);
-        explicit iterator();
-        std::stack<NodePtr> workStack;
-    };
-
+   public:
     /**
-     * @brief Starts a new iterator at the start node, which is always a sink.
+     * @brief Moves the iterator to the next node.
+     * If we reach the end of the iterator we will ignore this operation.
      * @return iterator
      */
-    iterator begin();
+    iterator& operator++();
 
     /**
-    * @brief The end of this iterator has an empty work stack.
-    * @return iterator
-    */
-    static iterator end();
-
-    /**
-     * @brief Return a snapshot of the iterator.
-     * @return vector<NodePtr> nodes
+     * @brief Checks if the iterators are not at the same position
      */
-    std::vector<NodePtr> snapshot();
+    bool operator!=(const iterator& other) const;
 
-  private:
-    std::vector<OperatorPtr> rootOperators;
+    /**
+     * @brief Gets the node at the current iterator position.
+     * @return
+     */
+    NodePtr operator*();
+
+   private:
+    explicit iterator(const std::vector<OperatorPtr>& rootOperators);
+    explicit iterator();
+    std::stack<NodePtr> workStack;
+  };
+
+  /**
+   * @brief Starts a new iterator at the start node, which is always a sink.
+   * @return iterator
+   */
+  iterator begin();
+
+  /**
+   * @brief The end of this iterator has an empty work stack.
+   * @return iterator
+   */
+  static iterator end();
+
+  /**
+   * @brief Return a snapshot of the iterator.
+   * @return vector<NodePtr> nodes
+   */
+  std::vector<NodePtr> snapshot();
+
+ private:
+  std::vector<OperatorPtr> rootOperators;
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_

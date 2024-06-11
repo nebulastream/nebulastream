@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <gmock/gmock-matchers.h>
+#include <gtest/gtest.h>
+
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
@@ -46,8 +49,6 @@
 #include <Types/WindowType.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gmock/gmock-matchers.h>
-#include <gtest/gtest.h>
 #include <iostream>
 
 namespace NES {
@@ -55,450 +56,522 @@ namespace NES {
 using namespace Configurations;
 
 class QueryAPITest : public Testing::BaseUnitTest {
-  public:
-    PhysicalSourcePtr physicalSource;
-    LogicalSourcePtr logicalSource;
+ public:
+  PhysicalSourcePtr physicalSource;
+  LogicalSourcePtr logicalSource;
 
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryTest test class.");
-    }
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("QueryTest.log", NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup QueryTest test class.");
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
-        physicalSource = PhysicalSource::create(defaultSourceType);
-        logicalSource = LogicalSource::create("test2", Schema::create());
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
+    physicalSource = PhysicalSource::create(defaultSourceType);
+    logicalSource = LogicalSource::create("test2", Schema::create());
+  }
 };
 
 TEST_F(QueryAPITest, testQueryFilter) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query = Query::from("default_logical")
+                    .filter(lessExpression)
+                    .sink(printSinkDescriptor);
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 1U);
 
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical").filter(lessExpression).sink(printSinkDescriptor);
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
-
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 TEST_F(QueryAPITest, testQueryProjection) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("id");
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query = Query::from("default_logical")
+                    .project(Attribute("id"), Attribute("value"))
+                    .sink(printSinkDescriptor);
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 1U);
 
-    auto lessExpression = Attribute("id");
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical").project(Attribute("id"), Attribute("value")).sink(printSinkDescriptor);
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
-
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 TEST_F(QueryAPITest, testQueryTumblingWindow) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query = Query::from("default_logical")
+                    .window(TumblingWindow::of(
+                        TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                    .byKey(Attribute("id"))
+                    .apply(Sum(Attribute("value")))
+                    .sink(printSinkDescriptor);
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 1U);
 
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
-                      .byKey(Attribute("id"))
-                      .apply(Sum(Attribute("value")))
-                      .sink(printSinkDescriptor);
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
-
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_TRUE(sinkOptr->getSinkDescriptor()->instanceOf<PrintSinkDescriptor>());
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_TRUE(sinkOptr->getSinkDescriptor()->instanceOf<PrintSinkDescriptor>());
 }
 
 TEST_F(QueryAPITest, testQuerySlidingWindow) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query =
+      Query::from("default_logical")
+          .window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(),
+                                    Seconds(10), Seconds(2)))
+          .byKey(Attribute("id"))
+          .apply(Sum(Attribute("value")))
+          .sink(printSinkDescriptor);
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 1U);
 
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)))
-                      .byKey(Attribute("id"))
-                      .apply(Sum(Attribute("value")))
-                      .sink(printSinkDescriptor);
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
-
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 /**
  * Merge two input source: one with filter and one without filter.
  */
 TEST_F(QueryAPITest, testQueryMerge) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
-
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
-    auto subQuery = Query::from("default_logical").filter(lessExpression);
-    auto query = Query::from("default_logical").unionWith(subQuery).sink(printSinkDescriptor);
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 2U);
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
+  auto subQuery = Query::from("default_logical").filter(lessExpression);
+  auto query = Query::from("default_logical")
+                   .unionWith(subQuery)
+                   .sink(printSinkDescriptor);
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 2U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 /**
  * Join two input source: one with filter and one without filter.
  */
 TEST_F(QueryAPITest, testQueryJoin) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
+  auto subQuery = Query::from("default_logical").filter(lessExpression);
 
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
-    auto subQuery = Query::from("default_logical").filter(lessExpression);
-
-    auto query = Query::from("default_logical")
-                     .joinWith(subQuery)
-                     .where(Attribute("id") == Attribute("id"))
-                     .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
-                     .sink(printSinkDescriptor);
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 2U);
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  auto query = Query::from("default_logical")
+                   .joinWith(subQuery)
+                   .where(Attribute("id") == Attribute("id"))
+                   .window(TumblingWindow::of(
+                       TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                   .sink(printSinkDescriptor);
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 2U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
 TEST_F(QueryAPITest, testQueryExpression) {
-    auto andExpression = Attribute("f1") && 10;
-    EXPECT_TRUE(andExpression->instanceOf<AndExpressionNode>());
+  auto andExpression = Attribute("f1") && 10;
+  EXPECT_TRUE(andExpression->instanceOf<AndExpressionNode>());
 
-    auto orExpression = Attribute("f1") || 45;
-    EXPECT_TRUE(orExpression->instanceOf<OrExpressionNode>());
+  auto orExpression = Attribute("f1") || 45;
+  EXPECT_TRUE(orExpression->instanceOf<OrExpressionNode>());
 
-    auto lessExpression = Attribute("f1") < 45;
-    EXPECT_TRUE(lessExpression->instanceOf<LessExpressionNode>());
+  auto lessExpression = Attribute("f1") < 45;
+  EXPECT_TRUE(lessExpression->instanceOf<LessExpressionNode>());
 
-    auto lessThenExpression = Attribute("f1") <= 45;
-    EXPECT_TRUE(lessThenExpression->instanceOf<LessEqualsExpressionNode>());
+  auto lessThenExpression = Attribute("f1") <= 45;
+  EXPECT_TRUE(lessThenExpression->instanceOf<LessEqualsExpressionNode>());
 
-    auto equalsExpression = Attribute("f1") == 45;
-    EXPECT_TRUE(equalsExpression->instanceOf<EqualsExpressionNode>());
+  auto equalsExpression = Attribute("f1") == 45;
+  EXPECT_TRUE(equalsExpression->instanceOf<EqualsExpressionNode>());
 
-    auto greaterExpression = Attribute("f1") > 45;
-    EXPECT_TRUE(greaterExpression->instanceOf<GreaterExpressionNode>());
+  auto greaterExpression = Attribute("f1") > 45;
+  EXPECT_TRUE(greaterExpression->instanceOf<GreaterExpressionNode>());
 
-    auto greaterThenExpression = Attribute("f1") >= 45;
-    EXPECT_TRUE(greaterThenExpression->instanceOf<GreaterEqualsExpressionNode>());
+  auto greaterThenExpression = Attribute("f1") >= 45;
+  EXPECT_TRUE(greaterThenExpression->instanceOf<GreaterEqualsExpressionNode>());
 
-    auto notEqualExpression = Attribute("f1") != 45;
-    EXPECT_TRUE(notEqualExpression->instanceOf<NegateExpressionNode>());
-    auto equals = notEqualExpression->as<NegateExpressionNode>()->child();
-    EXPECT_TRUE(equals->instanceOf<EqualsExpressionNode>());
+  auto notEqualExpression = Attribute("f1") != 45;
+  EXPECT_TRUE(notEqualExpression->instanceOf<NegateExpressionNode>());
+  auto equals = notEqualExpression->as<NegateExpressionNode>()->child();
+  EXPECT_TRUE(equals->instanceOf<EqualsExpressionNode>());
 
-    auto assignmentExpression = Attribute("f1") = --Attribute("f1")++ + 10;
-    ConsoleDumpHandler::create(std::cout)->dump(assignmentExpression);
-    EXPECT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
+  auto assignmentExpression = Attribute("f1") = --Attribute("f1")++ + 10;
+  ConsoleDumpHandler::create(std::cout)->dump(assignmentExpression);
+  EXPECT_TRUE(
+      assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
 }
 
 /**
- * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
+ * @brief Test if the custom field set for aggregation using "as()" is set in
+ * the sink output schema
  */
 TEST_F(QueryAPITest, windowAggregationWithAs) {
+  auto sce = Catalogs::Source::SourceCatalogEntry::create(
+      physicalSource, logicalSource, WorkerId(1));
 
-    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(1));
+  Catalogs::Source::SourceCatalogPtr sourceCatalog =
+      std::make_shared<Catalogs::Source::SourceCatalog>();
+  sourceCatalog->addPhysicalSource("default_logical", sce);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    sourceCatalog->addPhysicalSource("default_logical", sce);
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  // create a query with "as" in the aggregation
+  auto query = Query::from("default_logical")
+                   .window(TumblingWindow::of(EventTime(Attribute("value")),
+                                              Milliseconds(10)))
+                   .byKey(Attribute("id", BasicType::INT64))
+                   .apply(Sum(Attribute("value", BasicType::INT64))
+                              ->as(FieldAccessExpressionNode::create(
+                                  "MY_OUTPUT_FIELD_NAME")))
+                   .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
+                   .sink(PrintSinkDescriptor::create());
 
-    // create a query with "as" in the aggregation
-    auto query =
-        Query::from("default_logical")
-            .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
-            .byKey(Attribute("id", BasicType::INT64))
-            .apply(Sum(Attribute("value", BasicType::INT64))->as(FieldAccessExpressionNode::create("MY_OUTPUT_FIELD_NAME")))
-            .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
-            .sink(PrintSinkDescriptor::create());
+  Catalogs::UDF::UDFCatalogPtr udfCatalog =
+      std::make_shared<Catalogs::UDF::UDFCatalog>();
+  // only perform type inference phase to check if the modified aggregation
+  // field name is set in the output schema of the sink
+  auto typeInferencePhase =
+      Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+  auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
-    Catalogs::UDF::UDFCatalogPtr udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+  // get the output schema of the sink
+  const auto outputSchemaString = query.getQueryPlan()
+                                      ->getSinkOperators()[0]
+                                      ->getOutputSchema()
+                                      ->toString();
+  NES_DEBUG("QueryExecutionTest:: WindowAggWithAs outputSchema: {}",
+            outputSchemaString);
 
-    // get the output schema of the sink
-    const auto outputSchemaString = query.getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString();
-    NES_DEBUG("QueryExecutionTest:: WindowAggWithAs outputSchema: {}", outputSchemaString);
-
-    EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
+  EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
 }
 
 /**
- * @brief Test if the system can create a logical query plan with a Threshold Window Operator
+ * @brief Test if the system can create a logical query plan with a Threshold
+ * Window Operator
  */
 TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
 
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
+  // without by key
+  auto query = Query::from("default_logical")
+                   .window(ThresholdWindow::of(Attribute("f1") < 45))
+                   .apply(Sum(Attribute("value", BasicType::INT64))
+                              ->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                   .sink(PrintSinkDescriptor::create());
 
-    // without by key
-    auto query = Query::from("default_logical")
-                     .window(ThresholdWindow::of(Attribute("f1") < 45))
-                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-                     .sink(PrintSinkDescriptor::create());
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 1U);
 
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  // with by key
+  auto query2 = Query::from("default_logical")
+                    .window(ThresholdWindow::of(Attribute("f1") < 45))
+                    .byKey(Attribute("id", BasicType::INT64))
+                    .apply(Sum(Attribute("value", BasicType::INT64))
+                               ->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                    .sink(PrintSinkDescriptor::create());
 
-    // with by key
-    auto query2 = Query::from("default_logical")
-                      .window(ThresholdWindow::of(Attribute("f1") < 45))
-                      .byKey(Attribute("id", BasicType::INT64))
-                      .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-                      .sink(PrintSinkDescriptor::create());
+  auto plan2 = query2.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators2 =
+      plan2->getSourceOperators();
+  EXPECT_EQ(sourceOperators2.size(), 1U);
 
-    auto plan2 = query2.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators2 = plan2->getSourceOperators();
-    EXPECT_EQ(sourceOperators2.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr2 = sourceOperators2[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr2 = sourceOperators2[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators2 =
+      plan2->getSinkOperators();
+  EXPECT_EQ(sinkOperators2.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators2 = plan2->getSinkOperators();
-    EXPECT_EQ(sinkOperators2.size(), 1U);
-
-    SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
-    EXPECT_EQ(sinkOperators2.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
+  EXPECT_EQ(sinkOperators2.size(), 1U);
 }
 
 /**
- * @brief Test if the system can create a logical query plan with a Threshold Window Operator with minuium count
+ * @brief Test if the system can create a logical query plan with a Threshold
+ * Window Operator with minuium count
  */
 TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
 
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
+  // without by key
+  auto query = Query::from("default_logical")
+                   .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
+                   .apply(Sum(Attribute("value", BasicType::INT64))
+                              ->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                   .sink(PrintSinkDescriptor::create());
 
-    // without by key
-    auto query = Query::from("default_logical")
-                     .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
-                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-                     .sink(PrintSinkDescriptor::create());
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 1U);
 
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  // with by key
+  auto query2 = Query::from("default_logical")
+                    .window(ThresholdWindow::of(Attribute("f1") < 45))
+                    .byKey(Attribute("id", BasicType::INT64))
+                    .apply(Sum(Attribute("value", BasicType::INT64))
+                               ->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                    .sink(PrintSinkDescriptor::create());
 
-    // with by key
-    auto query2 = Query::from("default_logical")
-                      .window(ThresholdWindow::of(Attribute("f1") < 45))
-                      .byKey(Attribute("id", BasicType::INT64))
-                      .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-                      .sink(PrintSinkDescriptor::create());
+  auto plan2 = query2.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators2 =
+      plan2->getSourceOperators();
+  EXPECT_EQ(sourceOperators2.size(), 1U);
 
-    auto plan2 = query2.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators2 = plan2->getSourceOperators();
-    EXPECT_EQ(sourceOperators2.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr2 = sourceOperators2[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr2 = sourceOperators2[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators2 =
+      plan2->getSinkOperators();
+  EXPECT_EQ(sinkOperators2.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators2 = plan2->getSinkOperators();
-    EXPECT_EQ(sinkOperators2.size(), 1U);
-
-    SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
-    EXPECT_EQ(sinkOperators2.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
+  EXPECT_EQ(sinkOperators2.size(), 1U);
 }
 
 /**
- * @brief Test if the system can create a logical query plan with a Threshold Window Operator and minium count
+ * @brief Test if the system can create a logical query plan with a Threshold
+ * Window Operator and minium count
  */
 TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto printSinkDescriptor = PrintSinkDescriptor::create();
 
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto printSinkDescriptor = PrintSinkDescriptor::create();
+  // without by key
+  auto query = Query::from("default_logical")
+                   .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
+                   .apply(Sum(Attribute("value", BasicType::INT64))
+                              ->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                   .sink(PrintSinkDescriptor::create());
 
-    // without by key
-    auto query = Query::from("default_logical")
-                     .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
-                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-                     .sink(PrintSinkDescriptor::create());
+  auto plan = query.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators =
+      plan->getSourceOperators();
+  EXPECT_EQ(sourceOperators.size(), 1U);
 
-    auto plan = query.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
-    EXPECT_EQ(sourceOperators.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators =
+      plan->getSinkOperators();
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+  EXPECT_EQ(sinkOperators.size(), 1U);
 
-    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+  // with by key
+  auto query2 = Query::from("default_logical")
+                    .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
+                    .byKey(Attribute("id", BasicType::INT64))
+                    .apply(Sum(Attribute("value", BasicType::INT64))
+                               ->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                    .sink(PrintSinkDescriptor::create());
 
-    // with by key
-    auto query2 = Query::from("default_logical")
-                      .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
-                      .byKey(Attribute("id", BasicType::INT64))
-                      .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
-                      .sink(PrintSinkDescriptor::create());
+  auto plan2 = query2.getQueryPlan();
+  const std::vector<SourceLogicalOperatorPtr> sourceOperators2 =
+      plan2->getSourceOperators();
+  EXPECT_EQ(sourceOperators2.size(), 1U);
 
-    auto plan2 = query2.getQueryPlan();
-    const std::vector<SourceLogicalOperatorPtr> sourceOperators2 = plan2->getSourceOperators();
-    EXPECT_EQ(sourceOperators2.size(), 1U);
+  SourceLogicalOperatorPtr srcOptr2 = sourceOperators2[0];
+  EXPECT_TRUE(
+      srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
-    SourceLogicalOperatorPtr srcOptr2 = sourceOperators2[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+  const std::vector<SinkLogicalOperatorPtr> sinkOperators2 =
+      plan2->getSinkOperators();
+  EXPECT_EQ(sinkOperators2.size(), 1U);
 
-    const std::vector<SinkLogicalOperatorPtr> sinkOperators2 = plan2->getSinkOperators();
-    EXPECT_EQ(sinkOperators2.size(), 1U);
-
-    SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
-    EXPECT_EQ(sinkOperators2.size(), 1U);
+  SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
+  EXPECT_EQ(sinkOperators2.size(), 1U);
 }
 
 /*
  * @brief Test for Sequence-Operator (seqWith) with two sources.
- * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
- * Query: SEQ(A,B) WITHIN 2 minutes
+ * This test compares the structure of the seqWith operator with the structure
+ * of the joinWith operator. Query: SEQ(A,B) WITHIN 2 minutes
  */
 TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto subQueryB =
+      Query::from("default_logical").filter(lessExpression);  // B in query
 
-    // Query: SEQ(A,B) WITHIN 2 minutes
-    auto querySeq = Query::from("default_logical")// A in query
-                        .seqWith(subQueryB)
-                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                        .sink(PrintSinkDescriptor::create());
-    // create query with joinWith-operator instead of seqWith for comparison
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto queryJoin = Query::from("default_logical")                   // A in query
-                         .map(Attribute("cep_leftKey") = 1)
-                         .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
-                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
-                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
-                         .sink(PrintSinkDescriptor::create());
-    auto seqPlan = querySeq.getQueryPlan();
-    auto joinPlan = queryJoin.getQueryPlan();
-    // compare if seq- and join-plan are equal
-    EXPECT_TRUE(seqPlan->compare(joinPlan));
+  // Query: SEQ(A,B) WITHIN 2 minutes
+  auto querySeq = Query::from("default_logical")  // A in query
+                      .seqWith(subQueryB)
+                      .window(TumblingWindow::of(
+                          EventTime(Attribute("timestamp")), Minutes(2)))
+                      .sink(PrintSinkDescriptor::create());
+  // create query with joinWith-operator instead of seqWith for comparison
+  subQueryB = Query::from("default_logical").filter(lessExpression);  // reset B
+  auto queryJoin =
+      Query::from("default_logical")  // A in query
+          .map(Attribute("cep_leftKey") = 1)
+          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
+          .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
+          .window(
+              TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+          .filter(Attribute("logical$timestamp") <
+                  Attribute("logical$timestamp"))
+          .sink(PrintSinkDescriptor::create());
+  auto seqPlan = querySeq.getQueryPlan();
+  auto joinPlan = queryJoin.getQueryPlan();
+  // compare if seq- and join-plan are equal
+  EXPECT_TRUE(seqPlan->compare(joinPlan));
 }
 
 /*
  * @brief Test for Sequence-Operator (seqWith) with three sources.
- * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
- * Query: SEQ(A,B,C) WITHIN 2 minutes
+ * This test compares the structure of the seqWith operator with the structure
+ * of the joinWith operator. Query: SEQ(A,B,C) WITHIN 2 minutes
  */
 TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
-    auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
-    auto subQueryC = Query::from("default_logical").filter(lessExpression);// C in query
+  auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+  auto lessExpression = Attribute("field_1") <= 10;
+  auto subQueryB =
+      Query::from("default_logical").filter(lessExpression);  // B in query
+  auto subQueryC =
+      Query::from("default_logical").filter(lessExpression);  // C in query
 
-    // Query: SEQ(A,B,C) WITHIN 2 minutes
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto querySeq = Query::from("default_logical")                    // A in query
-                        .seqWith(subQueryB)
-                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                        .seqWith(subQueryC)
-                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                        .sink(PrintSinkDescriptor::create());
-    // reset input streams
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    subQueryC = Query::from("default_logical").filter(lessExpression);// reset C
-    auto queryJoin = Query::from("default_logical")                   // A in query
-                         // create seqWith B
-                         .map(Attribute("cep_leftKey") = 1)
-                         .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
-                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
-                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
-                         // create seqWith C
-                         .map(Attribute("cep_leftKey") = 1)
-                         .joinWith(subQueryC.map(Attribute("cep_rightKey") = 1))
-                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
-                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
-                         .sink(PrintSinkDescriptor::create());
-    auto seqPlan = querySeq.getQueryPlan();
-    auto joinPlan = queryJoin.getQueryPlan();
-    // compare if seq- and join-plan are equal
-    EXPECT_TRUE(seqPlan->compare(joinPlan));
+  // Query: SEQ(A,B,C) WITHIN 2 minutes
+  subQueryB = Query::from("default_logical").filter(lessExpression);  // reset B
+  auto querySeq = Query::from("default_logical")  // A in query
+                      .seqWith(subQueryB)
+                      .window(TumblingWindow::of(
+                          EventTime(Attribute("timestamp")), Minutes(2)))
+                      .seqWith(subQueryC)
+                      .window(TumblingWindow::of(
+                          EventTime(Attribute("timestamp")), Minutes(2)))
+                      .sink(PrintSinkDescriptor::create());
+  // reset input streams
+  subQueryB = Query::from("default_logical").filter(lessExpression);  // reset B
+  subQueryC = Query::from("default_logical").filter(lessExpression);  // reset C
+  auto queryJoin =
+      Query::from("default_logical")  // A in query
+                                      // create seqWith B
+          .map(Attribute("cep_leftKey") = 1)
+          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
+          .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
+          .window(
+              TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+          .filter(Attribute("logical$timestamp") <
+                  Attribute("logical$timestamp"))
+          // create seqWith C
+          .map(Attribute("cep_leftKey") = 1)
+          .joinWith(subQueryC.map(Attribute("cep_rightKey") = 1))
+          .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
+          .window(
+              TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+          .filter(Attribute("logical$timestamp") <
+                  Attribute("logical$timestamp"))
+          .sink(PrintSinkDescriptor::create());
+  auto seqPlan = querySeq.getQueryPlan();
+  auto joinPlan = queryJoin.getQueryPlan();
+  // compare if seq- and join-plan are equal
+  EXPECT_TRUE(seqPlan->compare(joinPlan));
 }
 
-}// namespace NES
+}  // namespace NES

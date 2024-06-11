@@ -26,7 +26,8 @@ class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 class OriginIdAssignmentOperator;
-using OriginIdAssignmentOperatorPtr = std::shared_ptr<OriginIdAssignmentOperator>;
+using OriginIdAssignmentOperatorPtr =
+    std::shared_ptr<OriginIdAssignmentOperator>;
 
 namespace Optimizer {
 
@@ -34,41 +35,45 @@ class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
 
 /**
- * @brief The OriginIdInferencePhase traverses the operator tree and assigns origin ids to operators.
+ * @brief The OriginIdInferencePhase traverses the operator tree and assigns
+ * origin ids to operators.
  *
- * In general, origin ids are emitted from sources, windows or other stateful operators and are used to identify the origin of records.
- * This is crucial for stateful operators, which have to make guarantees over the order of records in the stream (see WatermarkProcessor)
+ * In general, origin ids are emitted from sources, windows or other stateful
+ * operators and are used to identify the origin of records. This is crucial for
+ * stateful operators, which have to make guarantees over the order of records
+ * in the stream (see WatermarkProcessor)
  *
  * This rule is performed in two phases:
- * 1. It assigns unique origin ids to all operators, which inherit from OriginIdAssignmentOperator.
- * These origin ids are unique to a specific query.
+ * 1. It assigns unique origin ids to all operators, which inherit from
+ * OriginIdAssignmentOperator. These origin ids are unique to a specific query.
  * 2. It processes all operators and assigns the input and output origin ids.
-*/
+ */
 class OriginIdInferencePhase {
-  public:
-    static OriginIdInferencePhasePtr create();
-    virtual ~OriginIdInferencePhase() = default;
+ public:
+  static OriginIdInferencePhasePtr create();
+  virtual ~OriginIdInferencePhase() = default;
 
-    /**
-     * @brief Apply the rule to the Query plan
-     * @param queryPlanPtr : The original query plan
-     * @return The updated query plan
-     */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+  /**
+   * @brief Apply the rule to the Query plan
+   * @param queryPlanPtr : The original query plan
+   * @return The updated query plan
+   */
+  QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-    /**
-     * @brief Apply the rule to the Query plan
-     * @param decomposedQueryPlan: The original query plan
-     * @return The updated query plan
-     */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
+  /**
+   * @brief Apply the rule to the Query plan
+   * @param decomposedQueryPlan: The original query plan
+   * @return The updated query plan
+   */
+  DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-  private:
-    explicit OriginIdInferencePhase();
+ private:
+  explicit OriginIdInferencePhase();
 
-    void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
-                          std::vector<OperatorPtr> rootOperators);
+  void performInference(
+      std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
+      std::vector<OperatorPtr> rootOperators);
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_
+}  // namespace Optimizer
+}  // namespace NES
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_

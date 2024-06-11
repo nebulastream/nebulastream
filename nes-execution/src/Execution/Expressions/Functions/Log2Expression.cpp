@@ -19,45 +19,53 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-Log2Expression::Log2Expression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+Log2Expression::Log2Expression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
     : subExpression(subExpression) {}
 
 /**
  * @brief This method calculates the log2 of x.
- * This function is basically a wrapper for std::log2 and enables us to use it in our execution engine framework.
+ * This function is basically a wrapper for std::log2 and enables us to use it
+ * in our execution engine framework.
  * @param x double
  * @return double
  */
 double calculateLog2(double x) { return std::log2(x); }
 
 Value<> Log2Expression::execute(NES::Nautilus::Record& record) const {
-    Value subValue = subExpression->execute(record);
+  Value subValue = subExpression->execute(record);
 
-    if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Double>());
-    } else {
-        // Throw an exception if no type is applicable
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
-    }
+  if (subValue->isType<Int8>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int8>());
+  } else if (subValue->isType<Int16>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int16>());
+  } else if (subValue->isType<Int32>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int32>());
+  } else if (subValue->isType<Int64>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int64>());
+  } else if (subValue->isType<UInt8>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt8>());
+  } else if (subValue->isType<UInt16>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2,
+                          subValue.as<UInt16>());
+  } else if (subValue->isType<UInt32>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2,
+                          subValue.as<UInt32>());
+  } else if (subValue->isType<UInt64>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2,
+                          subValue.as<UInt64>());
+  } else if (subValue->isType<Float>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Float>());
+  } else if (subValue->isType<Double>()) {
+    return FunctionCall<>("calculateLog2", calculateLog2,
+                          subValue.as<Double>());
+  } else {
+    // Throw an exception if no type is applicable
+    throw Exceptions::NotImplementedException(
+        "This expression is only defined on numeric input arguments that are "
+        "either Integer or Float.");
+  }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log2Expression>> log2Expression("log2");
-}// namespace NES::Runtime::Execution::Expressions
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log2Expression>>
+    log2Expression("log2");
+}  // namespace NES::Runtime::Execution::Expressions

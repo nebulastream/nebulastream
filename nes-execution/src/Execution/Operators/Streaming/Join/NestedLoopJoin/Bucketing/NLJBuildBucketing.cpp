@@ -27,57 +27,55 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
-    NES_ASSERT2_FMT(ptrWindowVector != nullptr, "ptrPagedVector should not be null!");
-    auto allWindowVec = static_cast<std::vector<NLJSlice*>*>(ptrWindowVector);
-    auto nljWindow = allWindowVec->operator[](index);
-    auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
-    NES_INFO("allWindowVec->size(): {}", allWindowVec->size());
-    NES_INFO("joinBuildSide: {}", magic_enum::enum_name(joinBuildSide));
+void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index,
+                             WorkerThreadId workerThreadId,
+                             uint64_t joinBuildSideInt) {
+  NES_ASSERT2_FMT(ptrWindowVector != nullptr,
+                  "ptrPagedVector should not be null!");
+  auto allWindowVec = static_cast<std::vector<NLJSlice*>*>(ptrWindowVector);
+  auto nljWindow = allWindowVec->operator[](index);
+  auto joinBuildSide =
+      magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(
+          joinBuildSideInt)
+          .value();
+  NES_INFO("allWindowVec->size(): {}", allWindowVec->size());
+  NES_INFO("joinBuildSide: {}", magic_enum::enum_name(joinBuildSide));
 
-    NES_INFO("getPagedVectorRefProxy for index {} workerThreadId {} nljWindow {}", index, workerThreadId, nljWindow->toString());
+  NES_INFO("getPagedVectorRefProxy for index {} workerThreadId {} nljWindow {}",
+           index, workerThreadId, nljWindow->toString());
 
-    switch (joinBuildSide) {
-        case QueryCompilation::JoinBuildSideType::Left: return nljWindow->getPagedVectorRefLeft(workerThreadId);
-        case QueryCompilation::JoinBuildSideType::Right: return nljWindow->getPagedVectorRefRight(workerThreadId);
-    }
+  switch (joinBuildSide) {
+    case QueryCompilation::JoinBuildSideType::Left:
+      return nljWindow->getPagedVectorRefLeft(workerThreadId);
+    case QueryCompilation::JoinBuildSideType::Right:
+      return nljWindow->getPagedVectorRefRight(workerThreadId);
+  }
 }
 
-void NLJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
-                                              Value<UInt64>& curIndex,
-                                              ValueId<WorkerThreadId>& workerThreadId,
-                                              Record& record) const {
-    auto curPagedVectorRef = Nautilus::FunctionCall("getPagedVectorRefProxy",
-                                                    getPagedVectorRefProxy,
-                                                    allWindowsToFill,
-                                                    curIndex,
-                                                    workerThreadId,
-                                                    Value<UInt64>(to_underlying(joinBuildSide)));
+void NLJBuildBucketing::insertRecordForWindow(
+    Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex,
+    ValueId<WorkerThreadId>& workerThreadId, Record& record) const {
+  auto curPagedVectorRef = Nautilus::FunctionCall(
+      "getPagedVectorRefProxy", getPagedVectorRefProxy, allWindowsToFill,
+      curIndex, workerThreadId, Value<UInt64>(to_underlying(joinBuildSide)));
 
-    // Write record to the pagedVector
-    auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema);
-    pagedVectorVarSizedRef.writeRecord(record);
+  // Write record to the pagedVector
+  auto pagedVectorVarSizedRef =
+      Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema);
+  pagedVectorVarSizedRef.writeRecord(record);
 }
 
-NLJBuildBucketing::NLJBuildBucketing(const uint64_t operatorHandlerIndex,
-                                     const SchemaPtr& schema,
-                                     const std::string& joinFieldName,
-                                     const QueryCompilation::JoinBuildSideType joinBuildSide,
-                                     const uint64_t entrySize,
-                                     TimeFunctionPtr timeFunction,
-                                     QueryCompilation::StreamJoinStrategy joinStrategy,
-                                     QueryCompilation::WindowingStrategy windowingStrategy,
-                                     const uint64_t windowSize,
-                                     const uint64_t windowSlide)
-    : StreamJoinBuildBucketing(operatorHandlerIndex,
-                               schema,
-                               joinFieldName,
-                               joinBuildSide,
-                               entrySize,
-                               std::move(timeFunction),
-                               joinStrategy,
-                               windowingStrategy,
-                               windowSize,
-                               windowSlide) {}
+NLJBuildBucketing::NLJBuildBucketing(
+    const uint64_t operatorHandlerIndex, const SchemaPtr& schema,
+    const std::string& joinFieldName,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const uint64_t entrySize, TimeFunctionPtr timeFunction,
+    QueryCompilation::StreamJoinStrategy joinStrategy,
+    QueryCompilation::WindowingStrategy windowingStrategy,
+    const uint64_t windowSize, const uint64_t windowSlide)
+    : StreamJoinBuildBucketing(operatorHandlerIndex, schema, joinFieldName,
+                               joinBuildSide, entrySize,
+                               std::move(timeFunction), joinStrategy,
+                               windowingStrategy, windowSize, windowSlide) {}
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

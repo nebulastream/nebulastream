@@ -19,75 +19,92 @@
 
 namespace NES {
 
-SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName,
-                                           const std::string& physicalSourceName,
-                                           std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<SenseSourceType>(SenseSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
+SenseSourceTypePtr SenseSourceType::create(
+    const std::string& logicalSourceName, const std::string& physicalSourceName,
+    std::map<std::string, std::string> sourceConfigMap) {
+  return std::make_shared<SenseSourceType>(SenseSourceType(
+      logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
-SenseSourceTypePtr
-SenseSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
-    return std::make_shared<SenseSourceType>(SenseSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+SenseSourceTypePtr SenseSourceType::create(
+    const std::string& logicalSourceName, const std::string& physicalSourceName,
+    Yaml::Node yamlConfig) {
+  return std::make_shared<SenseSourceType>(SenseSourceType(
+      logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
 
-SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
-    return std::make_shared<SenseSourceType>(SenseSourceType(logicalSourceName, physicalSourceName));
+SenseSourceTypePtr SenseSourceType::create(
+    const std::string& logicalSourceName,
+    const std::string& physicalSourceName) {
+  return std::make_shared<SenseSourceType>(
+      SenseSourceType(logicalSourceName, physicalSourceName));
 }
 
-SenseSourceType::SenseSourceType(const std::string& logicalSourceName,
-                                 const std::string& physicalSourceName,
-                                 std::map<std::string, std::string> sourceConfigMap)
+SenseSourceType::SenseSourceType(
+    const std::string& logicalSourceName, const std::string& physicalSourceName,
+    std::map<std::string, std::string> sourceConfigMap)
     : SenseSourceType(logicalSourceName, physicalSourceName) {
-    NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (sourceConfigMap.find(Configurations::UDFS_CONFIG) != sourceConfigMap.end()) {
-        udfs->setValue(sourceConfigMap.find(Configurations::UDFS_CONFIG)->second);
-    } else {
-        NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no udfs defined! Please define a udfs.");
-    }
+  NES_INFO(
+      "SenseSourceConfig: Init source config object with values from "
+      "sourceConfigMap.");
+  if (sourceConfigMap.find(Configurations::UDFS_CONFIG) !=
+      sourceConfigMap.end()) {
+    udfs->setValue(sourceConfigMap.find(Configurations::UDFS_CONFIG)->second);
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "OPCSourceConfig:: no udfs defined! Please define a udfs.");
+  }
 }
 
 SenseSourceType::SenseSourceType(const std::string& logicalSourceName,
                                  const std::string& physicalSourceName,
                                  Yaml::Node yamlConfig)
     : SenseSourceType(logicalSourceName, physicalSourceName) {
-    NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (!yamlConfig[Configurations::UDFS_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::UDFS_CONFIG].As<std::string>() != "\n") {
-        udfs->setValue(yamlConfig[Configurations::UDFS_CONFIG].As<std::string>());
-    } else {
-        NES_THROW_RUNTIME_ERROR("SenseSourceType:: no udfs defined! Please define a udfs.");
-    }
+  NES_INFO(
+      "SenseSourceConfig: Init source config object with values from "
+      "sourceConfigMap.");
+  if (!yamlConfig[Configurations::UDFS_CONFIG].As<std::string>().empty() &&
+      yamlConfig[Configurations::UDFS_CONFIG].As<std::string>() != "\n") {
+    udfs->setValue(yamlConfig[Configurations::UDFS_CONFIG].As<std::string>());
+  } else {
+    NES_THROW_RUNTIME_ERROR(
+        "SenseSourceType:: no udfs defined! Please define a udfs.");
+  }
 }
 
-SenseSourceType::SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::SENSE_SOURCE),
-      udfs(Configurations::ConfigurationOption<std::string>::create(Configurations::UDFS_CONFIG,
-                                                                    "",
-                                                                    "udfs, needed for: SenseSource")) {
-    NES_INFO("SenseSourceType: Init source config object with default values.");
+SenseSourceType::SenseSourceType(const std::string& logicalSourceName,
+                                 const std::string& physicalSourceName)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName,
+                         SourceType::SENSE_SOURCE),
+      udfs(Configurations::ConfigurationOption<std::string>::create(
+          Configurations::UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
+  NES_INFO("SenseSourceType: Init source config object with default values.");
 }
 
 std::string SenseSourceType::toString() {
-    std::stringstream ss;
-    ss << "SenseSourceType => {\n";
-    ss << Configurations::UDFS_CONFIG + ":" + udfs->toStringNameCurrentValue();
-    ss << "\n}";
-    return ss.str();
+  std::stringstream ss;
+  ss << "SenseSourceType => {\n";
+  ss << Configurations::UDFS_CONFIG + ":" + udfs->toStringNameCurrentValue();
+  ss << "\n}";
+  return ss.str();
 }
 
 bool SenseSourceType::equal(const PhysicalSourceTypePtr& other) {
-
-    if (!other->instanceOf<SenseSourceType>()) {
-        return false;
-    }
-    auto otherSourceConfig = other->as<SenseSourceType>();
-    return udfs->getValue() == otherSourceConfig->udfs->getValue();
+  if (!other->instanceOf<SenseSourceType>()) {
+    return false;
+  }
+  auto otherSourceConfig = other->as<SenseSourceType>();
+  return udfs->getValue() == otherSourceConfig->udfs->getValue();
 }
 
-Configurations::StringConfigOption SenseSourceType::getUdfs() const { return udfs; }
+Configurations::StringConfigOption SenseSourceType::getUdfs() const {
+  return udfs;
+}
 
-void SenseSourceType::setUdfs(const std::string& udfsValue) { udfs->setValue(udfsValue); }
+void SenseSourceType::setUdfs(const std::string& udfsValue) {
+  udfs->setValue(udfsValue);
+}
 
 void SenseSourceType::reset() { setUdfs(udfs->getDefaultValue()); }
 
-}// namespace NES
+}  // namespace NES

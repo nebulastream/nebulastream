@@ -22,53 +22,53 @@ namespace NES::Windowing {
  * A time based window measure.
  */
 class TimeMeasure : public WindowMeasure {
-  public:
-    /**
-     * @brief Constructor for a TimeMeasure
-     * @param milliseconds
-     */
-    explicit TimeMeasure(uint64_t milliseconds);
+ public:
+  /**
+   * @brief Constructor for a TimeMeasure
+   * @param milliseconds
+   */
+  explicit TimeMeasure(uint64_t milliseconds);
 
-    /**
-     * @brief gets the time measure in milliseconds
-     * @return uint64_t
-     */
-    [[nodiscard]] uint64_t getTime() const;
+  /**
+   * @brief gets the time measure in milliseconds
+   * @return uint64_t
+   */
+  [[nodiscard]] uint64_t getTime() const;
 
-    std::string toString() const override;
+  std::string toString() const override;
 
-    /**
-     * @brief Compares for equality
-     * @param other: TimeMeasure
-     * @return Boolean
-     */
-    bool equals(const TimeMeasure& other) const;
+  /**
+   * @brief Compares for equality
+   * @param other: TimeMeasure
+   * @return Boolean
+   */
+  bool equals(const TimeMeasure& other) const;
 
-    /**
-     * @brief Checks for less than
-     * @param other
-     * @return True if this < other, false otherwise
-     */
-    bool operator<(const TimeMeasure& other) const;
+  /**
+   * @brief Checks for less than
+   * @param other
+   * @return True if this < other, false otherwise
+   */
+  bool operator<(const TimeMeasure& other) const;
 
-    /**
-     * @brief Checks for less or equal than
-     * @param other
-     * @return True if this <= other, false otherwise
-     */
-    bool operator<=(const TimeMeasure& other) const;
+  /**
+   * @brief Checks for less or equal than
+   * @param other
+   * @return True if this <= other, false otherwise
+   */
+  bool operator<=(const TimeMeasure& other) const;
 
-    /**
-     * @brief Checks equality
-     * @param other
-     * @return True if this == other, false otherwise
-     */
-    bool operator==(const TimeMeasure& other) const;
+  /**
+   * @brief Checks equality
+   * @param other
+   * @return True if this == other, false otherwise
+   */
+  bool operator==(const TimeMeasure& other) const;
 
-  private:
-    const uint64_t milliSeconds;
+ private:
+  const uint64_t milliSeconds;
 };
 
-}// namespace NES::Windowing
+}  // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_
+#endif  // NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_

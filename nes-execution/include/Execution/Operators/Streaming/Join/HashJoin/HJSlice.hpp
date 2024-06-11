@@ -28,93 +28,96 @@
 namespace NES::Runtime::Execution {
 
 /**
- * @brief This class is a data container for all the necessary objects in a slice/window of the StreamJoin
+ * @brief This class is a data container for all the necessary objects in a
+ * slice/window of the StreamJoin
  */
 class HJSlice : public StreamSlice {
+ public:
+  /**
+   * @brief Constructor for a StreamJoinWindow
+   * @param numberOfWorkerThreads
+   * @param sizeOfRecordLeft
+   * @param sizeOfRecordRight
+   * @param sliceStart
+   * @param sliceEnd
+   * @param maxHashTableSize
+   * @param pageSize
+   * @param preAllocPageSizeCnt
+   * @param numPartitions
+   */
+  explicit HJSlice(size_t numberOfWorkerThreads, uint64_t sliceStart,
+                   uint64_t sliceEnd, size_t sizeOfRecordLeft,
+                   size_t sizeOfRecordRight, size_t maxHashTableSize,
+                   size_t pageSize, size_t preAllocPageSizeCnt,
+                   size_t numPartitions,
+                   QueryCompilation::StreamJoinStrategy joinStrategy);
 
-  public:
-    /**
-     * @brief Constructor for a StreamJoinWindow
-     * @param numberOfWorkerThreads
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
-     * @param sliceStart
-     * @param sliceEnd
-     * @param maxHashTableSize
-     * @param pageSize
-     * @param preAllocPageSizeCnt
-     * @param numPartitions
-     */
-    explicit HJSlice(size_t numberOfWorkerThreads,
-                     uint64_t sliceStart,
-                     uint64_t sliceEnd,
-                     size_t sizeOfRecordLeft,
-                     size_t sizeOfRecordRight,
-                     size_t maxHashTableSize,
-                     size_t pageSize,
-                     size_t preAllocPageSizeCnt,
-                     size_t numPartitions,
-                     QueryCompilation::StreamJoinStrategy joinStrategy);
+  ~HJSlice() override = default;
 
-    ~HJSlice() override = default;
+  /**
+   * @brief Returns the number of tuples in this window for the left side
+   * @return uint64_t
+   */
+  uint64_t getNumberOfTuplesLeft() override;
 
-    /**
-     * @brief Returns the number of tuples in this window for the left side
-     * @return uint64_t
-     */
-    uint64_t getNumberOfTuplesLeft() override;
+  /**
+   * @brief Returns the number of tuples in this window for the right side
+   * @return uint64_t
+   */
+  uint64_t getNumberOfTuplesRight() override;
 
-    /**
-     * @brief Returns the number of tuples in this window for the right side
-     * @return uint64_t
-     */
-    uint64_t getNumberOfTuplesRight() override;
+  /**
+   * @brief Creates a string representation of this window
+   * @return String
+   */
+  std::string toString() override;
 
-    /**
-     * @brief Creates a string representation of this window
-     * @return String
-     */
-    std::string toString() override;
+  /**
+   * @brief Returns the local hash table of either the left or the right join
+   * side
+   * @param joinBuildSide
+   * @param workerThreadId
+   * @return Reference to the hash table
+   */
+  Operators::StreamJoinHashTable* getHashTable(
+      QueryCompilation::JoinBuildSideType joinBuildSide,
+      WorkerThreadId workerThreadId);
 
-    /**
-     * @brief Returns the local hash table of either the left or the right join side
-     * @param joinBuildSide
-     * @param workerThreadId
-     * @return Reference to the hash table
-     */
-    Operators::StreamJoinHashTable* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
-                                                 WorkerThreadId workerThreadId);
+  /**
+   * @brief Returns the shared hash table of either the left or the right side
+   * @param joinBuildSide
+   * @return Reference to the shared hash table
+   */
+  Operators::MergingHashTable& getMergingHashTable(
+      QueryCompilation::JoinBuildSideType joinBuildSide);
 
-    /**
-     * @brief Returns the shared hash table of either the left or the right side
-     * @param joinBuildSide
-     * @return Reference to the shared hash table
-     */
-    Operators::MergingHashTable& getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide);
+  /**
+   * @brief Merges all local hash tables to the global one
+   */
+  void mergeLocalToGlobalHashTable();
 
-    /**
-     * @brief Merges all local hash tables to the global one
-     */
-    void mergeLocalToGlobalHashTable();
+  /**
+   * @brief Returns the number of tuples in this window
+   * @param joinBuildSide
+   * @param workerThreadId
+   * @return uint64_t
+   */
+  uint64_t getNumberOfTuplesOfWorker(
+      QueryCompilation::JoinBuildSideType joinBuildSide,
+      WorkerThreadId workerThreadId);
 
-    /**
-     * @brief Returns the number of tuples in this window
-     * @param joinBuildSide
-     * @param workerThreadId
-     * @return uint64_t
-     */
-    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId workerThreadId);
-
-  protected:
-    std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
-    std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;
-    Operators::MergingHashTable mergingHashTableLeftSide;
-    Operators::MergingHashTable mergingHashTableRightSide;
-    Runtime::FixedPagesAllocator fixedPagesAllocator;
-    std::atomic<bool> alreadyMergedLocalToGlobalHashTable;
-    std::mutex mutexMergeLocalToGlobalHashTable;
-    QueryCompilation::StreamJoinStrategy joinStrategy;
+ protected:
+  std::vector<std::unique_ptr<Operators::StreamJoinHashTable>>
+      hashTableLeftSide;
+  std::vector<std::unique_ptr<Operators::StreamJoinHashTable>>
+      hashTableRightSide;
+  Operators::MergingHashTable mergingHashTableLeftSide;
+  Operators::MergingHashTable mergingHashTableRightSide;
+  Runtime::FixedPagesAllocator fixedPagesAllocator;
+  std::atomic<bool> alreadyMergedLocalToGlobalHashTable;
+  std::mutex mutexMergeLocalToGlobalHashTable;
+  QueryCompilation::StreamJoinStrategy joinStrategy;
 };
-}// namespace NES::Runtime::Execution
+}  // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_

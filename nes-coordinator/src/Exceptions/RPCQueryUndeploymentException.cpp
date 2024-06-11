@@ -14,14 +14,20 @@
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <utility>
 namespace NES::Exceptions {
-RPCQueryUndeploymentException::RPCQueryUndeploymentException(const std::string& message,
-                                                             std::vector<WorkerId> failedRpcWorkerIds,
-                                                             RpcClientMode mode)
-    : RequestExecutionException(message), failedWorkerIds(std::move(failedRpcWorkerIds)), mode(mode) {}
+RPCQueryUndeploymentException::RPCQueryUndeploymentException(
+    const std::string& message, std::vector<WorkerId> failedRpcWorkerIds,
+    RpcClientMode mode)
+    : RequestExecutionException(message),
+      failedWorkerIds(std::move(failedRpcWorkerIds)),
+      mode(mode) {}
 
-const char* RPCQueryUndeploymentException::what() const noexcept { return message.c_str(); }
+const char* RPCQueryUndeploymentException::what() const noexcept {
+  return message.c_str();
+}
 
-std::vector<WorkerId> RPCQueryUndeploymentException::getFailedWorkerIds() { return failedWorkerIds; }
+std::vector<WorkerId> RPCQueryUndeploymentException::getFailedWorkerIds() {
+  return failedWorkerIds;
+}
 
 RpcClientMode RPCQueryUndeploymentException::getMode() { return mode; }
-}// namespace NES::Exceptions
+}  // namespace NES::Exceptions

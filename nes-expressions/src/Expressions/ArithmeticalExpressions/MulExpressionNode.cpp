@@ -18,32 +18,37 @@
 #include <utility>
 namespace NES {
 
-MulExpressionNode::MulExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
+MulExpressionNode::MulExpressionNode(DataTypePtr stamp)
+    : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-MulExpressionNode::MulExpressionNode(MulExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
+MulExpressionNode::MulExpressionNode(MulExpressionNode* other)
+    : ArithmeticalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
-    auto mulNode = std::make_shared<MulExpressionNode>(left->getStamp());
-    mulNode->setChildren(left, right);
-    return mulNode;
+ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr& left,
+                                            const ExpressionNodePtr& right) {
+  auto mulNode = std::make_shared<MulExpressionNode>(left->getStamp());
+  mulNode->setChildren(left, right);
+  return mulNode;
 }
 
 bool MulExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<MulExpressionNode>()) {
-        auto otherMulNode = rhs->as<MulExpressionNode>();
-        return getLeft()->equal(otherMulNode->getLeft()) && getRight()->equal(otherMulNode->getRight());
-    }
-    return false;
+  if (rhs->instanceOf<MulExpressionNode>()) {
+    auto otherMulNode = rhs->as<MulExpressionNode>();
+    return getLeft()->equal(otherMulNode->getLeft()) &&
+           getRight()->equal(otherMulNode->getRight());
+  }
+  return false;
 }
 
 std::string MulExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << children[0]->toString() << "*" << children[1]->toString();
-    return ss.str();
+  std::stringstream ss;
+  ss << children[0]->toString() << "*" << children[1]->toString();
+  return ss.str();
 }
 
 ExpressionNodePtr MulExpressionNode::copy() {
-    return MulExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+  return MulExpressionNode::create(children[0]->as<ExpressionNode>()->copy(),
+                                   children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+}  // namespace NES

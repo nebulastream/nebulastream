@@ -22,29 +22,29 @@
 
 namespace NES::Nautilus::IR::Operations {
 class IfOperation : public Operation {
-  public:
-    IfOperation(OperationPtr booleanValue);
-    ~IfOperation() override = default;
+ public:
+  IfOperation(OperationPtr booleanValue);
+  ~IfOperation() override = default;
 
-    OperationPtr getValue();
+  OperationPtr getValue();
 
-    BasicBlockPtr getMergeBlock();
-    OperationPtr getBooleanValue();
-    void setMergeBlock(BasicBlockPtr mergeBlock);
-    BasicBlockInvocation& getTrueBlockInvocation();
-    BasicBlockInvocation& getFalseBlockInvocation();
-    void setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation);
-    void setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation);
-    bool hasFalseCase();
+  BasicBlockPtr getMergeBlock();
+  OperationPtr getBooleanValue();
+  void setMergeBlock(BasicBlockPtr mergeBlock);
+  BasicBlockInvocation& getTrueBlockInvocation();
+  BasicBlockInvocation& getFalseBlockInvocation();
+  void setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation);
+  void setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation);
+  bool hasFalseCase();
 
-    std::string toString() override;
+  std::string toString() override;
 
-  private:
-    OperationWPtr booleanValue;
-    BasicBlockInvocation trueBlockInvocation;
-    BasicBlockInvocation falseBlockInvocation;
-    std::weak_ptr<BasicBlock> mergeBlock;
-    std::unique_ptr<CountedLoopInfo> countedLoopInfo;
+ private:
+  OperationWPtr booleanValue;
+  BasicBlockInvocation trueBlockInvocation;
+  BasicBlockInvocation falseBlockInvocation;
+  std::weak_ptr<BasicBlock> mergeBlock;
+  std::unique_ptr<CountedLoopInfo> countedLoopInfo;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
+}  // namespace NES::Nautilus::IR::Operations
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_

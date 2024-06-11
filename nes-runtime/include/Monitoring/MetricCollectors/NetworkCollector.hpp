@@ -21,43 +21,46 @@
 namespace NES::Monitoring {
 
 /**
- * The NetworkCollector class enables measuring and writing records of class Metrics/Gauge/NetworkMetrics into a TupleBuffer.
+ * The NetworkCollector class enables measuring and writing records of class
+ * Metrics/Gauge/NetworkMetrics into a TupleBuffer.
  */
 class NetworkCollector : public MetricCollector {
-  public:
-    explicit NetworkCollector();
+ public:
+  explicit NetworkCollector();
 
-    /**
-     * @brief Returns the type of metric collector
-     * @return the metric collector type
-     */
-    MetricCollectorType getType() override;
+  /**
+   * @brief Returns the type of metric collector
+   * @return the metric collector type
+   */
+  MetricCollectorType getType() override;
 
-    /**
-     * @brief Fill a buffer with a given metric.
-     * @param tupleBuffer The tuple buffer
-     * @return True if successful, else false
-     */
-    bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
+  /**
+   * @brief Fill a buffer with a given metric.
+   * @param tupleBuffer The tuple buffer
+   * @return True if successful, else false
+   */
+  bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
 
-    /**
-     * @brief Return the schema representing the metrics gathered by the collector.
-     * @return The schema
-     */
-    SchemaPtr getSchema() override;
+  /**
+   * @brief Return the schema representing the metrics gathered by the
+   * collector.
+   * @return The schema
+   */
+  SchemaPtr getSchema() override;
 
-    /**
-     * @brief Read the Network metrics based on the underlying utility systems reader and return the metrics.
-     * @return The metrics object
-     */
-    const MetricPtr readMetric() const override;
+  /**
+   * @brief Read the Network metrics based on the underlying utility systems
+   * reader and return the metrics.
+   * @return The metrics object
+   */
+  const MetricPtr readMetric() const override;
 
-  private:
-    AbstractSystemResourcesReaderPtr resourceReader;
-    SchemaPtr schema;
+ private:
+  AbstractSystemResourcesReaderPtr resourceReader;
+  SchemaPtr schema;
 };
 
 using NetworkCollectorPtr = std::shared_ptr<NetworkCollector>;
 
-}// namespace NES::Monitoring
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_
+}  // namespace NES::Monitoring
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_

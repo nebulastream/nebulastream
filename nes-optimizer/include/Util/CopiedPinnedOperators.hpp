@@ -31,27 +31,30 @@ namespace Optimizer {
  * @brief class to store copied pinned up and down stream operators
  */
 class CopiedPinnedOperators {
+ public:
+  /**
+   * @brief Create a CopiedPinnedOperators object
+   * @param pinnedUpStreamOperators: the original pinned up stream operators
+   * @param pinnedDownStreamOperators: the original pinned down stream operators
+   * @param operatorIdToOriginalOperatorMap: the operator id to the original
+   * operator map
+   * @return instance of CopiedPinnedOperators
+   */
+  static CopiedPinnedOperators create(
+      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+      std::unordered_map<OperatorId, LogicalOperatorPtr>&
+          operatorIdToOriginalOperatorMap);
 
-  public:
-    /**
-     * @brief Create a CopiedPinnedOperators object
-     * @param pinnedUpStreamOperators: the original pinned up stream operators
-     * @param pinnedDownStreamOperators: the original pinned down stream operators
-     * @param operatorIdToOriginalOperatorMap: the operator id to the original operator map
-     * @return instance of CopiedPinnedOperators
-     */
-    static CopiedPinnedOperators create(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                        std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap);
+  std::set<LogicalOperatorPtr> copiedPinnedUpStreamOperators;
+  std::set<LogicalOperatorPtr> copiedPinnedDownStreamOperators;
 
-    std::set<LogicalOperatorPtr> copiedPinnedUpStreamOperators;
-    std::set<LogicalOperatorPtr> copiedPinnedDownStreamOperators;
-
-  private:
-    CopiedPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                          const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
+ private:
+  CopiedPinnedOperators(
+      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 };
-}// namespace Optimizer
-}// namespace NES
+}  // namespace Optimizer
+}  // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_

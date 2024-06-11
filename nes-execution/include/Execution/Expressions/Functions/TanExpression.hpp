@@ -20,13 +20,13 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class TanExpression : public Expression {
-  public:
-    TanExpression(const ExpressionPtr& expression);
-    Value<> execute(Record& record) const override;
+ public:
+  TanExpression(const ExpressionPtr& expression);
+  Value<> execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr expression;
+ private:
+  const ExpressionPtr expression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_TANEXPRESSION_HPP_
+}  // namespace NES::Runtime::Execution::Expressions
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_TANEXPRESSION_HPP_

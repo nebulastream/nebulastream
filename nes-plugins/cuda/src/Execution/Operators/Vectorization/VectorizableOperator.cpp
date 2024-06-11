@@ -18,8 +18,9 @@
 namespace NES::Runtime::Execution::Operators {
 
 void VectorizableOperator::execute(ExecutionContext&, Record&) const {
-    throw Exceptions::RuntimeException(
-        "VectorizableOperator: Non-vectorized record input is not allowed in vectorizable operator");
+  throw Exceptions::RuntimeException(
+      "VectorizableOperator: Non-vectorized record input is not allowed in "
+      "vectorizable operator");
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators

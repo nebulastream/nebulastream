@@ -18,17 +18,18 @@
 namespace NES::QueryCompilation {
 
 /**
- * @brief This operator fusion policy fuses all non pipeline breakers (operators, which do not materialize data).
- * Currently fusion is enabled for:
+ * @brief This operator fusion policy fuses all non pipeline breakers
+ * (operators, which do not materialize data). Currently fusion is enabled for:
  * PhysicalMapOperator, PhysicalFilterOperator, PhysicalProjectOperator,
  * PhysicalWatermarkAssignmentOperator, PhysicalJoinBuildOperator,
  * PhysicalSlicePreAggregationOperator, PhysicalSliceMergingOperator.
  */
 class FuseNonPipelineBreakerPolicy : public OperatorFusionPolicy {
-  public:
-    static OperatorFusionPolicyPtr create();
-    bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
+ public:
+  static OperatorFusionPolicyPtr create();
+  bool isFusible(
+      PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
-}// namespace NES::QueryCompilation
+}  // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_

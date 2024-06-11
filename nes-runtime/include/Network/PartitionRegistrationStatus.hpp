@@ -16,18 +16,19 @@
 #include <cstdint>
 namespace NES::Network {
 /**
- * @brief This enum represent the life-cycle of a nes partition in the partition manager:
- * NotFound: partition was never registered in the current partition manager.
- * Deleted: partition was unregistered at some point in time (we keep it for bookkeeping).
- * Registered: partition was registered and alive (meaning its ref cnt is greater than 0).
+ * @brief This enum represent the life-cycle of a nes partition in the partition
+ * manager: NotFound: partition was never registered in the current partition
+ * manager. Deleted: partition was unregistered at some point in time (we keep
+ * it for bookkeeping). Registered: partition was registered and alive (meaning
+ * its ref cnt is greater than 0).
  */
 enum class PartitionRegistrationStatus : uint8_t {
-    /// a partition is registered, i.e., its counter is >= 0
-    Registered,
-    /// a partition was registered but got deleted, i.e., its counter is == 0
-    Deleted,
-    /// a partition was never registered
-    NotFound,
+  /// a partition is registered, i.e., its counter is >= 0
+  Registered,
+  /// a partition was registered but got deleted, i.e., its counter is == 0
+  Deleted,
+  /// a partition was never registered
+  NotFound,
 };
-}// namespace NES::Network
-#endif// NES_RUNTIME_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_
+}  // namespace NES::Network
+#endif  // NES_RUNTIME_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_

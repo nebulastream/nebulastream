@@ -20,26 +20,28 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Unvectorize operator which reverts the execution mode from vectorized to tuple-at-a-time.
- * The child operator is executed on each tuple that is retrieved from an incoming tuple buffer.
+ * @brief Unvectorize operator which reverts the execution mode from vectorized
+ * to tuple-at-a-time. The child operator is executed on each tuple that is
+ * retrieved from an incoming tuple buffer.
  */
 class Unvectorize : public VectorizableOperator {
-  public:
-    /**
-     * @brief Constructor.
-     * @param memoryProvider the memory layout that describes the tuple buffer.
-     * @param projections the projection vector.
-     */
-    Unvectorize(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-                std::vector<Record::RecordFieldIdentifier> projections = {});
+ public:
+  /**
+   * @brief Constructor.
+   * @param memoryProvider the memory layout that describes the tuple buffer.
+   * @param projections the projection vector.
+   */
+  Unvectorize(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+              std::vector<Record::RecordFieldIdentifier> projections = {});
 
-    void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+  void execute(ExecutionContext& ctx,
+               RecordBuffer& recordBuffer) const override;
 
-  private:
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-    std::vector<Record::RecordFieldIdentifier> projections;
+ private:
+  std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+  std::vector<Record::RecordFieldIdentifier> projections;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_UNVECTORIZE_HPP_
+#endif  // NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_UNVECTORIZE_HPP_

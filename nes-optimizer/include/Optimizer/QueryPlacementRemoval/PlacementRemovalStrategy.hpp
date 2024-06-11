@@ -15,10 +15,11 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_
 
+#include <folly/Synchronized.h>
+
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/CopiedPinnedOperators.hpp>
-#include <folly/Synchronized.h>
 #include <set>
 
 namespace NES {
@@ -35,7 +36,8 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-using TopologyNodeWLock = std::shared_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
+using TopologyNodeWLock =
+    std::shared_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
 
 class PathFinder;
 using PathFinderPtr = std::shared_ptr<PathFinder>;
@@ -58,112 +60,128 @@ class DeploymentContext;
 using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
 /**
- * @brief This class takes as input a query plan (represented by a upstream and downstream operators) and removes the
- * placements for all intermediate operators that are in the state To-Be-Removed or To-Be-Replaced. Upon successful
- * removal of the placements the operator states are changed to Removed and To-Be-Placed respectively.
+ * @brief This class takes as input a query plan (represented by a upstream and
+ * downstream operators) and removes the placements for all intermediate
+ * operators that are in the state To-Be-Removed or To-Be-Replaced. Upon
+ * successful removal of the placements the operator states are changed to
+ * Removed and To-Be-Placed respectively.
  *
- * It reflects the changes on the global execution plan by either marking a deployed query sub plan as Updated or Removed.
+ * It reflects the changes on the global execution plan by either marking a
+ * deployed query sub plan as Updated or Removed.
  *
  */
 class PlacementRemovalStrategy {
+ public:
+  /**
+   * @brief Create instance of placement removal strategy
+   * @param globalExecutionPlan: the global execution plan to update
+   * @param topology: the topology
+   * @param typeInferencePhase: the type inference phase
+   * @param placementAmendmentMode: the placement amended mode
+   * @return a pointer to the placement
+   */
+  static PlacementRemovalStrategyPtr create(
+      const GlobalExecutionPlanPtr& globalExecutionPlan,
+      const TopologyPtr& topology,
+      const TypeInferencePhasePtr& typeInferencePhase,
+      PlacementAmendmentMode placementAmendmentMode);
 
-  public:
-    /**
-     * @brief Create instance of placement removal strategy
-     * @param globalExecutionPlan: the global execution plan to update
-     * @param topology: the topology
-     * @param typeInferencePhase: the type inference phase
-     * @param placementAmendmentMode: the placement amended mode
-     * @return a pointer to the placement
-     */
-    static PlacementRemovalStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                              const TopologyPtr& topology,
-                                              const TypeInferencePhasePtr& typeInferencePhase,
-                                              PlacementAmendmentMode placementAmendmentMode);
+  /**
+   * Update Global execution plan by removing operators that are in the state
+   * To-Be-Removed and To-Be-Re-Placed between input pinned upstream and
+   * downstream operators
+   * @param sharedQueryId: id of the shared query
+   * @param pinnedUpStreamOperators: pinned upstream operators
+   * @param pinnedDownStreamOperators: pinned downstream operators
+   * @param querySubPlanVersion: the new version of the updated query sub plans
+   * @return map of deployment context containing updated decomposed query plans
+   */
+  std::map<DecomposedQueryPlanId, DeploymentContextPtr>
+  updateGlobalExecutionPlan(
+      SharedQueryId sharedQueryId,
+      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+      DecomposedQueryPlanVersion querySubPlanVersion);
 
-    /**
-     * Update Global execution plan by removing operators that are in the state To-Be-Removed and To-Be-Re-Placed
-     * between input pinned upstream and downstream operators
-     * @param sharedQueryId: id of the shared query
-     * @param pinnedUpStreamOperators: pinned upstream operators
-     * @param pinnedDownStreamOperators: pinned downstream operators
-     * @param querySubPlanVersion: the new version of the updated query sub plans
-     * @return map of deployment context containing updated decomposed query plans
-     */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr>
-    updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                              const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                              DecomposedQueryPlanVersion querySubPlanVersion);
+  /**
+   * @brief Destructor releases all locks (if any acquired) for pessimistic mode
+   */
+  ~PlacementRemovalStrategy();
 
-    /**
-     * @brief Destructor releases all locks (if any acquired) for pessimistic mode
-     */
-    ~PlacementRemovalStrategy();
+ private:
+  /**
+   * Find topology path for placing operators between the input pinned upstream
+   * and downstream operators
+   * @param upStreamPinnedOperators: the pinned upstream operators
+   * @param downStreamPinnedOperators: the pinned downstream operators
+   */
+  void performPathSelection(
+      const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
+      const std::set<LogicalOperatorPtr>& downStreamPinnedOperators);
 
-  private:
-    /**
-     * Find topology path for placing operators between the input pinned upstream and downstream operators
-     * @param upStreamPinnedOperators: the pinned upstream operators
-     * @param downStreamPinnedOperators: the pinned downstream operators
-     */
-    void performPathSelection(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
-                              const std::set<LogicalOperatorPtr>& downStreamPinnedOperators);
+  /**
+   * @brief Select path for placement using pessimistic 2PL strategy. If attempt
+   * fails then an exponential retries are performed. NOTE: These paths are
+   * local copies of the topology nodes. Any changes done on these nodes are not
+   * reflected in the topology catalog.
+   * @return true if successful else false
+   */
+  bool pessimisticPathSelection();
 
-    /**
-     * @brief Select path for placement using pessimistic 2PL strategy. If attempt fails then an exponential retries are performed.
-     * NOTE: These paths are local copies of the topology nodes. Any changes done on these nodes are not reflected in the topology catalog.
-     * @return true if successful else false
-     */
-    bool pessimisticPathSelection();
+  /**
+   * @brief Perform unlocking of all topology nodes on which the lock was
+   * acquired. We following an order inverse of the lock acquisition. This
+   * allows us to prevent starvation situation.
+   * @return true if successful else false
+   */
+  bool unlockTopologyNodesInSelectedPath();
 
-    /**
-     * @brief Perform unlocking of all topology nodes on which the lock was acquired.
-     * We following an order inverse of the lock acquisition. This allows us to prevent starvation situation.
-     * @return true if successful else false
-     */
-    bool unlockTopologyNodesInSelectedPath();
+  /**
+   * @brief Update the query sub plans by removing the query operators
+   * @param sharedQueryId
+   */
+  void updateQuerySubPlans(SharedQueryId sharedQueryId);
 
-    /**
-     * @brief Update the query sub plans by removing the query operators
-     * @param sharedQueryId
-     */
-    void updateQuerySubPlans(SharedQueryId sharedQueryId);
+  /**
+   * @brief Add the computed query sub plans tot he global execution plan
+   * @param sharedQueryId: the shared query plan id
+   * @param querySubPlanVersion: the new version of the query sub plan
+   * @return vector of deployment contexts
+   */
+  std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateExecutionNodes(
+      SharedQueryId sharedQueryId,
+      DecomposedQueryPlanVersion querySubPlanVersion);
 
-    /**
-     * @brief Add the computed query sub plans tot he global execution plan
-     * @param sharedQueryId: the shared query plan id
-     * @param querySubPlanVersion: the new version of the query sub plan
-     * @return vector of deployment contexts
-     */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId,
-                                                                               DecomposedQueryPlanVersion querySubPlanVersion);
+  PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                           const TopologyPtr& topology,
+                           const TypeInferencePhasePtr& typeInferencePhase,
+                           PlacementAmendmentMode placementMode);
 
-    PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                             const TopologyPtr& topology,
-                             const TypeInferencePhasePtr& typeInferencePhase,
-                             PlacementAmendmentMode placementMode);
+  GlobalExecutionPlanPtr globalExecutionPlan;
+  TopologyPtr topology;
+  TypeInferencePhasePtr typeInferencePhase;
+  PlacementAmendmentMode placementAmendmentMode;
+  PathFinderPtr pathFinder;
+  std::set<WorkerId> workerIdsInBFS;
+  std::unordered_map<OperatorId, LogicalOperatorPtr>
+      operatorIdToOriginalOperatorMap;
+  std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
+  std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>>
+      workerIdToDecomposedQueryPlanIds;
+  std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
+  std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>>
+      workerIdToUpdatedDecomposedQueryPlans;
+  std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
 
-    GlobalExecutionPlanPtr globalExecutionPlan;
-    TopologyPtr topology;
-    TypeInferencePhasePtr typeInferencePhase;
-    PlacementAmendmentMode placementAmendmentMode;
-    PathFinderPtr pathFinder;
-    std::set<WorkerId> workerIdsInBFS;
-    std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
-    std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
-    std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToDecomposedQueryPlanIds;
-    std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
-    std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>> workerIdToUpdatedDecomposedQueryPlans;
-    std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
-
-    //Max retires for path selection before failing the placement
-    static constexpr auto MAX_PATH_SELECTION_RETRIES = 3;
-    //Time interval in which to retry
-    static constexpr auto PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(1000);
-    static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(120000);
+  // Max retires for path selection before failing the placement
+  static constexpr auto MAX_PATH_SELECTION_RETRIES = 3;
+  // Time interval in which to retry
+  static constexpr auto PATH_SELECTION_RETRY_WAIT =
+      std::chrono::milliseconds(1000);
+  static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT =
+      std::chrono::milliseconds(120000);
 };
 
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_
+}  // namespace Optimizer
+}  // namespace NES
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_

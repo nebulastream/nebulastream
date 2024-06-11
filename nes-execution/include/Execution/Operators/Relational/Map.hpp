@@ -20,20 +20,22 @@ namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief Map operator that evaluates a map expression on a input records.
- * Map expressions read record fields, apply transformations, and can set/update fields.
+ * Map expressions read record fields, apply transformations, and can set/update
+ * fields.
  */
 class Map : public ExecutableOperator {
-  public:
-    /**
-     * @brief Creates a map operator with a map expression.
-     * @param mapExpression map expression.
-     */
-    Map(Runtime::Execution::Expressions::ExpressionPtr mapExpression) : mapExpression(mapExpression){};
-    void execute(ExecutionContext& ctx, Record& record) const override;
+ public:
+  /**
+   * @brief Creates a map operator with a map expression.
+   * @param mapExpression map expression.
+   */
+  Map(Runtime::Execution::Expressions::ExpressionPtr mapExpression)
+      : mapExpression(mapExpression){};
+  void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
-    const Runtime::Execution::Expressions::ExpressionPtr mapExpression;
+ private:
+  const Runtime::Execution::Expressions::ExpressionPtr mapExpression;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_MAP_HPP_
+}  // namespace NES::Runtime::Execution::Operators
+#endif  // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_MAP_HPP_

@@ -20,42 +20,46 @@
 namespace NES::Runtime::Execution::Operators {
 
 void PythonUDFOperatorHandler::initPython() {
-    this->moduleName = this->functionName + "Module";
-    // initialize python interpreter
-    Py_Initialize();
-    PyObject* pythonCode = Py_CompileString(this->function.c_str(), "", Py_file_input);
-    if (pythonCode == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-            NES_THROW_RUNTIME_ERROR("Could not compile String.");
-        }
+  this->moduleName = this->functionName + "Module";
+  // initialize python interpreter
+  Py_Initialize();
+  PyObject* pythonCode =
+      Py_CompileString(this->function.c_str(), "", Py_file_input);
+  if (pythonCode == NULL) {
+    if (PyErr_Occurred()) {
+      PyErr_Print();
+      PyErr_Clear();
+      NES_THROW_RUNTIME_ERROR("Could not compile String.");
     }
-    // add python code into our module
-    this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), pythonCode);
-    if (this->pythonModule == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
+  }
+  // add python code into our module
+  this->pythonModule =
+      PyImport_ExecCodeModule(this->moduleName.c_str(), pythonCode);
+  if (this->pythonModule == NULL) {
+    if (PyErr_Occurred()) {
+      PyErr_Print();
+      PyErr_Clear();
     }
+    NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName
+                                                   << " to module "
+                                                   << this->moduleName);
+  }
 }
 
 void PythonUDFOperatorHandler::finalize() {
-    Py_DecRef(this->pythonVariable);
-    Py_DecRef(this->pythonModule);
-    Py_DecRef(this->pythonArguments);
+  Py_DecRef(this->pythonVariable);
+  Py_DecRef(this->pythonModule);
+  Py_DecRef(this->pythonArguments);
 
-    if (Py_IsInitialized()) {
-        if (Py_FinalizeEx() == -1) {
-            PyErr_Print();
-            PyErr_Clear();
-            NES_THROW_RUNTIME_ERROR("Something went wrong with finalizing Python");
-        }
+  if (Py_IsInitialized()) {
+    if (Py_FinalizeEx() == -1) {
+      PyErr_Print();
+      PyErr_Clear();
+      NES_THROW_RUNTIME_ERROR("Something went wrong with finalizing Python");
     }
+  }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+}  // namespace NES::Runtime::Execution::Operators
 
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+#endif  // NAUTILUS_PYTHON_UDF_ENABLED

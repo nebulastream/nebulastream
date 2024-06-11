@@ -23,28 +23,29 @@ namespace NES {
  * @brief Descriptor defining properties used for creating physical sense source
  */
 class SenseSourceDescriptor : public SourceDescriptor {
+ public:
+  static SourceDescriptorPtr create(SchemaPtr schema, std::string udfs);
+  static SourceDescriptorPtr create(SchemaPtr schema, std::string sourceName,
+                                    std::string udfs);
 
-  public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string udfs);
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string sourceName, std::string udfs);
+  /**
+   * @brief Get the udf for the sense node
+   */
+  const std::string& getUdfs() const;
+  [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+  std::string toString() const override;
+  SourceDescriptorPtr copy() override;
 
-    /**
-     * @brief Get the udf for the sense node
-     */
-    const std::string& getUdfs() const;
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
-    std::string toString() const override;
-    SourceDescriptorPtr copy() override;
+ private:
+  explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
+  explicit SenseSourceDescriptor(SchemaPtr schema, std::string sourceName,
+                                 std::string udfs);
 
-  private:
-    explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
-    explicit SenseSourceDescriptor(SchemaPtr schema, std::string sourceName, std::string udfs);
-
-    std::string udfs;
+  std::string udfs;
 };
 
 using SenseSourceDescriptorPtr = std::shared_ptr<SenseSourceDescriptor>;
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SENSESOURCEDESCRIPTOR_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SENSESOURCEDESCRIPTOR_HPP_

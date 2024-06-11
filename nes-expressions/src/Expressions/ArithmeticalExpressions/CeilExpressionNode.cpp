@@ -18,39 +18,43 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-CeilExpressionNode::CeilExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+CeilExpressionNode::CeilExpressionNode(DataTypePtr stamp)
+    : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
 
-CeilExpressionNode::CeilExpressionNode(CeilExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
+CeilExpressionNode::CeilExpressionNode(CeilExpressionNode* other)
+    : ArithmeticalUnaryExpressionNode(other) {}
 
 ExpressionNodePtr CeilExpressionNode::create(ExpressionNodePtr const& child) {
-    auto ceilNode = std::make_shared<CeilExpressionNode>(child->getStamp());
-    ceilNode->setChild(child);
-    return ceilNode;
+  auto ceilNode = std::make_shared<CeilExpressionNode>(child->getStamp());
+  ceilNode->setChild(child);
+  return ceilNode;
 }
 
 void CeilExpressionNode::inferStamp(SchemaPtr schema) {
-    // infer stamp of the child, check if its numerical, assume the same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+  // infer stamp of the child, check if its numerical, assume the same stamp
+  ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("CeilExpressionNode: converted stamp to float: {}", toString());
+  // if stamp is integer, convert stamp to float
+  stamp = DataTypeFactory::createFloatFromInteger(stamp);
+  NES_TRACE("CeilExpressionNode: converted stamp to float: {}", toString());
 }
 
 bool CeilExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<CeilExpressionNode>()) {
-        auto otherCeilNode = rhs->as<CeilExpressionNode>();
-        return child()->equal(otherCeilNode->child());
-    }
-    return false;
+  if (rhs->instanceOf<CeilExpressionNode>()) {
+    auto otherCeilNode = rhs->as<CeilExpressionNode>();
+    return child()->equal(otherCeilNode->child());
+  }
+  return false;
 }
 
 std::string CeilExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << "CEIL(" << children[0]->toString() << ")";
-    return ss.str();
+  std::stringstream ss;
+  ss << "CEIL(" << children[0]->toString() << ")";
+  return ss.str();
 }
 
-ExpressionNodePtr CeilExpressionNode::copy() { return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr CeilExpressionNode::copy() {
+  return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+}  // namespace NES

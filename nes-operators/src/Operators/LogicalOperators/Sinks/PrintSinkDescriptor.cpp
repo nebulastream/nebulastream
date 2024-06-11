@@ -17,14 +17,20 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor(uint64_t numberOfOrigins) : SinkDescriptor(numberOfOrigins) {}
+PrintSinkDescriptor::PrintSinkDescriptor(uint64_t numberOfOrigins)
+    : SinkDescriptor(numberOfOrigins) {}
 
 SinkDescriptorPtr PrintSinkDescriptor::create(uint64_t numberOfOrigins) {
-    return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(numberOfOrigins));
+  return std::make_shared<PrintSinkDescriptor>(
+      PrintSinkDescriptor(numberOfOrigins));
 }
 
-std::string PrintSinkDescriptor::toString() const { return "PrintSinkDescriptor()"; }
+std::string PrintSinkDescriptor::toString() const {
+  return "PrintSinkDescriptor()";
+}
 
-bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<PrintSinkDescriptor>(); }
+bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other) {
+  return other->instanceOf<PrintSinkDescriptor>();
+}
 
-}// namespace NES
+}  // namespace NES

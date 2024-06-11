@@ -21,35 +21,37 @@
 namespace NES::Compiler {
 
 /**
- * @brief This class abstracts the collection of compiler flags. Each collected flag is unique.
- * Flags can be added, retrieved and two sets of CompilerFlags can also be merged.
+ * @brief This class abstracts the collection of compiler flags. Each collected
+ * flag is unique. Flags can be added, retrieved and two sets of CompilerFlags
+ * can also be merged.
  */
 class CompilerFlags {
-  public:
-    CompilerFlags() = default;
+ public:
+  CompilerFlags() = default;
 
-    /**
-     * @brief Get all of the compiler flags.
-     * @return A std::unordered_set<std::string> of all the compiler flags.
-     */
-    [[nodiscard]] std::unordered_set<std::string> getFlags() const;
+  /**
+   * @brief Get all of the compiler flags.
+   * @return A std::unordered_set<std::string> of all the compiler flags.
+   */
+  [[nodiscard]] std::unordered_set<std::string> getFlags() const;
 
-    /**
-     * @brief Add a new compiler flag to the collection.
-     * @param flag the new compiler flag.
-     */
-    void addFlag(const std::string& flag);
+  /**
+   * @brief Add a new compiler flag to the collection.
+   * @param flag the new compiler flag.
+   */
+  void addFlag(const std::string& flag);
 
-    /**
-     * @brief Merge the compiler flags of another CompilerFlags with the flags of this instance.
-     * @param flags the other CompilerFlags instance
-     */
-    void mergeFlags(const CompilerFlags& flags);
+  /**
+   * @brief Merge the compiler flags of another CompilerFlags with the flags of
+   * this instance.
+   * @param flags the other CompilerFlags instance
+   */
+  void mergeFlags(const CompilerFlags& flags);
 
-  private:
-    std::unordered_set<std::string> compilerFlags;
+ private:
+  std::unordered_set<std::string> compilerFlags;
 };
 
-}// namespace NES::Compiler
+}  // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_
+#endif  // NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_

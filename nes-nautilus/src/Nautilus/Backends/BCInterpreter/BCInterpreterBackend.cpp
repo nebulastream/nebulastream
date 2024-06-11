@@ -21,21 +21,25 @@
 
 namespace NES::Nautilus::Backends::BC {
 
-// this makes nes crash if the logger singleton is destroyed before BCInterpreterBackend object as its dtor prints
-[[maybe_unused]] static CompilationBackendRegistry::Add<BCInterpreterBackend> bcInterpreterBackend("BCInterpreter");
+// this makes nes crash if the logger singleton is destroyed before
+// BCInterpreterBackend object as its dtor prints
+[[maybe_unused]] static CompilationBackendRegistry::Add<BCInterpreterBackend>
+    bcInterpreterBackend("BCInterpreter");
 
-std::unique_ptr<Executable>
-BCInterpreterBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions&, const DumpHelper& dumpHelper) {
-    auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
-    timer.start();
+std::unique_ptr<Executable> BCInterpreterBackend::compile(
+    std::shared_ptr<IR::IRGraph> ir, const CompilationOptions&,
+    const DumpHelper& dumpHelper) {
+  auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
+  timer.start();
 
-    auto result = BCLoweringProvider().lower(ir);
+  auto result = BCLoweringProvider().lower(ir);
 
-    timer.snapshot("ByteCodeGeneration");
+  timer.snapshot("ByteCodeGeneration");
 
-    auto code = std::get<0>(result);
-    dumpHelper.dump("3. ByteCode.bc", code.toString());
-    return std::make_unique<BCInterpreter>(std::get<0>(result), std::get<1>(result));
+  auto code = std::get<0>(result);
+  dumpHelper.dump("3. ByteCode.bc", code.toString());
+  return std::make_unique<BCInterpreter>(std::get<0>(result),
+                                         std::get<1>(result));
 }
 
-}// namespace NES::Nautilus::Backends::BC
+}  // namespace NES::Nautilus::Backends::BC

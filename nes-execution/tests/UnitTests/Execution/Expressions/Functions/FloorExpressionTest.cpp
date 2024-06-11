@@ -21,39 +21,43 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class FloorExpressionTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("FloorExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FloorExpressionTest test class.");
-    }
+ public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("FloorExpressionTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup FloorExpressionTest test class.");
+  }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down FloorExpressionTest test class."); }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down FloorExpressionTest test class.");
+  }
 };
 
 TEST_F(FloorExpressionTest, evaluateFloorExpressionFloat) {
-    auto expression = UnaryExpressionWrapper<FloorExpression>();
-    // Double
-    {
-        auto resultValue = expression.eval(Value<Double>((double) 17.9));
-        ASSERT_EQ(resultValue, (float) 17);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Float
-    {
-        auto resultValue = expression.eval(Value<Float>((float) 17.5));
-        ASSERT_EQ(resultValue, (float) 17);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
+  auto expression = UnaryExpressionWrapper<FloorExpression>();
+  // Double
+  {
+    auto resultValue = expression.eval(Value<Double>((double)17.9));
+    ASSERT_EQ(resultValue, (float)17);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
+  // Float
+  {
+    auto resultValue = expression.eval(Value<Float>((float)17.5));
+    ASSERT_EQ(resultValue, (float)17);
+    ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+  }
 }
 
 /**
-* @brief If we execute the expression on a boolean it should throw an exception.
-*/
+ * @brief If we execute the expression on a boolean it should throw an
+ * exception.
+ */
 TEST_F(FloorExpressionTest, evaluateFloorExpressionOnWrongType) {
-    auto expression = UnaryExpressionWrapper<FloorExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+  auto expression = UnaryExpressionWrapper<FloorExpression>();
+  ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions

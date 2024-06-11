@@ -24,4 +24,4 @@ namespace NES {
  */
 std::pair<std::basic_string<char>, std::basic_string<char>>
 findEquiJoinKeyNames(std::shared_ptr<NES::ExpressionNode> joinExpression);
-}// namespace NES
+}  // namespace NES

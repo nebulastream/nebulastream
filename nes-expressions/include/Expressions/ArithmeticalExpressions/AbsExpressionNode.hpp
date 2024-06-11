@@ -20,33 +20,34 @@ namespace NES {
  * @brief This node represents an ABS (absolut value) expression.
  */
 class AbsExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
-    explicit AbsExpressionNode(DataTypePtr stamp);
-    ~AbsExpressionNode() noexcept override = default;
-    /**
-     * @brief Create a new ABS expression
-     */
-    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+ public:
+  explicit AbsExpressionNode(DataTypePtr stamp);
+  ~AbsExpressionNode() noexcept override = default;
+  /**
+   * @brief Create a new ABS expression
+   */
+  [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const& child);
+  [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+  [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
+  /**
+   * @brief Infers the stamp of the expression given the current schema and the
+   * typeInferencePhaseContext.
+   * @param typeInferencePhaseContext
+   * @param schema
+   */
+  void inferStamp(SchemaPtr schema) override;
 
-    /**
-    * @brief Create a deep copy of this expression node.
-    * @return ExpressionNodePtr
-    */
-    ExpressionNodePtr copy() override;
+  /**
+   * @brief Create a deep copy of this expression node.
+   * @return ExpressionNodePtr
+   */
+  ExpressionNodePtr copy() override;
 
-  private:
-    explicit AbsExpressionNode(AbsExpressionNode* other);
+ private:
+  explicit AbsExpressionNode(AbsExpressionNode* other);
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ABSEXPRESSIONNODE_HPP_
+#endif  // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ABSEXPRESSIONNODE_HPP_

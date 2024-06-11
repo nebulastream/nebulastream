@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/TextFunctions/PatternMatching/SearchingRegex.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
@@ -19,74 +21,78 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::Runtime::Execution::Expressions {
 
 class SearchingRegexTest : public Testing::BaseUnitTest {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("SearchingRegexTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SearchingRegexTest test class.");
-    }
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
-        NES_DEBUG("Setup SearchingRegexTest test case.")
-    }
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SearchingRegexTest test class."); }
-    std::shared_ptr<Runtime::BufferManager> bm;
-    std::shared_ptr<Runtime::WorkerContext> wc;
+ public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("SearchingRegexTest.log",
+                              NES::LogLevel::LOG_DEBUG);
+    NES_INFO("Setup SearchingRegexTest test class.");
+  }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    bm = std::make_shared<Runtime::BufferManager>();
+    wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm,
+                                                  1024);
+    NES_DEBUG("Setup SearchingRegexTest test case.")
+  }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() {
+    NES_INFO("Tear down SearchingRegexTest test class.");
+  }
+  std::shared_ptr<Runtime::BufferManager> bm;
+  std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
-/** @brief The SearchingRegex Class provides functionality that checks whether some sub-sequence in the target
- * sequence (the subject) matches the regular expression rgx (the pattern).
+/** @brief The SearchingRegex Class provides functionality that checks whether
+ * some sub-sequence in the target sequence (the subject) matches the regular
+ * expression rgx (the pattern).
  */
 
 TEST_F(SearchingRegexTest, evaluateSearchingRegex1) {
-    auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    // Positive Test full match
-    {
-        auto l = Value<Text>("This is a Test");
-        auto r = Value<Text>("This is a Test");
-        auto resultValue = expression.eval(l, r);
-        EXPECT_TRUE((Boolean) resultValue);
-    }
+  auto expression = BinaryExpressionWrapper<SearchingRegex>();
+  // Positive Test full match
+  {
+    auto l = Value<Text>("This is a Test");
+    auto r = Value<Text>("This is a Test");
+    auto resultValue = expression.eval(l, r);
+    EXPECT_TRUE((Boolean)resultValue);
+  }
 }
 TEST_F(SearchingRegexTest, evaluateSearchingRegex2) {
-    auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    // Negative Test regex overflow
-    {
-        auto l = Value<Text>("This is a Test");
-        auto r = Value<Text>("This is a Test!");
-        auto resultValue = expression.eval(l, r);
-        EXPECT_FALSE((Boolean) resultValue);
-    }
+  auto expression = BinaryExpressionWrapper<SearchingRegex>();
+  // Negative Test regex overflow
+  {
+    auto l = Value<Text>("This is a Test");
+    auto r = Value<Text>("This is a Test!");
+    auto resultValue = expression.eval(l, r);
+    EXPECT_FALSE((Boolean)resultValue);
+  }
 }
 TEST_F(SearchingRegexTest, evaluateSearchingRegex3) {
-    auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    // Positive Test Subsequence
-    {
-        auto l = Value<Text>("This is a Test");
-        auto r = Value<Text>("Test");
-        auto resultValue = expression.eval(l, r);
-        EXPECT_TRUE((Boolean) resultValue);
-    }
+  auto expression = BinaryExpressionWrapper<SearchingRegex>();
+  // Positive Test Subsequence
+  {
+    auto l = Value<Text>("This is a Test");
+    auto r = Value<Text>("Test");
+    auto resultValue = expression.eval(l, r);
+    EXPECT_TRUE((Boolean)resultValue);
+  }
 }
 TEST_F(SearchingRegexTest, evaluateSearchingRegex4) {
-    auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    //Negative Test Subsequence
-    {
-        auto l = Value<Text>("This is a Test");
-        auto r = Value<Text>("bbbb");
-        auto resultValue = expression.eval(l, r);
-        EXPECT_FALSE((Boolean) resultValue);
-    }
+  auto expression = BinaryExpressionWrapper<SearchingRegex>();
+  // Negative Test Subsequence
+  {
+    auto l = Value<Text>("This is a Test");
+    auto r = Value<Text>("bbbb");
+    auto resultValue = expression.eval(l, r);
+    EXPECT_FALSE((Boolean)resultValue);
+  }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+}  // namespace NES::Runtime::Execution::Expressions

@@ -24,12 +24,12 @@ namespace NES::Nautilus::Tracing {
  * The block reference can capture a set of arguments.
  */
 class BlockRef {
-  public:
-    BlockRef(uint32_t block);
-    uint32_t block;
-    std::vector<ValueRef> arguments;
-    friend std::ostream& operator<<(std::ostream& os, const BlockRef& ref);
+ public:
+  BlockRef(uint32_t block);
+  uint32_t block;
+  std::vector<ValueRef> arguments;
+  friend std::ostream& operator<<(std::ostream& os, const BlockRef& ref);
 };
-}// namespace NES::Nautilus::Tracing
+}  // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_
+#endif  // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_

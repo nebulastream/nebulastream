@@ -20,24 +20,26 @@
 namespace NES::Compiler {
 
 /**
- * @brief A class which inherits from `ExternalAPI` can be passed to a `CompilationRequest` to augment the
- * call to the compiler command with flags that are necessary for the correct compiling and linking
- * of a third-party library.
+ * @brief A class which inherits from `ExternalAPI` can be passed to a
+ * `CompilationRequest` to augment the call to the compiler command with flags
+ * that are necessary for the correct compiling and linking of a third-party
+ * library.
  *
- * An example for an external API would be CUDA, as we need to give the clang compiler CUDA-specific flags
- * that are not part of the default compiler call mechanism.
+ * An example for an external API would be CUDA, as we need to give the clang
+ * compiler CUDA-specific flags that are not part of the default compiler call
+ * mechanism.
  */
 class ExternalAPI {
-  public:
-    /**
-     * @brief Get the compiler flags specific to the external API.
-     * @return CompilerFlags
-     */
-    virtual const CompilerFlags getCompilerFlags() const = 0;
+ public:
+  /**
+   * @brief Get the compiler flags specific to the external API.
+   * @return CompilerFlags
+   */
+  virtual const CompilerFlags getCompilerFlags() const = 0;
 
-    virtual ~ExternalAPI() = default;
+  virtual ~ExternalAPI() = default;
 };
 
-}// namespace NES::Compiler
+}  // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_
+#endif  // NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_

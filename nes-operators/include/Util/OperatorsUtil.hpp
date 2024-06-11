@@ -23,12 +23,14 @@ namespace Util {
 
 namespace detail {
 /**
-* @brief set of helper functions for returning the string representation of different types
-* @return string representation for a given type
-*/
+ * @brief set of helper functions for returning the string representation of
+ * different types
+ * @return string representation for a given type
+ */
 [[maybe_unused]] std::string concatenateFunctionHelper(uint64_t value);
-[[maybe_unused]] std::string concatenateFunctionHelper(const NES::SchemaPtr& schema);
-}// namespace detail
+[[maybe_unused]] std::string concatenateFunctionHelper(
+    const NES::SchemaPtr& schema);
+}  // namespace detail
 
 /**
  * @brief concatenates each element of the vector with a comma as the delimiter
@@ -36,19 +38,19 @@ namespace detail {
  * @param vector the vector
  * @return the string representation of the vector
  */
-template<typename T>
+template <typename T>
 std::string concatenateVectorAsString(const std::vector<T>& vector) {
-    std::stringstream out;
-    for (const auto& item : vector) {
-        if (item != vector[0]) {
-            out << ", ";
-        }
-        out << detail::concatenateFunctionHelper(item);
+  std::stringstream out;
+  for (const auto& item : vector) {
+    if (item != vector[0]) {
+      out << ", ";
     }
-    out << std::endl;
-    return out.str();
+    out << detail::concatenateFunctionHelper(item);
+  }
+  out << std::endl;
+  return out.str();
 }
 
-};// namespace Util
+};  // namespace Util
 
-#endif// NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_
+#endif  // NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_

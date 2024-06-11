@@ -28,12 +28,13 @@ class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class FieldAssignmentExpressionNode;
-using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+using FieldAssignmentExpressionNodePtr =
+    std::shared_ptr<FieldAssignmentExpressionNode>;
 
 namespace API {
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-}// namespace API
+}  // namespace API
 
 namespace WindowOperatorBuilder {
 
@@ -41,78 +42,89 @@ class WindowedQuery;
 class KeyedWindowedQuery;
 
 /**
- * @brief A fragment of the query, which is windowed according to a window type and specific keys.
+ * @brief A fragment of the query, which is windowed according to a window type
+ * and specific keys.
  */
 class KeyedWindowedQuery {
-  public:
-    /**
-    * @brief: Constructor. Initialises always originalQuery, windowType, onKey
-    * @param originalQuery
-    * @param windowType
-    */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<ExpressionNodePtr> keys);
+ public:
+  /**
+   * @brief: Constructor. Initialises always originalQuery, windowType, onKey
+   * @param originalQuery
+   * @param windowType
+   */
+  KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType,
+                     std::vector<ExpressionNodePtr> keys);
 
-    /**
-    * @brief: Applies a set of aggregation functions to the window and returns a query object.
-    * @param aggregations list of aggregation functions.
-    * @return Query
-    */
-    template<class... WindowAggregations>
-    [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
-        std::vector<API::WindowAggregationPtr> windowAggregations;
-        (windowAggregations.emplace_back(std::forward<API::WindowAggregationPtr>(aggregations)), ...);
-        return originalQuery.windowByKey(keys, windowType, windowAggregations);
-    }
+  /**
+   * @brief: Applies a set of aggregation functions to the window and returns a
+   * query object.
+   * @param aggregations list of aggregation functions.
+   * @return Query
+   */
+  template <class... WindowAggregations>
+  [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
+    std::vector<API::WindowAggregationPtr> windowAggregations;
+    (windowAggregations.emplace_back(
+         std::forward<API::WindowAggregationPtr>(aggregations)),
+     ...);
+    return originalQuery.windowByKey(keys, windowType, windowAggregations);
+  }
 
-  private:
-    Query& originalQuery;
-    Windowing::WindowTypePtr windowType;
-    std::vector<ExpressionNodePtr> keys;
+ private:
+  Query& originalQuery;
+  Windowing::WindowTypePtr windowType;
+  std::vector<ExpressionNodePtr> keys;
 };
 
 /**
  * @brief A fragment of the query, which is windowed according to a window type.
  */
 class WindowedQuery {
-  public:
-    /**
-    * @brief: Constructor. Initialises always originalQuery, windowType
-    * @param originalQuery
-    * @param windowType
-    */
-    WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType);
+ public:
+  /**
+   * @brief: Constructor. Initialises always originalQuery, windowType
+   * @param originalQuery
+   * @param windowType
+   */
+  WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType);
 
-    /**
-    * @brief: Sets attributes for the keyBy Operation. For example `byKey(Attribute("x"), Attribute("y")))`
-    * Creates a KeyedWindowedQuery object.
-    * @param onKeys list of keys
-    * @return KeyedWindowedQuery
-    */
-    template<class... ExpressionItems>
-    [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItems... onKeys) {
-        std::vector<ExpressionNodePtr> keyExpressions;
-        (keyExpressions.emplace_back(std::forward<ExpressionItems>(onKeys).getExpressionNode()), ...);
-        return KeyedWindowedQuery(originalQuery, windowType, keyExpressions);
-    };
+  /**
+   * @brief: Sets attributes for the keyBy Operation. For example
+   * `byKey(Attribute("x"), Attribute("y")))` Creates a KeyedWindowedQuery
+   * object.
+   * @param onKeys list of keys
+   * @return KeyedWindowedQuery
+   */
+  template <class... ExpressionItems>
+  [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItems... onKeys) {
+    std::vector<ExpressionNodePtr> keyExpressions;
+    (keyExpressions.emplace_back(
+         std::forward<ExpressionItems>(onKeys).getExpressionNode()),
+     ...);
+    return KeyedWindowedQuery(originalQuery, windowType, keyExpressions);
+  };
 
-    /**
-    * @brief: Applies a set of aggregation functions to the window and returns a query object.
-    * @param aggregations list of aggregation functions.
-    * @return Query
-    */
-    template<class... WindowAggregations>
-    [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
-        std::vector<API::WindowAggregationPtr> windowAggregations;
-        (windowAggregations.emplace_back(std::forward<API::WindowAggregationPtr>(aggregations)), ...);
-        return originalQuery.window(windowType, windowAggregations);
-    }
+  /**
+   * @brief: Applies a set of aggregation functions to the window and returns a
+   * query object.
+   * @param aggregations list of aggregation functions.
+   * @return Query
+   */
+  template <class... WindowAggregations>
+  [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
+    std::vector<API::WindowAggregationPtr> windowAggregations;
+    (windowAggregations.emplace_back(
+         std::forward<API::WindowAggregationPtr>(aggregations)),
+     ...);
+    return originalQuery.window(windowType, windowAggregations);
+  }
 
-  private:
-    Query& originalQuery;
-    Windowing::WindowTypePtr windowType;
+ private:
+  Query& originalQuery;
+  Windowing::WindowTypePtr windowType;
 };
 
-}// namespace WindowOperatorBuilder
-}// namespace NES
+}  // namespace WindowOperatorBuilder
+}  // namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_
+#endif  // NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_

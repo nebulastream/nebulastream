@@ -24,19 +24,20 @@ class StatisticManager;
 using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
 
 class StatisticManager {
-  public:
-    static StatisticManagerPtr create(StatisticStorePtr statisticStore);
+ public:
+  static StatisticManagerPtr create(StatisticStorePtr statisticStore);
 
-    std::vector<StatisticValue<>> getStatistics(const StatisticProbeRequest& probeRequest);
+  std::vector<StatisticValue<>> getStatistics(
+      const StatisticProbeRequest& probeRequest);
 
-    StatisticStorePtr getStatisticStore() const;
+  StatisticStorePtr getStatisticStore() const;
 
-  private:
-    explicit StatisticManager(const StatisticStorePtr& statisticStore);
+ private:
+  explicit StatisticManager(const StatisticStorePtr& statisticStore);
 
-    StatisticStorePtr statisticStore;
+  StatisticStorePtr statisticStore;
 };
 
-}// namespace NES::Statistic
+}  // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_STATISTICCOLLECTION_STATISTICMANAGER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_STATISTICCOLLECTION_STATISTICMANAGER_HPP_

@@ -15,7 +15,9 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 
 namespace NES {
-QueryDeploymentException::QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message)
-    : Exceptions::RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message) {}
+QueryDeploymentException::QueryDeploymentException(SharedQueryId sharedQueryId,
+                                                   const std::string& message)
+    : Exceptions::RequestExecutionException(
+          UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message) {}
 
-}// namespace NES
+}  // namespace NES

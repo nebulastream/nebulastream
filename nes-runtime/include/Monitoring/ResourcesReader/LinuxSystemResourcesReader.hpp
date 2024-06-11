@@ -20,59 +20,64 @@
 namespace NES::Monitoring {
 
 /**
-* @brief This is a static utility class to collect basic system information on a Linux operating System
-* Warning: Only Linux distributions are currently supported
-*/
+ * @brief This is a static utility class to collect basic system information on
+ * a Linux operating System Warning: Only Linux distributions are currently
+ * supported
+ */
 class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
-  public:
-    LinuxSystemResourcesReader();
+ public:
+  LinuxSystemResourcesReader();
 
-    /**
-    * @brief This methods reads runtime system metrics that are used within NES (e.g., memory usage, cpu load).
-    * @return A RuntimeMetrics object containing the metrics.
-    */
-    RuntimeMetrics readRuntimeNesMetrics() override;
+  /**
+   * @brief This methods reads runtime system metrics that are used within NES
+   * (e.g., memory usage, cpu load).
+   * @return A RuntimeMetrics object containing the metrics.
+   */
+  RuntimeMetrics readRuntimeNesMetrics() override;
 
-    /**
-    * @brief This methods reads static system metrics that are used within NES (e.g., totalMemoryBytes, core num.).
-    * @return A NodeRegistrationMetrics object containing the metrics.
-    */
-    RegistrationMetrics readRegistrationMetrics() override;
+  /**
+   * @brief This methods reads static system metrics that are used within NES
+   * (e.g., totalMemoryBytes, core num.).
+   * @return A NodeRegistrationMetrics object containing the metrics.
+   */
+  RegistrationMetrics readRegistrationMetrics() override;
 
-    /**
-    * @brief This method reads CPU information from /proc/stat.
-    * Warning: Does not return correct values in containerized environments.
-    * @return A CpuMetricsWrapper object that contains the CPU information in a vector.
-    */
-    CpuMetricsWrapper readCpuStats() override;
+  /**
+   * @brief This method reads CPU information from /proc/stat.
+   * Warning: Does not return correct values in containerized environments.
+   * @return A CpuMetricsWrapper object that contains the CPU information in a
+   * vector.
+   */
+  CpuMetricsWrapper readCpuStats() override;
 
-    /**
-    * @brief This method reads memory information from sysinfo
-    * Warning: Does not return correct values in containerized environments.
-    * @return A map with the memory information
-    */
-    MemoryMetrics readMemoryStats() override;
+  /**
+   * @brief This method reads memory information from sysinfo
+   * Warning: Does not return correct values in containerized environments.
+   * @return A map with the memory information
+   */
+  MemoryMetrics readMemoryStats() override;
 
-    /**
-    * @brief This method reads disk stats from statvfs
-    * Warning: Does not return correct values in containerized environments.
-    * @return A map with the disk stats
-    */
-    DiskMetrics readDiskStats() override;
+  /**
+   * @brief This method reads disk stats from statvfs
+   * Warning: Does not return correct values in containerized environments.
+   * @return A map with the disk stats
+   */
+  DiskMetrics readDiskStats() override;
 
-    /**
-    * @brief This methods reads network statistics from /proc/net/dev and returns them for each interface in a
-    * separate map
-    * @return a map where each interface is mapping the according network statistics map.
-    */
-    NetworkMetricsWrapper readNetworkStats() override;
+  /**
+   * @brief This methods reads network statistics from /proc/net/dev and returns
+   * them for each interface in a separate map
+   * @return a map where each interface is mapping the according network
+   * statistics map.
+   */
+  NetworkMetricsWrapper readNetworkStats() override;
 
-    /**
-    * @return Returns the wall clock time of the system in nanoseconds.
-    */
-    uint64_t getWallTimeInNs() override;
+  /**
+   * @return Returns the wall clock time of the system in nanoseconds.
+   */
+  uint64_t getWallTimeInNs() override;
 };
 
-}// namespace NES::Monitoring
+}  // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_LINUXSYSTEMRESOURCESREADER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_LINUXSYSTEMRESOURCESREADER_HPP_

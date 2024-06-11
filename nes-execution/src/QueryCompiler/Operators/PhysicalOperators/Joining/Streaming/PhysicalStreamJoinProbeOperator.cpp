@@ -17,104 +17,86 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr
-PhysicalStreamJoinProbeOperator::create(OperatorId id,
-                                        StatisticId statisticId,
-                                        const SchemaPtr& leftSchema,
-                                        const SchemaPtr& rightSchema,
-                                        const SchemaPtr& outputSchema,
-                                        ExpressionNodePtr joinExpression,
-                                        const std::string& windowStartFieldName,
-                                        const std::string& windowEndFieldName,
-                                        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                        QueryCompilation::StreamJoinStrategy joinStrategy,
-                                        QueryCompilation::WindowingStrategy windowingStrategy) {
-    return std::make_shared<PhysicalStreamJoinProbeOperator>(id,
-                                                             statisticId,
-                                                             leftSchema,
-                                                             rightSchema,
-                                                             outputSchema,
-                                                             joinExpression,
-                                                             windowStartFieldName,
-                                                             windowEndFieldName,
-                                                             operatorHandler,
-                                                             joinStrategy,
-                                                             windowingStrategy);
+PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
+    OperatorId id, StatisticId statisticId, const SchemaPtr& leftSchema,
+    const SchemaPtr& rightSchema, const SchemaPtr& outputSchema,
+    ExpressionNodePtr joinExpression, const std::string& windowStartFieldName,
+    const std::string& windowEndFieldName,
+    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr&
+        operatorHandler,
+    QueryCompilation::StreamJoinStrategy joinStrategy,
+    QueryCompilation::WindowingStrategy windowingStrategy) {
+  return std::make_shared<PhysicalStreamJoinProbeOperator>(
+      id, statisticId, leftSchema, rightSchema, outputSchema, joinExpression,
+      windowStartFieldName, windowEndFieldName, operatorHandler, joinStrategy,
+      windowingStrategy);
 }
 
-PhysicalOperatorPtr
-PhysicalStreamJoinProbeOperator::create(StatisticId statisticId,
-                                        const SchemaPtr& leftSchema,
-                                        const SchemaPtr& rightSchema,
-                                        const SchemaPtr& outputSchema,
-                                        ExpressionNodePtr joinExpression,
-                                        const std::string& windowStartFieldName,
-                                        const std::string& windowEndFieldName,
-                                        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                        QueryCompilation::StreamJoinStrategy joinStrategy,
-                                        QueryCompilation::WindowingStrategy windowingStrategy) {
-    return create(getNextOperatorId(),
-                  statisticId,
-                  leftSchema,
-                  rightSchema,
-                  outputSchema,
-                  joinExpression,
-                  windowStartFieldName,
-                  windowEndFieldName,
-                  operatorHandler,
-                  joinStrategy,
-                  windowingStrategy);
+PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
+    StatisticId statisticId, const SchemaPtr& leftSchema,
+    const SchemaPtr& rightSchema, const SchemaPtr& outputSchema,
+    ExpressionNodePtr joinExpression, const std::string& windowStartFieldName,
+    const std::string& windowEndFieldName,
+    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr&
+        operatorHandler,
+    QueryCompilation::StreamJoinStrategy joinStrategy,
+    QueryCompilation::WindowingStrategy windowingStrategy) {
+  return create(getNextOperatorId(), statisticId, leftSchema, rightSchema,
+                outputSchema, joinExpression, windowStartFieldName,
+                windowEndFieldName, operatorHandler, joinStrategy,
+                windowingStrategy);
 }
 
 PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
-    OperatorId id,
-    StatisticId statisticId,
-    const SchemaPtr& leftSchema,
-    const SchemaPtr& rightSchema,
-    const SchemaPtr& outputSchema,
-    ExpressionNodePtr joinExpression,
-    const std::string& windowStartFieldName,
+    OperatorId id, StatisticId statisticId, const SchemaPtr& leftSchema,
+    const SchemaPtr& rightSchema, const SchemaPtr& outputSchema,
+    ExpressionNodePtr joinExpression, const std::string& windowStartFieldName,
     const std::string& windowEndFieldName,
-    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
+    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr&
+        operatorHandler,
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
-    : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
-      PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema), joinExpression(joinExpression),
+    : Operator(id),
+      PhysicalStreamJoinOperator(operatorHandler, joinStrategy,
+                                 windowingStrategy),
+      PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema,
+                             outputSchema),
+      joinExpression(joinExpression),
       windowMetaData(windowStartFieldName, windowEndFieldName) {}
 
 std::string PhysicalStreamJoinProbeOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalStreamJoinProbeOperator:\n";
-    out << PhysicalBinaryOperator::toString();
-    out << "windowStartFieldName: " << windowMetaData.windowStartFieldName << "\n";
-    out << "windowEndFieldName: " << windowMetaData.windowEndFieldName << "\n";
-    out << std::endl;
-    return out.str();
+  std::stringstream out;
+  out << std::endl;
+  out << "PhysicalStreamJoinProbeOperator:\n";
+  out << PhysicalBinaryOperator::toString();
+  out << "windowStartFieldName: " << windowMetaData.windowStartFieldName
+      << "\n";
+  out << "windowEndFieldName: " << windowMetaData.windowEndFieldName << "\n";
+  out << std::endl;
+  return out.str();
 }
 
 OperatorPtr PhysicalStreamJoinProbeOperator::copy() {
-    return create(id,
-                  statisticId,
-                  leftInputSchema,
-                  rightInputSchema,
-                  outputSchema,
-                  joinExpression,
-                  windowMetaData.windowStartFieldName,
-                  windowMetaData.windowEndFieldName,
-                  joinOperatorHandler,
-                  getJoinStrategy(),
-                  getWindowingStrategy());
+  return create(id, statisticId, leftInputSchema, rightInputSchema,
+                outputSchema, joinExpression,
+                windowMetaData.windowStartFieldName,
+                windowMetaData.windowEndFieldName, joinOperatorHandler,
+                getJoinStrategy(), getWindowingStrategy());
 }
 
-const Runtime::Execution::Operators::WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const {
-    return windowMetaData;
+const Runtime::Execution::Operators::WindowMetaData&
+PhysicalStreamJoinProbeOperator::getWindowMetaData() const {
+  return windowMetaData;
 }
 
-Runtime::Execution::Operators::JoinSchema PhysicalStreamJoinProbeOperator::getJoinSchema() {
-    return Runtime::Execution::Operators::JoinSchema(getLeftInputSchema(), getRightInputSchema(), getOutputSchema());
+Runtime::Execution::Operators::JoinSchema
+PhysicalStreamJoinProbeOperator::getJoinSchema() {
+  return Runtime::Execution::Operators::JoinSchema(
+      getLeftInputSchema(), getRightInputSchema(), getOutputSchema());
 }
 
-ExpressionNodePtr PhysicalStreamJoinProbeOperator::getJoinExpression() const { return joinExpression; }
+ExpressionNodePtr PhysicalStreamJoinProbeOperator::getJoinExpression() const {
+  return joinExpression;
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators

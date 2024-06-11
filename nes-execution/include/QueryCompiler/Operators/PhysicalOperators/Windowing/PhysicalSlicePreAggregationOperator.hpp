@@ -23,21 +23,20 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Physical operator for slice pre-aggregation.
  * This operator receives records and pre-aggregates values in a slice store.
  */
-class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator, public AbstractEmitOperator {
-  public:
-    PhysicalSlicePreAggregationOperator(OperatorId id,
-                                        StatisticId statisticId,
-                                        SchemaPtr inputSchema,
-                                        SchemaPtr outputSchema,
-                                        Windowing::LogicalWindowDescriptorPtr windowDefinition);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
-    std::string toString() const override;
-    OperatorPtr copy() override;
+class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator,
+                                            public AbstractEmitOperator {
+ public:
+  PhysicalSlicePreAggregationOperator(
+      OperatorId id, StatisticId statisticId, SchemaPtr inputSchema,
+      SchemaPtr outputSchema,
+      Windowing::LogicalWindowDescriptorPtr windowDefinition);
+  static PhysicalOperatorPtr create(
+      OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema,
+      const SchemaPtr& outputSchema,
+      const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
+  std::string toString() const override;
+  OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+}  // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEPREAGGREGATIONOPERATOR_HPP_
+#endif  // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEPREAGGREGATIONOPERATOR_HPP_

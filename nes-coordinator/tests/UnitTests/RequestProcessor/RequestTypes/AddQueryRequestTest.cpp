@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+#include <z3++.h>
+
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
@@ -46,100 +49,102 @@
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 #include <iostream>
-#include <z3++.h>
 
 namespace NES::RequestProcessor {
 
 class AddQueryRequestTest : public Testing::BaseUnitTest {
-  public:
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
-    Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::TopDown;
-    uint8_t ZERO_RETRIES = 0;
-    std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
-    TopologyPtr topology;
-    GlobalQueryPlanPtr globalQueryPlan;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    z3::ContextPtr z3Context;
-    Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
+ public:
+  Catalogs::Source::SourceCatalogPtr sourceCatalog;
+  std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
+  Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY =
+      Optimizer::PlacementStrategy::TopDown;
+  uint8_t ZERO_RETRIES = 0;
+  std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
+  TopologyPtr topology;
+  GlobalQueryPlanPtr globalQueryPlan;
+  Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+  z3::ContextPtr z3Context;
+  Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
-    /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
+  /* Will be called before all tests in this class are started. */
+  static void SetUpTestCase() {
+    NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG);
+  }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::BaseUnitTest::SetUp();
-        // init topology node for physical source
-        std::map<std::string, std::any> properties;
-        properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-        auto rootNodeId = WorkerId(1);
-        topology = Topology::create();
-        topology->registerWorker(rootNodeId, "localhost", 4000, 4002, 4, properties, 0, 0);
-        topology->addAsRootWorkerId(rootNodeId);
-        auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
-        auto physicalSource = PhysicalSource::create(defaultSourceType);
-        auto logicalSource = LogicalSource::create("test2", Schema::create());
-        // add source to source catalog
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-        sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
-        auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, rootNodeId);
-        sourceCatalog->addPhysicalSource("default_logical", sce);
-        queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-        coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-        globalQueryPlan = GlobalQueryPlan::create();
-        globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-        udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        z3Context = std::make_shared<z3::context>();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                         Statistic::DefaultStatisticCache::create(),
-                                                                         topology);
-    }
+  /* Will be called before a test is executed. */
+  void SetUp() override {
+    Testing::BaseUnitTest::SetUp();
+    // init topology node for physical source
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
+        NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    auto rootNodeId = WorkerId(1);
+    topology = Topology::create();
+    topology->registerWorker(rootNodeId, "localhost", 4000, 4002, 4, properties,
+                             0, 0);
+    topology->addAsRootWorkerId(rootNodeId);
+    auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
+    auto physicalSource = PhysicalSource::create(defaultSourceType);
+    auto logicalSource = LogicalSource::create("test2", Schema::create());
+    // add source to source catalog
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(),
+                                    logicalSource->getSchema());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(
+        physicalSource, logicalSource, rootNodeId);
+    sourceCatalog->addPhysicalSource("default_logical", sce);
+    queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
+    coordinatorConfiguration =
+        Configurations::CoordinatorConfiguration::createDefault();
+    globalQueryPlan = GlobalQueryPlan::create();
+    globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
+    udfCatalog = Catalogs::UDF::UDFCatalog::create();
+    z3Context = std::make_shared<z3::context>();
+    statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+        Statistic::StatisticRegistry::create(),
+        Statistic::DefaultStatisticProbeGenerator::create(),
+        Statistic::DefaultStatisticCache::create(), topology);
+  }
 };
 
-//test adding a single query until the deployment step, which cannot be done in a unit test
+// test adding a single query until the deployment step, which cannot be done in
+// a unit test
 TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
+  // Prepare
+  constexpr auto requestId = RequestId(1);
+  SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+  Query query = Query::from("default_logical").sink(printSinkDescriptor);
+  QueryPlanPtr queryPlan = query.getQueryPlan();
+  SinkLogicalOperatorPtr sinkOperator1 = queryPlan->getSinkOperators()[0];
+  QueryId queryId = PlanIdGenerator::getNextQueryId();
+  queryPlan->setQueryId(queryId);
+  auto amendmentQueue = std::make_shared<
+      folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
+  auto storageHandler = TwoPhaseLockingStorageHandler::create(
+      {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan,
+       queryCatalog, sourceCatalog, udfCatalog, amendmentQueue,
+       statisticProbeHandler});
 
-    // Prepare
-    constexpr auto requestId = RequestId(1);
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical").sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    SinkLogicalOperatorPtr sinkOperator1 = queryPlan->getSinkOperators()[0];
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 amendmentQueue,
-                                                                 statisticProbeHandler});
+  // Create new entry in query catalog service
+  queryCatalog->createQueryCatalogEntry("query string", queryPlan,
+                                        Optimizer::PlacementStrategy::TopDown,
+                                        QueryState::REGISTERED);
 
-    //Create new entry in query catalog service
-    queryCatalog->createQueryCatalogEntry("query string",
-                                          queryPlan,
-                                          Optimizer::PlacementStrategy::TopDown,
-                                          QueryState::REGISTERED);
+  EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::REGISTERED);
 
-    EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::REGISTERED);
+  // Create add request
+  auto addQueryRequest = RequestProcessor::AddQueryRequest::create(
+      queryPlan, TEST_PLACEMENT_STRATEGY, ZERO_RETRIES, z3Context);
+  addQueryRequest->setId(requestId);
 
-    // Create add request
-    auto addQueryRequest = RequestProcessor::AddQueryRequest::create(queryPlan, TEST_PLACEMENT_STRATEGY, ZERO_RETRIES, z3Context);
-    addQueryRequest->setId(requestId);
-
-    // Execute add request until deployment phase
-    try {
-        addQueryRequest->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
-        EXPECT_EQ(e.getMode(), RpcClientMode::Register);
-    }
+  // Execute add request until deployment phase
+  try {
+    addQueryRequest->execute(storageHandler);
+  } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    EXPECT_EQ(e.getMode(), RpcClientMode::Register);
+  }
 }
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor

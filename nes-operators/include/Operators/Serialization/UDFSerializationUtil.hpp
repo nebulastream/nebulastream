@@ -16,6 +16,7 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 
 #include <JavaUdfDescriptorMessage.pb.h>
+
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 
@@ -25,24 +26,27 @@ namespace NES {
  * Utility class to serialize/deserialize a Java UDF descriptor.
  */
 class UDFSerializationUtil {
-  public:
-    /**
-     * Serialize a Java UDF descriptor to a protobuf message.
-     * @param javaUdfDescriptor The Java UDF descriptor that should be serialized.
-     * @param javaUdfDescriptorMessage A mutable protobuf message into which the Java UDF descriptor is serialized.
-     */
-    static void serializeJavaUDFDescriptor(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
-                                           JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
+ public:
+  /**
+   * Serialize a Java UDF descriptor to a protobuf message.
+   * @param javaUdfDescriptor The Java UDF descriptor that should be serialized.
+   * @param javaUdfDescriptorMessage A mutable protobuf message into which the
+   * Java UDF descriptor is serialized.
+   */
+  static void serializeJavaUDFDescriptor(
+      const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
+      JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
 
-    /**
-     * Deserialize a protobuf message representing a Java UDF descriptor.
-     * @param javaUdfDescriptorMessage The Java UDF descriptor protobuf message.
-     * @return A Java UDF descriptor that was deserialized from the protobuf message.
-     */
-    static Catalogs::UDF::JavaUDFDescriptorPtr
-    deserializeJavaUDFDescriptor(const JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
+  /**
+   * Deserialize a protobuf message representing a Java UDF descriptor.
+   * @param javaUdfDescriptorMessage The Java UDF descriptor protobuf message.
+   * @return A Java UDF descriptor that was deserialized from the protobuf
+   * message.
+   */
+  static Catalogs::UDF::JavaUDFDescriptorPtr deserializeJavaUDFDescriptor(
+      const JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
 };
 
-}// namespace NES
+}  // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_

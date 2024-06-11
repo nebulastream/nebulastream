@@ -33,64 +33,72 @@ class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
 /**
- * This class encapsulates parts of a coordinator side requests logic that are to be executed concurrently.
- * Subrequests are scheduled and executed as part of the execution of a MultiRequest
+ * This class encapsulates parts of a coordinator side requests logic that are
+ * to be executed concurrently. Subrequests are scheduled and executed as part
+ * of the execution of a MultiRequest
  */
 class AbstractSubRequest : public StorageResourceLocker {
-  public:
-    /**
-     * @brief Constructor
-     * @param requiredResources the resources required to be locked by this request.
-     */
-    explicit AbstractSubRequest(std::vector<ResourceType> requiredResources);
+ public:
+  /**
+   * @brief Constructor
+   * @param requiredResources the resources required to be locked by this
+   * request.
+   */
+  explicit AbstractSubRequest(std::vector<ResourceType> requiredResources);
 
-    /**
-     * @brief destructor
-     */
-    virtual ~AbstractSubRequest() = default;
+  /**
+   * @brief destructor
+   */
+  virtual ~AbstractSubRequest() = default;
 
-    /**
-     * @brief lock resources, execute this sub request's logic and release resources
-     */
-    //todo #4433: move to common base class with abstract request
-    bool execute();
+  /**
+   * @brief lock resources, execute this sub request's logic and release
+   * resources
+   */
+  // todo #4433: move to common base class with abstract request
+  bool execute();
 
-    /**
-     * @brief obtain a future into which the results of this sub request's execution will be placed on completion
-     * @return a future containing the results
-     */
-    std::future<std::any> getFuture();
+  /**
+   * @brief obtain a future into which the results of this sub request's
+   * execution will be placed on completion
+   * @return a future containing the results
+   */
+  std::future<std::any> getFuture();
 
-    /**
-     * @brief set the storage handler to be used for resource access by this sub request
-     * @param storageHandler a pointer to the storage handler
-     */
-    void setStorageHandler(StorageHandlerPtr storageHandler);
+  /**
+   * @brief set the storage handler to be used for resource access by this sub
+   * request
+   * @param storageHandler a pointer to the storage handler
+   */
+  void setStorageHandler(StorageHandlerPtr storageHandler);
 
-    /**
-     * @brief check if this request has already been picked up by a thread to execute it
-     * @return true if execution has started or already finished, false otherwise
-     */
-    bool executionHasStarted();
+  /**
+   * @brief check if this request has already been picked up by a thread to
+   * execute it
+   * @return true if execution has started or already finished, false otherwise
+   */
+  bool executionHasStarted();
 
-  protected:
-    /**
-     * @brief Execute this sub request's logic
-     * @param storageHandler the storage handler to be used for resource access
-     */
-    virtual std::any executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
+ protected:
+  /**
+   * @brief Execute this sub request's logic
+   * @param storageHandler the storage handler to be used for resource access
+   */
+  virtual std::any executeSubRequestLogic(
+      const StorageHandlerPtr& storageHandler) = 0;
 
-    /**
-     * @brief get an id that identifies this request to lock resources for exclusive use by this object
-     * @return the id
-     */
-    RequestId getResourceLockingId() override;
+  /**
+   * @brief get an id that identifies this request to lock resources for
+   * exclusive use by this object
+   * @return the id
+   */
+  RequestId getResourceLockingId() override;
 
-    std::promise<std::any> responsePromise;
-    StorageHandlerPtr storageHandler;
-    std::atomic<bool> executionStarted{false};
-    RequestId requestId{INVALID_REQUEST_ID};
+  std::promise<std::any> responsePromise;
+  StorageHandlerPtr storageHandler;
+  std::atomic<bool> executionStarted{false};
+  RequestId requestId{INVALID_REQUEST_ID};
 };
-}// namespace NES::RequestProcessor
+}  // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTSUBREQUEST_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTSUBREQUEST_HPP_
