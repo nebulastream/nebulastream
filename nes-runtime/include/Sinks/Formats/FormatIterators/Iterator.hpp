@@ -65,7 +65,7 @@ class Iterator {
          */
     std::string operator*() {
         switch (sinkFormatType) {
-            case FormatTypes::JSON_FORMAT: return dataJson();
+            case FormatTypes::JSON_FORMAT: return serializeTupleAsJson();
             case FormatTypes::NES_FORMAT:
             case FormatTypes::CSV_FORMAT:
             default: NES_NOT_IMPLEMENTED();
@@ -80,7 +80,7 @@ class Iterator {
          * @brief return current tuple in json format
          * @return string in json representation
          */
-    std::string dataJson();
+    std::string serializeTupleAsJson();
 
     /**
          * current seek position in the buffer
