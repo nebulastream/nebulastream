@@ -70,20 +70,6 @@ class TopologyNode : public Node {
     WorkerId getId() const;
 
     /**
-     * @brief lock this topology node
-     * Note: It is the responsibility of the callee class to call releaseLock after the processing at the callee is done.
-     * @return true if locked else false
-     */
-    bool acquireLock();
-
-    /**
-     * @brief release the lock on this topology node
-     * Note: It is the responsibility of the callee class to have called acquireLock before calling this method.
-     * @return true if lock release else false
-     */
-    bool releaseLock();
-
-    /**
      * @brief method to get the overall cpu capacity of the node
      * @return uint64_t cpu capacity
      */

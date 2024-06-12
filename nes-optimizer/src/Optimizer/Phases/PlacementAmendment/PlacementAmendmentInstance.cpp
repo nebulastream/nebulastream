@@ -59,14 +59,14 @@ void PlacementAmendmentInstance::execute() {
 
     // Iterate over deployment context and update execution plan
     for (const auto& deploymentContext : deploymentContexts) {
-        auto executionNodeId = deploymentContext->getWorkerId();
+        auto workerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
         auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
         switch (decomposedQueryPlanState) {
             case QueryState::MARKED_FOR_REDEPLOYMENT:
             case QueryState::MARKED_FOR_DEPLOYMENT: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
                                                                     decomposedQueryPlanVersion,
@@ -74,12 +74,12 @@ void PlacementAmendmentInstance::execute() {
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
                                                                     decomposedQueryPlanVersion,
                                                                     QueryState::STOPPED);
-                globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                globalExecutionPlan->removeDecomposedQueryPlan(workerId,
                                                                sharedQueryId,
                                                                decomposedQueryPlanId,
                                                                decomposedQueryPlanVersion);

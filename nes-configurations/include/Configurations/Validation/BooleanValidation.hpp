@@ -15,7 +15,7 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_
 
-#include "Configurations/Validation/ConfigurationValidation.hpp"
+#include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <string>
 
 namespace NES::Configurations {

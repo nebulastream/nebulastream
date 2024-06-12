@@ -1,0 +1,54 @@
+#Location of query set
+# For each query set we will run the experiments
+QuerySetLocation: '<query set location>'
+# LOG level
+LogLevel: LOG_ERROR
+# Sleep interval between each run
+StartupSleepIntervalInSeconds: 3
+# Number of times experiment is to be repeated
+NumOfRuns: 7
+# Initial number of queries to deploy
+InitialQueries: 4000
+
+RunConfig:
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 1
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 3
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 10
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 10
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 10
+    ConfNum: 4
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 1
+    NumOfRemoveQueries: 0
+    NumOfAddQueries: 1
+    ConfNum: 5
+

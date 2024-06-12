@@ -60,7 +60,7 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
 
 static std::pair<OperatorId, WorkerId> deconstructTopologyId(std::string_view topologyId, const char* separator) {
     uint64_t operatorId;
-    uint64_t executionNodeId;
+    uint64_t workerId;
     auto operatorIdSubstring = topologyId.substr(0, topologyId.find(separator));
     auto executionNodeSubstr = topologyId.substr(topologyId.find(separator) + 1);
 
@@ -68,12 +68,12 @@ static std::pair<OperatorId, WorkerId> deconstructTopologyId(std::string_view to
         == std::errc::invalid_argument) {
         NES_THROW_RUNTIME_ERROR("Could not parse OperatorId: " << topologyId);
     }
-    if (std::from_chars(executionNodeSubstr.data(), executionNodeSubstr.data() + executionNodeSubstr.length(), executionNodeId).ec
+    if (std::from_chars(executionNodeSubstr.data(), executionNodeSubstr.data() + executionNodeSubstr.length(), workerId).ec
         == std::errc::invalid_argument) {
-        NES_THROW_RUNTIME_ERROR("Could not parse ExecutionNodeId: " << topologyId);
+        NES_THROW_RUNTIME_ERROR("Could not parse WorkerId: " << topologyId);
     }
 
-    return {OperatorId(operatorId), WorkerId(executionNodeId)};
+    return {OperatorId(operatorId), WorkerId(workerId)};
 }
 
 PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
@@ -157,13 +157,16 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
             }
 
             //2.4 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
+
+            auto newNodeMileageMap = computeMileage(copy.copiedPinnedDownStreamOperators);
+
             addConstraints(opt,
                            copy.copiedPinnedUpStreamOperators,
                            copy.copiedPinnedDownStreamOperators,
                            placementVariables,
                            operatorPositionMap,
                            nodeUtilizationMap,
-                           nodeMileageMap);
+                           newNodeMileageMap);
         }
 
         // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))

@@ -223,8 +223,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     fileSinkOperator->addChild(sourceLogicalOperator);
     auto lockedTopologyNode = topology->lockTopologyNode(pinnedId);
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(pinnedId, decomposedQueryPlan);
     subPlanId++;
 
     auto networkSinkId = getNextOperatorId();
@@ -264,8 +265,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     unaryOperator->addChild(sourceLogicalOperator);
     lockedTopologyNode = topology->lockTopologyNode(pinnedId);
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(pinnedId, decomposedQueryPlan);
     subPlanId++;
 
     //test link
@@ -340,8 +342,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     rightsourceLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     binaryOperator->addChild(rightsourceLogicalOperator);
     lockedTopologyNode = topology->lockTopologyNode(WorkerId(3));
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(WorkerId(3), decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
@@ -375,8 +378,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
     sinkLogicalOperator->addChild(sourceLogicalOperator);
     lockedTopologyNode = topology->lockTopologyNode(WorkerId(6));
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(WorkerId(6), decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
@@ -403,8 +407,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     copiedBinaryOperator->addChild(copiedDefaultSourceLeft);
     sinkLogicalOperator->addChild(defaultSourceLeft);
     lockedTopologyNode = topology->lockTopologyNode(WorkerId(7));
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(WorkerId(7), decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
@@ -439,8 +444,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     sinkLogicalOperator->addChild(sourceLogicalOperator);
     lockedTopologyNode = topology->lockTopologyNode(WorkerId(6));
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(WorkerId(6), decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
@@ -465,8 +471,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     copiedBinaryOperator->addChild(copiedDefaultSourceRight);
     sinkLogicalOperator->addChild(defaultSourceRight);
     lockedTopologyNode = topology->lockTopologyNode(WorkerId(8));
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(WorkerId(8), decomposedQueryPlan);
     subPlanId++;
 
     //additional operators on node 3
@@ -508,8 +515,9 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     copiedBinaryOperator->addChild(copiedSecondDefaultSourceRight);
     sinkLogicalOperator->addChild(secondDefaultSourceRight);
     lockedTopologyNode = topology->lockTopologyNode(WorkerId(9));
-    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, decomposedQueryPlan);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     lockedTopologyNode->unlock();
+    globalExecutionPlan->addDecomposedQueryPlan(WorkerId(9), decomposedQueryPlan);
     subPlanId++;
 
     auto sharedQueryPlan = SharedQueryPlan::create(innerSharedQueryPlan);

@@ -49,7 +49,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
         auto sharedQueryPlan = sharedQueryIdToPlanMap[UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId)];
         auto hostedQueryIds = sharedQueryPlan->getQueryIds();
         for (const auto& hostedQueryId : hostedQueryIds) {
-            sharedQueryPlan->removeQuery(hostedQueryId);
+            sharedQueryPlan->markQueryForRemoval(hostedQueryId);
         }
         //Instead of removing query we mark the status of the shared query plan to failed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::FAILED);
@@ -59,7 +59,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
             //Fetch the shared query plan id and remove the query and associated operators
             auto sharedQueryId = queryIdToSharedQueryIdMap.at(queryId);
             auto sharedQueryPlan = sharedQueryIdToPlanMap.at(sharedQueryId);
-            if (!sharedQueryPlan->removeQuery(queryId)) {
+            if (!sharedQueryPlan->markQueryForRemoval(queryId)) {
                 //todo: #3821 create specific exception for this case
                 throw Exceptions::RuntimeException(
                     fmt::format("GlobalQueryPlan: Unable to remove query with id {} from shared query plan with id {}",

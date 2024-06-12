@@ -79,7 +79,6 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                     auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
                     colChecks.push_back(equivalenceCheck);
                 }
-
                 solver->push();
                 solver->add(!z3::mk_and(colChecks).simplify());
                 schemaMatched = solver->check() == z3::unsat;
@@ -88,7 +87,6 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                 if (counter >= RESET_SOLVER_THRESHOLD) {
                     resetSolver();
                 }
-
                 //If schema is matched then remove the other schema from the list to avoid duplicate matching
                 if (schemaMatched) {
                     otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);

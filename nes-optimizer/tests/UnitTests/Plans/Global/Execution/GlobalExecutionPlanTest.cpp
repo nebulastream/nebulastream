@@ -83,9 +83,10 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto decomposedQueryPlan =
         DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId, topologyNodeId, plan->getRootOperators());
     decomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-
-    auto topologyNode = topology->lockTopologyNode(topologyNodeId);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan);
+    auto lockedTopologyNode = topology->lockTopologyNode(topologyNodeId);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan);
+    globalExecutionPlan->addExecutionNodeAsRoot(topologyNodeId);
 
     const std::string actualPlan = globalExecutionPlan->getAsString();
 
@@ -147,11 +148,13 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto decomposedQueryPlan2 =
         DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId, topologyNodeId, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+    auto lockedTopologyNode = topology->lockTopologyNode(topologyNodeId);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+    globalExecutionPlan->addExecutionNodeAsRoot(topologyNodeId);
 
     //create execution node
-    auto topologyNode = topology->lockTopologyNode(topologyNodeId);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan1);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan2);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan1);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan2);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
     NES_INFO("Actual query plan \n{}", actualPlan);
@@ -216,10 +219,13 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, topologyNodeId, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
 
+    auto lockedTopologyNode = topology->lockTopologyNode(topologyNodeId);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+    globalExecutionPlan->addExecutionNodeAsRoot(topologyNodeId);
+
     //create execution node
-    auto topologyNode = topology->lockTopologyNode(topologyNodeId);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan1);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan2);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan1);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan2);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
     NES_INFO("Actual query plan \n{}", actualPlan);
@@ -304,12 +310,15 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         DecomposedQueryPlan::create(decomposedQueryPlanId22, sharedQueryId2, topologyNodeId, plan22->getRootOperators());
     decomposedQueryPlan22->setState(QueryState::MARKED_FOR_DEPLOYMENT);
 
+    auto lockedTopologyNode = topology->lockTopologyNode(topologyNodeId);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+    globalExecutionPlan->addExecutionNodeAsRoot(topologyNodeId);
+
     //create execution node
-    auto topologyNode = topology->lockTopologyNode(topologyNodeId);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan11);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan12);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan21);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan22);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan11);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan12);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan21);
+    globalExecutionPlan->addDecomposedQueryPlan(topologyNodeId, decomposedQueryPlan22);
     const std::string& actualPlan = globalExecutionPlan->getAsString();
 
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
@@ -400,11 +409,14 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, node2Id, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
 
+    auto lockedTopologyNode1 = topology->lockTopologyNode(node1Id);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode1);
+    auto lockedTopologyNode2 = topology->lockTopologyNode(node2Id);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode2);
+
     //create execution node
-    auto topologyNode = topology->lockTopologyNode(node1Id);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan1);
-    topologyNode = topology->lockTopologyNode(node2Id);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan2);
+    globalExecutionPlan->addDecomposedQueryPlan(node1Id, decomposedQueryPlan1);
+    globalExecutionPlan->addDecomposedQueryPlan(node2Id, decomposedQueryPlan2);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
     NES_INFO("Actual query plan \n{}", actualPlan);
@@ -509,15 +521,20 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         DecomposedQueryPlan::create(decomposedQueryPlanId4, sharedQueryId4, node4Id, plan4->getRootOperators());
     decomposedQueryPlan4->setState(QueryState::MARKED_FOR_DEPLOYMENT);
 
+    auto lockedTopologyNode1 = topology->lockTopologyNode(node1Id);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode1);
+    auto lockedTopologyNode2 = topology->lockTopologyNode(node2Id);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode2);
+    auto lockedTopologyNode3 = topology->lockTopologyNode(node3Id);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode3);
+    auto lockedTopologyNode4 = topology->lockTopologyNode(node4Id);
+    globalExecutionPlan->registerExecutionNode(lockedTopologyNode4);
+
     //create execution node
-    auto topologyNode = topology->lockTopologyNode(node1Id);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan1);
-    topologyNode = topology->lockTopologyNode(node2Id);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan2);
-    topologyNode = topology->lockTopologyNode(node3Id);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan3);
-    topologyNode = topology->lockTopologyNode(node4Id);
-    globalExecutionPlan->addDecomposedQueryPlan(topologyNode, decomposedQueryPlan4);
+    globalExecutionPlan->addDecomposedQueryPlan(node1Id, decomposedQueryPlan1);
+    globalExecutionPlan->addDecomposedQueryPlan(node2Id, decomposedQueryPlan2);
+    globalExecutionPlan->addDecomposedQueryPlan(node3Id, decomposedQueryPlan3);
+    globalExecutionPlan->addDecomposedQueryPlan(node4Id, decomposedQueryPlan4);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
     NES_INFO("Actual query plan \n{}", actualPlan);

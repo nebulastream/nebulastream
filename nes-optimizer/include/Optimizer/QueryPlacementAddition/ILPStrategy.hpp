@@ -34,8 +34,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace NES::Optimizer {
 
 /**
-* @brief This class implements Integer Linear Programming strategy to perform the operator placement
-*/
+ * @brief This class implements Integer Linear Programming strategy to perform the operator placement
+ */
 class ILPStrategy : public BasePlacementAdditionStrategy {
   public:
     ~ILPStrategy() override = default;

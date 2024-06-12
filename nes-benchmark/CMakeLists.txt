@@ -48,11 +48,14 @@ add_nes_benchmarks(e2e-benchmark-main "src/E2E/E2EBenchmarkMain.cpp")
 include(ExternalProject)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
-### Query Merger Benchmark ###
-add_nes_benchmarks(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp")
+### Incremental Stream Query Merger Benchmark (ISQM) ###
+add_nes_benchmarks(isqm-benchmark "src/MicroBenchmarks/ISQMBenchmark/ISQMBenchmark.cpp")
 
-### Incremental Placement Benchmark ###
-add_nes_benchmarks(incremental-placement-benchmark "src/MicroBenchmarks/IncrementalPlacement/BenchmarkIncrementalPlacement.cpp")
+### Incremental Stream Query Placement Benchmark (ISQP) ###
+add_nes_benchmarks(isqp-benchmark "src/MicroBenchmarks/ISQPBenchmark/ISQPBenchmark.cpp")
+
+### Incremental Stream Query Placement Benchmark (ISQP) with topology changes ###
+add_nes_benchmarks(isqp-benchmark-topology-change "src/MicroBenchmarks/ISQPBenchmark/ISQPBenchmarkTopologyChanges.cpp")
 
 ### Output Channel Benchmark ###
 add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")

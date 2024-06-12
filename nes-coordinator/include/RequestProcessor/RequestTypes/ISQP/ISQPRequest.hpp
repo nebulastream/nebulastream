@@ -113,11 +113,6 @@ class ISQPRequest : public AbstractUniRequest {
 
   private:
     /**
-     * @brief run a placement amendment instance from the queue
-     */
-    void runPlacementAmenderInstance();
-
-    /**
      * @brief handle add query event by marking the affected operators for placement
      * @param addQueryEvent
      */
@@ -150,6 +145,7 @@ class ISQPRequest : public AbstractUniRequest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    bool enableIncrementalPlacement;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 

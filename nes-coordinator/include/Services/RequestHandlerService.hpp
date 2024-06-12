@@ -89,6 +89,9 @@ namespace RequestProcessor {
 class AsyncRequestProcessor;
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 
+struct ISQPRequestResponse;
+using ISQPRequestResponsePtr = std::shared_ptr<ISQPRequestResponse>;
+
 class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
 
@@ -176,9 +179,9 @@ class RequestHandlerService {
     /**
      * @brief Process multiple query and topology change request represented by isqp events in a batch
      * @param isqpEvents a vector of ISQP requests to be handled
-     * @return true on success
+     * @return response to the execution of the request
      */
-    bool queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
+    RequestProcessor::ISQPRequestResponsePtr queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
 
     /**
      * @brief Processes a track requests by mapping it to a statistic query and returning the statistic keys
